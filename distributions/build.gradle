@@ -7,252 +7,252 @@ apply plugin:'maven'
 apply plugin:'ubuntu'
 
 configurations{
-	distributions
+  distributions
 }
 
 task javadoc(type: Javadoc, overwrite: true) {
-    group = 'Documentation' 
-    description = 'Aggregates API javadocs across all projects.'
-    doFirst{
-		source project.parent.subprojects.collect { project ->
-			if(project.plugins.findPlugin("java")){
-				project.sourceSets.api.allJava
-			}
-			[]
-	    }
-	}
-	destinationDir = new File(buildDir, 'javadoc') 
-    // Might need a classpath
-    doFirst{
-		classpath files(project.parent.subprojects.collect { project ->
-			if(project.plugins.findPlugin("java")){
-				project.sourceSets.main.compileClasspath
-			}
-			[]
-		})
-	}
+  group = 'Documentation'
+  description = 'Aggregates API javadocs across all projects.'
+  doFirst{
+    source project.parent.subprojects.collect { project ->
+      if(project.plugins.findPlugin("java")){
+        project.sourceSets.api.allJava
+      }
+      []
+    }
+  }
+  destinationDir = new File(buildDir, 'javadoc')
+  // Might need a classpath
+  doFirst{
+    classpath files(project.parent.subprojects.collect { project ->
+      if(project.plugins.findPlugin("java")){
+        project.sourceSets.main.compileClasspath
+      }
+      []
+    })
+  }
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
 task singlenode_dist (type: Zip) {
-	dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
-    group = 'Continuuity'
-    
-	baseName = "continuuity"
-	appendix = "developer-suite"
-    into "${baseName}-${appendix}-${version}"	
-	description = 'Generates the singlenode distribution zip file'
+  dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
+  group = 'Continuuity'
 
-	//copySpec:
-	//root
-	from project(':singlenode').tasks.getByName('createApiJar').outputs
-    from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
-    from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
-    from project(':singlenode').files('src/dist')
-    from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
+  baseName = "continuuity"
+  appendix = "developer-suite"
+  into "${baseName}-${appendix}-${version}"
+  description = 'Generates the singlenode distribution zip file'
 
-	
-	//bin
-    into ("bin"){
-                // :singlenode/bin contains the startscript, not using startScripts task
-	    // include project bin directories
-	    from project.parent.subprojects.collect { project ->
-	        project.file('bin')
-	    }
-	
-		exclude 'node'
-	    exclude 'far-server'
-	    exclude 'run-java'
-	    exclude 'flow-config.sh'
-	    exclude 'service'
-	    exclude 'dfbench'
-	    exclude 'event-gen'
-	    exclude 'flume-client'
-	    exclude 'common*'
-	    def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-		cp += ":\$APP_HOME/conf/"
-		filter(ReplaceTokens, tokens: [classpath: cp])
-	}	 
-    	
-	
-    //create/include empty data directory
-	doFirst{
-		new File("${buildDir}/tmp/singlenode/data").mkdirs()
+  //copySpec:
+  //root
+  from project(':singlenode').tasks.getByName('createApiJar').outputs
+  from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
+  from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+  from project(':singlenode').files('src/dist')
+  from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
+
+
+  //bin
+  into ("bin"){
+    // :singlenode/bin contains the startscript, not using startScripts task
+    // include project bin directories
+    from project.parent.subprojects.collect { project ->
+      project.file('bin')
     }
 
-	from("${buildDir}/tmp/singlenode/")
-	
-	//conf
-	from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
-		into "conf"
-	}
-	
-	//distribution
-    into("lib"){
-		from project(':singlenode').configurations.getByName('runtime')
-	    from project(':singlenode').tasks.getByName('jar').outputs
-	    from project(':test').tasks.getByName('testJar').outputs
-	    exclude 'overlord-*-loggly.jar'
-	    exclude 'cglib-*v2*.jar'
-	}
-	
-	//docs
-	into("docs/api"){
-	    from javadoc.outputs 		
-	}
+    exclude 'node'
+    exclude 'far-server'
+    exclude 'run-java'
+    exclude 'flow-config.sh'
+    exclude 'service'
+    exclude 'dfbench'
+    exclude 'event-gen'
+    exclude 'flume-client'
+    exclude 'common*'
+    def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+  }
 
-	//examples
-	into("examples"){
-        from project(':examples').projectDir
-        exclude "README.md"
-        exclude "build/"
-        exclude ".gitignore"
-        exclude "**/*.gradle"
-        exclude "**/classes/"
-        exclude "*/*.jar"
-        exclude "PayvmentDemo/"
-        exclude "DependencyRandomNumber/"
-        exclude "TwitterScanner/"
-	}
-	
-	//webapp
-	into ("web-app/client"){
-		from project(':web-cloud-app').file('build/developer/client')
-	}
-	
-	into("web-app/server"){
-		from project(':web-cloud-app').file('build/developer/server')	
-	}
-	
-	// VERSION
-	from("VERSION"){
-		def versiontxt
-		if( project.hasProperty('teamcityBuildNumber')) {
-		    versiontxt = releaseVersion + "-" + teamcityBuildNumber
-		} else {
-		    versiontxt = releaseVersion
-		}
-		filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-	}
-	
-	//classifier = "beta"
+
+  //create/include empty data directory
+  doFirst{
+    new File("${buildDir}/tmp/singlenode/data").mkdirs()
+  }
+
+  from("${buildDir}/tmp/singlenode/")
+
+  //conf
+  from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
+    into "conf"
+  }
+
+  //distribution
+  into("lib"){
+    from project(':singlenode').configurations.getByName('runtime')
+    from project(':singlenode').tasks.getByName('jar').outputs
+    from project(':test').tasks.getByName('testJar').outputs
+    exclude 'overlord-*-loggly.jar'
+    exclude 'cglib-*v2*.jar'
+  }
+
+  //docs
+  into("docs/api"){
+    from javadoc.outputs
+  }
+
+  //examples
+  into("examples"){
+    from project(':examples').projectDir
+    exclude "README.md"
+    exclude "build/"
+    exclude ".gitignore"
+    exclude "**/*.gradle"
+    exclude "**/classes/"
+    exclude "*/*.jar"
+    exclude "PayvmentDemo/"
+    exclude "DependencyRandomNumber/"
+    exclude "TwitterScanner/"
+  }
+
+  //webapp
+  into ("web-app/client"){
+    from project(':web-cloud-app').file('build/developer/client')
+  }
+
+  into("web-app/server"){
+    from project(':web-cloud-app').file('build/developer/server')
+  }
+
+  // VERSION
+  from("VERSION"){
+    def versiontxt
     if( project.hasProperty('teamcityBuildNumber')) {
-        classifier = teamcityBuildNumber
+      versiontxt = releaseVersion + "-" + teamcityBuildNumber
     } else {
-        classifier = ""
+      versiontxt = releaseVersion
     }
-	ext.distName = "${baseName}-${appendix}"
+    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+  }
+
+  //classifier = "beta"
+  if( project.hasProperty('teamcityBuildNumber')) {
+    classifier = teamcityBuildNumber
+  } else {
+    classifier = ""
+  }
+  ext.distName = "${baseName}-${appendix}"
 }
 
 task cloud_dist (type: Tar) {
-    dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
-    group = 'Continuuity'
-    compression = Compression.GZIP
-    baseName = "continuuity"
-    appendix = "cloud-edition"
-    into "${baseName}-${appendix}-${version}"
-    description = 'Generates the cloud distribution zip file'
+  dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
+  group = 'Continuuity'
+  compression = Compression.GZIP
+  baseName = "continuuity"
+  appendix = "cloud-edition"
+  into "${baseName}-${appendix}-${version}"
+  description = 'Generates the cloud distribution zip file'
 
-    //distribution
-    into("lib"){
-        from project(':singlenode').configurations.getByName('runtime')
-        from tasks.findByPath(':performance:jar')
-	from project(':passport').tasks.getByName('jar').outputs
-        exclude 'passport-*-sources.jar'
-        exclude 'overlord-*-loggly.jar'
+  //distribution
+  into("lib"){
+    from project(':singlenode').configurations.getByName('runtime')
+    from tasks.findByPath(':performance:jar')
+    from project(':passport').tasks.getByName('jar').outputs
+    exclude 'passport-*-sources.jar'
+    exclude 'overlord-*-loggly.jar'
+  }
+
+  //
+  into("bin") {
+    from project.rootProject.subprojects.collect { project ->
+      project.file('bin')
     }
+    exclude 'node'
+    def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+  }
 
-    //
-    into("bin") {
-        from project.rootProject.subprojects.collect { project ->
-            project.file('bin')
-        }
-        exclude 'node'
-        def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
-        filter(ReplaceTokens, tokens: [classpath: cp])
+  into("conf") {
+    from project.rootProject.subprojects.collect { project ->
+      // include [service]-env.sh
+      project.file('conf')
+
     }
+    include "*-env.sh"
+  }
 
-    into("conf") {
-        from project.rootProject.subprojects.collect { project ->
-            // include [service]-env.sh
-            project.file('conf')
+  into("cloud/web-app/client") {
+    from project(':web-cloud-app').file('build/cloud/client')
+  }
 
-        }
-        include "*-env.sh"
-    }
+  into("cloud/web-app/server") {
+    from project(':web-cloud-app').file('build/cloud/server')
+  }
 
-    into("cloud/web-app/client") {
-        from project(':web-cloud-app').file('build/cloud/client')
-    }
-
-    into("cloud/web-app/server") {
-        from project(':web-cloud-app').file('build/cloud/server')
-    }
-
-    // VERSION
-    from("VERSION"){
-        def versiontxt
-        if( project.hasProperty('teamcityBuildNumber')) {
-            versiontxt = version + "-" + teamcityBuildNumber
-        } else {
-            versiontxt = version
-        }
-        filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-    }
-
+  // VERSION
+  from("VERSION"){
+    def versiontxt
     if( project.hasProperty('teamcityBuildNumber')) {
-        classifier = teamcityBuildNumber
+      versiontxt = version + "-" + teamcityBuildNumber
     } else {
-        classifier = ""
+      versiontxt = version
     }
-    ext.distName = "${baseName}-${appendix}"
+    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+  }
+
+  if( project.hasProperty('teamcityBuildNumber')) {
+    classifier = teamcityBuildNumber
+  } else {
+    classifier = ""
+  }
+  ext.distName = "${baseName}-${appendix}"
 }
 
 
 ubuntu {
-    println cloud_dist.archivePath.toURI()
-    archive = cloud_dist.archivePath.toURI()
-    releaseNotes = "Continuuity Cloud Distribution"
-    author = 'continuuity'
-    email = 'info@continuuity.com'
-    homepage = 'http://www.continuuity.com'
-    depends {
+  println cloud_dist.archivePath.toURI()
+  archive = cloud_dist.archivePath.toURI()
+  releaseNotes = "Continuuity Cloud Distribution"
+  author = 'continuuity'
+  email = 'info@continuuity.com'
+  homepage = 'http://www.continuuity.com'
+  depends {
 
-    }
-    dirs {
+  }
+  dirs {
 
-    }
+  }
 }
 
 deb.dependsOn(cloud_dist)
 
 
 artifacts{
-    // Asigning the artifact to the configuration
-	distributions singlenode_dist
-	distributions cloud_dist
+  // Asigning the artifact to the configuration
+  distributions singlenode_dist
+  distributions cloud_dist
 }
 
 uploadDistributions {
-	repositories {
-		repositories.mavenDeployer {
-                        repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
-                            authentication(userName: nexusUsername, password: nexusPassword)
-                        }
-                        snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
-                            authentication(userName: nexusUsername, password: nexusPassword)
-                        }
-			addFilter('singlenode') {artifact, file ->
-				file.name == singlenode_dist.archiveName
-			}
-			addFilter('cloud') {artifact, file ->
-				file.name == cloud_dist.archiveName
-			}
-			pom('singlenode').artifactId = singlenode_dist.distName
-			pom('cloud').artifactId = cloud_dist.distName
-		}
-	}
+  repositories {
+    repositories.mavenDeployer {
+      repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+      }
+      snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+      }
+      addFilter('singlenode') {artifact, file ->
+        file.name == singlenode_dist.archiveName
+      }
+      addFilter('cloud') {artifact, file ->
+        file.name == cloud_dist.archiveName
+      }
+      pom('singlenode').artifactId = singlenode_dist.distName
+      pom('cloud').artifactId = cloud_dist.distName
+    }
+  }
 }
 
