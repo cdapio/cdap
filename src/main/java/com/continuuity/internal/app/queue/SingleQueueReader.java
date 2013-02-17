@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.QueueName;
@@ -7,6 +7,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.internal.app.runtime.InputDatum;
 
 /**
  *

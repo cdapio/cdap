@@ -1,6 +1,7 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.internal.app.runtime.InputDatum;
 
 /**
  *
