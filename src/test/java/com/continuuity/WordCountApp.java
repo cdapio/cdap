@@ -90,11 +90,11 @@ public class WordCountApp implements Application {
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
         .withFlowlets().add(new StreamSucker()).apply()
-        .add(new Tokenizer()).apply()
-        .add(new CountByField()).apply()
+                       .add(new Tokenizer()).apply()
+                       .add(new CountByField()).apply()
         .connect().from(new Stream("text")).to(new StreamSucker())
-        .from(new StreamSucker()).to(new Tokenizer())
-        .from(new Tokenizer()).to(new CountByField())
+                  .from(new StreamSucker()).to(new Tokenizer())
+                  .from(new Tokenizer()).to(new CountByField())
         .build();
     }
   }

@@ -31,11 +31,10 @@ public class MDSBasedStoreTest {
 
   @BeforeClass
   public static void beforeClass() {
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
-    OperationExecutor executor = injector.getInstance(OperationExecutor.class);
-    MetadataService.Iface metadataService = injector.getInstance(com.continuuity.metadata.MetadataService.class);
-    MetaDataStore metaDataStore = new SerializingMetaDataStore(executor);
-    store = new MDSBasedStore(metaDataStore, metadataService);
+    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                                   new StoreModule4Test());
+
+    store = injector.getInstance(MDSBasedStore.class);
   }
 
   @Test
@@ -104,6 +103,8 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(1, stored.getDataSets().size());
     Assert.assertEquals(spec.getFlows().get("WordCountFlow").getClassName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
+
+    // TODO: test that application items where added to metadataservice too 'cause UI will need it
   }
 
 }

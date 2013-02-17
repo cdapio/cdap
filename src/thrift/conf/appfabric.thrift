@@ -2,7 +2,7 @@ namespace java com.continuuity.app.services
 
 /**
  * Indicates the client is not authorized to talk to FARService or 
- * FlowService. This can happen when the access has been revoked or 
+ * ProgramService. This can happen when the access has been revoked or
  * the delegation token has been expired.
  */
 exception NotAuthorizedException {
@@ -24,19 +24,19 @@ exception AuthorizationTimeoutException {
  * representing the consent information provided by Overlord to
  AuthorizationService.
  */
-struct DelegationToken {
+struct AuthToken {
  1: string token,
 }
 
 /**
- * Provides authorization service. This service returns a DelegationToken that
- * is then used in every call to FARService or FlowService.
+ * Provides authorization service. This service returns a AuthToken that
+ * is then used in every call to FARService or ProgramService.
  */
 service AuthorizationService {
-  DelegationToken authenticate(1:string user, 2:string password ) 
+  AuthToken authenticate(1:string user, 2:string password )
     throws (1:NotAuthorizedException noauth,
             2:AuthorizationTimeoutException authtimeout),
-  DelegationToken renew(1:DelegationToken token)
+  AuthToken renew(1:AuthToken token)
     throws (1:NotAuthorizedException noauth,
             2:AuthorizationTimeoutException authtimeout),
 }
@@ -117,50 +117,50 @@ service FARService {
   /**
    * Begins uploading of FAR
    */
-  ResourceIdentifier init(1:DelegationToken token, 2:ResourceInfo info)
+  ResourceIdentifier init(1:AuthToken token, 2:ResourceInfo info)
     throws (1:FARServiceException e),
 
   /**
    * Chunk of FAR is uploaded
    */
-  void chunk(1:DelegationToken token,
+  void chunk(1:AuthToken token,
              2:ResourceIdentifier resource, 3:binary chunk)
     throws (1: FARServiceException e),
 
   /**
    * Finalizes uploading of FAR
    */
-  void deploy(1:DelegationToken token, 2:ResourceIdentifier resource)
+  void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
     throws (1: FARServiceException e),
 
   /**
    * Status of upload
    */
-  FARStatus status(1:DelegationToken token, 2:ResourceIdentifier resource)
+  FARStatus status(1:AuthToken token, 2:ResourceIdentifier resource)
     throws (1: FARServiceException e),
 
   /**
    * Promote a flow an it's resource to cloud.
    */
-  bool promote(1:DelegationToken token, 2:FlowIdentifier identifier)
+  bool promote(1:AuthToken token, 2:FlowIdentifier identifier)
     throws (1: FARServiceException e),
 
   /**
    * Disables a Flow
    */
-  void remove(1:DelegationToken token, 2:FlowIdentifier identifier)
+  void remove(1:AuthToken token, 2:FlowIdentifier identifier)
     throws (1: FARServiceException e),
 
   /**
    * Disables all Flows and Queries
    */
-  void removeAll(1:DelegationToken token, 2:string accountId)
+  void removeAll(1:AuthToken token, 2:string accountId)
     throws (1: FARServiceException e),
 
   /**
    * Wipes out everything for an account
    */
-  void reset(1:DelegationToken token, 2:string accountId)
+  void reset(1:AuthToken token, 2:string accountId)
     throws (1: FARServiceException e),
 
 }
@@ -168,7 +168,7 @@ service FARService {
 /**
  * Exception raised when there is an issue in start/stop/status/pausing of Flows
  */
-exception FlowServiceException {
+exception ProgramServiceException {
   1:string message,
 }
 
@@ -226,53 +226,54 @@ struct FlowRunRecord {
 /**
  * Flow Service for managing flows. 
  */
-service FlowService {
+service ProgramService {
 
   /**
    * Starts a Flow
    */
-  RunIdentifier start(1:DelegationToken token,  2: FlowDescriptor descriptor)
-    throws (1: FlowServiceException e),
+  RunIdentifier start(1:AuthToken token,  2: FlowDescriptor descriptor)
+    throws (1: ProgramServiceException e),
 
   /**
    * Checks the status of a Flow
    */
-  FlowStatus status(1:DelegationToken token, 2: FlowIdentifier identifier)
-    throws (1: FlowServiceException e),
+  FlowStatus status(1:AuthToken token, 2: FlowIdentifier identifier)
+    throws (1: ProgramServiceException e),
 
   /**
    * Stops a Flow
    */
-  RunIdentifier stop(1: DelegationToken token,  2: FlowIdentifier identifier)
-    throws (1: FlowServiceException e),
+  RunIdentifier stop(1: AuthToken token,  2: FlowIdentifier identifier)
+    throws (1: ProgramServiceException e),
 
   /**
    * Set number of instance of a flowlet.
    */
-  void setInstances(1: DelegationToken token, 2: FlowIdentifier identifier,
+  void setInstances(1: AuthToken token, 2: FlowIdentifier identifier,
                     3: string flowletId, 4:i16 instances )
-    throws (1: FlowServiceException e),
+    throws (1: ProgramServiceException e),
 
   /**
    * Returns the state of flows within a given account id.
    */
   list<ActiveFlow> getFlows(1: string accountId)
-     throws(1: FlowServiceException e),
+     throws(1: ProgramServiceException e),
 
   /**
    * Returns definition of a flow.
    */
   string getFlowDefinition(1: FlowIdentifier id)
-    throws (1: FlowServiceException e),
+    throws (1: ProgramServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
-  list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id),
+  list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id)
+      throws (1: ProgramServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
   void stopAll(1: string accountId)
-   throws (1: FlowServiceException e),
+   throws (1: ProgramServiceException e),
 }
