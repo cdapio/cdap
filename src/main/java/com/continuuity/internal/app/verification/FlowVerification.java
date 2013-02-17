@@ -3,7 +3,6 @@ package com.continuuity.internal.app.verification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.QueueSpecification;
 import com.continuuity.api.io.Schema;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
@@ -113,13 +112,13 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    * @return An instance of {@link VerifyResult}
    */
   private VerifyResult VerifyFlowletConnections(FlowletDefinition source, FlowletDefinition target) {
-    Map<String, Set<QueueSpecification>> output = source.getOutputs();
-    Map<String, Set<QueueSpecification>> input  = target.getInputs();
+    Map<String, Set<Schema>> output = source.getOutputs();
+    Map<String, Set<Schema>> input  = target.getInputs();
 
     // We iterate through the outputs of a source flowlet.
-    for(Map.Entry<String, Set<QueueSpecification>> entrySource : output.entrySet()) {
+    for(Map.Entry<String, Set<Schema>> entrySource : output.entrySet()) {
       String outputName = entrySource.getKey();
-      Set<QueueSpecification> outputSchema = entrySource.getValue();
+      Set<Schema> outputSchema = entrySource.getValue();
 
       // Check if input connection has same as output connection.
       if(! input.containsKey(outputName)) {
@@ -156,15 +155,15 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    * @return true if they matched; false otherwise.
    * // Max 1 equal and Min 1 compatible.
    */
-  private boolean VerifyFlowletConnectionSchema(Set<QueueSpecification> output, Set<QueueSpecification> input) {
-    for(QueueSpecification outputQueueSpecification : output) {
+  private boolean VerifyFlowletConnectionSchema(Set<Schema> output, Set<Schema> input) {
+    for(Schema outputSchema : output) {
       int equal = 0;
       int compatible = 0;
-      for(QueueSpecification inputQueueSpecification : input) {
-        if(outputQueueSpecification.equals(inputQueueSpecification)) {
+      for(Schema inputSchema : input) {
+        if(outputSchema.equals(inputSchema)) {
           equal++;
         }
-        if(outputQueueSpecification.getSchema().isCompatible(outputQueueSpecification.getSchema())) {
+        if(outputSchema.isCompatible(inputSchema)) {
           compatible++;
         }
       }

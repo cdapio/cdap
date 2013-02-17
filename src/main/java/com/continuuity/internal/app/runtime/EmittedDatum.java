@@ -33,6 +33,7 @@ public final class EmittedDatum {
     this.header = builder.build();
   }
 
+
   public QueueEnqueue asEnqueue() {
     return new QueueEnqueue(queueProducer,
                             queueName.toASCIIString().getBytes(Charsets.US_ASCII),

@@ -9,7 +9,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class ApplicationVerificationTest {
   @Test
   public void testGoodApplication() throws Exception {
     ApplicationSpecification appSpec = new WebCrawlApp().configure();
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
     VerifyResult result = app.verify(newSpec);
@@ -51,7 +51,7 @@ public class ApplicationVerificationTest {
   @Test
   public void testApplicationWithBadId() throws Exception {
     ApplicationSpecification appSpec = new ApplicationWithBadId().configure();
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
     VerifyResult result = app.verify(newSpec);

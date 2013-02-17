@@ -7,13 +7,12 @@ package com.continuuity.internal.app;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.QueueSpecification;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.io.Schema;
+import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.io.QueueSpecificationGeneratorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -34,19 +33,18 @@ import java.io.Writer;
 @NotThreadSafe
 public final class ApplicationSpecificationAdapter {
 
-  private final QueueSpecificationGeneratorFactory generatorFactory;
+  private final SchemaGenerator schemaGenerator;
   private final Gson gson;
 
-  public static ApplicationSpecificationAdapter create(QueueSpecificationGeneratorFactory generatorFactory) {
+  public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
     Gson gson = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
       .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
       .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
       .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
-      .registerTypeAdapter(QueueSpecification.class, new QueueSpecificationCodec())
       .create();
-    return new ApplicationSpecificationAdapter(generatorFactory, gson);
+    return new ApplicationSpecificationAdapter(generator, gson);
   }
 
   public static ApplicationSpecificationAdapter create() {
@@ -64,11 +62,11 @@ public final class ApplicationSpecificationAdapter {
   }
 
   public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
-    Preconditions.checkState(generatorFactory != null, "No queue generator factory is configured. Fail to serialize to json");
+    Preconditions.checkState(schemaGenerator != null, "No schema generator is configured. Fail to serialize to json");
     try {
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
-          flowletDef.generateQueue(generatorFactory.create(flowSpec, flowletDef));
+          flowletDef.generateSchema(schemaGenerator);
         }
       }
       gson.toJson(appSpec, appendable);
@@ -109,8 +107,8 @@ public final class ApplicationSpecificationAdapter {
     }
   }
 
-  private ApplicationSpecificationAdapter(QueueSpecificationGeneratorFactory generatorFactory, Gson gson) {
-    this.generatorFactory = generatorFactory;
+  private ApplicationSpecificationAdapter(SchemaGenerator schemaGenerator, Gson gson) {
+    this.schemaGenerator = schemaGenerator;
     this.gson = gson;
   }
 }
