@@ -1,24 +1,13 @@
 package com.continuuity.data.operation.executor.omid;
 
-<<<<<<< HEAD
-import com.continuuity.data.operation.executor.Transaction;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.operation.executor.ReadPointer;
-=======
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.runtime.DataFabricModules;
->>>>>>> master
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
-
-<<<<<<< HEAD
-import java.util.Arrays;
-=======
->>>>>>> master
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -34,15 +23,11 @@ public class TestMemoryOracle {
   private static TransactionOracle newOracle() {
     return injector.getInstance(TransactionOracle.class);
   }
-
-<<<<<<< HEAD
-=======
   static final byte[] a = { 'a' };
   static final byte[] b = { 'b' };
   static final byte[] c = { 'c' };
   static final byte[][] columns = { { 'x' } };
 
->>>>>>> master
   // test that txids are increasing
   // test that new transaction includes itself for read
   // test that new transaction excludes in-progress transaction
@@ -108,13 +93,6 @@ public class TestMemoryOracle {
   @Test
   public void testWriteConflict() throws OmidTransactionException {
     final String table = "t";
-<<<<<<< HEAD
-    final byte[] a = { 'a' };
-    final byte[] b = { 'b' };
-    final byte[] c = { 'c' };
-    final byte[][] columns = { { 'x' } };
-=======
->>>>>>> master
 
     TransactionOracle oracle = newOracle();
 
@@ -148,13 +126,8 @@ public class TestMemoryOracle {
     Assert.assertFalse(txres1.isSuccess());
     List<Undo> undos1 = txres1.getUndos();
     Assert.assertEquals(2, undos1.size());
-<<<<<<< HEAD
-    assertUndo(undos1, a);
-    assertUndo(undos1, b);
-=======
     assertUndo(undos1, new RowSet.Row(table, a));
     assertUndo(undos1, new RowSet.Row(table, b));
->>>>>>> master
 
     // now tx3 commits. It has a conflict with tx1 on b, but tx1 failed -> success
     Assert.assertTrue(oracle.commitTransaction(txid3).isSuccess());
@@ -164,16 +137,6 @@ public class TestMemoryOracle {
     Assert.assertFalse(txres4.isSuccess());
     List<Undo> undos4 = txres4.getUndos();
     Assert.assertEquals(1, undos4.size());
-<<<<<<< HEAD
-    assertUndo(undos4, c);
-  }
-
-  private static void assertUndo(List<Undo> undos, byte[] key) {
-    for (Undo u : undos) {
-      if (Arrays.equals(u.getRowKey(), key)) return;
-    }
-    Assert.fail("Key " + Arrays.toString(key) + " is not in list of undos");
-=======
     assertUndo(undos4, new RowSet.Row(table, c));
   }
 
@@ -184,7 +147,6 @@ public class TestMemoryOracle {
       }
     }
     Assert.fail("Key " + key.toString() + " is not in list of undos");
->>>>>>> master
   }
 
   private static final List<Undo> noUndos = Lists.newArrayList();
@@ -301,8 +263,6 @@ public class TestMemoryOracle {
     oracle.removeTransaction(txid);
   }
 
-<<<<<<< HEAD
-=======
   // test that conflict detection can distinguish table names
   @Test
   public void testConflictDetectionAcrossTables() throws OmidTransactionException {
@@ -326,5 +286,4 @@ public class TestMemoryOracle {
     Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
     Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
   }
->>>>>>> master
 }
