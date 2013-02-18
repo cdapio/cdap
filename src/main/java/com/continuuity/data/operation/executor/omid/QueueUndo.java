@@ -85,9 +85,8 @@ public abstract class QueueUndo implements Undo {
     }
 
     @Override
-    public void execute(TTQueueTable queueTable,
-        Transaction transaction) throws OperationException {
-      queueTable.unack(queueName, entryPointer, consumer);
+    public void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException {
+      queueTable.unack(queueName, entryPointer, consumer, transaction.getReadPointer());
     }
   }
 }
