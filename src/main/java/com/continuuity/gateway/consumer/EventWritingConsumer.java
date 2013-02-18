@@ -82,7 +82,7 @@ public class EventWritingConsumer extends Consumer {
   protected void single(Event event) throws Exception {
     try {
       QueueEnqueue enqueue = constructOperation(event);
-      this.executor.execute(OperationContext.DEFAULT, enqueue);
+      this.executor.commit(OperationContext.DEFAULT, enqueue);
     } catch (Exception e) {
       Exception e1 = new Exception(
           "Failed to enqueue event(s): " + e.getMessage(), e);
@@ -98,7 +98,7 @@ public class EventWritingConsumer extends Consumer {
       operations.add(constructOperation(event));
     }
     try {
-      this.executor.execute(OperationContext.DEFAULT, operations);
+      this.executor.commit(OperationContext.DEFAULT, operations);
     } catch (Exception e) {
       Exception e1 = new Exception(
           "Failed to enqueue event(s): " + e.getMessage(), e);

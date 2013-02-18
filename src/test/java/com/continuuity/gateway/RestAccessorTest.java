@@ -557,7 +557,7 @@ public class RestAccessorTest {
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
         QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
-    this.collector.getExecutor().execute(context, ack);
+    this.collector.getExecutor().commit(context, ack);
   }
 
   void sendAndVerify(String baseUrl, String stream, int n) throws Exception {
@@ -569,7 +569,7 @@ public class RestAccessorTest {
     Tuple tuple = new TupleBuilder().set("number", n).create();
     byte[] bytes = new TupleSerializer(false).serialize(tuple);
     QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), bytes);
-    this.executor.execute(context, enqueue);
+    this.executor.commit(context, enqueue);
   }
 
   void verifyTuple(String queueUri, int n) throws Exception {

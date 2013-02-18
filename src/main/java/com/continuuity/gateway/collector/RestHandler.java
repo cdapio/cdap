@@ -415,7 +415,7 @@ public class RestHandler extends NettyRestHandler {
               queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
           try {
             this.collector.getExecutor().
-                execute(OperationContext.DEFAULT, ack);
+              commit(OperationContext.DEFAULT, ack);
           } catch (Exception e) {
             LOG.error("Ack failed to for queue " + queueURI + ", consumer "
                 + queueConsumer + " and pointer " + result.getEntryPointer() +

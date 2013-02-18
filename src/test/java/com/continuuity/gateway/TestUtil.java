@@ -363,7 +363,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      executor.execute(context, operations);
+      executor.commit(context, operations);
     }
   }
 
@@ -408,7 +408,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      executor.execute(context, operations);
+      executor.commit(context, operations);
     }
   }
 
@@ -430,7 +430,7 @@ public class TestUtil {
     Write write = new Write(table, key, Operation.KV_COL, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
-    executor.execute(context, operations);
+    executor.commit(context, operations);
 
     // make a get URL
     String getUrl = baseUri + (table == null ? "default" : table) + "/" +
