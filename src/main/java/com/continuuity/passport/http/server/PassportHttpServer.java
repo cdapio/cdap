@@ -58,8 +58,8 @@ public class PassportHttpServer  {
 
     //TODO: Move this configurations to a central place
     config.put("jdbcType","mysql");
-    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-   // config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+   // config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
 
     Realm realm = new JDBCAuthrozingRealm(config);
 

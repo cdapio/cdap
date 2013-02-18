@@ -116,7 +116,7 @@ public class AccountHandler {
     }
   }
 
-  @Path ("{id}/update")
+  @Path ("{id}")
   @PUT
   @Produces("application/json")
   @Consumes("application/json")

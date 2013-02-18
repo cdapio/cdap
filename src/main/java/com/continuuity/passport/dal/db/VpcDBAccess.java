@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  *
  */
-public class VpcDBAccess implements VpcDAO {
+public class VpcDBAccess extends  DBAccess implements VpcDAO {
 
   private Map<String, String> configuration;
 
@@ -28,20 +28,23 @@ public class VpcDBAccess implements VpcDAO {
 
   @Override
   public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet result = null;
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection= this.poolManager.getConnection();
+      connection= this.poolManager.getConnection();
 
       String SQL = String.format( "INSERT INTO %s (%s, %s, %s, %s) VALUES (?,?,?,?)",
-                                  DBUtils.VPC.TABLE_NAME,
-                                  DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN ,
-                                  DBUtils.VPC.LABEL_COLUMN,
-                                  DBUtils.VPC.VPC_CREATED_AT);
+        DBUtils.VPC.TABLE_NAME,
+        DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN ,
+        DBUtils.VPC.LABEL_COLUMN,
+        DBUtils.VPC.VPC_CREATED_AT);
 
       Date date = new Date();
-      PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
       ps.setString(3,vpc.getVpcLabel());
@@ -49,7 +52,7 @@ public class VpcDBAccess implements VpcDAO {
 
       ps.executeUpdate();
 
-      ResultSet result = ps.getGeneratedKeys();
+      result = ps.getGeneratedKeys();
       if (result == null) {
         throw new RuntimeException("Failed Insert");
       }
@@ -59,20 +62,26 @@ public class VpcDBAccess implements VpcDAO {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     }
+    finally {
+      close(connection, ps,result);
+    }
   }
 
   @Override
   public boolean removeVPC( int vpcId) throws ConfigurationException, RuntimeException {
+
+    Connection connection = null;
+    PreparedStatement ps = null;
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection= this.poolManager.getConnection();
+      connection= this.poolManager.getConnection();
 
       String SQL = String.format( "DELETE FROM %s WHERE %s = ?",
-                                  DBUtils.VPC.TABLE_NAME,
-                                  DBUtils.VPC.VPC_ID_COLUMN);
-      PreparedStatement ps = connection.prepareStatement(SQL);
+        DBUtils.VPC.TABLE_NAME,
+        DBUtils.VPC.VPC_ID_COLUMN);
+      ps = connection.prepareStatement(SQL);
 
       ps.setInt(1,vpcId);
       ps.executeUpdate();
@@ -81,27 +90,32 @@ public class VpcDBAccess implements VpcDAO {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     }
+    finally {
+      close(connection, ps);
+    }
     return true;
   }
 
   @Override
   public boolean addRoles(int accountId, int vpcId, int userId, Role role, String overrides)
-           throws ConfigurationException, RuntimeException {
+    throws ConfigurationException, RuntimeException {
 
+    Connection connection = null;
+    PreparedStatement ps = null;
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection= this.poolManager.getConnection();
+      connection= this.poolManager.getConnection();
 
 
       String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)",
-                                  DBUtils.VPCRole.TABLE_NAME,
-                                  DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
-                                  DBUtils.VPCRole.USER_ID_COLUMN, DBUtils.VPCRole.ROLE_TYPE_COLUMN,
-                                  DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
+        DBUtils.VPCRole.TABLE_NAME,
+        DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+        DBUtils.VPCRole.USER_ID_COLUMN, DBUtils.VPCRole.ROLE_TYPE_COLUMN,
+        DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
 
-      PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, vpcId);
       ps.setInt(2, accountId);
       ps.setInt(3, userId);
@@ -113,6 +127,9 @@ public class VpcDBAccess implements VpcDAO {
     catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    finally {
+      close(connection, ps);
     }
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -138,20 +155,23 @@ public class VpcDBAccess implements VpcDAO {
   public List<VPC> getVPC(int accountId) throws RuntimeException, ConfigurationException {
 
     List<VPC> vpcList = new ArrayList<VPC>();
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection = this.poolManager.getConnection();
+      connection = this.poolManager.getConnection();
       String SQL = String.format( "SELECT %s, %s, %s FROM %s WHERE %s = ?",
-                                  DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
-                                  DBUtils.VPC.LABEL_COLUMN, //COLUMNS
-                                  DBUtils.VPC.TABLE_NAME, //FROM
-                                  DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
+        DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
+        DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.TABLE_NAME, //FROM
+        DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
 
-      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(SQL);
       ps.setInt(1,accountId);
-      ResultSet rs = ps.executeQuery();
+      rs = ps.executeQuery();
 
 
       while(rs.next()) {
@@ -164,32 +184,37 @@ public class VpcDBAccess implements VpcDAO {
     catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    finally {
+      close(connection, ps,rs);
     }
     return vpcList;
   }
 
   @Override
   public List<VPC> getVPC(String apiKey) throws RuntimeException, ConfigurationException {
-
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     List<VPC> vpcList = new ArrayList<VPC>();
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection = this.poolManager.getConnection();
+      connection = this.poolManager.getConnection();
       String SQL = String.format( "SELECT %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
-                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
-                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN, //COLUMNS
-                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.LABEL_COLUMN, //COLUMNS
-                                  DBUtils.VPC.TABLE_NAME, //FROM
-                                  DBUtils.AccountTable.TABLE_NAME, //JOIN
-                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //CONDITION
-                                  DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.ID_COLUMN,
-                                  DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.API_KEY_COLUMN);
+        DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
+        DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN, //COLUMNS
+        DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.TABLE_NAME, //FROM
+        DBUtils.AccountTable.TABLE_NAME, //JOIN
+        DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //CONDITION
+        DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.ID_COLUMN,
+        DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.API_KEY_COLUMN);
 
-      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(SQL);
       ps.setString(1,apiKey);
-      ResultSet rs = ps.executeQuery();
+      rs = ps.executeQuery();
 
       while(rs.next()) {
         VPC vpc = new VPC(rs.getInt(1),rs.getString(2),rs.getString(3));
@@ -201,6 +226,9 @@ public class VpcDBAccess implements VpcDAO {
     catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    finally {
+      close(connection, ps,rs);
     }
     return vpcList;
   }

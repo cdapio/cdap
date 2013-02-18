@@ -2,6 +2,7 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.Component;
@@ -10,8 +11,10 @@ import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
+import com.continuuity.passport.dal.NonceDAO;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.dal.db.AccountDBAccess;
+import com.continuuity.passport.dal.db.NonceDBAccess;
 import com.continuuity.passport.dal.db.VpcDBAccess;
 
 import java.util.HashMap;
@@ -30,17 +33,21 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   private VpcDAO vpcDao = null;
 
+  private NonceDAO nonceDAO = null;
+
 
   private DataManagementServiceImpl() {
     accountDAO = new AccountDBAccess();
     Map<String,String> config = new HashMap<String,String>();
     config.put("jdbcType","mysql");
-    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    //config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
+    //config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
     accountDAO.configure(config);
 
     vpcDao = new VpcDBAccess();
     vpcDao.configure(config);
+
+    nonceDAO = new NonceDBAccess(config);
   }
 
   /**
@@ -228,11 +235,36 @@ public class DataManagementServiceImpl implements DataManagementService {
       throw new RuntimeException("Could not init data access Object");
     }
     try {
-      accountDAO.changePassword(accountId, oldPassword,newPassword);
+      accountDAO.changePassword(accountId, oldPassword, newPassword);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
 
+  }
+
+  @Override
+  public int getNonce(int id) throws RuntimeException {
+    if (nonceDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      return nonceDAO.getNonce(id);
+    }catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+
+  }
+
+  @Override
+  public int getId(int nonce) throws RuntimeException {
+    if (nonceDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      return nonceDAO.getId(nonce);
+    }catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
   }
 
   public VPC addVPC(int accountId, VPC vpc) throws RuntimeException {

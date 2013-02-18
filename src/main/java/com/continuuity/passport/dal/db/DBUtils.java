@@ -58,5 +58,12 @@ public class DBUtils {
     public static final String ROLE_OVERRIDES_COLUMN = "role_overrides";
   }
 
+  public static class Nonce {
+    public static final String TABLE_NAME ="nonce";
+    public static final String NONCE_ID_COLUMN = "nonce_id";
+    public static final String ID_COLUMN = "id";
+    public static final String NONCE_EXPIRES_AT_COLUMN = "nonce_expires_at";
+
+  }
 
 }

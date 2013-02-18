@@ -49,4 +49,14 @@ public class Utils {
   public static String getAuthenticatedJson( String error, String result) {
     return String.format( "{\"error\": \"%s\", \"result\": %s }",error, result);
   }
+
+  public static String getNonceJson( int result) {
+    return String.format( "{\"error\": null, \"result\": %d }",result);
+  }
+
+  public static String getNonceJson( String error, int result) {
+    return String.format( "{\"error\": \"%s\", \"result\": %d }",error, result);
+  }
+
+
 }

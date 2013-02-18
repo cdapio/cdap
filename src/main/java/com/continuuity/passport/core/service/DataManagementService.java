@@ -2,6 +2,7 @@ package com.continuuity.passport.core.service;
 
 
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.Component;
@@ -108,5 +109,10 @@ public interface DataManagementService {
   public void updateAccount(int accountId, Map<String,Object> params) throws RuntimeException;
 
   public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
+
+  public int getNonce(int id)  throws RuntimeException, StaleNonceException;
+
+  public int getId(int nonce)  throws RuntimeException, StaleNonceException;
+
 
 }
