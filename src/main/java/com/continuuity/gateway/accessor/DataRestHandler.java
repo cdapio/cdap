@@ -373,7 +373,7 @@ public class DataRestHandler extends NettyRestHandler {
           try {
             Delete delete = new Delete(table, keyBinary, Operation.KV_COL);
             this.accessor.getExecutor().
-                execute(OperationContext.DEFAULT, delete);
+              commit(OperationContext.DEFAULT, delete);
             // deleted successfully
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
@@ -402,7 +402,7 @@ public class DataRestHandler extends NettyRestHandler {
           Write write = new Write(table, keyBinary, Operation.KV_COL, bytes);
           try {
             this.accessor.getExecutor().
-                execute(OperationContext.DEFAULT, write);
+              commit(OperationContext.DEFAULT, write);
             // written successfully
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
