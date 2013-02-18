@@ -3,10 +3,12 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.util.ConverterTool;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -1223,6 +1225,146 @@ public abstract class TestTTQueue {
     // And dequeuedEntries should be >= n
     assertTrue("Expected dequeued >= n (dequeued=" + dequeueReturns.get() +
         ") (n=" + n + ")", n <= dequeueReturns.get());
+  }
+
+  @Test
+  public void testOneConsumer() throws Exception {
+    TTQueue queue = createQueue();
+    long version = timeOracle.getTimestamp();
+    ReadPointer readPointer = getCleanPointer(version);
+    AtomicLong dequeueReturns = null;
+    if (queue instanceof TTQueueOnVCTable) {
+      dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueOnHBaseNative) {
+      dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueNewOnVCTable) {
+      dequeueReturns = ((TTQueueNewOnVCTable)queue).dequeueReturns;
+    }
+
+    assertNotNull(dequeueReturns);
+
+    // values are longs
+    byte [] value = Bytes.toBytes(7L);
+
+    QueueConsumer consumer = new QueueConsumer(0,0,1, "user", new QueueConfig(PartitionerType.HASH_ON_VALUE, true));
+    QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, readPointer);
+    dequeuer.start();
+    assertTrue(dequeuer.triggerdequeue());
+
+    // No queue dequeue returns yet
+    long expectedQueuedequeues = 0;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    assertNull(dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
+    // no dequeues yet
+    long numdequeues = 0L;
+    assertEquals(numdequeues, dequeuer.dequeues.get());
+
+    @SuppressWarnings("unused")
+    long numEnqueues = 0;
+    // enqueue the first four values
+    Map<String, String> headerMap = Maps.newHashMap();
+    headerMap.put("user","0");
+
+
+    assertTrue(queue.enqueue(value, ConverterTool.toBytes(headerMap), version).isSuccess());
+    numEnqueues++;
+
+
+    // wait for n^2 more queuedequeue() returns
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // every dequeuer/consumer should have one result
+    numdequeues++;
+
+    waitForAndAssertCount(numdequeues, dequeuer.dequeues);
+    DequeueResult result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
+    assertNotNull(result);
+    assertEquals(1, Bytes.toLong(result.getValue()));
+
+    // trigger dequeues again, should get the same entries
+    numdequeues++;
+    assertTrue(dequeuer.triggerdequeue());
+    waitForAndAssertCount(numdequeues, dequeuer.dequeues);
+
+    // wait for 16 more queuedequeue() returns
+//    expectedQueuedequeues += (n*n);
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // every dequeuer/consumer should have one result
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
+    assertNotNull(result);
+    assertEquals(1, Bytes.toLong(result.getValue()));
+
+    // directly dequeueping should also yield the same result
+
+    result = queue.dequeue(consumer, readPointer);
+    assertNotNull(result);
+    assertTrue(result.isSuccess());
+    assertEquals(1, Bytes.toLong(result.getValue()));
+
+    // wait for 16 more queuedequeue() returns
+    expectedQueuedequeues += 1;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // ack it for groups(0,1) consumers(2,3)
+    result = queue.dequeue(consumer, readPointer);
+    assertNotNull(result);
+    assertEquals(1, Bytes.toLong(result.getValue()));
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
+    queue.finalize(result.getEntryPointer(), consumer, -1);
+    System.out.println("ACK: j=" + 1);
+
+
+    // wait for n more queuedequeue() returns
+    expectedQueuedequeues += 1;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // trigger dequeuers
+    numdequeues++;
+    waitForAndAssertCount(numdequeues, dequeuer.dequeueRunLoop);
+    assertTrue(dequeuer.triggerdequeue());
+    waitForAndAssertCount(numdequeues, dequeuer.triggers);
+
+    // wait for (n-1)(n) more queuedequeue() returns
+//    expectedQueuedequeues += (n*(n-1));
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // wait for (n*(n-1)) more queuedequeue() returns
+//    expectedQueuedequeues += (n*(n-1));
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+
+    // enqueue everything!
+    assertTrue(queue.enqueue(value, null, version).isSuccess());
+    numEnqueues++;
+
+    // wait for n^2 more queuedequeue() wake-ups
+//    expectedQueuedequeues += (n*n);
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
+    numdequeues++;
+
+    // dequeue and ack everything.  each consumer should have 4 things!
+
+//    waitForAndAssertCount(localdequeues, dequeuer.dequeues);
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
+    assertNotNull(result);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
+    queue.finalize(result.getEntryPointer(), consumer, -1);
+    dequeuer.triggerdequeue();
+
+    // everyone should be empty
+    assertNull(dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
+
+    dequeuer.shutdown();
+
+
+    // check on the queue meta
+    /* temporarily disable queue meta check during hbase native transition
+    QueueMeta meta = queue.getQueueInfo();
+    assertEquals(numEnqueues, meta.currentWritePointer);
+    assertEquals(numEnqueues, meta.globalHeadPointer);
+    assertEquals(n, meta.groups.length);
+     */
   }
 
   @Test
