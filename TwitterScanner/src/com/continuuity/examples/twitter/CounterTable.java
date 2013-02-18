@@ -4,6 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
@@ -104,7 +105,11 @@ public class CounterTable extends DataSet {
    * @param amount amount to increment counter by
    */
   public void incrementSingleKey(byte [] counter, long amount) {
-    this.counters.stage(generateSingleKeyIncrement(counter, amount));
+    try {
+      this.counters.stage(generateSingleKeyIncrement(counter, amount));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -322,7 +327,11 @@ public class CounterTable extends DataSet {
    * @param amount amount to increment counter by
    */
   public void incrementCounterSet(byte [] counterSet, byte [] counter, long amount) {
-    counters.stage(generateCounterSetIncrement(counterSet, counter, amount));
+    try {
+      counters.stage(generateCounterSetIncrement(counterSet, counter, amount));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -336,7 +345,11 @@ public class CounterTable extends DataSet {
    */
   public void incrementCounterSet(String counterSet,
       String [] counterNames, long [] amounts) {
-    counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+    try {
+      counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -350,7 +363,11 @@ public class CounterTable extends DataSet {
    */
   public void incrementCounterSet(byte [] counterSet,
       byte [][] counterNames, long [] amounts) {
-    counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+    try {
+      counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

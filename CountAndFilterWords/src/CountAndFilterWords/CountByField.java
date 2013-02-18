@@ -1,5 +1,6 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
@@ -7,7 +8,7 @@ import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class CountByField extends ComputeFlowlet
 {
@@ -43,6 +44,10 @@ public class CountByField extends ComputeFlowlet
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Incrementing for " + token);
     }
-    this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes()));
+    try {
+      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes()));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
