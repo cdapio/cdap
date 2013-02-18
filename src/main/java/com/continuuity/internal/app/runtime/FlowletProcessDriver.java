@@ -179,6 +179,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     destroyFlowlet();
   }
 
+  public BasicFlowletContext getFlowletContext() {
+    return flowletContext;
+  }
+
   private void initFlowlet() {
     try {
       flowlet.initialize(flowletContext);

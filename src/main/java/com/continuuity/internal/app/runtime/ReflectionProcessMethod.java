@@ -36,6 +36,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final Method method;
   private final SchemaCache schemaCache;
   private final TransactionAgentSupplier txAgentSupplier;
+  private final OutputSubmitter outputSubmitter;
   private final boolean needContext;
   private final ReflectionDatumReader<T> datumReader;
   private final ByteBufferInputStream byteBufferInput;
@@ -44,11 +45,13 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   public ReflectionProcessMethod(Flowlet flowlet, Method method,
                                  TypeToken<T> dataType,
                                  Schema schema, SchemaCache schemaCache,
-                                 TransactionAgentSupplier txAgentSupplier) {
+                                 TransactionAgentSupplier txAgentSupplier,
+                                 OutputSubmitter outputSubmitter) {
     this.flowlet = flowlet;
     this.method = method;
     this.schemaCache = schemaCache;
     this.txAgentSupplier = txAgentSupplier;
+    this.outputSubmitter = outputSubmitter;
 
     this.needContext = method.getGenericParameterTypes().length == 2;
     this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
@@ -89,6 +92,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
         } else {
           method.invoke(flowlet, event);
         }
+        outputSubmitter.submit(txAgent);
 
         return getPostProcess(txAgent, input, event, inputContext);
 
