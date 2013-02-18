@@ -15,6 +15,9 @@ public class QueueEntry {
     this(null, data);
   }
 
+  public byte[] getData() {
+    return data;
+  }
   @Override
   public String toString() {
     return Objects.toStringHelper(this)

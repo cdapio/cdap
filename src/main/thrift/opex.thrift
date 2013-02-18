@@ -70,19 +70,21 @@ struct TQueueProducer {
   1: optional string name,
 }
 
+struct TQueueEntry {
+  1: binary data
+  2: binary header
+}
+
 struct TQueueEnqueue {
   1: binary queueName,
-  2: binary value,
-  3: i32 headerVersion,
-  4: binary headers,
-  6: i64 id,
-  7: optional TQueueProducer producer,
+  2: TQueueEntry entry,
+  3: i64 id,
+  4: optional TQueueProducer producer,
 }
 
 enum TQueuePartitioner {
   FIFO,
   HASH,
-  LONGMOD,
   ROBIN,
 }
 
