@@ -74,6 +74,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     final TransactionAgent txAgent = txAgentSupplier.get();
 
     try {
+      txAgent.start();
       ByteBuffer data = input.getData();
       Schema sourceSchema = schemaCache.get(data);
       Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
