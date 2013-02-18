@@ -2,11 +2,11 @@ package com.continuuity.gateway.auth;
 
 import java.util.List;
 
-import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.passport.http.client.PassportClient;
 
 /**
@@ -39,10 +39,9 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   }
 
   @Override
-  public boolean authenticateRequest(AvroFlumeEvent flumeEvent) {
-    CharSequence apiKeyCS = flumeEvent.getHeaders().get(CONTINUUITY_API_KEY);
-    if (apiKeyCS == null || apiKeyCS.length() == 0) return false;
-    String apiKey = apiKeyCS.toString();
+  public boolean authenticateRequest(Event event) {
+    String apiKey = event.getHeader(CONTINUUITY_API_KEY);
+    if (apiKey == null) return false;
     return authenticate(apiKey);
   }
 

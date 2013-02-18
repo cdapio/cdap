@@ -138,7 +138,16 @@ public class GatewayFlumeCollectorAuthTest {
     Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
     TestUtil.consumeQueueAsTuples(this.executor, destination, name,
         eventsToSend);
+
+    // Sending events without auth sould fail
     TestUtil.disableAuth();
+    try {
+      TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+      Assert.assertTrue("Unauthenticated flume request worked but should fail",
+          false);
+    } catch (Exception e) {
+      // Expected
+    }
 
     // Stop the Gateway
     theGateway.stop(false);
@@ -178,16 +187,8 @@ public class GatewayFlumeCollectorAuthTest {
     Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
     TestUtil.consumeQueueAsEvents(this.executor, destination, name,
                                   eventsToSend);
-    
-    // Sending events without auth sould fail
+
     TestUtil.disableAuth();
-    try {
-      TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-      Assert.assertTrue("Unauthenticated flume request worked but should fail",
-          false);
-    } catch (Exception e) {
-      // Expected
-    }
 
     // Stop the Gateway
     theGateway.stop(false);

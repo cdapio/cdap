@@ -80,15 +80,15 @@ class FlumeAdapter implements AvroSourceProtocol {
     MetricsHelper helper = new MetricsHelper(this.getClass(),
         this.metrics, this.collector.getMetricsQualifier(), "append");
     LOG.trace("Received event: " + event);
-    // perform authentication of request
-    if (!collector.getAuthenticator().authenticateRequest(event)) {
-      LOG.debug("Received an unauthorized request");
-      helper.finish(Error);
-      return Status.FAILED;
-    }
     try {
-      this.collector.getConsumer().consumeEvent(
-          convertFlume2Event(event, helper));
+      Event convertedEvent = convertFlume2Event(event, helper);
+      // perform authentication of request
+      if (!collector.getAuthenticator().authenticateRequest(convertedEvent)) {
+        LOG.debug("Received an unauthorized request");
+        helper.finish(Error);
+        return Status.FAILED;
+      }
+      this.collector.getConsumer().consumeEvent(convertedEvent);
       helper.finish(MetricsHelper.Status.Success);
       return Status.OK;
     } catch (Exception e) {
@@ -104,15 +104,16 @@ class FlumeAdapter implements AvroSourceProtocol {
     MetricsHelper helper = new MetricsHelper(this.getClass(),
         this.metrics, this.collector.getMetricsQualifier(), "batch");
     LOG.trace("Received batch: " + events);
-    // perform authentication of request
-    if (!collector.getAuthenticator().authenticateRequest(events.get(0))) {
-      LOG.warn("Received an unauthorized request");
-      helper.finish(Error);
-      return Status.FAILED;
-    }
     try {
-      this.collector.getConsumer().consumeEvents(
-          convertFlume2Event(events, helper));
+      List<Event> convertedEvents = convertFlume2Event(events, helper);
+      // perform authentication of request
+      if (!collector.getAuthenticator().authenticateRequest(
+          convertedEvents.get(0))) {
+        LOG.warn("Received an unauthorized request");
+        helper.finish(Error);
+        return Status.FAILED;
+      }
+      this.collector.getConsumer().consumeEvents(convertedEvents);
       helper.finish(Success);
       return Status.OK;
     } catch (Exception e) {

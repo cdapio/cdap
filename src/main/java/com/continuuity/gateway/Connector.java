@@ -132,7 +132,7 @@ public abstract class Connector {
    * Sets the authenticator to be used for all requests to this connector.
    * @param authenticator the authenticator to use for requests
    */
-  void setAuthenticator(GatewayAuthenticator authenticator) {
+  public void setAuthenticator(GatewayAuthenticator authenticator) {
     this.authenticator = authenticator;
   }
 
