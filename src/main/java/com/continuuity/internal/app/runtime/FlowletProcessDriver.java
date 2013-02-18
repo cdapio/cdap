@@ -8,6 +8,7 @@ import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -15,12 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.PriorityQueue;
+import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -107,6 +109,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   public void resume() {
     CountDownLatch latch = suspension.getAndSet(null);
     if (latch != null) {
+      suspendBarrier.reset();
       latch.countDown();
     }
   }
@@ -116,7 +119,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     initFlowlet();
 
     // Insert all into priority queue, ordered by next deque time.
-    PriorityQueue<ProcessEntry> processQueue = new PriorityQueue<ProcessEntry>(processSpecs.size());
+    PriorityBlockingQueue<ProcessEntry> processQueue = new PriorityBlockingQueue<ProcessEntry>(processSpecs.size());
     for (ProcessSpecification spec : processSpecs) {
       processQueue.offer(new ProcessEntry(spec));
     }
@@ -145,7 +148,6 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           continue;
         }
       }
-      entry.nextDeque = 0;
 
       try {
         InputDatum input = entry.processSpec.getQueueReader().dequeue();
@@ -153,6 +155,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           entry.backOff();
           continue;
         }
+        entry.nextDeque = 0;
 
         try {
           // Call the process method and commit the transaction
@@ -164,11 +167,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         }
       } catch (OperationException e) {
         LOGGER.error("Queue operation failure", e);
-        // TODO: Should it be keep retrying? Currently it does.
       } finally {
         // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
         if (!entry.isRetry()) {
-          processQueue.offer(entry);
+          entry.enqueue(processQueue);
         }
       }
     }
@@ -194,7 +196,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private PostProcess.Callback processMethodCallback(final PriorityQueue<ProcessEntry> processQueue,
+  private PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry> processQueue,
                                                      final ProcessEntry processEntry,
                                                      final InputDatum input) {
     return new PostProcess.Callback() {
@@ -231,7 +233,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
                                        processEntry.processSpec.getProcessMethod()),
               true);
 
-          processQueue.offer(retryEntry);
+          retryEntry.enqueue(processQueue);
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
@@ -248,6 +250,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     private final ProcessSpecification processSpec;
     private final boolean retry;
     private long nextDeque;
+    private int iteration;
     private long currentBackOff = BACKOFF_MIN;
 
     private ProcessEntry(ProcessSpecification processSpec) {
@@ -263,12 +266,32 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       return retry;
     }
 
+    public void enqueue(PriorityBlockingQueue<ProcessEntry> queue) {
+      if (!retry) {
+        iteration++;
+        if (iteration == Integer.MAX_VALUE) {
+          iteration = 0;
+          // Drain items from the queue, modify the iteration and put them back
+          List<ProcessEntry> entries = Lists.newLinkedList();
+          queue.drainTo(entries);
+          for (ProcessEntry entry : entries) {
+            entry.iteration = 0;
+            queue.offer(entry);
+          }
+        }
+      }
+      queue.offer(this);
+    }
+
     @Override
     public int compareTo(ProcessEntry o) {
-      if (nextDeque == o.nextDeque) {
-        return 0;
+      if (iteration == o.iteration) {
+        if (nextDeque == o.nextDeque) {
+          return 0;
+        }
+        return nextDeque > o.nextDeque ? 1 : -1;
       }
-      return nextDeque > o.nextDeque ? 1 : -1;
+      return iteration - o.iteration;
     }
 
     public void backOff() {
