@@ -34,15 +34,17 @@ public class VpcDBAccess implements VpcDAO {
     try {
       Connection connection= this.poolManager.getConnection();
 
-      String SQL = String.format( "INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
+      String SQL = String.format( "INSERT INTO %s (%s, %s, %s, %s) VALUES (?,?,?,?)",
                                   DBUtils.VPC.TABLE_NAME,
                                   DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN ,
+                                  DBUtils.VPC.LABEL_COLUMN,
                                   DBUtils.VPC.VPC_CREATED_AT);
 
       Date date = new Date();
       PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
+      ps.setString(3,vpc.getVpcLabel());
       ps.setTimestamp(3, new java.sql.Timestamp(date.getTime()));
 
       ps.executeUpdate();
@@ -52,7 +54,7 @@ public class VpcDBAccess implements VpcDAO {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
-      return new VPC(result.getInt(1),vpc.getVpcName());
+      return new VPC(result.getInt(1),vpc.getVpcName(), vpc.getVpcLabel());
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
@@ -141,8 +143,9 @@ public class VpcDBAccess implements VpcDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      String SQL = String.format( "SELECT %s, %s FROM %s WHERE %s = ?",
-                                  DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN, //COLUMNS
+      String SQL = String.format( "SELECT %s, %s, %s FROM %s WHERE %s = ?",
+                                  DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
+                                  DBUtils.VPC.LABEL_COLUMN, //COLUMNS
                                   DBUtils.VPC.TABLE_NAME, //FROM
                                   DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
 
@@ -152,7 +155,7 @@ public class VpcDBAccess implements VpcDAO {
 
 
       while(rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1),rs.getString(2));
+        VPC vpc = new VPC(rs.getInt(1),rs.getString(2),rs.getString(3));
         vpcList.add(vpc);
 
       }
@@ -174,9 +177,10 @@ public class VpcDBAccess implements VpcDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      String SQL = String.format( "SELECT %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String SQL = String.format( "SELECT %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
                                   DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
                                   DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN, //COLUMNS
+                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.LABEL_COLUMN, //COLUMNS
                                   DBUtils.VPC.TABLE_NAME, //FROM
                                   DBUtils.AccountTable.TABLE_NAME, //JOIN
                                   DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //CONDITION
@@ -188,7 +192,7 @@ public class VpcDBAccess implements VpcDAO {
       ResultSet rs = ps.executeQuery();
 
       while(rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1),rs.getString(2));
+        VPC vpc = new VPC(rs.getInt(1),rs.getString(2),rs.getString(3));
         vpcList.add(vpc);
 
       }

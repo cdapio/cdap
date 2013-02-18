@@ -107,5 +107,6 @@ public interface DataManagementService {
    */
   public void updateAccount(int accountId, Map<String,Object> params) throws RuntimeException;
 
+  public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
 
 }

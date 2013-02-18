@@ -13,19 +13,23 @@ public class VPC {
 
   private final String vpcName;
 
+  private final String vpcLabel;
 
-  public VPC(String vpcName) {
-    this(-1,vpcName);
+  public VPC(String vpcName, String vpcLabel) {
+    this(-1,vpcName, vpcLabel);
   }
-  public VPC(int vpcId, String vpcName) {
+  public VPC(int vpcId, String vpcName, String vpcLabel) {
     this.vpcId = vpcId;
     this.vpcName = vpcName;
-
-
+    this.vpcLabel = vpcLabel;
   }
 
   public int getVpcId() {
     return vpcId;
+  }
+
+  public String getVpcLabel() {
+    return vpcLabel;
   }
 
   public String getVpcName() {

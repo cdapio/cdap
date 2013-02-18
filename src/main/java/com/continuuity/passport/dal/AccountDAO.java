@@ -70,4 +70,5 @@ public interface AccountDAO {
   public void updateAccount(int accountId, Map<String,Object> keyValueParams)
     throws ConfigurationException, RuntimeException;
 
+  public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
 }

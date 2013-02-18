@@ -48,17 +48,66 @@ public class AccountHandler {
 
 
 
-  @Path("{id}/confirmDownload")
+  @Path("{id}/password")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response changePassword(@PathParam("id") int id, String data){
+
+    try {
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
+
+      String oldPassword = jsonObject.get("old_password") == null? null : jsonObject.get("old_password").getAsString();
+      String newPassword = jsonObject.get("new_password") == null? null : jsonObject.get("new_password").getAsString();
+
+      if ( (oldPassword == null ) || (oldPassword.isEmpty()) ||
+        (newPassword == null) || (newPassword.isEmpty()) ) {
+        return Response.status(Response.Status.BAD_REQUEST)
+          .entity(Utils.getJson("FAILED", "Must pass in old_password and new_password"))
+          .build();
+     }
+
+      DataManagementServiceImpl.getInstance().changePassword(id,oldPassword,newPassword);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      if ( account !=null) {
+        return Response.ok(account.toString()).build();
+      }
+      else {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
+    }
+    catch (Exception e){
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED","Download confirmation failed",e))
+        .build();
+    }
+  }
+
+  @Path("{id}/downloaded")
   @PUT
   @Produces("application/json")
   public Response confirmDownload(@PathParam("id") int id){
 
     try {
-      DataManagementServiceImpl.getInstance().confirmDownload(id);
-      return Response.ok()
-        .entity(Utils.getJson("OK", "Download confirmed"))
-        .build();
 
+      DataManagementServiceImpl.getInstance().confirmDownload(id);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      if ( account !=null) {
+        return Response.ok(account.toString()).build();
+      }
+      else {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
     }
     catch (Exception e){
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -98,9 +147,17 @@ public class AccountHandler {
       }
 
       DataManagementServiceImpl.getInstance().updateAccount(id,updateParams);
-      return Response.ok()
-        .entity(Utils.getJson("OK", "Account Updated"))
-        .build();
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      if ( account !=null) {
+        return Response.ok(account.toString()).build();
+      }
+      else {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
     }
     catch(Exception e) {
       return Response.status(Response.Status.BAD_REQUEST)
@@ -130,7 +187,7 @@ public class AccountHandler {
       }
       else {
         Account account = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
-                                                                                         lastName,company,emailId));
+          lastName,company,emailId));
         return Response.ok(account.toString()).build();
       }
     }
@@ -141,7 +198,7 @@ public class AccountHandler {
     }
   }
 
-  @Path("{id}/confirm")
+  @Path("{id}/confirmed")
   @PUT
   @Produces("application/json")
   @Consumes("application/json")
@@ -150,11 +207,8 @@ public class AccountHandler {
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
-
       JsonElement password = jsonObject.get("password");
-
       String accountPassword = StringUtils.EMPTY_STRING;
-
 
       if(password !=null){
         accountPassword = password.getAsString();
@@ -165,10 +219,19 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED","Password is missing")).build();
       }
       else {
-
         AccountSecurity security = new AccountSecurity(id, accountPassword);
         DataManagementServiceImpl.getInstance().confirmRegistration(security);
-        return Response.ok(Utils.getJson("OK","Account confirmed")).build();
+        //Contract for the api is to return updated account to avoid a second call from the caller to get the
+        // updated account
+        Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+        if ( account !=null) {
+          return Response.ok(account.toString()).build();
+        }
+        else {
+          return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+            .build();
+        }
       }
     }
     catch (Exception e){
@@ -190,16 +253,11 @@ public class AccountHandler {
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
-      JsonElement name = jsonObject.get("vpc_name");
+      String vpcName  = jsonObject.get("vpc_name") == null ? null : jsonObject.get("vpc_name").getAsString();
+      String vpcLabel = jsonObject.get("vpc_label") == null ? null : jsonObject.get("vpc_label").getAsString();
 
-      String vpcName = StringUtils.EMPTY_STRING;
-
-      if ( name != null)  {
-        vpcName = name.getAsString();
-      }
-
-      if ( (!vpcName.isEmpty()) ){
-        VPC vpc= DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
+      if ( (vpcName!= null) && (!vpcName.isEmpty()) && (vpcLabel!=null) && ( !vpcLabel.isEmpty()) ){
+        VPC vpc= DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName,vpcLabel));
         return Response.ok(vpc.toString()).build();
       }
       else {
@@ -255,7 +313,7 @@ public class AccountHandler {
     try {
       AuthenticationStatus status = AuthenticatorImpl.getInstance()
         .authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
-                                                            StringUtils.EMPTY_STRING));
+          StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
@@ -263,7 +321,7 @@ public class AccountHandler {
       else {
         return Response.status(Response.Status.UNAUTHORIZED).entity(
           Utils.getAuthenticatedJson("Authentication Failed." , "Either user doesn't exist or password doesn't match"))
-               .build();
+          .build();
       }
     } catch (Exception e) {
 

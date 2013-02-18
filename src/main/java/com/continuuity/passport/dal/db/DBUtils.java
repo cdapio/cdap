@@ -45,6 +45,7 @@ public class DBUtils {
     public static final String VPC_ID_COLUMN = "id";
     public static final String ACCOUNT_ID_COLUMN = "account_id";
     public static final String NAME_COLUMN = "vpc_name";
+    public static final String LABEL_COLUMN = "vpc_label";
     public static final String VPC_CREATED_AT = "vpc_created_at";
   }
 
