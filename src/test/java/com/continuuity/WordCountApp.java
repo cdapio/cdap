@@ -6,6 +6,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
@@ -162,7 +163,7 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+      //this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
     }
   }
 
@@ -170,9 +171,9 @@ public class WordCountApp implements Application {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
 
-    public long process(String word) throws OperationException {
+    @Handle("wordfreq")
+    public void process(String word) throws OperationException {
       byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
-      return val == null ? 0 : Bytes.toLong(val);
     }
   }
 }

@@ -53,6 +53,10 @@ public final class Id  {
     public static Application DEFAULT() {
       return new Application(Account.DEFAULT(), DEFAULT_APPLICATION_ID);
     }
+
+    public static Application from(Account id, String application) {
+      return new Application(id, application);
+    }
   }
 
   /**

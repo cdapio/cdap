@@ -4,6 +4,7 @@
 
 package com.continuuity.pipeline;
 
+import com.continuuity.common.conf.Configuration;
 import com.google.common.reflect.TypeToken;
 
 /**

@@ -50,6 +50,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
     //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    emit(new ApplicationSpecLocation(specification, archive));
+    Id.Application appId = Id.Application.from(id, specification.getName());
+    emit(new ApplicationSpecLocation(appId, specification, archive));
   }
 }

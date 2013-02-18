@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.pipeline;
 
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Context;
 
 /**
@@ -19,7 +20,7 @@ final class StageContext implements Context {
    *
    * @param upStream Object data
    */
-  public StageContext(final Object upStream) {
+  public StageContext(Object upStream) {
     this.upStream = upStream;
   }
 

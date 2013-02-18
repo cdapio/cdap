@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.program.Id;
 import com.continuuity.filesystem.Location;
 
 /**
@@ -14,8 +15,10 @@ import com.continuuity.filesystem.Location;
 public class ApplicationSpecLocation {
   private final ApplicationSpecification specification;
   private final Location archive;
+  private final Id.Application id;
 
-  public ApplicationSpecLocation(ApplicationSpecification specification, Location archive) {
+  public ApplicationSpecLocation(Id.Application id, ApplicationSpecification specification, Location archive) {
+    this.id = id;
     this.specification = specification;
     this.archive = archive;
   }
@@ -32,5 +35,12 @@ public class ApplicationSpecLocation {
    */
   public Location getArchive() {
     return archive;
+  }
+
+  /**
+   * @return Application Id
+   */
+  public Id.Application getApplicationId() {
+    return id;
   }
 }

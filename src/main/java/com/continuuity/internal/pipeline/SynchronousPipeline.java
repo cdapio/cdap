@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.pipeline;
 
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Context;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.Stage;

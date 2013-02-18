@@ -36,7 +36,7 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
    * Receives an input containing application specification and location
    * and verifies both.
    *
-   * @param input An instance of {@link Input}
+   * @param input An instance of {@link ApplicationSpecLocation}
    */
   @Override
   public void process(ApplicationSpecLocation input) throws Exception {

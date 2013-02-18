@@ -157,7 +157,7 @@ public class WebCrawlApp implements Application {
     public void process(DocumentURL url) throws UnsupportedEncodingException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
-      crawledPages.stage(new KeyValueTable.WriteKey(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8")));
+      //crawledPages.stage(new KeyValueTable.WriteKey(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8")));
     }
   }
 

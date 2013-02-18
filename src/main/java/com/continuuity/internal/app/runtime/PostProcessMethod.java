@@ -56,7 +56,8 @@ class PostProcessMethod {
     }
 
     try {
-      opex.execute(operationCtx, writeOperations);
+      //TODO: Passing Null which will create a transaction. Terence ?
+      opex.execute(operationCtx, null, writeOperations);
     } catch(OperationException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }

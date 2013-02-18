@@ -130,4 +130,15 @@ final class HDFSLocation implements Location {
   public void deleteOnExit() throws IOException {
     fs.deleteOnExit(path);
   }
+
+  /**
+   * Creates the directory named by this abstract pathname, including any necessary
+   * but nonexistent parent directories.
+   *
+   * @return true if and only if the renaming succeeded; false otherwise
+   */
+  @Override
+  public boolean mkdirs() throws IOException {
+    return fs.mkdirs(path);
+  }
 }

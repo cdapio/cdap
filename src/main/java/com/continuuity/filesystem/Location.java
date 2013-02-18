@@ -81,4 +81,12 @@ public interface Location {
    * </p>
    */
   public void deleteOnExit() throws IOException;
+
+  /**
+   * Creates the directory named by this abstract pathname, including any necessary
+   * but nonexistent parent directories.
+   *
+   * @return true if and only if the renaming succeeded; false otherwise
+   */
+  public boolean mkdirs() throws IOException;
 }

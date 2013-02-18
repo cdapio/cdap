@@ -54,6 +54,11 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
   }
 
   @Override
+  public void stopAll(final String account) throws RuntimeServiceException {
+    throw new NotImplementedException();
+  }
+
+  @Override
   public FlowStatus status(AuthToken token, final FlowIdentifier identifier) throws RuntimeServiceException {
     Preconditions.checkNotNull(token);
     throw new NotImplementedException();
@@ -181,6 +186,7 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
   @Override
   public List<FlowRunRecord> getFlowHistory(final FlowIdentifier id) throws RuntimeServiceException {
     List<RunRecord> log;
+
     try {
       log = store.getRunHistory(new Id.Program(new Id.Application(new Id.Account(id.getAccountId()),
                                                                   id.getApplicationId()),
@@ -188,7 +194,6 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
     } catch(OperationException e) {
       throw  new RuntimeServiceException("Could NOT retrieve application spec for " +
                                            id.toString() + ", reason: " + e.getMessage());
-
     }
 
     List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
@@ -199,10 +204,5 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
     }
 
     return history;
-  }
-
-  @Override
-  public void stopAll(final String account) throws RuntimeServiceException {
-    throw new NotImplementedException();
   }
 }
