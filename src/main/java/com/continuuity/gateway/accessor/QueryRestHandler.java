@@ -105,7 +105,7 @@ public class QueryRestHandler extends NettyRestHandler {
 
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
-      if (!accessor.attemptAuthentication(request)) {
+      if (!accessor.getAuthenticator().authenticateRequest(request)) {
         LOG.info("Received an unauthorized request");
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         helper.finish(BadRequest);

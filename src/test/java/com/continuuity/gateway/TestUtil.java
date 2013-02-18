@@ -55,14 +55,14 @@ public class TestUtil {
 
   static final OperationContext context = OperationContext.DEFAULT;
 
-  private static String apiToken = null;
+  private static String apiKey = null;
 
-  static void enableAuth(String apiToken) {
-    TestUtil.apiToken = apiToken;
+  static void enableAuth(String apiKey) {
+    TestUtil.apiKey = apiKey;
   }
 
   static void disableAuth() {
-    TestUtil.apiToken = null;
+    TestUtil.apiKey = null;
   }
 
   /**
@@ -93,6 +93,11 @@ public class TestUtil {
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("messageNumber", Integer.toString(i));
     headers.put(Constants.HEADER_DESTINATION_STREAM, dest);
+    if (TestUtil.apiKey != null) {
+      headers.put(GatewayAuthenticator.CONTINUUITY_API_KEY,
+          TestUtil.apiKey);
+      LOG.warn("Set the API key on the flume event: " + apiKey);
+    }
     event.setHeaders(headers);
     event.setBody(createMessage(i));
     return event;
@@ -452,9 +457,9 @@ public class TestUtil {
     // and issue a GET request to the server
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(getUrl);
-    if (TestUtil.apiToken != null) {
+    if (TestUtil.apiKey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
-          TestUtil.apiToken);
+          TestUtil.apiKey);
     }
     HttpResponse response = client.execute(get);
     client.getConnectionManager().shutdown();
@@ -557,9 +562,9 @@ public class TestUtil {
     // and issue a PUT request to the server
     HttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(putUrl);
-    if (TestUtil.apiToken != null) {
+    if (TestUtil.apiKey != null) {
       put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
-          TestUtil.apiToken);
+          TestUtil.apiKey);
     }
     put.setEntity(new ByteArrayEntity(value));
     HttpResponse response = client.execute(put);

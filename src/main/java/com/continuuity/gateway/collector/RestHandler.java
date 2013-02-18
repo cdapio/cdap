@@ -137,7 +137,7 @@ public class RestHandler extends NettyRestHandler {
 
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
-      if (!collector.attemptAuthentication(request)) {
+      if (!collector.getAuthenticator().authenticateRequest(request)) {
         LOG.info("Received an unauthorized request");
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         helper.finish(BadRequest);

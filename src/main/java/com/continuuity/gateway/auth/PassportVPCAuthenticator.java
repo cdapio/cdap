@@ -2,9 +2,11 @@ package com.continuuity.gateway.auth;
 
 import java.util.List;
 
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.continuuity.gateway.Constants;
 import com.continuuity.passport.http.client.PassportClient;
 
 /**
@@ -12,6 +14,9 @@ import com.continuuity.passport.http.client.PassportClient;
  * specified token are authorized to use the current cluster.
  */
 public class PassportVPCAuthenticator implements GatewayAuthenticator {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PassportVPCAuthenticator.class);
 
   private final String clusterName;
 
@@ -28,21 +33,37 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   @Override
   public boolean authenticateRequest(HttpRequest request) {
+    String apiKey = request.getHeader(CONTINUUITY_API_KEY);
+    if (apiKey == null) return false;
+    return authenticate(apiKey);
+  }
+
+  @Override
+  public boolean authenticateRequest(AvroFlumeEvent flumeEvent) {
+    CharSequence apiKeyCS = flumeEvent.getHeaders().get(CONTINUUITY_API_KEY);
+    if (apiKeyCS == null || apiKeyCS.length() == 0) return false;
+    String apiKey = apiKeyCS.toString();
+    return authenticate(apiKey);
+  }
+
+  /**
+   * Authenticates that the specified apiKey can access this cluster.
+   * @param apiKey
+   * @return true
+   */
+  private boolean authenticate(String apiKey) {
     try {
-      String apiToken = request.getHeader(CONTINUUITY_API_KEY);
-      // TODO: We may want a more complex return type to distinguish a missing
-      //       api token from an invalid api token
-      if (apiToken == null) return false;
       List<String> authorizedClusters =
-          this.passportClient.getVPCList(this.passportHostname, apiToken);
+          this.passportClient.getVPCList(this.passportHostname, apiKey);
       if (authorizedClusters == null || authorizedClusters.isEmpty())
         return false;
       for (String authorizedCluster : authorizedClusters) {
         if (clusterName.equals(authorizedCluster)) return true;
       }
+      LOG.debug("Failed to authenticate request using key: " + apiKey);
       return false;
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Exception authorizing with passport service", e);
       return false;
     }
   }

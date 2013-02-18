@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 
@@ -23,10 +24,17 @@ public interface GatewayAuthenticator {
   public boolean isAuthenticationRequired();
 
   /**
-   * Authenticates a request given the specified token.
-   * @param token authentication token
+   * Authenticates the specified HTTP request.
+   * @param request http request
    * @return true if authentication succeeds, false if not
    */
-  public boolean authenticateRequest(HttpRequest request);
+  public boolean authenticateRequest(HttpRequest httpRequest);
+
+  /**
+   * Authenticates the specified HTTP request.
+   * @param request http request
+   * @return true if authentication succeeds, false if not
+   */
+  public boolean authenticateRequest(AvroFlumeEvent flumeEvent);
 
 }

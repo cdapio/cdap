@@ -4,23 +4,26 @@
 
 package com.continuuity.gateway.collector;
 
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
-import com.continuuity.gateway.Collector;
-import com.continuuity.gateway.Constants;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.flow.flowlet.internal.EventBuilder;
+import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.Constants;
 
 /**
  * /**
@@ -77,6 +80,12 @@ class FlumeAdapter implements AvroSourceProtocol {
     MetricsHelper helper = new MetricsHelper(this.getClass(),
         this.metrics, this.collector.getMetricsQualifier(), "append");
     LOG.trace("Received event: " + event);
+    // perform authentication of request
+    if (!collector.getAuthenticator().authenticateRequest(event)) {
+      LOG.debug("Received an unauthorized request");
+      helper.finish(Error);
+      return Status.FAILED;
+    }
     try {
       this.collector.getConsumer().consumeEvent(
           convertFlume2Event(event, helper));
@@ -95,6 +104,12 @@ class FlumeAdapter implements AvroSourceProtocol {
     MetricsHelper helper = new MetricsHelper(this.getClass(),
         this.metrics, this.collector.getMetricsQualifier(), "batch");
     LOG.trace("Received batch: " + events);
+    // perform authentication of request
+    if (!collector.getAuthenticator().authenticateRequest(events.get(0))) {
+      LOG.warn("Received an unauthorized request");
+      helper.finish(Error);
+      return Status.FAILED;
+    }
     try {
       this.collector.getConsumer().consumeEvents(
           convertFlume2Event(events, helper));

@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
@@ -9,6 +10,11 @@ public class NoAuthenticator implements GatewayAuthenticator {
 
   @Override
   public boolean authenticateRequest(HttpRequest request) {
+    return true;
+  }
+
+  @Override
+  public boolean authenticateRequest(AvroFlumeEvent flumeEvent) {
     return true;
   }
 

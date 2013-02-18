@@ -137,11 +137,11 @@ public abstract class Connector {
   }
 
   /**
-   * Returns whether this connector requires authentication or not.
-   * @return true if authentication is required, false if not
+   * Returns the authenticator to be used for all requests to this connector.
+   * @return authenticator to use for requests
    */
-  public boolean attemptAuthentication(HttpRequest request) {
-    return this.authenticator.authenticateRequest(request);
+  public GatewayAuthenticator getAuthenticator() {
+    return this.authenticator;
   }
 
   /**
