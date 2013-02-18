@@ -96,6 +96,10 @@ public final class Id  {
       return new Program(appId, DEFAULT_PROGRAM_ID);
     }
 
+    public static Program from(Application appId, String pgmId) {
+      return new Program(appId, pgmId);
+    }
+
     public static Program from(String accountId, String appId, String pgmId) {
       return new Program(new Application(new Account(accountId), appId), pgmId);
     }

@@ -2,6 +2,8 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -14,6 +16,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.OutputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
@@ -59,38 +62,64 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     // Create a tempoaray application specification
     Location appSpecFile = locationFactory.create(File.createTempFile("application", ".spec.json").getPath());
-    OutputStream os = appSpecFile.getOutputStream();
+    final OutputStream os = appSpecFile.getOutputStream();
     try {
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
       ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(o.getSpecification()));
-//      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(o.getSpecification(),
-//                                                                                     new OutputStreamWriter(os));
+      adapter.toJson(o.getSpecification(), new OutputSupplier<Writer>() {
+        @Override
+        public Writer getOutput() throws IOException {
+          return new OutputStreamWriter(os);
+        }
+      });
     } finally {
       if(os != null) {
         os.close();
       }
     }
 
-    // Now, we iterate through FlowSpecification and generate programs
-    Location outputDir = locationFactory.create(configuration.get("app.output.dir"));
-    for(FlowSpecification flow : o.getSpecification().getFlows().values()) {
-      String name = String.format(Locale.ENGLISH, "%s.%s", applicationName, flow.getName());
+    try {
+      // Make sure we have a directory to store the original artifact.
+      Location outputDir = locationFactory.create(configuration.get("app.output.dir"));
       Location newOutputDir = outputDir
         .append(o.getApplicationId().getAccountId())
         .append(applicationName);
       if(! newOutputDir.exists() && !newOutputDir.mkdirs()) {
         throw new IOException("Failed to create directory");
       }
-      Location output = newOutputDir.append(name + ".jar");
-      clone(bundler, output, flow.getClass(), Type.FLOW, appSpecFile);
+
+      // Now, we iterate through FlowSpecification and generate programs
+      for(FlowSpecification flow : o.getSpecification().getFlows().values()) {
+        String name = String.format(Locale.ENGLISH, "%s.%s.%s", Type.FLOW.toString(), applicationName, flow.getName());
+        Location output = newOutputDir.append(name + ".jar");
+        Location loc = clone(bundler, output, flow.getClassName(), Type.FLOW, appSpecFile);
+        PROGRAMS.add(new Program(Id.Program.from(o.getApplicationId(), flow.getName()), loc));
+      }
+
+      // Iterate through ProcedureSpecification and generate program
+      for(ProcedureSpecification procedure : o.getSpecification().getProcedures().values()) {
+        String name = String.format(Locale.ENGLISH, "%s.%s.%s", Type.PROCEDURE.toString(),
+                                    applicationName, procedure.getName());
+        Location output = newOutputDir.append(name + ".jar");
+        Location loc = clone(bundler, output, procedure.getClassName(), Type.PROCEDURE, appSpecFile);
+        PROGRAMS.add(new Program(Id.Program.from(o.getApplicationId(), procedure.getName()), loc));
+      }
+    } finally {
+      if(appSpecFile != null) {
+        appSpecFile.delete();
+      }
     }
+
+    // Emits the received specification with programs.
+    emit(new ApplicationWithPrograms(o, PROGRAMS.build()));
   }
 
-  private Location clone(ArchiveBundler bundler, Location output, Class<?> klass, Type type, Location specFile)
+  private Location clone(ArchiveBundler bundler, Location output, String className, Type type, Location specFile)
     throws IOException {
     // Create a MANIFEST file
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, klass.getClass().getCanonicalName());
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, className);
     manifest.getMainAttributes().put(ManifestFields.PROCESSOR_TYPE, type.toString());
     manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, MANIFEST_SPEC_FILE);
     bundler.clone(output, manifest, ImmutableList.of(specFile), metaIgnore);
