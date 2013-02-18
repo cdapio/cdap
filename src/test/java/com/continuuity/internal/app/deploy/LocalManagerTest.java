@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.TestHelper;
+import com.continuuity.ToyApp;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.program.Id;
@@ -44,25 +45,10 @@ import java.util.jar.Manifest;
  */
 public class LocalManagerTest {
   private static LocationFactory lf;
-  private static PipelineFactory pf;
-  private static Manager mgr;
 
   @BeforeClass
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
-    pf = new SynchronousPipelineFactory();
-    final Injector injector =
-      Guice.createInjector(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(OperationExecutor.class).to(NoOperationExecutor.class);
-          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-          bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-        }
-      });
-
-    Store store = injector.getInstance(MDSBasedStore.class);
-    mgr = new LocalManager(new Configuration(), pf, lf, store);
   }
 
   /**
@@ -72,7 +58,7 @@ public class LocalManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
-    mgr.deploy(Id.Account.DEFAULT(), deployedJar);
+    TestHelper.getLocalManager().deploy(Id.Account.DEFAULT(), deployedJar);
   }
 
   /**
@@ -80,14 +66,16 @@ public class LocalManagerTest {
    */
   @Test
   public void testGoodPipeline() throws Exception {
-    String jar = JarFinder.getJar(WebCrawlApp.class,
-                                  TestHelper.getManifestWithMainClass(WebCrawlApp.class));
-    Location deployedJar = lf.create(jar);
-    ListenableFuture<?> p = mgr.deploy(Id.Account.DEFAULT(), deployedJar);
+    Location deployedJar = lf.create(
+      JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
+    );
+
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(Id.Account.DEFAULT(), deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms)p.get();
+
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
     Assert.assertEquals(input.getPrograms().iterator().next().getProcessorType(), Type.FLOW);
-    Assert.assertEquals(input.getPrograms().iterator().next().getProcessorName(), "" );
+    Assert.assertEquals(input.getPrograms().iterator().next().getProcessorName(), "ToyFlow");
   }
 
 }
