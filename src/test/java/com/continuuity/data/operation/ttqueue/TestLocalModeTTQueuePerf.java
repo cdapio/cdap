@@ -68,7 +68,7 @@ public class TestLocalModeTTQueuePerf {
     byte [] data = new byte[1024];
     long version = 10L;
 
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true));
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     ReadPointer readPointer = new MemoryReadPointer(version);
 
     // first test it with the intra-flow queues

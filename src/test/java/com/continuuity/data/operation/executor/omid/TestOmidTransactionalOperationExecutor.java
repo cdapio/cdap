@@ -109,7 +109,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] queueKey = Bytes.toBytes("queue://queueKey");
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // insert to all three types
@@ -419,7 +419,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, batch(new QueueEnqueue(queueName, queueName)));
 
     // DequeuePayload it
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     DequeueResult dequeueResult = executor.execute(context, new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isSuccess());
@@ -627,7 +627,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, batch);
 
     // Dequeueing from these queues should yield the post increment values
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
 
     // Dequeue from queue one, expect two fields, one=1 and two=2
@@ -1106,19 +1106,19 @@ public abstract class TestOmidTransactionalOperationExecutor {
                                                                                      value))));
     // dequeue
     DequeueResult deqres = executor.execute(
-      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)),
-                                new QueueConfig(PartitionerType.RANDOM, true)));
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
+                                new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertFalse(deqres.isEmpty());
     Assert.assertArrayEquals(value, DequeuePayload.read(deqres.getValue()).getSerializedTuple());
     // in a new transaction, write the dequeued value and ack the queue entry
     executor.commit(context, batch(new Write(table, g, x, value),
                                    new QueueAck(qname, deqres.getEntryPointer(),
-                                   new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)))));
+                                   new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)))));
     // attempt to dequeue again, should be empty
     deqres = executor.execute(
-      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)),
-                                new QueueConfig(PartitionerType.RANDOM, true)));
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
+                                new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertTrue(deqres.isEmpty());
     // verify the write

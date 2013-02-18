@@ -370,7 +370,7 @@ public abstract class OperationExecutorServiceTest extends
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, "0".getBytes()));
     remote.commit(context, new QueueEnqueue(q, "1".getBytes()));
-    QueueConfig config=new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(context, dequeue);
@@ -459,7 +459,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // verify that all is gone
     Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     Assert.assertTrue(remote.execute(
         context, new QueueDequeue(q, consumer, config)).isEmpty());
@@ -539,7 +539,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // creeate two configs, one hash, one random, one single, one multi
     QueueConfig conf1 = new QueueConfig(PartitionerType.HASH_ON_VALUE, false);
-    QueueConfig conf2 = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig conf2 = new QueueConfig(PartitionerType.FIFO, true);
 
     // create 2 consumers for each groupId
     QueueConsumer cons11 = new QueueConsumer(0, id1, 2, conf1);
@@ -720,7 +720,7 @@ public abstract class OperationExecutorServiceTest extends
         remote.execute(context, new Read(row, column)).getValue().get(column));
 
     // dequeue the payload
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     QueueDequeue dequeue = new QueueDequeue(queue, consumer, config);
     DequeueResult result = remote.execute(context, dequeue);

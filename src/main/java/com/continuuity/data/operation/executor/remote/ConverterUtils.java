@@ -54,13 +54,13 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -545,12 +545,6 @@ public class ConverterUtils {
         tPointer.getEntryId(),
         tPointer.getShardId());
   }
-  /** wrap a queue entry pointer (to an entry pointer) */
-  EntryPointer unwrapEntryPointer(TQueueEntryPointer tPointer) {
-    return new EntryPointer(
-        tPointer.getEntryId(),
-        tPointer.getShardId());
-  }
 
   /** wrap a queue consumer */
   TQueueConsumer wrap(QueueConsumer consumer) {
@@ -597,13 +591,15 @@ public class ConverterUtils {
   TQueuePartitioner wrap(PartitionerType partitioner) {
     if (PartitionerType.HASH_ON_VALUE.equals(partitioner))
       return TQueuePartitioner.HASH;
-    if (PartitionerType.RANDOM.equals(partitioner))
-      return TQueuePartitioner.RANDOM;
+    if (PartitionerType.FIFO.equals(partitioner))
+      return TQueuePartitioner.FIFO;
     if (PartitionerType.MODULO_LONG_VALUE.equals(partitioner))
       return TQueuePartitioner.LONGMOD;
+    if (PartitionerType.ROUND_ROBIN.equals(partitioner))
+      return TQueuePartitioner.ROBIN;
     Log.error("Internal Error: Received an unknown QueuePartitioner with " +
         "class " + partitioner + ". Defaulting to RANDOM.");
-    return TQueuePartitioner.RANDOM;
+    return TQueuePartitioner.FIFO;
   }
   /**
    * unwrap a queue partitioner. We can only do this for the known
@@ -613,13 +609,15 @@ public class ConverterUtils {
   PartitionerType unwrap(TQueuePartitioner tPartitioner) {
     if (TQueuePartitioner.HASH.equals(tPartitioner))
       return PartitionerType.HASH_ON_VALUE;
-    if (TQueuePartitioner.RANDOM.equals(tPartitioner))
-      return PartitionerType.RANDOM;
+    if (TQueuePartitioner.FIFO.equals(tPartitioner))
+      return PartitionerType.FIFO;
     if (TQueuePartitioner.LONGMOD.equals(tPartitioner))
       return PartitionerType.MODULO_LONG_VALUE;
+    if (TQueuePartitioner.ROBIN.equals(tPartitioner))
+      return PartitionerType.ROUND_ROBIN;
     Log.error("Internal Error: Received unknown QueuePartitioner " +
-        tPartitioner + ". Defaulting to " + PartitionerType.RANDOM + ".");
-    return PartitionerType.RANDOM;
+        tPartitioner + ". Defaulting to " + PartitionerType.FIFO + ".");
+    return PartitionerType.FIFO;
   }
 
   /** wrap a queue config */

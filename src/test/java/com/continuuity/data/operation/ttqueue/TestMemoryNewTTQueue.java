@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 
 @Ignore
-public class TestMemoryFifoTTQueue extends TestTTQueue {
+public class TestMemoryNewTTQueue extends TestTTQueue {
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) {

@@ -84,7 +84,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     long groupid = this.executor.execute(context, new GetGroupID(queueName));
     assertEquals(1L, groupid);
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
     this.executor.commit(context, new QueueEnqueue(queueName, queueName));
@@ -121,7 +121,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     long groupid = this.executor.execute(context, new GetGroupID(queueName));
     assertEquals(1L, groupid);
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
     // enqueue to queue, stream, and write data
@@ -164,7 +164,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
     
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // Queue should be empty
@@ -246,7 +246,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
     TTQueueOnVCTable.TRACE = true;
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // Queue should be empty
@@ -291,7 +291,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Verify operations are re-ordered
     // Verify user write operations are stable sorted
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // One source queue
@@ -379,7 +379,7 @@ public abstract class TestOmidExecutorLikeAFlow {
       throws Exception {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // One source queue
@@ -532,7 +532,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // First consume them all in sync mode
 
-    QueueConfig configOne = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig configOne = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumerOne = new QueueConsumer(0, 0, 1, configOne);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne));
@@ -550,7 +550,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
 
     // Now consume them all in async mode, no ack
-    QueueConfig configTwo = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig configTwo = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumerTwo = new QueueConsumer(0, 2, 1, configTwo);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerTwo, configTwo));
@@ -584,7 +584,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     final byte [] queueName = Bytes.toBytes("testConcurrentEnqueueDequeue");
 
     // Create and start a thread that dequeues in a loop
-    final QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    final QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
@@ -697,7 +697,7 @@ public abstract class TestOmidExecutorLikeAFlow {
                 // Use synchronous execution first
                 Consumer [] consumerGroupOne = new Consumer[p];
                 Consumer [] consumerGroupTwo = new Consumer[p];
-                QueueConfig config=new QueueConfig(PartitionerType.RANDOM, true);
+                QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
                 for (int i=0;i<p;i++) {
                   consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
                                                    config, dequeuedMapOne, producersDone);

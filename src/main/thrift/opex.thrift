@@ -80,9 +80,10 @@ struct TQueueEnqueue {
 }
 
 enum TQueuePartitioner {
-  RANDOM,
+  FIFO,
   HASH,
   LONGMOD,
+  ROBIN,
 }
 
 struct TQueueConfig {

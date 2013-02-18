@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.executor.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -62,7 +63,7 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
-    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true));
+    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
@@ -82,7 +83,7 @@ public abstract class TestTTQueue {
 
     // Async
 
-    QueueConfig configAsync = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
@@ -135,7 +136,7 @@ public abstract class TestTTQueue {
     long dirtyVersion = 1;
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-//    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+//    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
@@ -153,6 +154,7 @@ public abstract class TestTTQueue {
     for (int i=0; i<10; i++) {
       DequeueResult result =
           queueNormal.dequeue(consumer, dirtyReadPointer);
+      Assert.assertFalse(result.isEmpty());
       queueNormal.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
       queueNormal.finalize(result.getEntryPointer(), consumer, numGroups);
     }
@@ -200,7 +202,7 @@ public abstract class TestTTQueue {
     long dirtyVersion = 1;
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1, config);
     QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1, config);
     QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1, config);
@@ -312,8 +314,8 @@ public abstract class TestTTQueue {
     assertTrue(queue.enqueue(valueOne, null, dirtyVersion).isSuccess());
     assertTrue(queue.enqueue(valueTwo, null, dirtyVersion).isSuccess());
 
-    // dequeue it with the single consumer and random partitioner
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     DequeueResult result = queue.dequeue(consumer, dirtyReadPointer);
 
@@ -364,8 +366,8 @@ public abstract class TestTTQueue {
     assertTrue(queue.enqueue(valueSemiAckedToDequeued, null, dirtyVersion).isSuccess());
     assertTrue(queue.enqueue(valueSemiAckedToAcked, null, dirtyVersion).isSuccess());
 
-    // dequeue with the single consumer and random partitioner
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    // dequeue with the single consumer and FIFO partitioner
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // get the first entry
@@ -406,7 +408,7 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // since there are no pending entries, we can change our config
-    QueueConfig newConfig = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig newConfig = new QueueConfig(PartitionerType.FIFO, false);
     assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
 
     // now sleep timeout+1 to allow semi-ack to timeout
@@ -429,8 +431,8 @@ public abstract class TestTTQueue {
       assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
-    // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, false));
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);
@@ -505,8 +507,8 @@ public abstract class TestTTQueue {
       assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
-    // dequeue it with the single consumer and random partitioner
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // verify it's the first value
@@ -629,8 +631,8 @@ public abstract class TestTTQueue {
       assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
-    // dequeue it with the single consumer and random partitioner
-    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, multiConfig);
 
     // verify it's the first value
@@ -656,7 +658,7 @@ public abstract class TestTTQueue {
     // one is still not acked, queue is not empty
 
     // attempt to change to single entry mode should fail
-    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.FIFO, true);
     try {
       queue.dequeue(consumer, singleConfig, readPointer);
       fail("dequeue should fail because it changes single entry mode.");
@@ -694,9 +696,9 @@ public abstract class TestTTQueue {
     // invalidate number 3
     queue.invalidate(results[2].getEntryPointer(), version);
 
-    // dequeue with a single consumer and random partitioner
-    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
-    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
+    // dequeue with a single consumer and FIFO partitioner
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.FIFO, false);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, singleConfig);
 
     // use single entry first
@@ -838,8 +840,8 @@ public abstract class TestTTQueue {
     }
 
     // single consumer in this test, switch between single and multi mode
-    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
-    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.FIFO, false);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, singleConfig);
 
     // use single config first
@@ -1054,8 +1056,8 @@ public abstract class TestTTQueue {
     byte [] valueTwo = Bytes.toBytes("value2");
 
 
-    // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true));
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
 
     // spawn a thread to dequeue
     QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, readPointer);
@@ -1152,7 +1154,7 @@ public abstract class TestTTQueue {
     final int n = getNumIterations();
 
     // Create and start a thread that dequeues in a loop
-    final QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    final QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);

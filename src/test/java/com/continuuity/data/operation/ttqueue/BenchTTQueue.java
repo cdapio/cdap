@@ -75,7 +75,7 @@ public abstract class BenchTTQueue {
     log("Dequeueing " + iterations + " entries");
     long dstart = now();
     last = dstart;
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
     for (int i=0; i<iterations; i++) {

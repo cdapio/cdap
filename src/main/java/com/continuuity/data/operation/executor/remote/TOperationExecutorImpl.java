@@ -33,7 +33,6 @@ import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +127,7 @@ public class TOperationExecutorImpl
       else if (tWriteOp.isSetCompareAndSwap())
         writeOp = unwrap(tWriteOp.getCompareAndSwap());
       else if (tWriteOp.isSetQueueEnqueue())
-        writeOp = new QueueEnqueue(tWriteOp.getQueueEnqueue().getQueueName(), tWriteOp.getQueueEnqueue().getValue());
+        writeOp = unwrap(tWriteOp.getQueueEnqueue());
       else if (tWriteOp.isSetQueueAck())
         writeOp = unwrap(tWriteOp.getQueueAck());
       else {
