@@ -9,6 +9,8 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -17,6 +19,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
@@ -44,7 +47,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .noProcedure().build();
+      .withProcedures().add(new WordFrequency()).build();
   }
 
   public static interface MyRecord {
@@ -160,6 +163,16 @@ public class WordCountApp implements Application {
         token = field + ":" + token;
       }
       this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+    }
+  }
+
+  public static class WordFrequency extends AbstractProcedure {
+    @UseDataSet("mydataset")
+    private KeyValueTable counters;
+
+    public long process(String word) throws OperationException {
+      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
+      return val == null ? 0 : Bytes.toLong(val);
     }
   }
 }

@@ -248,6 +248,7 @@ public class MDSBasedStore implements Store {
         query.setServiceName(procedureSpec.getName());
         // TODO: datasets are missing in ProcedureSpecification
         query.setDatasets(new ArrayList<String>());
+        metaDataService.createQuery(account, query);
       }
     } catch(MetadataServiceException e) {
       throw Throwables.propagate(e);

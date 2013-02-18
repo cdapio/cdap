@@ -7,6 +7,7 @@ package com.continuuity.internal.app.program;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
@@ -18,8 +19,11 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.Stream;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -110,16 +114,39 @@ public class MDSBasedStoreTest {
                         stored.getFlows().get("WordCountFlow").getClassName());
 
     // Checking that resources were registered in metadataService (UI still uses this)
+    // app
+    Application app = metadataService.getApplication(new Account("account1"), new Application("application1"));
+    Assert.assertNotNull(app);
+    Assert.assertEquals("WordCountApp", app.getName());
+
+    // flow
+    Assert.assertEquals(1, metadataService.getFlows("account1").size());
     Flow flow = metadataService.getFlow("account1", "application1", "WordCountFlow");
     Assert.assertNotNull(flow);
     Assert.assertEquals(1, flow.getDatasets().size());
     Assert.assertEquals(1, flow.getStreams().size());
     Assert.assertEquals("WordCountFlow", flow.getName());
 
+    // procedure
+    Assert.assertEquals(1, metadataService.getQueries(new Account("account1")).size());
+    Query query = metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1"));
+    Assert.assertNotNull(query);
+    // TODO: uncomment when datasets are added to procedureSpec
+//    Assert.assertEquals(1, query.getDatasets().size());
+    Assert.assertEquals("WordFrequency", query.getName());
 
-    Application app = metadataService.getApplication(new Account("account1"), new Application("application1"));
-    Assert.assertNotNull(app);
-    Assert.assertEquals("WordCountApp", app.getName());
+    // streams
+    Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
+    Stream stream = metadataService.getStream(new Account("account1"), new Stream("text"));
+    Assert.assertNotNull(stream);
+    Assert.assertEquals("text", stream.getName());
+
+    // datasets
+    Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
+    Dataset dataset = metadataService.getDataset(new Account("account1"), new Dataset("mydataset"));
+    Assert.assertNotNull(dataset);
+    Assert.assertEquals("mydataset", dataset.getName());
+    Assert.assertEquals(KeyValueTable.class.getName(), dataset.getType());
   }
 
 }
