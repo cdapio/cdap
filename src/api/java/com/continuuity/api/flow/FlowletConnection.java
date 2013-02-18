@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.flow;
 
 /**
@@ -43,4 +47,5 @@ public final class FlowletConnection {
   public String getTargetName() {
     return targetName;
   }
+
 }

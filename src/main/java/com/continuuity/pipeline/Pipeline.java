@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  * This class represents a processing system consisting of a number of stages.
  * Each {@link Stage} takes in data processes it and forwards it to the next {@link Stage}
- *
+ * <p/>
  * This class also allows all stages in the {@link Pipeline} to be managed collectively
  * with methods to run and get results of processing.
  */

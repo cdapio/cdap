@@ -4,6 +4,8 @@
 
 package com.continuuity.pipeline;
 
+import com.continuuity.common.conf.Configuration;
+
 /**
  * This interface represents the context in which a stage is running.
  * Ordinarily the context will be provided by the pipeline in which
@@ -12,6 +14,7 @@ package com.continuuity.pipeline;
 public interface Context {
   /**
    * Used when you a {@link Stage} wants to send data to the downstream stage
+   *
    * @param o to be send to next stage.
    */
   void setDownStream(Object o);

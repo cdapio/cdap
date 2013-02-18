@@ -61,10 +61,12 @@ public class DatumCodecTest {
   public static class Record1 {
     private final int i;
     private final Map<Integer, Value> properties;
+    private final int[] numbers;
 
     public Record1(int i, Map<Integer, Value> properties) {
       this.i = i;
       this.properties = properties;
+      this.numbers = new int[] {1, 2};
     }
   }
 
@@ -72,11 +74,13 @@ public class DatumCodecTest {
     private final Long i;
     private final Map<String, Value> properties;
     private final String name;
+    private final long[] numbers;
 
     public Record2(long i, Map<String, Value> properties, String name) {
       this.i = i;
       this.properties = properties;
       this.name = name;
+      this.numbers = new long[0];
     }
   }
 
@@ -99,6 +103,8 @@ public class DatumCodecTest {
     Assert.assertEquals(10L, r2.i.longValue());
     Assert.assertEquals(ImmutableMap.of("1", new Value(1, "Name1"), "2", new Value(2, "Name2")), r2.properties);
     Assert.assertNull(r2.name);
+
+    Assert.assertArrayEquals(new long[] {1L, 2L}, r2.numbers);
   }
 
   public static final class Node {

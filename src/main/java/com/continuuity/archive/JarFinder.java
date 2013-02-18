@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. See accompanying LICENSE file.
  */
+
 package com.continuuity.archive;
 
 
@@ -45,7 +46,7 @@ public class JarFinder {
     zos.putNextEntry(entry);
     byte[] arr = new byte[4096];
     int read = is.read(arr);
-    while (read > -1) {
+    while(read > -1) {
       zos.write(arr, 0, read);
       read = is.read(arr);
     }
@@ -62,7 +63,7 @@ public class JarFinder {
     // ZIP.
     File manifestFile = new File(dir, JarFile.MANIFEST_NAME);
     ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
-    if (!manifestFile.exists()) {
+    if(!manifestFile.exists()) {
       zos.putNextEntry(manifestEntry);
       manifest.write(new BufferedOutputStream(zos));
       zos.closeEntry();
@@ -78,11 +79,11 @@ public class JarFinder {
   private static void zipDir(File dir, String relativePath, ZipOutputStream zos,
                              boolean start) throws IOException {
     String[] dirList = dir.list();
-    for (String aDirList : dirList) {
+    for(String aDirList : dirList) {
       File f = new File(dir, aDirList);
-      if (!f.isHidden()) {
-        if (f.isDirectory()) {
-          if (!start) {
+      if(!f.isHidden()) {
+        if(f.isDirectory()) {
+          if(!start) {
             ZipEntry dirEntry = new ZipEntry(relativePath + f.getName() + "/");
             zos.putNextEntry(dirEntry);
             zos.closeEntry();
@@ -90,10 +91,9 @@ public class JarFinder {
           String filePath = f.getPath();
           File file = new File(filePath);
           zipDir(file, relativePath + f.getName() + "/", zos, false);
-        }
-        else {
+        } else {
           String path = relativePath + f.getName();
-          if (!path.equals(JarFile.MANIFEST_NAME)) {
+          if(!path.equals(JarFile.MANIFEST_NAME)) {
             ZipEntry anEntry = new ZipEntry(path);
             InputStream is = new FileInputStream(f);
             copyToZipStream(is, anEntry, zos);
@@ -107,10 +107,14 @@ public class JarFinder {
     Preconditions.checkNotNull(dir, "dir");
     Preconditions.checkNotNull(jarFile, "jarFile");
     File jarDir = jarFile.getParentFile();
-    if (!jarDir.exists()) {
-      if (!jarDir.mkdirs()) {
-        throw new IOException(MessageFormat.format("could not create dir [{0}]",
-                                                   jarDir));
+    if(!jarDir.exists()) {
+      if(!jarDir.mkdirs()) {
+        throw new IOException(
+                               MessageFormat.format(
+                                                     "could not create dir [{0}]",
+                                                     jarDir
+                               )
+        );
       }
     }
     JarOutputStream zos = new JarOutputStream(new FileOutputStream(jarFile));
@@ -125,37 +129,35 @@ public class JarFinder {
    * Returns the full path to the Jar containing the class. It always return a
    * JAR.
    *
-   * @param klass class.
+   * @param klass    class.
    * @param manifest Manifest to be generated.
-   *
    * @return path to the Jar containing the class.
    */
   public static String getJar(Class klass, Manifest manifest) {
     Preconditions.checkNotNull(klass, "klass");
     ClassLoader loader = klass.getClassLoader();
-    if (loader != null) {
+    if(loader != null) {
       String class_file = klass.getName().replaceAll("\\.", "/") + ".class";
       try {
-        for (Enumeration itr = loader.getResources(class_file);
-             itr.hasMoreElements(); ) {
+        for(Enumeration itr = loader.getResources(class_file);
+            itr.hasMoreElements(); ) {
           URL url = (URL) itr.nextElement();
           String path = url.getPath();
-          if (path.startsWith("file:")) {
+          if(path.startsWith("file:")) {
             path = path.substring("file:".length());
           }
           path = URLDecoder.decode(path, "UTF-8");
-          if ("jar".equals(url.getProtocol())) {
+          if("jar".equals(url.getProtocol())) {
             path = URLDecoder.decode(path, "UTF-8");
             return path.replaceAll("!.*$", "");
-          }
-          else if ("file".equals(url.getProtocol())) {
+          } else if("file".equals(url.getProtocol())) {
             String klassName = klass.getName();
             klassName = klassName.replace(".", "/") + ".class";
             path = path.substring(0, path.length() - klassName.length());
             File baseDir = new File(path);
             File testDir = new File(System.getProperty("test.build.dir", "target/test-dir"));
             testDir = testDir.getAbsoluteFile();
-            if (!testDir.exists()) {
+            if(!testDir.exists()) {
               testDir.mkdirs();
             }
             File tempJar = File.createTempFile("app-", "", testDir);
@@ -164,8 +166,7 @@ public class JarFinder {
             return tempJar.getAbsolutePath();
           }
         }
-      }
-      catch (IOException e) {
+      } catch(IOException e) {
         throw new RuntimeException(e);
       }
     }

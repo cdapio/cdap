@@ -22,7 +22,8 @@ final class HDFSLocation implements Location {
 
   /**
    * Created by the {@link HDFSLocationFactory}
-   * @param fs An instance of {@link FileSystem}
+   *
+   * @param fs   An instance of {@link FileSystem}
    * @param path of the file.
    */
   public HDFSLocation(FileSystem fs, String path) {
@@ -32,7 +33,8 @@ final class HDFSLocation implements Location {
 
   /**
    * Created by the {@link HDFSLocationFactory}
-   * @param fs An instance of {@link FileSystem}
+   *
+   * @param fs  An instance of {@link FileSystem}
    * @param uri of the file.
    */
   public HDFSLocation(FileSystem fs, URI uri) {
@@ -42,6 +44,7 @@ final class HDFSLocation implements Location {
 
   /**
    * Checks if the this location exists on HDFS.
+   *
    * @return true if found; false otherwise.
    * @throws IOException
    */
@@ -71,8 +74,9 @@ final class HDFSLocation implements Location {
   /**
    * Appends the child to the current {@link Location} on HDFS.
    * <p>
-   *   Returns a new instance of Location.
+   * Returns a new instance of Location.
    * </p>
+   *
    * @param child to be appended to this location.
    * @return A new instance of {@link Location}
    * @throws IOException
@@ -125,5 +129,16 @@ final class HDFSLocation implements Location {
   @Override
   public void deleteOnExit() throws IOException {
     fs.deleteOnExit(path);
+  }
+
+  /**
+   * Creates the directory named by this abstract pathname, including any necessary
+   * but nonexistent parent directories.
+   *
+   * @return true if and only if the renaming succeeded; false otherwise
+   */
+  @Override
+  public boolean mkdirs() throws IOException {
+    return fs.mkdirs(path);
   }
 }

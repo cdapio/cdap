@@ -14,6 +14,7 @@ import java.net.URI;
 public interface LocationFactory {
   /**
    * Creates an instance of {@link Location} based on string <code>path</code>
+   *
    * @param path to the resource on the filesystem.
    * @return A instance of {@link Location}
    */
@@ -21,6 +22,7 @@ public interface LocationFactory {
 
   /**
    * Creates an instance of {@link Location} based on {@link URI} <code>uri</code>
+   *
    * @param uri to the resource on the filesystem.
    * @return A instance of {@link Location}
    */

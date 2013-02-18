@@ -22,8 +22,8 @@ import java.io.Reader;
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
  * <p>
- *   This class is responsible for starting the process of generating configuration
- *   by passing in the JAR file of Application be configured by a seperate JVM.
+ * This class is responsible for starting the process of generating configuration
+ * by passing in the JAR file of Application be configured by a seperate JVM.
  * </p>
  *
  * @see InMemoryConfigurator
@@ -50,6 +50,7 @@ public class SandboxConfigurator implements Configurator {
 
   /**
    * Constructor
+   *
    * @param jarFilename Name of the JAR file.
    */
   public SandboxConfigurator(File jarFilename) {
@@ -59,6 +60,7 @@ public class SandboxConfigurator implements Configurator {
 
   /**
    * Helper for simplifying creating {@link SandboxConfigurator}
+   *
    * @param jarFilename Name of the file.
    * @return An instance of {@link ListenableFuture}
    */
@@ -102,7 +104,8 @@ public class SandboxConfigurator implements Configurator {
       // Add future to handle the case when the future is cancelled.
       // OnSuccess, we don't do anything other than cleaning the output.
       // onFailure, we make sure that process is destroyed.
-      Futures.addCallback(result, new FutureCallback<ConfigResponse>() {
+      Futures.addCallback(
+                           result, new FutureCallback<ConfigResponse>() {
 
         private void deleteOutput() {
           if(outputFile.exists()) {
@@ -125,7 +128,8 @@ public class SandboxConfigurator implements Configurator {
           }
           deleteOutput();
         }
-      });
+      }
+      );
     } catch(Exception e) {
       // Returns a {@code ListenableFuture} which has an exception set immediately
       // upon construction.
@@ -141,12 +145,12 @@ public class SandboxConfigurator implements Configurator {
           // be shutdown.
           process.waitFor();
           int exit = process.exitValue();
-          if(exit == 0)  {
+          if(exit == 0) {
             result.set(new DefaultConfigResponse(0, newFileStream(outputFile)));
           } else {
             result.set(new DefaultConfigResponse(exit, null));
           }
-        } catch (Exception e) {
+        } catch(Exception e) {
           result.setException(e);
         }
       }
@@ -157,10 +161,12 @@ public class SandboxConfigurator implements Configurator {
 
   /**
    * @return Returns the command used to execute configure using <code>outputFile</code> in which
-   * the output of run would be stored.
+   *         the output of run would be stored.
    */
   private String getCommand(File outputFile) {
-    return String.format("--jar %s --output %s", jarFilename.getAbsolutePath(),
-                         outputFile.getAbsolutePath());
+    return String.format(
+                          "--jar %s --output %s", jarFilename.getAbsolutePath(),
+                          outputFile.getAbsolutePath()
+    );
   }
 }

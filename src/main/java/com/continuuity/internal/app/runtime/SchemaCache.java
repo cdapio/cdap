@@ -22,24 +22,27 @@ public final class SchemaCache {
 
   /**
    * Creates the schema cache with a set of know schemas
+   *
    * @param schemas Set of known schemas
    */
   public SchemaCache(Collection<Schema> schemas) {
 
     // TODO: Later on we should use ClassLoader.getResource
     final Map<SchemaHash, Schema> schemaMap = Maps.newHashMap();
-    for (Schema schema : schemas) {
+    for(Schema schema : schemas) {
       schemaMap.put(schema.getSchemaHash(), schema);
     }
 
-    cache = CacheBuilder.newBuilder().build(new CacheLoader<SchemaHash, Schema>() {
-      @Override
-      public Schema load(SchemaHash key) throws Exception {
-        Schema schema = schemaMap.get(key);
-        Preconditions.checkNotNull(schema);
-        return schema;
-      }
-    });
+    cache = CacheBuilder.newBuilder().build(
+                                             new CacheLoader<SchemaHash, Schema>() {
+                                               @Override
+                                               public Schema load(SchemaHash key) throws Exception {
+                                                 Schema schema = schemaMap.get(key);
+                                                 Preconditions.checkNotNull(schema);
+                                                 return schema;
+                                               }
+                                             }
+    );
   }
 
   /**
@@ -50,9 +53,13 @@ public final class SchemaCache {
    * @return A {@link Schema} or {@code null} if the schema is not found.
    */
   public Schema get(ByteBuffer buffer) {
+    return get(new SchemaHash(buffer));
+  }
+
+  public Schema get(SchemaHash hash) {
     try {
-      return cache.get(new SchemaHash(buffer));
-    } catch (ExecutionException e) {
+      return cache.get(hash);
+    } catch(ExecutionException e) {
       return null;
     }
   }

@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.pipeline;
 
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.Stage;
 import com.google.common.collect.Lists;
@@ -22,6 +23,7 @@ public abstract class AbstractPipeline implements Pipeline {
 
   /**
    * Adds a {@link Stage} to the {@link Pipeline}
+   *
    * @param stage to be added to this pipeline.
    */
   @Override

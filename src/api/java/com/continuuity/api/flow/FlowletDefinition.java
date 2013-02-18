@@ -13,6 +13,7 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
@@ -37,8 +38,8 @@ import java.util.Set;
  * Class defining the definition for a flowlet.
  */
 public final class FlowletDefinition {
-  private static final String PROCESS_METHOD_PREFIX = "process";
-  private static final String DEFAULT_OUTPUT = "out";
+  public static final String PROCESS_METHOD_PREFIX = "process";
+  public static final String DEFAULT_OUTPUT = "out";
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
@@ -48,8 +49,8 @@ public final class FlowletDefinition {
 
   private final transient Map<String, Set<Type>> inputTypes;
   private final transient Map<String, Set<Type>> outputTypes;
-  private Map<String, Set<QueueSpecification>> inputs;
-  private Map<String, Set<QueueSpecification>> outputs;
+  private Map<String, Set<Schema>> inputs;
+  private Map<String, Set<Schema>> outputs;
 
   FlowletDefinition(Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(), flowlet.configure());
@@ -101,7 +102,7 @@ public final class FlowletDefinition {
   /**
    * @return Mapping of name to the method types for processing inputs.
    */
-  public Map<String, Set<QueueSpecification>> getInputs() {
+  public Map<String, Set<Schema>> getInputs() {
     Preconditions.checkState(inputs != null, "Input schemas not yet generated.");
     return inputs;
   }
@@ -109,7 +110,7 @@ public final class FlowletDefinition {
   /**
    * @return Mapping from name of {@link com.continuuity.api.flow.flowlet.OutputEmitter} to actual emitters.
    */
-  public Map<String, Set<QueueSpecification>> getOutputs() {
+  public Map<String, Set<Schema>> getOutputs() {
     Preconditions.checkState(outputs != null, "Output schemas not yet generated.");
     return outputs;
   }
@@ -118,26 +119,27 @@ public final class FlowletDefinition {
    * Generate schemas for all input and output types with the given {@link SchemaGenerator}.
    * @param generator The {@link SchemaGenerator} for generating type schema.
    */
-  public void generateQueue(QueueSpecificationGenerator generator) throws UnsupportedTypeException {
+  public void generateSchema(SchemaGenerator generator) throws UnsupportedTypeException {
     if (inputs == null && outputs == null && inputTypes != null && outputTypes != null) {
       // Generate both inputs and outputs before making this visible
-      Map<String, Set<QueueSpecification>> inputs = generateQueue(generator, inputTypes, ImmutableMap.<String, Set<QueueSpecification>>builder());
-      Map<String, Set<QueueSpecification>> outputs = generateQueue(generator, outputTypes, ImmutableMap.<String,Set<QueueSpecification>>builder());
+      Map<String, Set<Schema>> inputs = generateSchema(generator, inputTypes, ImmutableMap.<String, Set<Schema>>builder());
+      Map<String, Set<Schema>> outputs = generateSchema(generator, outputTypes, ImmutableMap.<String, Set<Schema>>builder());
 
       this.inputs = inputs;
       this.outputs = outputs;
     }
   }
 
-  private Map<String, Set<QueueSpecification>> generateQueue(QueueSpecificationGenerator generator, Map<String, Set<Type>> types,
-                                                ImmutableMap.Builder<String, Set<QueueSpecification>> result)
+  private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator,
+                                                  Map<String, Set<Type>> types,
+                                                  ImmutableMap.Builder<String, Set<Schema>> result)
                                                   throws UnsupportedTypeException {
     for (Map.Entry<String, Set<Type>> entry : types.entrySet()) {
-      ImmutableSet.Builder<QueueSpecification> queues = ImmutableSet.builder();
+      ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
       for (Type type : entry.getValue()) {
-        queues.add(generator.generate(entry.getKey(), type));
+        schemas.add(generator.generate(type));
       }
-      result.put(entry.getKey(), queues.build());
+      result.put(entry.getKey(), schemas.build());
     }
     return result.build();
   }

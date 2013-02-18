@@ -8,17 +8,17 @@ import com.google.inject.Inject;
 /**
  *
  */
-public class MDSJoinStage extends AbstractStage<VerificationStage.Input> {
+public class MDSJoinStage extends AbstractStage<ApplicationSpecLocation> {
   private final MetaDataStore mds;
 
   @Inject
   public MDSJoinStage(MetaDataStore mds) {
-    super(TypeToken.of(VerificationStage.Input.class));
+    super(TypeToken.of(ApplicationSpecLocation.class));
     this.mds = mds;
   }
 
   @Override
-  public void process(final VerificationStage.Input o) throws Exception {
+  public void process(final ApplicationSpecLocation o) throws Exception {
 
   }
 

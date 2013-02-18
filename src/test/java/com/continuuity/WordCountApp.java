@@ -6,9 +6,12 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -17,6 +20,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
@@ -44,7 +48,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .noProcedure().build();
+      .withProcedures().add(new WordFrequency()).build();
   }
 
   public static interface MyRecord {
@@ -90,11 +94,11 @@ public class WordCountApp implements Application {
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
         .withFlowlets().add(new StreamSucker()).apply()
-        .add(new Tokenizer()).apply()
-        .add(new CountByField()).apply()
+                       .add(new Tokenizer()).apply()
+                       .add(new CountByField()).apply()
         .connect().from(new Stream("text")).to(new StreamSucker())
-        .from(new StreamSucker()).to(new Tokenizer())
-        .from(new Tokenizer()).to(new CountByField())
+                  .from(new StreamSucker()).to(new Tokenizer())
+                  .from(new Tokenizer()).to(new CountByField())
         .build();
     }
   }
@@ -159,7 +163,17 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+      //this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+    }
+  }
+
+  public static class WordFrequency extends AbstractProcedure {
+    @UseDataSet("mydataset")
+    private KeyValueTable counters;
+
+    @Handle("wordfreq")
+    public void process(String word) throws OperationException {
+      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
     }
   }
 }

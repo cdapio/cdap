@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
@@ -17,7 +21,8 @@ import java.lang.reflect.Type;
 /**
  *
  */
-final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecification>, JsonDeserializer<FlowletSpecification> {
+final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecification>,
+                                                   JsonDeserializer<FlowletSpecification> {
 
   @Override
   public JsonElement serialize(FlowletSpecification src, Type typeOfSrc, JsonSerializationContext context) {

@@ -7,13 +7,18 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.TestHelper;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.program.Id;
 import com.continuuity.archive.JarFinder;
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationSpecLocation;
+import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
+import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.hadoop.conf.Configured;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,12 +31,14 @@ import java.util.jar.Manifest;
  */
 public class LocalManagerTest {
   private static LocationFactory lf;
+  private static PipelineFactory pf;
   private static Manager mgr;
 
   @BeforeClass
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
-    mgr = new LocalManager(new SynchronousPipelineFactory());
+    pf = new SynchronousPipelineFactory();
+    mgr = new LocalManager(new Configuration(), pf, lf);
   }
 
   /**
@@ -41,7 +48,7 @@ public class LocalManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
-    mgr.deploy(deployedJar);
+    mgr.deploy(Id.Account.DEFAULT(), deployedJar);
   }
 
   /**
@@ -52,8 +59,8 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class,
                                   TestHelper.getManifestWithMainClass(WebCrawlApp.class));
     Location deployedJar = lf.create(jar);
-    ListenableFuture<?> p = mgr.deploy(deployedJar);
-    VerificationStage.Input input = (VerificationStage.Input)p.get();
+    ListenableFuture<?> p = mgr.deploy(Id.Account.DEFAULT(), deployedJar);
+    ApplicationSpecLocation input = (ApplicationSpecLocation)p.get();
     Assert.assertEquals(input.getArchive(), deployedJar);
   }
 

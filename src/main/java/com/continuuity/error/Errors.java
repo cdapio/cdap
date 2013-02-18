@@ -14,7 +14,7 @@ public final class Errors {
     this.format = format;
   }
 
-  public String getMessage(Object...objs) {
+  public String getMessage(Object... objs) {
     return String.format(format, objs);
   }
 }

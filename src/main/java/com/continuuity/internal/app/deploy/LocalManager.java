@@ -5,8 +5,12 @@
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.program.Id;
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.filesystem.Location;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
+import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
@@ -17,18 +21,23 @@ import com.google.inject.Inject;
  * This class is concrete implementation of
  */
 public class LocalManager implements Manager<Location, String> {
-  private final PipelineFactory factory;
+  private final PipelineFactory pipelineFactory;
+  private final LocationFactory locationFactory;
+  private final Configuration configuration;
 
   @Inject
-  public LocalManager(PipelineFactory factory) {
-    this.factory = factory;
+  public LocalManager(Configuration configuration, PipelineFactory pipelineFactory, LocationFactory locationFactory) {
+    this.configuration = configuration;
+    this.pipelineFactory = pipelineFactory;
+    this.locationFactory = locationFactory;
   }
 
   @Override
-  public ListenableFuture<String> deploy(Location archive) throws Exception {
-    Pipeline<String> pipeline = factory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage());
+  public ListenableFuture<String> deploy(Id.Account id, Location archive) throws Exception {
+    Pipeline<String> pipeline = pipelineFactory.getPipeline();
+    pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
+    //pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     return pipeline.execute(archive);
   }
 }

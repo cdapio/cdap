@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * A simple test class loader capable of loading from
  * multiple sources, such as local files or a URL.
- *
+ * <p/>
  * This class is derived from an article by Chuck McManis
  * http://www.javaworld.com/javaworld/jw-10-1996/indepth.src.html
  * with large modifications.
@@ -21,7 +21,7 @@ import java.util.Map;
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
   private Map<String, Class<?>> classes = Maps.newHashMap();
-  private char      classNameReplacementChar;
+  private char classNameReplacementChar;
 
   /**
    * This is a simple version for external clients since they
@@ -35,11 +35,11 @@ public abstract class MultiClassLoader extends ClassLoader {
 
   @Override
   public synchronized Class<?> loadClass(String className,
-                                      boolean resolveIt) throws ClassNotFoundException {
+                                         boolean resolveIt) throws ClassNotFoundException {
 
     //Check our local cache of classes
     Class<?> result = classes.get(className);
-    if (result != null) {
+    if(result != null) {
       return result;
     }
 
@@ -47,8 +47,8 @@ public abstract class MultiClassLoader extends ClassLoader {
     try {
       result = super.findSystemClass(className);
       return result;
-    } catch (ClassNotFoundException e) {
-      if (LOG.isTraceEnabled()) {
+    } catch(ClassNotFoundException e) {
+      if(LOG.isTraceEnabled()) {
         LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
       }
     }
@@ -56,18 +56,18 @@ public abstract class MultiClassLoader extends ClassLoader {
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
     byte[] classBytes = loadClassBytes(className);
-    if (classBytes == null) {
+    if(classBytes == null) {
       throw new ClassNotFoundException();
     }
 
     //Define it (parse the class file)
     result = defineClass(className, classBytes, 0, classBytes.length);
-    if (result == null) {
+    if(result == null) {
       throw new ClassFormatError("Error parsing class " + className);
     }
 
     //Resolve if necessary
-    if (resolveIt) {
+    if(resolveIt) {
       resolveClass(result);
     }
 
@@ -90,13 +90,15 @@ public abstract class MultiClassLoader extends ClassLoader {
   protected abstract byte[] loadClassBytes(String className);
 
   protected String formatClassName(String className) {
-    if (classNameReplacementChar == '\u0000') {
+    if(classNameReplacementChar == '\u0000') {
       // '/' is used to map the package to the path
       return className.replace('.', '/') + ".class";
     } else {
       // Replace '.' with custom char, such as '_'
-      return className.replace('.',
-          classNameReplacementChar) + ".class";
+      return className.replace(
+                                '.',
+                                classNameReplacementChar
+      ) + ".class";
     }
   }
 

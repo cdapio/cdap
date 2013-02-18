@@ -6,9 +6,13 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
+import com.continuuity.internal.filesystem.HDFSLocationFactory;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -17,6 +21,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +34,10 @@ import java.io.Writer;
  * Sandbox JVM allows the configuration phase of an application to be executed
  * within a contained JVM within minimal access to JVM capabilities.
  * <p>
- *   Idea is that this piece of code is called in during the configuration phase
- *   which happens during deployment and running in the same JVM as the server
- *   could be dangerous. Hence, we spin-up a JVM with restricted access to resources
- *   and invoke configure on application.
+ * Idea is that this piece of code is called in during the configuration phase
+ * which happens during deployment and running in the same JVM as the server
+ * could be dangerous. Hence, we spin-up a JVM with restricted access to resources
+ * and invoke configure on application.
  * </p>
  */
 public class SandboxJVM {
@@ -40,33 +45,49 @@ public class SandboxJVM {
 
   /**
    * Main class within the object.
+   *
    * @param args specified on command line.
    * @return 0 if successfull; otherwise non-zero.
    */
   public int doMain(String[] args) {
     String jarFilename;
     File outputFile;
+    String locationFactory;
+    String id;
+    LocationFactory lf;
 
     CommandLineParser parser = new GnuParser();
     Options options = new Options();
+    options.addOption("i", "id", true, "Account ID");
     options.addOption("j", "jar", true, "Application JAR");
+    options.addOption("f", "locfactory", true, "Location Factory (LOCAL or DISTRIBUTED)");
     options.addOption("o", "output", true, "Output");
 
     // Check all the options of command line
     try {
       CommandLine line = parser.parse(options, args);
-      if(! line.hasOption("jar")) {
+      if(!line.hasOption("jar")) {
         LOG.error("Application JAR not specified.");
         return -1;
       }
-      if(! line.hasOption("output")) {
+      if(!line.hasOption("output")) {
         LOG.error("Output file not specified.");
+        return -1;
+      }
+      if(!line.hasOption("id")) {
+        LOG.error("Account id not specified.");
+        return -1;
+      }
+      if(!line.hasOption("locfactory")) {
+        LOG.error("Location factory not specified.");
         return -1;
       }
 
       jarFilename = line.getOptionValue("jar");
       outputFile = new File(line.getOptionValue("output"));
-    } catch (org.apache.commons.cli.ParseException e) {
+      id = line.getOptionValue("id");
+      locationFactory = line.getOptionValue("locfactory");
+    } catch(org.apache.commons.cli.ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
       return -1;
@@ -76,9 +97,18 @@ public class SandboxJVM {
 
     Object mainClass;
     try {
-      Program archive = new Program(new File(jarFilename));
+      if("LOCAL".equals(locationFactory)) {
+        lf = new LocalLocationFactory();
+      } else if("DISTRIBUTED".equals(locationFactory)) {
+        lf = new HDFSLocationFactory(new Configuration());
+      } else {
+        LOG.error("Unknown location factory specified");
+        return -1;
+      }
+
+      Program archive = new Program(Id.Program.from(new Id.Account(id)), lf.create(jarFilename));
       mainClass = archive.getMainClass().newInstance();
-    } catch (Exception e) {
+    } catch(Exception e) {
       LOG.error(e.getMessage());
       return -1;
     }
@@ -102,11 +132,11 @@ public class SandboxJVM {
       Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
       try {
         // TODO: The SchemaGenerator should be injected.
-        ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
+        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       } finally {
         writer.close();
       }
-    } catch (IOException e) {
+    } catch(IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
     }
@@ -116,6 +146,7 @@ public class SandboxJVM {
 
   /**
    * Invoked from command line.
+   *
    * @param args specified on command line.
    */
   public static void main(String[] args) {

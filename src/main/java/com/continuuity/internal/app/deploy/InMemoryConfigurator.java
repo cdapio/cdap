@@ -8,10 +8,11 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -29,7 +30,7 @@ import java.io.StringWriter;
  *
  * @see SandboxConfigurator
  */
-public class InMemoryConfigurator implements Configurator  {
+public class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */
@@ -41,21 +42,32 @@ public class InMemoryConfigurator implements Configurator  {
   private final Application application;
 
   /**
+   * Id of the program
+   */
+  private final Id.Account id;
+
+  /**
    * Constructor that accepts archive file as input to invoke configure.
+   *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Location archive) {
+  public InMemoryConfigurator(Id.Account id, Location archive) {
+    Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
+    this.id = id;
     this.archive = archive;
     this.application = null;
   }
 
   /**
    * Constructor that takes an {@link Application} to invoke configure.
+   *
    * @param application instance for which configure needs to be invoked.
    */
-  public InMemoryConfigurator(Application application) {
+  public InMemoryConfigurator(Id.Account id, Application application) {
+    Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(application);
+    this.id = id;
     this.archive = null;
     this.application = application;
   }
@@ -78,8 +90,9 @@ public class InMemoryConfigurator implements Configurator  {
   /**
    * Executes the <code>Application.configure</code> within the same JVM.
    * <p>
-   *   This method could be dangerous and should be used only in singlenode.
+   * This method could be dangerous and should be used only in singlenode.
    * </p>
+   *
    * @return A instance of {@link ListenableFuture}.
    */
   @Override
@@ -91,10 +104,13 @@ public class InMemoryConfigurator implements Configurator  {
       Application app = null;
 
       if(archive != null && application == null) { // Provided Application JAR.
+        // Create Program Id
+        Id.Program pgmId = Id.Program.from(id);
+
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass = new Program(archive).getMainClass().newInstance();
+        Object mainClass = new Program(pgmId, archive).getMainClass().newInstance();
         // Convert it to the type application.
-        app  = (Application) mainClass;
+        app = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance
         app = application;
       } else {
@@ -108,17 +124,17 @@ public class InMemoryConfigurator implements Configurator  {
       // We write the Application specification to output file in JSON format.
       writer = new StringWriter();
       // TODO: The SchemaGenerator should be injected
-      ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
+      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
-    } catch (Exception e) {
+    } catch(Exception e) {
       return Futures.immediateFailedFuture(e);
-    } catch (Throwable throwable) {
+    } catch(Throwable throwable) {
       return Futures.immediateFailedFuture(throwable);
     } finally {
       if(writer != null) {
         try {
           writer.close();
-        } catch (IOException e) {
+        } catch(IOException e) {
           Futures.immediateFailedFuture(e);
         }
       }

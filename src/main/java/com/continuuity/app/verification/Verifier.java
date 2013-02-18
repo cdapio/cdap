@@ -3,14 +3,14 @@ package com.continuuity.app.verification;
 /**
  * A verifier for verifying the specifications provided.
  * <p>
- *   Implementors of this interface will take Specification as input
- *   and verify the information within the specification meets satisfies
- *   all the checkpoints.
+ * Implementors of this interface will take Specification as input
+ * and verify the information within the specification meets satisfies
+ * all the checkpoints.
  * </p>
- *
+ * <p/>
  * <p>
- *   Implementation of this interface are expected to be thread-safe,
- *   an can be safely accessed by multiple concurrent threads.
+ * Implementation of this interface are expected to be thread-safe,
+ * an can be safely accessed by multiple concurrent threads.
  * </p>
  */
 public interface Verifier<T> {

@@ -16,17 +16,17 @@ import java.util.List;
 /**
  * This class represents a collection of {@link Permission} objects.
  * <p>
- *   With a {@link ApplicationPermissionCollection}, you can:
- *   <ul>
- *    <li>add a permission to the collection using the <code>add</code> method</li>
- *    <li>check to see if a particular permission is implied in the collection, using the <code>implies</code> method</li>
- *    <li>enumerate all the permission, using the <code>elements</code> method</li>
- *   </ul>
+ * With a {@link ApplicationPermissionCollection}, you can:
+ * <ul>
+ * <li>add a permission to the collection using the <code>add</code> method</li>
+ * <li>check to see if a particular permission is implied in the collection, using the <code>implies</code> method</li>
+ * <li>enumerate all the permission, using the <code>elements</code> method</li>
+ * </ul>
  * </p>
- *
+ * <p/>
  * <p>
- *   This collection does not group the permissions, but these are collection of the permission
- *   related to an application that we want to restrict.
+ * This collection does not group the permissions, but these are collection of the permission
+ * related to an application that we want to restrict.
  * </p>
  */
 class ApplicationPermissionCollection extends PermissionCollection {
@@ -42,6 +42,7 @@ class ApplicationPermissionCollection extends PermissionCollection {
 
   /**
    * Adds a {@link Permission} object to the current collection of permission objects.
+   *
    * @param p the {@link Permission} object to be added.
    */
   public void add(Permission p) {
@@ -53,13 +54,14 @@ class ApplicationPermissionCollection extends PermissionCollection {
   /**
    * Checks to see if the specified {@link Permission} <code>p</code> is implied by the collection
    * of {@link Permission} objects held by the {@link ApplicationPermissionCollection}
+   *
    * @param p the {@link Permission} object to compare.
    * @return true if "permission" is implied by the permissions in the collection, false if not.
    */
   public boolean implies(Permission p) {
     Iterator<Permission> i = perms.iterator();
     while(i.hasNext()) {
-      Permission p1 = ((Permission) i.next());
+      Permission p1 = ( (Permission) i.next() );
       if(p.getClass().isAssignableFrom(p1.getClass()) && p1.implies(p)) {
         return true;
       }

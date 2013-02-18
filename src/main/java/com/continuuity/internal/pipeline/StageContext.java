@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.pipeline;
 
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Context;
 
 /**
@@ -16,14 +17,16 @@ final class StageContext implements Context {
 
   /**
    * Constructor constructed when the result is available from upstream.
+   *
    * @param upStream Object data
    */
-  public StageContext(final Object upStream) {
+  public StageContext(Object upStream) {
     this.upStream = upStream;
   }
 
   /**
    * Sets result to be sent to downstream from the current stage.
+   *
    * @param downStream Object to be sent to downstream
    */
   @Override

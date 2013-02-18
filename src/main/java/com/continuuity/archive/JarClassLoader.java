@@ -8,8 +8,6 @@ import com.continuuity.filesystem.Location;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 /**
  * JarClassLoader extends {@link MultiClassLoader}
@@ -49,8 +47,8 @@ public class JarClassLoader extends MultiClassLoader {
    */
   @Override
   @Nullable
-  public byte[] loadClassBytes (String className) {
-    className = formatClassName (className);
-    return (jarResources.getResource (className));
+  public byte[] loadClassBytes(String className) {
+    className = formatClassName(className);
+    return ( jarResources.getResource(className) );
   }
 }

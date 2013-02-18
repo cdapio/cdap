@@ -1,35 +1,59 @@
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.google.common.base.Charsets;
 
-import java.net.URI;
 import java.nio.ByteBuffer;
 
 /**
  *
  */
-class InputDatum {
+public class InputDatum {
 
   private final QueueConsumer consumer;
-  private final URI queueName;
   private final DequeueResult dequeueResult;
+  private final QueueName queueName;
+  private int retry;
 
-  InputDatum(QueueConsumer consumer, URI queueName, DequeueResult dequeueResult) {
+  public InputDatum(QueueConsumer consumer, DequeueResult dequeueResult) {
     this.consumer = consumer;
-    this.queueName = queueName;
     this.dequeueResult = dequeueResult;
+    this.queueName = QueueName.from(dequeueResult.getEntryPointer().getQueueName());
   }
 
-  QueueAck asAck() {
-    return new QueueAck(queueName.toASCIIString().getBytes(Charsets.US_ASCII),
-                        dequeueResult.getEntryPointer(),
-                        consumer);
+  public QueueAck asAck() {
+    return new QueueAck(
+                         dequeueResult.getEntryPointer().getQueueName(),
+                         dequeueResult.getEntryPointer(),
+                         consumer
+    );
   }
 
-  ByteBuffer getData() {
+  public ByteBuffer getData() {
     return ByteBuffer.wrap(dequeueResult.getValue());
+  }
+
+  public void incrementRetry() {
+    retry++;
+  }
+
+  public InputContext getInputContext() {
+    final String name = queueName.getSimpleName();
+    final int retry = this.retry;
+
+    return new InputContext() {
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public int getRetryCount() {
+        return retry;
+      }
+    };
   }
 }

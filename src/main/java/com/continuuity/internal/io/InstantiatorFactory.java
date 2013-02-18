@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -32,7 +36,7 @@ public final class InstantiatorFactory {
       Field f = unsafeClass.getDeclaredField("theUnsafe");
       f.setAccessible(true);
       unsafe = (Unsafe) f.get(null);
-    } catch (Exception e) {
+    } catch(Exception e) {
       unsafe = null;
     }
     UNSAFE = unsafe;
@@ -40,12 +44,12 @@ public final class InstantiatorFactory {
 
   public <T> Instantiator<T> get(TypeToken<T> type) {
     Instantiator<T> creator = getByDefaultConstructor(type);
-    if (creator != null) {
+    if(creator != null) {
       return creator;
     }
 
     creator = getByKnownType(type);
-    if (creator != null) {
+    if(creator != null) {
       return creator;
     }
 
@@ -69,21 +73,29 @@ public final class InstantiatorFactory {
         public T create() {
           try {
             return (T) defaultCons.newInstance();
-          } catch (Exception e) {
+          } catch(Exception e) {
             throw Throwables.propagate(e);
           }
         }
       };
 
-    } catch (NoSuchMethodException e) {
+    } catch(NoSuchMethodException e) {
       return null;
     }
   }
 
   private <T> Instantiator<T> getByKnownType(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
-    if (Collection.class.isAssignableFrom(rawType)) {
-      if (SortedSet.class.isAssignableFrom(rawType)) {
+    if(rawType.isArray()) {
+      return new Instantiator<T>() {
+        @Override
+        public T create() {
+          return (T) Lists.newLinkedList();
+        }
+      };
+    }
+    if(Collection.class.isAssignableFrom(rawType)) {
+      if(SortedSet.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -91,7 +103,7 @@ public final class InstantiatorFactory {
           }
         };
       }
-      if (Set.class.isAssignableFrom(rawType)) {
+      if(Set.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -99,7 +111,7 @@ public final class InstantiatorFactory {
           }
         };
       }
-      if (Queue.class.isAssignableFrom(rawType)) {
+      if(Queue.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -115,8 +127,8 @@ public final class InstantiatorFactory {
       };
     }
 
-    if (Map.class.isAssignableFrom(rawType)) {
-      if (SortedMap.class.isAssignableFrom(rawType)) {
+    if(Map.class.isAssignableFrom(rawType)) {
+      if(SortedMap.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
           @Override
           public T create() {
@@ -131,7 +143,7 @@ public final class InstantiatorFactory {
         }
       };
     }
-    if (StreamEvent.class.isAssignableFrom(rawType)) {
+    if(StreamEvent.class.isAssignableFrom(rawType)) {
       return new Instantiator<T>() {
         @Override
         public T create() {
@@ -148,8 +160,8 @@ public final class InstantiatorFactory {
       @Override
       public T create() {
         try {
-          return (T)UNSAFE.allocateInstance(rawType);
-        } catch (InstantiationException e) {
+          return (T) UNSAFE.allocateInstance(rawType);
+        } catch(InstantiationException e) {
           throw Throwables.propagate(e);
         }
       }

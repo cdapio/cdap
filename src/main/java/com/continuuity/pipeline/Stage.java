@@ -13,6 +13,7 @@ public interface Stage {
   /**
    * Implementation of this method should atomically process a single data
    * object and transfer any objects generated to downstream for processing.
+   *
    * @param ctx
    */
   void process(Context ctx) throws Exception;

@@ -41,6 +41,7 @@ public final class ArchiveBundler {
 
   /**
    * Constructor with archive to be cloned.
+   *
    * @param archive to be cloned.
    */
   public ArchiveBundler(Location archive) {
@@ -49,7 +50,8 @@ public final class ArchiveBundler {
 
   /**
    * Constructor that takes in the archive to be cloned
-   * @param archive to be cloned
+   *
+   * @param archive        to be cloned
    * @param jarEntryPrefix within cloned archive for additional files.
    */
   public ArchiveBundler(Location archive, String jarEntryPrefix) {
@@ -65,9 +67,9 @@ public final class ArchiveBundler {
    * Clones the input <code>archive</code> file with MANIFEST file and also adds addition
    * Files to the cloned archive.
    *
-   * @param output Cloned output archive
+   * @param output   Cloned output archive
    * @param manifest New manifest file to be added to the cloned archive
-   * @param files Additional files to be added to cloned archive
+   * @param files    Additional files to be added to cloned archive
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest, Iterable<Location> files) throws IOException {
@@ -78,9 +80,9 @@ public final class ArchiveBundler {
    * Clones the input <code>archive</code> file with MANIFEST file and also adds addition
    * Files to the cloned archive.
    *
-   * @param output Cloned output archive
-   * @param manifest New manifest file to be added to the cloned archive
-   * @param files Additional files to be added to cloned archive
+   * @param output       Cloned output archive
+   * @param manifest     New manifest file to be added to the cloned archive
+   * @param files        Additional files to be added to cloned archive
    * @param acceptFilter Filter applied on ZipEntry, if true file is accepted, otherwise will be ignored output.
    * @throws IOException thrown when issue with handling of files.
    */
@@ -100,7 +102,7 @@ public final class ArchiveBundler {
       // being added are not already present. If not, they are added to the
       // output zip.
       JarEntry entry = zin.getNextJarEntry();
-      while (entry != null) {
+      while(entry != null) {
         // Invoke the predicate to see if the entry needs to be filtered.
         // If the acceptFilter returns false, then it needs to be filtered; true keep it.
         if(!acceptFilter.apply(entry)) {
@@ -110,14 +112,14 @@ public final class ArchiveBundler {
 
         String name = entry.getName();
         boolean absenceInJar = true;
-        for (Location f : files) {
-          if (f.getName().equals(name)) {
+        for(Location f : files) {
+          if(f.getName().equals(name)) {
             absenceInJar = false;
             break;
           }
         }
 
-        if (absenceInJar) {
+        if(absenceInJar) {
           zout.putNextEntry(new JarEntry(entry));
           ByteStreams.copy(zin, zout);
         }
@@ -130,7 +132,7 @@ public final class ArchiveBundler {
 
     try {
       // Add the new files.
-      for (Location file : files) {
+      for(Location file : files) {
         InputStream in = file.getInputStream();
         try {
           zout.putNextEntry(new JarEntry(jarEntryPrefix + file.getName()));

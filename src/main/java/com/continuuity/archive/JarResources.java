@@ -69,6 +69,7 @@ public final class JarResources {
 
   /**
    * Extracts a archive resource as a blob.
+   *
    * @param name a resource name.
    */
   public byte[] getResource(String name) {
@@ -81,12 +82,14 @@ public final class JarResources {
   private Manifest init(final Location jar) throws IOException {
     File tmpFile = File.createTempFile("archive-", ".jar");
     try {
-      Files.copy(new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return jar.getInputStream();
-        }
-      }, tmpFile);
+      Files.copy(
+                  new InputSupplier<InputStream>() {
+                    @Override
+                    public InputStream getInput() throws IOException {
+                      return jar.getInputStream();
+                    }
+                  }, tmpFile
+      );
       return init(tmpFile);
     } finally {
       tmpFile.delete();
@@ -102,31 +105,31 @@ public final class JarResources {
     try {
       Enumeration<JarEntry> entries = zf.entries();
 
-      while (entries.hasMoreElements()) {
+      while(entries.hasMoreElements()) {
         JarEntry ze = entries.nextElement();
-        if (LOG.isTraceEnabled()) {
+        if(LOG.isTraceEnabled()) {
           LOG.trace(dumpJarEntry(ze));
         }
 
-        if (ze.isDirectory()) {
+        if(ze.isDirectory()) {
           continue;
         }
-        if (ze.getSize() > Integer.MAX_VALUE) {
+        if(ze.getSize() > Integer.MAX_VALUE) {
           throw new IOException("Jar entry is too big to fit in memory.");
         }
 
         InputStream is = zf.getInputStream(ze);
         try {
           byte[] bytes;
-          if (ze.getSize() < 0) {
+          if(ze.getSize() < 0) {
             bytes = ByteStreams.toByteArray(is);
           } else {
-            bytes = new byte[(int)ze.getSize()];
+            bytes = new byte[(int) ze.getSize()];
             ByteStreams.readFully(is, bytes);
           }
           // add to internal resource hashtable
           entryContents.put(ze.getName(), bytes);
-          if (LOG.isTraceEnabled()) {
+          if(LOG.isTraceEnabled()) {
             LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize=" + ze.getCompressedSize());
           }
 
@@ -143,27 +146,28 @@ public final class JarResources {
 
   /**
    * Dumps a zip entry into a string.
+   *
    * @param ze a JarEntry
    */
   private String dumpJarEntry(JarEntry ze) {
-    StringBuilder sb=new StringBuilder();
-    if (ze.isDirectory()) {
+    StringBuilder sb = new StringBuilder();
+    if(ze.isDirectory()) {
       sb.append("d ");
     } else {
       sb.append("f ");
     }
 
-    if (ze.getMethod()==JarEntry.STORED) {
+    if(ze.getMethod() == JarEntry.STORED) {
       sb.append("stored   ");
     } else {
       sb.append("defalted ");
     }
 
     sb.append(ze.getName()).append("\t").append(ze.getSize());
-    if (ze.getMethod()==JarEntry.DEFLATED) {
+    if(ze.getMethod() == JarEntry.DEFLATED) {
       sb.append("/").append(ze.getCompressedSize());
     }
 
-    return (sb.toString());
+    return ( sb.toString() );
   }
 }

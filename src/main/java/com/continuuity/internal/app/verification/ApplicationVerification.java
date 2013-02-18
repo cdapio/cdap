@@ -9,13 +9,13 @@ import com.continuuity.error.Err;
 /**
  * This class is responsible for verifying the Application details of
  * the {@link ApplicationSpecification}.
- *
+ * <p/>
  * <p>
- *   Following are the checks done for Application
- *   <ul>
- *     <li>Application name is an ID</li>
- *     <li>Application contains at one of the following: Flow, Procedure, Batch/MR</li>
- *   </ul>
+ * Following are the checks done for Application
+ * <ul>
+ * <li>Application name is an ID</li>
+ * <li>Application contains at one of the following: Flow, Procedure, Batch/MR</li>
+ * </ul>
  * </p>
  */
 public class ApplicationVerification extends AbstractVerifier implements Verifier<ApplicationSpecification> {

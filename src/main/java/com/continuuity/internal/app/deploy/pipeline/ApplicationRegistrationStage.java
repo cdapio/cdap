@@ -6,9 +6,9 @@ import com.google.common.reflect.TypeToken;
 /**
  *
  */
-public class ProgramRegistrationStage extends AbstractStage<String> {
+public class ApplicationRegistrationStage extends AbstractStage<String> {
 
-  public ProgramRegistrationStage () {
+  public ApplicationRegistrationStage() {
     super(TypeToken.of(String.class));
   }
 

@@ -4,11 +4,12 @@
 
 package com.continuuity.app.deploy;
 
+import com.continuuity.app.program.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  *
  */
-public interface Manager<I,O> {
-  ListenableFuture<O> deploy(I input) throws Exception;
+public interface Manager<I, O> {
+  ListenableFuture<O> deploy(Id.Account id, I input) throws Exception;
 }

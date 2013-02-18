@@ -22,6 +22,7 @@ final class LocalLocation implements Location {
 
   /**
    * Created by the {@link LocalLocationFactory}
+   *
    * @param uri of the file.
    */
   public LocalLocation(URI uri) {
@@ -30,6 +31,7 @@ final class LocalLocation implements Location {
 
   /**
    * Created by the {@link LocalLocationFactory}
+   *
    * @param path to the file.
    */
   public LocalLocation(String path) {
@@ -38,6 +40,7 @@ final class LocalLocation implements Location {
 
   /**
    * Used by the public constructors.
+   *
    * @param file to the file.
    */
   private LocalLocation(File file) {
@@ -46,6 +49,7 @@ final class LocalLocation implements Location {
 
   /**
    * Checks if the this location exists on local file system.
+   *
    * @return true if found; false otherwise.
    * @throws IOException
    */
@@ -83,8 +87,9 @@ final class LocalLocation implements Location {
   /**
    * Appends the child to the current {@link Location} on local filesystem.
    * <p>
-   *   Returns a new instance of Location.
+   * Returns a new instance of Location.
    * </p>
+   *
    * @param child to be appended to this location.
    * @return A new instance of {@link Location}
    * @throws IOException
@@ -129,5 +134,16 @@ final class LocalLocation implements Location {
   @Override
   public void deleteOnExit() throws IOException {
     file.deleteOnExit();
+  }
+
+  /**
+   * Creates the directory named by this abstract pathname, including any necessary
+   * but nonexistent parent directories.
+   *
+   * @return true if and only if the renaming succeeded; false otherwise
+   */
+  @Override
+  public boolean mkdirs() throws IOException {
+    return file.mkdirs();
   }
 }

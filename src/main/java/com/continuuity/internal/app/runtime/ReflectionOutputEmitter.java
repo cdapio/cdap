@@ -21,17 +21,19 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  *
  */
-final class ReflectionOutputEmitter implements ManagedOutputEmitter<Object> {
+public final class ReflectionOutputEmitter implements ManagedOutputEmitter<Object> {
 
   private final QueueProducer queueProducer;
   private final URI queueName;
+  private final byte[] schemaHash;
   private final ReflectionDatumWriter writer;
   private final Queue<EmittedDatum> dataQueue;
   private final AtomicReference<Queue<EmittedDatum>> dataQueueRef;
 
-  ReflectionOutputEmitter(QueueProducer queueProducer, URI queueName, Schema schema) {
+  public ReflectionOutputEmitter(QueueProducer queueProducer, URI queueName, Schema schema) {
     this.queueProducer = queueProducer;
     this.queueName = queueName;
+    this.schemaHash = schema.getSchemaHash().toByteArray();
     this.writer = new ReflectionDatumWriter(schema);
     this.dataQueue = new ConcurrentLinkedQueue<EmittedDatum>();
     this.dataQueueRef = new AtomicReference<Queue<EmittedDatum>>(dataQueue);
@@ -49,9 +51,10 @@ final class ReflectionOutputEmitter implements ManagedOutputEmitter<Object> {
 
     try {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
+      output.write(schemaHash);
       writer.write(data, new BinaryEncoder(output));
       queue.add(new EmittedDatum(queueProducer, queueName, output.toByteArray(), partitions));
-    } catch (IOException e) {
+    } catch(IOException e) {
       // This should never happens.
       throw Throwables.propagate(e);
     }
