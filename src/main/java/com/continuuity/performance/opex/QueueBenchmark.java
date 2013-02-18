@@ -2,14 +2,28 @@ package com.continuuity.performance.opex;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.common.utils.Bytes;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.util.TupleMetaDataAnnotator;
-import com.continuuity.performance.benchmark.*;
+import com.continuuity.performance.benchmark.Agent;
+import com.continuuity.performance.benchmark.AgentGroup;
+import com.continuuity.performance.benchmark.BenchmarkException;
+import com.continuuity.performance.benchmark.BenchmarkRunner;
+import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
-import com.continuuity.common.utils.Bytes;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class QueueBenchmark extends OpexBenchmark {
 
@@ -83,9 +97,8 @@ public class QueueBenchmark extends OpexBenchmark {
   void doDequeue(int consumerId) throws BenchmarkException {
 
     // create a dequeue operation
-    QueueConsumer consumer = new QueueConsumer(consumerId, 1, numConsumers);
-    QueueConfig config = new QueueConfig(
-        QueuePartitioner.PartitionerType.RANDOM, numPendingAcks == 0);
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, numPendingAcks == 0);
+    QueueConsumer consumer = new QueueConsumer(consumerId, 1, numConsumers, config);
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
     // first dequeue

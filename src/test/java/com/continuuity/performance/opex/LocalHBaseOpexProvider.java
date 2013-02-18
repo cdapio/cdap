@@ -152,7 +152,20 @@ public class LocalHBaseOpexProvider extends OpexProvider {
     FSUtils.setVersion(fs, hbaseRootdir);
     return hbaseRootdir;
   }
-
+//  private static void printClasspathURLs() {
+//    for(URL url: ((URLClassLoader)ClassLoader.getSystemClassLoader()).getURLs()) {
+//      String fileName=url.getFile();
+//      File file=new File(fileName);
+//      if (file.isDirectory()) {
+//        for(String fileInDir:file.list()) {
+//          if (fileInDir.contains("logback") || fileInDir.contains("log4j.properties")) {
+//            System.out.println(fileName);
+//            System.out.println(fileInDir);
+//          }
+//        }
+//      }
+//    }
+//  }
   public static void main(String[] args) {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--opex";
