@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
@@ -35,13 +36,13 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
   private final Collection<ProcessSpecification> processSpecs;
-  private final TransactionCallback txCallback;
+  private final Callback txCallback;
   private ExecutorService transactionExecutor;
 
   public FlowletProcessDriver(Flowlet flowlet,
                               BasicFlowletContext flowletContext,
                               Collection<ProcessSpecification> processSpecs,
-                              TransactionCallback txCallback) {
+                              Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.processSpecs = processSpecs;

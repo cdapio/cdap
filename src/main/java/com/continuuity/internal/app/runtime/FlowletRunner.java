@@ -16,7 +16,7 @@ import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.runtime.Cancellable;
+import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.Runner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -37,7 +37,7 @@ import java.util.Map;
 public final class FlowletRunner implements Runner {
 
   @Override
-  public Cancellable run(Program program, String name, Map<String, String> arguments) {
+  public Controller run(Program program, String name, Map<String, String> arguments) {
     try {
       Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
 

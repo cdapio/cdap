@@ -11,5 +11,5 @@ import java.util.Map;
  */
 public interface Runner {
 
-  Cancellable run(Program program, String name, Map<String, String> arguments);
+  Controller run(Program program, String name, Map<String, String> arguments);
 }

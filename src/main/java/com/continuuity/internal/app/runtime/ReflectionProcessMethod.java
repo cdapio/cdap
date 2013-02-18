@@ -146,7 +146,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
               LOGGER.error("OperationException when aborting transaction.", e);
             } finally {
               callback.onFailure(event, inputContext,
-                                 new FailureReason(FailureReason.Type.UNKNOWN, t.getMessage()),
+                                 new FailureReason(FailureReason.Type.USER, t.getMessage()),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             }
           }
