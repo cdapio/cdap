@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
- *
+ *  An {@link Encoder} for binary-format data.
  */
 public final class BinaryEncoder implements Encoder {
 

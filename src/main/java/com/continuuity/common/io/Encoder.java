@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * Interface for encoding data.
  */
 public interface Encoder {
 
