@@ -18,7 +18,7 @@ import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
@@ -195,8 +195,10 @@ public class TTQueueOnVCTable implements TTQueue {
     log("Invalidated " + entryPointer);
   }
 
-  @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+  /**
+   * {@inheritDoc}
+   */
+  @Override  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
     return dequeueInternal(consumer, config, readPointer);
   }

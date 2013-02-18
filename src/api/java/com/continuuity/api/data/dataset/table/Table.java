@@ -91,7 +91,8 @@ public class Table extends DataSet {
    * @param op The write operation
    * @throws OperationException if something goes wrong
    */
-  public void stage(WriteOperation op) {
+  // @Deprecated
+  public void stage(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
@@ -104,7 +105,10 @@ public class Table extends DataSet {
    * execution context (flowlet, query, etc.).
    * @param op The write operation
    * @throws OperationException if something goes wrong
+   *
+   * TODO this method will go away with the new flow system
    */
+  // @Deprecated
   public void exec(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -120,7 +124,10 @@ public class Table extends DataSet {
    * @param op the increment operation, must be on a single column.
    * @return a closure encapsulating the increment operation
    * @throws OperationException if something goes wrong
+   *
+   * TODO this method will go away with the new flow system
    */
+  // @Deprecated
   public Closure closure(Increment op) {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");

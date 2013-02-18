@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -40,13 +40,27 @@ public interface TTQueueTable {
    * and read pointer.
    * @param queueName name of the queue
    * @param consumer
-   * @param config
    * @param readPointer
    * @return dequeue result object
    * @throws OperationException if something goes wrong
    */
-  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer) throws OperationException;
+  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, ReadPointer readPointer)
+                               throws OperationException;
+
+  /**
+   * Attempts to mark and return an entry from the queue for the specified
+   * consumer from the specified group, according to the specified configuration
+   * and read pointer.
+   * @param queueName name of the queue
+   * @param consumer
+   * @param config
+   * @param readPointer
+   * @return dequeue result object
+   * @throws OperationException if something goes wrong
+   * @deprecated
+   */
+//  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+//                               throws OperationException;
 
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
@@ -81,7 +95,8 @@ public interface TTQueueTable {
    * @param consumer
    * @param readPointer
    */
-  void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
+  void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+             throws OperationException;
 
   /**
    * Generates and returns a unique group id for the specified queue.

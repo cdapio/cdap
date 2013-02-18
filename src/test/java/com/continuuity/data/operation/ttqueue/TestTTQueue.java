@@ -6,7 +6,7 @@ import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOrac
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
@@ -86,8 +86,7 @@ public abstract class TestTTQueue {
     QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
-          queue.dequeue(consumerAsync, configAsync,
-              new MemoryReadPointer(timeOracle.getTimestamp()));
+          queue.dequeue(consumerAsync, new MemoryReadPointer(timeOracle.getTimestamp()));
       assertTrue(result.isSuccess());
       assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getValue()),
           Bytes.equals(Bytes.toBytes(i), result.getValue()));
@@ -133,11 +132,11 @@ public abstract class TestTTQueue {
   
   @Test
   public void testEvictOnAck_OneGroup() throws Exception {
-    final boolean singleEntry = true;
     long dirtyVersion = 1;
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+//    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
 
@@ -202,9 +201,9 @@ public abstract class TestTTQueue {
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
-    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1,config);
-    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1,config);
-    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1,config);
+    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1, config);
+    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1, config);
+    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1, config);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
@@ -281,7 +280,7 @@ public abstract class TestTTQueue {
         queue.dequeue(consumer2, dirtyReadPointer).isEmpty());
 
     // consumer 3 still gets entry 9
-    result = queue.dequeue(consumer3, config, dirtyReadPointer);
+    result = queue.dequeue(consumer3, dirtyReadPointer);
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
     queue.ack(result.getEntryPointer(), consumer3, dirtyReadPointer);
@@ -316,7 +315,7 @@ public abstract class TestTTQueue {
     // dequeue it with the single consumer and random partitioner
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
+    DequeueResult result = queue.dequeue(consumer, dirtyReadPointer);
 
     // verify we got something and it's the first value
     assertTrue(result.toString(), result.isSuccess());
@@ -420,7 +419,6 @@ public abstract class TestTTQueue {
 
   @Test
   public void testSingleConsumerMulti() throws Exception {
-    final boolean singleEntry = false;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);
@@ -432,8 +430,7 @@ public abstract class TestTTQueue {
     }
 
     // dequeue it with the single consumer and random partitioner
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, false));
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);
@@ -468,7 +465,7 @@ public abstract class TestTTQueue {
     }
 
     // verify queue is empty (first and fourth not ackd but still dequeued)
-    assertTrue(queue.dequeue(consumer, config, readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumer, readPointer).isEmpty());
 
     // second and third ackd, another ack should fail
     // second and third ackd, another ack should fail
@@ -582,7 +579,7 @@ public abstract class TestTTQueue {
     assertNotNull(resultOneB);
     assertTrue(resultOneB.isSuccess());
     assertTrue(Bytes.equals(resultOneB.getValue(), Bytes.toBytes(1)));
-    DequeueResult resultFourB = queue.dequeue(consumer, config, readPointer);
+    DequeueResult resultFourB = queue.dequeue(consumer, readPointer);
     assertNotNull(resultFourB);
     assertTrue(resultFourB.isSuccess());
     assertTrue(Bytes.equals(resultFourB.getValue(), Bytes.toBytes(4)));
@@ -637,11 +634,11 @@ public abstract class TestTTQueue {
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, multiConfig);
 
     // verify it's the first value
-    DequeueResult resultOne = queue.dequeue(consumer, multiConfig, readPointer);
+    DequeueResult resultOne = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultOne.getValue(), Bytes.toBytes(1)));
 
     // dequeue again without acking, multi mode should get the second value
-    DequeueResult resultTwo = queue.dequeue(consumer, multiConfig, readPointer);
+    DequeueResult resultTwo = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultTwo.getValue(), Bytes.toBytes(2)));
 
     // ack result two
@@ -649,7 +646,7 @@ public abstract class TestTTQueue {
     queue.finalize(resultTwo.getEntryPointer(), consumer, -1);
 
     // dequeue again, multi mode should get the third value
-    DequeueResult resultThree = queue.dequeue(consumer, multiConfig, readPointer);
+    DequeueResult resultThree = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultThree.getValue(), Bytes.toBytes(3)));
 
     // ack result three
@@ -700,16 +697,16 @@ public abstract class TestTTQueue {
     // dequeue with a single consumer and random partitioner
     QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
     QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, singleConfig);
 
     // use single entry first
 
     // verify it's the first value
-    DequeueResult resultOne = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultOne = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultOne.getValue(), Bytes.toBytes(1)));
 
     // dequeue again without acking, singleEntry mode should get the first value again
-    DequeueResult resultOneB = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultOneB = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultOneB.getValue(), Bytes.toBytes(1)));
 
     // ack result one
@@ -717,17 +714,17 @@ public abstract class TestTTQueue {
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);
 
     // dequeue again without acking, get second value
-    DequeueResult resultTwo = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultTwo = queue.dequeue(consumer, readPointer);
     assertTrue(Bytes.equals(resultTwo.getValue(), Bytes.toBytes(2)));
 
     // dequeue should give us back the un-ack'd stuff still
-    DequeueResult resultTwoB = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultTwoB = queue.dequeue(consumer, readPointer);
     assertNotNull(resultTwoB);
     assertTrue("expected 2, actual " + Bytes.toInt(resultTwoB.getValue()),
         Bytes.equals(resultTwoB.getValue(), Bytes.toBytes(2)));
 
     // same thing again
-    DequeueResult resultTwoC = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultTwoC = queue.dequeue(consumer, readPointer);
     assertNotNull(resultTwoC);
     assertTrue(Bytes.equals(resultTwoC.getValue(), Bytes.toBytes(2)));
 
@@ -736,7 +733,7 @@ public abstract class TestTTQueue {
     queue.finalize(resultTwoB.getEntryPointer(), consumer, -1);
 
     // dequeue again, should get four not three as it was invalidated
-    DequeueResult resultFourA = queue.dequeue(consumer, singleConfig, readPointer);
+    DequeueResult resultFourA = queue.dequeue(consumer, readPointer);
     assertNotNull(resultFourA);
     assertTrue("Expected to read 4 but read: " +
           Bytes.toInt(resultFourA.getValue()),
@@ -752,7 +749,7 @@ public abstract class TestTTQueue {
 
     // trying to change group size should also fail
     try {
-      queue.dequeue(new QueueConsumer(0, 0, 2), singleConfig, readPointer);
+      queue.dequeue(new QueueConsumer(0, 0, 2, singleConfig), readPointer);
       fail("dequeue should fail because it changes group size.");
     } catch (OperationException e) {
       // expected
@@ -767,11 +764,11 @@ public abstract class TestTTQueue {
 
     // change modes to multi config and two consumer instances
     QueueConsumer [] consumers = new QueueConsumer[] {
-        new QueueConsumer(0, 0, 2), new QueueConsumer(1, 0, 2)
+        new QueueConsumer(0, 0, 2, multiConfig), new QueueConsumer(1, 0, 2, multiConfig)
     };
 
     // should be empty with new config, not failure
-    assertTrue(queue.dequeue(consumers[0], multiConfig, readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumers[0], readPointer).isEmpty());
 
     // enqueue three entries
     n=3;
@@ -782,24 +779,21 @@ public abstract class TestTTQueue {
     }
 
     // dequeue two with consumer 0, should get 1 and 2
-    DequeueResult resultM0One = queue.dequeue(consumers[0], multiConfig,
-        readPointer);
+    DequeueResult resultM0One = queue.dequeue(consumers[0], readPointer);
     assertTrue(resultM0One.isSuccess());
     assertTrue(Bytes.equals(resultM0One.getValue(), Bytes.toBytes(1)));
-    DequeueResult resultM0Two = queue.dequeue(consumers[0], multiConfig,
-        readPointer);
+    DequeueResult resultM0Two = queue.dequeue(consumers[0], readPointer);
     assertTrue(resultM0Two.isSuccess());
     assertTrue(Bytes.equals(resultM0Two.getValue(), Bytes.toBytes(2)));
 
     // dequeue one with consumer 1, should get 3
-    DequeueResult resultM1Three = queue.dequeue(consumers[1], multiConfig,
-        readPointer);
+    DequeueResult resultM1Three = queue.dequeue(consumers[1], readPointer);
     assertTrue(resultM1Three.isSuccess());
     assertTrue(Bytes.equals(resultM1Three.getValue(), Bytes.toBytes(3)));
 
     // consumer 0 and consumer 1 should see empty now
-    assertTrue(queue.dequeue(consumers[0], multiConfig, readPointer).isEmpty());
-    assertTrue(queue.dequeue(consumers[1], multiConfig, readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumers[0], readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumers[1], readPointer).isEmpty());
 
     // verify consumer 1 can't ack one of consumer 0s entries and vice versa
     try {
@@ -824,12 +818,13 @@ public abstract class TestTTQueue {
     queue.finalize(resultM1Three.getEntryPointer(), consumer, -1);
 
     // both still see empty
-    assertTrue(queue.dequeue(consumers[0], multiConfig, readPointer).isEmpty());
-    assertTrue(queue.dequeue(consumers[1], multiConfig, readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumers[0], readPointer).isEmpty());
+    assertTrue(queue.dequeue(consumers[1], readPointer).isEmpty());
   }
 
   @Test
   public void testSingleConsumerSingleGroup_dynamicReconfig() throws Exception {
+    //Todo: Please update test case regarding queue configuration
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);
@@ -843,15 +838,14 @@ public abstract class TestTTQueue {
     }
 
     // single consumer in this test, switch between single and multi mode
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
     QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, singleConfig);
 
     // use single config first
-    QueueConfig config = singleConfig;
 
     // dequeue and ack the first entry, value = 1
-    DequeueResult result = queue.dequeue(consumer, config, readPointer);
+    DequeueResult result = queue.dequeue(consumer, singleConfig, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1)));
     queue.ack(result.getEntryPointer(), consumer, readPointer);
@@ -859,53 +853,47 @@ public abstract class TestTTQueue {
 
     // changing configuration to multi should work fine, should get next entry
     // value = 2
-    config = multiConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, multiConfig, readPointer);
     DequeueResult value2result = result;
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(2)));
     // but don't ack yet
 
     // changing configuration back to single should not work (pending entry)
-    config = singleConfig;
     try {
-      queue.dequeue(consumer, config, readPointer);
+      queue.dequeue(consumer, singleConfig, readPointer);
       fail("dequeue should fail because it changes to single mode.");
     } catch (OperationException e) {
       // expected
     }
 
     // back to multi should work and give entry value = 3, ack it
-    config = multiConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, multiConfig, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(3)));
     queue.ack(result.getEntryPointer(), consumer, readPointer);
 
     // changing configuration back to single should still not work
-    config = singleConfig;
     try {
-      queue.dequeue(consumer, config, readPointer);
+      queue.dequeue(consumer, singleConfig, readPointer);
       fail("dequeue should fail because it changes to single mode.");
     } catch (OperationException e) {
       // expected
     }
 
     // back to multi should work and give entry value = 4, ack it
-    config = multiConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, multiConfig, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(4)));
     queue.ack(result.getEntryPointer(), consumer, readPointer);
 
     // we still have value=2 pending but dequeue will return empty in multiEntry
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, multiConfig, readPointer);
     assertTrue(result.isEmpty());
 
     // but we can't change config because value=2 still pending
-    config = singleConfig;
     try {
-      queue.dequeue(consumer, config, readPointer);
+      queue.dequeue(consumer, singleConfig, readPointer);
       fail("dequeue should fail because it changes to single mode.");
     } catch (OperationException e) {
       // expected
@@ -915,32 +903,28 @@ public abstract class TestTTQueue {
     queue.ack(value2result.getEntryPointer(), consumer, readPointer);
 
     // nothing pending and empty, can change config
-    config = singleConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, singleConfig, readPointer);
     assertTrue(result.isEmpty());
 
     // enqueue twice, dequeue/ack once
     queue.enqueue(Bytes.toBytes(5), null, version);
     queue.enqueue(Bytes.toBytes(6), null, version);
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, singleConfig, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(5)));
     queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // change config and dequeue
-    config = multiConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, multiConfig, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(6)));
     queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // nothing pending and empty, can change config
-    config = singleConfig;
-    result = queue.dequeue(consumer, config, readPointer);
+    result = queue.dequeue(consumer, singleConfig, readPointer);
     assertTrue(result.isEmpty());
-
   }
 
   @Test
@@ -959,13 +943,12 @@ public abstract class TestTTQueue {
     // we want to verify at the end of the test we acked every entry
     Set<Integer> acked = new TreeSet<Integer>();
 
-    // two consumers with a hash partitioner, both single mode
-    QueueConsumer consumer1 = new QueueConsumer(0, 0, 2);
-    QueueConsumer consumer2 = new QueueConsumer(1, 0, 2);
-    PartitionerType hashPartitionerType = PartitionerType.HASH_ON_VALUE;
-
     // use multi config
+    PartitionerType hashPartitionerType = PartitionerType.HASH_ON_VALUE;
     QueueConfig config = new QueueConfig(hashPartitionerType, false);
+    // two consumers with a hash partitioner, both single mode
+    QueueConsumer consumer1 = new QueueConsumer(0, 0, 2, config);
+    QueueConsumer consumer2 = new QueueConsumer(1, 0, 2, config);
 
     // dequeue all entries for consumer 1 but only ack until the first hole
     boolean ack = true;
@@ -973,7 +956,7 @@ public abstract class TestTTQueue {
     Map<Integer,QueueEntryPointer> consumer1unacked =
         new TreeMap<Integer,QueueEntryPointer>();
     while (true) {
-      DequeueResult result = queue.dequeue(consumer1, config, readPointer);
+      DequeueResult result = queue.dequeue(consumer1, readPointer);
       if (result.isEmpty()) break;
       assertTrue(result.isSuccess());
       int value = Bytes.toInt(result.getValue());
@@ -995,7 +978,7 @@ public abstract class TestTTQueue {
     // we should not be able to reconfigure (try to introduce consumer 3)
     QueueConsumer consumer3 = new QueueConsumer(2, 0, 3, config);
     try {
-      queue.dequeue(consumer3, config, readPointer);
+      queue.dequeue(consumer3, readPointer);
       fail("dequeue should fail because it changes group size.");
     } catch (OperationException e) {
       // expected
@@ -1011,7 +994,7 @@ public abstract class TestTTQueue {
     }
 
     // now we can reconfigure to 3 consumers
-    DequeueResult result = queue.dequeue(consumer3, config, readPointer);
+    DequeueResult result = queue.dequeue(consumer3, readPointer);
 
     // dequeue/ack all entries with consumer 3
     while (true) {
@@ -1021,14 +1004,14 @@ public abstract class TestTTQueue {
       queue.ack(result.getEntryPointer(), consumer3, readPointer);
       queue.finalize(result.getEntryPointer(), consumer3, -1);
       assertTrue(acked.add(value));
-      result = queue.dequeue(consumer3, config, readPointer);
+      result = queue.dequeue(consumer3, readPointer);
     }
 
     // reconfigure again back to 2 and dequeue everything
     Map<Integer,QueueEntryPointer> consumer2unacked =
         new TreeMap<Integer,QueueEntryPointer>();
     while (true) {
-      result = queue.dequeue(consumer2, config, readPointer);
+      result = queue.dequeue(consumer2, readPointer);
       if (result.isEmpty()) break;
       assertTrue(result.isSuccess());
       consumer2unacked.put(Bytes.toInt(result.getValue()),
@@ -1036,9 +1019,9 @@ public abstract class TestTTQueue {
     }
 
     // should not be able to introduced consumer 4 (pending entries from 2)
-    QueueConsumer consumer4 = new QueueConsumer(3, 0, 4);
+    QueueConsumer consumer4 = new QueueConsumer(3, 0, 4, config);
     try {
-      queue.dequeue(consumer4, config, readPointer);
+      queue.dequeue(consumer4, readPointer);
       fail("dequeue should fail because it changes group size.");
     } catch (OperationException e) {
       // expected
@@ -1054,7 +1037,7 @@ public abstract class TestTTQueue {
     }
 
     // now introduce consumer 4, should be valid but empty
-    result = queue.dequeue(consumer4, config, readPointer);
+    result = queue.dequeue(consumer4, readPointer);
     assertTrue(result.isEmpty());
 
     // size of set should be equal to number of entries
@@ -1063,7 +1046,6 @@ public abstract class TestTTQueue {
 
   @Test
   public void testSingleConsumerThreaded() throws Exception {
-    final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);
@@ -1073,10 +1055,10 @@ public abstract class TestTTQueue {
 
 
     // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, singleEntry));
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true));
 
     // spawn a thread to dequeue
-    QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, PartitionerType.RANDOM, singleEntry, readPointer);
+    QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, readPointer);
     dequeuer.start();
 
     // dequeuer should be empty
@@ -1161,8 +1143,8 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
-    } else if (queue instanceof TTQueueAbstractOnVCTable) {
-      dequeueReturns = ((TTQueueAbstractOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueNewOnVCTable) {
+      dequeueReturns = ((TTQueueNewOnVCTable)queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1170,8 +1152,8 @@ public abstract class TestTTQueue {
     final int n = getNumIterations();
 
     // Create and start a thread that dequeues in a loop
-    final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     final QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
@@ -1182,7 +1164,7 @@ public abstract class TestTTQueue {
         while (lastSuccess || !stop.get()) {
           DequeueResult result;
           try {
-            result = queue.dequeue(consumer, config, readPointer);
+            result = queue.dequeue(consumer, readPointer);
           } catch (OperationException e) {
             System.out.println("DequeuePayload failed! " + e.getMessage());
             return;
@@ -1243,7 +1225,6 @@ public abstract class TestTTQueue {
 
   @Test
   public void testMultiConsumerMultiGroup() throws Exception {
-    final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);
@@ -1252,8 +1233,8 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
-    } else if (queue instanceof TTQueueAbstractOnVCTable) {
-      dequeueReturns = ((TTQueueAbstractOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueNewOnVCTable) {
+      dequeueReturns = ((TTQueueNewOnVCTable)queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1264,7 +1245,7 @@ public abstract class TestTTQueue {
     for (int i=0; i<n; i++) {
       consumers[i] = new QueueConsumer[n];
       for (int j=0; j<n; j++) {
-        consumers[i][j] = new QueueConsumer(j, i, n);
+        consumers[i][j] = new QueueConsumer(j, i, n, new QueueConfig(PartitionerType.MODULO_LONG_VALUE, true));
       }
     }
 
@@ -1274,17 +1255,13 @@ public abstract class TestTTQueue {
       values[i] = Bytes.toBytes((long)i);
     }
 
-    // Make a partitioner that just converts value to long and modulos it
-    PartitionerType partitionerType = PartitionerType.MODULO_LONG_VALUE;
-    QueueConfig config = new QueueConfig(partitionerType, singleEntry);
 
     // Start a dequeuer for every consumer!
     QueueDequeuer [][] dequeuers = new QueueDequeuer[n][];
     for (int i=0; i<n; i++) {
       dequeuers[i] = new QueueDequeuer[n];
       for (int j=0; j<n; j++) {
-        dequeuers[i][j] = new QueueDequeuer(queue, consumers[i][j],
-            partitionerType, singleEntry, readPointer);
+        dequeuers[i][j] = new QueueDequeuer(queue, consumers[i][j], readPointer);
         dequeuers[i][j].start();
         assertTrue(dequeuers[i][j].triggerdequeue());
       }
@@ -1357,8 +1334,7 @@ public abstract class TestTTQueue {
     // directly dequeueping should also yield the same result
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        DequeueResult result = queue.dequeue(consumers[i][j], config,
-            readPointer);
+        DequeueResult result = queue.dequeue(consumers[i][j], readPointer);
         assertNotNull(result);
         assertTrue(result.isSuccess());
         assertEquals(j, Bytes.toLong(result.getValue()));
@@ -1372,8 +1348,7 @@ public abstract class TestTTQueue {
     // ack it for groups(0,1) consumers(2,3)
     for (int i=0; i<n/2; i++) {
       for (int j=n/2; j<n; j++) {
-        DequeueResult result = queue.dequeue(consumers[i][j], config,
-            readPointer);
+        DequeueResult result = queue.dequeue(consumers[i][j], readPointer);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getValue()));
         queue.ack(result.getEntryPointer(), consumers[i][j], readPointer);
@@ -1408,8 +1383,7 @@ public abstract class TestTTQueue {
           assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
         } else {
           System.out.println("dequeue: i=" + i + ", j=" + j);
-          DequeueResult result = queue.dequeue(consumers[i][j], config,
-              readPointer);
+          DequeueResult result = queue.dequeue(consumers[i][j], readPointer);
           assertNotNull(result);
           assertEquals(j, Bytes.toLong(result.getValue()));
           queue.ack(result.getEntryPointer(), consumers[i][j], readPointer);
@@ -1528,7 +1502,6 @@ public abstract class TestTTQueue {
 
     private final TTQueue queue;
     private final QueueConsumer consumer;
-    private final QueueConfig config;
     private final ReadPointer readPointer;
 
     private final AtomicBoolean dequeueTrigger = new AtomicBoolean(false);
@@ -1541,12 +1514,9 @@ public abstract class TestTTQueue {
 
     private boolean keepgoing = true;
 
-    QueueDequeuer(TTQueue queue, QueueConsumer consumer,
-        PartitionerType partitionerType, boolean singleEntry,
-        ReadPointer readPointer) {
+    QueueDequeuer(TTQueue queue, QueueConsumer consumer, ReadPointer readPointer) {
       this.queue = queue;
       this.consumer = consumer;
-      this.config = new QueueConfig(partitionerType, singleEntry);
       this.readPointer = readPointer;
       this.result = null;
     }
@@ -1615,8 +1585,7 @@ public abstract class TestTTQueue {
         DequeueResult result = null;
         while ((result == null || result.isEmpty()) && this.keepgoing) {
           try {
-            result = this.queue.dequeue(this.consumer, this.config,
-                this.readPointer);
+            result = this.queue.dequeue(this.consumer, this.readPointer);
           } catch (OperationException e) {
             fail("DequeuePayload failed with exception: " + e.getMessage());
           }
@@ -1626,5 +1595,5 @@ public abstract class TestTTQueue {
         this.dequeues.incrementAndGet();
       }
     }
-  }
+  } // end of class QueueDequeuer
 }

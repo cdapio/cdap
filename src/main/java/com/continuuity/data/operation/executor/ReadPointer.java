@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2012 Continuuity, Inc.
  */
-package com.continuuity.data.table;
+package com.continuuity.data.operation.executor;
 
 /**
  * Interface that defines a read pointer by exposing a method to determine

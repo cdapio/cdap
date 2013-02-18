@@ -8,6 +8,9 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.SmartTransactionAgent;
+import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -30,12 +33,19 @@ import java.util.List;
  */
 public class DataSetTestBase {
 
+  private static OperationExecutor opex;
   private static DataFabric fabric;
+
   private static SimpleBatchCollector collector = new SimpleBatchCollector();
   private static BatchCollectionClient collectionClient = new SimpleBatchCollectionClient();
 
+  private static TransactionAgent agent;
+  private static TransactionProxy proxy = new TransactionProxy();
+
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
+
+  public static boolean useProxy = false;
 
   /**
    * Sets up the in-memory operation executor and the data fabric
@@ -46,9 +56,9 @@ public class DataSetTestBase {
     final Injector injector =
       // Guice.createInjector(new DataFabricModules().getInMemoryModules());
       Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
-    OperationExecutor executor = injector.getInstance(OperationExecutor.class);
+    opex = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(executor, OperationContext.DEFAULT);
+    fabric = new DataFabricImpl(opex, OperationContext.DEFAULT);
   }
 
   /**
@@ -70,7 +80,11 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, collectionClient, null);
+    if (useProxy) {
+      instantiator = new DataSetInstantiator(fabric, proxy, null);
+    } else {
+      instantiator = new DataSetInstantiator(fabric, collectionClient, null);
+    }
     instantiator.setDataSets(specs);
   }
 
@@ -80,9 +94,18 @@ public class DataSetTestBase {
    * and all data sets configured through the instantiator (@see
    * #setupInstantiator) will start using that collector immediately.
    */
-  public static void newCollector() {
-    collector = new SimpleBatchCollector();
-    collectionClient.setCollector(collector);
+  public static void newCollector() throws OperationException {
+    if (useProxy) {
+      newTransaction();
+    } else {
+      collector = new SimpleBatchCollector();
+      collectionClient.setCollector(collector);
+    }
+  }
+  public static void newTransaction() throws OperationException {
+    agent = new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+    agent.start();
+    proxy.setTransactionAgent(agent);
   }
 
   /**
@@ -93,10 +116,21 @@ public class DataSetTestBase {
    * @throws OperationException if the transaction fails for any reason
    */
   public static void executeCollector() throws OperationException {
+    if (useProxy) {
+      commitTransaction();
+    } else {
+      try {
+        fabric.execute(collector.getWrites());
+      } finally {
+        newCollector();
+      }
+    }
+  }
+  public static void commitTransaction() throws OperationException {
     try {
-      fabric.execute(collector.getWrites());
+      agent.finish();
     } finally {
-      newCollector();
+      newTransaction();
     }
   }
 }

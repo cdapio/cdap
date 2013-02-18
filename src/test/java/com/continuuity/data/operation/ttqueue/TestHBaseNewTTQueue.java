@@ -47,7 +47,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    return new TTQueueAbstractOnVCTable(
+    return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.timeOracle, conf);
@@ -58,14 +58,14 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     return 100;
   }
 
-  // Tests that do not work on HBaseFifoTTQueue
+  // Tests that do not work on HBaseNewTTQueue
 
   /**
    * Currently not working.  Will be fixed in ENG-???.
    */
-  @Override @Test @Ignore
-  public void testEvictOnAck_OneGroup() {}
-
+//  @Override @Test @Ignore
+//  public void testEvictOnAck_OneGroup() {}
+//
   @Override @Test @Ignore
   public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() {}
 
@@ -80,16 +80,16 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
   @Override @Test @Ignore
   public void testMultiConsumerSingleGroup_dynamicReconfig() {}
-
-  @Override @Test @Ignore
-  public void testSingleConsumerMulti() {}
-
-  @Override @Test @Ignore
-  public void testMultipleConsumerMultiTimeouts() {}
-
-  @Override @Test @Ignore
-  public void testMultiConsumerMultiGroup() {}
-
-  @Override @Test @Ignore
-  public void testEvictOnAck_ThreeGroups() {}
+//
+//  @Override @Test @Ignore
+//  public void testSingleConsumerMulti() {}
+//
+//  @Override @Test @Ignore
+//  public void testMultipleConsumerMultiTimeouts() {}
+//
+//  @Override @Test @Ignore
+//  public void testMultiConsumerMultiGroup() {}
+//
+//  @Override @Test @Ignore
+//  public void testEvictOnAck_ThreeGroups() {}
 }

@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;

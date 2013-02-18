@@ -11,7 +11,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-public class BenchHBaseFifoTTqueue extends BenchTTQueue {
+public class BenchHBaseNewTTqueue extends BenchTTQueue {
 
   private static Injector injector;
 
@@ -41,7 +41,7 @@ public class BenchHBaseFifoTTqueue extends BenchTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
-    return new TTQueueAbstractOnVCTable(
+    return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),
         TestTTQueue.timeOracle, conf);

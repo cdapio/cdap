@@ -3,6 +3,7 @@ package com.continuuity.data.table;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import java.util.Map;
  * columns (column-oriented).  Columns are sorted in ascending binary order.
  *
  * Versioned implies that every row+column can have multiple versions and these
- * can be used with a {@link ReadPointer} to provide visibility constraint
+ * can be used with a {@link com.continuuity.data.operation.executor.ReadPointer} to provide visibility constraint
  * possibilities (ie. for use with a transactional system).
  */
 public interface VersionedColumnarTable {

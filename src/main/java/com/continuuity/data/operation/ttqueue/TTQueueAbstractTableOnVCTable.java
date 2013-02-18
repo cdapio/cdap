@@ -2,9 +2,8 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.table.ReadPointer;
-import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -41,10 +40,16 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
     getQueue(queueName).invalidate(entryPointer, writeVersion);
   }
 
+//  @Override
+//  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
+//      QueueConfig config, ReadPointer readPointer) throws OperationException {
+//    return getQueue(queueName).dequeue(consumer, config, readPointer);
+//  }
+
   @Override
-  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer) throws OperationException {
-    return getQueue(queueName).dequeue(consumer, config, readPointer);
+  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, ReadPointer readPointer)
+                               throws OperationException {
+    return getQueue(queueName).dequeue(consumer, readPointer);
   }
 
   @Override

@@ -7,13 +7,12 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
-import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayInputStream;
@@ -24,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  *
  */
-public class TTQueueAbstractOnVCTable implements TTQueue {
+public class TTQueueNewOnVCTable implements TTQueue {
 
   protected final VersionedColumnarTable table;
   private final byte [] queueName;
@@ -82,8 +81,8 @@ public class TTQueueAbstractOnVCTable implements TTQueue {
 
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
 
-  protected TTQueueAbstractOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
-                                     final CConfiguration conf) {
+  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
+                                final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
     this.timeOracle = timeOracle;
@@ -195,7 +194,9 @@ public class TTQueueAbstractOnVCTable implements TTQueue {
     this.table.delete(rowName, ENTRY_DATA, cleanWriteVersion);
     log("Invalidated " + entryPointer);
   }
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
@@ -292,7 +293,7 @@ public class TTQueueAbstractOnVCTable implements TTQueue {
     throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-
+    // TODO: 3. Use Transaction.getTransactionId instead ReadPointer
     QueuePartitioner partitioner=consumer.getQueueConfig().getPartitionerType().getPartitioner();
 
     if (partitioner.isDisjoint()) {

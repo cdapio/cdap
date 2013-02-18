@@ -6,7 +6,6 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.data.table.ReadPointer;
 import com.continuuity.hbase.ttqueue.HBQAck;
 import com.continuuity.hbase.ttqueue.HBQDequeue;
 import com.continuuity.hbase.ttqueue.HBQDequeueResult;
@@ -16,6 +15,7 @@ import com.continuuity.hbase.ttqueue.HBQExpirationConfig;
 import com.continuuity.hbase.ttqueue.HBQFinalize;
 import com.continuuity.hbase.ttqueue.HBQInvalidate;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
 import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.continuuity.hbase.ttqueue.HBQShardConfig;
@@ -104,6 +104,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {

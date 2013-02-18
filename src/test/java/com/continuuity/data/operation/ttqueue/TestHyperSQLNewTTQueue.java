@@ -2,20 +2,17 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
+
 import java.util.Random;
 
 @Ignore
-public class TestHyperSQLFifoTTQueue extends TestTTQueue {
+public class TestHyperSQLNewTTQueue extends TestTTQueue {
 
   private static final Injector injector = Guice.createInjector (
     new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
@@ -29,7 +26,7 @@ public class TestHyperSQLFifoTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    return new TTQueueAbstractOnVCTable(
+    return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("HyperSQLTTQueueFifoOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.timeOracle, conf);
