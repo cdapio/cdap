@@ -7,7 +7,7 @@ package com.continuuity.internal.app.program;
 /**
  * Constants used to serialize objects when storing into MDSBasedStore
  */
-public final class FieldTypes {
+final class FieldTypes {
   public static class ProgramRun {
     public static final String ENTRY_TYPE = "run";
     public static final String PROGRAM = "prg";

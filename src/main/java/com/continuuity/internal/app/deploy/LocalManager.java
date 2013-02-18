@@ -6,9 +6,11 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.program.Id;
+import com.continuuity.app.program.Store;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
@@ -24,12 +26,15 @@ public class LocalManager implements Manager<Location, String> {
   private final PipelineFactory pipelineFactory;
   private final LocationFactory locationFactory;
   private final Configuration configuration;
+  private final Store store;
 
   @Inject
-  public LocalManager(Configuration configuration, PipelineFactory pipelineFactory, LocationFactory locationFactory) {
+  public LocalManager(Configuration configuration, PipelineFactory pipelineFactory,
+                      LocationFactory locationFactory, Store store) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
+    this.store = store;
   }
 
   @Override
@@ -37,7 +42,8 @@ public class LocalManager implements Manager<Location, String> {
     Pipeline<String> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
-    //pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
+    pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
+    pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);
   }
 }
