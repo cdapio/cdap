@@ -367,12 +367,10 @@ public class RestHandler extends NettyRestHandler {
           String queueURI = FlowStream.buildStreamURI(
               Constants.defaultAccount, destination).toString();
           // 0th instance of group 'id' of size 1
-          QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+          QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+          QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
           // singleEntry = true means we must ack before we can see the next entry
-          QueueConfig queueConfig =
-              new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-          QueueDequeue dequeue = new QueueDequeue(
-              queueURI.getBytes(), queueConsumer, queueConfig);
+          QueueDequeue dequeue = new QueueDequeue(queueURI.getBytes(), queueConsumer, queueConfig);
           DequeueResult result;
           try {
             result = this.collector.getExecutor().
