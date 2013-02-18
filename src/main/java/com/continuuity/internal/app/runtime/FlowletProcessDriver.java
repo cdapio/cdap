@@ -16,9 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.PriorityQueue;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class responsible invoking process methods one by one and commit the post process transaction.
@@ -37,7 +41,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final BasicFlowletContext flowletContext;
   private final Collection<ProcessSpecification> processSpecs;
   private final Callback txCallback;
+  private final AtomicReference<CountDownLatch> suspension;
+  private final CyclicBarrier suspendBarrier;
   private ExecutorService transactionExecutor;
+  private Thread runnerThread;
 
   public FlowletProcessDriver(Flowlet flowlet,
                               BasicFlowletContext flowletContext,
@@ -47,6 +54,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     this.flowletContext = flowletContext;
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
+
+    this.suspension = new AtomicReference<CountDownLatch>();
+    this.suspendBarrier = new CyclicBarrier(2);
   }
 
   @Override
@@ -60,6 +70,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     } else {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
+    runnerThread = Thread.currentThread();
   }
 
   @Override
@@ -69,11 +80,36 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    // TODO
+    runnerThread.interrupt();
+  }
+
+  /**
+   * Suspend the running of flowlet. This method will block until the flowlet running thread actually suspended.
+   */
+  public void suspend() {
+    if (suspension.compareAndSet(null, new CountDownLatch(1))) {
+      try {
+        suspendBarrier.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (BrokenBarrierException e) {
+        LOGGER.error("Exception during suspend.", e);
+      }
+    }
+  }
+
+  /**
+   * Resume the running of flowlet
+   */
+  public void resume() {
+    CountDownLatch latch = suspension.getAndSet(null);
+    if (latch != null) {
+      latch.countDown();
+    }
   }
 
   @Override
-  protected void run() throws Exception {
+  protected void run() {
     initFlowlet();
 
     // Insert all into priority queue, ordered by next deque time.
@@ -83,18 +119,33 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
 
     while (isRunning()) {
-      // TODO: Suspend Flowlet
+      CountDownLatch suspendLatch = suspension.get();
+      if (suspendLatch != null) {
+        try {
+          suspendBarrier.await();
+          suspendLatch.await();
+        } catch (Exception e) {
+          // Simply continue and let the isRunning() check to deal with that.
+          continue;
+        }
+      }
+
       long startTime = System.nanoTime();
       ProcessEntry entry = processQueue.poll();
 
       long waitTime = entry.nextDeque - startTime;
       if (waitTime > 0) {
-        TimeUnit.NANOSECONDS.sleep(waitTime);
+        try {
+          TimeUnit.NANOSECONDS.sleep(waitTime);
+        } catch (InterruptedException e) {
+          // Triggered by shutdown or suspend, simply continue and let the isRunning() check to deal with that.
+          continue;
+        }
       }
       entry.nextDeque = 0;
-      InputDatum input = entry.processSpec.getQueueReader().dequeue();
 
       try {
+        InputDatum input = entry.processSpec.getQueueReader().dequeue();
         if (input.isEmpty()) {
           entry.backOff();
           continue;
@@ -108,6 +159,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         } catch (Throwable t) {
           LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec));
         }
+      } catch (OperationException e) {
+        LOGGER.error("Queue operation failure", e);
+        // TODO: Should it be keep retrying? Currently it does.
       } finally {
         // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
         if (!entry.isRetry()) {
