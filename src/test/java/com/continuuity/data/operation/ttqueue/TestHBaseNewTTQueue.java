@@ -63,9 +63,9 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   /**
    * Currently not working.  Will be fixed in ENG-???.
    */
-//  @Override @Test @Ignore
-//  public void testEvictOnAck_OneGroup() {}
-//
+  @Override @Test @Ignore
+  public void testEvictOnAck_OneGroup() {}
+
   @Override @Test @Ignore
   public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() {}
 
@@ -84,12 +84,12 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override @Test @Ignore
   public void testSingleConsumerMulti() {}
 
-//  @Override @Test @Ignore
-//  public void testMultipleConsumerMultiTimeouts() {}
-//
+  @Override @Test @Ignore
+  public void testMultipleConsumerMultiTimeouts() {}
+
 //  @Override @Test @Ignore
 //  public void testMultiConsumerMultiGroup() {}
-//
-//  @Override @Test @Ignore
-//  public void testEvictOnAck_ThreeGroups() {}
+
+  @Override @Test @Ignore
+  public void testEvictOnAck_ThreeGroups() {}
 }
