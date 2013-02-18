@@ -28,33 +28,6 @@ public class Increment implements WriteOperation, ReadOperation {
   private final long [] amounts;
 
   /**
-   * Increments the specified key by the specified amount, in the default table
-   *
-   * This is a key-value operation.
-   *
-   * @param key the row key to increment for
-   * @param amount the amount to increment by
-   */
-  public Increment(final byte [] key, long amount) {
-    this((String)null, key, amount);
-  }
-
-  /**
-   * Increments the specified key by the specified amount in the specified table
-   *
-   * This is a key-value operation.
-   *
-   * @param table the table to increment in
-   * @param key the row key to increment for
-   * @param amount the amount to increment by
-   */
-  public Increment(final String table,
-                   final byte [] key,
-                   long amount) {
-    this(table, key, KV_COL_ARR, new long [] { amount });
-  }
-
-  /**
    * Increments the specified column in the specified row by the specified
    * amount, in the default table
    *
@@ -65,7 +38,7 @@ public class Increment implements WriteOperation, ReadOperation {
    * @param amount the amount to increment by
    */
   public Increment(final byte[] row,
-                   final byte [] column,
+                   final byte[] column,
                    final long amount) {
     this(null, row, column, amount);
   }

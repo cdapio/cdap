@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.List;
 

@@ -23,34 +23,6 @@ public class Write implements WriteOperation {
   private final byte [][] values;
 
   /**
-   * Writes the specified value for the specified key to the default table
-   *
-   * This is a key-value operation.
-   *
-   * @param key the row key to write to
-   * @param value the value to write
-   */
-  public Write(final byte [] key,
-               final byte [] value) {
-    this((String)null, key, value);
-  }
-
-  /**
-   * Writes the specified value for the specified key to the specified table
-   *
-   * This is a key-value operation.
-   *
-   * @param table the table to write to
-   * @param key the row key to write to
-   * @param value the value to write
-   */
-  public Write(final String table,
-               final byte [] key,
-               final byte [] value) {
-    this(table, key, KV_COL_ARR, new byte [][] { value });
-  }
-
-  /**
    * Writes the specified value for the specified column in the specified row
    * to the default table.
    *

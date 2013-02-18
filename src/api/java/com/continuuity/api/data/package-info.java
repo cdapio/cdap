@@ -109,10 +109,7 @@
  * 
  * {@link com.continuuity.data.operation.Read} is used to perform point reads on a
  * single key-value or a discrete set of columns in a single columnar row.
- * 
- * {@link com.continuuity.data.operation.ReadKey} is used to perform a point read on
- * a single key of a stored key-value.
- * 
+ *
  * {@link com.continuuity.data.operation.ReadColumnRange} is used to read a range of
  * columns within a single columnar row.
  * 

@@ -16,19 +16,16 @@ import com.google.inject.Injector;
 public class  TestHBaseOmidTransactionalOperationExecutor
 extends TestOmidTransactionalOperationExecutor {
 
-  private static Injector injector;
-
   private static OmidTransactionalOperationExecutor executor;
 
   @BeforeClass
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
-      executor = (OmidTransactionalOperationExecutor)injector.getInstance(
-          Key.get(OperationExecutor.class,
-              Names.named("DataFabricOperationExecutor")));
+      Injector injector = Guice.createInjector(
+        new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      executor = (OmidTransactionalOperationExecutor) injector.getInstance(
+        Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -53,7 +50,7 @@ extends TestOmidTransactionalOperationExecutor {
   /**
    * Currently not working.  Will be fixed in ENG-420.
    */
-  @Test @Override @Ignore
+  @Test @Ignore @Override
   public void testDeletesCanBeTransacted() throws Exception {}
 
 }

@@ -7,7 +7,6 @@ import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 
@@ -18,19 +17,6 @@ import java.util.Map;
  * This is the abstract base class for data fabric.
  */
 public interface DataFabric {
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.ReadKey} operation.
-   * @param read the operation
-   * @return a result object containing the value that was stored for
-   *      the requested key. If the key is not found, the result will
-   *      be empty and the status will be KEY_NOT_FOUND. If the key is
-   *      found but does not have the key column, then the result is empty
-   *      and the status is COLUMN_NOT_FOUND.
-   * @throws com.continuuity.api.data.OperationException is something goes wrong
-   */
-  public OperationResult<byte[]> read(ReadKey read)
-      throws OperationException;
 
   /**
    * Executes a {@link com.continuuity.data.operation.Read} operation.

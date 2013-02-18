@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -10,11 +10,17 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.google.common.collect.Lists;
@@ -32,32 +38,25 @@ import java.util.Random;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
 
   static OperationContext context = OperationContext.DEFAULT;
 
-  /** Tests Write, Read, ReadKey */
+  /** Tests Write, Read */
   @Test
   public void testWriteThenRead() throws Exception {
-    final byte[] key = "tWTRkey".getBytes();
     final byte[] key1 = "tWTRkey1".getBytes();
     final byte[] key2 = "tWTRkey2".getBytes();
-    byte[] value = { 'v', 'a', 'l', 'u', 'e' };
 
-    // write a key/value with remote
-    Write write = new Write(key, value);
-    remote.execute(context, write);
-    // read back with remote and compare
-    ReadKey readKey = new ReadKey(key);
-    Assert.assertArrayEquals(value,
-        remote.execute(context, readKey).getValue());
-
-    // write one columns with remote
-    write = new Write(key1, "col1".getBytes(), "val1".getBytes());
-    remote.execute(context, write);
+    // write one column with remote
+    Write write = new Write(key1, "col1".getBytes(), "val1".getBytes());
+    remote.commit(context, write);
     // read back with remote and compare
     Read read = new Read(key1, "col1".getBytes());
     Map<byte[], byte[]> columns = remote.execute(context, read).getValue();
@@ -68,7 +67,7 @@ public abstract class OperationExecutorServiceTest extends
     write = new Write(key2,
         new byte[][] { "col2".getBytes(), "col3".getBytes() },
         new byte[][] { "val2".getBytes(), "val3".getBytes() });
-    remote.execute(context, write);
+    remote.commit(context, write);
     // read back with remote and compare
     read = new Read(key2,
         new byte[][] { "col2".getBytes(), "col3".getBytes() });
@@ -78,36 +77,38 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("val3".getBytes(), columns.get("col3".getBytes()));
   }
 
-  /** Tests Increment, Read, ReadKey */
+  /** Tests Increment, Read */
   @Test
   public void testIncrementThenRead() throws Exception {
     final byte[] count = "tITRcount".getBytes();
+    final byte[] col = { 'c', 'o', 'l' };
 
-    // increment a key/value with remote
-    Increment increment = new Increment(count, 1);
-    remote.execute(context, increment);
+    // increment one column with remote
+    Increment increment = new Increment(count, col, 1);
+    remote.increment(context, increment);
     // read back with remote and verify it is 1
-    ReadKey readKey = new ReadKey(count);
-    byte[] value = remote.execute(context, readKey).getValue();
-    Assert.assertNotNull(value);
+    Read read = new Read(count, col);
+    Map<byte[], byte[]> result = remote.execute(context, read).getValue();
+    Assert.assertNotNull(result);
+    byte[] value = result.get(col);
     Assert.assertEquals(8, value.length);
     Assert.assertEquals(1L, ByteBuffer.wrap(value).asLongBuffer().get());
 
     // increment two columns with remote
     increment = new Increment(count,
-        new byte[][] { "a".getBytes(), Operation.KV_COL },
+        new byte[][] { "a".getBytes(), col },
         new long[] { 5L, 10L } );
-    remote.execute(context, increment);
+    remote.increment(context, increment);
     // read back with remote and verify values
-    Read read = new Read(count,
-        new byte[][] { "a".getBytes(), Operation.KV_COL });
+    read = new Read(count,
+        new byte[][] { "a".getBytes(), col });
     Map<byte[], byte[]> columns = remote.execute(context, read).getValue();
     Assert.assertNotNull(columns);
     Assert.assertEquals(2, columns.size());
     Assert.assertEquals(5L,
         ByteBuffer.wrap(columns.get("a".getBytes())).asLongBuffer().get());
     Assert.assertEquals(11L,
-        ByteBuffer.wrap(columns.get(Operation.KV_COL)).asLongBuffer().get());
+        ByteBuffer.wrap(columns.get(col)).asLongBuffer().get());
   }
 
   /** Tests read for non-existent key */
@@ -116,21 +117,18 @@ public abstract class OperationExecutorServiceTest extends
 
     // this is the key we will use
     final byte[] key = "tDTRkey".getBytes();
+    final byte[] col = "col".getBytes();
 
     // write a key/value
-    Write write = new Write(key, "here".getBytes());
-    remote.execute(context, write);
+    Write write = new Write(key, col, "here".getBytes());
+    remote.commit(context, write);
 
     // delete the row with remote
-    Delete delete = new Delete(key);
-    remote.execute(context, delete);
+    Delete delete = new Delete(key, col);
+    remote.commit(context, delete);
 
     // read back key with remote and verify null
-    ReadKey readKey = new ReadKey(key);
-    Assert.assertTrue(remote.execute(context, readKey).isEmpty());
-
-    // read back row with remote and verify null
-    Read read = new Read(key);
+    Read read = new Read(key, col);
     Assert.assertTrue(remote.execute(context, read).isEmpty());
 
     // read back one column and verify null
@@ -160,7 +158,7 @@ public abstract class OperationExecutorServiceTest extends
     Write write = new Write(row,
         new byte[][] { "a".getBytes(), "b".getBytes(), "c".getBytes() },
         new byte[][] { "1".getBytes(), "2".getBytes(), "3".getBytes() });
-    remote.execute(context, write);
+    remote.commit(context, write);
 
     // read back all columns with remote (from "" ... "")
     ReadColumnRange readColumnRange =
@@ -222,7 +220,7 @@ public abstract class OperationExecutorServiceTest extends
     // delete two of the columns with remote
     Delete delete = new Delete(row,
         new byte[][] { "a".getBytes(), "c".getBytes() });
-    remote.execute(context, delete);
+    remote.commit(context, delete);
 
     // read back the column range again with remote
     readColumnRange = // reads everything
@@ -244,12 +242,12 @@ public abstract class OperationExecutorServiceTest extends
 
     // write a column with a value
     Write write = new Write(key, "x".getBytes(), "1".getBytes());
-    remote.execute(context, write);
+    remote.commit(context, write);
 
     // compareAndSwap with actual value
     CompareAndSwap compareAndSwap = new CompareAndSwap(key,
         "x".getBytes(), "1".getBytes(), "2".getBytes());
-    remote.execute(context, compareAndSwap);
+    remote.commit(context, compareAndSwap);
 
     // read back value and verify it swapped
     Read read = new Read(key, "x".getBytes());
@@ -262,7 +260,7 @@ public abstract class OperationExecutorServiceTest extends
     compareAndSwap = new CompareAndSwap(key,
         "x".getBytes(), "1".getBytes(), "3".getBytes());
     try {
-      remote.execute(context, compareAndSwap);
+      remote.commit(context, compareAndSwap);
       Assert.fail("Expected compare-and-swap to fail.");
     } catch (OperationException e) {
       //expected
@@ -276,7 +274,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // delete the row
     Delete delete = new Delete(key, "x".getBytes());
-    remote.execute(context, delete);
+    remote.commit(context, delete);
 
     // verify the row is not there any more, actually the read will return
     // a map with an entry for x, but with a null value
@@ -286,7 +284,7 @@ public abstract class OperationExecutorServiceTest extends
     compareAndSwap = new CompareAndSwap(key,
         "x".getBytes(), "2".getBytes(), "3".getBytes());
     try {
-      remote.execute(context, compareAndSwap);
+      remote.commit(context, compareAndSwap);
       Assert.fail("Expected compare-and-swap to fail.");
     } catch (OperationException e) {
       //expected
@@ -310,15 +308,15 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertEquals(0, keys.size());
     // write a batch, some k/v, some single column, some multi-column
     List<WriteOperation> writes = Lists.newArrayList();
-    writes.add(new Write("a".getBytes(), "1".getBytes()));
-    writes.add(new Write("b".getBytes(), "2".getBytes()));
-    writes.add(new Write("c".getBytes(), "3".getBytes()));
+    writes.add(new Write("a".getBytes(), "c".getBytes(), "1".getBytes()));
+    writes.add(new Write("b".getBytes(), "c".getBytes(), "2".getBytes()));
+    writes.add(new Write("c".getBytes(), "c".getBytes(), "3".getBytes()));
     writes.add(new Write("d".getBytes(), "x".getBytes(), "4".getBytes()));
     writes.add(new Write("e".getBytes(), "y".getBytes(), "5".getBytes()));
     writes.add(new Write("f".getBytes(), "z".getBytes(), "6".getBytes()));
     writes.add(new Write("g".getBytes(), new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
                                          new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
-    remote.execute(context, writes);
+    remote.commit(context, writes);
 
     // readAllKeys with > number of writes
     readAllKeys = new ReadAllKeys(0, 10);
@@ -351,6 +349,8 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertEquals(0, keys.size());
   }
 
+  static final byte[] kvcol = Operation.KV_COL;
+
   /** test batch, one that succeeds and one that fails */
   @Test
   public void testBatchSuccessAndFailure() throws Exception {
@@ -363,13 +363,13 @@ public abstract class OperationExecutorServiceTest extends
     final byte[] qq = "tBSAF.qq".getBytes();
 
     // write a row for deletion within the batch, and one compareAndSwap
-    Write write = new Write(keyB, "0".getBytes());
-    remote.execute(context, write);
-    write = new Write(keyD, "0".getBytes());
-    remote.execute(context, write);
+    Write write = new Write(keyB, kvcol, "0".getBytes());
+    remote.commit(context, write);
+    write = new Write(keyD, kvcol, "0".getBytes());
+    remote.commit(context, write);
     // insert two elements into a queue, and dequeue one to get an ack
-    remote.execute(context, new QueueEnqueue(q, "0".getBytes()));
-    remote.execute(context, new QueueEnqueue(q, "1".getBytes()));
+    remote.commit(context, new QueueEnqueue(q, "0".getBytes()));
+    remote.commit(context, new QueueEnqueue(q, "1".getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
     QueueConfig config =
         new QueueConfig(PartitionerType.RANDOM, true);
@@ -382,9 +382,9 @@ public abstract class OperationExecutorServiceTest extends
 
     // create a batch of write, delete, increment, enqueue, ack, compareAndSwap
     List<WriteOperation> writes = Lists.newArrayList();
-    writes.add(new Write(keyA, "1".getBytes()));
-    writes.add(new Delete(keyB));
-    writes.add(new Increment(keyC, 5));
+    writes.add(new Write(keyA, kvcol, "1".getBytes()));
+    writes.add(new Delete(keyB, kvcol));
+    writes.add(new Increment(keyC, kvcol, 5));
     writes.add(new QueueEnqueue(qq, "1".getBytes()));
     writes.add(new QueueAck(
         q, dequeueResult.getEntryPointer(), consumer));
@@ -393,19 +393,19 @@ public abstract class OperationExecutorServiceTest extends
 
     // execute the writes and verify it failed (compareAndSwap must fail)
     try {
-      remote.execute(context, writes);
+      remote.commit(context, writes);
       Assert.fail("expected coompare-and-swap conflict");
     } catch (OperationException e) {
       // expected
     }
 
     // verify that all operations were rolled back
-    Assert.assertTrue(remote.execute(context, new ReadKey(keyA)).isEmpty());
+    Assert.assertTrue(remote.execute(context, new Read(keyA, kvcol)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
-        remote.execute(context, new ReadKey(keyB)).getValue());
-    Assert.assertTrue(remote.execute(context, new ReadKey(keyC)).isEmpty());
+        remote.execute(context, new Read(keyB, kvcol)).getValue().get(kvcol));
+    Assert.assertTrue(remote.execute(context, new Read(keyC, kvcol)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
-        remote.execute(context, new ReadKey(keyD)).getValue());
+        remote.execute(context, new Read(keyD, kvcol)).getValue().get(kvcol));
     Assert.assertTrue(remote.execute(context,
         new QueueDequeue(qq, consumer, config)).isEmpty());
     // queue should return the same element until it is acked
@@ -416,19 +416,19 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("0".getBytes(), dequeueResult.getValue());
 
     // set d to 1 to make compareAndSwap succeed
-    remote.execute(context, new Write(keyD, "1".getBytes()));
+    remote.commit(context, new Write(keyD, kvcol, "1".getBytes()));
 
     // execute the writes again and verify it suceeded
-    remote.execute(context, writes);
+    remote.commit(context, writes);
 
     // verify that all operations were performed
     Assert.assertArrayEquals("1".getBytes(),
-        remote.execute(context, new ReadKey(keyA)).getValue());
-    Assert.assertTrue(remote.execute(context, new ReadKey(keyB)).isEmpty());
+        remote.execute(context, new Read(keyA, kvcol)).getValue().get(kvcol));
+    Assert.assertTrue(remote.execute(context, new Read(keyB, kvcol)).isEmpty());
     Assert.assertArrayEquals(new byte[] { 0,0,0,0,0,0,0,5 },
-        remote.execute(context, new ReadKey(keyC)).getValue());
+        remote.execute(context, new Read(keyC, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals("2".getBytes(),
-        remote.execute(context, new ReadKey(keyD)).getValue());
+        remote.execute(context, new Read(keyD, kvcol)).getValue().get(kvcol));
     dequeueResult = remote.execute(context,
         new QueueDequeue(qq, consumer, config));
     Assert.assertTrue(dequeueResult.isSuccess());
@@ -451,15 +451,15 @@ public abstract class OperationExecutorServiceTest extends
     final byte[] s = "stream://tCF/s".getBytes();
 
     // write to a table, a queue, and a stream
-    remote.execute(context, new Write(a, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
+    remote.commit(context, new Write(a, kvcol, x));
+    remote.commit(context, new QueueEnqueue(q, x));
+    remote.commit(context, new QueueEnqueue(s, x));
 
     // clear everything
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
 
     // verify that all is gone
-    Assert.assertTrue(remote.execute(context, new ReadKey(a)).isEmpty());
+    Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     Assert.assertTrue(remote.execute(
@@ -468,43 +468,43 @@ public abstract class OperationExecutorServiceTest extends
         context, new QueueDequeue(s, consumer, config)).isEmpty());
 
     // write back all values
-    remote.execute(context, new Write(a, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
+    remote.commit(context, new Write(a, kvcol, x));
+    remote.commit(context, new QueueEnqueue(q, x));
+    remote.commit(context, new QueueEnqueue(s, x));
 
     // clear only the data
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
 
     // verify that the tables are gone, but queues and streams are there
-    Assert.assertTrue(remote.execute(context, new ReadKey(a)).isEmpty());
+    Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getValue());
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(s, consumer, config)).getValue());
 
     // write back to the table
-    remote.execute(context, new Write(a, x));
+    remote.commit(context, new Write(a, kvcol, x));
 
     // clear only the queues
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.QUEUES));
 
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x,
-        remote.execute(context, new ReadKey(a)).getValue());
+        remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertTrue(remote.execute(
         context, new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(s, consumer, config)).getValue());
 
     // write back to the queue
-    remote.execute(context, new QueueEnqueue(q, x));
+    remote.commit(context, new QueueEnqueue(q, x));
 
     // clear only the streams
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // verify that the streams are gone, but tables and queues are there
     Assert.assertArrayEquals(x, remote.execute(
-        context, new ReadKey(a)).getValue());
+        context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getValue());
     Assert.assertTrue(remote.execute(
@@ -529,8 +529,8 @@ public abstract class OperationExecutorServiceTest extends
       if (next == prev) continue;
       byte[] value = Integer.toString(next).getBytes();
       QueueEnqueue enqueue = new QueueEnqueue(q, value);
-      remote.execute(context, enqueue);
-      remote.execute(context, enqueue);
+      remote.commit(context, enqueue);
+      remote.commit(context, enqueue);
       prev = next;
       i++;
     }
@@ -599,7 +599,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // ack group 1 to verify that it did not affect group 2
     QueueEntryPointer pointer11 = res11.getEntryPointer();
-    remote.execute(context, new QueueAck(q, pointer11, cons11));
+    remote.commit(context, new QueueAck(q, pointer11, cons11));
     // dequeue group 2 again
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
     Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
@@ -611,7 +611,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // ack group 2, consumer 1,
     QueueEntryPointer pointer21 = res21.getEntryPointer();
-    remote.execute(context, new QueueAck(q, pointer21, cons21));
+    remote.commit(context, new QueueAck(q, pointer21, cons21));
     // dequeue group 2 again
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
     Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
@@ -634,7 +634,7 @@ public abstract class OperationExecutorServiceTest extends
   }
 
   /*
-   * Test that the remot eopex is thread safe:
+   * Test that the remote opex is thread safe:
    * Run many threads that perform reads and writes concurrently.
    * If the opex is not thread-safe, some of them will corrupt each other's
    * network communication.
@@ -678,12 +678,12 @@ public abstract class OperationExecutorServiceTest extends
           byte[] key = (id + "-" + i).getBytes();
           byte[] value = Integer.toString(i).getBytes();
           Log.debug("Thread " + id + " writing #" + i);
-          Write write = new Write(key, value);
-          remote.execute(context, write);
+          Write write = new Write(key, Operation.KV_COL, value);
+          remote.commit(context, write);
           Log.debug("Thread " + id + " reading #" + i);
-          ReadKey readKey = new ReadKey(key);
+          Read read = new Read(key, Operation.KV_COL);
           Assert.assertArrayEquals(value,
-              remote.execute(context, readKey).getValue());
+              remote.execute(context, read).getValue().get(Operation.KV_COL));
           count++;
         }
       } catch (Exception e) {
@@ -708,7 +708,7 @@ public abstract class OperationExecutorServiceTest extends
     String field = "field";
 
     // write a value to a column
-    remote.execute(context, new Write(row, column, val41));
+    remote.commit(context, new Write(row, column, val41));
     // verify it's there
     Assert.assertArrayEquals(val41,
         remote.execute(context, new Read(row, column)).getValue().get(column));
@@ -724,7 +724,7 @@ public abstract class OperationExecutorServiceTest extends
     // make a batch of the increment and the enqueue and execute
     List<WriteOperation> batch = Lists.newArrayList(
         enqueue, (WriteOperation)increment);
-    remote.execute(context, batch);
+    remote.commit(context, batch);
 
     // verify that the increment was performed
     Assert.assertArrayEquals(val42,

@@ -18,29 +18,6 @@ public class Delete implements WriteOperation {
   private final byte [][] columns;
 
   /**
-   * Deletes the specified key-value from the default table
-   *
-   * This is a key-value operation.
-   *
-   * @param key the key to delete
-   */
-  public Delete(final byte [] key) {
-    this((String)null, key);
-  }
-
-  /**
-   * Deletes the specified key-value from the specified table
-   *
-   * This is a key-value operation.
-   *
-   * @param table the name of the table to delete from
-   * @param key the key to delete
-   */
-  public Delete(String table, final byte [] key) {
-    this(table, key, KV_COL_ARR);
-  }
-
-  /**
    * Deletes the specified column in the specified row from the default table.
    *
    * This is a columnar operation.

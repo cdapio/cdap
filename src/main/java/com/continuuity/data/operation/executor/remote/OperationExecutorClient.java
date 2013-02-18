@@ -13,7 +13,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.remote.stubs.*;
@@ -278,34 +277,6 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey readKey)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("readkey", readKey.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + readKey);
-      TOperationContext tcontext = wrap(context);
-      TReadKey tReadKey = wrap(readKey);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadKey" + tReadKey);
-      TOptionalBinary tResult = client.readKey(tcontext, tReadKey);
-      if (Log.isTraceEnabled()) Log.trace("TReadKey successful.");
-      OperationResult<byte[]> result = unwrap(tResult);
-
-      helper.finish(result.isEmpty() ? NoData : Success);
-      return result;
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
                                                       Read read)
       throws OperationException, TException {
@@ -381,154 +352,6 @@ public class OperationExecutorClient extends ConverterUtils {
 
       helper.finish(result.isEmpty() ? NoData : Success);
       return result;
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      Write write) throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("write", write.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received Write.");
-      TOperationContext tcontext = wrap(context);
-      TWrite tWrite = wrap(write);
-      if (Log.isTraceEnabled()) Log.trace("Sending TWrite.");
-      client.write(tcontext, tWrite);
-      if (Log.isTraceEnabled()) Log.trace("TWrite successful.");
-      helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      Delete delete) throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("delete", delete.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received Delete.");
-      TOperationContext tcontext = wrap(context);
-      TDelete tDelete = wrap(delete);
-      if (Log.isTraceEnabled()) Log.trace("Sending TDelete.");
-      client.delet(tcontext, tDelete);
-      if (Log.isTraceEnabled()) Log.trace("TDelete successful.");
-      helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      Increment increment)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("increment", increment.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
-      TOperationContext tcontext = wrap(context);
-      TIncrement tIncrement = wrap(increment);
-      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
-      client.increment(tcontext, tIncrement);
-      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
-      helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      CompareAndSwap compareAndSwap)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("swap", compareAndSwap.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received CompareAndSwap.");
-      TOperationContext tcontext = wrap(context);
-      TCompareAndSwap tCompareAndSwap = wrap(compareAndSwap);
-      if (Log.isTraceEnabled()) Log.trace("Sending TCompareAndSwap.");
-      client.compareAndSwap(tcontext, tCompareAndSwap);
-      if (Log.isTraceEnabled()) Log.trace("TCompareAndSwap successful.");
-      helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      QueueEnqueue enqueue)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("enqueue", enqueue.getKey());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received EnqueuePayload.");
-      TOperationContext tcontext = wrap(context);
-      TQueueEnqueue tQueueEnqueue = wrap(enqueue);
-      if (Log.isTraceEnabled()) Log.trace("Sending TQueueEnqueue.");
-      client.queueEnqueue(tcontext, tQueueEnqueue);
-      if (Log.isTraceEnabled()) Log.trace("TQueueEnqueue successful.");
-      helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public void execute(OperationContext context,
-                      QueueAck ack)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("ack", ack.getKey());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + ack);
-      TOperationContext tcontext = wrap(context);
-      TQueueAck tQueueAck = wrap(ack);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueAck);
-      client.queueAck(tcontext, tQueueAck);
-      if (Log.isTraceEnabled()) Log.trace("TQueueAck successful.");
-      helper.success();
 
     } catch (TOperationException te) {
       helper.failure();

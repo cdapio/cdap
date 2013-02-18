@@ -13,7 +13,7 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.internal.*;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;

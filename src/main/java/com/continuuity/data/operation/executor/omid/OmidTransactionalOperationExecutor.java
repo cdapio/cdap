@@ -3,37 +3,44 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadAllKeys;
-import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.*;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OpenTable;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadAllKeys;
+import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.WriteOperationComparator;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueFinalize;
-import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
-import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
-import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.EnqueueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueFinalize;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.base.Objects;
@@ -45,7 +52,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -391,50 +402,57 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey read)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException {
-    initialize();
-    requestMetric("ReadKey");
-    long begin = begin();
-    OperationResult<byte[]> result =
-        read(context, read, this.oracle.getReadPointer());
-    end("ReadKey", begin);
-    namedTableMetric_read(read.getTable());
-    return result;
-  }
-
-  OperationResult<byte[]> read(OperationContext context,
-                               ReadKey read, ReadPointer pointer)
-      throws OperationException {
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), Operation.KV_COL, pointer);
+    return execute(context, null, readKeys);
   }
 
   @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
                                                ReadAllKeys readKeys)
-      throws OperationException {
+    throws OperationException {
+
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
-    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
-    end("ReadKey", begin);
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), pointer);
+    end("ReadAllKeys", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
+  }
+
+  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
+                                           Read read, ReadPointer pointer)
+    throws OperationException {
+    OrderedVersionedColumnarTable table =
+      this.findRandomTable(context, read.getTable());
+    return table.get(read.getKey(), read.getColumns(), pointer);
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
       throws OperationException {
+    return execute(context, null, read);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException {
     initialize();
     requestMetric("Read");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OperationResult<Map<byte[], byte[]>> result =
-      table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
+      table.get(read.getKey(), read.getColumns(), pointer);
     end("Read", begin);
     namedTableMetric_read(read.getTable());
     return result;
@@ -444,15 +462,26 @@ implements TransactionalOperationExecutor {
   public OperationResult<Map<byte[], byte[]>>
   execute(OperationContext context,
           ReadColumnRange readColumnRange) throws OperationException {
+    return execute(context, null, readColumnRange);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
+
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
     OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, readColumnRange.getTable());
+      this.findRandomTable(context, readColumnRange.getTable());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OperationResult<Map<byte[], byte[]>> result = table.get(
-        readColumnRange.getKey(), readColumnRange.getStartColumn(),
-        readColumnRange.getStopColumn(), readColumnRange.getLimit(),
-        this.oracle.getReadPointer());
+      readColumnRange.getKey(), readColumnRange.getStartColumn(),
+      readColumnRange.getStopColumn(), readColumnRange.getLimit(),
+      pointer);
     end("ReadColumnRange", begin);
     namedTableMetric_read(readColumnRange.getTable());
     return result;
@@ -496,106 +525,188 @@ implements TransactionalOperationExecutor {
   // Write batches
 
   @Override
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
+  public void commit(OperationContext context, List<WriteOperation> writes)
       throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
     long begin = begin();
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
-    execute(context, writes, startTransaction());
+    commit(context, startTransaction(), writes);
     end("WriteOperationBatch", begin);
   }
 
-  private void executeAsBatch(OperationContext context,
-                              WriteOperation write)
-      throws OperationException {
-    execute(context, Collections.singletonList(write));
+  @Override
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException {
+    return this.startTransaction();
   }
 
-  void execute(OperationContext context, List<WriteOperation> writes,
-               ImmutablePair<ReadPointer,Long> pointer)
-      throws OperationException {
+  @Override
+  public Transaction execute(OperationContext context,
+                             Transaction transaction,
+                             List<WriteOperation> writes) throws OperationException {
+    // make sure we have a transaction
+    if (transaction == null) {
+      transaction = startTransaction();
+    }
 
-    if (writes.isEmpty()) return;
+    // TODO should we add an empty batch of undos to the transaction in oracle?
+    // TODO That would update the timestamp of the transaction and prevent it from time out
+    if (writes.isEmpty()) {
+      return transaction;
+    }
 
     // Re-order operations (create a copy for now)
     List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes);
     Collections.sort(orderedWrites, new WriteOperationComparator());
 
     // Execute operations
-    RowSet rows = new MemoryRowSet();
-    List<Delete> deletes = new ArrayList<Delete>(writes.size());
-    List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();
+    List<Undo> undos = new ArrayList<Undo>(writes.size());
 
     // Track a map from increment operation ids to post-increment values
     Map<Long,Long> incrementResults = new TreeMap<Long,Long>();
+    boolean abort = false;
 
+    WriteTransactionResult writeTxReturn = null;
     for (WriteOperation write : orderedWrites) {
 
       // See if write operation is an enqueue, and if so, update serialized data
       if (write instanceof QueueEnqueue) {
         processEnqueue((QueueEnqueue)write, incrementResults);
       }
-      WriteTransactionResult writeTxReturn = dispatchWrite(context, write, pointer);
+      writeTxReturn = dispatchWrite(context, write, transaction);
 
       if (!writeTxReturn.success) {
         // Write operation failed
         cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
-        abortTransaction(context, pointer, deletes, invalidates);
-        throw new OmidTransactionException(
-            writeTxReturn.statusCode, writeTxReturn.message);
+        abort = true;
+        break;
       } else {
-        // Write was successful.  Store delete if we need to abort and continue
-        deletes.addAll(writeTxReturn.deletes);
-        if (writeTxReturn.invalidate != null) {
-          // Queue operation
-          invalidates.add(writeTxReturn.invalidate);
-        } else {
-          // Normal write operation
-          rows.addRow(write.getKey());
-        }
+        // Write was successful.  Store undo if we need to abort and continue
+        undos.addAll(writeTxReturn.undos);
         // See if write operation was an Increment, and if so, add result to map
         if (write instanceof Increment) {
-          incrementResults.put(write.getId(), writeTxReturn.incrementValue);
+          // TODO this is for the old increment pass-through. It only works for a single column
+          // TODO remove this as soon as increment pass-thru is obsolete
+          Map<byte[], Long> result = writeTxReturn.incrementResult;
+          if (result != null && result.size() > 0) {
+            incrementResults.put(write.getId(), result.values().iterator().next());
+          }
         }
       }
     }
 
-    // All operations completed successfully, commit transaction
-    if (!commitTransaction(pointer, rows)) {
-      // Commit failed, abort
+    // whether success or not, we must notify the oracle of all operations
+    if (!undos.isEmpty()) {
+      addToTransaction(transaction, undos);
+    }
+
+    // if any write failed, abort the transaction
+    if (abort) {
+      abort(context, transaction);
+      throw new OmidTransactionException(
+        writeTxReturn.statusCode, writeTxReturn.message);
+    }
+    return transaction; // TODO auto generated body
+  }
+
+  @Override
+  public void commit(OperationContext context,
+                     Transaction transaction) throws OperationException {
+    // attempt to commit in Oracle
+    TransactionResult txResult = commitTransaction(transaction);
+    if (!txResult.isSuccess()) {
+      // make sure to emit the metric for failed commits
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
-      abortTransaction(context, pointer, deletes, invalidates);
+
+      // attempt to ubdo all the writes of the transaction
+      // (transaction is already marked as invalid in oracle)
+      attemptUndo(context, transaction, txResult.getUndos());
+
       throw new OmidTransactionException(StatusCode.WRITE_CONFLICT,
-          "Commit of transaction failed, transaction aborted");
+                                         "Commit of transaction failed, transaction aborted");
+    }
+    // Commit was successful.
+
+    // TODO this must go away with the new queue implementation
+    // If the transaction did a queue ack, finalize it
+    QueueFinalize finalize = txResult.getFinalize();
+    if (finalize != null) {
+      finalize.execute(getQueueTable(finalize.getQueueName()));
     }
 
-    // If last operation was an ack, finalize it
-    if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
-      QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
-      QueueFinalize finalize = new QueueFinalize(ack.getKey(),
-          ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups());
-      finalize.execute(getQueueTable(ack.getKey()), pointer);
-    }
-
-    // Transaction was successfully committed, emit metrics
-    // - for the transaction
+    // emit metrics for the transaction and the queues/streams involved
     cmetric.meter(
-        METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
+      METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
     // for each queue operation (enqueue or ack)
-    for (QueueInvalidate invalidate : invalidates)
-      if (invalidate instanceof QueueUnenqueue) {
-        QueueUnenqueue unenqueue = (QueueUnenqueue)invalidate;
+    for (Undo undo : txResult.getUndos()) {
+      if (undo instanceof QueueUndo.QueueUnenqueue) {
+        QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue)undo;
         QueueProducer producer = unenqueue.producer;
         enqueueMetric(unenqueue.queueName, producer);
         if (isStream(unenqueue.queueName))
           streamMetric(unenqueue.queueName, unenqueue.data);
-      } else if (invalidate instanceof QueueUnack) {
-        QueueUnack unack = (QueueUnack)invalidate;
+      } else if (undo instanceof QueueUndo.QueueUnack) {
+        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)undo;
         QueueConsumer consumer = unack.consumer;
         ackMetric(unack.queueName, consumer);
       }
+    }
+    // done
+  }
+
+  @Override
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes) throws OperationException {
+    transaction = execute(context, transaction, writes);
+    commit(context, transaction);
+  }
+
+  @Override
+  public void abort(OperationContext context, Transaction transaction) throws OperationException {
+    // abort transaction in oracle, that returns the undos to be performed
+    TransactionResult txResult = abortTransaction(transaction);
+    // attempt to ubdo all the writes of the transaction
+    // (transaction is already marked as invalid in oracle)
+    attemptUndo(context, transaction, txResult.getUndos());
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
+    OperationException {
+    // start transaction, execute increment, commit transaction, return result
+    Transaction tx = startTransaction();
+    OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
+    commit(context, tx);
+    return result;
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+                                                      Increment increment) throws OperationException {
+    // if a null transaction is passed in,
+    // call the companion method that wraps this into a new transaction
+    if (transaction == null) {
+      return increment(context, increment);
+    }
+
+    WriteTransactionResult writeTxReturn = write(context, increment, transaction);
+    List<Undo> undos = writeTxReturn.undos;
+    // whether success or not, we must notify the oracle of all operations
+    if (null != undos && !undos.isEmpty()) {
+      addToTransaction(transaction, undos);
+    }
+    if (writeTxReturn.success) {
+      // increment was successful. the return value is in the write transaction result
+      return new OperationResult<Map<byte[], Long>>(writeTxReturn.incrementResult);
+    } else {
+      // operation failed
+      cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
+      abort(context, transaction);
+      throw new OmidTransactionException(
+        writeTxReturn.statusCode, writeTxReturn.message);
+    }
   }
 
   /**
@@ -650,44 +761,36 @@ implements TransactionalOperationExecutor {
     return this.tableHandle;
   }
 
-  static final List<Delete> noDeletes = Collections.emptyList();
+  static final List<Undo> noUndos = Collections.emptyList();
 
-  private class WriteTransactionResult {
+  class WriteTransactionResult {
     final boolean success;
     final int statusCode;
     final String message;
-    final List<Delete> deletes;
-    final QueueInvalidate invalidate;
-    Long incrementValue;
+    final List<Undo> undos;
+    Map<byte[], Long> incrementResult;
 
-    WriteTransactionResult(boolean success, int status, String message,
-                           List<Delete> deletes, QueueInvalidate invalidate) {
+    WriteTransactionResult(boolean success, int status, String message, List<Undo> undos) {
       this.success = success;
       this.statusCode = status;
       this.message = message;
-      this.deletes = deletes;
-      this.invalidate = invalidate;
+      this.undos = undos;
     }
 
     // successful, one delete to undo
-    WriteTransactionResult(Delete delete) {
-      this(true, StatusCode.OK, null, Collections.singletonList(delete), null);
+    WriteTransactionResult(Undo undo) {
+      this(true, StatusCode.OK, null, Collections.singletonList(undo));
     }
 
     // successful increment, one delete to undo
-    WriteTransactionResult(Delete delete, Long incrementValue) {
-      this(true, StatusCode.OK, null, Collections.singletonList(delete), null);
-      this.incrementValue = incrementValue;
-    }
-
-    // successful, one queue operation to invalidate
-    WriteTransactionResult(QueueInvalidate invalidate) {
-      this(true, StatusCode.OK, null, noDeletes, invalidate);
+    WriteTransactionResult(Undo undo, Map<byte[], Long> incrementResult) {
+      this(true, StatusCode.OK, null, Collections.singletonList(undo));
+      this.incrementResult = incrementResult;
     }
 
     // failure with status code and message, nothing to undo
     WriteTransactionResult(int status, String message) {
-      this(false, status, message, noDeletes, null);
+      this(false, status, message, noUndos);
     }
   }
 
@@ -696,95 +799,88 @@ implements TransactionalOperationExecutor {
    */
   private WriteTransactionResult dispatchWrite(
       OperationContext context, WriteOperation write,
-      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+      Transaction transaction) throws OperationException {
     if (write instanceof Write) {
-      return write(context, (Write)write, pointer);
+      return write(context, (Write)write, transaction);
     } else if (write instanceof Delete) {
-      return write(context, (Delete)write, pointer);
+      return write(context, (Delete)write, transaction);
     } else if (write instanceof Increment) {
-      return write(context, (Increment)write, pointer);
+      return write(context, (Increment)write, transaction);
     } else if (write instanceof CompareAndSwap) {
-      return write(context, (CompareAndSwap)write, pointer);
+      return write(context, (CompareAndSwap)write, transaction);
     } else if (write instanceof QueueEnqueue) {
-      return write((QueueEnqueue)write, pointer);
+      return write((QueueEnqueue)write, transaction);
     } else if (write instanceof QueueAck) {
-      return write((QueueAck)write, pointer);
+      return write((QueueAck)write, transaction);
     }
     return new WriteTransactionResult(StatusCode.INTERNAL_ERROR,
         "Unknown write operation " + write.getClass().getName());
   }
 
-  WriteTransactionResult write(OperationContext context, Write write, ImmutablePair<ReadPointer,Long> pointer)
+  WriteTransactionResult write(OperationContext context, Write write, Transaction transaction)
     throws OperationException {
     initialize();
     requestMetric("Write");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
-    table.put(write.getKey(), write.getColumns(), pointer.getSecond(), write.getValues());
+    table.put(write.getKey(), write.getColumns(), transaction.getTransactionId(), write.getValues());
     end("Write", begin);
     namedTableMetric_write(write.getTable(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
-    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
+    return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
   }
 
   WriteTransactionResult write(OperationContext context, Delete delete,
-      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
+      Transaction transaction) throws OperationException {
     initialize();
     requestMetric("Delete");
     long begin = begin();
     OrderedVersionedColumnarTable table =
         this.findRandomTable(context, delete.getTable());
-    table.deleteAll(delete.getKey(), delete.getColumns(),
-        pointer.getSecond());
+    table.deleteAll(delete.getKey(), delete.getColumns(), transaction.getTransactionId());
     end("Delete", begin);
     namedTableMetric_write(delete.getTable(), delete.getSize());
     return new WriteTransactionResult(
-        new Undelete(delete.getTable(), delete.getKey(), delete.getColumns()));
+        new UndoDelete(delete.getTable(), delete.getKey(), delete.getColumns()));
   }
 
   WriteTransactionResult write(OperationContext context, Increment increment,
-      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+      Transaction transaction) throws OperationException {
     initialize();
     requestMetric("Increment");
     long begin = begin();
-    Long incrementValue;
+    Map<byte[],Long> map;
     try {
-      @SuppressWarnings("unused")
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, increment.getTable());
-      Map<byte[],Long> map =
-          table.increment(increment.getKey(),
-              increment.getColumns(), increment.getAmounts(),
-              pointer.getFirst(), pointer.getSecond());
-      incrementValue = map.values().iterator().next();
+      map = table.increment(increment.getKey(), increment.getColumns(), increment.getAmounts(),
+                            transaction.getReadPointer(), transaction.getTransactionId());
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("Increment", begin);
     namedTableMetric_write(increment.getTable(), increment.getSize());
     return new WriteTransactionResult(
-        new Delete(increment.getTable(), increment.getKey(),
-            increment.getColumns()), incrementValue);
+        new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()), map);
   }
 
   WriteTransactionResult write(OperationContext context, CompareAndSwap write,
-      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+      Transaction transaction) throws OperationException {
     initialize();
     requestMetric("CompareAndSwap");
     long begin = begin();
     try {
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, write.getTable());
-      table.compareAndSwap(write.getKey(),
-          write.getColumn(), write.getExpectedValue(), write.getNewValue(),
-          pointer.getFirst(), pointer.getSecond());
+      table.compareAndSwap(write.getKey(), write.getColumn(), write.getExpectedValue(), write.getNewValue(),
+                           transaction.getReadPointer(), transaction.getTransactionId());
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("CompareAndSwap", begin);
     namedTableMetric_write(write.getTable(), write.getSize());
     return new WriteTransactionResult(
-        new Delete(write.getTable(), write.getKey(), write.getColumn()));
+        new UndoWrite(write.getTable(), write.getKey(), new byte[][] { write.getColumn() }));
   }
 
   // TTQueues
@@ -795,20 +891,20 @@ implements TransactionalOperationExecutor {
    * They are rolled back with an invalidate.
    */
   WriteTransactionResult write(QueueEnqueue enqueue,
-      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
+      Transaction transaction) throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(
-        enqueue.getKey(), enqueue.getData(), pointer.getSecond());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
+                                                                   transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
   WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused") ImmutablePair<ReadPointer, Long> pointer)
+      @SuppressWarnings("unused") Transaction pointer)
       throws OperationException {
 
     initialize();
@@ -825,7 +921,7 @@ implements TransactionalOperationExecutor {
       end("QueueAck", begin);
     }
     return new WriteTransactionResult(
-        new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
@@ -891,42 +987,54 @@ implements TransactionalOperationExecutor {
         new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
   }
 
-  ImmutablePair<ReadPointer, Long> startTransaction() {
+  Transaction startTransaction() {
     requestMetric("StartTransaction");
-    return this.oracle.getNewPointer();
+    return this.oracle.startTransaction();
   }
 
-  boolean commitTransaction(ImmutablePair<ReadPointer, Long> pointer,
-      RowSet rows) throws OmidTransactionException {
+  void addToTransaction(Transaction transaction, List<Undo> undos)
+      throws OmidTransactionException {
+    this.oracle.addToTransaction(transaction.getTransactionId(), undos);
+  }
+
+  TransactionResult commitTransaction(Transaction transaction)
+    throws OmidTransactionException {
     requestMetric("CommitTransaction");
-    return this.oracle.commit(pointer.getSecond(), rows);
+    return this.oracle.commitTransaction(transaction.getTransactionId());
   }
 
-  private void abortTransaction(OperationContext context,
-                                ImmutablePair<ReadPointer, Long> pointer,
-                                List<Delete> deletes,
-                                List<QueueInvalidate> invalidates)
+  TransactionResult abortTransaction(Transaction transaction)
+    throws OmidTransactionException {
+    requestMetric("CommitTransaction");
+    return this.oracle.abortTransaction(transaction.getTransactionId());
+  }
+
+
+  private void attemptUndo(OperationContext context,
+                           Transaction transaction,
+                           List<Undo> undos)
       throws OperationException {
     // Perform queue invalidates
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
-    for (QueueInvalidate invalidate : invalidates) {
-      invalidate.execute(getQueueTable(invalidate.queueName), pointer);
-    }
-    // Perform deletes
-    for (Delete delete : deletes) {
-      assert(delete != null);
-      OrderedVersionedColumnarTable table =
-          this.findRandomTable(context, delete.getTable());
-      if (delete instanceof Undelete) {
-        table.undeleteAll(delete.getKey(), delete.getColumns(),
-            pointer.getSecond());
-      } else {
-        table.delete(delete.getKey(), delete.getColumns(),
-            pointer.getSecond());
+    for (Undo undo : undos) {
+      if (undo instanceof QueueUndo) {
+        QueueUndo queueUndo = (QueueUndo)undo;
+        queueUndo.execute(getQueueTable(queueUndo.queueName), transaction);
+      }
+      if (undo instanceof UndoWrite) {
+        UndoWrite tableUndo = (UndoWrite)undo;
+        OrderedVersionedColumnarTable table =
+            this.findRandomTable(context, tableUndo.getTable());
+        if (tableUndo instanceof UndoDelete) {
+          table.undeleteAll(tableUndo.getKey(), tableUndo.getColumns(), transaction.getTransactionId());
+        } else {
+          table.delete(tableUndo.getKey(), tableUndo.getColumns(), transaction.getTransactionId());
+        }
       }
     }
-    // Notify oracle
-    this.oracle.aborted(pointer.getSecond());
+    // if any of the undos fails, we won't reach this point.
+    // That is, the tx will remain in the oracle as invalid
+    oracle.removeTransaction(transaction.getTransactionId());
   }
 
   // Single Write Operations (Wrapped and called in a transaction batch)
@@ -937,39 +1045,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void execute(OperationContext context,
-                      Write write) throws OperationException {
-    executeAsBatch(context, write);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      Delete delete) throws OperationException {
-    executeAsBatch(context, delete);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      Increment inc) throws OperationException {
-    executeAsBatch(context, inc);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      CompareAndSwap cas) throws OperationException {
-    executeAsBatch(context, cas);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      QueueAck ack) throws OperationException {
-    executeAsBatch(context, ack);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      QueueEnqueue enqueue) throws OperationException {
-    executeAsBatch(context, enqueue);
+  public void commit(OperationContext context, WriteOperation write) throws OperationException {
+    commit(context, Collections.singletonList(write));
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {

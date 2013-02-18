@@ -2,7 +2,7 @@ package com.continuuity.data.table.converter;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data.table.VersionedKVTable;
 

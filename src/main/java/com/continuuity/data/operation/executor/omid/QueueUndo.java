@@ -1,23 +1,35 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.table.ReadPointer;
 import com.google.common.base.Objects;
 
-public abstract class QueueInvalidate {
+public abstract class QueueUndo implements Undo {
+
+  @Override
+  public RowSet.Row getRow() {
+    // queue operations are excluded from conflict detection
+    return null;
+  }
 
   protected final byte [] queueName;
   protected final QueueEntryPointer entryPointer;
 
-  protected QueueInvalidate(final byte [] queueName,
-      final QueueEntryPointer entryPointer) {
+  public byte[] getQueueName() {
+    return queueName;
+  }
+
+  public QueueEntryPointer getEntryPointer() {
+    return entryPointer;
+  }
+
+  protected QueueUndo(final byte[] queueName, final QueueEntryPointer entryPointer) {
     this.queueName = queueName;
     this.entryPointer = entryPointer;
   }
@@ -31,11 +43,12 @@ public abstract class QueueInvalidate {
   }
   
   public abstract void execute(TTQueueTable queueTable,
-      ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
+      Transaction transaction) throws OperationException;
 
-  public static class QueueUnenqueue extends QueueInvalidate {
+  public static class QueueUnenqueue extends QueueUndo {
     final byte[] data;
     final QueueProducer producer;
+
     public QueueUnenqueue(final byte[] queueName,
                           final byte[] data,
                           QueueProducer producer,
@@ -44,39 +57,36 @@ public abstract class QueueInvalidate {
       this.producer = producer;
       this.data = data;
     }
+
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
-      queueTable.invalidate(queueName, entryPointer, txPointer.getSecond());
+        Transaction transaction) throws OperationException {
+      queueTable.invalidate(queueName, entryPointer, transaction.getTransactionId());
     }
   }
 
-  public static class QueueFinalize extends QueueInvalidate {
-    private final QueueConsumer consumer;
-    private final int totalNumGroups;
-    public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer,
-        QueueConsumer consumer, int totalNumGroups) {
-      super(queueName, entryPointer);
-      this.consumer = consumer;
-      this.totalNumGroups = totalNumGroups;
-    }
-    @Override
-    public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
-      queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups);
-    }
-  }
-
-  public static class QueueUnack extends QueueInvalidate {
+  public static class QueueUnack extends QueueUndo {
     final QueueConsumer consumer;
+    final int numGroups;
+
+    public QueueConsumer getConsumer() {
+      return consumer;
+    }
+
+    public int getNumGroups() {
+      return numGroups;
+    }
+
     public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
-        QueueConsumer consumer) {
+        QueueConsumer consumer, int numGroups) {
       super(queueName, entryPointer);
       this.consumer = consumer;
+      this.numGroups = numGroups;
     }
+
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
+        Transaction transaction) throws OperationException {
       queueTable.unack(queueName, entryPointer, consumer);
     }
   }
