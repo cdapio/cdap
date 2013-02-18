@@ -123,6 +123,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     for (ProcessSpecification spec : processSpecs) {
       processQueue.offer(new ProcessEntry(spec));
     }
+    List<ProcessEntry> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
 
     while (isRunning()) {
       CountDownLatch suspendLatch = suspension.get();
@@ -136,41 +137,41 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         }
       }
 
-      long startTime = System.nanoTime();
-      ProcessEntry entry = processQueue.poll();
-
-      long waitTime = entry.nextDeque - startTime;
-      if (waitTime > 0) {
-        try {
-          TimeUnit.NANOSECONDS.sleep(waitTime);
-        } catch (InterruptedException e) {
-          // Triggered by shutdown or suspend, simply continue and let the isRunning() check to deal with that.
-          continue;
-        }
+      try {
+        // If the queue head need to wait, we had to wait.
+        processQueue.peek().await(System.nanoTime());
+      } catch (InterruptedException e) {
+        // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
+        continue;
       }
 
-      try {
-        InputDatum input = entry.processSpec.getQueueReader().dequeue();
-        if (input.isEmpty()) {
-          entry.backOff();
-          continue;
-        }
-        entry.nextDeque = 0;
+      processList.clear();
+      processQueue.drainTo(processList);
 
+      for (ProcessEntry entry : processList) {
         try {
-          // Call the process method and commit the transaction
-          entry.processSpec.getProcessMethod().invoke(input)
-            .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
+          InputDatum input = entry.processSpec.getQueueReader().dequeue();
+          if (input.isEmpty()) {
+            entry.backOff();
+            continue;
+          }
+          entry.nextDeque = 0;
 
-        } catch (Throwable t) {
-          LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec));
-        }
-      } catch (OperationException e) {
-        LOGGER.error("Queue operation failure", e);
-      } finally {
-        // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
-        if (!entry.isRetry()) {
-          entry.enqueue(processQueue);
+          try {
+            // Call the process method and commit the transaction
+            entry.processSpec.getProcessMethod().invoke(input)
+              .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
+
+          } catch (Throwable t) {
+            LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec));
+          }
+        } catch (OperationException e) {
+          LOGGER.error("Queue operation failure", e);
+        } finally {
+          // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
+          if (!entry.isRetry()) {
+            processQueue.offer(entry);
+          }
         }
       }
     }
@@ -233,7 +234,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
                                        processEntry.processSpec.getProcessMethod()),
               true);
 
-          retryEntry.enqueue(processQueue);
+          processQueue.offer(retryEntry);
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
@@ -250,7 +251,6 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     private final ProcessSpecification processSpec;
     private final boolean retry;
     private long nextDeque;
-    private int iteration;
     private long currentBackOff = BACKOFF_MIN;
 
     private ProcessEntry(ProcessSpecification processSpec) {
@@ -266,32 +266,19 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       return retry;
     }
 
-    public void enqueue(PriorityBlockingQueue<ProcessEntry> queue) {
-      if (!retry) {
-        iteration++;
-        if (iteration == Integer.MAX_VALUE) {
-          iteration = 0;
-          // Drain items from the queue, modify the iteration and put them back
-          List<ProcessEntry> entries = Lists.newLinkedList();
-          queue.drainTo(entries);
-          for (ProcessEntry entry : entries) {
-            entry.iteration = 0;
-            queue.offer(entry);
-          }
-        }
+    public void await(long startTime) throws InterruptedException {
+      long waitTime = nextDeque - startTime;
+      if (waitTime > 0) {
+        TimeUnit.NANOSECONDS.sleep(waitTime);
       }
-      queue.offer(this);
     }
 
     @Override
     public int compareTo(ProcessEntry o) {
-      if (iteration == o.iteration) {
-        if (nextDeque == o.nextDeque) {
-          return 0;
-        }
-        return nextDeque > o.nextDeque ? 1 : -1;
+      if (nextDeque == o.nextDeque) {
+        return 0;
       }
-      return iteration - o.iteration;
+      return nextDeque > o.nextDeque ? 1 : -1;
     }
 
     public void backOff() {
