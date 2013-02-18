@@ -5,7 +5,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -139,7 +138,7 @@ public class SmartTransactionAgentTest {
   public void testStartReadFinish() throws OperationException {
     final String table = "tSRF";
     // write a value outside the smart xaction
-    opex.execute(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
     SmartTransactionAgent agent = newAgent();
     agent.start();
     // read back the value inside the smart xaction
@@ -155,7 +154,7 @@ public class SmartTransactionAgentTest {
   public void testStartReadWriteReadFinish() throws OperationException {
     final String table = "tSRWRF";
     // write a value outside the smart xaction
-    opex.execute(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
     SmartTransactionAgent agent = newAgent();
     agent.start();
     // read back the value inside the smart xaction and verify

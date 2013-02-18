@@ -62,19 +62,19 @@ public class SynchronousTransactionAgent implements TransactionAgent {
   @Override
   public void submit(WriteOperation operation) throws OperationException {
     // execute synchronously
-    this.opex.execute(this.context, operation);
+    this.opex.commit(this.context, operation);
   }
 
   @Override
   public void submit(List<WriteOperation> operations) throws OperationException {
     // execute synchronously
-    this.opex.execute(this.context, operations);
+    this.opex.commit(this.context, operations);
   }
 
   @Override
   public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException {
     // execute synchronously - beware since this is also a write, it can't be rolled back
-    return this.opex.execute(this.context, increment);
+    return this.opex.increment(this.context, increment);
   }
 
   @Override

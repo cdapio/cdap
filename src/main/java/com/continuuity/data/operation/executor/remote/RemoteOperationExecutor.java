@@ -208,8 +208,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context,
-                      final List<WriteOperation> writes)
+  public void commit(final OperationContext context, final List<WriteOperation> writes)
       throws OperationException {
     this.execute(
         new Operation<Boolean>("Batch") {
@@ -235,7 +234,7 @@ public class RemoteOperationExecutor
                              final List<WriteOperation> writes)
     throws OperationException {
     // TODO implement this properly
-    execute(context, writes);
+    commit(context, writes);
     return null;
   }
 
@@ -252,7 +251,7 @@ public class RemoteOperationExecutor
                      List<WriteOperation> writes)
     throws OperationException {
     // TODO implement this properly
-    execute(context, writes);
+    commit(context, writes);
   }
 
   @Override
@@ -263,16 +262,16 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment)
     throws OperationException {
     // TODO implement this properly
-    execute(context, (WriteOperation)increment);
+    commit(context, (WriteOperation) increment);
     return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
-                                                    Increment increment)
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+                                                      Increment increment)
     throws OperationException {
     // TODO implement this properly
     execute(context, transaction, Collections.singletonList((WriteOperation)increment));
@@ -427,10 +426,9 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context,
-                      final WriteOperation write)
+  public void commit(final OperationContext context, final WriteOperation write)
       throws OperationException {
-    this.execute(context, Collections.singletonList(write));
+    this.commit(context, Collections.singletonList(write));
   }
 
   @Override

@@ -118,7 +118,7 @@ public class SmartTransactionAgent implements TransactionAgent {
         }
         // we have no transaction yet, but we have operations:
         // execute them (together in a transaction internal to opex).
-        this.opex.execute(this.context, deferred);
+        this.opex.commit(this.context, deferred);
       } else if (this.deferred.isEmpty()) {
         // we have a transaction but no deferred ops: commit
         this.opex.commit(this.context, this.xaction);
@@ -190,7 +190,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-      return this.opex.execute(this.context, this.xaction, increment);
+      return this.opex.increment(this.context, this.xaction, increment);
     } catch (OperationException e) {
       this.abort();
       throw e;

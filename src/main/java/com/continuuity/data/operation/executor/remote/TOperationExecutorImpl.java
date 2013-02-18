@@ -22,7 +22,6 @@ import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
-import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinary;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
@@ -30,7 +29,6 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
-import com.continuuity.data.operation.executor.remote.stubs.TReadKey;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
@@ -146,7 +144,7 @@ public class TOperationExecutorImpl
 
     try {
       OperationContext context = unwrap(tcontext);
-      this.opex.execute(context, writes);
+      this.opex.commit(context, writes);
       if (Log.isTraceEnabled()) Log.trace("Batch successful.");
       helper.success();
 
