@@ -1,9 +1,11 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.google.common.base.Throwables;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 
 /**
@@ -29,7 +31,8 @@ public final class ReflectionTransactionCallback implements TransactionCallback 
   }
 
   @Override
-  public void onSuccess(Object object, InputContext inputContext) {
+  public synchronized void onSuccess(Object object, InputContext inputContext) {
+    // Synchronized to avoid concurrent calls
     try {
       success.invoke(target, object, inputContext);
     } catch(Exception e) {
@@ -38,9 +41,9 @@ public final class ReflectionTransactionCallback implements TransactionCallback 
   }
 
   @Override
-  public FailurePolicy onFailure(Object object, InputContext inputContext) {
+  public synchronized FailurePolicy onFailure(Object object, InputContext inputContext, FailureReason reason) {
     try {
-      return (FailurePolicy) failure.invoke(target, object, inputContext);
+      return (FailurePolicy) failure.invoke(target, object, inputContext, reason);
     } catch(Exception e) {
       throw Throwables.propagate(e);
     }

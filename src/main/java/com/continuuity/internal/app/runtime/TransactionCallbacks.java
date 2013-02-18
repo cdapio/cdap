@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.google.common.reflect.TypeToken;
 
@@ -61,7 +62,7 @@ public final class TransactionCallbacks {
       }
 
       @Override
-      public FailurePolicy onFailure(Object object, InputContext inputContext) {
+      public FailurePolicy onFailure(Object object, InputContext inputContext, FailureReason reason) {
         return defaultFailurePolicy;
       }
     };

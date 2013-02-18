@@ -5,19 +5,30 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.app.program.Id;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Cancellable;
 import com.continuuity.app.runtime.Runner;
-import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,93 +73,75 @@ public final class FlowletRunner implements Runner {
     return null;
   }
 
+  private Flowlet instantiateFlowlet(FlowSpecification flowSpec, FlowletDefinition flowletDef,
+                                     String flowletName,
+                                     Class<? extends Flowlet> flowletClass,
+                                     DataSetContext dataSetCtx) throws Exception {
 
-  private <T extends Flowlet> T instantiateFlowlet(Class<? extends Flowlet> flowletClass,
-                                                   DataSetContext dataSetCtx) throws Exception {
+    TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
+    Flowlet flowlet = flowletClass.newInstance();
+    List<TransactionOutputEmitter<?>> outputEmitters = Lists.newArrayList();
 
-    //    TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
-    //    Flowlet flowlet = flowletClass.newInstance();
-    //
-    //
-    //    // Walk up the hierarchy of flowlet class.
-    //    for (TypeToken<?> type : flowletType.getTypes().classes()) {
-    //      if (type.getRawType().equals(Object.class)) {
-    //        break;
-    //      }
-    //
-    //      // Grab all the DataSet and OutputEmitter fields
-    //      for (Field field : type.getRawType().getDeclaredFields()) {
-    //        if (DataSet.class.isAssignableFrom(field.getType())) {
-    //          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-    //          if (dataset == null || dataset.value().isEmpty()) {
-    //            continue;
-    //          }
-    //
-    //          // Inject DataSet object into flowlet
-    //          field.set(flowlet, dataSetCtx.getDataSet(dataset.value()));
-    //
-    //        } else if (OutputEmitter.class.equals(field.getType())) {
-    //          java.lang.reflect.Type emitterType = field.getGenericType();
-    //          Preconditions.checkArgument(emitterType instanceof ParameterizedType,
-    //                                      "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
-    //
-    //          // Extract the Output type from the first type argument of OutputEmitter
-    //          java.lang.reflect.Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
-    //          String outputName = field.isAnnotationPresent(Output.class) ?
-    //            field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
-    //
-    //          Set<java.lang.reflect.Type> types = outputs.get(outputName);
-    //          if (types == null) {
-    //            types = Sets.newHashSet();
-    //            outputs.put(outputName, types);
-    //          }
-    //          types.add(outputType);
-    //        }
-    //      }
-    //
-    //      // Grab all process methods
-    //      for (Method method : type.getRawType().getDeclaredMethods()) {
-    //        com.continuuity.api.annotation.Process processAnnotation = method.getAnnotation(com.continuuity.api
-    // .annotation.Process.class);
-    //        if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processAnnotation == null) {
-    //          continue;
-    //        }
-    //
-    //        java.lang.reflect.Type[] methodParams = method.getGenericParameterTypes();
-    //        Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
-    //                                    "Type parameter missing from process method; class: %s, method: %s",
-    //                                    type, method);
-    //
-    //        // If there are more than one parameter, there be exactly two and the 2nd one should be InputContext
-    //        if (methodParams.length == 2) {
-    //          Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
-    //                                      "The second parameter of the process method must be %s type.",
-    //                                      InputContext.class.getName());
-    //        }
-    //
-    //        // Extract the Input type from the first parameter of the process method
-    //        java.lang.reflect.Type inputType = type.resolveType(methodParams[0]).getType();
-    //
-    //        List<String> inputNames = Lists.newLinkedList();
-    //        if (processAnnotation == null || processAnnotation.value().length == 0) {
-    //          inputNames.add(ANY_INPUT);
-    //        } else {
-    //          Collections.addAll(inputNames, processAnnotation.value());
-    //        }
-    //
-    //        for (String inputName : inputNames) {
-    //          Set<java.lang.reflect.Type> types = inputs.get(inputName);
-    //          if (types == null) {
-    //            types = Sets.newHashSet();
-    //            inputs.put(inputName, types);
-    //          }
-    //          Preconditions.checkArgument(!types.contains(inputType),
-    //                                      "Same type already defined for the same input. Type: %s, input: %s",
-    //                                      inputType, inputName);
-    //          types.add(inputType);
-    //        }
-    //      }
-    //    }
-    return null;
+    // Walk up the hierarchy of flowlet class.
+    for (TypeToken<?> type : flowletType.getTypes().classes()) {
+      if (type.getRawType().equals(Object.class)) {
+        break;
+      }
+
+      // Inject DataSet and Emitter fields
+      for (Field field : type.getRawType().getDeclaredFields()) {
+        // Inject DataSet
+        if (DataSet.class.isAssignableFrom(field.getType())) {
+          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
+          if (dataset == null || dataset.value().isEmpty()) {
+            continue;
+          }
+          if (!field.isAccessible()) {
+            field.setAccessible(true);
+          }
+          field.set(flowlet, dataSetCtx.getDataSet(dataset.value()));
+          continue;
+        }
+        // Inject OutputEmitter
+        if (OutputEmitter.class.equals(field.getType())) {
+          TypeToken<?> outputType = TypeToken.of(((ParameterizedType)field.getGenericType())
+                                                   .getActualTypeArguments()[0]);
+          String outputName = field.isAnnotationPresent(Output.class) ?
+                    field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
+
+          // TODO: Lookup queue name by output name
+          // TODO: Find way to create QueueProducer
+          URI queueName = URI.create(String.format("queue://%s/%s/%s", flowSpec.getName(), flowletDef.getFlowletSpec().getName(), outputName));
+
+//          TransactionOutputEmitter<?> outputEmitter =
+//            new ReflectionOutputEmitter(new QueueProducer(), queueName, flowletDef.getOutputs().get(outputName).iterator().next());
+//          if (!field.isAccessible()) {
+//            field.setAccessible(true);
+//          }
+//          field.set(flowlet, outputEmitter);
+//          outputEmitters.add(outputEmitter);
+        }
+      }
+
+      // Extracts all process methods
+      for (Method method : type.getRawType().getDeclaredMethods()) {
+        Process processAnnotation = method.getAnnotation(Process.class);
+        if (!method.getName().startsWith(FlowletDefinition.PROCESS_METHOD_PREFIX) && processAnnotation == null) {
+          continue;
+        }
+
+        List<String> inputNames;
+        if (processAnnotation == null || processAnnotation.value().length == 0) {
+          inputNames = ImmutableList.of(FlowletDefinition.ANY_INPUT);
+        } else {
+          inputNames = ImmutableList.copyOf(processAnnotation.value());
+        }
+
+        // TODO: Find out the queue name by input name
+        // TODO: Create method invoker
+
+      }
+    }
+    return flowlet;
   }
 }

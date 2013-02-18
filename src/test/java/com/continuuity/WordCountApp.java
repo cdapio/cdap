@@ -154,7 +154,7 @@ public class WordCountApp implements Application {
     private KeyValueTable counters;
 
     @Process("field")
-    public void process(Map<String, String> fieldToken) {
+    public void process(Map<String, String> fieldToken) throws OperationException {
       String token = fieldToken.get("word");
       if (token == null) {
         return;

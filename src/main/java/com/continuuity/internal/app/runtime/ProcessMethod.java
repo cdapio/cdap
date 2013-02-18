@@ -7,7 +7,7 @@ package com.continuuity.internal.app.runtime;
 /**
  *
  */
-public interface ProcessMethodInvoker {
+public interface ProcessMethod {
 
-  void invoke(InputDatum input);
+  PostProcess invoke(InputDatum input);
 }

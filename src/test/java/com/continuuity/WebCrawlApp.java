@@ -7,6 +7,7 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -154,7 +155,7 @@ public class WebCrawlApp implements Application {
     @UseDataSet("crawled-pages")
     private KeyValueTable crawledPages;
 
-    public void process(DocumentURL url) throws UnsupportedEncodingException {
+    public void process(DocumentURL url) throws UnsupportedEncodingException, OperationException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
       //crawledPages.stage(new KeyValueTable.WriteKey(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8")));
