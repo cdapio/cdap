@@ -4,8 +4,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.NoAuthenticator;
+import com.continuuity.gateway.auth.PassportVPCAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.passport.http.client.PassportClient;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,13 +77,26 @@ public class Gateway implements Server {
    */
   private CConfiguration myConfiguration;
 
+  /**
+   * The cluster name, used for authentication purposes.
+   */
+  private String clusterName;
+
+  /**
+   * The passport client used to perform authentication, if necessary.
+   */
+  private PassportClient passportClient;
+
+  /**
+   * The authenticator used for this Gateway instance.
+   */
+  private GatewayAuthenticator authenticator;
 
   /**
    * Get the Gateway's current configuration
    *
    * @return Our current Configuration
    */
-  @SuppressWarnings("unused")
   public CConfiguration getConfiguration() {
     return myConfiguration;
   }
@@ -214,6 +231,21 @@ public class Gateway implements Server {
   }
 
   /**
+   * Set the PassportClient that the GatewayAuthenticator will use.
+   *
+   * @param passportClient The passport client used for authentication
+   * @throws IllegalArgumentException If the passportClient object is null
+   */
+  public void setPassportClient(PassportClient passportClient) {
+    if (passportClient == null) {
+      throw new IllegalArgumentException("'passportClient' argument was null");
+    }
+    LOG.info("Setting PassportClient to " + passportClient.getClass().getName()
+        + ".");
+    this.passportClient = passportClient;
+  }
+
+  /**
    * Set the operations executor that is used for all data fabric access.
    *
    * @param executor The executor to use
@@ -258,6 +290,29 @@ public class Gateway implements Server {
     if (doDiscovery) {
       this.serviceDiscovery = new ServiceDiscovery(configuration);
       this.serviceDiscovery.initialize();
+    }
+
+    // Determine cluster instance name for authentication purposes
+    this.clusterName = myConfiguration.get(Constants.CONFIG_CLUSTER_NAME,
+        Constants.CONFIG_CLUSTER_NAME_DEFAULT);
+    
+    // Create the authenticator that will be used by all connectors
+    boolean requireAuthentication = this.myConfiguration.getBoolean(
+        Constants.CONFIG_AUTHENTICATION_REQUIRED,
+        Constants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT);
+    if (requireAuthentication) {
+      // Tests may set a passport client, so only create one if it dne
+      if (this.passportClient == null) {
+        this.passportClient = new PassportClient();
+      }
+      // Get the hostname for the passport service from config for now
+      // TODO: Use constant from passport once committed
+      String passportHostname = myConfiguration.get("passport.hostname",
+          "localhost");
+      this.authenticator = new PassportVPCAuthenticator(this.clusterName,
+          passportHostname, this.passportClient);
+    } else {
+      this.authenticator = new NoAuthenticator();
     }
 
     // Retrieve the list of connectors that we will create
@@ -305,6 +360,9 @@ public class Gateway implements Server {
         // set the connector's discovery client
         newConnector.setServiceDiscovery(this.serviceDiscovery);
 
+        // set the connector's authenticator
+        newConnector.setAuthenticator(this.authenticator);
+        
         // Add it to our Connector list
         try {
           this.addConnector(newConnector);

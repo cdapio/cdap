@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.*;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -135,6 +134,15 @@ public class RestHandler extends NettyRestHandler {
       // we do not support a query or parameters in the URL
       QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
       Map<String, List<String>> parameters = decoder.getParameters();
+
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!collector.attemptAuthentication(request)) {
+        LOG.info("Received an unauthorized request");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
+        return;
+      }
 
       int operation = UNKNOWN;
       if (method == HttpMethod.POST) {
