@@ -192,6 +192,15 @@ public class MonitorRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       String path = decoder.getPath();
 
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!accessor.getAuthenticator().authenticateRequest(request)) {
+        LOG.info("Received an unauthorized request");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
+        return;
+      }
+
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(path)) {
         helper.setMethod("ping");

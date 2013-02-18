@@ -2,6 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import org.apache.flume.event.SimpleEvent;
@@ -53,6 +54,7 @@ public class FlumeCollectorTest {
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.NoopConsumer());
+    collector.setAuthenticator(new NoAuthenticator());
     // create an event to reuse
     SimpleEvent event = TestUtil.createFlumeEvent(42, stream);
     try { // verify send fails before start()
@@ -90,6 +92,7 @@ public class FlumeCollectorTest {
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(17, name, stream));
+    collector.setAuthenticator(new NoAuthenticator());
     collector.start();
     TestUtil.sendFlumeEvent(port, TestUtil.createFlumeEvent(17, stream));
     collector.stop();
