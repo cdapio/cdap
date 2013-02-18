@@ -84,9 +84,7 @@ public class QueueBenchmark extends OpexBenchmark {
     QueueEnqueue enqueue = null;
     try {
       enqueue = new QueueEnqueue(queueBytes, TupleMetaDataAnnotator
-                                               .EnqueuePayload.write(new
-                                                                       HashMap<String, Long>(),
-                                                                     value));
+                                               .EnqueuePayload.write(new HashMap<String, Long>(), value));
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
@@ -97,7 +95,7 @@ public class QueueBenchmark extends OpexBenchmark {
   void doDequeue(int consumerId) throws BenchmarkException {
 
     // create a dequeue operation
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, numPendingAcks == 0);
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, numPendingAcks == 0);
     QueueConsumer consumer = new QueueConsumer(consumerId, 1, numConsumers, config);
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
