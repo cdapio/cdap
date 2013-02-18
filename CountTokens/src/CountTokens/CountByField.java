@@ -1,5 +1,6 @@
 package CountTokens;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
@@ -44,6 +45,10 @@ public class CountByField extends ComputeFlowlet
     if (Common.debug) {
        System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
     }
-    this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(), 1));
+    try {
+      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(), 1));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

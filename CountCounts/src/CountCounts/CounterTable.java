@@ -42,7 +42,11 @@ public class CounterTable extends DataSet {
   }
 
   public void increment(String key) {
-    this.kvTable.stage(new KeyValueTable.IncrementKey(key.getBytes(), 1L));
+    try {
+      this.kvTable.stage(new KeyValueTable.IncrementKey(key.getBytes(), 1L));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

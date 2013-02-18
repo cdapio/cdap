@@ -1,5 +1,6 @@
 package com.continuuity.examples.twitter;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -8,7 +9,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.common.Bytes;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -110,7 +110,11 @@ public class SortedCounterTable extends DataSet {
         long localAmount = amount;
         if (value - bucket < amount) localAmount = value - bucket;
         byte [] row = makeRow(counterSet, bucket);
-        this.counters.stage(new Increment(row, counter, localAmount));
+        try {
+          this.counters.stage(new Increment(row, counter, localAmount));
+        } catch (OperationException e) {
+          throw new RuntimeException(e);
+        }
       } else break;
     }
   }

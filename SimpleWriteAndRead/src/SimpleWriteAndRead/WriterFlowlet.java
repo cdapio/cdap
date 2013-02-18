@@ -42,7 +42,11 @@ public class WriterFlowlet extends ComputeFlowlet {
     byte [] key = params[0].getBytes();
     byte [] value = params[1].getBytes();
 
-    this.kvTable.stage(new KeyValueTable.WriteKey(key, value));
+    try {
+      this.kvTable.stage(new KeyValueTable.WriteKey(key, value));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
 
     Tuple outputTuple = new TupleBuilder().
           set("key", key).

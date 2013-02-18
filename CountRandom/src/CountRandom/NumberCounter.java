@@ -1,9 +1,14 @@
 package CountRandom;
 
-import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.flow.flowlet.*;
+import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
+import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class NumberCounter extends ComputeFlowlet {
@@ -22,7 +27,11 @@ public class NumberCounter extends ComputeFlowlet {
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     Integer i = tuple.get("number");
     getFlowletContext().getLogger().info("Processing integer " + i.intValue());
-    counters.stage(new Increment(i.toString().getBytes(), column, 1L));
+    try {
+      counters.stage(new Increment(i.toString().getBytes(), column, 1L));
+    } catch (OperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
