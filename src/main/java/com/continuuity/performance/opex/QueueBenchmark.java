@@ -9,7 +9,6 @@ import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import com.continuuity.common.utils.Bytes;
 
-import java.io.IOException;
 import java.util.*;
 
 public class QueueBenchmark extends OpexBenchmark {
@@ -74,7 +73,7 @@ public class QueueBenchmark extends OpexBenchmark {
                                                .EnqueuePayload.write(new
                                                                        HashMap<String, Long>(),
                                                                      value));
-      opex.execute(opContext, enqueue);
+      opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
@@ -113,7 +112,7 @@ public class QueueBenchmark extends OpexBenchmark {
     // execute the ack operation
     if (ackToExecute != null) {
       try {
-        opex.execute(opContext, ackToExecute);
+        opex.commit(opContext, ackToExecute);
       } catch (OperationException e) {
         Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
             "(Ignoring this error)", e);
@@ -143,7 +142,7 @@ public class QueueBenchmark extends OpexBenchmark {
     for (List<QueueAck> pending : pendingAcks) {
       for (QueueAck ack : pending) {
         try {
-          opex.execute(opContext, ack);
+          opex.commit(opContext, ack);
         } catch (OperationException e) {
           // ignore success or failure
         }

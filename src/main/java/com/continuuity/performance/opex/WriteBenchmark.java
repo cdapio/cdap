@@ -18,7 +18,7 @@ public class WriteBenchmark extends OpexBenchmark {
     Write write = new Write(key, Operation.KV_COL, value);
 
     try {
-      opex.execute(opContext, write);
+      opex.commit(opContext, write);
     } catch (OperationException e) {
       throw new BenchmarkException(
           "Operation " + write + " failed: " + e.getMessage());
