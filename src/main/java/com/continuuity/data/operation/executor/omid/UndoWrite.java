@@ -14,14 +14,8 @@ public class UndoWrite extends Delete implements Undo {
   }
 
   @Override
-<<<<<<< HEAD
-  public byte[] getRowKey() {
-    return this.getKey();
-=======
   public RowSet.Row getRow() {
     return new RowSet.Row(this.getTable(), this.getKey());
->>>>>>> master
   }
-
 
 }

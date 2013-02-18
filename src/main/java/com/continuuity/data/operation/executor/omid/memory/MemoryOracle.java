@@ -11,13 +11,6 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
-<<<<<<< HEAD
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.ttqueue.QueueFinalize;
-import com.google.inject.Inject;
-
-import java.util.*;
-=======
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.google.inject.Inject;
 
@@ -29,7 +22,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
->>>>>>> master
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MemoryOracle implements TransactionOracle {
@@ -46,11 +38,7 @@ public class MemoryOracle implements TransactionOracle {
   /**
    * Global read pointer. This is maintained as greatest transaction id of all
    * committed transaction. There may be in-progress or invalid transactions
-<<<<<<< HEAD
-   * with a larger id, but they are excluded from writes.
-=======
    * with a smaller id, but they are excluded from reads.
->>>>>>> master
    */
   long readPoint = 0;
 
@@ -238,11 +226,7 @@ public class MemoryOracle implements TransactionOracle {
   private RowSet computeRowSet(List<Undo> undos) {
     RowSet rows = null;
     for (Undo undo : undos) {
-<<<<<<< HEAD
-      byte[] rowKey = undo.getRowKey();
-=======
       RowSet.Row rowKey = undo.getRow();
->>>>>>> master
       if (rowKey != null) {
         if (rows == null) {
           rows = new MemoryRowSet();

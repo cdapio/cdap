@@ -2,13 +2,10 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-<<<<<<< HEAD
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-=======
->>>>>>> master
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -136,7 +133,7 @@ public class ConverterUtils {
     else {
       ByteArrayInputStream bis = new ByteArrayInputStream(mapAsBytes);
       Decoder decoder = new BinaryDecoder(bis);
-      int size= 0;
+      int size;
       try {
         size = decoder.readInt();
         if (size>0) {
@@ -168,17 +165,6 @@ public class ConverterUtils {
       return TBaseHelper.byteBufferToByteArray(buf);
   }
 
-  /** wrap a byte array into an optional binary */
-  TOptionalBinary wrapBinary(OperationResult<byte[]> result) {
-    TOptionalBinary binary = new TOptionalBinary();
-    if (result.isEmpty()) {
-      binary.setStatus(result.getStatus());
-      binary.setMessage(result.getMessage());
-    } else {
-      binary.setValue(result.getValue());
-    }
-    return binary;
-  }
   /** wrap a byte array into an optional binary */
   TOptionalBinary wrapBinary(byte[] bytes) {
     TOptionalBinary binary = new TOptionalBinary();
