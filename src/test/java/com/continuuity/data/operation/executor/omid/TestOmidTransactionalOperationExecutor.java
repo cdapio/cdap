@@ -113,9 +113,15 @@ public abstract class TestOmidTransactionalOperationExecutor {
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // insert to all three types
+<<<<<<< HEAD
     executor.execute(context, new Write(dataKey, kvcol, dataKey));
     executor.execute(context, new QueueEnqueue(queueKey, queueKey));
     executor.execute(context, new QueueEnqueue(streamKey, streamKey));
+=======
+    executor.commit(context, new Write(dataKey, kvcol, dataKey));
+    executor.commit(context, new QueueEnqueue(queueKey, queueKey));
+    executor.commit(context, new QueueEnqueue(streamKey, streamKey));
+>>>>>>> master
 
     // read data from all three types
     assertTrue(Bytes.equals(dataKey,
@@ -147,9 +153,15 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
     // insert data to all three again
+<<<<<<< HEAD
     executor.execute(context, new Write(dataKey, kvcol, dataKey));
     executor.execute(context, new QueueEnqueue(queueKey, queueKey));
     executor.execute(context, new QueueEnqueue(streamKey, streamKey));
+=======
+    executor.commit(context, new Write(dataKey, kvcol, dataKey));
+    executor.commit(context, new QueueEnqueue(queueKey, queueKey));
+    executor.commit(context, new QueueEnqueue(streamKey, streamKey));
+>>>>>>> master
 
     // read data from all three types
     assertArrayEquals(dataKey,
@@ -347,7 +359,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // now read with long-running read 1, should see value = 1
     assertArrayEquals(Bytes.toBytes(1),
+<<<<<<< HEAD
         executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
+=======
+        executor.execute(context, pointerReadOne, new Read(key, kvcol))
+>>>>>>> master
             .getValue().get(kvcol));
 
     // now do the same thing but in reverse order of conflict
@@ -373,12 +389,20 @@ public abstract class TestOmidTransactionalOperationExecutor {
         executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // long running reads should still see their respective values
+<<<<<<< HEAD
     assertArrayEquals(Bytes.toBytes(1),
         executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
             .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
         executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
             .getValue().get(kvcol));
+=======
+    assertArrayEquals(Bytes.toBytes(1), executor.execute(context, pointerReadOne, new Read(key,
+                                                                                           kvcol)).getValue().get
+      (kvcol));
+    assertArrayEquals(Bytes.toBytes(2),
+        executor.execute(context, pointerReadTwo, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
 
     // commit 5, should be successful
     assertTrue(executor.commitTransaction(pointerWFive).isSuccess());
@@ -389,11 +413,17 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
+<<<<<<< HEAD
         executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
             .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
         executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
             .getValue().get(kvcol));
+=======
+        executor.execute(context, pointerReadOne, new Read(key, kvcol)).getValue().get(kvcol));
+    assertArrayEquals(Bytes.toBytes(2),
+        executor.execute(context, pointerReadTwo, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
 
     // commit 6, should fail
     assertFalse(executor.commitTransaction(pointerWSix).isSuccess());
@@ -404,11 +434,17 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
+<<<<<<< HEAD
         executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
             .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
         executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
             .getValue().get(kvcol));
+=======
+        executor.execute(context, pointerReadOne, new Read(key, kvcol)).getValue().get(kvcol));
+    assertArrayEquals(Bytes.toBytes(2),
+        executor.execute(context, pointerReadTwo, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
   }
 
 
@@ -420,7 +456,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
     // EnqueuePayload something
-    executor.execute(context, batch(new QueueEnqueue(queueName, queueName)));
+    executor.commit(context, batch(new QueueEnqueue(queueName, queueName)));
 
     // DequeuePayload it
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
@@ -493,15 +529,17 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] valueOne = Bytes.toBytes("valueOne");
     byte [] valueTwo = Bytes.toBytes("valueTwo");
 
+    Transaction dirtyRead = new Transaction(1L, MemoryReadPointer.DIRTY_READ);
+
     List<WriteOperation> ops = new ArrayList<WriteOperation>();
     Delete delete = new Delete(key, kvcol);
     ops.add(delete);
 
     // Executing in a batch should succeed
-    executor.execute(context, ops);
+    executor.commit(context, ops);
 
     // Executing singly should also succeed
-    executor.execute(context, delete);
+    executor.commit(context, delete);
 
     // start tx one
     Transaction pointerOne = executor.startTransaction();
@@ -520,8 +558,12 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.commitTransaction(pointerOne).isSuccess());
 
     // dirty read should see it
+<<<<<<< HEAD
     assertArrayEquals(valueOne, executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE))
       .getValue().get(kvcol));
+=======
+    assertArrayEquals(valueOne, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
 
     // start tx two
     Transaction pointerTwo = executor.startTransaction();
@@ -537,7 +579,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(valueOne, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // dirty read should NOT see it
+<<<<<<< HEAD
     assertTrue(executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
+=======
+    assertTrue(executor.execute(context, dirtyRead, new Read(key, kvcol)).isEmpty());
+>>>>>>> master
 
     // commit it
     assertTrue(executor.commitTransaction(pointerTwo).isSuccess());
@@ -546,14 +592,22 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // write value two
+<<<<<<< HEAD
     executor.execute(context, new Write(key, kvcol, valueTwo));
+=======
+    executor.commit(context, new Write(key, kvcol, valueTwo));
+>>>>>>> master
 
     // clean read sees it
     assertArrayEquals(valueTwo, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // dirty read sees it
+<<<<<<< HEAD
     assertArrayEquals(valueTwo, executor.read(context,
         new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE)).getValue().get(kvcol));
+=======
+    assertArrayEquals(valueTwo, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
 
     // start tx three
     Transaction pointerThree = executor.startTransaction();
@@ -575,8 +629,12 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // verify clean and dirty reads still see the value (it was undeleted)
     assertArrayEquals(valueTwo, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
+<<<<<<< HEAD
     assertArrayEquals(valueTwo, executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE))
       .getValue().get(kvcol));
+=======
+    assertArrayEquals(valueTwo, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
+>>>>>>> master
   }
 
   @Test
@@ -629,7 +687,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     batch.add(incrementTwo);
 
     // Execute the batch!
-    executor.execute(context, batch);
+    executor.commit(context, batch);
 
     // Dequeueing from these queues should yield the post increment values
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, false);
@@ -697,9 +755,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] val3 = Bytes.toBytes(7L);
     final byte[] val4 = new byte[] { 'x', 'y', 'z'};
     final byte[] rowkey = new byte[] { 'r', 'o', 'w', '4', '2' };
-    executor.execute(context, new Write(table, rowkey,
-        new byte[][] { col1, col2, col3, col4 },
-        new byte[][] { val1, val2, val3, val4 }));
+    executor.commit(context, new Write(table, rowkey, new byte[][]{col1, col2, col3, col4}, new byte[][]{val1, val2,
+      val3, val4}));
 
     {
     // read back with single column
@@ -739,7 +796,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertArrayEquals(val4, result4.getValue().get(col4));
     }
     // increment one column
-    executor.execute(context, new Increment(table, rowkey, col3, 1L));
+    executor.increment(context, new Increment(table, rowkey, col3, 1L));
     {
     // read back with single column
     OperationResult<Map<byte[], byte[]>> result5 = executor.execute(context,
@@ -750,7 +807,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertArrayEquals(Bytes.toBytes(8L), result5.getValue().get(col3));
     }
     // delete one column
-    executor.execute(context, new Delete(table, rowkey, col2));
+    executor.commit(context, new Delete(table, rowkey, col2));
     {
     // verify it's gone
     OperationResult<Map<byte[], byte[]>> result6 = executor.execute(context,
@@ -759,8 +816,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertEquals(StatusCode.COLUMN_NOT_FOUND, result6.getStatus());
     }
     // compare-and-swap with success
-    executor.execute(context, new CompareAndSwap(table, rowkey, col3,
-        Bytes.toBytes(8L), Bytes.toBytes(3L)));
+    executor.commit(context, new CompareAndSwap(table, rowkey, col3, Bytes.toBytes(8L), Bytes.toBytes(3L)));
     {
     // verify value has changed
     OperationResult<Map<byte[], byte[]>> result7 = executor.execute(context,
@@ -772,8 +828,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     }
     // compare-and-swap and fail
     try {
-      executor.execute(context, new CompareAndSwap(table, rowkey, col3,
-          Bytes.toBytes(8L), Bytes.toBytes(17L)));
+      executor.commit(context, new CompareAndSwap(table, rowkey, col3, Bytes.toBytes(8L), Bytes.toBytes(17L)));
       fail("Write conflict exception expected.");
     } catch (OperationException e) {
       // expected write conflict
@@ -809,9 +864,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, new OpenTable(tableB));
 
     // write to default and both tables
-    executor.execute(context, new Write(rowX, colX, valX));
-    executor.execute(context, new Write(tableA, rowY, colY, val42));
-    executor.execute(context, new Write(tableB, rowZ, colZ, valZ));
+    executor.commit(context, new Write(rowX, colX, valX));
+    executor.commit(context, new Write(tableA, rowY, colY, val42));
+    executor.commit(context, new Write(tableB, rowZ, colZ, valZ));
 
     // verify the writes went through
     Assert.assertArrayEquals(valX, executor.execute(
@@ -828,7 +883,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     writes.add(new Delete(tableB, rowZ, colZ));
     writes.add(new CompareAndSwap(tableA, rowX, colX, valX, null));
     try {
-      executor.execute(context, writes);
+      executor.commit(context, writes);
       fail("Expected compare-and-swap to fail batch.");
     } catch (OperationException e) {
       if (e.getStatus() != StatusCode.WRITE_CONFLICT)
@@ -861,7 +916,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // open a table, and write to the table
     executor.execute(context, new OpenTable(table));
-    executor.execute(context, new Write(table, rowX, colX, valX));
+    executor.commit(context, new Write(table, rowX, colX, valX));
 
     // verify the write can be read
     OperationResult<Map<byte[], byte[]>> result = executor.execute(context, new Read(table, rowX, colX));
@@ -877,7 +932,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         context, new Read(table, rowX, colX)).getValue().get(colX));
 
     // write to the table
-    executor.execute(context, new Write(table, rowX, colX, valX1));
+    executor.commit(context, new Write(table, rowX, colX, valX1));
     Assert.assertArrayEquals(valX1, executor.execute(
         context, new Read(table, rowX, colX)).getValue().get(colX));
 
@@ -906,8 +961,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context2, new OpenTable(table));
 
     // write different values to each table
-    executor.execute(context1, new Write(table, rowX, colX, valX));
-    executor.execute(context2, new Write(table, rowX, colY, valY));
+    executor.commit(context1, new Write(table, rowX, colX, valX));
+    executor.commit(context2, new Write(table, rowX, colY, valY));
 
     // verify each context see its own writes
     Assert.assertArrayEquals(valX, executor.execute(
@@ -1073,7 +1128,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // read the value inside the tx -> visible
     Assert.assertArrayEquals(one, executor.execute(context, tx, new Read(table, f, x)).getValue().get(x));
     // write another value outside the tx
+<<<<<<< HEAD
     executor.execute(context, batch(new Write(table, g, x, one)));
+=======
+    executor.commit(context, batch(new Write(table, g, x, one)));
+>>>>>>> master
     // read the value outside the tx -> visible
     Assert.assertArrayEquals(one, executor.execute(context, new Read(table, g, x)).getValue().get(x));
     // read the value inside the tx -> null
@@ -1114,12 +1173,17 @@ public abstract class TestOmidTransactionalOperationExecutor {
                                                                                      value))));
     // dequeue
     DequeueResult deqres = executor.execute(
+<<<<<<< HEAD
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)),
                                 new QueueConfig(PartitionerType.RANDOM, true)));
+=======
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+>>>>>>> master
     // verify the value
     Assert.assertFalse(deqres.isEmpty());
     Assert.assertArrayEquals(value, DequeuePayload.read(deqres.getValue()).getSerializedTuple());
     // in a new transaction, write the dequeued value and ack the queue entry
+<<<<<<< HEAD
     executor.execute(context, batch(new Write(table, g, x, value),
                                     new QueueAck(qname, deqres.getEntryPointer(),
                                                  new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)))));
@@ -1127,6 +1191,13 @@ public abstract class TestOmidTransactionalOperationExecutor {
     deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.RANDOM, true)),
                                 new QueueConfig(PartitionerType.RANDOM, true)));
+=======
+    executor.commit(context, batch(new Write(table, g, x, value), new QueueAck(qname, deqres.getEntryPointer(),
+                                                                               new QueueConsumer(0, 0, 1))));
+    // attempt to dequeue again, should be empty
+    deqres = executor.execute(
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+>>>>>>> master
     // verify the value
     Assert.assertTrue(deqres.isEmpty());
     // verify the write
@@ -1146,14 +1217,22 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[][] abc = {a,b,c};
 
     // write two out of three columns
+<<<<<<< HEAD
     executor.execute(context, new Write(table, first, ab, new byte[][] {
       Bytes.toBytes(1L), Bytes.toBytes(10L) }));
+=======
+    executor.commit(context, new Write(table, first, ab, new byte[][]{Bytes.toBytes(1L), Bytes.toBytes(10L)}));
+>>>>>>> master
 
     // start a transaction
     Transaction tx1 = executor.startTransaction(context);
     // increment these columns within the transaction
     OperationResult<Map<byte[], Long>> res = executor.
+<<<<<<< HEAD
       execute(context, tx1, new Increment(table, first, abc, new long[] { 1, 2, 55 } ));
+=======
+      increment(context, tx1, new Increment(table, first, abc, new long[]{1, 2, 55}));
+>>>>>>> master
     // verify return values
     Assert.assertFalse(res.isEmpty());
     Assert.assertEquals(new Long(2L), res.getValue().get(a));
@@ -1166,7 +1245,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
       Bytes.toBytes(res.getValue().get(c)) })));
 
     // increment new row in own tx
+<<<<<<< HEAD
     res = executor.execute(context, new Increment(table, second, abc, new long[]{1, 3, 11}));
+=======
+    res = executor.increment(context, new Increment(table, second, abc, new long[]{1, 3, 11}));
+>>>>>>> master
     // verify return values
     Assert.assertFalse(res.isEmpty());
     Assert.assertEquals(new Long(3L), res.getValue().get(a));
@@ -1182,4 +1265,31 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertEquals(66L, Bytes.toLong(res1.getValue().get(c)));
   }
 
+<<<<<<< HEAD
+=======
+  // test that operation on different tables but with same key do not cause write conflict
+  @Test
+  public void testNoConflictsIfDifferentTables() throws OperationException {
+    final String t2 = "tNCIDT2";
+    final String t3 = "tNCIDT3";
+    final byte[] a = {'a'};
+    final byte[] b = {'b'};
+
+    // start three transactions
+    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx2 = executor.startTransaction(context);
+    Transaction tx3 = executor.startTransaction(context);
+
+    // all transactions write the same row to different tables, one uses default table
+    executor.execute(context, tx1, batch(new Write(a, b, b)));
+    executor.execute(context, tx2, batch(new Write(t2, a, b, b)));
+    executor.execute(context, tx3, batch(new Write(t3, a, b, b)));
+
+    // commit all transactions, none should fail
+    executor.commit(context, tx1); // succeeds anyway
+    executor.commit(context, tx2); // no conflict between named table and default table
+    executor.commit(context, tx3); // no conflict between two named tables
+  }
+
+>>>>>>> master
 }

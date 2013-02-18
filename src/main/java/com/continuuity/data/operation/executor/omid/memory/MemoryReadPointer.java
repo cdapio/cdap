@@ -3,10 +3,15 @@
  */
 package com.continuuity.data.operation.executor.omid.memory;
 
+<<<<<<< HEAD
 import java.util.Set;
 
+=======
+>>>>>>> master
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.common.base.Objects;
+
+import java.util.Set;
 
 /**
  * A simple in-memory {@link ReadPointer} that supports a global read point,
@@ -89,4 +94,6 @@ public class MemoryReadPointer implements ReadPointer {
   public Set<Long> getReadExcludes() {
     return this.excludes;
   }
+
+  public static final MemoryReadPointer DIRTY_READ = new MemoryReadPointer(Long.MAX_VALUE);
 }

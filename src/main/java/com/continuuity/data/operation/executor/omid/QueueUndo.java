@@ -2,28 +2,24 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.google.common.base.Objects;
-import org.apache.hadoop.hbase.util.Bytes;
 
 public abstract class QueueUndo implements Undo {
 
-  protected final byte [] queueName;
-  protected final QueueEntryPointer entryPointer;
-
-  protected QueueUndo(final byte[] queueName, final QueueEntryPointer entryPointer) {
-    this.queueName = queueName;
-    this.entryPointer = entryPointer;
-  }
-
   @Override
-  public byte[] getRowKey() {
+  public RowSet.Row getRow() {
     // queue operations are excluded from conflict detection
     return null;
   }
+
+  protected final byte [] queueName;
+  protected final QueueEntryPointer entryPointer;
 
   public byte[] getQueueName() {
     return queueName;
@@ -31,6 +27,11 @@ public abstract class QueueUndo implements Undo {
 
   public QueueEntryPointer getEntryPointer() {
     return entryPointer;
+  }
+
+  protected QueueUndo(final byte[] queueName, final QueueEntryPointer entryPointer) {
+    this.queueName = queueName;
+    this.entryPointer = entryPointer;
   }
 
   @Override
@@ -41,8 +42,8 @@ public abstract class QueueUndo implements Undo {
         .toString();
   }
   
-  public abstract void execute(TTQueueTable queueTable, Transaction transaction)
-    throws OperationException;
+  public abstract void execute(TTQueueTable queueTable,
+      Transaction transaction) throws OperationException;
 
   public static class QueueUnenqueue extends QueueUndo {
     final byte[] data;
@@ -58,7 +59,8 @@ public abstract class QueueUndo implements Undo {
     }
 
     @Override
-    public void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException {
+    public void execute(TTQueueTable queueTable,
+        Transaction transaction) throws OperationException {
       queueTable.invalidate(queueName, entryPointer, transaction.getTransactionId());
     }
   }
@@ -83,8 +85,9 @@ public abstract class QueueUndo implements Undo {
     }
 
     @Override
-    public void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException {
-      queueTable.unack(queueName, entryPointer, consumer, transaction.getReadPointer());
+    public void execute(TTQueueTable queueTable,
+        Transaction transaction) throws OperationException {
+      queueTable.unack(queueName, entryPointer, consumer);
     }
   }
 }

@@ -25,8 +25,7 @@ public interface TransactionalOperationExecutor extends OperationExecutor {
    * @throws OperationException
    */
   @Override
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
+  public void commit(OperationContext context, List<WriteOperation> writes)
       throws OperationException;
 
 }

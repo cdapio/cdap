@@ -90,6 +90,8 @@ public class Table extends DataSet {
    * flowlet or a query etc.)
    * @param op The write operation
    * @throws OperationException if something goes wrong
+   *
+   * TODO this method will be renamed to write() in the new flow system
    */
   // @Deprecated
   public void stage(WriteOperation op) throws OperationException {

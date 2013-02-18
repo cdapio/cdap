@@ -230,13 +230,13 @@ public class SerializingMetaDataStore implements MetaDataStore {
       if (isUpdate && expected == null) {
         // generate a write
         Write write = new Write(tableName, rowkey, column, bytes);
-        opex.execute(context, write);
+        opex.commit(context, write);
       } else {
         // generate a compare-and-swap operation to make sure there is no add
         // conflict with some other thread or process
         CompareAndSwap compareAndSwap =
             new CompareAndSwap(tableName, rowkey, column, bytesRead, bytes);
-          opex.execute(context, compareAndSwap);
+          opex.commit(context, compareAndSwap);
       }
     } catch (OperationException e) {
       if (resolve && e.getStatus() == StatusCode.WRITE_CONFLICT) {
@@ -425,7 +425,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       // write w/ compareAndSwap
       try {
         CompareAndSwap compareAndSwap = new CompareAndSwap(tableName, rowkey, column, bytes, newBytes);
-        opex.execute(context, compareAndSwap);
+        opex.commit(context, compareAndSwap);
         return;
       } catch (OperationException e) {
         if (e.getStatus() == StatusCode.WRITE_CONFLICT && attempts >= 0)
@@ -506,7 +506,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     byte[] column = makeColumnKey(application, type, id);
 
     try {
-      opex.execute(context, new Delete(tableName, rowkey, column));
+      opex.commit(context, new Delete(tableName, rowkey, column));
 
     } catch (OperationException e) {
       String message =
@@ -626,7 +626,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
     Delete delete = new Delete(tableName, rowkey, columns);
     try {
-      opex.execute(context, delete);
+      opex.commit(context, delete);
     } catch (OperationException e) {
       String message =
           String.format("Error clearing meta data: %s", e.getMessage());

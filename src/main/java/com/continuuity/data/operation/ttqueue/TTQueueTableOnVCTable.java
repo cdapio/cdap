@@ -3,7 +3,17 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+<<<<<<< HEAD
 import com.continuuity.data.table.VersionedColumnarTable;
+=======
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.VersionedColumnarTable;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.concurrent.ConcurrentSkipListMap;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+>>>>>>> master
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.

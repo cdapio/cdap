@@ -208,8 +208,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context,
-                      final List<WriteOperation> writes)
+  public void commit(final OperationContext context, final List<WriteOperation> writes)
       throws OperationException {
     this.execute(
         new Operation<Boolean>("Batch") {
@@ -235,7 +234,11 @@ public class RemoteOperationExecutor
                              final List<WriteOperation> writes)
     throws OperationException {
     // TODO implement this properly
+<<<<<<< HEAD
     execute(context, writes);
+=======
+    commit(context, writes);
+>>>>>>> master
     return null;
   }
 
@@ -252,7 +255,11 @@ public class RemoteOperationExecutor
                      List<WriteOperation> writes)
     throws OperationException {
     // TODO implement this properly
+<<<<<<< HEAD
     execute(context, writes);
+=======
+    commit(context, writes);
+>>>>>>> master
   }
 
   @Override
@@ -263,16 +270,28 @@ public class RemoteOperationExecutor
   }
 
   @Override
+<<<<<<< HEAD
   public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
     throws OperationException {
     // TODO implement this properly
     execute(context, (WriteOperation)increment);
+=======
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment)
+    throws OperationException {
+    // TODO implement this properly
+    commit(context, (WriteOperation) increment);
+>>>>>>> master
     return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
+<<<<<<< HEAD
   public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
                                                     Increment increment)
+=======
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+                                                      Increment increment)
+>>>>>>> master
     throws OperationException {
     // TODO implement this properly
     execute(context, transaction, Collections.singletonList((WriteOperation)increment));
@@ -427,10 +446,16 @@ public class RemoteOperationExecutor
   }
 
   @Override
+<<<<<<< HEAD
   public void execute(final OperationContext context,
                       final WriteOperation write)
       throws OperationException {
     this.execute(context, Collections.singletonList(write));
+=======
+  public void commit(final OperationContext context, final WriteOperation write)
+      throws OperationException {
+    this.commit(context, Collections.singletonList(write));
+>>>>>>> master
   }
 
   @Override

@@ -38,27 +38,27 @@ public class DataFabricImpl implements DataFabric {
 
   @Override
   public void execute(Write write) throws OperationException {
-    this.opex.execute(context, write);
+    this.opex.commit(context, write);
   }
 
   @Override
   public void execute(Delete delete) throws OperationException {
-    this.opex.execute(context, delete);
+    this.opex.commit(context, delete);
   }
 
   @Override
   public void execute(Increment inc) throws OperationException {
-    this.opex.execute(context, inc);
+    this.opex.increment(context, inc);
   }
 
   @Override
   public void execute(CompareAndSwap cas) throws OperationException {
-    this.opex.execute(context, cas);
+    this.opex.commit(context, cas);
   }
 
   @Override
   public void execute(List<WriteOperation> writes) throws OperationException {
-    this.opex.execute(context, writes);
+    this.opex.commit(context, writes);
   }
 
   @Override
