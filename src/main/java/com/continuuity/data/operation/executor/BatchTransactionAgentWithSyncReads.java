@@ -21,6 +21,8 @@ import java.util.Map;
  * synchronously, each in its own transaction. If an error occurs during a
  * read operation, the agent remains operational (because the reads do not
  * affect the transaction).
+ *
+ * This class is not thread-safe - any synchronization is up to the caller.
  */
 public class BatchTransactionAgentWithSyncReads implements TransactionAgent {
 

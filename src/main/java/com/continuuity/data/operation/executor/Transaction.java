@@ -5,8 +5,8 @@ package com.continuuity.data.operation.executor;
  * and a read pointer that provides read (snapshot) isolation.
  */
 public class Transaction {
-  private long transactionId;
-  private ReadPointer readPointer;
+  private final long transactionId;
+  private final ReadPointer readPointer;
 
   public Transaction(long transactionId, ReadPointer readPointer) {
     this.readPointer = readPointer;

@@ -8,7 +8,6 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +19,10 @@ import java.util.Map;
  * synchronously, each in its own transaction. If an error occurs during
  * an operation, the agent remains operational (because the operations do
  * not affect a running transaction).
+ *
+ * Even though this class is currently thread-safe, the caller should not
+ * rely on that, because transaction agents in general are not thread-safe
+ * - any synchronization is up to the caller.
  */
 public class SynchronousTransactionAgent implements TransactionAgent {
 

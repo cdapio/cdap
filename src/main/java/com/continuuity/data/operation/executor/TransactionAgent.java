@@ -23,6 +23,8 @@ import java.util.Map;
  * batch up all operations until then, to minimize the duration of the transaction.
  * Yet another implementation could ignore transactions alltogether and execute each
  * operation by itself.
+ *
+ * Transaction agents are not thread-safe - any synchronization is up to the caller.
  */
 public interface TransactionAgent {
 

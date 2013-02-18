@@ -13,7 +13,6 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +32,9 @@ import java.util.Map;
  * </ul>
  * This agent aborts the current transaction whenever an operation fails - even if
  * it is a read operation. After a failure, no more operations may be submitted.
+ *
+ * This class is not thread-safe - any synchronization is up to the caller.
+ *
  */
 public class SmartTransactionAgent implements TransactionAgent {
 
@@ -40,13 +42,13 @@ public class SmartTransactionAgent implements TransactionAgent {
     LoggerFactory.getLogger(SmartTransactionAgent.class);
 
   // the actual operation executor
-  private OperationExecutor opex;
+  private final OperationExecutor opex;
   // the operation context for all operations
-  private OperationContext context;
+  private final OperationContext context;
+  // the list of currently deferred operations
+  private final List<WriteOperation> deferred = Lists.newLinkedList();
   // the current transaction
   private Transaction xaction;
-  // the list of currently deferred operations
-  private List<WriteOperation> deferred = Lists.newLinkedList();
   // keep track of current state
   private State state = State.New;
 
@@ -68,7 +70,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     if (this.state == State.Running) {
       // in this case we want to throw a runtime exception. The transaction has started
       // and we must abort or commit it, otherwise data fabric may be inconsistent.
-      throw new IllegalStateException("State is already running.");
+      throw new IllegalStateException("Transaction has already started.");
     }
     this.xaction = null;
     this.deferred.clear();
