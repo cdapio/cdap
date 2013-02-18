@@ -5,13 +5,10 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-<<<<<<< HEAD
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-=======
->>>>>>> master
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
@@ -679,40 +676,22 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   }
 
   @Override
-<<<<<<< HEAD
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
-                                                    Increment increment) throws OperationException {
-    // start transaction, execute increment, commit transaction, return result
-    Transaction tx = startTransaction();
-    OperationResult<Map<byte[], Long>> result = execute(context, tx, increment);
-=======
   public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
     OperationException {
     // start transaction, execute increment, commit transaction, return result
     Transaction tx = startTransaction();
     OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
->>>>>>> master
     commit(context, tx);
     return result;
   }
 
   @Override
-<<<<<<< HEAD
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
-                                                    Transaction transaction,
-                                                    Increment increment) throws OperationException {
-    // if a null transaction is passed in,
-    // call the companion method that wraps this into a new transaction
-    if (transaction == null) {
-      return execute(context, increment);
-=======
   public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
                                                       Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
     if (transaction == null) {
       return increment(context, increment);
->>>>>>> master
     }
 
     WriteTransactionResult writeTxReturn = write(context, increment, transaction);
@@ -910,45 +889,27 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   // TTQueues
 
   /**
-   * EnqueuePayload operations always succeed but can be rolled back.
+   * Enqueue operations always succeed but can be rolled back.
    *
    * They are rolled back with an invalidate.
    */
-<<<<<<< HEAD
   WriteTransactionResult write(QueueEnqueue enqueue, Transaction transaction) throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
     //TODO: need to store header version
     enqueue.getHeaderVersion();
-
-
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
-                                                        wrap(enqueue.getHeaders()) ,transaction.getTransactionId());
-=======
-  WriteTransactionResult write(QueueEnqueue enqueue,
-      Transaction transaction) throws OperationException {
-    initialize();
-    requestMetric("QueueEnqueue");
-    long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
-                                                                   transaction.getTransactionId());
->>>>>>> master
+                                         wrap(enqueue.getHeaders()), transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
-<<<<<<< HEAD
   WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)
-                               throws OperationException {
-=======
-  WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused") Transaction pointer)
-      throws OperationException {
+    throws  OperationException {
 
->>>>>>> master
     initialize();
     requestMetric("QueueAck");
     long begin = begin();
@@ -1028,25 +989,6 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     return this.oracle.startTransaction();
   }
 
-<<<<<<< HEAD
-  void addToTransaction(Transaction transaction, List<Undo> undos) throws OmidTransactionException {
-    this.oracle.addToTransaction(transaction.getTransactionId(), undos);
-  }
-
-  TransactionResult commitTransaction(Transaction transaction) throws OmidTransactionException {
-    requestMetric("CommitTransaction");
-    return this.oracle.commitTransaction(transaction.getTransactionId());
-  }
-
-  TransactionResult abortTransaction(Transaction transaction) throws OmidTransactionException {
-    requestMetric("CommitTransaction");
-    return this.oracle.abortTransaction(transaction.getTransactionId());
-  }
-
-
-  private void attemptUndo(OperationContext context, Transaction transaction, List<Undo> undos)
-                           throws OperationException {
-=======
   void addToTransaction(Transaction transaction, List<Undo> undos)
       throws OmidTransactionException {
     this.oracle.addToTransaction(transaction.getTransactionId(), undos);
@@ -1060,7 +1002,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
   TransactionResult abortTransaction(Transaction transaction)
     throws OmidTransactionException {
-    requestMetric("CommitTransaction");
+    requestMetric("AbortTransaction");
     return this.oracle.abortTransaction(transaction.getTransactionId());
   }
 
@@ -1069,7 +1011,6 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
                            Transaction transaction,
                            List<Undo> undos)
       throws OperationException {
->>>>>>> master
     // Perform queue invalidates
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
     for (Undo undo : undos) {
@@ -1101,14 +1042,8 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   }
 
   @Override
-<<<<<<< HEAD
-  public void execute(OperationContext context,
-                      WriteOperation write) throws OperationException {
-    execute(context, Collections.singletonList(write));
-=======
   public void commit(OperationContext context, WriteOperation write) throws OperationException {
     commit(context, Collections.singletonList(write));
->>>>>>> master
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {
