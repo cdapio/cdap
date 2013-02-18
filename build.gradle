@@ -18,7 +18,7 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
 
   // Self dependencies.
-  compile apiJar.outputs.files
+  // compile apiJar.outputs.files
   compile libraries.mysql
   //TODO: Move this to central dependency
   compile 'org.apache.shiro:shiro-core:1.2.1'
