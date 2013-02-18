@@ -56,11 +56,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // write one column with remote
     Write write = new Write(key1, "col1".getBytes(), "val1".getBytes());
-<<<<<<< HEAD
-    remote.execute(context, write);
-=======
     remote.commit(context, write);
->>>>>>> master
     // read back with remote and compare
     Read read = new Read(key1, "col1".getBytes());
     Map<byte[], byte[]> columns = remote.execute(context, read).getValue();
@@ -89,11 +85,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // increment one column with remote
     Increment increment = new Increment(count, col, 1);
-<<<<<<< HEAD
-    remote.execute(context, increment);
-=======
     remote.increment(context, increment);
->>>>>>> master
     // read back with remote and verify it is 1
     Read read = new Read(count, col);
     Map<byte[], byte[]> result = remote.execute(context, read).getValue();
@@ -129,19 +121,11 @@ public abstract class OperationExecutorServiceTest extends
 
     // write a key/value
     Write write = new Write(key, col, "here".getBytes());
-<<<<<<< HEAD
-    remote.execute(context, write);
-
-    // delete the row with remote
-    Delete delete = new Delete(key, col);
-    remote.execute(context, delete);
-=======
     remote.commit(context, write);
 
     // delete the row with remote
     Delete delete = new Delete(key, col);
     remote.commit(context, delete);
->>>>>>> master
 
     // read back key with remote and verify null
     Read read = new Read(key, col);
@@ -380,26 +364,14 @@ public abstract class OperationExecutorServiceTest extends
 
     // write a row for deletion within the batch, and one compareAndSwap
     Write write = new Write(keyB, kvcol, "0".getBytes());
-<<<<<<< HEAD
-    remote.execute(context, write);
-    write = new Write(keyD, kvcol, "0".getBytes());
-    remote.execute(context, write);
-    // insert two elements into a queue, and dequeue one to get an ack
-    remote.execute(context, new QueueEnqueue(q, "0".getBytes()));
-    remote.execute(context, new QueueEnqueue(q, "1".getBytes()));
-    QueueConfig config=new QueueConfig(PartitionerType.RANDOM, true);
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-=======
     remote.commit(context, write);
     write = new Write(keyD, kvcol, "0".getBytes());
     remote.commit(context, write);
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, "0".getBytes()));
     remote.commit(context, new QueueEnqueue(q, "1".getBytes()));
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
-    QueueConfig config =
-        new QueueConfig(PartitionerType.RANDOM, true);
->>>>>>> master
+    QueueConfig config=new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(context, dequeue);
     Assert.assertNotNull(dequeueResult);
@@ -443,11 +415,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("0".getBytes(), dequeueResult.getValue());
 
     // set d to 1 to make compareAndSwap succeed
-<<<<<<< HEAD
-    remote.execute(context, new Write(keyD, kvcol, "1".getBytes()));
-=======
     remote.commit(context, new Write(keyD, kvcol, "1".getBytes()));
->>>>>>> master
 
     // execute the writes again and verify it suceeded
     remote.commit(context, writes);
@@ -482,25 +450,15 @@ public abstract class OperationExecutorServiceTest extends
     final byte[] s = "stream://tCF/s".getBytes();
 
     // write to a table, a queue, and a stream
-<<<<<<< HEAD
-    remote.execute(context, new Write(a, kvcol, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
-=======
     remote.commit(context, new Write(a, kvcol, x));
     remote.commit(context, new QueueEnqueue(q, x));
     remote.commit(context, new QueueEnqueue(s, x));
->>>>>>> master
 
     // clear everything
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
 
     // verify that all is gone
     Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
-<<<<<<< HEAD
-=======
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
->>>>>>> master
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     Assert.assertTrue(remote.execute(
@@ -509,15 +467,9 @@ public abstract class OperationExecutorServiceTest extends
         context, new QueueDequeue(s, consumer, config)).isEmpty());
 
     // write back all values
-<<<<<<< HEAD
-    remote.execute(context, new Write(a, kvcol, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
-=======
     remote.commit(context, new Write(a, kvcol, x));
     remote.commit(context, new QueueEnqueue(q, x));
     remote.commit(context, new QueueEnqueue(s, x));
->>>>>>> master
 
     // clear only the data
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -530,11 +482,7 @@ public abstract class OperationExecutorServiceTest extends
         context, new QueueDequeue(s, consumer, config)).getValue());
 
     // write back to the table
-<<<<<<< HEAD
-    remote.execute(context, new Write(a, kvcol, x));
-=======
     remote.commit(context, new Write(a, kvcol, x));
->>>>>>> master
 
     // clear only the queues
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.QUEUES));
@@ -720,11 +668,7 @@ public abstract class OperationExecutorServiceTest extends
           byte[] value = Integer.toString(i).getBytes();
           Log.debug("Thread " + id + " writing #" + i);
           Write write = new Write(key, Operation.KV_COL, value);
-<<<<<<< HEAD
-          remote.execute(context, write);
-=======
           remote.commit(context, write);
->>>>>>> master
           Log.debug("Thread " + id + " reading #" + i);
           Read read = new Read(key, Operation.KV_COL);
           Assert.assertArrayEquals(value,

@@ -75,24 +75,15 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-<<<<<<< HEAD
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
-=======
   public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment)
->>>>>>> master
     throws OperationException {
     // do nothing
     return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-<<<<<<< HEAD
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
-                                                    Increment increment)
-=======
   public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
                                                       Increment increment)
->>>>>>> master
     throws OperationException {
     // do nothing
     return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
@@ -176,11 +167,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-<<<<<<< HEAD
-  public void execute(OperationContext context, WriteOperation write)
-=======
   public void commit(OperationContext context, WriteOperation write)
->>>>>>> master
       throws OperationException {
     // do nothing
   }

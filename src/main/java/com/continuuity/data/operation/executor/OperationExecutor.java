@@ -67,28 +67,6 @@ public interface OperationExecutor
   public String getName();
 
   /**
-<<<<<<< HEAD
-   * Performs a {@link com.continuuity.data.operation.Write} operation.
-   * @param write the operation
-   * @throws com.continuuity.api.data.OperationException if execution failed
-   */
-  public void execute(OperationContext context,
-                      WriteOperation write)
-    throws OperationException;
-
-  /**
-   * Executes the specified list of write operations as a batch.
-   *
-   * @param writes list of write operations to execute as a batch
-   * @throws OperationException if anything goes wrong
-   */
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
-    throws OperationException;
-
-  /**
-   * Start a transaction
-=======
    * Performs and commits a {@link com.continuuity.data.operation.WriteOperation}
    * in an anonymous transaction.
    * @param write the operation
@@ -111,24 +89,11 @@ public interface OperationExecutor
   /**
    * Start a client-side transaction
    * @return the new transaction
->>>>>>> master
    */
   public Transaction startTransaction(OperationContext context)
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Submit a batch of operations for execution in a transaction. If the transaction is
-   * passed in, it is used, otherwise a new transaction is started.
-   * @param context the operation context
-   * @param transaction the existing transaction, or null to start a new one
-   * @param writes the operations to execute
-   * @return the transaction (either provided or newly started)
-   * @throws OperationException if anything goes wrong
-   */
-  public Transaction execute(OperationContext context,
-                             Transaction transaction,
-=======
    * Submit a batch of operations for execution in a client-side transaction.
    * An existing transaction can be passed in, or otherwise this methods starts
    * a new transaction. If any of the operations fail, the transaction is aborted
@@ -146,16 +111,11 @@ public interface OperationExecutor
    */
   public Transaction execute(OperationContext context,
                              @Nullable Transaction transaction,
->>>>>>> master
                              List<WriteOperation> writes)
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Commit an existing transaction. If the commit fails, the transaction is
-=======
    * Commit a client-side transaction. If the commit fails, the transaction is
->>>>>>> master
    * aborted and an exception is thrown.
    * @param context the operation context
    * @param transaction the transaction to be committed
@@ -166,16 +126,6 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Execute a batch of write operations in an existing transaction and commit.
-   * If the commit fails, the transaction is aborted and an exception is thrown.
-   * @param context the operation context
-   * @param transaction the transaction to be committed
-   * @throws OperationException if the commit fails for any reason
-   */
-  public void commit(OperationContext context,
-                     Transaction transaction,
-=======
    * Execute a batch of write operations in a client-side transaction and commit
    * the transaction. An existing transaction can be passed in, or otherwise this
    * methods starts a new transaction. If any operation or the the commit fails,
@@ -190,7 +140,6 @@ public interface OperationExecutor
    */
   public void commit(OperationContext context,
                      @Nullable Transaction transaction,
->>>>>>> master
                      List<WriteOperation> writes)
     throws OperationException;
 
@@ -201,36 +150,6 @@ public interface OperationExecutor
    * @throws OperationException if the abort fails for any reason
    */
   public void abort(OperationContext context,
-<<<<<<< HEAD
-                     Transaction transaction)
-    throws OperationException;
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.Increment} operation.
-   *
-   * @param increment the operation
-   * @return a result object containing a map of columns to the new, incremented
-   *         values if the key is found. If the key is not found, the result will
-   *         be empty and the status code is KEY_NOT_FOUND.
-   * @throws OperationException is something goes wrong
-   */
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
-    throws OperationException;
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.Increment} operation in the
-   * context of an existing transaction.
-   *
-   * @param transaction the existing transaction
-   * @param increment the operation
-   * @return a result object containing a map of columns to the new, incremented
-   *         values if the key is found. If the key is not found, the result will
-   *         be empty and the status code is KEY_NOT_FOUND.
-   * @throws OperationException is something goes wrong
-   */
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
-                                                    Increment increment)
-=======
                     Transaction transaction)
     throws OperationException;
 
@@ -265,16 +184,12 @@ public interface OperationExecutor
   public OperationResult<Map<byte[], Long>> increment(OperationContext context,
                                                       @Nullable Transaction transaction,
                                                       Increment increment)
->>>>>>> master
     throws OperationException;
 
   /**
    * Executes a {@link com.continuuity.data.operation.Read} operation.
-<<<<<<< HEAD
-=======
    *
    * @param context the operation context
->>>>>>> master
    * @param read the operation
    * @return a result object containing a map of columns to values if the key
    *    is found. If the key is not found, the result will be empty and the
@@ -286,12 +201,6 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Executes a {@link com.continuuity.data.operation.Read} operation
-   * in an existing transaction
-   * @param read the operation
-   * @param transaction the existing transaction
-=======
    * Executes a {@link com.continuuity.data.operation.Read} operation. If
    * a non-null transaction is passed in, the operation is performed in that
    * client-side transaction. Otherwise it is performed as an anonymous
@@ -301,30 +210,21 @@ public interface OperationExecutor
    * @param transaction an existing transaction, or null to perform an anonymous
    *                    transaction
    * @param read the operation
->>>>>>> master
    * @return a result object containing a map of columns to values if the key
    *    is found. If the key is not found, the result will be empty and the
    *    status code is KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-<<<<<<< HEAD
-                                                      Transaction transaction,
-=======
                                                       @Nullable Transaction transaction,
->>>>>>> master
                                                       Read read)
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation.
-=======
    * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation
    * in an anonymous (singleton) transaction.
    *
    * @param context the operation context
->>>>>>> master
    * @param readKeys the operation
    * @return a result object containing a list of keys if none found. If no
    * keys are found, then the result object will be empty and the status
@@ -336,12 +236,6 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation
-   * within an existing transaction.
-   * @param readKeys the operation
-   * @param transaction the existing transaction
-=======
    * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation.
    * If a non-null transaction is passed in, the operation is performed in that
    * client-side transaction. Otherwise it is performed as an anonymous
@@ -351,30 +245,21 @@ public interface OperationExecutor
    * @param readKeys the operation
    * @param transaction an existing transaction, or null to perform an anonymous
    *                    transaction
->>>>>>> master
    * @return a result object containing a list of keys if none found. If no
    * keys are found, then the result object will be empty and the status
    * code will be KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
   public OperationResult<List<byte[]>> execute(OperationContext context,
-<<<<<<< HEAD
-                                               Transaction transaction,
-=======
                                                @Nullable Transaction transaction,
->>>>>>> master
                                                ReadAllKeys readKeys)
     throws OperationException;
 
   /**
-<<<<<<< HEAD
-   * Executes a {@link com.continuuity.data.operation.ReadColumnRange} operation.
-=======
    * Executes a {@link com.continuuity.data.operation.ReadColumnRange} operation
    * in an anonymous (singleton) transaction.
    *
    * @param context the operation context
->>>>>>> master
    * @param readColumnRange the operation
    * @return a result object containing a map of columns to values. If the
    * key is not found, the result will be empty and the status code is
@@ -383,15 +268,6 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-<<<<<<< HEAD
-                                                      ReadColumnRange readColumnRange) throws OperationException;
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.ReadColumnRange} operation in the
-   * context of an existing transaction.
-   * @param readColumnRange the operation
-   * @param transaction the existing transaction
-=======
                                                       ReadColumnRange readColumnRange)
     throws OperationException;
 
@@ -405,7 +281,6 @@ public interface OperationExecutor
    * @param readColumnRange the operation
    * @param transaction an existing transaction, or null to perform an anonymous
    *                    transaction
->>>>>>> master
    * @return a result object containing a map of columns to values. If the
    * key is not found, the result will be empty and the status code is
    * KEY_NOT_FOUND. If the key exists but there are no columns the given range,
@@ -413,12 +288,7 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-<<<<<<< HEAD
-                                                      Transaction transaction,
-                                                      ReadColumnRange readColumnRange) throws OperationException;
-=======
                                                       @Nullable Transaction transaction,
                                                       ReadColumnRange readColumnRange)
     throws OperationException;
->>>>>>> master
 }

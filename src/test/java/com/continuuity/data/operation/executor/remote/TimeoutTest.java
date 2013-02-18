@@ -40,6 +40,7 @@ public class TimeoutTest extends OpexServiceTestBase {
             return "noop(sleep on write)";
           }
 
+          @Override
           public void commit(OperationContext context, WriteOperation write) throws OperationException {
             if (write instanceof Write) {
               try {
@@ -105,11 +106,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @Test(expected = OperationException.class)
   public void testThriftTimeout() throws OperationException {
     Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
-<<<<<<< HEAD
-    remote.execute(context, write);
-=======
     remote.commit(context, write);
->>>>>>> master
   }
 
   /**
