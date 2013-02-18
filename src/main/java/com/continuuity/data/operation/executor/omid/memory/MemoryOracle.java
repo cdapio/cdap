@@ -37,7 +37,7 @@ public class MemoryOracle implements TransactionOracle {
   /**
    * Global read pointer. This is maintained as greatest transaction id of all
    * committed transaction. There may be in-progress or invalid transactions
-   * with a larger id, but they are excluded from writes.
+   * with a smaller id, but they are excluded from reads.
    */
   long readPoint = 0;
 
