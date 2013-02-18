@@ -1114,7 +1114,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // in a new transaction, write the dequeued value and ack the queue entry
     executor.commit(context, batch(new Write(table, g, x, value),
                                    new QueueAck(qname, deqres.getEntryPointer(),
-                                   new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)))));
+                                                new QueueConsumer(0, 0, 1,
+                                                                  new QueueConfig(PartitionerType.FIFO, true)))));
     // attempt to dequeue again, should be empty
     deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),

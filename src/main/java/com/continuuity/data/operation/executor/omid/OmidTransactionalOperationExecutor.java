@@ -918,8 +918,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
                                       transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
-      return new WriteTransactionResult(StatusCode.ILLEGAL_ACK,
-          "Attempt to ack a dequeue of a different consumer");
+      return new WriteTransactionResult(e.getStatus(), e.getMessage());
     } finally {
       end("QueueAck", begin);
     }

@@ -80,6 +80,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] CONSUMER_READ_POINTER = {30}; //row <queueName>30<groupId><consumerId>, column 30
 
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
+  static final byte[] INVALID_ACTIVE_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE);
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
                                 final CConfiguration conf) {
@@ -288,6 +289,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return entryId;
   }
 
+
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
@@ -301,13 +303,27 @@ public class TTQueueNewOnVCTable implements TTQueue {
                      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
                      readPointer.getMaximum(),
                      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
-                       Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+                     Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
     } else {
-      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                     new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
+
+      byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+      byte[] colKey = makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId());
+      byte[] acked = new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes();
+
+      // verify it is not acked yet
+      OperationResult<byte[]> result = this.table.get(rowKey, colKey, readPointer);
+      if (result.isEmpty()) {
+        throw new OperationException(StatusCode.ILLEGAL_ACK, "Entry has never been claimed. ");
+      }
+      EntryConsumerMeta meta = EntryConsumerMeta.fromBytes(result.getValue());
+      if (!meta.isClaimed()) {
+        throw new OperationException(StatusCode.ILLEGAL_ACK, "Entry is " + meta.getState().name());
+      }
+      // now put the new value
+      this.table.put(rowKey,
+                     new byte[][] { colKey, ACTIVE_ENTRY },
                      readPointer.getMaximum(),
-                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
-                       Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+                     new byte[][] { acked, INVALID_ACTIVE_ENTRY_ID_BYTES } );
     }
   }
 
@@ -333,7 +349,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public long getGroupID() throws OperationException {
     // TODO: implement this :)
-    return groupId++;
+    return ++groupId;
   }
 
   @Override
