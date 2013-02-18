@@ -1,19 +1,23 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
+import com.continuuity.app.program.Store;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 
 /**
  *
  */
-public class ApplicationRegistrationStage extends AbstractStage<String> {
+public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithPrograms> {
+  private final Store store;
 
-  public ApplicationRegistrationStage() {
-    super(TypeToken.of(String.class));
+  public ApplicationRegistrationStage(Store store) {
+    super(TypeToken.of(ApplicationWithPrograms.class));
+    this.store = store;
   }
 
   @Override
-  public void process(final String o) throws Exception {
-
+  public void process(final ApplicationWithPrograms o) throws Exception {
+    store.addApplication(o.getAppSpecLoc().getApplicationId(), o.getAppSpecLoc().getSpecification());
+    emit(o);
   }
 }

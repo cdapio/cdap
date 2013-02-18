@@ -8,16 +8,29 @@ import com.continuuity.TestHelper;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.program.Id;
+import com.continuuity.app.program.Store;
+import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.Configuration;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.operation.executor.NoOperationExecutor;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationSpecLocation;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
+import com.continuuity.internal.app.program.MDSBasedStore;
+import com.continuuity.internal.app.program.MDSBasedStoreTest;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configured;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -38,7 +51,18 @@ public class LocalManagerTest {
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
     pf = new SynchronousPipelineFactory();
-    mgr = new LocalManager(new Configuration(), pf, lf);
+    final Injector injector =
+      Guice.createInjector(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(OperationExecutor.class).to(NoOperationExecutor.class);
+          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+          bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+        }
+      });
+
+    Store store = injector.getInstance(MDSBasedStore.class);
+    mgr = new LocalManager(new Configuration(), pf, lf, store);
   }
 
   /**
@@ -60,8 +84,10 @@ public class LocalManagerTest {
                                   TestHelper.getManifestWithMainClass(WebCrawlApp.class));
     Location deployedJar = lf.create(jar);
     ListenableFuture<?> p = mgr.deploy(Id.Account.DEFAULT(), deployedJar);
-    ApplicationSpecLocation input = (ApplicationSpecLocation)p.get();
-    Assert.assertEquals(input.getArchive(), deployedJar);
+    ApplicationWithPrograms input = (ApplicationWithPrograms)p.get();
+    Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
+    Assert.assertEquals(input.getPrograms().iterator().next().getProcessorType(), Type.FLOW);
+    Assert.assertEquals(input.getPrograms().iterator().next().getProcessorName(), "" );
   }
 
 }

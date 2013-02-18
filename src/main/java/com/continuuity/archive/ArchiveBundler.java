@@ -105,7 +105,7 @@ public final class ArchiveBundler {
       while(entry != null) {
         // Invoke the predicate to see if the entry needs to be filtered.
         // If the acceptFilter returns false, then it needs to be filtered; true keep it.
-        if(!acceptFilter.apply(entry)) {
+        if(acceptFilter.apply(entry)) {
           entry = zin.getNextJarEntry();
           continue;
         }
