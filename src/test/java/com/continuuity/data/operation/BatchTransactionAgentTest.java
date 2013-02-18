@@ -57,8 +57,7 @@ public class BatchTransactionAgentTest {
     final String table = "tWADBNR";
 
     // write two rows outside the xaction
-    opex.execute(OperationContext.DEFAULT, batch(new Write(table, a, x, one),
-                                                 new Write(table, b, y, two)));
+    opex.commit(OperationContext.DEFAULT, batch(new Write(table, a, x, one), new Write(table, b, y, two)));
     // start a batch xaction
     TransactionAgent agent = newAgent();
 
@@ -97,7 +96,7 @@ public class BatchTransactionAgentTest {
     final String table = "tWANDWA";
 
     // write a row outside xaction
-    opex.execute(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
 
     // start batch xaction
     TransactionAgent agent = newAgent();

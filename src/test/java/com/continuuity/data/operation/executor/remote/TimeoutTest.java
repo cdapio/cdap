@@ -41,8 +41,7 @@ public class TimeoutTest extends OpexServiceTestBase {
           }
 
           @Override
-          public void execute(OperationContext context,
-                              WriteOperation write) throws OperationException {
+          public void commit(OperationContext context, WriteOperation write) throws OperationException {
             if (write instanceof Write) {
               try {
                 Thread.sleep(1000);
@@ -50,19 +49,18 @@ public class TimeoutTest extends OpexServiceTestBase {
                 // do nothing
               }
             }
-            super.execute(context, write);
+            super.commit(context, write);
           }
 
           @Override
-          public void execute(OperationContext context,
-                              List<WriteOperation> batch)
+          public void commit(OperationContext context, List<WriteOperation> batch)
               throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
-            super.execute(context, batch);
+            super.commit(context, batch);
           }
 
           int readCount = 0;
@@ -108,7 +106,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @Test(expected = OperationException.class)
   public void testThriftTimeout() throws OperationException {
     Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
-    remote.execute(context, write);
+    remote.commit(context, write);
   }
 
   /**
@@ -120,7 +118,7 @@ public class TimeoutTest extends OpexServiceTestBase {
     List<WriteOperation> batch = Lists.newArrayList();
     Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
     batch.add(write);
-    remote.execute(context, batch);
+    remote.commit(context, batch);
   }
 
   /**

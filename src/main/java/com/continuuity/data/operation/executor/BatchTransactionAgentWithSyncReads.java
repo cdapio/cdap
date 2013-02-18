@@ -62,7 +62,7 @@ public class BatchTransactionAgentWithSyncReads implements TransactionAgent {
       return;
     }
     try {
-      this.opex.execute(this.context, this.writes);
+      this.opex.commit(this.context, this.writes);
     } finally {
       this.writes.clear();
     }
@@ -83,7 +83,7 @@ public class BatchTransactionAgentWithSyncReads implements TransactionAgent {
   @Override
   public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException {
     // execute synchronously - beware since this is also a write, it can't be rolled back
-    return this.opex.execute(this.context, increment);
+    return this.opex.increment(this.context, increment);
   }
 
   @Override

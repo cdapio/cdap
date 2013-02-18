@@ -73,8 +73,8 @@ public interface OperationExecutor
    * @param write the operation
    * @throws OperationException if execution failed
    */
-  public void execute(OperationContext context,
-                      WriteOperation write)
+  public void commit(OperationContext context,
+                     WriteOperation write)
     throws OperationException;
 
   /**
@@ -83,8 +83,8 @@ public interface OperationExecutor
    * @param writes list of write operations to execute
    * @throws OperationException if anything goes wrong
    */
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
+  public void commit(OperationContext context,
+                     List<WriteOperation> writes)
     throws OperationException;
 
   /**
@@ -164,7 +164,8 @@ public interface OperationExecutor
    *         values.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context,
+                                                      Increment increment)
     throws OperationException;
 
   /**
@@ -181,9 +182,9 @@ public interface OperationExecutor
    *         values.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
-                                                    @Nullable Transaction transaction,
-                                                    Increment increment)
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context,
+                                                      @Nullable Transaction transaction,
+                                                      Increment increment)
     throws OperationException;
 
   /**
@@ -268,7 +269,8 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      ReadColumnRange readColumnRange) throws OperationException;
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException;
 
   /**
    * Executes a {@link com.continuuity.data.operation.ReadColumnRange} operation.
@@ -288,5 +290,6 @@ public interface OperationExecutor
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
                                                       @Nullable Transaction transaction,
-                                                      ReadColumnRange readColumnRange) throws OperationException;
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException;
 }

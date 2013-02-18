@@ -525,8 +525,7 @@ implements TransactionalOperationExecutor {
   // Write batches
 
   @Override
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
+  public void commit(OperationContext context, List<WriteOperation> writes)
       throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
@@ -674,23 +673,22 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
-                                                    Increment increment) throws OperationException {
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
+    OperationException {
     // start transaction, execute increment, commit transaction, return result
     Transaction tx = startTransaction();
-    OperationResult<Map<byte[], Long>> result = execute(context, tx, increment);
+    OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
     commit(context, tx);
     return result;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
-                                                    Transaction transaction,
-                                                    Increment increment) throws OperationException {
+  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+                                                      Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
     if (transaction == null) {
-      return execute(context, increment);
+      return increment(context, increment);
     }
 
     WriteTransactionResult writeTxReturn = write(context, increment, transaction);
@@ -1047,9 +1045,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void execute(OperationContext context,
-                      WriteOperation write) throws OperationException {
-    execute(context, Collections.singletonList(write));
+  public void commit(OperationContext context, WriteOperation write) throws OperationException {
+    commit(context, Collections.singletonList(write));
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {
