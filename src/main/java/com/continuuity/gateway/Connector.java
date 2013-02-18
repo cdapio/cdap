@@ -1,8 +1,5 @@
 package com.continuuity.gateway;
 
-import java.util.List;
-import java.util.Map;
-
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -131,6 +128,10 @@ public abstract class Connector {
     return serviceDiscovery;
   }
 
+  /**
+   * Sets the authenticator to be used for all requests to this connector.
+   * @param authenticator the authenticator to use for requests
+   */
   void setAuthenticator(GatewayAuthenticator authenticator) {
     this.authenticator = authenticator;
   }
