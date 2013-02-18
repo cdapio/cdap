@@ -9,17 +9,10 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
-<<<<<<< HEAD
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-=======
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
->>>>>>> master
 import java.util.List;
 import java.util.Map;
 
@@ -37,14 +30,10 @@ import java.util.Map;
  *   <li>Upon finish, all outstanding operations are executed, and the transaction
  *     is committed.</li>
  * </ul>
-<<<<<<< HEAD
-=======
  * This agent aborts the current transaction whenever an operation fails - even if
  * it is a read operation. After a failure, no more operations may be submitted.
  *
  * This class is not thread-safe - any synchronization is up to the caller.
- *
->>>>>>> master
  */
 public class SmartTransactionAgent implements TransactionAgent {
 
@@ -52,15 +41,6 @@ public class SmartTransactionAgent implements TransactionAgent {
     LoggerFactory.getLogger(SmartTransactionAgent.class);
 
   // the actual operation executor
-<<<<<<< HEAD
-  private OperationExecutor opex;
-  // the operation context for all operations
-  private OperationContext context;
-  // the current transaction
-  private Transaction xaction;
-  // the list of currently deferred operations
-  private List<WriteOperation> deferred;
-=======
   private final OperationExecutor opex;
   // the operation context for all operations
   private final OperationContext context;
@@ -68,7 +48,6 @@ public class SmartTransactionAgent implements TransactionAgent {
   private final List<WriteOperation> deferred = Lists.newLinkedList();
   // the current transaction
   private Transaction xaction;
->>>>>>> master
   // keep track of current state
   private State state = State.New;
 
@@ -83,10 +62,6 @@ public class SmartTransactionAgent implements TransactionAgent {
   public SmartTransactionAgent(OperationExecutor opex, OperationContext context) {
     this.opex = opex;
     this.context = context;
-<<<<<<< HEAD
-    this.deferred = new ArrayList<WriteOperation>();
-=======
->>>>>>> master
   }
 
   @Override
@@ -94,11 +69,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     if (this.state == State.Running) {
       // in this case we want to throw a runtime exception. The transaction has started
       // and we must abort or commit it, otherwise data fabric may be inconsistent.
-<<<<<<< HEAD
-      throw new IllegalStateException("State is already running.");
-=======
       throw new IllegalStateException("Transaction has already started.");
->>>>>>> master
     }
     this.xaction = null;
     this.deferred.clear();
@@ -146,11 +117,7 @@ public class SmartTransactionAgent implements TransactionAgent {
         }
         // we have no transaction yet, but we have operations:
         // execute them (together in a transaction internal to opex).
-<<<<<<< HEAD
-        this.opex.execute(this.context, deferred);
-=======
         this.opex.commit(this.context, deferred);
->>>>>>> master
       } else if (this.deferred.isEmpty()) {
         // we have a transaction but no deferred ops: commit
         this.opex.commit(this.context, this.xaction);
@@ -222,11 +189,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-<<<<<<< HEAD
-      return this.opex.execute(this.context, this.xaction, increment);
-=======
       return this.opex.increment(this.context, this.xaction, increment);
->>>>>>> master
     } catch (OperationException e) {
       this.abort();
       throw e;
