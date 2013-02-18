@@ -80,10 +80,10 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
   @Override @Test @Ignore
   public void testMultiConsumerSingleGroup_dynamicReconfig() {}
-//
-//  @Override @Test @Ignore
-//  public void testSingleConsumerMulti() {}
-//
+
+  @Override @Test @Ignore
+  public void testSingleConsumerMulti() {}
+
 //  @Override @Test @Ignore
 //  public void testMultipleConsumerMultiTimeouts() {}
 //

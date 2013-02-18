@@ -593,8 +593,6 @@ public class ConverterUtils {
       return TQueuePartitioner.HASH;
     if (PartitionerType.FIFO.equals(partitioner))
       return TQueuePartitioner.FIFO;
-    if (PartitionerType.MODULO_LONG_VALUE.equals(partitioner))
-      return TQueuePartitioner.LONGMOD;
     if (PartitionerType.ROUND_ROBIN.equals(partitioner))
       return TQueuePartitioner.ROBIN;
     Log.error("Internal Error: Received an unknown QueuePartitioner with " +
@@ -611,8 +609,6 @@ public class ConverterUtils {
       return PartitionerType.HASH_ON_VALUE;
     if (TQueuePartitioner.FIFO.equals(tPartitioner))
       return PartitionerType.FIFO;
-    if (TQueuePartitioner.LONGMOD.equals(tPartitioner))
-      return PartitionerType.MODULO_LONG_VALUE;
     if (TQueuePartitioner.ROBIN.equals(tPartitioner))
       return PartitionerType.ROUND_ROBIN;
     Log.error("Internal Error: Received unknown QueuePartitioner " +

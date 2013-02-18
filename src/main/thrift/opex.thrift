@@ -82,7 +82,6 @@ struct TQueueEnqueue {
 enum TQueuePartitioner {
   FIFO,
   HASH,
-  LONGMOD,
   ROBIN,
 }
 
