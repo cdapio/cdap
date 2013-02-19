@@ -18,6 +18,12 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.Runner;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.TransactionProxy;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +41,14 @@ import java.util.Map;
  *
  */
 public final class FlowletRunner implements Runner {
+
+  private final OperationExecutor opex;
+  private final OperationContext opCtx;
+
+  public FlowletRunner(OperationExecutor opex, OperationContext opCtx) {
+    this.opex = opex;
+    this.opCtx = opCtx;
+  }
 
   @Override
   public Controller run(Program program, String name, Map<String, String> arguments) {
@@ -55,32 +69,42 @@ public final class FlowletRunner implements Runner {
       FlowletDefinition flowletDef = flowSpec.getFlowlets().get(name);
 
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", name);
-      Class<?> flowletClass = Class.forName(
-                                             flowletDef.getFlowletSpec().getClassName(),
-                                             true,
-                                             program.getMainClass().getClassLoader()
-      );
+      ClassLoader classLoader = program.getMainClass().getClassLoader();
+      Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>)
+                                                  Class.forName(flowletDef.getFlowletSpec().getClassName(),
+                                                                true, classLoader);
 
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
+      TransactionProxy transactionProxy = new TransactionProxy();
+      TransactionAgentSupplier txAgentSupplier = new SmartTransactionAgentSupplier(opex, opCtx, transactionProxy);
+      DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
+      DataSetContext dataSetCtxr = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
 
-      //      instantiateFlowlet((Class<? extends Flowlet>) flowletClass);
+      final FlowletProcessDriver driver = instantiateFlowlet(flowSpec, flowletDef, name,
+                                                       flowletClass, dataSetCtxr, txAgentSupplier);
+
+      driver.start();
+      return new Controller() {
+        @Override public void suspend() { driver.suspend(); }
+        @Override public void resume() { driver.resume(); }
+        @Override public void stop() { driver.stopAndWait(); }
+      };
 
     } catch(Exception e) {
       throw Throwables.propagate(e);
     }
-
-    return null;
   }
 
-  private Flowlet instantiateFlowlet(FlowSpecification flowSpec, FlowletDefinition flowletDef,
-                                     String flowletName,
-                                     Class<? extends Flowlet> flowletClass,
-                                     DataSetContext dataSetCtx) throws Exception {
+  private FlowletProcessDriver instantiateFlowlet(FlowSpecification flowSpec, FlowletDefinition flowletDef,
+                                                  String flowletName,
+                                                  Class<? extends Flowlet> flowletClass,
+                                                  DataSetContext dataSetCtx,
+                                                  TransactionAgentSupplier txAgentSupplier) throws Exception {
 
     TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
     Flowlet flowlet = flowletClass.newInstance();
-    List<TransactionOutputEmitter<?>> outputEmitters = Lists.newArrayList();
+    List<OutputEmitter<?>> outputEmitters = Lists.newArrayList();
 
     // Walk up the hierarchy of flowlet class.
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
@@ -111,7 +135,6 @@ public final class FlowletRunner implements Runner {
 
           // TODO: Lookup queue name by output name
           // TODO: Find way to create QueueProducer
-          URI queueName = URI.create(String.format("queue://%s/%s/%s", flowSpec.getName(), flowletDef.getFlowletSpec().getName(), outputName));
 
 //          TransactionOutputEmitter<?> outputEmitter =
 //            new ReflectionOutputEmitter(new QueueProducer(), queueName, flowletDef.getOutputs().get(outputName).iterator().next());
@@ -142,6 +165,6 @@ public final class FlowletRunner implements Runner {
 
       }
     }
-    return flowlet;
+    return null;
   }
 }
