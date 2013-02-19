@@ -5,6 +5,7 @@ import java.util.Formatter;
 /**
  *  Defines class to log data. Implements functions to log in different log levels.
  */
+@Deprecated
 public class CLogger {
   private static ThreadLocal<Formatter> formatterCache = new FormatterCache();
   private final LogDispatcher log;

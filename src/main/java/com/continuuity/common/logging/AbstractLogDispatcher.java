@@ -12,6 +12,7 @@ import com.continuuity.common.utils.StackTraceUtil;
  * Time: 1:40 PM
  * To change this template use File | Settings | File Templates.
  */
+@Deprecated
 public abstract class AbstractLogDispatcher implements LogDispatcher {
   private Level level = Level.INFO;
 

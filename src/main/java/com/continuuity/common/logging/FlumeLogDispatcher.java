@@ -20,6 +20,7 @@ import java.util.Map;
 /**
  *
  */
+@Deprecated
 public class FlumeLogDispatcher extends AbstractLogDispatcher {
   private static final Logger LOG
     = LoggerFactory.getLogger(FlumeLogDispatcher.class);
