@@ -153,25 +153,15 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   }
 
   /**
-   * Writes entry synchronously. See {@link com.continuuity.api.data.dataset.TimeseriesTable#write(Entry)} for more details on usage.
+   * Writes an entry. See {@link com.continuuity.api.data.dataset.TimeseriesTable#write(Entry)}
+   * for more details on usage.
    * @param entry to write
    * @throws OperationException
    */
   @Override
   public void write(Entry entry) throws OperationException {
     Write write = createWrite(entry);
-    table.exec(write);
-  }
-
-  /**
-   * Writes entry asynchronously. See {@link com.continuuity.api.data.dataset.TimeseriesTable#stage(Entry)} for more details on usage.
-   * @param entry to write
-   * @throws OperationException
-   */
-  @Override
-  public void stage(Entry entry) throws OperationException {
-    Write write = createWrite(entry);
-    table.stage(write);
+    table.write(write);
   }
 
   /**

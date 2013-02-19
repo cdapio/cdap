@@ -1,14 +1,13 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.Closure;
-import com.continuuity.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.WriteOperation;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 
@@ -81,26 +80,21 @@ public class ReadOnlyTable extends RuntimeTable {
         // old-style: use data fabric
         // TODO this will go away with the new flow system
         return this.getDataFabric().read(op);
+
       }
     }
   }
 
   // no support for write operations
   @Override
-  public void stage(WriteOperation op) throws OperationException {
+  public void write(WriteOperation op) throws OperationException {
     throw new UnsupportedOperationException("Write operations are not supported by read only table.");
   }
 
-  // no support for write operations
+  // no support for write operations, including the increment
   @Override
-  public void exec(WriteOperation op) throws OperationException {
-    throw new UnsupportedOperationException("Write operations are not supported by read only table.");
-  }
-
-  // no support for write operations, including the increment closure
-  @Override
-  public Closure closure(Increment increment) {
-    throw new UnsupportedOperationException("Write operations are not supported by read only table.");
+  public Map<byte[], Long> increment(Increment increment) throws OperationException {
+    throw new UnsupportedOperationException("Increment is not supported by read only table.");
   }
 
 }

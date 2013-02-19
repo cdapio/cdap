@@ -347,7 +347,6 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // now read with long-running read 1, should see value = 1
     assertArrayEquals(Bytes.toBytes(1),
-
         executor.execute(context, pointerReadOne, new Read(key, kvcol))
             .getValue().get(kvcol));
 
@@ -1144,26 +1143,24 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start a transaction
     Transaction tx1 = executor.startTransaction(context);
     // increment these columns within the transaction
-    OperationResult<Map<byte[], Long>> res = executor.
+    Map<byte[], Long> res = executor.
       increment(context, tx1, new Increment(table, first, abc, new long[]{1, 2, 55}));
     // verify return values
     Assert.assertFalse(res.isEmpty());
-    Assert.assertEquals(new Long(2L), res.getValue().get(a));
-    Assert.assertEquals(new Long(12L), res.getValue().get(b));
-    Assert.assertEquals(new Long(55L), res.getValue().get(c));
+    Assert.assertEquals(new Long(2L), res.get(a));
+    Assert.assertEquals(new Long(12L), res.get(b));
+    Assert.assertEquals(new Long(55L), res.get(c));
     // write to a new row and commit transaction
     executor.commit(context, tx1, batch(new Write(table, second, abc, new byte[][] {
-      Bytes.toBytes(res.getValue().get(a)),
-      Bytes.toBytes(res.getValue().get(b)),
-      Bytes.toBytes(res.getValue().get(c)) })));
+      Bytes.toBytes(res.get(a)), Bytes.toBytes(res.get(b)), Bytes.toBytes(res.get(c)) })));
 
     // increment new row in own tx
     res = executor.increment(context, new Increment(table, second, abc, new long[]{1, 3, 11}));
     // verify return values
     Assert.assertFalse(res.isEmpty());
-    Assert.assertEquals(new Long(3L), res.getValue().get(a));
-    Assert.assertEquals(new Long(15L), res.getValue().get(b));
-    Assert.assertEquals(new Long(66L), res.getValue().get(c));
+    Assert.assertEquals(new Long(3L), res.get(a));
+    Assert.assertEquals(new Long(15L), res.get(b));
+    Assert.assertEquals(new Long(66L), res.get(c));
 
     // read back values as bytes in own tx
     OperationResult<Map<byte[], byte[]>> res1 = executor.execute(context, new Read(table, second, abc));

@@ -367,11 +367,11 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, write);
     write = new Write(keyD, kvcol, "0".getBytes());
     remote.commit(context, write);
+    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, "0".getBytes()));
     remote.commit(context, new QueueEnqueue(q, "1".getBytes()));
-    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(context, dequeue);
     Assert.assertNotNull(dequeueResult);

@@ -5,10 +5,6 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
@@ -54,8 +50,6 @@ import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -320,8 +314,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     return ("random_" + context.getAccount() + "_" + name).getBytes();
   }
 
-  private OrderedVersionedColumnarTable waitForTableToMaterialize(
-      ImmutablePair<String, String> tableKey) {
+  private OrderedVersionedColumnarTable waitForTableToMaterialize(ImmutablePair<String, String> tableKey) {
     while (true) {
       ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
           this.namedTables.get(tableKey);
@@ -342,8 +335,9 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     // TODO should this time out after some time or number of attempts?
   }
 
-  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(
-      OperationContext context, String name, MetaDataEntry meta)
+  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(OperationContext context,
+                                                                String name,
+                                                                MetaDataEntry meta)
     throws OperationException {
 
     while(true) {
@@ -407,7 +401,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
-      throws OperationException {
+    throws OperationException {
     return execute(context, null, readKeys);
   }
 
@@ -429,17 +423,10 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     return new OperationResult<List<byte[]>>(result);
   }
 
-  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
-                                           Read read, ReadPointer pointer)
-    throws OperationException {
-    OrderedVersionedColumnarTable table =
-      this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), read.getColumns(), pointer);
-  }
-
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
-      throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
+    throws OperationException {
     return execute(context, null, read);
   }
 
@@ -462,9 +449,9 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context,
-          ReadColumnRange readColumnRange) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
     return execute(context, null, readColumnRange);
   }
 
@@ -491,6 +478,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   }
 
   // Administrative calls
+
 
   @Override
   public void execute(OperationContext context,
@@ -595,6 +583,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
           if (result != null && result.size() > 0) {
             incrementResults.put(write.getId(), result.values().iterator().next());
           }
+
         }
       }
     }
@@ -609,13 +598,15 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
       abort(context, transaction);
       throw new OmidTransactionException(
         writeTxReturn.statusCode, writeTxReturn.message);
-    }
+      }
     return transaction; // TODO auto generated body
-  }
+    }
 
   @Override
   public void commit(OperationContext context,
-                     Transaction transaction) throws OperationException {
+                     Transaction transaction)
+    throws OperationException {
+
     // attempt to commit in Oracle
     TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
@@ -676,17 +667,19 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Increment increment) throws
     OperationException {
     // start transaction, execute increment, commit transaction, return result
     Transaction tx = startTransaction();
-    OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
+    Map<byte[], Long> result = increment(context, tx, increment);
     commit(context, tx);
     return result;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Transaction transaction,
                                                       Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
@@ -702,13 +695,12 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     }
     if (writeTxReturn.success) {
       // increment was successful. the return value is in the write transaction result
-      return new OperationResult<Map<byte[], Long>>(writeTxReturn.incrementResult);
+      return writeTxReturn.incrementResult;
     } else {
       // operation failed
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
       abort(context, transaction);
-      throw new OmidTransactionException(
-        writeTxReturn.statusCode, writeTxReturn.message);
+      throw new OmidTransactionException(writeTxReturn.statusCode, writeTxReturn.message);
     }
   }
 
@@ -897,7 +889,8 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     requestMetric("QueueEnqueue");
     long begin = begin();
     //TODO: need to store header version
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry()  , transaction.getTransactionId());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
+                                                                   transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
@@ -998,7 +991,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
   TransactionResult abortTransaction(Transaction transaction)
     throws OmidTransactionException {
-    requestMetric("AbortTransaction");
+    requestMetric("CommitTransaction");
     return this.oracle.abortTransaction(transaction.getTransactionId());
   }
 
@@ -1065,50 +1058,6 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
       this.streamTable = this.tableHandle.getStreamTable(Bytes.toBytes("streams"));
       this.namedTables = Maps.newConcurrentMap();
       this.metaStore = new SerializingMetaDataStore(this);
-    }
-  }
-  private byte[] wrap(Map<String,String> map) {
-    byte[] mapAsBytes;
-    if (map == null)
-      return null;
-    else {
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      Encoder encoder = new BinaryEncoder(bos);
-      try {
-        encoder.writeInt(map.size());
-        for(Map.Entry<String,String> entry: map.entrySet()) {
-          encoder.writeString(entry.getKey());
-          encoder.writeString(entry.getValue());
-        }
-        mapAsBytes=bos.toByteArray();
-      } catch (IOException e) {
-        e.printStackTrace();
-        return null;
-      }
-      return mapAsBytes;
-    }
-  }
-
-  Map<String,String> unwrap(byte[] mapAsBytes) {
-    Map<String,String> map=null;
-    if (mapAsBytes == null) return map;
-    else {
-      ByteArrayInputStream bis = new ByteArrayInputStream(mapAsBytes);
-      Decoder decoder = new BinaryDecoder(bis);
-      int size= 0;
-      try {
-        size = decoder.readInt();
-        if (size>0) {
-          map=Maps.newHashMap();
-          for(int i=0; i<size; i++) {
-            map.put(decoder.readString(),decoder.readString());
-          }
-        }
-      } catch (IOException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        return null;
-      }
-      return map;
     }
   }
 } // end of OmitTransactionalOperationExecutor

@@ -7,11 +7,11 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -348,6 +348,62 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer, dirtyReadPointer);
     assertTrue(result.isEmpty());
   }
+
+  @Test @Ignore
+  public void testSingleConsumerWithHashPartitioning() throws Exception {
+    final boolean singleEntry = true;
+    TTQueue queue = createQueue();
+    long dirtyVersion = 1;
+    ReadPointer dirtyReadPointer = getDirtyPointer();
+
+    byte [] valueOne = Bytes.toBytes("value1");
+    byte [] valueTwo = Bytes.toBytes("value2");
+    Map<String,Integer> headerTwo = Maps.newHashMap();
+    headerTwo.put("hashValue",2);
+
+    // enqueue two entries
+    QueueEntry queueEntryOne = new QueueEntryImpl(valueOne);
+    queueEntryOne.addPartitioningKey("hashValue",1);
+    QueueEntry queueEntryTwo = new QueueEntryImpl(valueOne);
+    queueEntryTwo.addPartitioningKey("hashValue",2);
+
+    assertTrue(queue.enqueue(queueEntryOne, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(queueEntryTwo, dirtyVersion).isSuccess());
+
+    // dequeue it with the single consumer and FIFO partitioner
+    QueueConfig config = new QueueConfig(PartitionerType.HASH_ON_VALUE, singleEntry);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    DequeueResult result = queue.dequeue(consumer, dirtyReadPointer);
+
+    // verify we got something and it's the first value
+    assertTrue(result.toString(), result.isSuccess());
+    assertTrue(Bytes.equals(result.getEntry().getData(), valueOne));
+
+    // dequeue again without acking, should still get first value
+    result = queue.dequeue(consumer, dirtyReadPointer);
+    assertTrue(result.isSuccess());
+    assertTrue("Expected (" + Bytes.toString(valueOne) + ") Got (" +
+                 Bytes.toString(result.getEntry().getData()) + ")",
+               Bytes.equals(result.getEntry().getData(), valueOne));
+
+    // ack
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
+    queue.finalize(result.getEntryPointer(), consumer, -1);
+
+    // dequeue, should get second value
+    result = queue.dequeue(consumer, dirtyReadPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getEntry().getData(), valueTwo));
+
+    // ack
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
+    queue.finalize(result.getEntryPointer(), consumer, -1);
+
+    // verify queue is empty
+    result = queue.dequeue(consumer, dirtyReadPointer);
+    assertTrue(result.isEmpty());
+  }
+
 
   @Test
   public void testSingleConsumerAckSemantics() throws Exception {

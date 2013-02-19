@@ -262,20 +262,21 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment)
+  public Map<byte[], Long> increment(OperationContext context, Increment increment)
     throws OperationException {
     // TODO implement this properly
-    commit(context, (WriteOperation) increment);
-    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    commit(context, increment);
+    return Collections.EMPTY_MAP;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Transaction transaction,
                                                       Increment increment)
     throws OperationException {
     // TODO implement this properly
     execute(context, transaction, Collections.singletonList((WriteOperation)increment));
-    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    return Collections.EMPTY_MAP;
   }
 
   @Override

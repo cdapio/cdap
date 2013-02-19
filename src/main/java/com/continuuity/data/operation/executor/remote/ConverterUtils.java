@@ -419,7 +419,9 @@ public class ConverterUtils {
   }
 
   TQueueEntry wrap(QueueEntry entry) {
-    return new TQueueEntry(entry.getPartioningMap(), wrap(entry.getData()));
+    TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
+    tQueueEntry.setHeader(entry.getPartioningMap());
+    return tQueueEntry;
   }
 
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
@@ -640,9 +642,13 @@ public class ConverterUtils {
       Log.error(message);
       throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
     }
-    return new TDequeueResult(status,
-        wrap(result.getEntryPointer()),
-        wrap(result.getEntry()));
+    TDequeueResult tQueueResult=new TDequeueResult(status, wrap(result.getEntryPointer()));
+    QueueEntry entry=result.getEntry();
+    if (entry!=null) {
+      TQueueEntry tQueueEntry=wrap(entry);
+      tQueueResult.setEntry(tQueueEntry);
+    }
+    return tQueueResult;
   }
   /**
    * unwrap a dequeue result

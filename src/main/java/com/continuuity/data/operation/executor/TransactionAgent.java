@@ -71,7 +71,7 @@ public interface TransactionAgent {
    * @return a map from the name of each incremented column to its resulting value
    * @throws OperationException if something goes wrong in data fabric
    */
-  public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException;
+  public Map<byte[], Long> execute(Increment increment) throws OperationException;
 
   /**
    * Execute a read operation and return the result.
