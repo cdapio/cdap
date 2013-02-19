@@ -46,11 +46,11 @@ public class WordCounterFlowlet extends ComputeFlowlet {
     try {
 
       // Count number of times we have seen this word
-      this.wordCountsTable.stage(
+      this.wordCountsTable.write(
           new Increment(Bytes.toBytes(word), Bytes.toBytes("total"), 1L));
       
       // Count other word statistics (word length, total words seen)
-      this.wordStatsTable.stage(
+      this.wordStatsTable.write(
           new Increment(Bytes.toBytes("totals"),
               new byte [][] {
                 Bytes.toBytes("total_length"), Bytes.toBytes("total_words")

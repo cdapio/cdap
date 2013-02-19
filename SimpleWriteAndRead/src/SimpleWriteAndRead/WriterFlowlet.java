@@ -43,7 +43,7 @@ public class WriterFlowlet extends ComputeFlowlet {
     byte [] value = params[1].getBytes();
 
     try {
-      this.kvTable.stage(new KeyValueTable.WriteKey(key, value));
+      this.kvTable.write(key, value);
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }

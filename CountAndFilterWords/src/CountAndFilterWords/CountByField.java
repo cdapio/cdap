@@ -45,7 +45,7 @@ public class CountByField extends ComputeFlowlet
       System.out.println(this.getClass().getSimpleName() + ": Incrementing for " + token);
     }
     try {
-      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes()));
+      this.counters.increment(token.getBytes(), 1L);
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }

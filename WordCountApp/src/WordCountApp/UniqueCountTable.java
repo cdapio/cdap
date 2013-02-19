@@ -1,9 +1,6 @@
 package WordCountApp;
 
-import java.util.Map;
-
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
@@ -15,6 +12,8 @@ import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+
+import java.util.Map;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
@@ -79,19 +78,20 @@ public class UniqueCountTable extends DataSet {
    * <p>
    * Continuously add entries into the table using this method, pass the Tuple
    * to another downstream Flowlet, and in the second Flowlet pass the Tuple to
-   * the {@link #updateUniqueCount(String, Tuple)}.
+   * the {@link #updateUniqueCount(Tuple)}.
    * @param entry entry to add
-   * @param tuple tuple that will be passed 
+   * @return tuple that will be passed
    * @throws OperationException
    */
   public Tuple writeEntryAndCreateTuple(String entry)
       throws OperationException {
-    Closure closure = this.entryCountTable.closure(
-        new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L));
+    Long newCount = this.entryCountTable.
+      increment(new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L)).
+      get(ENTRY_COUNT);
     return new TupleBuilder()
-        .set("entry", entry)
-        .set("count", closure)
-        .create();
+      .set("entry", entry)
+      .set("count", newCount)
+      .create();
   }
 
   /**
@@ -104,7 +104,7 @@ public class UniqueCountTable extends DataSet {
       throws OperationException {
     Long count = tuple.get("count");
     if (count == 1L) {
-      this.uniqueCountTable.stage(
+      this.uniqueCountTable.write(
           new Increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L));
     }
   }

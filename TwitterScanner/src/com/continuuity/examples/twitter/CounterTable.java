@@ -1,14 +1,13 @@
 package com.continuuity.examples.twitter;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 
 import java.util.Map;
@@ -106,7 +105,7 @@ public class CounterTable extends DataSet {
    */
   public void incrementSingleKey(byte [] counter, long amount) {
     try {
-      this.counters.stage(generateSingleKeyIncrement(counter, amount));
+      this.counters.write(generateSingleKeyIncrement(counter, amount));
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }
@@ -115,10 +114,6 @@ public class CounterTable extends DataSet {
   /**
    * Generates an increment operation that should be used to increment the
    * specified counter by the specified amount.
-   * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
    * <p>
    * See ... for more information.
    * @param counter counter name
@@ -132,10 +127,6 @@ public class CounterTable extends DataSet {
   /**
    * Generates an increment operation that should be used to increment the
    * specified counter by the specified amount.
-   * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
    * <p>
    * See ... for more information.
    * @param counter counter name
@@ -314,7 +305,7 @@ public class CounterTable extends DataSet {
    */
   public void incrementCounterSet(String counterSet, String counter, long amount)
     throws OperationException {
-    counters.stage(generateCounterSetIncrement(counterSet, counter, amount));
+    counters.write(generateCounterSetIncrement(counterSet, counter, amount));
   }
 
   /**
@@ -328,7 +319,7 @@ public class CounterTable extends DataSet {
    */
   public void incrementCounterSet(byte [] counterSet, byte [] counter, long amount) {
     try {
-      counters.stage(generateCounterSetIncrement(counterSet, counter, amount));
+      counters.write(generateCounterSetIncrement(counterSet, counter, amount));
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }
@@ -346,7 +337,7 @@ public class CounterTable extends DataSet {
   public void incrementCounterSet(String counterSet,
       String [] counterNames, long [] amounts) {
     try {
-      counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+      counters.write(generateCounterSetIncrement(counterSet, counterNames, amounts));
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }
@@ -364,7 +355,7 @@ public class CounterTable extends DataSet {
   public void incrementCounterSet(byte [] counterSet,
       byte [][] counterNames, long [] amounts) {
     try {
-      counters.stage(generateCounterSetIncrement(counterSet, counterNames, amounts));
+      counters.write(generateCounterSetIncrement(counterSet, counterNames, amounts));
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }
@@ -373,10 +364,6 @@ public class CounterTable extends DataSet {
   /**
    * Generates an increment operation that should be used to increment the
    * specified counter in the specified counter set by the specified amount.
-   * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
    * <p>
    * See ... for more information.
    * @param counterSet counter set name
@@ -393,10 +380,6 @@ public class CounterTable extends DataSet {
    * Generates an increment operation that should be used to increment the
    * specified counter in the specified counter set by the specified amount.
    * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
-   * <p>
    * See ... for more information.
    * @param counterSet counter set name
    * @param counter counter name
@@ -411,10 +394,6 @@ public class CounterTable extends DataSet {
   /**
    * Generates an increment operation that should be used to increment the
    * specified counters in the specified counter set by the specified amounts.
-   * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
    * <p>
    * See ... for more information.
    * @param counterSet counter set name
@@ -431,10 +410,6 @@ public class CounterTable extends DataSet {
   /**
    * Generates an increment operation that should be used to increment the
    * specified counters in the specified counter set by the specified amounts.
-   * <p>
-   * This increment can be performed synchronously using
-   * {@link com.continuuity.api.data.DataFabric#execute(com.continuuity.api.data.Increment)} or performed asynchronously with the
-   * final counter value returned as a field in a tuple.
    * <p>
    * See ... for more information.
    * @param counterSet counter set name
