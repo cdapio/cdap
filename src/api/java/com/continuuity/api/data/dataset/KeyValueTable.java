@@ -10,7 +10,7 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.data.operation.StatusCode;
+import com.continuuity.api.data.StatusCode;
 
 import javax.annotation.Nullable;
 import java.util.Map;
