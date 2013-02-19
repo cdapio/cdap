@@ -6,7 +6,6 @@ package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.google.common.collect.Table;
 
 import java.util.Set;
@@ -26,20 +25,20 @@ public interface QueueSpecificationGenerator {
    * This class represents a node in the DAG.
    */
   public static final class Node {
-    private final FlowletConnection.SourceType type;
-    private final String source;
+    private final FlowletConnection.Type type;
+    private final String name;
 
-    public Node(FlowletConnection.SourceType type, String source) {
+    public Node(FlowletConnection.Type type, String name) {
       this.type = type;
-      this.source = source;
+      this.name = name;
     }
 
-    public FlowletConnection.SourceType getSourceType() {
+    public FlowletConnection.Type getType() {
       return type;
     }
 
-    public String getSourceName() {
-      return source;
+    public String getName() {
+      return name;
     }
   }
 
