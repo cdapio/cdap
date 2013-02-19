@@ -1,8 +1,7 @@
 package com.continuuity.passport.core.service;
 
 
-import com.continuuity.passport.core.exceptions.RetryException;
-import com.continuuity.passport.core.exceptions.StaleNonceException;
+import com.continuuity.passport.core.exceptions.*;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.Component;
@@ -25,12 +24,12 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Account registerAccount(Account account) throws RuntimeException;
+  public Account registerAccount(Account account) throws RuntimeException, AccountAlreadyExistsException;
 
   public VPC addVPC(int accountId, VPC vpc) throws RuntimeException;
 
 
-  public Status confirmRegistration(AccountSecurity account) throws RuntimeException;
+  public Status confirmRegistration(Account account, String password) throws RuntimeException;
 
   public void confirmDownload(int accountId) throws RuntimeException;
 
@@ -62,11 +61,9 @@ public interface DataManagementService {
    * Delete an {@code Account} in the system
    *
    * @param accountId   account to be deleted
-   * @param credentials credentials of the owner of the account
-   * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status deleteAccount(String accountId, Credentials credentials) throws RetryException;
+  public void deleteAccount(int accountId) throws RuntimeException, AccountNotFoundException;
 
 
   /**
@@ -110,9 +107,19 @@ public interface DataManagementService {
 
   public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
 
-  public int getNonce(int id)  throws RuntimeException, StaleNonceException;
+  public int getActivationNonce(int id)  throws RuntimeException, StaleNonceException;
 
-  public int getId(int nonce)  throws RuntimeException, StaleNonceException;
+  public int getActivationId(int nonce)  throws RuntimeException, StaleNonceException;
+
+  public int getSessionNonce(int id)  throws RuntimeException, StaleNonceException;
+
+  public int getSessionId(int nonce)  throws RuntimeException, StaleNonceException;
+
+  public VPC getVPC(int accountId, int vpcID);
+
+  public void deleteVPC(int accountId, int vpcId) throws RuntimeException, VPCNotFoundException;
+
+  public Account getAccount(String emailId) throws RuntimeException;
 
 
 }

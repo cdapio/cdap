@@ -11,8 +11,6 @@ import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.http.server.Utils;
 import com.continuuity.passport.impl.AuthenticatorImpl;
-import com.continuuity.passport.impl.DataManagementServiceImpl;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,7 +19,6 @@ import com.google.inject.Singleton;
 import org.apache.shiro.util.StringUtils;
 
 import javax.ws.rs.*;
-
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +36,7 @@ import java.util.Map;
 @Path("/passport/v1/account/")
 public class AccountHandler {
 
-  private DataManagementService dataManagementService;
+  private final DataManagementService dataManagementService;
 
   @Inject
   public AccountHandler(DataManagementService dataManagementService) {
@@ -51,7 +48,7 @@ public class AccountHandler {
   @Produces("application/json")
   public Response getAccountInfo(@PathParam("id") int id){
 
-    Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+    Account account = dataManagementService.getAccount(id);
     if (account != null){
       return Response.ok(account.toString()).build();
     }
@@ -85,10 +82,10 @@ public class AccountHandler {
           .build();
       }
 
-      DataManagementServiceImpl.getInstance().changePassword(id, oldPassword, newPassword);
+      dataManagementService.changePassword(id, oldPassword, newPassword);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
-      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      Account account = dataManagementService.getAccount(id);
       if ( account !=null) {
         return Response.ok(account.toString()).build();
       }
@@ -112,10 +109,10 @@ public class AccountHandler {
 
     try {
 
-      DataManagementServiceImpl.getInstance().confirmDownload(id);
+      dataManagementService.confirmDownload(id);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
-      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      Account account = dataManagementService.getAccount(id);
       if ( account !=null) {
         return Response.ok(account.toString()).build();
       }
@@ -162,10 +159,10 @@ public class AccountHandler {
         updateParams.put("company",company);
       }
 
-      DataManagementServiceImpl.getInstance().updateAccount(id,updateParams);
+      dataManagementService.updateAccount(id,updateParams);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
-      Account account = DataManagementServiceImpl.getInstance().getAccount(id);
+      Account account = dataManagementService.getAccount(id);
       if ( account !=null) {
         return Response.ok(account.toString()).build();
       }
@@ -199,12 +196,12 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED", "Email id is missing")).build();
       }
       else {
-        Account account = DataManagementServiceImpl.getInstance()
-          .registerAccount(new Account("", "", "", emailId));
+        Account account = dataManagementService.registerAccount(new Account("", "", "", emailId));
         return Response.ok(account.toString()).build();
       }
     } catch (AccountAlreadyExistsException e) {
-      Account account = DataManagementServiceImpl.getInstance().getAccount(emailId);
+      //If the account already exists - return the existing account so that the caller can take appropriate action
+      Account account = dataManagementService.getAccount(emailId);
       return Response.status(Response.Status.CONFLICT)
         .entity(Utils.getJsonError("FAILED", account.toString()))
         .build();
@@ -242,10 +239,10 @@ public class AccountHandler {
       else {
         Account account = new Account(firstName, lastName,company,id);
         AccountSecurity security = new AccountSecurity(account, accountPassword);
-        DataManagementServiceImpl.getInstance().confirmRegistration(account, accountPassword);
+        dataManagementService.confirmRegistration(account, accountPassword);
           //Contract for the api is to return updated account to avoid a second call from the caller to get the
         // updated account
-        Account accountFetched = DataManagementServiceImpl.getInstance().getAccount(id);
+        Account accountFetched = dataManagementService.getAccount(id);
         if ( accountFetched !=null) {
           return Response.ok(accountFetched.toString()).build();
         }
@@ -279,7 +276,7 @@ public class AccountHandler {
       String vpcLabel = jsonObject.get("vpc_label") == null ? null : jsonObject.get("vpc_label").getAsString();
 
       if ( (vpcName!= null) && (!vpcName.isEmpty()) && (vpcLabel!=null) && ( !vpcLabel.isEmpty()) ){
-        VPC vpc= DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName,vpcLabel));
+        VPC vpc= dataManagementService.addVPC(id, new VPC(vpcName,vpcLabel));
         return Response.ok(vpc.toString()).build();
       }
       else {
@@ -302,7 +299,7 @@ public class AccountHandler {
   public Response getVPC(@PathParam("id") int id) {
 
     try{
-      List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(id);
+      List<VPC> vpcList = dataManagementService.getVPC(id);
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
       }
@@ -336,7 +333,7 @@ public class AccountHandler {
   public Response getSingleVPC(@PathParam("accountId") int accountId, @PathParam("vpcId") int vpcId) {
 
     try{
-      VPC vpc = DataManagementServiceImpl.getInstance().getVPC(accountId,vpcId);
+      VPC vpc = dataManagementService.getVPC(accountId,vpcId);
       if (vpc==null) {
         return Response.status(Response.Status.NOT_FOUND)
           .entity(Utils.getJsonError("VPC not found")).build();
@@ -394,7 +391,7 @@ public class AccountHandler {
 
     try {
 
-      DataManagementServiceImpl.getInstance().deleteAccount(id);
+      dataManagementService.deleteAccount(id);
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (AccountNotFoundException e) {
       return Response.status(Response.Status.NOT_FOUND)
@@ -415,7 +412,7 @@ public class AccountHandler {
   public Response deleteVPC(@PathParam("accountId") int accountId,  @PathParam("vpcId") int vpcId){
 
     try {
-      DataManagementServiceImpl.getInstance().deleteVPC(accountId,vpcId);
+      dataManagementService.deleteVPC(accountId,vpcId);
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (VPCNotFoundException e) {
       return Response.status(Response.Status.NOT_FOUND)

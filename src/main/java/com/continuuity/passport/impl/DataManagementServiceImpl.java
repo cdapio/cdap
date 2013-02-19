@@ -1,10 +1,7 @@
 package com.continuuity.passport.impl;
 
-import com.continuuity.passport.core.exceptions.ConfigurationException;
-import com.continuuity.passport.core.exceptions.RetryException;
-import com.continuuity.passport.core.exceptions.StaleNonceException;
+import com.continuuity.passport.core.exceptions.*;
 import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.Component;
 import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.meta.VPC;
@@ -16,8 +13,9 @@ import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.dal.db.AccountDBAccess;
 import com.continuuity.passport.dal.db.NonceDBAccess;
 import com.continuuity.passport.dal.db.VpcDBAccess;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +25,6 @@ import java.util.Map;
 public class DataManagementServiceImpl implements DataManagementService {
 
 
-  private static DataManagementService service = null;
-
   private AccountDAO accountDAO = null;
 
   private VpcDAO vpcDao = null;
@@ -36,15 +32,13 @@ public class DataManagementServiceImpl implements DataManagementService {
   private NonceDAO nonceDAO = null;
 
 
-  private DataManagementServiceImpl() {
+  @Inject
+  public DataManagementServiceImpl(@Named("passport.config") Map<String,String> config) {
     accountDAO = new AccountDBAccess();
-    Map<String,String> config = new HashMap<String,String>();
-    config.put("jdbcType","mysql");
-    //config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
-    accountDAO.configure(config);
 
+    accountDAO.configure(config);
     vpcDao = new VpcDBAccess();
+    //TODO: Remove configure
     vpcDao.configure(config);
 
     nonceDAO = new NonceDBAccess(config);
@@ -58,7 +52,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Account registerAccount(Account account) throws RuntimeException {
+  public Account registerAccount(Account account) throws RuntimeException, AccountAlreadyExistsException {
     if (accountDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
 
@@ -71,14 +65,14 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public Status confirmRegistration(AccountSecurity account) throws RuntimeException {
+  public Status confirmRegistration(Account account, String password) throws RuntimeException {
 
     if (accountDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
 
     }
     try {
-      accountDAO.confirmRegistration(account);
+      accountDAO.confirmRegistration(account, password);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -108,7 +102,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component)
-                                                                                    throws RetryException {
+                                                                                    throws RuntimeException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -131,13 +125,19 @@ public class DataManagementServiceImpl implements DataManagementService {
    * Delete an {@code Account} in the system
    *
    * @param accountId   account to be deleted
-   * @param credentials credentials of the owner of the account
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
   @Override
-  public Status deleteAccount(String accountId, Credentials credentials) throws RetryException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public void deleteAccount(int accountId) throws RuntimeException, AccountNotFoundException {
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      accountDAO.deleteAccount(accountId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
   }
 
   /**
@@ -168,6 +168,46 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
     try {
      account= accountDAO.getAccount(accountId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return account;
+  }
+
+  @Override
+  public VPC getVPC(int accountId, int vpcId) {
+    if(vpcDao == null) {
+      throw new RuntimeException("Could not initialize data access object");
+    }
+    try {
+      return vpcDao.getVPC(accountId,vpcId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
+
+  @Override
+  public void deleteVPC(int accountId, int vpcId) throws RuntimeException, VPCNotFoundException {
+    if(vpcDao == null) {
+      throw new RuntimeException("Could not initialize data access object");
+    }
+    try {
+       vpcDao.removeVPC(accountId, vpcId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+
+
+  }
+
+  @Override
+  public Account getAccount(String emailId) throws RuntimeException {
+    Account account = null;
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      account= accountDAO.getAccount(emailId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -243,12 +283,12 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public int getNonce(int id) throws RuntimeException {
+  public int getActivationNonce(int id) throws RuntimeException {
     if (nonceDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
     }
     try {
-      return nonceDAO.getNonce(id);
+      return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.ACTIVATION);
     }catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -256,12 +296,37 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public int getId(int nonce) throws RuntimeException {
+  public int getSessionNonce(int id) throws RuntimeException {
     if (nonceDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
     }
     try {
-      return nonceDAO.getId(nonce);
+      return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
+    }catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+
+  }
+
+  @Override
+  public int getActivationId(int nonce) throws RuntimeException {
+    if (nonceDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
+    }catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
+
+  @Override
+  public int getSessionId(int nonce) throws RuntimeException {
+    if (nonceDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
     }catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -278,12 +343,5 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
   }
 
-
-  public static DataManagementService getInstance(){
-    if (service == null ){
-      service = new DataManagementServiceImpl();
-    }
-    return service;
-  }
 
 }

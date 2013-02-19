@@ -2,10 +2,14 @@ package com.continuuity.passport.http.handlers;
 
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
+import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.http.server.Utils;
-import com.continuuity.passport.impl.DataManagementServiceImpl;
+import com.google.inject.Inject;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
@@ -14,12 +18,19 @@ import javax.ws.rs.core.Response;
 @Path("/passport/v1")
 public class ActivationHandler {
 
+  private final DataManagementService dataManagementService;
+
+  @Inject
+  public ActivationHandler(DataManagementService dataManagementService) {
+    this.dataManagementService = dataManagementService;
+  }
+
   @Path("generateActivationKey/{id}")
   @GET
   @Produces("application/json")
   public Response getActivationNonce(@PathParam("id") int id){
     try {
-      int nonce = DataManagementServiceImpl.getInstance().getActivationNonce(id);
+      int nonce = dataManagementService.getActivationNonce(id);
       if (nonce != -1){
         return Response.ok(Utils.getNonceJson(nonce)).build();
       }
@@ -40,7 +51,7 @@ public class ActivationHandler {
   @Produces("application/json")
   public Response getActivationId(@PathParam("id") int id){
     try {
-      int nonce = DataManagementServiceImpl.getInstance().getActivationId(id);
+      int nonce = dataManagementService.getActivationId(id);
       if (nonce != -1){
         return Response.ok(Utils.getNonceJson(nonce)).build();
       }

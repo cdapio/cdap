@@ -16,7 +16,9 @@ import java.util.Map;
 public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   private DBConnectionPoolManager poolManager = null;
-  private static final int  MINUTES_IN_MILLS = 1000 * 60 * 10;
+  private static final int  SESSION_EXPIRATION_MILLS = 1000 * 60 * 10;
+  private static final int  ACTIVATION_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24 * 3;
+
 
   public NonceDBAccess(Map<String,String> configurations) {
 
@@ -31,7 +33,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   @Override
-  public int getNonce(int id) throws RuntimeException {
+  public int getNonce(int id, NONCE_TYPE type) throws RuntimeException {
 
     Connection connection= null;
     PreparedStatement ps = null;
@@ -45,8 +47,15 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       int nonce = NonceUtils.getNonce();
       ps.setInt(1, nonce);
       ps.setInt(2,id);
-      ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()+MINUTES_IN_MILLS));
-
+      if (type.equals(NONCE_TYPE.SESSION)) {
+        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()+SESSION_EXPIRATION_MILLS));
+      }
+      else if (type.equals(NONCE_TYPE.ACTIVATION)) {
+        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()+ACTIVATION_EXPIRATION_MILLIS));
+      }
+      else {
+        throw new RuntimeException("Unknown nonce type");
+      }
       ps.executeUpdate();
 
       return nonce;
@@ -62,7 +71,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   @Override
-  public int getId(int nonce) throws RuntimeException, StaleNonceException {
+  public int getId(int nonce, NONCE_TYPE type) throws RuntimeException, StaleNonceException {
 
     Connection connection = null;
     PreparedStatement ps = null;

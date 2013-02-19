@@ -5,14 +5,20 @@ package com.continuuity.passport.http.server;
  */
 public class Utils {
 
-
+  //TODO: Clean up lot of these helper functions
   public static String getJsonError(String error) {
-    return String.format("{\"error:\", \"%s\"",error);
+    return String.format("{\"error\" :, \"%s\" }",error);
   }
 
   public static String getJsonError(String error,Exception e) {
-    return String.format("{\"error:\", \"%s . %s \" ",error,e.getMessage());
+    return String.format("{\"error\":, \"%s . %s \" }",error,e.getMessage());
   }
+
+
+  public static String getJsonError(String error,String reason) {
+    return String.format("{\"error\":, \"%s , \"reason\" : \"%s \" }",error,reason);
+  }
+
 
   public static String getJson(String status, String message){
 
@@ -56,6 +62,10 @@ public class Utils {
 
   public static String getNonceJson( String error, int result) {
     return String.format( "{\"error\": \"%s\", \"result\": %d }",error, result);
+  }
+
+  public static String getJsonOK(){
+    return String.format( "{\"error\": null }");
   }
 
 

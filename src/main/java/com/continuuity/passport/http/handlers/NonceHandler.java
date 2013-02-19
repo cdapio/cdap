@@ -1,9 +1,9 @@
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
-import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.http.server.Utils;
-import com.continuuity.passport.impl.DataManagementServiceImpl;
+import com.google.inject.Inject;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,12 +17,20 @@ import javax.ws.rs.core.Response;
 @Path("passport/v1/sso/")
 public class NonceHandler {
 
+  private final DataManagementService dataManagementService;
+
+  @Inject
+  public NonceHandler(DataManagementService dataManagementService) {
+    this.dataManagementService = dataManagementService;
+  }
+
+
   @Path("getNonce/{id}")
   @GET
   @Produces("application/json")
   public Response getSessionNonce(@PathParam("id") int id){
     try {
-      int nonce = DataManagementServiceImpl.getInstance().getSessionNonce(id);
+      int nonce = dataManagementService.getSessionNonce(id);
       if (nonce != -1){
         return Response.ok(Utils.getNonceJson(nonce)).build();
       }
@@ -43,7 +51,7 @@ public class NonceHandler {
   @Produces("application/json")
   public Response getSessionId(@PathParam("nonce") int nonce){
     try {
-      int id = DataManagementServiceImpl.getInstance().getSessionId(nonce);
+      int id = dataManagementService.getSessionId(nonce);
       if (id != -1){
         return Response.ok(Utils.getNonceJson(id)).build();
       }

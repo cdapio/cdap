@@ -1,5 +1,7 @@
 package com.continuuity.passport.dal;
 
+import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
@@ -22,10 +24,10 @@ public interface AccountDAO {
    * @return int account Id that was generated
    * @throws {@code RetryException}
    */
-  public Account createAccount(Account account) throws ConfigurationException, RuntimeException;
+  public Account createAccount(Account account) throws ConfigurationException, RuntimeException, AccountAlreadyExistsException;
 
 
-  public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException;
+  public boolean confirmRegistration(Account account, String password) throws ConfigurationException, RuntimeException;
 
 
   /**
@@ -44,7 +46,8 @@ public interface AccountDAO {
    * @return boolean status of account deletion
    * @throws {@code RetryException}
    */
-  public boolean deleteAccount(String accountId) throws ConfigurationException, RuntimeException;
+  public boolean deleteAccount(int accountId)
+                        throws ConfigurationException, RuntimeException, AccountNotFoundException;
 
   /**
    * GetAccount
@@ -54,6 +57,15 @@ public interface AccountDAO {
    * @throws {@code RetryException}
    */
   public Account getAccount(int accountId) throws ConfigurationException, RuntimeException;
+
+  /**
+   * GetAccount
+   *
+   * @param emailId emailId requested
+   * @return {@code Account}
+   * @throws {@code RetryException}
+   */
+  public Account getAccount(String emailId) throws ConfigurationException, RuntimeException;
 
 
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)

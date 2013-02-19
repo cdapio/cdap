@@ -7,7 +7,12 @@ import com.continuuity.passport.core.exceptions.StaleNonceException;
  */
 public interface NonceDAO {
 
-  public int getNonce(int id) throws RuntimeException;
+  public enum NONCE_TYPE {
+    SESSION,
+    ACTIVATION
+  }
 
-  public int getId(int nonce) throws RuntimeException, StaleNonceException;
+  public int getNonce(int id, NONCE_TYPE type) throws RuntimeException;
+
+  public int getId(int nonce, NONCE_TYPE type) throws RuntimeException, StaleNonceException;
 }

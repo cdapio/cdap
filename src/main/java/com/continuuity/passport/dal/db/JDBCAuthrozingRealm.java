@@ -31,23 +31,25 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
   private Map<String,String> configurations;
   private DBConnectionPoolManager poolManager =null;
 
-  private final String SQL_LOOKUP_BY_EMAIL = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+  private final String SQL_LOOKUP_BY_EMAIL = String.format( "SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
                                                              DBUtils.AccountTable.FIRST_NAME_COLUMN,
                                                              DBUtils.AccountTable.LAST_NAME_COLUMN,
                                                              DBUtils.AccountTable.COMPANY_COLUMN,
                                                              DBUtils.AccountTable.ID_COLUMN,
                                                              DBUtils.AccountTable.PASSWORD_COLUMN,
                                                              DBUtils.AccountTable.API_KEY_COLUMN,
+                                                             DBUtils.AccountTable.CONFIRMED_COLUMN,
                                                              DBUtils.AccountTable.TABLE_NAME,
                                                              DBUtils.AccountTable.EMAIL_COLUMN);
 
-  private final String SQL_LOOKUP_BY_APIKEY = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+  private final String SQL_LOOKUP_BY_APIKEY = String.format( "SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
                                                                 DBUtils.AccountTable.FIRST_NAME_COLUMN,
                                                                 DBUtils.AccountTable.LAST_NAME_COLUMN,
                                                                 DBUtils.AccountTable.COMPANY_COLUMN,
                                                                 DBUtils.AccountTable.ID_COLUMN,
                                                                 DBUtils.AccountTable.PASSWORD_COLUMN,
                                                                 DBUtils.AccountTable.API_KEY_COLUMN,
+                                                                DBUtils.AccountTable.CONFIRMED_COLUMN,
                                                                 DBUtils.AccountTable.TABLE_NAME,
                                                                 DBUtils.AccountTable.API_KEY_COLUMN);
 
@@ -192,7 +194,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       String lastName = null;
       String company = null;
       String apiToken = null;
-
+      boolean confirmed  = false;
       while(rs.next()) {
         firstName = rs.getString(1);
         lastName = rs.getString(2);
@@ -201,6 +203,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         accountId  = rs.getInt(4);
         password = rs.getString(5);
         apiToken = rs.getString(6);
+        confirmed  = rs.getBoolean(7);
         count++;
         if(count > 1) {
           // Note: This condition should never occur since ids are auto generated.
@@ -212,7 +215,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         throw new RuntimeException(String.format("Password not found for %s",emailId));
       }
 
-      Account account = new Account(firstName,lastName,company,emailId,accountId,apiToken);
+      Account account = new Account(firstName,lastName,company,emailId,accountId,apiToken,confirmed);
       info = new SimpleAuthenticationInfo(account,password,getName());
 
     } catch (SQLException e) {

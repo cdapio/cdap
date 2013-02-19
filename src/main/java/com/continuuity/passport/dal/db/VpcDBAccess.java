@@ -2,6 +2,7 @@ package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
+import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.dal.VpcDAO;
@@ -48,7 +49,7 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
       ps.setString(3,vpc.getVpcLabel());
-      ps.setTimestamp(3, new java.sql.Timestamp(date.getTime()));
+      ps.setTimestamp(4, new java.sql.Timestamp(date.getTime()));
 
       ps.executeUpdate();
 
@@ -68,7 +69,8 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
   }
 
   @Override
-  public boolean removeVPC( int vpcId) throws ConfigurationException, RuntimeException {
+  public void removeVPC( int accountId, int vpcId)
+    throws ConfigurationException, RuntimeException, VPCNotFoundException {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -78,13 +80,19 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
     try {
       connection= this.poolManager.getConnection();
 
-      String SQL = String.format( "DELETE FROM %s WHERE %s = ?",
+      String SQL = String.format( "DELETE FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.TABLE_NAME,
-        DBUtils.VPC.VPC_ID_COLUMN);
-      ps = connection.prepareStatement(SQL);
+        DBUtils.VPC.VPC_ID_COLUMN,
+        DBUtils.VPC.ACCOUNT_ID_COLUMN);
 
+      ps = connection.prepareStatement(SQL);
       ps.setInt(1,vpcId);
-      ps.executeUpdate();
+      ps.setInt(2, accountId);
+
+      int count = ps.executeUpdate();
+      if (count == 0 ){
+        throw new VPCNotFoundException("VPC not found");
+      }
 
     } catch (SQLException e) {
       //TODO: Log
@@ -93,7 +101,6 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
     finally {
       close(connection, ps);
     }
-    return true;
   }
 
   @Override
@@ -189,6 +196,47 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
       close(connection, ps,rs);
     }
     return vpcList;
+  }
+
+  @Override
+  public VPC getVPC(int accountId, int vpcId) throws RuntimeException, ConfigurationException {
+
+
+    VPC vpc = null;
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    if (this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      connection = this.poolManager.getConnection();
+      String SQL = String.format( "SELECT %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
+        DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
+        DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.TABLE_NAME, //FROM
+        DBUtils.VPC.ACCOUNT_ID_COLUMN, //WHERE
+        DBUtils.VPC.VPC_ID_COLUMN);
+
+      ps = connection.prepareStatement(SQL);
+      ps.setInt(1,accountId);
+      ps.setInt(2,vpcId);
+      rs = ps.executeQuery();
+
+
+      while(rs.next()) {
+        vpc = new VPC(rs.getInt(1),rs.getString(2),rs.getString(3));
+      }
+
+    }
+    catch (SQLException e) {
+      //TODO: Log
+      throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    finally {
+      close(connection, ps,rs);
+    }
+    return vpc;
   }
 
   @Override

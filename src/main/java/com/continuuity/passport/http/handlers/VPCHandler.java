@@ -1,9 +1,9 @@
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.http.server.Utils;
-import com.continuuity.passport.impl.DataManagementServiceImpl;
-import com.google.gson.Gson;
+import com.google.inject.Inject;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -18,11 +18,18 @@ import java.util.List;
 @Path("passport/v1/vpc")
 public class VPCHandler {
 
+  private final DataManagementService dataManagementService;
+
+  @Inject
+  public VPCHandler(DataManagementService dataManagementService) {
+    this.dataManagementService = dataManagementService;
+  }
+
   @GET
   @Produces("application/json")
   public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey){
     try{
-      List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(apiKey);
+      List<VPC> vpcList = dataManagementService.getVPC(apiKey);
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
       }

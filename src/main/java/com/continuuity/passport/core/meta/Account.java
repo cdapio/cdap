@@ -22,22 +22,31 @@ public class Account {
 
   private final String apiKey;
 
+  private final boolean confirmed;
+
   public Account(String firstName, String lastName, String emailId) {
     this(firstName,lastName, StringUtils.EMPTY,emailId,-1);
   }
 
   public Account(String firstName, String lastName, String company, String emailId, int accountId) {
-    this(firstName,lastName,company,emailId,accountId,StringUtils.EMPTY);
+    this(firstName,lastName,company,emailId,accountId,StringUtils.EMPTY,false);
   }
 
-  public Account(String firstName, String lastName, String company, String emailId, int accountId,String apiKey) {
+  public Account(String firstName, String lastName, String company, String emailId,
+                 int accountId,String apiKey, boolean confirmed) {
     this.firstName = firstName;
     this.lastName = lastName;
     this.company = company;
     this.emailId = emailId;
     this.accountId = accountId;
     this.apiKey = apiKey;
+    this.confirmed = confirmed;
   }
+
+  public Account(String firstName, String lastName, String company, int accountId) {
+    this(firstName,lastName,company,"",accountId);
+  }
+
 
 
   public Account(String firstName, String lastName, String company, String emailId) {

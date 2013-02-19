@@ -1,6 +1,8 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
@@ -28,6 +30,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
   private DBConnectionPoolManager poolManager = null;
 
+  private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
+
   /**
    * Create Account in the system
    * @param account Instance of {@code Account}
@@ -35,7 +39,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public Account createAccount(Account account) throws ConfigurationException, RuntimeException {
+  public Account createAccount(Account account)
+    throws ConfigurationException, RuntimeException, AccountAlreadyExistsException {
     //TODO: Return boolean?
     Connection connection = null;
     PreparedStatement ps  = null;
@@ -73,6 +78,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         account.getCompany(),account.getEmailId(),result.getInt(1));
       return createdAccount;
     } catch (SQLException e) {
+      if (DB_INTEGRITY_CONSTRAINT_VIOLATION.equals(e.getSQLState())) {
+        throw new AccountAlreadyExistsException(e.getMessage());
+      }
+
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     }
@@ -82,7 +91,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
 
-  public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException{
+  public boolean confirmRegistration(Account account, String password)
+    throws ConfigurationException, RuntimeException{
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -91,16 +101,21 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     }
     try {
       connection = this.poolManager.getConnection();
-      String SQL = String.format( "UPDATE %s SET %s = ?, %s = ?, %s = ? WHERE %s = ?" ,
+      String SQL = String.format( "UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?" ,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
-        DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.ID_COLUMN);
+        DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
+        DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
+        DBUtils.AccountTable.ID_COLUMN);
 
       ps = connection.prepareStatement(SQL);
-      ps.setString(1, generateSaltedHashedPassword(security.getPassword()));
+      ps.setString(1, generateSaltedHashedPassword(password));
       ps.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
-      ps.setString(3, ApiKey.generateKey(String.valueOf(security.getAccountId())));
-      ps.setInt(4, security.getAccountId());
+      ps.setString(3, ApiKey.generateKey(String.valueOf(account.getAccountId())));
+      ps.setString(4, account.getFirstName());
+      ps.setString(5, account.getLastName());
+      ps.setString(6, account.getCompany());
+      ps.setInt(7, account.getAccountId());
 
       ps.executeUpdate();
 
@@ -164,7 +179,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public boolean deleteAccount(String accountId) throws ConfigurationException, RuntimeException {
+  public boolean deleteAccount(int accountId)
+    throws ConfigurationException, RuntimeException, AccountNotFoundException {
 
     PreparedStatement ps = null;
     Connection connection = null;
@@ -179,9 +195,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.ID_COLUMN);
       ps = connection.prepareStatement(SQL);
 
-      ps.setString(1, accountId);
-      ps.executeUpdate();
-
+      ps.setInt(1, accountId);
+      int affectedRows = ps.executeUpdate();
+      if( affectedRows == 0) {
+        throw new AccountNotFoundException("Account doesn't exists");
+      }
     }
     catch (SQLException e){
       throw new RuntimeException(e.getMessage(),e.getCause());
@@ -214,10 +232,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getConnection();
 
-      String SQL = String.format( "SELECT %s,%s,%s,%s,%s, %s FROM %s WHERE %s = ?",
+      String SQL = String.format( "SELECT %s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN,DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
 
@@ -225,11 +244,66 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setInt(1,accountId);
       rs = ps.executeQuery();
 
+
       int count  = 0;
       while(rs.next()) {
         count++;
         account = new Account(rs.getString(1),rs.getString(2),rs.getString(3),
-          rs.getString(4),rs.getInt(5),rs.getString(6));
+          rs.getString(4),rs.getInt(5),rs.getString(6),rs.getBoolean(7));
+        if (count > 1 ) { // Note: This condition should never occur since ids are auto generated.
+          throw new RuntimeException("Multiple accounts with same account ID");
+        }
+      }
+
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e.getMessage(),e.getCause());
+    }
+    finally {
+      close(connection, ps,rs);
+    }
+
+
+    return account;
+  }
+
+  /**
+   * GetAccount
+   *
+   * @param emailId emailId requested
+   * @return {@code Account}
+   * @throws {@code RetryException}
+   */
+  @Override
+  public Account getAccount(String emailId) throws ConfigurationException, RuntimeException {
+
+    Account account = null;
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    if(this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      connection = this.poolManager.getConnection();
+
+      String SQL = String.format( "SELECT %s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+        DBUtils.AccountTable.FIRST_NAME_COLUMN,DBUtils.AccountTable.LAST_NAME_COLUMN,
+        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+        DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN,
+        DBUtils.AccountTable.TABLE_NAME,
+        DBUtils.AccountTable.EMAIL_COLUMN);
+
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1,emailId);
+      rs = ps.executeQuery();
+
+      int count  = 0;
+      while(rs.next()) {
+        count++;
+        account = new Account(rs.getString(1),rs.getString(2),rs.getString(3),
+          rs.getString(4),rs.getInt(5),rs.getString(6),rs.getBoolean(7));
         if (count > 1 ) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -385,7 +459,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         ps = connection.prepareStatement(sb.toString());
         int count = 1;
 
-        System.out.println(sb.toString());
         //Set Values in prepared statement
         //All values are set as String for now.
         //For now we are only updating String fields
