@@ -1,7 +1,6 @@
 package com.continuuity.examples.twitter;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
@@ -34,13 +33,13 @@ import java.util.TreeSet;
  * <p>
  * <ul>
  *  <li>
- *   Generate initial increment using
- *   {@link #generatePrimaryCounterIncrement(byte[], byte[], long)}
+ *   Perform initial increment using
+ *   {@link #performPrimaryCounterIncrement(byte[], byte[], long)}
  *  </li>
  *  <li>
  *   Output Increment within a field of a tuple going to the next flowlet:
  *   <p>
- *   <pre>TupleBuilder.set("top-counter", generatedPrimaryIncrement)</pre>
+ *   <pre>TupleBuilder.set("top-counter", primaryIncrementResult)</pre>
  *  </li>
  *  <li>
  *   In the next flowlet, perform any necessary secondary counter increments
@@ -88,10 +87,14 @@ public class SortedCounterTable extends DataSet {
    * @param amount counter increment amount
    * @return generated increment operation
    */
-  public Closure generatePrimaryCounterIncrement(byte [] counterSet,
-                                                 byte [] counter, long amount) {
-    byte [] row = makeRow(counterSet, 0);
-    return this.counters.closure(new Increment(row, counter, amount));
+  public Long performPrimaryCounterIncrement(byte [] counterSet, byte[] counter, long amount) {
+    try {
+      byte [] row = makeRow(counterSet, 0);
+      Map<byte[], Long> result = this.counters.increment(new Increment(row, counter, amount));
+      return result.get(counter);
+    } catch (OperationException e) {
+      return null;
+    }
   }
 
   /**
@@ -111,7 +114,7 @@ public class SortedCounterTable extends DataSet {
         if (value - bucket < amount) localAmount = value - bucket;
         byte [] row = makeRow(counterSet, bucket);
         try {
-          this.counters.stage(new Increment(row, counter, localAmount));
+          this.counters.write(new Increment(row, counter, localAmount));
         } catch (OperationException e) {
           throw new RuntimeException(e);
         }

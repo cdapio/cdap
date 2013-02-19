@@ -1,12 +1,5 @@
 package WordCountApp;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -15,6 +8,13 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class WordAssocTable extends DataSet {
 
@@ -134,7 +134,7 @@ public class WordAssocTable extends DataSet {
    */
   public void writeWordAssoc(String word, String assocWord)
       throws OperationException {
-    this.table.stage(
+    this.table.write(
         new Increment(Bytes.toBytes(word), Bytes.toBytes(assocWord), 1L));
   }
 }

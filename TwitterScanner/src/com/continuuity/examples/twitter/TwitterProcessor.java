@@ -3,9 +3,8 @@
  */
 package com.continuuity.examples.twitter;
 
-import com.continuuity.api.data.Closure;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
@@ -59,13 +58,15 @@ public class TwitterProcessor extends ComputeFlowlet {
     for (String word : goodWords) {
       if (word.startsWith("#")) {
         // Track top hash tags
-        Closure closure = topHashTags.generatePrimaryCounterIncrement(
-            TwitterFlow.HASHTAG_SET, Bytes.toBytes(word), 1L);
-        Tuple outTuple = new TupleBuilder()
+        Long incrementedPrimaryCount = topHashTags.performPrimaryCounterIncrement(
+          TwitterFlow.HASHTAG_SET, Bytes.toBytes(word), 1L);
+        if (incrementedPrimaryCount != null) {
+          Tuple outTuple = new TupleBuilder()
             .set("name", word)
-            .set("value", closure)
+            .set("value", incrementedPrimaryCount)
             .create();
-        collector.add(outTuple);
+          collector.add(outTuple);
+        }
         // And for every hash tag, track word associations
         for (String corWord : goodWords) {
           if (corWord.startsWith("#")) continue;
@@ -84,14 +85,15 @@ public class TwitterProcessor extends ComputeFlowlet {
     }
 
     // Track top users
-    Closure closure = topUsers.generatePrimaryCounterIncrement(
-        TwitterFlow.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
-    Tuple outTuple = new TupleBuilder()
+    Long incrementedPrimaryCount = topUsers.performPrimaryCounterIncrement(
+      TwitterFlow.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
+    if (incrementedPrimaryCount != null) {
+      Tuple outTuple = new TupleBuilder()
         .set("name", tweet.getUser())
-        .set("value", closure)
+        .set("value", incrementedPrimaryCount)
         .create();
-    
-    collector.add(outTuple);
+      collector.add(outTuple);
+    }
   }
 
 }

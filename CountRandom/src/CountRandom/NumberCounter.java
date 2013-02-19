@@ -28,7 +28,7 @@ public class NumberCounter extends ComputeFlowlet {
     Integer i = tuple.get("number");
     getFlowletContext().getLogger().info("Processing integer " + i.intValue());
     try {
-      counters.stage(new Increment(i.toString().getBytes(), column, 1L));
+      counters.write(new Increment(i.toString().getBytes(), column, 1L));
     } catch (OperationException e) {
       throw new RuntimeException(e);
     }
