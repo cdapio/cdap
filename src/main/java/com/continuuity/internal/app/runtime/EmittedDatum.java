@@ -4,11 +4,14 @@
 
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.app.queue.QueueName;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 
-import java.net.URI;
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -17,11 +20,20 @@ import java.util.Map;
 public final class EmittedDatum {
 
   private final QueueProducer queueProducer;
-  private final URI queueName;
+  private final QueueName queueName;
   private final byte[] data;
   private final Map<String, String> header;
 
-  public EmittedDatum(QueueProducer queueProducer, URI queueName, byte[] data, Map<String, Object> partitions) {
+  public static Function<EmittedDatum, WriteOperation> datumToWriteOp() {
+    return new Function<EmittedDatum, WriteOperation>() {
+      @Override
+      public WriteOperation apply(EmittedDatum input) {
+        return input.asEnqueue();
+      }
+    };
+  }
+
+  public EmittedDatum(QueueProducer queueProducer, QueueName queueName, byte[] data, Map<String, Object> partitions) {
     this.queueProducer = queueProducer;
     this.queueName = queueName;
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
@@ -34,9 +46,8 @@ public final class EmittedDatum {
 
 
   public QueueEnqueue asEnqueue() {
-    //    return new QueueEnqueue(queueProducer,
-    //                            queueName.toASCIIString().getBytes(Charsets.US_ASCII),
-    //                            header, data);
-    return null;
+        return new QueueEnqueue(queueProducer,
+                                queueName.toBytes(),
+                                header, data);
   }
 }

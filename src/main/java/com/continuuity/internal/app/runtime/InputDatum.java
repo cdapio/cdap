@@ -13,6 +13,8 @@ import java.nio.ByteBuffer;
  */
 public class InputDatum {
 
+  private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);
+
   private final QueueConsumer consumer;
   private final DequeueResult dequeueResult;
   private final QueueName queueName;
@@ -32,12 +34,20 @@ public class InputDatum {
     );
   }
 
+  public boolean isEmpty() {
+    return dequeueResult.isEmpty();
+  }
+
   public ByteBuffer getData() {
-    return ByteBuffer.wrap(dequeueResult.getValue());
+    return isEmpty() ? EMPTY_BUFFER : ByteBuffer.wrap(dequeueResult.getValue());
   }
 
   public void incrementRetry() {
     retry++;
+  }
+
+  public int getRetry() {
+    return retry;
   }
 
   public InputContext getInputContext() {

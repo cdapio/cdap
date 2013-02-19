@@ -156,7 +156,7 @@ public class WebCrawlApp implements Application {
     @UseDataSet("crawled-pages")
     private KeyValueTable crawledPages;
 
-    public void process(DocumentURL url) throws UnsupportedEncodingException {
+    public void process(DocumentURL url) throws UnsupportedEncodingException, OperationException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
       try {
