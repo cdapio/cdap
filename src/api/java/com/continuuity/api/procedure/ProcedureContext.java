@@ -12,9 +12,10 @@ import com.continuuity.api.data.DataSet;
  */
 public interface ProcedureContext {
   /**
-   * Given a name of dataset, returns an instance of {@link DataSet}
-   * @param name of the {@link DataSet}
-   * @return An instance of {@link DataSet}
+   * Given a name of dataset, returns an instance of {@link DataSet}.
+   * @param name of the {@link DataSet}.
+   * @param <T> The specific {@link DataSet} type requested for.
+   * @return An instance of {@link DataSet}.
    */
-  DataSet getDataSet(String name);
+  <T extends DataSet> T getDataSet(String name);
 }
