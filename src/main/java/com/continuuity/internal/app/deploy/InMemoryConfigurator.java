@@ -8,6 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.app.program.Archive;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
@@ -104,11 +105,8 @@ public class InMemoryConfigurator implements Configurator {
       Application app = null;
 
       if(archive != null && application == null) { // Provided Application JAR.
-        // Create Program Id
-        Id.Program pgmId = Id.Program.from(id);
-
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass = new Program(pgmId, archive).getMainClass().newInstance();
+        Object mainClass = new Archive(id, archive).getMainClass().newInstance();
         // Convert it to the type application.
         app = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance

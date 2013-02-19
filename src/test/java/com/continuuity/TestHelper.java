@@ -5,7 +5,9 @@
 package com.continuuity;
 
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Store;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
@@ -42,15 +44,15 @@ public class TestHelper {
    */
   public static Manifest getManifestWithMainClass(Class<?> klass) {
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, klass.getCanonicalName());
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getCanonicalName());
     return manifest;
   }
 
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, String> getLocalManager() {
+  public static Manager<Location, String> getLocalManager(CConfiguration configuration) {
     LocationFactory lf = new LocalLocationFactory();
     PipelineFactory pf = new SynchronousPipelineFactory();
 
@@ -67,6 +69,6 @@ public class TestHelper {
       );
 
     Store store = injector.getInstance(MDSBasedStore.class);
-    return new LocalManager(new Configuration(), pf, lf, store);
+    return new LocalManager(configuration, pf, lf, store);
   }
 }

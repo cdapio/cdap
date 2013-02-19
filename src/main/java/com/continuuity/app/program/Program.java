@@ -6,6 +6,7 @@ import com.continuuity.archive.JarResources;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
@@ -21,34 +22,35 @@ public final class Program {
   private final ClassLoader jarClassLoader;
   private final String mainClassName;
   private final Type processorType;
-  private final String processorName;
   private final ApplicationSpecification specification;
-  private final Id.Program id;
+  private Id.Program id;
 
   @Deprecated
-  public Program(Id.Program id, File file) throws IOException {
-    this(id, new JarResources(file));
+  public Program(File file) throws IOException {
+    this(new JarResources(file));
   }
 
-  public Program(Id.Program id, Location location) throws IOException {
-    this(id, new JarResources(location));
+  public Program(Location location) throws IOException {
+    this(new JarResources(location));
   }
 
-  private Program(Id.Program id, JarResources jarResources) throws IOException {
+  private Program(JarResources jarResources) throws IOException {
     jarClassLoader = new JarClassLoader(jarResources);
-    this.id = id;
 
     Manifest manifest = jarResources.getManifest();
 
-    mainClassName = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-    check(mainClassName != null, "Fail to get %s attribute in jar.", Attributes.Name.MAIN_CLASS);
+    mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
 
-    String type = manifest.getMainAttributes().getValue(ManifestFields.PROCESSOR_TYPE);
+    String accountId = getAttribute(manifest, ManifestFields.ACCOUNT_ID);
+    String applicationId = getAttribute(manifest, ManifestFields.APPLICATION_ID);
+    String programName = getAttribute(manifest, ManifestFields.PROGRAM_NAME);
+    id = Id.Program.from(accountId, applicationId, programName);
+
+    String type = getAttribute(manifest, ManifestFields.PROCESSOR_TYPE);
     processorType = type == null ? null : Type.valueOf(type);
 
-    processorName = manifest.getMainAttributes().getValue(ManifestFields.PROCESSOR_NAME);
+    String appSpecFile = getAttribute(manifest, ManifestFields.SPEC_FILE);
 
-    String appSpecFile = manifest.getMainAttributes().getValue(ManifestFields.SPEC_FILE);
     specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create()
       .fromJson(CharStreams.newReaderSupplier(
         ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
@@ -64,12 +66,28 @@ public final class Program {
     return processorType;
   }
 
-  public String getProcessorName() {
-    return processorName;
+  public String getProgramName() {
+    return id.getId();
+  }
+
+  public String getAccountId() {
+    return id.getAccountId();
+  }
+
+  public String getApplicationId() {
+    return id.getApplicationId();
   }
 
   public ApplicationSpecification getSpecification() {
     return specification;
+  }
+
+  private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {
+    Preconditions.checkNotNull(manifest);
+    Preconditions.checkNotNull(name);
+    String value = manifest.getMainAttributes().getValue(name);
+    check(value != null, "Fail to get %s attribute from jar", name);
+    return value;
   }
 
   private void check(boolean condition, String fmt, Object... objs) throws IOException {

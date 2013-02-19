@@ -12,6 +12,17 @@ smartyFacts {
 }
 
 /**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
+}
+
+/**
  * Specify all the dependencies for smartyFacts & main.
  */
 dependencies {

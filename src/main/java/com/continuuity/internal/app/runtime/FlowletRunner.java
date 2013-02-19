@@ -9,12 +9,10 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Cancellable;
 import com.continuuity.app.runtime.Runner;
-import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -37,7 +35,7 @@ public final class FlowletRunner implements Runner {
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-      String processorName = program.getProcessorName();
+      String processorName = program.getProgramName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
