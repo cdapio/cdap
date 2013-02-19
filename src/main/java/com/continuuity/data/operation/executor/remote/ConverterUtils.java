@@ -2,10 +2,6 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -36,6 +32,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueConfig;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConsumer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEnqueue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueEntry;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TQueuePartitioner;
@@ -51,6 +48,8 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
@@ -61,9 +60,6 @@ import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,52 +100,6 @@ public class ConverterUtils {
       longs[i++] = value;
     return longs;
   }
-
-  private ByteBuffer wrap(Map<String,String> map) {
-    byte[] mapAsBytes;
-    if (map == null)
-      return null;
-    else {
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      Encoder encoder = new BinaryEncoder(bos);
-      try {
-        encoder.writeInt(map.size());
-        for(Map.Entry<String,String> entry: map.entrySet()) {
-          encoder.writeString(entry.getKey());
-          encoder.writeString(entry.getValue());
-        }
-        mapAsBytes=bos.toByteArray();
-      } catch (IOException e) {
-        e.printStackTrace();
-        return null;
-      }
-      return ByteBuffer.wrap(mapAsBytes);
-    }
-  }
-
-  Map<String,String> unwrap(byte[] mapAsBytes) {
-    Map<String,String> map=null;
-    if (mapAsBytes == null) return map;
-    else {
-      ByteArrayInputStream bis = new ByteArrayInputStream(mapAsBytes);
-      Decoder decoder = new BinaryDecoder(bis);
-      int size;
-      try {
-        size = decoder.readInt();
-        if (size>0) {
-          map=Maps.newHashMap();
-          for(int i=0; i<size; i++) {
-            map.put(decoder.readString(),decoder.readString());
-          }
-        }
-      } catch (IOException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        return null;
-      }
-      return map;
-    }
-  }
-
   /** wrap a byte array into a byte buffer */
   ByteBuffer wrap(byte[] bytes) {
     if (bytes == null)
@@ -446,14 +396,36 @@ public class ConverterUtils {
         tReadColumnRange.getStopColumn(),
         tReadColumnRange.getLimit());
   }
-
+//  /** wrap a queue entry */
+//  TQueueEntry wrap(QueueEntry entry) {
+//    return new TQueueEntry(
+//      wrap(entry.getData()),
+//      wrap(entry.getHeader())
+//    );
+//  }
+//
+//  /** unwrap a queue entry */
+//  QueueEntry unwrap(TQueueEntry entry) {
+//    return new QueueEntry(
+//      entry.getHeader(),
+//      entry.getData()
+//    );
+//  }
   /** wrap an EnqueuePayload operation */
+
+
+  QueueEntry unwrap(TQueueEntry entry) {
+    return new QueueEntryImpl(entry.getHeader(), entry.getData());
+  }
+
+  TQueueEntry wrap(QueueEntry entry) {
+    return new TQueueEntry(entry.getPartioningMap(), wrap(entry.getData()));
+  }
+
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
-        wrap(enqueue.getData()),
-        enqueue.getHeaderVersion(),
-        wrap(enqueue.getHeaders()),
+        wrap(enqueue.getEntry()),
         enqueue.getId());
     if (enqueue.getProducer() != null)
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
@@ -465,8 +437,7 @@ public class ConverterUtils {
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
-        unwrap(tEnqueue.getHeaders()),
-        tEnqueue.getValue());
+        unwrap(tEnqueue.getEntry()));
   }
 
   /** wrap a DequeuePayload operation */
@@ -671,7 +642,7 @@ public class ConverterUtils {
     }
     return new TDequeueResult(status,
         wrap(result.getEntryPointer()),
-        wrap(result.getValue()));
+        wrap(result.getEntry()));
   }
   /**
    * unwrap a dequeue result
@@ -682,7 +653,7 @@ public class ConverterUtils {
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
           unwrap(tDequeueResult.getPointer()),
-          tDequeueResult.getValue());
+          unwrap(tDequeueResult.getEntry()));
     } else {
       DequeueResult.DequeueStatus status;
       TDequeueStatus tStatus = tDequeueResult.getStatus();

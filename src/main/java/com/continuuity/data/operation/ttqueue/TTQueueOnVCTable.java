@@ -23,6 +23,7 @@ import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -94,7 +95,18 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
   }
   @Override
-  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+  }
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
+    byte[] data;
+    try {
+      data = QueueEntrySerializer.serialize(entry);
+    } catch (IOException e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException");
+    }
+
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a dirty pointer
@@ -471,10 +483,15 @@ public class TTQueueOnVCTable implements TTQueue {
                   dirty.getFirst(), dirty.getSecond());
               // Successfully updated timestamp, still own it, return this
               this.dequeueReturns.incrementAndGet();
-              return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
-                  this.table.get(shardRow,
-                      makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
-                      dirty.getFirst()).getValue());
+
+              byte[] combinedHeaderPlusData=this.table.get(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst()).getValue();
+              try {
+                QueueEntry entry=QueueEntrySerializer.deserialize(combinedHeaderPlusData);
+                return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, entry);
+              } catch (IOException e) {
+                throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                             "Queue entry deserialization failed.", e);
+              }
             } catch (com.continuuity.api.data.OperationException e) {
               // Failed to update group meta, someone else must own it now,
               // move to next entry in shard
@@ -503,43 +520,44 @@ public class TTQueueOnVCTable implements TTQueue {
       if (TRACE) log("Fell through, entry is available!");
 
       // Get the data and check the partitioner
-      OperationResult<byte[]> data = this.table.get(shardRow,
-          makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
-      assert(!data.isEmpty());
-
-      if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer,
-          entryPointer.getEntryId(), data.getValue())) {
-
-        // Partitioner says skip, flag as available, move to next entry in shard
-        if (TRACE) log("Partitioner rejected this entry, skip");
-        entryPointer = new EntryPointer(
-            entryPointer.getEntryId() + 1, entryPointer.getShardId());
-        continue;
-      }
-
-      // Atomically update group meta to point to this consumer and return!
-      EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
-          EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
+      OperationResult<byte[]> combinedHeaderPlusDataResult = this.table.get(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
+      assert(!combinedHeaderPlusDataResult.isEmpty());
       try {
-        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-            entryGroupMetaData, newEntryGroupMeta.getBytes(),
-            dirty.getFirst(), dirty.getSecond());
-
-        // We own it!  Return it.
-        this.dequeueReturns.incrementAndGet();
-        if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
-
-        return new DequeueResult(DequeueStatus.SUCCESS,
-            entryPointer, data.getValue());
-      } catch (com.continuuity.api.data.OperationException e) {
-        // Someone else has grabbed it, on to the next one
-        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
-        entryPointer = new EntryPointer(
+        QueueEntry entry=QueueEntrySerializer.deserialize(combinedHeaderPlusDataResult.getValue());
+        byte[] data=entry.getData();
+        if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer, entryPointer.getEntryId(), data)) {
+          // Partitioner says skip, flag as available, move to next entry in shard
+          if (TRACE) log("Partitioner rejected this entry, skip");
+          entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
-        // continue and loop on
+          continue;
+        }
+
+        // Atomically update group meta to point to this consumer and return!
+        EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
+          EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
+        try {
+          this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+                                    entryGroupMetaData, newEntryGroupMeta.getBytes(),
+                                    dirty.getFirst(), dirty.getSecond());
+
+          // We own it!  Return it.
+          this.dequeueReturns.incrementAndGet();
+          if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
+
+          return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, entry);
+        } catch (com.continuuity.api.data.OperationException e) {
+          // Someone else has grabbed it, on to the next one
+          if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
+          entryPointer = new EntryPointer(
+            entryPointer.getEntryId() + 1, entryPointer.getShardId());
+          // continue and loop on
+        }
+      } catch (IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     "Queue entry deserialization failed.", e);
       }
     }
-
     // If you exit this loop, something is wrong.  Fail.
     throw new OperationException(StatusCode.INTERNAL_ERROR,
         "Somehow broke from loop, bug in TTQueue");

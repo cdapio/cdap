@@ -46,7 +46,7 @@ public abstract class BenchTTQueue {
     long last = start;
     for (int i=0; i<iterations; i++) {
       r.nextBytes(data);
-      assertTrue(queue.enqueue(data, null, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(data, timeOracle.getTimestamp()).isSuccess());
       last = printStat(i, last, 1000);
     }
     
@@ -65,7 +65,7 @@ public abstract class BenchTTQueue {
     long last = start;
     for (int i=0; i<iterations; i++) {
       r.nextBytes(data);
-      assertTrue(queue.enqueue(data, null, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(data, timeOracle.getTimestamp()).isSuccess());
       last = printStat(i, last, 1000);
     }
     long end = now();

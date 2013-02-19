@@ -154,7 +154,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+  }
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
+    byte[] data=entry.getData();
+    byte[] headerData=null;
+    try {
+      data = QueueEntrySerializer.serialize(entry);
+    } catch (IOException e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException");
+    }
     if (TRACE)
       log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
             cleanWriteVersion + ")");
@@ -211,6 +222,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
+    // DO NOT USE THIS CLASS!
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
@@ -248,8 +260,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       byte [] entryData = result.getValue().get(ENTRY_DATA);
       if (TRACE) log("Entry : " + entryId + " is dequeued");
       this.dequeueReturns.incrementAndGet();
+      QueueEntry entry=new QueueEntryImpl(entryData);
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                               new QueueEntryPointer(this.queueName, entryId), entryData);
+                               new QueueEntryPointer(this.queueName, entryId), entry);
     }
   }
 

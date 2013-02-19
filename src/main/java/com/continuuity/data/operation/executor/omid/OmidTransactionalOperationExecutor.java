@@ -751,8 +751,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
     // Serialize dequeue payload and overwrite enqueue data
     try {
-      enqueue.setData(DequeuePayload.write(fieldsToValues,
-          enqueuePayload.getSerializedTuple()));
+      enqueue.setData(DequeuePayload.write(fieldsToValues, enqueuePayload.getSerializedTuple()));
     } catch (IOException e) {
       // Fatal error serializing dequeue payload
       e.printStackTrace();
@@ -898,9 +897,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     requestMetric("QueueEnqueue");
     long begin = begin();
     //TODO: need to store header version
-    enqueue.getHeaderVersion();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
-                                         wrap(enqueue.getHeaders()), transaction.getTransactionId());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry()  , transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),

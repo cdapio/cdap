@@ -29,9 +29,9 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   protected abstract TTQueue getQueue(byte [] queueName);
 
   @Override
-  public EnqueueResult enqueue(byte [] queueName, byte [] data, byte[] headerData,
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry entry,
       long writeVersion) throws OperationException {
-    return getQueue(queueName).enqueue(data, headerData, writeVersion);
+    return getQueue(queueName).enqueue(entry, writeVersion);
   }
 
   @Override

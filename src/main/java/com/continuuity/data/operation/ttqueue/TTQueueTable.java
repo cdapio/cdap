@@ -14,13 +14,25 @@ public interface TTQueueTable {
    * Inserts an entry into the tail of the queue using the specified write
    * version.
    * @param queueName name of the queue
-   * @param data the data to be inserted into the queue
+   * @param entry the queue entry to be inserted into the queue
    * @param writeVersion
    * @return return code, and if success, the unique entryId of the queue entry
    * @throws OperationException if something goes wrong
    */
-  public EnqueueResult enqueue(byte [] queueName, byte [] data, byte[] headerData,
-      long writeVersion) throws OperationException;
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry entry, long writeVersion) throws OperationException;
+
+  /**
+   * Inserts an entry into the tail of the queue using the specified write
+   * version.
+   * @param queueName name of the queue
+   * @param data the data to be inserted into the queue
+   * @param writeVersion
+   * @return return code, and if success, the unique entryId of the queue entry
+   * @throws OperationException if something goes wrong
+   * @deprecated
+   */
+//  public EnqueueResult enqueue(byte [] queueName, byte [] data, byte[] headerData, long writeVersion)
+//    throws OperationException;
 
   /**
    * Invalidates an entry that was enqueued into the queue.  This is used only

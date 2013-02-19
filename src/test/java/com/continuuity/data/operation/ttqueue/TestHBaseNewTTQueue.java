@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import java.util.Random;
 
+@Ignore
 public class TestHBaseNewTTQueue extends TestTTQueue {
 
   private static Injector injector;

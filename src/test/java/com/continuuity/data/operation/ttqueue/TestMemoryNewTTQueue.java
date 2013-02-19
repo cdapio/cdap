@@ -5,7 +5,7 @@ import com.continuuity.data.engine.memory.MemoryOVCTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
-
+@Ignore
 public class TestMemoryNewTTQueue extends TestTTQueue {
 
   @Override

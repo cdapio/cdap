@@ -3,6 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
@@ -15,9 +16,6 @@ import com.continuuity.hbase.ttqueue.HBQExpirationConfig;
 import com.continuuity.hbase.ttqueue.HBQFinalize;
 import com.continuuity.hbase.ttqueue.HBQInvalidate;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation;
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.hbase.ttqueue.*;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
 import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.continuuity.hbase.ttqueue.HBQShardConfig;
@@ -66,10 +64,15 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion)
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+  }
+
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion)
       throws OperationException {
     if (TRACE)
-      log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
+      log("Enqueueing (data.len=" + entry.getData().length + ", writeVersion=" +
           cleanWriteVersion + ")");
 
     // Get a read pointer that sees everything (dirty read pointer)
@@ -78,7 +81,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     HBQEnqueueResult result;
     try {
       result = this.table.enqueue(
-          new HBQEnqueue(this.queueName, data,
+          new HBQEnqueue(this.queueName, entry.getData(),
               new HBReadPointer(cleanWriteVersion, now), this.shardConfig));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());

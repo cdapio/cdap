@@ -1,28 +1,19 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.google.common.base.Objects;
+import java.util.Map;
+import java.util.Set;
 
-public class QueueEntry {
-  private final byte[] header;
-  private final byte[] data;
+public interface QueueEntry {
 
-  public QueueEntry(byte[] header, byte[] data) {
-    this.header = header;
-    this.data = data;
-  }
+  public void addPartitioningKey(String key, int hash);
 
-  public QueueEntry(byte[] data) {
-    this(null, data);
-  }
+  public Integer getHash(String key);
 
-  public byte[] getData() {
-    return data;
-  }
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("data", this.data)
-        .add("header", this.header)
-        .toString();
-  }
+  public byte[] getData();
+
+  public void setData(byte[] data);
+
+  public Set<String> getAllPartioningKeys();
+
+  public Map<String, Integer> getPartioningMap();
 }

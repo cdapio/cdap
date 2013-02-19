@@ -10,7 +10,9 @@ import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
+@Ignore
 public class BenchHBaseNewTTqueue extends BenchTTQueue {
 
   private static Injector injector;
