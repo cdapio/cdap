@@ -5,6 +5,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.SchemaFinder;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -19,7 +20,7 @@ import java.util.Set;
  * AbstractQueueSpecification builder for extracting commanality across
  * different implementation. We don't know how it would look for this yet :-)
  */
-public abstract class AbstractQueueSpecificationGenerator {
+public abstract class AbstractQueueSpecificationGenerator implements QueueSpecificationGenerator {
   /**
    * Holds the matched schema and uri for a connection.
    */

@@ -227,7 +227,7 @@ public class MDSBasedStore implements Store {
 
         Set<String> streams = new HashSet<String>();
         for (FlowletConnection con : flowSpec.getConnections()) {
-          if (FlowletConnection.SourceType.STREAM == con.getSourceType()) {
+          if (FlowletConnection.Type.STREAM == con.getSourceType()) {
             streams.add(con.getSourceName());
           }
         }

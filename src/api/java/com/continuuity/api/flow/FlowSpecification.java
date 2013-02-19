@@ -291,13 +291,13 @@ public interface FlowSpecification {
         String flowletName = flowlet.configure().getName();
         Preconditions.checkArgument(flowlets.containsKey(flowletName), "Undefined flowlet %s", flowletName);
 
-        FlowletConnection.SourceType sourceType;
+        FlowletConnection.Type sourceType;
         String sourceName;
         if (fromStream != null) {
-          sourceType = FlowletConnection.SourceType.STREAM;
+          sourceType = FlowletConnection.Type.STREAM;
           sourceName = fromStream;
         } else {
-          sourceType = FlowletConnection.SourceType.FLOWLET;
+          sourceType = FlowletConnection.Type.FLOWLET;
           sourceName = fromFlowlet.getFlowletSpec().getName();
         }
         connections.add(new FlowletConnection(sourceType, sourceName, flowletName));

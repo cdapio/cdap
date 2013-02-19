@@ -12,16 +12,16 @@ public final class FlowletConnection {
   /**
    * Defines different types of source a flowlet can be connected to.
    */
-  public enum SourceType {
+  public enum Type {
     STREAM,
     FLOWLET
   }
 
-  private final SourceType sourceType;
+  private final Type sourceType;
   private final String sourceName;
   private final String targetName;
 
-  public FlowletConnection(SourceType sourceType, String sourceName, String targetName) {
+  public FlowletConnection(Type sourceType, String sourceName, String targetName) {
     this.sourceType = sourceType;
     this.sourceName = sourceName;
     this.targetName = targetName;
@@ -30,7 +30,7 @@ public final class FlowletConnection {
   /**
    * @return Type of source.
    */
-  public SourceType getSourceType() {
+  public Type getSourceType() {
     return sourceType;
   }
 

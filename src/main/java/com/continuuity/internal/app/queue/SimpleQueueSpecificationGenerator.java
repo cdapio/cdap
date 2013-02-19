@@ -11,21 +11,17 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.app.program.Id;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.SchemaFinder;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +30,7 @@ import java.util.Set;
  * Concrete implementation of {@link QueueSpecificationGenerator} for generating queue
  * names.
  */
-public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecificationGenerator
-  implements QueueSpecificationGenerator {
+public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecificationGenerator {
   /**
    * Account Name under which the stream names to generated.
    */
@@ -71,7 +66,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
       // If the source type is a flowlet, then we attempt to find a matching
       // connection that is equal or compatible. Equality has higher priority
       // over compatibility.
-      if(connection.getSourceType() == FlowletConnection.SourceType.FLOWLET) {
+      if(connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
         List<SchemaURIHolder> holders = findSchema(flow, flowlets.get(source), flowlets.get(target));
         for(SchemaURIHolder holder : holders) {
           if(table.contains(source, target)) {
@@ -83,7 +78,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
       }
 
       // Connection is a Stream.
-      if(connection.getSourceType() == FlowletConnection.SourceType.STREAM) {
+      if(connection.getSourceType() == FlowletConnection.Type.STREAM) {
         try {
           // Create schema for StreamEvent and compare that with the inputs of the flowlet.
           final Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<StreamEvent>() {}).getType                                                                                                     ());
