@@ -48,7 +48,7 @@ public final class FlowletRunner implements Runner {
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-      String processorName = program.getProcessorName();
+      String processorName = program.getProgramName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);

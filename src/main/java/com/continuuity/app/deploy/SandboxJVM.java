@@ -106,7 +106,7 @@ public class SandboxJVM {
         return -1;
       }
 
-      Program archive = new Program(Id.Program.from(new Id.Account(id)), lf.create(jarFilename));
+      Program archive = new Program(lf.create(jarFilename));
       mainClass = archive.getMainClass().newInstance();
     } catch(Exception e) {
       LOG.error(e.getMessage());

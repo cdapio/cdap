@@ -1,6 +1,7 @@
 package com.continuuity.archive;
 
 import com.continuuity.WebCrawlApp;
+import com.continuuity.app.program.ManifestFields;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
@@ -32,10 +33,10 @@ public class ArchiveBundlerTest {
 
     try {
       Manifest manifest = new Manifest();
-      manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-      manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "com.continuuity.WebCrawlApp");
-      manifest.getMainAttributes().put(new Attributes.Name("Processor-Type"), "FLOW");
-      manifest.getMainAttributes().put(new Attributes.Name("Spec-File"), "META-INF/specification/application.json");
+      manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+      manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, "com.continuuity.WebCrawlApp");
+      manifest.getMainAttributes().put(ManifestFields.PROCESSOR_TYPE, "FLOW");
+      manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, "META-INF/specification/application.json");
 
       // Create a JAR file based on the class.
       String jarfile = JarFinder.getJar(WebCrawlApp.class);
@@ -54,11 +55,11 @@ public class ArchiveBundlerTest {
       Enumeration<JarEntry> entries = file.entries();
 
       Manifest newManifest = file.getManifest();
-      Assert.assertTrue(newManifest.getMainAttributes().get(Attributes.Name.MANIFEST_VERSION).equals("1.0"));
-      Assert.assertTrue(newManifest.getMainAttributes().get(Attributes.Name.MAIN_CLASS)
+      Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.MANIFEST_VERSION).equals("1.0"));
+      Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.MAIN_CLASS)
                           .equals("com.continuuity.WebCrawlApp"));
-      Assert.assertTrue(newManifest.getMainAttributes().get(new Attributes.Name("Processor-Type")).equals("FLOW"));
-      Assert.assertTrue(newManifest.getMainAttributes().get(new Attributes.Name("Spec-File"))
+      Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.PROCESSOR_TYPE).equals("FLOW"));
+      Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.SPEC_FILE)
                           .equals("META-INF/specification/application.json"));
       boolean found_app_json = false;
       while(entries.hasMoreElements()) {

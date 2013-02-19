@@ -72,12 +72,12 @@ public final class Err {
     );
 
     public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
-                                                                 "Input of flowlet %s does not define a compatible " +
-                                                                   "type method for processing output of flowlet %s."
+                                                                 "Input of flowlet '%s' does not define a compatible " +
+                                                                   "type method for processing output of flowlet '%s'."
     );
-    public static final Errors INCOMPATIBLE_CONNECTION = new Errors(
-                                                                     "There are no inputs of flowlet %s that are " +
-                                                                       "compatible for processing output of flowlet %s "
+    public static final Errors MORE_OUTPUT_NOT_ALLOWED = new Errors(
+                                                                     "The output emitter '%s' in flowlet '%s' has multiple" +
+                                                                     "schemas defined"
     );
     // Output being emitted
   }
