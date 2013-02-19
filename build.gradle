@@ -20,6 +20,8 @@ dependencies {
   // Self dependencies.
   compile apiJar.outputs.files
   compile libraries.mysql
+  compile libraries.google_guice
+  compile libraries.google_guice_assistedinject
   //TODO: Move this to central dependency
   compile 'org.apache.shiro:shiro-core:1.2.1'
   compile libraries.jetty
