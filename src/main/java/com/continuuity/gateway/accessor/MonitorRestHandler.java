@@ -1,16 +1,13 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.flow.manager.stubs.*;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.metrics2.thrift.Counter;
-import com.continuuity.metrics2.thrift.CounterRequest;
-import com.continuuity.metrics2.thrift.FlowArgument;
-import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -27,11 +24,21 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.flow.manager.stubs.ActiveFlow;
+import com.continuuity.flow.manager.stubs.DelegationToken;
+import com.continuuity.flow.manager.stubs.FlowIdentifier;
+import com.continuuity.flow.manager.stubs.FlowService;
+import com.continuuity.flow.manager.stubs.FlowStatus;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.metrics2.thrift.Counter;
+import com.continuuity.metrics2.thrift.CounterRequest;
+import com.continuuity.metrics2.thrift.FlowArgument;
+import com.continuuity.metrics2.thrift.MetricsFrontendService;
 
 /**
  * This is the http request handler for the metrics and status REST API.
@@ -195,7 +202,6 @@ public class MonitorRestHandler extends NettyRestHandler {
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!accessor.getAuthenticator().authenticateRequest(request)) {
-        LOG.info("Received an unauthorized request");
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         helper.finish(BadRequest);
         return;
@@ -216,7 +222,6 @@ public class MonitorRestHandler extends NettyRestHandler {
         StringBuilder resp = new StringBuilder();
         boolean first = true;
 
-        java.util.HashMap statuses = new HashMap();
         Map<String, Integer> statusmetrics = new HashMap<String, Integer>();
         // initialize zeros for the minimal set of statuses we always want to return
         statusmetrics.put("RUNNING", 0);

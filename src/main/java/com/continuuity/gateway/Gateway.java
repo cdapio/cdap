@@ -10,6 +10,7 @@ import com.continuuity.gateway.auth.PassportVPCAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.http.client.PassportClient;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,9 +238,7 @@ public class Gateway implements Server {
    * @throws IllegalArgumentException If the passportClient object is null
    */
   public void setPassportClient(PassportClient passportClient) {
-    if (passportClient == null) {
-      throw new IllegalArgumentException("'passportClient' argument was null");
-    }
+    Preconditions.checkNotNull(passportClient);
     LOG.info("Setting PassportClient to " + passportClient.getClass().getName()
         + ".");
     this.passportClient = passportClient;
@@ -252,9 +251,7 @@ public class Gateway implements Server {
    * @throws IllegalArgumentException If the consumer object is null
    */
   public void setExecutor(OperationExecutor executor) {
-    if (executor == null) {
-      throw new IllegalArgumentException("'executor' argument was null");
-    }
+    Preconditions.checkNotNull(executor);
     LOG.info("Setting Operations Executor to " +
         executor.getClass().getName() + ".");
     this.executor = executor;
@@ -270,10 +267,7 @@ public class Gateway implements Server {
    * @throws IllegalArgumentException If configuration argument is null.
    */
   private void configure(CConfiguration configuration) throws ServerException {
-
-    if (configuration == null) {
-      throw new IllegalArgumentException("'configuration' argument was null");
-    }
+    Preconditions.checkNotNull(configuration);
 
     LOG.info("Configuring Gateway..");
 

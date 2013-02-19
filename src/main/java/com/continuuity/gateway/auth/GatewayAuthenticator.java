@@ -1,8 +1,7 @@
 package com.continuuity.gateway.auth;
 
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-
-import com.continuuity.api.flow.flowlet.Event;
 
 
 /**
@@ -15,6 +14,7 @@ import com.continuuity.api.flow.flowlet.Event;
  */
 public interface GatewayAuthenticator {
 
+  // TODO: Pull from Passport once constant is visible
   public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
 
   /**
@@ -36,6 +36,6 @@ public interface GatewayAuthenticator {
    * @param event stream event to authenticate
    * @return true if authentication succeeds, false if not
    */
-  public boolean authenticateRequest(Event event);
+  public boolean authenticateRequest(AvroFlumeEvent event);
 
 }
