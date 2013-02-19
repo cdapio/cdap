@@ -163,7 +163,7 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      //this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+      //this.counters.write(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
     }
   }
 
