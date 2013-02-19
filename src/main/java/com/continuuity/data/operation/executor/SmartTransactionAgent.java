@@ -169,7 +169,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     if (!this.deferred.isEmpty()) {
       try {
         // this will start, use and return a new transaction if xaction is null
-        this.xaction = this.opex.execute(this.context, null, this.deferred);
+        this.xaction = this.opex.execute(this.context, this.xaction, this.deferred);
         this.deferred.clear();
       } catch (OperationException e) {
         // opex aborts the transaction if the execute fails
@@ -185,7 +185,7 @@ public class SmartTransactionAgent implements TransactionAgent {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException {
+  public Map<byte[], Long> execute(Increment increment) throws OperationException {
     // check state and get rid of deferred operations
     executeDeferred();
     // now execute the operation and make sure abort in case of failure

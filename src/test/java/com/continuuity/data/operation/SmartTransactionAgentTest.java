@@ -1,5 +1,6 @@
 package com.continuuity.data.operation;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -287,6 +288,24 @@ public class SmartTransactionAgentTest {
     // read back in a new transaction, must still see nothing
     result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testRepeatedWriteReadThenCommit() throws OperationException {
+    final String table = "tRWRTC";
+    SmartTransactionAgent agent = newAgent();
+    agent.start();
+
+    // increment a column
+    agent.submit(new Increment(table, a, x, 1L));
+    // read back, expect 1
+    Assert.assertArrayEquals(Bytes.toBytes(1L), agent.execute(new Read(table, a, x)).getValue().get(x));
+    // increment again
+    agent.submit(new Increment(table, a, x, 1L));
+    // read back, expect 2
+    Assert.assertArrayEquals(Bytes.toBytes(2L), agent.execute(new Read(table, a, x)).getValue().get(x));
+    // commit
+    agent.finish();
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {

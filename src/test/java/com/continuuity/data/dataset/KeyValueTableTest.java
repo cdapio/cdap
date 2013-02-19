@@ -1,16 +1,14 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static com.continuuity.api.data.dataset.KeyValueTable.*;
 
 public class KeyValueTableTest extends DataSetTestBase {
 
@@ -35,17 +33,20 @@ public class KeyValueTableTest extends DataSetTestBase {
   @Test
   public void testSyncWriteReadSwapDelete() throws OperationException {
 
+    // this test runs all operations synchronously
+    newTransaction(Mode.Sync);
+
     // write a value and read it back
-    kvTable.exec(new WriteKey(key1, val1));
+    kvTable.write(key1, val1);
     Assert.assertArrayEquals(val1, kvTable.read(key1));
 
     // update the value and read it back
-    kvTable.exec(new WriteKey(key1, val2));
+    kvTable.write(key1, val2);
     Assert.assertArrayEquals(val2, kvTable.read(key1));
 
     // attempt to swap, expecting old value
     try {
-      kvTable.exec(new SwapKey(key1, val1, val3));
+      kvTable.swap(key1, val1, val3);
       Assert.fail("swap should have failed");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
@@ -53,75 +54,95 @@ public class KeyValueTableTest extends DataSetTestBase {
     }
 
     // swap the value and read it back
-    kvTable.exec(new SwapKey(key1, val2, val3));
+    kvTable.swap(key1, val2, val3);
     Assert.assertArrayEquals(val3, kvTable.read(key1));
 
     // delete the value and verify its gone
-    kvTable.exec(new DeleteKey(key1));
+    kvTable.delete(key1);
     Assert.assertNull(kvTable.read(key1));
   }
 
   @Test
   public void testASyncWriteReadSwapDelete() throws OperationException {
 
-    // start a new transaction
-    newCollector();
-    // async write a value
-    kvTable.stage(new WriteKey(key2, val1));
+    // defer all writes until commit
+    newTransaction(Mode.Batch);
+    // write a value
+    kvTable.write(key2, val1);
     // value should not be visible yet
     Assert.assertNull(kvTable.read(key2));
     // commit the transaction
-    executeCollector();
+    commitTransaction();
+
+    // verify synchronously
+    newTransaction(Mode.Sync);
     // verify that the value is now visible
     Assert.assertArrayEquals(val1, kvTable.read(key2));
+    // commit the transaction
+    commitTransaction();
 
-    // start a new transaction
-    newCollector();
+    // defer all writes until commit
+    newTransaction(Mode.Batch);
     // update the value
-    kvTable.stage(new WriteKey(key2, val2));
+    kvTable.write(key2, val2);
     // value should not be visible yet
     Assert.assertArrayEquals(val1, kvTable.read(key2));
     // commit the transaction
-    executeCollector();
+    commitTransaction();
+
+    // verify synchronously
+    newTransaction(Mode.Sync);
     // verify that the value is now visible
     Assert.assertArrayEquals(val2, kvTable.read(key2));
+    // commit the transaction
+    commitTransaction();
 
-    // start a new transaction
-    newCollector();
-    // stage a swap, this should not fail yet
-    kvTable.stage(new SwapKey(key2, val1, val3));
+    // defer all writes until commit
+    newTransaction(Mode.Batch);
+    // write a swap, this should not fail yet
+    kvTable.swap(key2, val1, val3);
     // verify that the old value is still there
     Assert.assertArrayEquals(val2, kvTable.read(key2));
     // attempt to commit the transaction, should fail
     try {
-      executeCollector();
+      commitTransaction();
       Assert.fail("swap should have failed");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
       Assert.assertArrayEquals(val2, kvTable.read(key2));
     }
 
-    // start a new transaction
-    newCollector();
+    // defer all writes until commit
+    newTransaction(Mode.Batch);
     // swap the value
-    kvTable.stage(new SwapKey(key2, val2, val3));
+    kvTable.swap(key2, val2, val3);
     // new value should not be visible yet
     Assert.assertArrayEquals(val2, kvTable.read(key2));
     // commit the transaction
-    executeCollector();
+    commitTransaction();
+
+    // verify synchronously
+    newTransaction(Mode.Sync);
     // verify the value was swapped
     Assert.assertArrayEquals(val3, kvTable.read(key2));
+    // commit the transaction
+    commitTransaction();
 
-    // start a new transaction
-    newCollector();
+    // defer all writes until commit
+    newTransaction(Mode.Batch);
     // delete the value
-    kvTable.stage(new DeleteKey(key2));
+    kvTable.delete(key2);
     // value should still be visible
     Assert.assertArrayEquals(val3, kvTable.read(key2));
     // commit the transaction
-    executeCollector();
+    commitTransaction();
+
+    // verify synchronously
+    newTransaction(Mode.Sync);
     // verify it is gone now
     Assert.assertNull(kvTable.read(key2));
+    // commit the transaction
+    commitTransaction();
   }
 
   @Test
@@ -130,35 +151,39 @@ public class KeyValueTableTest extends DataSetTestBase {
     KeyValueTable table2 = instantiator.getDataSet("t2");
 
     // write a value to table1 and verify it
-    table1.exec(new WriteKey(key1, val1));
+    newTransaction(Mode.Sync);
+    table1.write(key1, val1);
     Assert.assertArrayEquals(val1, table1.read(key1));
-    table2.exec(new WriteKey(key2, val2));
+    table2.write(key2, val2);
     Assert.assertArrayEquals(val2, table2.read(key2));
+    commitTransaction();
 
     // start a new transaction
-    newCollector();
+    newTransaction(Mode.Batch);
     // add a write for table 1 to the transaction
-    table1.stage(new WriteKey(key1, val2));
+    table1.write(key1, val2);
     // verify that the write is not effective yet
     Assert.assertArrayEquals(val1, table1.read(key1));
     // submit a delete for table 2
-    table2.stage(new DeleteKey(key2));
+    table2.delete(key2);
     // verify that the delete is not effective yet
     Assert.assertArrayEquals(val2, table2.read(key2));
     // add a swap for a third table that should fail
-    kvTable.stage(new SwapKey(key3, val1, val1));
+    kvTable.swap(key3, val1, val1);
 
     // attempt to commit the transaction, should fail
     try {
-      executeCollector();
+      commitTransaction();
       Assert.fail("swap should have failed");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
     }
 
-    // verify old value are still there
+    // verify synchronously that old value are still there
+    newTransaction(Mode.Sync);
     Assert.assertArrayEquals(val1, table1.read(key1));
     Assert.assertArrayEquals(val2, table2.read(key2));
+    commitTransaction();
   }
 
 

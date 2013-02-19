@@ -1,9 +1,16 @@
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.data.dataset.table.Swap;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 
 import java.util.Arrays;
@@ -171,13 +178,13 @@ public class IndexedTable extends DataSet {
       idxWrite = new Write(newSecondaryKey, write.getRow(), EXISTS);
     }
 
-    // stage all operations against both tables
-    this.table.stage(write);
+    // apply all operations to both tables
+    this.table.write(write);
     if (idxDelete != null) {
-      this.index.stage(idxDelete);
+      this.index.write(idxDelete);
     }
     if (idxWrite != null) {
-      this.index.stage(idxWrite);
+      this.index.write(idxWrite);
     }
   }
 
@@ -203,10 +210,10 @@ public class IndexedTable extends DataSet {
       idxDelete = new Delete(oldSecondaryKey, delete.getRow());
     }
 
-    // stage all operations against both tables
-    this.table.stage(delete);
+    // apply all operations to both tables
+    this.table.write(delete);
     if (idxDelete != null) {
-      this.index.stage(idxDelete);
+      this.index.write(idxDelete);
     }
   }
 
@@ -225,7 +232,7 @@ public class IndexedTable extends DataSet {
     // is the same as the new value, then the index is not affected either.
     if (!Arrays.equals(this.column, swap.getColumn()) ||
         Arrays.equals(swap.getExpected(), swap.getValue())) {
-      this.table.stage(swap);
+      this.table.write(swap);
       return;
     }
 
@@ -244,14 +251,47 @@ public class IndexedTable extends DataSet {
       idxWrite = new Write(swap.getValue(), swap.getRow(), EXISTS);
     }
 
-    // stage all operations against both tables
-    this.table.stage(swap);
+    // apply all operations to both tables
+    this.table.write(swap);
     if (idxDelete != null) {
-      this.index.stage(idxDelete);
+      this.index.write(idxDelete);
     }
     if (idxWrite != null) {
-      this.index.stage(idxWrite);
+      this.index.write(idxWrite);
     }
+  }
+
+  public void increment(Increment increment) throws OperationException {
+    // if the increment is on columns other than the index, just pass
+    // it through to the table - the index is not affected
+    Long indexIncrement = null;
+    for (int i = 0; i < increment.getColumns().length; ++i) {
+      if (Arrays.equals(this.column, increment.getColumns()[i])) {
+        indexIncrement = increment.getValues()[i];
+        break;
+      }
+    }
+    if (indexIncrement == null) {
+      // note this only adds the increment to the current xaction, it may be deferred
+      this.table.write(increment);
+      return;
+    }
+
+    // index column is affected. Perform the increment synchronously
+    Long newIndexValue = this.table.increment(increment).get(this.column);
+    if (newIndexValue == null) {
+      // should never happen (we checked that it was in the increment columns)
+      // but if it does, we are done;
+      return;
+    }
+
+    // delete the old secondary key from the index
+    byte[] oldSecondaryKey = Bytes.toBytes(newIndexValue - indexIncrement);
+    this.table.write(new Delete(oldSecondaryKey, increment.getRow()));
+
+    // add the new secondary key to the index
+    byte[] newSecondaryKey = Bytes.toBytes(newIndexValue);
+    this.table.write(new Write(newSecondaryKey, increment.getRow(), EXISTS));
   }
 
 }

@@ -1,11 +1,6 @@
 package com.continuuity.data.dataset;
 
 
-import com.continuuity.data.BatchCollectionClient;
-import com.continuuity.data.BatchCollector;
-import com.continuuity.api.data.Closure;
-import com.continuuity.data.DataFabric;
-import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
@@ -13,10 +8,14 @@ import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.WriteOperation;
-import com.continuuity.data.operation.IncrementClosure;
+import com.continuuity.data.BatchCollectionClient;
+import com.continuuity.data.BatchCollector;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.TransactionProxy;
 
-import java.util.Collections;
+import java.util.Map;
 
 /**
  * The read/write runtime implementation of the Table data set.
@@ -97,10 +96,7 @@ public class ReadWriteTable extends ReadOnlyTable {
   }
 
   /**
-   * Perform a write operation. If the mode is synchronous, then the write is
-   * executed immediately in its own transaction, if it is asynchronous, the
-   * write is appended to the current transaction, which will be committed
-   * by the executing agent.
+   * Turn a table operation into a data fabric operation.
    *
    * @param op a table write operation
    * @return the corresponding data fabric operation
@@ -118,9 +114,7 @@ public class ReadWriteTable extends ReadOnlyTable {
           this.tableName(), delete.getRow(), delete.getColumns());
     }
     else if (op instanceof Increment) {
-      Increment increment = (Increment)op;
-      operation = new com.continuuity.data.operation.Increment(
-          this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
+      operation = toOperation((Increment)op);
     }
     else if (op instanceof Swap) {
       Swap swap = (Swap)op;
@@ -133,9 +127,19 @@ public class ReadWriteTable extends ReadOnlyTable {
     return operation;
   }
 
+  /**
+   * Helper to convert an increment operation
+   * @param increment the table increment
+   * @return a corresponding data fabric increment operation
+   */
+  private com.continuuity.data.operation.Increment toOperation(Increment increment) {
+    return new com.continuuity.data.operation.Increment(
+      this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
+  }
+
   // perform an asynchronous write operation (see toOperation())
   @Override
-  public void stage(WriteOperation op) throws OperationException {
+  public void write(WriteOperation op) throws OperationException {
     // new style
     if (this.proxy != null) {
       this.getTransactionAgent().submit(toOperation(op));
@@ -145,25 +149,15 @@ public class ReadWriteTable extends ReadOnlyTable {
     }
   }
 
-  // perform a synchronous write operation (see toOperation())
   @Override
-  public void exec(WriteOperation op) throws OperationException {
+  public Map<byte[], Long> increment(Increment increment) throws OperationException {
     // new style
     if (this.proxy != null) {
-      this.getTransactionAgent().submit(toOperation(op));
+      return this.getTransactionAgent().execute(toOperation(increment));
     } else {
       // TODO old-style will go away
-      this.getDataFabric().execute(Collections.singletonList(toOperation(op)));
+      throw new OperationException(StatusCode.ILLEGAL_INCREMENT, "Increment is not supported in old style");
     }
   }
-
-  // get a closure for an increment
-  @Override
-  public Closure closure(Increment increment) {
-    // TODO old-style will go away
-    return new IncrementClosure(new com.continuuity.data.operation.Increment
-        (this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues()));
-  }
-
 
 }

@@ -23,6 +23,7 @@ dependencies {
 
     apiCompile libraries.google_guava
     apiCompile libraries.netty
+    apiCompile libraries.jsr_305
 
     compile libraries.kryo
     compile libraries.hsql
