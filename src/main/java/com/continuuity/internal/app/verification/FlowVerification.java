@@ -82,7 +82,7 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
 
       // Let's start with a simple case, when the type of source is FLOWLET
       if(connection.getSourceType() == FlowletConnection.SourceType.FLOWLET) {
-        VerifyResult result = VerifyFlowletConnections(flowlets.get(source), flowlets.get(target));
+        VerifyResult result = connectionVerification(flowlets.get(source), flowlets.get(target));
         // If validation have failed, then we return the status of failure and not proceed further.
         if(result.getStatus() != VerifyResult.Status.SUCCESS) {
           return result;
@@ -113,7 +113,7 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    * @param target flowlet definition
    * @return An instance of {@link VerifyResult}
    */
-  private VerifyResult VerifyFlowletConnections(FlowletDefinition source, FlowletDefinition target) {
+  private VerifyResult connectionVerification(FlowletDefinition source, FlowletDefinition target) {
     Map<String, Set<Schema>> output = source.getOutputs();
     Map<String, Set<Schema>> input = target.getInputs();
 

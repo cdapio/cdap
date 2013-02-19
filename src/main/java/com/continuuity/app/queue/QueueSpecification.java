@@ -23,5 +23,5 @@ public interface QueueSpecification {
   /**
    * @return {@link Schema} associated with the respective {@link URI}
    */
-  Set<Schema> getSchemas();
+  Schema getSchemas();
 }

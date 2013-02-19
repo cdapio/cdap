@@ -141,8 +141,6 @@ public class WebCrawlApp implements Application {
   public static final class UrlSanitizer extends AbstractFlowlet {
     private OutputEmitter<DocumentURL> output;
 
-    private OutputEmitter<String> str;
-
     public void process(StreamEvent event) {
       // Does some-fancy sanitization of url.
       output.emit(new DocumentURLImpl(event.getHeaders().get("url")));

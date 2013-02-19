@@ -9,6 +9,8 @@ import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.google.common.collect.Table;
 
+import java.util.Set;
+
 /**
  * This interface specifies how the {@link QueueSpecification} is generated
  * for each {@link com.continuuity.api.flow.flowlet.Flowlet} and within
@@ -48,5 +50,5 @@ public interface QueueSpecificationGenerator {
    * @param specification of a Flow
    * @return A {@link Table} consisting of From, To Flowlet and QueueSpecification.
    */
-  Table<String, String, QueueSpecification> create(FlowSpecification specification);
+  Table<String, String, Set<QueueSpecification>> create(FlowSpecification specification);
 }

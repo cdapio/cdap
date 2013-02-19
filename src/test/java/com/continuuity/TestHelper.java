@@ -16,6 +16,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.program.MDSBasedStore;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
@@ -52,7 +53,7 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, String> getLocalManager(CConfiguration configuration) {
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
     LocationFactory lf = new LocalLocationFactory();
     PipelineFactory pf = new SynchronousPipelineFactory();
 

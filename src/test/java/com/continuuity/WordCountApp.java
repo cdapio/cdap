@@ -163,7 +163,12 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      //this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+    }
+
+    @Process("mylist")
+    public void processMyList(List<String> list) {
+
     }
   }
 

@@ -27,6 +27,10 @@ public final class Id  {
     public static Account DEFAULT() {
       return new Account(DEFAULT_ACCOUNT_ID);
     }
+
+    public static Account from(String account) {
+      return new Account(account);
+    }
   }
 
   /**

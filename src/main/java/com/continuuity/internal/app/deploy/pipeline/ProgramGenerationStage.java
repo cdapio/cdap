@@ -113,7 +113,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         PROGRAMS.add(new Program(loc));
       }
 
-      // Iterate through MapRecduceSpecification and generate program
+      // Iterate through MapReduceSpecification and generate program
     } finally {
       if(appSpecDir != null && appSpecDir.exists()) {
         appSpecDir.delete();
