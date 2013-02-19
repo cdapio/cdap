@@ -7,6 +7,7 @@ package com.continuuity.internal.app;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -17,6 +18,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
+import java.util.Set;
 
 /**
  *
@@ -32,6 +34,7 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("failurePolicy", new JsonPrimitive(src.getFailurePolicy().name()));
+    jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
 
     return jsonObj;
   }
@@ -44,7 +47,8 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     FailurePolicy policy = FailurePolicy.valueOf(jsonObj.get("failurePolicy").getAsString());
+    Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
 
-    return new DefaultFlowletSpecification(className, name, description, policy);
+    return new DefaultFlowletSpecification(className, name, description, policy, dataSets);
   }
 }
