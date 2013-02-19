@@ -361,9 +361,8 @@ public class TestUtil {
     // one deserializer to reuse
     EventSerializer deserializer = new EventSerializer();
     // prepare the queue consumer
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -405,9 +404,8 @@ public class TestUtil {
     // one deserializer to reuse
     TupleSerializer deserializer = new TupleSerializer(false);
     // prepare the queue consumer
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = tuplesExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -419,8 +417,7 @@ public class TestUtil {
       TestUtil.verifyTuple(tuple, collectorName, destination, null);
       // message number should be in the header "messageNumber"
       Map<String, String> headers = tuple.get("headers");
-      LOG.info("Popped one event, message number: " +
-          headers.get("messageNumber"));
+      LOG.info("Popped one event, message number: " + headers.get("messageNumber"));
       // ack the event so that it disappers from the queue
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
