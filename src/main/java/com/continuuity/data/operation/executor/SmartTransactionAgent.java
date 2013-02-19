@@ -169,7 +169,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     if (!this.deferred.isEmpty()) {
       try {
         // this will start, use and return a new transaction if xaction is null
-        this.xaction = this.opex.execute(this.context, null, this.deferred);
+        this.xaction = this.opex.execute(this.context, this.xaction, this.deferred);
         this.deferred.clear();
       } catch (OperationException e) {
         // opex aborts the transaction if the execute fails
