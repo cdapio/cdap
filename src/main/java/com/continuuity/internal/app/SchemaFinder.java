@@ -10,10 +10,10 @@ import javax.annotation.Nullable;
 import java.util.Set;
 
 /**
- *
+ * This class consolidates the functionalities related to find schemas
+ * that are compatible for a connection.
  */
 public final class SchemaFinder {
-
   /**
    * Given two schema's checks if there exists compatibility or equality.
    *
