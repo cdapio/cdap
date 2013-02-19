@@ -72,7 +72,7 @@ public class SampleQueryTest extends AppFabricTestBase {
 
     // get a runtime instance of the data set and write a row
     KeyValueTable kv = getDataSet("simple");
-    kv.exec(new KeyValueTable.WriteKey(HelloWorldQueryProvider.row, Bytes.toBytes("xyz")));
+    kv.write(HelloWorldQueryProvider.row, Bytes.toBytes("xyz"));
 
     // start the query provider
     TestQueryHandle queryHandle = startQuery(HelloWorldQueryProvider.class);
