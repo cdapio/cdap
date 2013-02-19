@@ -28,31 +28,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Contains verification status of all the entities present in the far file.
+ * Contains verification status of all the entities present in the deployed file.
  */
-public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerificationStatus, FlowVerificationStatus._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlowVerificationStatus");
+public class VerificationStatus implements org.apache.thrift.TBase<VerificationStatus, VerificationStatus._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("VerificationStatus");
 
   private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField PROGRAM_FIELD_DESC = new org.apache.thrift.protocol.TField("program", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)3);
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new FlowVerificationStatusStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new FlowVerificationStatusTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new VerificationStatusStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new VerificationStatusTupleSchemeFactory());
   }
 
   public String applicationId; // required
-  public String flow; // required
+  public String program; // required
   public int status; // required
   public String message; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     APPLICATION_ID((short)1, "applicationId"),
-    FLOW((short)2, "flow"),
+    PROGRAM((short)2, "program"),
     STATUS((short)3, "status"),
     MESSAGE((short)4, "message");
 
@@ -71,8 +71,8 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
       switch(fieldId) {
         case 1: // APPLICATION_ID
           return APPLICATION_ID;
-        case 2: // FLOW
-          return FLOW;
+        case 2: // PROGRAM
+          return PROGRAM;
         case 3: // STATUS
           return STATUS;
         case 4: // MESSAGE
@@ -124,28 +124,28 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.PROGRAM, new org.apache.thrift.meta_data.FieldMetaData("program", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlowVerificationStatus.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(VerificationStatus.class, metaDataMap);
   }
 
-  public FlowVerificationStatus() {
+  public VerificationStatus() {
   }
 
-  public FlowVerificationStatus(
+  public VerificationStatus(
     String applicationId,
-    String flow,
+    String program,
     int status,
     String message)
   {
     this();
     this.applicationId = applicationId;
-    this.flow = flow;
+    this.program = program;
     this.status = status;
     setStatusIsSet(true);
     this.message = message;
@@ -154,14 +154,14 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FlowVerificationStatus(FlowVerificationStatus other) {
+  public VerificationStatus(VerificationStatus other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetApplicationId()) {
       this.applicationId = other.applicationId;
     }
-    if (other.isSetFlow()) {
-      this.flow = other.flow;
+    if (other.isSetProgram()) {
+      this.program = other.program;
     }
     this.status = other.status;
     if (other.isSetMessage()) {
@@ -169,14 +169,14 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     }
   }
 
-  public FlowVerificationStatus deepCopy() {
-    return new FlowVerificationStatus(this);
+  public VerificationStatus deepCopy() {
+    return new VerificationStatus(this);
   }
 
   @Override
   public void clear() {
     this.applicationId = null;
-    this.flow = null;
+    this.program = null;
     setStatusIsSet(false);
     this.status = 0;
     this.message = null;
@@ -186,7 +186,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     return this.applicationId;
   }
 
-  public FlowVerificationStatus setApplicationId(String applicationId) {
+  public VerificationStatus setApplicationId(String applicationId) {
     this.applicationId = applicationId;
     return this;
   }
@@ -206,27 +206,27 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     }
   }
 
-  public String getFlow() {
-    return this.flow;
+  public String getProgram() {
+    return this.program;
   }
 
-  public FlowVerificationStatus setFlow(String flow) {
-    this.flow = flow;
+  public VerificationStatus setProgram(String program) {
+    this.program = program;
     return this;
   }
 
-  public void unsetFlow() {
-    this.flow = null;
+  public void unsetProgram() {
+    this.program = null;
   }
 
-  /** Returns true if field flow is set (has been assigned a value) and false otherwise */
-  public boolean isSetFlow() {
-    return this.flow != null;
+  /** Returns true if field program is set (has been assigned a value) and false otherwise */
+  public boolean isSetProgram() {
+    return this.program != null;
   }
 
-  public void setFlowIsSet(boolean value) {
+  public void setProgramIsSet(boolean value) {
     if (!value) {
-      this.flow = null;
+      this.program = null;
     }
   }
 
@@ -234,7 +234,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     return this.status;
   }
 
-  public FlowVerificationStatus setStatus(int status) {
+  public VerificationStatus setStatus(int status) {
     this.status = status;
     setStatusIsSet(true);
     return this;
@@ -257,7 +257,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     return this.message;
   }
 
-  public FlowVerificationStatus setMessage(String message) {
+  public VerificationStatus setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -287,11 +287,11 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
       }
       break;
 
-    case FLOW:
+    case PROGRAM:
       if (value == null) {
-        unsetFlow();
+        unsetProgram();
       } else {
-        setFlow((String)value);
+        setProgram((String)value);
       }
       break;
 
@@ -319,8 +319,8 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     case APPLICATION_ID:
       return getApplicationId();
 
-    case FLOW:
-      return getFlow();
+    case PROGRAM:
+      return getProgram();
 
     case STATUS:
       return Integer.valueOf(getStatus());
@@ -341,8 +341,8 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     switch (field) {
     case APPLICATION_ID:
       return isSetApplicationId();
-    case FLOW:
-      return isSetFlow();
+    case PROGRAM:
+      return isSetProgram();
     case STATUS:
       return isSetStatus();
     case MESSAGE:
@@ -355,12 +355,12 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FlowVerificationStatus)
-      return this.equals((FlowVerificationStatus)that);
+    if (that instanceof VerificationStatus)
+      return this.equals((VerificationStatus)that);
     return false;
   }
 
-  public boolean equals(FlowVerificationStatus that) {
+  public boolean equals(VerificationStatus that) {
     if (that == null)
       return false;
 
@@ -373,12 +373,12 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
         return false;
     }
 
-    boolean this_present_flow = true && this.isSetFlow();
-    boolean that_present_flow = true && that.isSetFlow();
-    if (this_present_flow || that_present_flow) {
-      if (!(this_present_flow && that_present_flow))
+    boolean this_present_program = true && this.isSetProgram();
+    boolean that_present_program = true && that.isSetProgram();
+    if (this_present_program || that_present_program) {
+      if (!(this_present_program && that_present_program))
         return false;
-      if (!this.flow.equals(that.flow))
+      if (!this.program.equals(that.program))
         return false;
     }
 
@@ -408,13 +408,13 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     return 0;
   }
 
-  public int compareTo(FlowVerificationStatus other) {
+  public int compareTo(VerificationStatus other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FlowVerificationStatus typedOther = (FlowVerificationStatus)other;
+    VerificationStatus typedOther = (VerificationStatus)other;
 
     lastComparison = Boolean.valueOf(isSetApplicationId()).compareTo(typedOther.isSetApplicationId());
     if (lastComparison != 0) {
@@ -426,12 +426,12 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetFlow()).compareTo(typedOther.isSetFlow());
+    lastComparison = Boolean.valueOf(isSetProgram()).compareTo(typedOther.isSetProgram());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlow()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flow, typedOther.flow);
+    if (isSetProgram()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.program, typedOther.program);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -473,7 +473,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FlowVerificationStatus(");
+    StringBuilder sb = new StringBuilder("VerificationStatus(");
     boolean first = true;
 
     sb.append("applicationId:");
@@ -484,11 +484,11 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("flow:");
-    if (this.flow == null) {
+    sb.append("program:");
+    if (this.program == null) {
       sb.append("null");
     } else {
-      sb.append(this.flow);
+      sb.append(this.program);
     }
     first = false;
     if (!first) sb.append(", ");
@@ -529,15 +529,15 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     }
   }
 
-  private static class FlowVerificationStatusStandardSchemeFactory implements SchemeFactory {
-    public FlowVerificationStatusStandardScheme getScheme() {
-      return new FlowVerificationStatusStandardScheme();
+  private static class VerificationStatusStandardSchemeFactory implements SchemeFactory {
+    public VerificationStatusStandardScheme getScheme() {
+      return new VerificationStatusStandardScheme();
     }
   }
 
-  private static class FlowVerificationStatusStandardScheme extends StandardScheme<FlowVerificationStatus> {
+  private static class VerificationStatusStandardScheme extends StandardScheme<VerificationStatus> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, FlowVerificationStatus struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, VerificationStatus struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -555,10 +555,10 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // FLOW
+          case 2: // PROGRAM
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.flow = iprot.readString();
-              struct.setFlowIsSet(true);
+              struct.program = iprot.readString();
+              struct.setProgramIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -590,7 +590,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, FlowVerificationStatus struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, VerificationStatus struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -599,9 +599,9 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
         oprot.writeString(struct.applicationId);
         oprot.writeFieldEnd();
       }
-      if (struct.flow != null) {
-        oprot.writeFieldBegin(FLOW_FIELD_DESC);
-        oprot.writeString(struct.flow);
+      if (struct.program != null) {
+        oprot.writeFieldBegin(PROGRAM_FIELD_DESC);
+        oprot.writeString(struct.program);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldBegin(STATUS_FIELD_DESC);
@@ -618,22 +618,22 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
 
   }
 
-  private static class FlowVerificationStatusTupleSchemeFactory implements SchemeFactory {
-    public FlowVerificationStatusTupleScheme getScheme() {
-      return new FlowVerificationStatusTupleScheme();
+  private static class VerificationStatusTupleSchemeFactory implements SchemeFactory {
+    public VerificationStatusTupleScheme getScheme() {
+      return new VerificationStatusTupleScheme();
     }
   }
 
-  private static class FlowVerificationStatusTupleScheme extends TupleScheme<FlowVerificationStatus> {
+  private static class VerificationStatusTupleScheme extends TupleScheme<VerificationStatus> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, FlowVerificationStatus struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, VerificationStatus struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetApplicationId()) {
         optionals.set(0);
       }
-      if (struct.isSetFlow()) {
+      if (struct.isSetProgram()) {
         optionals.set(1);
       }
       if (struct.isSetStatus()) {
@@ -646,8 +646,8 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
       if (struct.isSetApplicationId()) {
         oprot.writeString(struct.applicationId);
       }
-      if (struct.isSetFlow()) {
-        oprot.writeString(struct.flow);
+      if (struct.isSetProgram()) {
+        oprot.writeString(struct.program);
       }
       if (struct.isSetStatus()) {
         oprot.writeI32(struct.status);
@@ -658,7 +658,7 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, FlowVerificationStatus struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, VerificationStatus struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
@@ -666,8 +666,8 @@ public class FlowVerificationStatus implements org.apache.thrift.TBase<FlowVerif
         struct.setApplicationIdIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.flow = iprot.readString();
-        struct.setFlowIsSet(true);
+        struct.program = iprot.readString();
+        struct.setProgramIsSet(true);
       }
       if (incoming.get(2)) {
         struct.status = iprot.readI32();

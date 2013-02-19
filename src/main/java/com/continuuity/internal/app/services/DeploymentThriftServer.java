@@ -1,7 +1,11 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.services.RuntimeServer;
-import com.continuuity.app.services.RuntimeService;
+import com.continuuity.app.services.DeploymentServer;
+import com.continuuity.app.services.DeploymentService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
@@ -9,7 +13,9 @@ import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.common.zookeeper.ZookeeperClientProvider;
 import com.google.inject.Inject;
+import com.netflix.curator.framework.CuratorFramework;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -21,9 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of RuntimeServer as Thrift server
+ * Implementation of DeploymentServer as Thrift server
  */
-public final class RuntimeThriftServer implements RuntimeServer {
+public class DeploymentThriftServer implements DeploymentServer {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeThriftServer.class);
 
   /**
@@ -32,9 +38,9 @@ public final class RuntimeThriftServer implements RuntimeServer {
   private ExecutorService executorService;
 
   /**
-   * Runtime Service handler.
+   * Deployment Service handler.
    */
-  private RuntimeService.Iface runtimeService;
+  private DeploymentService.Iface deploymentService;
 
   /**
    * Half-Sync, Half-Async Thrift server.
@@ -42,8 +48,8 @@ public final class RuntimeThriftServer implements RuntimeServer {
   private THsHaServer server;
 
   @Inject
-  public RuntimeThriftServer(RuntimeService.Iface RuntimeService) {
-    this.runtimeService = RuntimeService;
+  public DeploymentThriftServer(DeploymentService.Iface deploymentService) {
+    this.deploymentService = deploymentService;
   }
 
   /**
@@ -59,17 +65,19 @@ public final class RuntimeThriftServer implements RuntimeServer {
     try {
       executorService = Executors.newCachedThreadPool();
 
-      int port = conf.getInt(Constants.CFG_FLOW_MANAGER_SERVER_PORT,
-        Constants.DEFAULT_FLOW_MANAGER_SERVER_PORT);
+      int port = conf.getInt(Constants.CFG_RESOURCE_MANAGER_SERVER_PORT,
+                             Constants.DEFAULT_RESOURCE_MANAGER_SERVER_PORT
+      );
 
-      int threads = conf.getInt(Constants.CFG_FLOW_MANAGER_SERVER_THREADS,
-        Constants.DEFAULT_FLOW_MANAGER_SERVER_THREADS);
+      int threads = conf.getInt(Constants.CFG_RESOURCE_MANAGER_SERVER_THREADS,
+                                Constants.DEFAULT_RESOURCE_MANAGER_SERVER_THREADS
+      );
 
       THsHaServer.Args serverArgs =
         new THsHaServer
-          .Args(new TNonblockingServerSocket(port))
+              .Args(new TNonblockingServerSocket(port))
           .executorService(executorService)
-          .processor(new RuntimeService.Processor(runtimeService))
+          .processor(new DeploymentService.Processor(deploymentService))
           .workerThreads(threads);
 
       OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
@@ -80,7 +88,7 @@ public final class RuntimeThriftServer implements RuntimeServer {
       serverArgs.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
 
       server = new THsHaServer(serverArgs);
-      LOG.info("Starting runtime service on port {}", port);
+      LOG.info("Starting deployment service on port {}", port);
       new Thread ( new Runnable() {
         @Override
         public void run() {
@@ -91,14 +99,14 @@ public final class RuntimeThriftServer implements RuntimeServer {
       try {
         // Provide the registration info of service.
         RegisteredServerInfo info
-            = new RegisteredServerInfo("localhost", port);
+          = new RegisteredServerInfo("localhost", port);
         info.addPayload("threads", Integer.toString(threads));
         ServiceDiscoveryClient client = new ServiceDiscoveryClient(zkEnsemble);
         client.register(Constants.SERVICE_FLOW_SERVER,
-            info.getAddress(), info.getPort(), info.getPayload());
+                        info.getAddress(), info.getPort(), info.getPayload());
       } catch (ServiceDiscoveryClientException e) {
-        String message = "Error registering runtime service with service " +
-            "discovery: " + e.getMessage();
+        String message = "Error registering deployment service with service " +
+                           "discovery: " + e.getMessage();
         LOG.error(message);
         throw new ServerException(message, e);
       }

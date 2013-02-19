@@ -10,6 +10,7 @@ import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.program.MDSBasedStore;
 import com.continuuity.internal.app.program.StoreModule4Test;
@@ -32,7 +33,8 @@ public class RuntimeServiceImplTest {
   @BeforeClass
   public static void beforeClass() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new StoreModule4Test(), new ServicesModule4Test());
+                                                   new StoreModule4Test(),
+                                                   new ServicesModule4Test(new CConfiguration()));
 
     store = injector.getInstance(MDSBasedStore.class);
     runtimeService = injector.getInstance(RuntimeServiceImpl.class);

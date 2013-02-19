@@ -65,15 +65,15 @@ public class DeploymentService {
      * @param token
      * @param resource
      */
-    public FARStatus status(AuthToken token, ResourceIdentifier resource) throws DeploymentServiceException, org.apache.thrift.TException;
+    public DeploymentStatus status(AuthToken token, ResourceIdentifier resource) throws DeploymentServiceException, org.apache.thrift.TException;
 
     /**
-     * Promote a flow an it's resource to cloud.
+     * Promote an application an it's resource to cloud.
      * 
      * @param token
      * @param identifier
      */
-    public boolean promote(AuthToken token, FlowIdentifier identifier) throws DeploymentServiceException, org.apache.thrift.TException;
+    public boolean promote(AuthToken token, ResourceIdentifier identifier) throws DeploymentServiceException, org.apache.thrift.TException;
 
     /**
      * Disables a Flow
@@ -111,7 +111,7 @@ public class DeploymentService {
 
     public void status(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.status_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void promote(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
+    public void promote(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
 
     public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -217,7 +217,7 @@ public class DeploymentService {
       return;
     }
 
-    public FARStatus status(AuthToken token, ResourceIdentifier resource) throws DeploymentServiceException, org.apache.thrift.TException
+    public DeploymentStatus status(AuthToken token, ResourceIdentifier resource) throws DeploymentServiceException, org.apache.thrift.TException
     {
       send_status(token, resource);
       return recv_status();
@@ -231,7 +231,7 @@ public class DeploymentService {
       sendBase("status", args);
     }
 
-    public FARStatus recv_status() throws DeploymentServiceException, org.apache.thrift.TException
+    public DeploymentStatus recv_status() throws DeploymentServiceException, org.apache.thrift.TException
     {
       status_result result = new status_result();
       receiveBase(result, "status");
@@ -244,13 +244,13 @@ public class DeploymentService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "status failed: unknown result");
     }
 
-    public boolean promote(AuthToken token, FlowIdentifier identifier) throws DeploymentServiceException, org.apache.thrift.TException
+    public boolean promote(AuthToken token, ResourceIdentifier identifier) throws DeploymentServiceException, org.apache.thrift.TException
     {
       send_promote(token, identifier);
       return recv_promote();
     }
 
-    public void send_promote(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_promote(AuthToken token, ResourceIdentifier identifier) throws org.apache.thrift.TException
     {
       promote_args args = new promote_args();
       args.setToken(token);
@@ -494,7 +494,7 @@ public class DeploymentService {
         prot.writeMessageEnd();
       }
 
-      public FARStatus getResult() throws DeploymentServiceException, org.apache.thrift.TException {
+      public DeploymentStatus getResult() throws DeploymentServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -504,7 +504,7 @@ public class DeploymentService {
       }
     }
 
-    public void promote(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
+    public void promote(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       promote_call method_call = new promote_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -513,8 +513,8 @@ public class DeploymentService {
 
     public static class promote_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private FlowIdentifier identifier;
-      public promote_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ResourceIdentifier identifier;
+      public promote_call(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -3949,7 +3949,7 @@ public class DeploymentService {
       schemes.put(TupleScheme.class, new status_resultTupleSchemeFactory());
     }
 
-    public FARStatus success; // required
+    public DeploymentStatus success; // required
     public DeploymentServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -4018,7 +4018,7 @@ public class DeploymentService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FARStatus.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DeploymentStatus.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -4029,7 +4029,7 @@ public class DeploymentService {
     }
 
     public status_result(
-      FARStatus success,
+      DeploymentStatus success,
       DeploymentServiceException e)
     {
       this();
@@ -4042,7 +4042,7 @@ public class DeploymentService {
      */
     public status_result(status_result other) {
       if (other.isSetSuccess()) {
-        this.success = new FARStatus(other.success);
+        this.success = new DeploymentStatus(other.success);
       }
       if (other.isSetE()) {
         this.e = new DeploymentServiceException(other.e);
@@ -4059,11 +4059,11 @@ public class DeploymentService {
       this.e = null;
     }
 
-    public FARStatus getSuccess() {
+    public DeploymentStatus getSuccess() {
       return this.success;
     }
 
-    public status_result setSuccess(FARStatus success) {
+    public status_result setSuccess(DeploymentStatus success) {
       this.success = success;
       return this;
     }
@@ -4113,7 +4113,7 @@ public class DeploymentService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((FARStatus)value);
+          setSuccess((DeploymentStatus)value);
         }
         break;
 
@@ -4301,7 +4301,7 @@ public class DeploymentService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new FARStatus();
+                struct.success = new DeploymentStatus();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -4380,7 +4380,7 @@ public class DeploymentService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new FARStatus();
+          struct.success = new DeploymentStatus();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
@@ -4407,7 +4407,7 @@ public class DeploymentService {
     }
 
     public AuthToken token; // required
-    public FlowIdentifier identifier; // required
+    public ResourceIdentifier identifier; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4477,7 +4477,7 @@ public class DeploymentService {
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(promote_args.class, metaDataMap);
     }
@@ -4487,7 +4487,7 @@ public class DeploymentService {
 
     public promote_args(
       AuthToken token,
-      FlowIdentifier identifier)
+      ResourceIdentifier identifier)
     {
       this();
       this.token = token;
@@ -4502,7 +4502,7 @@ public class DeploymentService {
         this.token = new AuthToken(other.token);
       }
       if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
+        this.identifier = new ResourceIdentifier(other.identifier);
       }
     }
 
@@ -4540,11 +4540,11 @@ public class DeploymentService {
       }
     }
 
-    public FlowIdentifier getIdentifier() {
+    public ResourceIdentifier getIdentifier() {
       return this.identifier;
     }
 
-    public promote_args setIdentifier(FlowIdentifier identifier) {
+    public promote_args setIdentifier(ResourceIdentifier identifier) {
       this.identifier = identifier;
       return this;
     }
@@ -4578,7 +4578,7 @@ public class DeploymentService {
         if (value == null) {
           unsetIdentifier();
         } else {
-          setIdentifier((FlowIdentifier)value);
+          setIdentifier((ResourceIdentifier)value);
         }
         break;
 
@@ -4767,7 +4767,7 @@ public class DeploymentService {
               break;
             case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.identifier = new FlowIdentifier();
+                struct.identifier = new ResourceIdentifier();
                 struct.identifier.read(iprot);
                 struct.setIdentifierIsSet(true);
               } else { 
@@ -4842,7 +4842,7 @@ public class DeploymentService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.identifier = new FlowIdentifier();
+          struct.identifier = new ResourceIdentifier();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }

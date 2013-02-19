@@ -38,7 +38,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
   private static final org.apache.thrift.protocol.TField FILENAME_FIELD_DESC = new org.apache.thrift.protocol.TField("filename", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("size", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField MODTIME_FIELD_DESC = new org.apache.thrift.protocol.TField("modtime", org.apache.thrift.protocol.TType.I64, (short)5);
-  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)6);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -51,11 +50,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
   public String filename; // required
   public int size; // required
   public long modtime; // required
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType type; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -63,12 +57,7 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     APPLICATION_ID((short)2, "applicationId"),
     FILENAME((short)3, "filename"),
     SIZE((short)4, "size"),
-    MODTIME((short)5, "modtime"),
-    /**
-     * 
-     * @see EntityType
-     */
-    TYPE((short)6, "type");
+    MODTIME((short)5, "modtime");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -93,8 +82,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
           return SIZE;
         case 5: // MODTIME
           return MODTIME;
-        case 6: // TYPE
-          return TYPE;
         default:
           return null;
       }
@@ -138,7 +125,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
   private static final int __SIZE_ISSET_ID = 0;
   private static final int __MODTIME_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
-  private _Fields optionals[] = {_Fields.TYPE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -152,15 +138,11 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.MODTIME, new org.apache.thrift.meta_data.FieldMetaData("modtime", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, EntityType.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ResourceInfo.class, metaDataMap);
   }
 
   public ResourceInfo() {
-    this.type = com.continuuity.app.services.EntityType.FLOW;
-
   }
 
   public ResourceInfo(
@@ -197,9 +179,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     }
     this.size = other.size;
     this.modtime = other.modtime;
-    if (other.isSetType()) {
-      this.type = other.type;
-    }
   }
 
   public ResourceInfo deepCopy() {
@@ -215,8 +194,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     this.size = 0;
     setModtimeIsSet(false);
     this.modtime = 0;
-    this.type = com.continuuity.app.services.EntityType.FLOW;
-
   }
 
   public String getAccountId() {
@@ -337,38 +314,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     __isset_bit_vector.set(__MODTIME_ISSET_ID, value);
   }
 
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType getType() {
-    return this.type;
-  }
-
-  /**
-   * 
-   * @see EntityType
-   */
-  public ResourceInfo setType(EntityType type) {
-    this.type = type;
-    return this;
-  }
-
-  public void unsetType() {
-    this.type = null;
-  }
-
-  /** Returns true if field type is set (has been assigned a value) and false otherwise */
-  public boolean isSetType() {
-    return this.type != null;
-  }
-
-  public void setTypeIsSet(boolean value) {
-    if (!value) {
-      this.type = null;
-    }
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ACCOUNT_ID:
@@ -411,14 +356,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       }
       break;
 
-    case TYPE:
-      if (value == null) {
-        unsetType();
-      } else {
-        setType((EntityType)value);
-      }
-      break;
-
     }
   }
 
@@ -438,9 +375,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
 
     case MODTIME:
       return Long.valueOf(getModtime());
-
-    case TYPE:
-      return getType();
 
     }
     throw new IllegalStateException();
@@ -463,8 +397,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       return isSetSize();
     case MODTIME:
       return isSetModtime();
-    case TYPE:
-      return isSetType();
     }
     throw new IllegalStateException();
   }
@@ -524,15 +456,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       if (!(this_present_modtime && that_present_modtime))
         return false;
       if (this.modtime != that.modtime)
-        return false;
-    }
-
-    boolean this_present_type = true && this.isSetType();
-    boolean that_present_type = true && that.isSetType();
-    if (this_present_type || that_present_type) {
-      if (!(this_present_type && that_present_type))
-        return false;
-      if (!this.type.equals(that.type))
         return false;
     }
 
@@ -602,16 +525,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetType()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     return 0;
   }
 
@@ -663,16 +576,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     sb.append("modtime:");
     sb.append(this.modtime);
     first = false;
-    if (isSetType()) {
-      if (!first) sb.append(", ");
-      sb.append("type:");
-      if (this.type == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.type);
-      }
-      first = false;
-    }
     sb.append(")");
     return sb.toString();
   }
@@ -768,14 +671,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 6: // TYPE
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.type = EntityType.findByValue(iprot.readI32());
-              struct.setTypeIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -818,13 +713,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       oprot.writeFieldBegin(MODTIME_FIELD_DESC);
       oprot.writeI64(struct.modtime);
       oprot.writeFieldEnd();
-      if (struct.type != null) {
-        if (struct.isSetType()) {
-          oprot.writeFieldBegin(TYPE_FIELD_DESC);
-          oprot.writeI32(struct.type.getValue());
-          oprot.writeFieldEnd();
-        }
-      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -847,14 +735,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       oprot.writeString(struct.filename);
       oprot.writeI32(struct.size);
       oprot.writeI64(struct.modtime);
-      BitSet optionals = new BitSet();
-      if (struct.isSetType()) {
-        optionals.set(0);
-      }
-      oprot.writeBitSet(optionals, 1);
-      if (struct.isSetType()) {
-        oprot.writeI32(struct.type.getValue());
-      }
     }
 
     @Override
@@ -870,11 +750,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
       struct.setSizeIsSet(true);
       struct.modtime = iprot.readI64();
       struct.setModtimeIsSet(true);
-      BitSet incoming = iprot.readBitSet(1);
-      if (incoming.get(0)) {
-        struct.type = EntityType.findByValue(iprot.readI32());
-        struct.setTypeIsSet(true);
-      }
     }
   }
 
