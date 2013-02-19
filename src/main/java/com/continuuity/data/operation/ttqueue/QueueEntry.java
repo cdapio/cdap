@@ -1,7 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
 import java.util.Map;
-import java.util.Set;
 
 public interface QueueEntry {
 
@@ -12,8 +11,6 @@ public interface QueueEntry {
   public byte[] getData();
 
   public void setData(byte[] data);
-
-  public Set<String> getAllPartioningKeys();
 
   public Map<String, Integer> getPartioningMap();
 }

@@ -71,7 +71,7 @@ struct TQueueProducer {
 }
 
 struct TQueueEntry {
-  1: map<string,i32> header, 
+  1: optional map<string,i32> header,
   2: binary data,
 }
 
@@ -132,7 +132,7 @@ enum TDequeueStatus {
 struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
-  3: TQueueEntry entry,
+  3: optional TQueueEntry entry,
 }
 
 struct TGetGroupId {

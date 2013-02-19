@@ -6,19 +6,26 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.nio.ByteBuffer;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueEntry._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueEntry");
@@ -32,7 +39,7 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
     schemes.put(TupleScheme.class, new TQueueEntryTupleSchemeFactory());
   }
 
-  public Map<String,Integer> header; // required
+  public Map<String,Integer> header; // optional
   public ByteBuffer data; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -97,10 +104,11 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.HEADER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.HEADER, new org.apache.thrift.meta_data.FieldMetaData("header", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.HEADER, new org.apache.thrift.meta_data.FieldMetaData("header", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32))));
@@ -114,11 +122,9 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
   }
 
   public TQueueEntry(
-    Map<String,Integer> header,
     ByteBuffer data)
   {
     this();
-    this.header = header;
     this.data = data;
   }
 
@@ -361,13 +367,15 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
     StringBuilder sb = new StringBuilder("TQueueEntry(");
     boolean first = true;
 
-    sb.append("header:");
-    if (this.header == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.header);
+    if (isSetHeader()) {
+      sb.append("header:");
+      if (this.header == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.header);
+      }
+      first = false;
     }
-    first = false;
     if (!first) sb.append(", ");
     sb.append("data:");
     if (this.data == null) {
@@ -462,17 +470,19 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.header != null) {
-        oprot.writeFieldBegin(HEADER_FIELD_DESC);
-        {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I32, struct.header.size()));
-          for (Map.Entry<String, Integer> _iter52 : struct.header.entrySet())
+        if (struct.isSetHeader()) {
+          oprot.writeFieldBegin(HEADER_FIELD_DESC);
           {
-            oprot.writeString(_iter52.getKey());
-            oprot.writeI32(_iter52.getValue());
+            oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I32, struct.header.size()));
+            for (Map.Entry<String, Integer> _iter52 : struct.header.entrySet())
+            {
+              oprot.writeString(_iter52.getKey());
+              oprot.writeI32(_iter52.getValue());
+            }
+            oprot.writeMapEnd();
           }
-          oprot.writeMapEnd();
+          oprot.writeFieldEnd();
         }
-        oprot.writeFieldEnd();
       }
       if (struct.data != null) {
         oprot.writeFieldBegin(DATA_FIELD_DESC);

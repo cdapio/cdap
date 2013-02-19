@@ -12,7 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This serializes and deserializes queue entries.
@@ -33,19 +32,19 @@ public final class QueueEntrySerializer {
    * @throws IOException if serialization fails
    */
   public static byte[] serialize(QueueEntry entry) throws IOException {
-    Set<String> allKeys = entry.getAllPartioningKeys();
+    Map<String, Integer> map = entry.getPartioningMap();
     byte[] data = entry.getData();
 
     try {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
-      if (allKeys==null || allKeys.size()==0)
+      if (map==null || map.size()==0)
         encoder.writeInt(0);
       else {
-        encoder.writeInt(allKeys.size());
-        for(String key: allKeys) {
-          encoder.writeString(key);
-          encoder.writeInt(entry.getHash(key));
+        encoder.writeInt(map.size());
+        for(Map.Entry<String, Integer> e: map.entrySet()) {
+          encoder.writeString(e.getKey());
+          encoder.writeInt(e.getValue());
         }
       }
       if (data==null || data.length==0)

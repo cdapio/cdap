@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import java.util.Set;
 
 public class QueueEntryImpl implements QueueEntry {
   private final Map<String, Integer> header;
@@ -27,11 +26,6 @@ public class QueueEntryImpl implements QueueEntry {
   @Override
   public void setData(byte[] data) {
     this.data=data;
-  }
-
-  @Override
-  public Set<String> getAllPartioningKeys() {
-    return header.keySet();
   }
 
   @Override

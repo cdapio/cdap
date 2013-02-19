@@ -46,7 +46,7 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
    */
   public TDequeueStatus status; // required
   public TQueueEntryPointer pointer; // required
-  public TQueueEntry entry; // required
+  public TQueueEntry entry; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -117,6 +117,7 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.ENTRY};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -124,7 +125,7 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TDequeueStatus.class)));
     tmpMap.put(_Fields.POINTER, new org.apache.thrift.meta_data.FieldMetaData("pointer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntryPointer.class)));
-    tmpMap.put(_Fields.ENTRY, new org.apache.thrift.meta_data.FieldMetaData("entry", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.ENTRY, new org.apache.thrift.meta_data.FieldMetaData("entry", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntry.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TDequeueResult.class, metaDataMap);
@@ -135,13 +136,11 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
 
   public TDequeueResult(
     TDequeueStatus status,
-    TQueueEntryPointer pointer,
-    TQueueEntry entry)
+    TQueueEntryPointer pointer)
   {
     this();
     this.status = status;
     this.pointer = pointer;
-    this.entry = entry;
   }
 
   /**
@@ -432,14 +431,16 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       sb.append(this.pointer);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("entry:");
-    if (this.entry == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.entry);
+    if (isSetEntry()) {
+      if (!first) sb.append(", ");
+      sb.append("entry:");
+      if (this.entry == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entry);
+      }
+      first = false;
     }
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -534,9 +535,11 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         oprot.writeFieldEnd();
       }
       if (struct.entry != null) {
-        oprot.writeFieldBegin(ENTRY_FIELD_DESC);
-        struct.entry.write(oprot);
-        oprot.writeFieldEnd();
+        if (struct.isSetEntry()) {
+          oprot.writeFieldBegin(ENTRY_FIELD_DESC);
+          struct.entry.write(oprot);
+          oprot.writeFieldEnd();
+        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
