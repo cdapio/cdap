@@ -11,9 +11,9 @@ USE `continuuity` ;
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `first_name` VARCHAR(50) NOT NULL ,
-  `last_name` VARCHAR(50) NOT NULL ,
-  `company` VARCHAR(100) NOT NULL ,
+  `first_name` VARCHAR(50) NULL DEFAULT NULL ,
+  `last_name` VARCHAR(50) NULL DEFAULT NULL ,
+  `company` VARCHAR(100) NULL DEFAULT NULL,
   `email_id` VARCHAR(100) NOT NULL ,
   `salt`  VARCHAR(20) NULL DEFAULT NULL,
   `password` VARCHAR(100) NULL DEFAULT NULL ,
@@ -170,7 +170,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`nonce` (
   `nonce_id` INT(11) NOT NULL,
   `id` INT(11) NOT NULL ,
   `nonce_expires_at` DATETIME NOT NULL,
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ,
   UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
 
 ENGINE = InnoDB
