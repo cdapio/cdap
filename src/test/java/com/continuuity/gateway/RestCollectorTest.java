@@ -2,6 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
@@ -81,6 +82,7 @@ public class RestCollectorTest {
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(15, name, destination));
+    collector.setAuthenticator(new NoAuthenticator());
     collector.start();
     TestUtil.sendRestEvent(TestUtil.
         createHttpPost(port, prefix, path, destination, 15));
@@ -124,6 +126,7 @@ public class RestCollectorTest {
     collector.setName(name);
     collector.setConsumer(new TestUtil.NoopConsumer());
     collector.setMetadataService(new DummyMDS());
+    collector.setAuthenticator(new NoAuthenticator());
     collector.configure(configuration);
     collector.start();
 

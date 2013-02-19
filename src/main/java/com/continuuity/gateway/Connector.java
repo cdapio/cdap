@@ -1,8 +1,11 @@
 package com.continuuity.gateway;
 
+import org.jboss.netty.handler.codec.http.HttpRequest;
+
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 
 /**
@@ -49,6 +52,11 @@ public abstract class Connector {
    * This will be used for zookeeper client discovery by all connectors
    */
   private ServiceDiscovery serviceDiscovery;
+
+  /**
+   * Authenticates requests to this connector.
+   */
+  private GatewayAuthenticator authenticator;
 
   /**
    * Retrieve the metrics client of the connector
@@ -118,6 +126,22 @@ public abstract class Connector {
    */
   public ServiceDiscovery getServiceDiscovery() {
     return serviceDiscovery;
+  }
+
+  /**
+   * Sets the authenticator to be used for all requests to this connector.
+   * @param authenticator the authenticator to use for requests
+   */
+  public void setAuthenticator(GatewayAuthenticator authenticator) {
+    this.authenticator = authenticator;
+  }
+
+  /**
+   * Returns the authenticator to be used for all requests to this connector.
+   * @return authenticator to use for requests
+   */
+  public GatewayAuthenticator getAuthenticator() {
+    return this.authenticator;
   }
 
   /**

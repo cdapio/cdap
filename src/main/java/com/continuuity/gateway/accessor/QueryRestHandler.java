@@ -18,12 +18,15 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
@@ -97,6 +100,15 @@ public class QueryRestHandler extends NettyRestHandler {
         helper.finish(BadRequest);
         LOG.trace("Received a " + method + " request, which is not supported");
         respondNotAllowed(message.getChannel(), allowedMethods);
+        return;
+      }
+
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!accessor.getAuthenticator().authenticateRequest(request)) {
+        LOG.info("Received an unauthorized request");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
         return;
       }
 

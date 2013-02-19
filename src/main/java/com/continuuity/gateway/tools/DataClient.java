@@ -1,10 +1,14 @@
 package com.continuuity.gateway.tools;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
-import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.DataRestAccessor;
-import com.continuuity.gateway.util.Util;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -15,14 +19,12 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.UsageException;
+import com.continuuity.gateway.accessor.DataRestAccessor;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.util.Util;
 
 /**
  * This is a command line tool to interact with the key/vaue store of
@@ -37,6 +39,7 @@ import java.util.List;
  * by the --hex, --url, and --encoding arguments</li>
  * <li>The value can be saved to a file in binary form, or printed
  * to the screen in the same encoding as the key.</li>
+ * <li>If authentication is required, you can use the --apikey option</li>
  * </ul>
  */
 public class DataClient {
@@ -53,6 +56,7 @@ public class DataClient {
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the rest accessor
+  String apikey = null;          // the api key for authentication
   String key = null;             // the key to read/write/delete
   String value = null;           // the value to write
   String encoding = null;        // the encoding for --key and for display
@@ -107,6 +111,8 @@ public class DataClient {
         "To specify the hostname to send to");
     out.println("  --connector <name>      " +
         "To specify the name of the rest connector");
+    out.println("  --apikey <apikey>       " +
+        "To specify an API key for authentication");
     out.println("  --table <string>        To specify a table to operate on");
     out.println("  --key <string>          To specify the key");
     out.println("  --key-file <path>       To read the binary key from a file");
@@ -171,6 +177,9 @@ public class DataClient {
       } else if ("--connector".equals(arg)) {
         if (++pos >= args.length) usage(true);
         connector = args[pos];
+      } else if ("--apikey".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        apikey = args[pos];
       } else if ("--key".equals(arg)) {
         if (++pos >= args.length) usage(true);
         key = args[pos];
@@ -496,7 +505,11 @@ public class DataClient {
     // the rest depends on the command
     if ("read".equals(command)) {
       try {
-        response = client.execute(new HttpGet(uri));
+        HttpGet get = new HttpGet(uri);
+        if (apikey != null) {
+          get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
+        response = client.execute(get);
         client.getConnectionManager().shutdown();
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
@@ -512,6 +525,9 @@ public class DataClient {
     else if ("write".equals(command)) {
       try {
         HttpPut put = new HttpPut(uri);
+        if (apikey != null) {
+          put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
         put.setEntity(new ByteArrayEntity(binaryValue));
         response = client.execute(put);
         client.getConnectionManager().shutdown();
@@ -524,7 +540,11 @@ public class DataClient {
     }
     else if ("delete".equals(command)) {
       try {
-        response = client.execute(new HttpDelete(uri));
+        HttpDelete delete = new HttpDelete(uri);
+        if (apikey != null) {
+          delete.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
+        response = client.execute(delete);
         client.getConnectionManager().shutdown();
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
@@ -554,7 +574,11 @@ public class DataClient {
       }
       // now execute this as a get
       try {
-        response = client.execute(new HttpGet(uri));
+        HttpGet get = new HttpGet(uri);
+        if (apikey != null) {
+          get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
+        response = client.execute(get);
         client.getConnectionManager().shutdown();
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
@@ -595,7 +619,11 @@ public class DataClient {
       }
       // now execute this as a get
       try {
-        response = client.execute(new HttpPost(requestUrl));
+        HttpPost post = new HttpPost(requestUrl);
+        if (apikey != null) {
+          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
+        response = client.execute(post);
         client.getConnectionManager().shutdown();
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
