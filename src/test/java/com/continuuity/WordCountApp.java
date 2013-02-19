@@ -135,7 +135,7 @@ public class WordCountApp implements Application {
     @Process
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
-      tokenize(data.getText(), "title");
+      tokenize(data.getText(), "text");
     }
 
     private void tokenize(String str, String field) {

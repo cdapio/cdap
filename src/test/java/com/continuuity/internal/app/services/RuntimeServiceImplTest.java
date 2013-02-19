@@ -40,9 +40,7 @@ public class RuntimeServiceImplTest {
     runtimeService = injector.getInstance(RuntimeServiceImpl.class);
   }
 
-  // TODO: remove @Ignore when srcType is added to Queues
   @Test
-  @Ignore
   public void testGetFlowDefinition() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application appId = new Id.Application(new Id.Account("account1"), "application1");
@@ -56,24 +54,24 @@ public class RuntimeServiceImplTest {
     Assert.assertEquals(1, flowDef.getFlowStreams().size());
 
     // checking connections (most important stuff)
-    Assert.assertEquals(3, flowDef.getConnections().size());
+    Assert.assertEquals(4, flowDef.getConnections().size());
     int[] connectionFound = new int[3];
     for (ConnectionDefinition conn : flowDef.getConnections()) {
       if (conn.getFrom().isFlowStream()) {
-        connectionFound[0] = 1;
+        connectionFound[0]++;
         Assert.assertEquals("text", conn.getFrom().getStream());
       } else {
         if ("Tokenizer".equals(conn.getFrom().getFlowlet())) {
-          connectionFound[1] = 1;
+          connectionFound[1]++;
           Assert.assertEquals("CountByField", conn.getTo().getFlowlet());
         } else if ("StreamSucker".equals(conn.getFrom().getFlowlet())) {
-          connectionFound[2] = 1;
+          connectionFound[2]++;
           Assert.assertEquals("Tokenizer", conn.getTo().getFlowlet());
         }
       }
     }
 
-    Assert.assertArrayEquals(new int[]{1, 1, 1}, connectionFound);
+    Assert.assertArrayEquals(new int[]{1, 2, 1}, connectionFound);
   }
 
   @Test
