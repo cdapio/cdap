@@ -37,7 +37,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
   private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField RESOURCE_FIELD_DESC = new org.apache.thrift.protocol.TField("resource", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I32, (short)4);
-  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -49,23 +48,13 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
   public String applicationId; // required
   public String resource; // required
   public int version; // required
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType type; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ACCOUNT_ID((short)1, "accountId"),
     APPLICATION_ID((short)2, "applicationId"),
     RESOURCE((short)3, "resource"),
-    VERSION((short)4, "version"),
-    /**
-     * 
-     * @see EntityType
-     */
-    TYPE((short)5, "type");
+    VERSION((short)4, "version");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -88,8 +77,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
           return RESOURCE;
         case 4: // VERSION
           return VERSION;
-        case 5: // TYPE
-          return TYPE;
         default:
           return null;
       }
@@ -132,7 +119,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
   // isset id assignments
   private static final int __VERSION_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
-  private _Fields optionals[] = {_Fields.TYPE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -144,15 +130,11 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, EntityType.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ResourceIdentifier.class, metaDataMap);
   }
 
   public ResourceIdentifier() {
-    this.type = com.continuuity.app.services.EntityType.FLOW;
-
   }
 
   public ResourceIdentifier(
@@ -185,9 +167,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       this.resource = other.resource;
     }
     this.version = other.version;
-    if (other.isSetType()) {
-      this.type = other.type;
-    }
   }
 
   public ResourceIdentifier deepCopy() {
@@ -201,8 +180,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     this.resource = null;
     setVersionIsSet(false);
     this.version = 0;
-    this.type = com.continuuity.app.services.EntityType.FLOW;
-
   }
 
   public String getAccountId() {
@@ -300,38 +277,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     __isset_bit_vector.set(__VERSION_ISSET_ID, value);
   }
 
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType getType() {
-    return this.type;
-  }
-
-  /**
-   * 
-   * @see EntityType
-   */
-  public ResourceIdentifier setType(EntityType type) {
-    this.type = type;
-    return this;
-  }
-
-  public void unsetType() {
-    this.type = null;
-  }
-
-  /** Returns true if field type is set (has been assigned a value) and false otherwise */
-  public boolean isSetType() {
-    return this.type != null;
-  }
-
-  public void setTypeIsSet(boolean value) {
-    if (!value) {
-      this.type = null;
-    }
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ACCOUNT_ID:
@@ -366,14 +311,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       }
       break;
 
-    case TYPE:
-      if (value == null) {
-        unsetType();
-      } else {
-        setType((EntityType)value);
-      }
-      break;
-
     }
   }
 
@@ -390,9 +327,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
 
     case VERSION:
       return Integer.valueOf(getVersion());
-
-    case TYPE:
-      return getType();
 
     }
     throw new IllegalStateException();
@@ -413,8 +347,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       return isSetResource();
     case VERSION:
       return isSetVersion();
-    case TYPE:
-      return isSetType();
     }
     throw new IllegalStateException();
   }
@@ -465,15 +397,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       if (!(this_present_version && that_present_version))
         return false;
       if (this.version != that.version)
-        return false;
-    }
-
-    boolean this_present_type = true && this.isSetType();
-    boolean that_present_type = true && that.isSetType();
-    if (this_present_type || that_present_type) {
-      if (!(this_present_type && that_present_type))
-        return false;
-      if (!this.type.equals(that.type))
         return false;
     }
 
@@ -533,16 +456,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetType()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     return 0;
   }
 
@@ -590,16 +503,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     sb.append("version:");
     sb.append(this.version);
     first = false;
-    if (isSetType()) {
-      if (!first) sb.append(", ");
-      sb.append("type:");
-      if (this.type == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.type);
-      }
-      first = false;
-    }
     sb.append(")");
     return sb.toString();
   }
@@ -686,14 +589,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 5: // TYPE
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.type = EntityType.findByValue(iprot.readI32());
-              struct.setTypeIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -730,13 +625,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       oprot.writeFieldBegin(VERSION_FIELD_DESC);
       oprot.writeI32(struct.version);
       oprot.writeFieldEnd();
-      if (struct.type != null) {
-        if (struct.isSetType()) {
-          oprot.writeFieldBegin(TYPE_FIELD_DESC);
-          oprot.writeI32(struct.type.getValue());
-          oprot.writeFieldEnd();
-        }
-      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -758,14 +646,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       oprot.writeString(struct.applicationId);
       oprot.writeString(struct.resource);
       oprot.writeI32(struct.version);
-      BitSet optionals = new BitSet();
-      if (struct.isSetType()) {
-        optionals.set(0);
-      }
-      oprot.writeBitSet(optionals, 1);
-      if (struct.isSetType()) {
-        oprot.writeI32(struct.type.getValue());
-      }
     }
 
     @Override
@@ -779,11 +659,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
       struct.setResourceIsSet(true);
       struct.version = iprot.readI32();
       struct.setVersionIsSet(true);
-      BitSet incoming = iprot.readBitSet(1);
-      if (incoming.get(0)) {
-        struct.type = EntityType.findByValue(iprot.readI32());
-        struct.setTypeIsSet(true);
-      }
     }
   }
 

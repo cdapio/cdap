@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Contains status of over all FAR and each flow within the FAR.
  */
-public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FARStatus");
+public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatus, DeploymentStatus._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DeploymentStatus");
 
   private static final org.apache.thrift.protocol.TField OVERALL_FIELD_DESC = new org.apache.thrift.protocol.TField("overall", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)2);
@@ -39,13 +39,13 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new FARStatusStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new FARStatusTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new DeploymentStatusStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new DeploymentStatusTupleSchemeFactory());
   }
 
   public int overall; // required
   public String message; // required
-  public List<FlowVerificationStatus> verification; // required
+  public List<VerificationStatus> verification; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -123,18 +123,18 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.VERIFICATION, new org.apache.thrift.meta_data.FieldMetaData("verification", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowVerificationStatus.class))));
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, VerificationStatus.class))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FARStatus.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DeploymentStatus.class, metaDataMap);
   }
 
-  public FARStatus() {
+  public DeploymentStatus() {
   }
 
-  public FARStatus(
+  public DeploymentStatus(
     int overall,
     String message,
-    List<FlowVerificationStatus> verification)
+    List<VerificationStatus> verification)
   {
     this();
     this.overall = overall;
@@ -146,7 +146,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FARStatus(FARStatus other) {
+  public DeploymentStatus(DeploymentStatus other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.overall = other.overall;
@@ -154,16 +154,16 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
       this.message = other.message;
     }
     if (other.isSetVerification()) {
-      List<FlowVerificationStatus> __this__verification = new ArrayList<FlowVerificationStatus>();
-      for (FlowVerificationStatus other_element : other.verification) {
-        __this__verification.add(new FlowVerificationStatus(other_element));
+      List<VerificationStatus> __this__verification = new ArrayList<VerificationStatus>();
+      for (VerificationStatus other_element : other.verification) {
+        __this__verification.add(new VerificationStatus(other_element));
       }
       this.verification = __this__verification;
     }
   }
 
-  public FARStatus deepCopy() {
-    return new FARStatus(this);
+  public DeploymentStatus deepCopy() {
+    return new DeploymentStatus(this);
   }
 
   @Override
@@ -178,7 +178,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     return this.overall;
   }
 
-  public FARStatus setOverall(int overall) {
+  public DeploymentStatus setOverall(int overall) {
     this.overall = overall;
     setOverallIsSet(true);
     return this;
@@ -201,7 +201,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     return this.message;
   }
 
-  public FARStatus setMessage(String message) {
+  public DeploymentStatus setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -225,22 +225,22 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     return (this.verification == null) ? 0 : this.verification.size();
   }
 
-  public java.util.Iterator<FlowVerificationStatus> getVerificationIterator() {
+  public java.util.Iterator<VerificationStatus> getVerificationIterator() {
     return (this.verification == null) ? null : this.verification.iterator();
   }
 
-  public void addToVerification(FlowVerificationStatus elem) {
+  public void addToVerification(VerificationStatus elem) {
     if (this.verification == null) {
-      this.verification = new ArrayList<FlowVerificationStatus>();
+      this.verification = new ArrayList<VerificationStatus>();
     }
     this.verification.add(elem);
   }
 
-  public List<FlowVerificationStatus> getVerification() {
+  public List<VerificationStatus> getVerification() {
     return this.verification;
   }
 
-  public FARStatus setVerification(List<FlowVerificationStatus> verification) {
+  public DeploymentStatus setVerification(List<VerificationStatus> verification) {
     this.verification = verification;
     return this;
   }
@@ -282,7 +282,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
       if (value == null) {
         unsetVerification();
       } else {
-        setVerification((List<FlowVerificationStatus>)value);
+        setVerification((List<VerificationStatus>)value);
       }
       break;
 
@@ -325,12 +325,12 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FARStatus)
-      return this.equals((FARStatus)that);
+    if (that instanceof DeploymentStatus)
+      return this.equals((DeploymentStatus)that);
     return false;
   }
 
-  public boolean equals(FARStatus that) {
+  public boolean equals(DeploymentStatus that) {
     if (that == null)
       return false;
 
@@ -369,13 +369,13 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     return 0;
   }
 
-  public int compareTo(FARStatus other) {
+  public int compareTo(DeploymentStatus other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FARStatus typedOther = (FARStatus)other;
+    DeploymentStatus typedOther = (DeploymentStatus)other;
 
     lastComparison = Boolean.valueOf(isSetOverall()).compareTo(typedOther.isSetOverall());
     if (lastComparison != 0) {
@@ -424,7 +424,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FARStatus(");
+    StringBuilder sb = new StringBuilder("DeploymentStatus(");
     boolean first = true;
 
     sb.append("overall:");
@@ -472,15 +472,15 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     }
   }
 
-  private static class FARStatusStandardSchemeFactory implements SchemeFactory {
-    public FARStatusStandardScheme getScheme() {
-      return new FARStatusStandardScheme();
+  private static class DeploymentStatusStandardSchemeFactory implements SchemeFactory {
+    public DeploymentStatusStandardScheme getScheme() {
+      return new DeploymentStatusStandardScheme();
     }
   }
 
-  private static class FARStatusStandardScheme extends StandardScheme<FARStatus> {
+  private static class DeploymentStatusStandardScheme extends StandardScheme<DeploymentStatus> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, FARStatus struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, DeploymentStatus struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -510,11 +510,11 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                struct.verification = new ArrayList<FlowVerificationStatus>(_list0.size);
+                struct.verification = new ArrayList<VerificationStatus>(_list0.size);
                 for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  FlowVerificationStatus _elem2; // required
-                  _elem2 = new FlowVerificationStatus();
+                  VerificationStatus _elem2; // required
+                  _elem2 = new VerificationStatus();
                   _elem2.read(iprot);
                   struct.verification.add(_elem2);
                 }
@@ -536,7 +536,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, FARStatus struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, DeploymentStatus struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -552,7 +552,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
         oprot.writeFieldBegin(VERIFICATION_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.verification.size()));
-          for (FlowVerificationStatus _iter3 : struct.verification)
+          for (VerificationStatus _iter3 : struct.verification)
           {
             _iter3.write(oprot);
           }
@@ -566,16 +566,16 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
 
   }
 
-  private static class FARStatusTupleSchemeFactory implements SchemeFactory {
-    public FARStatusTupleScheme getScheme() {
-      return new FARStatusTupleScheme();
+  private static class DeploymentStatusTupleSchemeFactory implements SchemeFactory {
+    public DeploymentStatusTupleScheme getScheme() {
+      return new DeploymentStatusTupleScheme();
     }
   }
 
-  private static class FARStatusTupleScheme extends TupleScheme<FARStatus> {
+  private static class DeploymentStatusTupleScheme extends TupleScheme<DeploymentStatus> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, FARStatus struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, DeploymentStatus struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetOverall()) {
@@ -597,7 +597,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
       if (struct.isSetVerification()) {
         {
           oprot.writeI32(struct.verification.size());
-          for (FlowVerificationStatus _iter4 : struct.verification)
+          for (VerificationStatus _iter4 : struct.verification)
           {
             _iter4.write(oprot);
           }
@@ -606,7 +606,7 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, FARStatus struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, DeploymentStatus struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
@@ -620,11 +620,11 @@ public class FARStatus implements org.apache.thrift.TBase<FARStatus, FARStatus._
       if (incoming.get(2)) {
         {
           org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.verification = new ArrayList<FlowVerificationStatus>(_list5.size);
+          struct.verification = new ArrayList<VerificationStatus>(_list5.size);
           for (int _i6 = 0; _i6 < _list5.size; ++_i6)
           {
-            FlowVerificationStatus _elem7; // required
-            _elem7 = new FlowVerificationStatus();
+            VerificationStatus _elem7; // required
+            _elem7 = new VerificationStatus();
             _elem7.read(iprot);
             struct.verification.add(_elem7);
           }

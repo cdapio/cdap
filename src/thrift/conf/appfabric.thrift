@@ -57,7 +57,6 @@ struct ResourceIdentifier {
  2:required string applicationId,
  3:required string resource,
  4:required i32 version,
- 5:optional EntityType type = EntityType.FLOW,
 }
 
 /**
@@ -69,7 +68,6 @@ struct ResourceIdentifier {
   3:required string filename,
   4:required i32 size,
   5:required i64 modtime,
-  6:optional EntityType type = EntityType.FLOW,
  }
 
 /**
@@ -80,11 +78,11 @@ exception DeploymentServiceException {
 }
 
 /**
- * Contains verification status of all the entities present in the far file.
+ * Contains verification status of all the entities present in the deployed file.
  */
-struct FlowVerificationStatus {
+struct VerificationStatus {
   1:string applicationId,
-  2:string flow,
+  2:string program,
   3:i32 status,
   4:string message,
 }
@@ -92,10 +90,10 @@ struct FlowVerificationStatus {
 /**
  * Contains status of over all FAR and each flow within the FAR.
  */
-struct FARStatus {
+struct DeploymentStatus {
   1:i32 overall,
   2:string message,
-  3:list<FlowVerificationStatus> verification,
+  3:list<VerificationStatus> verification,
 }
 
 /**
@@ -136,13 +134,13 @@ service DeploymentService {
   /**
    * Status of upload
    */
-  FARStatus status(1:AuthToken token, 2:ResourceIdentifier resource)
+  DeploymentStatus status(1:AuthToken token, 2:ResourceIdentifier resource)
     throws (1: DeploymentServiceException e),
 
   /**
-   * Promote a flow an it's resource to cloud.
+   * Promote an application an it's resource to cloud.
    */
-  bool promote(1:AuthToken token, 2:FlowIdentifier identifier)
+  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier)
     throws (1: DeploymentServiceException e),
 
   /**
