@@ -67,9 +67,9 @@ public class BatchTransactionAgentTest {
     Assert.assertArrayEquals(one, result.getValue().get(x));
 
     // sync increment the other row
-    OperationResult<Map<byte[],Long>> incr = agent.execute(new Increment(table, b, y, 1L));
+    Map<byte[],Long> incr = agent.execute(new Increment(table, b, y, 1L));
     Assert.assertFalse(incr.isEmpty());
-    Assert.assertEquals((Long)3L, incr.getValue().get(y));
+    Assert.assertEquals((Long)3L, incr.get(y));
 
     // add a row with the xaction agent
     agent.submit(new Write(table, c, x, y));

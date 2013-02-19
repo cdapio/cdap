@@ -317,8 +317,7 @@ implements TransactionalOperationExecutor {
     return ("random_" + context.getAccount() + "_" + name).getBytes();
   }
 
-  private OrderedVersionedColumnarTable waitForTableToMaterialize(
-      ImmutablePair<String, String> tableKey) {
+  private OrderedVersionedColumnarTable waitForTableToMaterialize(ImmutablePair<String, String> tableKey) {
     while (true) {
       ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
           this.namedTables.get(tableKey);
@@ -339,8 +338,9 @@ implements TransactionalOperationExecutor {
     // TODO should this time out after some time or number of attempts?
   }
 
-  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(
-      OperationContext context, String name, MetaDataEntry meta)
+  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(OperationContext context,
+                                                                String name,
+                                                                MetaDataEntry meta)
     throws OperationException {
 
     while(true) {
@@ -426,16 +426,9 @@ implements TransactionalOperationExecutor {
     return new OperationResult<List<byte[]>>(result);
   }
 
-  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
-                                           Read read, ReadPointer pointer)
-    throws OperationException {
-    OrderedVersionedColumnarTable table =
-      this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), read.getColumns(), pointer);
-  }
-
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException {
     return execute(context, null, read);
   }
@@ -459,9 +452,9 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context,
-          ReadColumnRange readColumnRange) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
     return execute(context, null, readColumnRange);
   }
 
@@ -612,7 +605,9 @@ implements TransactionalOperationExecutor {
 
   @Override
   public void commit(OperationContext context,
-                     Transaction transaction) throws OperationException {
+                     Transaction transaction)
+    throws OperationException {
+
     // attempt to commit in Oracle
     TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
@@ -673,18 +668,20 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Increment increment) throws
     OperationException {
     // start transaction, execute increment, commit transaction, return result
     Transaction tx = startTransaction();
-    OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
+    Map<byte[], Long> result = increment(context, tx, increment);
     commit(context, tx);
     return result;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
-                                                      Increment increment) throws OperationException {
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Transaction transaction,
+                                     Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
     if (transaction == null) {
@@ -699,13 +696,12 @@ implements TransactionalOperationExecutor {
     }
     if (writeTxReturn.success) {
       // increment was successful. the return value is in the write transaction result
-      return new OperationResult<Map<byte[], Long>>(writeTxReturn.incrementResult);
+      return writeTxReturn.incrementResult;
     } else {
       // operation failed
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
       abort(context, transaction);
-      throw new OmidTransactionException(
-        writeTxReturn.statusCode, writeTxReturn.message);
+      throw new OmidTransactionException(writeTxReturn.statusCode, writeTxReturn.message);
     }
   }
 

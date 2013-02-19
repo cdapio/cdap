@@ -14,20 +14,12 @@ import java.util.List;
 public interface TimeseriesTable {
 
   /**
-   * Stores entry in dataset. This write operation is executed synchronously.
+   * Stores entry in dataset.
    * See {@link Entry} for more details.
    * @param entry to store.
    * @throws OperationException
    */
   void write(Entry entry) throws OperationException;
-
-  /**
-   * Stores entry in dataset. This write operation is executed asynchronously.
-   * See {@link Entry} for more details.
-   * @param entry to store.
-   * @throws OperationException
-   */
-  void stage(Entry entry) throws OperationException;
 
   /**
    * Reads entries of a time range with given key and tags set.

@@ -160,12 +160,11 @@ public interface OperationExecutor
    *
    * @param context the operation context
    * @param increment the operation
-   * @return a result object containing a map of columns to the new, incremented
-   *         values.
+   * @return a map of columns to the new, incremented values.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context,
-                                                      Increment increment)
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Increment increment)
     throws OperationException;
 
   /**
@@ -182,9 +181,9 @@ public interface OperationExecutor
    *         values.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context,
-                                                      @Nullable Transaction transaction,
-                                                      Increment increment)
+  public Map<byte[], Long> increment(OperationContext context,
+                                     @Nullable Transaction transaction,
+                                     Increment increment)
     throws OperationException;
 
   /**
