@@ -185,7 +185,7 @@ public class SmartTransactionAgent implements TransactionAgent {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException {
+  public Map<byte[], Long> execute(Increment increment) throws OperationException {
     // check state and get rid of deferred operations
     executeDeferred();
     // now execute the operation and make sure abort in case of failure

@@ -81,7 +81,7 @@ public class BatchTransactionAgentWithSyncReads implements TransactionAgent {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> execute(Increment increment) throws OperationException {
+  public Map<byte[], Long> execute(Increment increment) throws OperationException {
     // execute synchronously - beware since this is also a write, it can't be rolled back
     return this.opex.increment(this.context, increment);
   }
