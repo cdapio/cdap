@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 //TODO: Thread safety?
 public class PassportClient {
 
-  private final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+  public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
 
   private boolean debugEnabled = false;
 
