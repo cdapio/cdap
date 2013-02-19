@@ -80,6 +80,7 @@ public class ReadOnlyTable extends RuntimeTable {
         // old-style: use data fabric
         // TODO this will go away with the new flow system
         return this.getDataFabric().read(op);
+
       }
     }
   }

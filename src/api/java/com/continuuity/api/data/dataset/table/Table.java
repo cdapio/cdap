@@ -97,6 +97,8 @@ public class Table extends DataSet {
    * @param increment the increment operation
    * @return a map with the incremented values as Long
    * @throws OperationException if something goes wrong
+   *
+   * TODO this method will go away with the new flow system
    */
   public Map<byte[], Long> increment(Increment increment) throws OperationException {
     if (null == this.delegate) {

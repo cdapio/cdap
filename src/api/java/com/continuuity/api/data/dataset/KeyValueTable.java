@@ -49,7 +49,7 @@ public class KeyValueTable extends DataSet {
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        dataset(this.table.configure()).create();
+      dataset(this.table.configure()).create();
   }
 
   /**
@@ -61,7 +61,7 @@ public class KeyValueTable extends DataSet {
   @Nullable
   public byte[] read(byte[] key) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result =
-        this.table.read(new Read(key, KEY_COLUMN));
+      this.table.read(new Read(key, KEY_COLUMN));
     if (result.isEmpty()) {
       return null;
     } else {

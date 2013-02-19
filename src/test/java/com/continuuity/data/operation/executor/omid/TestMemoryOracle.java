@@ -8,7 +8,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -24,7 +23,6 @@ public class TestMemoryOracle {
   private static TransactionOracle newOracle() {
     return injector.getInstance(TransactionOracle.class);
   }
-
   static final byte[] a = { 'a' };
   static final byte[] b = { 'b' };
   static final byte[] c = { 'c' };

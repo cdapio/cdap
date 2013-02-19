@@ -70,11 +70,27 @@ struct TQueueProducer {
   1: optional string name,
 }
 
+struct TQueueEntry {
+  1: optional map<string,i32> header,
+  2: binary data,
+}
+
 struct TQueueEnqueue {
   1: binary queueName,
-  2: binary value,
+  2: TQueueEntry entry,
   3: i64 id,
   4: optional TQueueProducer producer,
+}
+
+enum TQueuePartitioner {
+  FIFO,
+  HASH,
+  ROBIN,
+}
+
+struct TQueueConfig {
+  1: TQueuePartitioner partitioner,
+  2: bool singleEntry,
 }
 
 struct TQueueConsumer {
@@ -82,6 +98,8 @@ struct TQueueConsumer {
   2: i64 groupId,
   3: i32 groupSize,
   4: optional string groupName,
+  5: optional string partitioningKey,
+  6: optional TQueueConfig queueConfig,
 }
 
 struct TQueueEntryPointer {
@@ -96,17 +114,6 @@ struct TQueueAck {
   3: TQueueConsumer consumer,
   4: i32 numGroups,
   5: i64 id,
-}
-
-enum TQueuePartitioner {
-  RANDOM,
-  HASH,
-  LONGMOD,
-}
-
-struct TQueueConfig {
-  1: TQueuePartitioner partitioner,
-  2: bool singleEntry,
 }
 
 struct TQueueDequeue {
@@ -125,7 +132,7 @@ enum TDequeueStatus {
 struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
-  3: binary value,
+  3: optional TQueueEntry entry,
 }
 
 struct TGetGroupId {

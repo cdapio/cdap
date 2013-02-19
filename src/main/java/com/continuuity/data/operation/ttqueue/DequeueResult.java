@@ -11,17 +11,17 @@ public class DequeueResult {
 
   private final DequeueStatus status;
   private final QueueEntryPointer pointer;
-  private final byte [] value;
+  private final QueueEntry entry;
 
   public DequeueResult(final DequeueStatus status) {
     this(status, null, null);
   }
 
   public DequeueResult(final DequeueStatus status,
-      final QueueEntryPointer pointer, final byte [] value) {
+      final QueueEntryPointer pointer, final QueueEntry entry) {
     this.status = status;
     this.pointer = pointer;
-    this.value = value;
+    this.entry = entry;
   }
   
   public DequeueResult(final byte [] queueName,
@@ -29,13 +29,15 @@ public class DequeueResult {
     if (dequeueResult.getStatus() == HBQDequeueStatus.EMPTY) {
       this.status = DequeueStatus.EMPTY;
       this.pointer = null;
-      this.value = null;
+//      this.value = null;
+      //TODO: is this correct?
+      this.entry = null;
     } else if (dequeueResult.getStatus() == HBQDequeueStatus.SUCCESS) {
       this.status = DequeueStatus.SUCCESS;
       this.pointer = new QueueEntryPointer(queueName,
           dequeueResult.getEntryPointer().getEntryId(),
           dequeueResult.getEntryPointer().getShardId());
-      this.value = dequeueResult.getData();
+      this.entry = new QueueEntryImpl(dequeueResult.getData());
     } else {
       throw new RuntimeException("Invalid state: " + dequeueResult.toString());
     }
@@ -61,8 +63,8 @@ public class DequeueResult {
     return this.pointer;
   }
   
-  public byte [] getValue() {
-    return this.value;
+  public QueueEntry getEntry() {
+    return this.entry;
   }
 
   public static enum DequeueStatus {
@@ -74,7 +76,11 @@ public class DequeueResult {
     return Objects.toStringHelper(this)
         .add("status", this.status)
         .add("entryPointer", this.pointer)
-        .add("value.length", this.value != null ? this.value.length : 0)
+        .add("entry", this.entry)
         .toString();
+  }
+  @Deprecated
+  public byte[] getValue() {
+    return entry.getData();
   }
 }

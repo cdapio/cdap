@@ -20,7 +20,7 @@ public class MemoryReadPointer implements ReadPointer {
   /**
    * Constructs a read pointer that will see all txids that are less than or
    * equal to the specified read point.
-   * @param readPoint
+   * @param readPoint the latest transaction id to include in reads
    */
   public MemoryReadPointer(long readPoint) {
     this(readPoint, null);
@@ -30,8 +30,8 @@ public class MemoryReadPointer implements ReadPointer {
    * Constructs a read pointer that will see all txids that are less than or
    * equal to the specified read point and are not in the specified exclude
    * list.
-   * @param readPoint
-   * @param excludes
+   * @param readPoint the latest transaction id to include in read
+   * @param excludes the transaction ids to exclude from read
    */
   public MemoryReadPointer(long readPoint, Set<Long> excludes) {
     this(readPoint, -1L, excludes);
@@ -43,9 +43,9 @@ public class MemoryReadPointer implements ReadPointer {
    * list. Also adds a special exception for the specified write pointer which
    * can be used to allow a read-modify-write operation to see their own writes.
    * 
-   * @param readPoint
-   * @param writePoint
-   * @param excludes
+   * @param readPoint the latest transaction id to include in read
+   * @param writePoint the current transaction id, will be included if it is in excludes
+   * @param excludes the transaction ids to exclude from read
    */
   public MemoryReadPointer(long readPoint, long writePoint, Set<Long> excludes){
     this.readPoint = readPoint;
@@ -55,14 +55,11 @@ public class MemoryReadPointer implements ReadPointer {
 
   @Override
   public boolean isVisible(long txid) {
-    if (txid == this.writePoint) return true;
-    if (txid > this.readPoint) return false;
-    return !isExcluded(txid);
+    return txid == this.writePoint || txid <= this.readPoint && !isExcluded(txid);
   }
 
   private boolean isExcluded(long txid) {
-    if (this.excludes != null && this.excludes.contains(txid)) return true;
-    return false;
+    return this.excludes != null && this.excludes.contains(txid);
   }
 
   @Override
