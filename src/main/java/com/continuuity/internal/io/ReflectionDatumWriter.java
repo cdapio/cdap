@@ -4,6 +4,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.common.io.Encoder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -65,11 +67,7 @@ public final class ReflectionDatumWriter {
         encoder.writeString(object.toString());
         break;
       case BYTES:
-        if(object instanceof ByteBuffer) {
-          encoder.writeBytes((ByteBuffer) object);
-        } else {
-          encoder.writeBytes((byte[]) object);
-        }
+        writeBytes(object, encoder);
         break;
       case ENUM:
         writeEnum(object.toString(), encoder, objSchema);
@@ -82,6 +80,19 @@ public final class ReflectionDatumWriter {
         break;
       case RECORD:
         writeRecord(object, encoder, objSchema, seenRefs);
+    }
+  }
+
+  private void writeBytes(Object object, Encoder encoder) throws IOException {
+    if(object instanceof ByteBuffer) {
+      encoder.writeBytes((ByteBuffer) object);
+    } else if (object instanceof UUID) {
+      UUID uuid = (UUID)object;
+      ByteBuffer buf = ByteBuffer.allocate(Longs.BYTES * 2);
+      buf.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+      encoder.writeBytes((ByteBuffer)buf.flip());
+    } else {
+      encoder.writeBytes((byte[]) object);
     }
   }
 
