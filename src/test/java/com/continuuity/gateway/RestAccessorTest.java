@@ -539,7 +539,7 @@ public class RestAccessorTest {
         Constants.defaultAccount, stream).toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
-    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
@@ -573,7 +573,7 @@ public class RestAccessorTest {
   void verifyTuple(String queueUri, int n) throws Exception {
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
     long id = this.executor.execute(context, op);
-    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
@@ -606,7 +606,7 @@ public class RestAccessorTest {
   void verifyQueueGone(String queueUri) throws Exception {
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
     long id = this.executor.execute(context, op);
-    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
