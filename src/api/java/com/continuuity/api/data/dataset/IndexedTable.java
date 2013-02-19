@@ -1,11 +1,17 @@
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.data.dataset.table.Swap;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
 import java.util.Map;
