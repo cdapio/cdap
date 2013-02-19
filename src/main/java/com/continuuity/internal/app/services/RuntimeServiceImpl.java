@@ -145,11 +145,11 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
 
     QueueSpecificationGenerator generator =
       new SimpleQueueSpecificationGenerator(new Id.Account(identifier.getAccountId()));
-    Table<String, String, Set<QueueSpecification>> queues =  generator.create(flowSpec);
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(flowSpec);
 
-    for (Table.Cell<String, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
+    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
       for (QueueSpecification queueSpec : conSet.getValue()) {
-        String srcName = conSet.getRowKey();
+        String srcName = conSet.getRowKey().getName();
         String destName = conSet.getColumnKey();
         FlowletStreamDefinitionImpl from;
         if (!flowSpec.getFlowlets().containsKey(srcName)) {

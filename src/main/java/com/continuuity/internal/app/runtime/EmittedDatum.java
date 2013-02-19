@@ -46,8 +46,9 @@ public final class EmittedDatum {
 
 
   public QueueEnqueue asEnqueue() {
-        return new QueueEnqueue(queueProducer,
-                                queueName.toBytes(),
-                                header, data);
+//        return new QueueEnqueue(queueProducer,
+//                                queueName.toBytes(),
+//                                header, data);
+    return null;
   }
 }

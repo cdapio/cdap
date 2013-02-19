@@ -6,6 +6,7 @@ package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
+import com.google.common.base.Objects;
 import com.google.common.collect.Table;
 
 import java.util.Set;
@@ -40,6 +41,20 @@ public interface QueueSpecificationGenerator {
     public String getName() {
       return name;
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(type, name);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if(o == null) {
+        return false;
+      }
+      Node other = (Node) o;
+      return Objects.equal(type, other.getType()) && Objects.equal(name, other.getName());
+    }
   }
 
   /**
@@ -49,5 +64,5 @@ public interface QueueSpecificationGenerator {
    * @param specification of a Flow
    * @return A {@link Table} consisting of From, To Flowlet and QueueSpecification.
    */
-  Table<String, String, Set<QueueSpecification>> create(FlowSpecification specification);
+  Table<Node, String, Set<QueueSpecification>> create(FlowSpecification specification);
 }

@@ -21,7 +21,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URI;
+import java.net.URL;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  *
@@ -62,11 +65,15 @@ public class DatumCodecTest {
     private final int i;
     private final Map<Integer, Value> properties;
     private final int[] numbers;
+    private final URL url;
+    private final UUID uuid;
 
-    public Record1(int i, Map<Integer, Value> properties) {
+    public Record1(int i, Map<Integer, Value> properties, URL url) {
       this.i = i;
       this.properties = properties;
       this.numbers = new int[] {1, 2};
+      this.url = url;
+      this.uuid = UUID.randomUUID();
     }
   }
 
@@ -75,18 +82,22 @@ public class DatumCodecTest {
     private final Map<String, Value> properties;
     private final String name;
     private final long[] numbers;
+    private final URI url;
+    private final UUID uuid;
 
     public Record2(long i, Map<String, Value> properties, String name) {
       this.i = i;
       this.properties = properties;
       this.name = name;
       this.numbers = new long[0];
+      this.url = null;
+      this.uuid = null;
     }
   }
 
   @Test
   public void testTypeProject() throws IOException, UnsupportedTypeException {
-    Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap());
+    Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap(), new URL("http://www.yahoo.com"));
     r1.properties.put(1, new Value(1, "Name1"));
     r1.properties.put(2, new Value(2, "Name2"));
 
@@ -105,6 +116,9 @@ public class DatumCodecTest {
     Assert.assertNull(r2.name);
 
     Assert.assertArrayEquals(new long[] {1L, 2L}, r2.numbers);
+    Assert.assertEquals(URI.create("http://www.yahoo.com"), r2.url);
+
+    Assert.assertEquals(r1.uuid, r2.uuid);
   }
 
   public static final class Node {

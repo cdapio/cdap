@@ -31,5 +31,5 @@ import java.lang.annotation.Target;
           ElementType.METHOD,
           ElementType.TYPE})
 @Documented
-public @interface Unstable {
+public @interface Beta {
 }

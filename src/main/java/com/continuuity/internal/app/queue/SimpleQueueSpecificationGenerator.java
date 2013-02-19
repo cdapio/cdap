@@ -52,8 +52,8 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
    * @return A {@link Table}
    */
   @Override
-  public Table<String, String, Set<QueueSpecification>> create(FlowSpecification input) {
-    Table<String, String, Set<QueueSpecification>> table = HashBasedTable.create();
+  public Table<Node, String, Set<QueueSpecification>> create(FlowSpecification input) {
+    Table<Node, String, Set<QueueSpecification>> table = HashBasedTable.create();
 
     String flow = input.getName();
     Map<String, FlowletDefinition> flowlets = input.getFlowlets();
@@ -62,6 +62,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
     for(FlowletConnection connection : input.getConnections()) {
       final String source = connection.getSourceName();
       final String target = connection.getTargetName();
+      final Node sourceNode = new Node(connection.getSourceType(), source);
 
       // If the source type is a flowlet, then we attempt to find a matching
       // connection that is equal or compatible. Equality has higher priority
@@ -69,10 +70,10 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
       if(connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
         List<SchemaURIHolder> holders = findSchema(flow, flowlets.get(source), flowlets.get(target));
         for(SchemaURIHolder holder : holders) {
-          if(table.contains(source, target)) {
-            table.get(source, target).add(createSpec(holder.getOutput(), holder.getSchema()));
+          if(table.contains(sourceNode, target)) {
+            table.get(sourceNode, target).add(createSpec(holder.getOutput(), holder.getSchema()));
           } else {
-            table.put(source, target, Sets.newHashSet(createSpec(holder.getOutput(), holder.getSchema())));
+            table.put(sourceNode, target, Sets.newHashSet(createSpec(holder.getOutput(), holder.getSchema())));
           }
         }
       }
@@ -91,10 +92,10 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
           }
 
           if(foundSchema != null) {
-            if(table.contains(source, target)) {
-              table.get(source, target).add(createSpec(streamURI(account, source), foundSchema));
+            if(table.contains(sourceNode, target)) {
+              table.get(sourceNode, target).add(createSpec(streamURI(account, source), foundSchema));
             } else {
-              table.put(source, target,Sets.newHashSet(createSpec(streamURI(account, source), foundSchema)));
+              table.put(sourceNode, target,Sets.newHashSet(createSpec(streamURI(account, source), foundSchema)));
             }
           } else {
             throw new RuntimeException("Unable to find matching schema for connection between "

@@ -24,7 +24,7 @@ public class ServicesModule4Test extends AbstractModule {
   @Override
   protected void configure() {
     bind(RuntimeService.Iface.class).to(RuntimeServiceImpl.class);
-    bind(DeploymentService.Iface.class).to(DeploymentServiceImpl.class);
+    //bind(DeploymentService.Iface.class).to(DeploymentServiceImpl.class);
     bind(LocationFactory.class).to(LocalLocationFactory.class);
 
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);

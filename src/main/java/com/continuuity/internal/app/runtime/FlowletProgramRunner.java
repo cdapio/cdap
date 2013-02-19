@@ -17,7 +17,8 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Controller;
-import com.continuuity.app.runtime.Runner;
+import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -33,27 +34,27 @@ import com.google.common.reflect.TypeToken;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
-public final class FlowletRunner implements Runner {
+public final class FlowletProgramRunner implements ProgramRunner {
 
   private final OperationExecutor opex;
   private final OperationContext opCtx;
 
-  public FlowletRunner(OperationExecutor opex, OperationContext opCtx) {
+  public FlowletProgramRunner(OperationExecutor opex, OperationContext opCtx) {
     this.opex = opex;
     this.opCtx = opCtx;
   }
 
   @Override
-  public Controller run(Program program, String name, Map<String, String> arguments) {
+  public Controller run(Program program, ProgramOptions options) {
     try {
       Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
+
+      String flowletName = options.getName();
 
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -66,9 +67,9 @@ public final class FlowletRunner implements Runner {
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
-      FlowletDefinition flowletDef = flowSpec.getFlowlets().get(name);
+      FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletName);
 
-      Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", name);
+      Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
       ClassLoader classLoader = program.getMainClass().getClassLoader();
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>)
                                                   Class.forName(flowletDef.getFlowletSpec().getClassName(),
@@ -81,7 +82,7 @@ public final class FlowletRunner implements Runner {
       DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
       DataSetContext dataSetCtxr = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
 
-      final FlowletProcessDriver driver = instantiateFlowlet(flowSpec, flowletDef, name,
+      final FlowletProcessDriver driver = instantiateFlowlet(flowSpec, flowletDef, flowletName,
                                                        flowletClass, dataSetCtxr, txAgentSupplier);
 
       driver.start();

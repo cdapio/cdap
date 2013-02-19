@@ -4,14 +4,14 @@
 
 package com.continuuity.api.flow;
 
-import com.continuuity.api.annotation.Unstable;
+import com.continuuity.api.annotation.Beta;
 import com.google.common.base.Function;
 
 /**
  * This class is for specifying resources that are needed for a
  * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlet}.
  */
-@Unstable
+@Beta
 public final class ResourceSpecification {
 
   /**

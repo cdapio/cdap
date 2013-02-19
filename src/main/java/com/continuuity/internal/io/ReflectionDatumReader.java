@@ -4,6 +4,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.common.io.Decoder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -11,9 +12,12 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  *
@@ -85,7 +89,7 @@ public final class ReflectionDatumReader<T> {
     }
     // For simple type other than NULL and BYTES
     if(sourceType.isSimpleType()) {
-      return resolveType(decoder, sourceType, targetType);
+      return resolveType(decoder, sourceType, targetType, targetTypeToken);
     }
     throw new IOException(String.format("Fails to resolve %s to %s", sourceSchema, targetSchema));
   }
@@ -107,6 +111,8 @@ public final class ReflectionDatumReader<T> {
         buffer.get(bytes);
         return bytes;
       }
+    } else if (targetTypeToken.getRawType().equals(UUID.class) && buffer.remaining() == Longs.BYTES * 2) {
+      return new UUID(buffer.getLong(), buffer.getLong());
     }
     return buffer;
   }
@@ -226,7 +232,8 @@ public final class ReflectionDatumReader<T> {
     }
   }
 
-  private Object resolveType(Decoder decoder, Schema.Type sourceType, Schema.Type targetType) throws IOException {
+  private Object resolveType(Decoder decoder, Schema.Type sourceType,
+                             Schema.Type targetType, TypeToken<?> targetTypeToken) throws IOException {
     switch(sourceType) {
       case BOOLEAN:
         switch(targetType) {
@@ -283,7 +290,14 @@ public final class ReflectionDatumReader<T> {
       case STRING:
         switch(targetType) {
           case STRING:
-            return decoder.readString();
+            String str = decoder.readString();
+            Class<?> targetClass = targetTypeToken.getRawType();
+            if (targetClass.equals(URI.class)) {
+              return URI.create(str);
+            } else if (targetClass.equals(URL.class)) {
+              return new URL(str);
+            }
+            return str;
         }
         break;
     }
