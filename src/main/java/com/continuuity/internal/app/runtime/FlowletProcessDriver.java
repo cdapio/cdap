@@ -139,7 +139,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       try {
         // If the queue head need to wait, we had to wait.
-        processQueue.peek().await(System.nanoTime());
+        processQueue.peek().await();
       } catch (InterruptedException e) {
         // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
         continue;
@@ -150,6 +150,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       for (ProcessEntry entry : processList) {
         try {
+          if (!entry.shouldProcess()) {
+            continue;
+          }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
           if (input.isEmpty()) {
             entry.backOff();
@@ -270,11 +273,15 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       return retry;
     }
 
-    public void await(long startTime) throws InterruptedException {
-      long waitTime = nextDeque - startTime;
+    public void await() throws InterruptedException {
+      long waitTime = nextDeque - System.nanoTime();
       if (waitTime > 0) {
         TimeUnit.NANOSECONDS.sleep(waitTime);
       }
+    }
+
+    public boolean shouldProcess() {
+      return nextDeque - System.nanoTime() <= 0;
     }
 
     @Override
