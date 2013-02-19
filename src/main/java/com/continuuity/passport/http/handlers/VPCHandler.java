@@ -1,6 +1,7 @@
-package com.continuuity.passport.http.server;
+package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.http.server.Utils;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.gson.Gson;
 

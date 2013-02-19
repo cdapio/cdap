@@ -1,19 +1,27 @@
-package com.continuuity.passport.http.server;
+package com.continuuity.passport.http.handlers;
 
+import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
+import com.continuuity.passport.http.server.Utils;
 import com.continuuity.passport.impl.AuthenticatorImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.shiro.util.StringUtils;
 
 import javax.ws.rs.*;
+
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +35,16 @@ import java.util.Map;
  */
 
 
+@Singleton
 @Path("/passport/v1/account/")
 public class AccountHandler {
+
+  private DataManagementService dataManagementService;
+
+  @Inject
+  public AccountHandler(DataManagementService dataManagementService) {
+    this.dataManagementService = dataManagementService;
+  }
 
   @Path("{id}")
   @GET
@@ -67,9 +83,9 @@ public class AccountHandler {
         return Response.status(Response.Status.BAD_REQUEST)
           .entity(Utils.getJson("FAILED", "Must pass in old_password and new_password"))
           .build();
-     }
+      }
 
-      DataManagementServiceImpl.getInstance().changePassword(id,oldPassword,newPassword);
+      DataManagementServiceImpl.getInstance().changePassword(id, oldPassword, newPassword);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
       Account account = DataManagementServiceImpl.getInstance().getAccount(id);
@@ -170,28 +186,30 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAccount(String data) {
-
+    String emailId = null;
     try{
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
-      String firstName = jsonObject.get("first_name") == null? null : jsonObject.get("first_name").getAsString();
-      String lastName = jsonObject.get("first_name") == null? null : jsonObject.get("last_name").getAsString();
-      String emailId = jsonObject.get("email_id") == null? null : jsonObject.get("email_id").getAsString();
-      String company = jsonObject.get("company") == null? null : jsonObject.get("company").getAsString();
+       emailId = jsonObject.get("email_id") == null? null : jsonObject.get("email_id").getAsString();
 
-      if ( (firstName == null) || (lastName == null) || (emailId == null) || (company == null) ){
+      if (  (emailId == null)  ){
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "First/last name or email id or company is missing")).build();
+          .entity(Utils.getJson("FAILED", "Email id is missing")).build();
       }
       else {
-        Account account = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
-          lastName,company,emailId));
+        Account account = DataManagementServiceImpl.getInstance()
+          .registerAccount(new Account("", "", "", emailId));
         return Response.ok(account.toString()).build();
       }
+    } catch (AccountAlreadyExistsException e) {
+      Account account = DataManagementServiceImpl.getInstance().getAccount(emailId);
+      return Response.status(Response.Status.CONFLICT)
+        .entity(Utils.getJsonError("FAILED", account.toString()))
+        .build();
     }
-    catch (Exception e){
+    catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Account Creation Failed", e))
         .build();
@@ -207,25 +225,29 @@ public class AccountHandler {
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
-      JsonElement password = jsonObject.get("password");
-      String accountPassword = StringUtils.EMPTY_STRING;
 
-      if(password !=null){
-        accountPassword = password.getAsString();
-      }
+      String accountPassword = jsonObject.get("password") == null? null : jsonObject.get("password").getAsString();
+      String firstName = jsonObject.get("first_name") == null? null : jsonObject.get("first_name").getAsString();
+      String lastName = jsonObject.get("last_name") == null? null : jsonObject.get("last_name").getAsString();
+      String company = jsonObject.get("company") == null? null : jsonObject.get("company").getAsString();
 
-      if ( accountPassword.isEmpty()){
+
+      if ( (accountPassword == null) ||  (accountPassword.isEmpty()) ||
+        (firstName == null) ||  (firstName.isEmpty()) ||
+        (lastName == null) ||  (lastName.isEmpty()) ||
+        (company == null) ||  (company.isEmpty())) {
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED","Password is missing")).build();
+          .entity(Utils.getJson("FAILED","password, first_name, last_name, company should be passed in")).build();
       }
       else {
-        AccountSecurity security = new AccountSecurity(id, accountPassword);
-        DataManagementServiceImpl.getInstance().confirmRegistration(security);
-        //Contract for the api is to return updated account to avoid a second call from the caller to get the
+        Account account = new Account(firstName, lastName,company,id);
+        AccountSecurity security = new AccountSecurity(account, accountPassword);
+        DataManagementServiceImpl.getInstance().confirmRegistration(account, accountPassword);
+          //Contract for the api is to return updated account to avoid a second call from the caller to get the
         // updated account
-        Account account = DataManagementServiceImpl.getInstance().getAccount(id);
-        if ( account !=null) {
-          return Response.ok(account.toString()).build();
+        Account accountFetched = DataManagementServiceImpl.getInstance().getAccount(id);
+        if ( accountFetched !=null) {
+          return Response.ok(accountFetched.toString()).build();
         }
         else {
           return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -242,7 +264,7 @@ public class AccountHandler {
   }
 
 
-  @Path("{id}/vpc/create")
+  @Path("{id}/vpc")
   @POST
   @Produces("application/json")
   @Consumes("application/json")
@@ -281,16 +303,51 @@ public class AccountHandler {
 
     try{
       List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(id);
-      Gson gson = new Gson();
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
       }
       else {
-        return Response.ok(gson.toJson(vpcList)).build();
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (VPC vpc : vpcList) {
+          if (first) {
+            first = false;
+          }
+          else {
+            sb.append(",");
+          }
+          sb.append(vpc.toString());
+        }
+        sb.append("]");
+        return Response.ok(sb.toString()).build();
       }
     }
     catch(Exception e){
       return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJsonError("VPC get Failed", e))
+        .build();
+    }
+  }
+
+  @Path("{accountId}/vpc/{vpcId}")
+  @GET
+  @Produces("application/json")
+  public Response getSingleVPC(@PathParam("accountId") int accountId, @PathParam("vpcId") int vpcId) {
+
+    try{
+      VPC vpc = DataManagementServiceImpl.getInstance().getVPC(accountId,vpcId);
+      if (vpc==null) {
+        return Response.status(Response.Status.NOT_FOUND)
+          .entity(Utils.getJsonError("VPC not found")).build();
+
+      }
+      else {
+        return Response.ok(vpc.toString()).build();
+      }
+    }
+    catch(Exception e){
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
     }
@@ -329,4 +386,48 @@ public class AccountHandler {
         Utils.getAuthenticatedJson("Authentication Failed.",e.getMessage())).build();
     }
   }
+
+  @Path("{id}")
+  @DELETE
+  @Produces("application/json")
+  public Response deleteAccount(@PathParam("id") int id){
+
+    try {
+
+      DataManagementServiceImpl.getInstance().deleteAccount(id);
+      return Response.ok().entity(Utils.getJsonOK()).build();
+    } catch (AccountNotFoundException e) {
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJsonError("Account not found"))
+        .build();
+    }
+    catch(RuntimeException e) {
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("Account delete Failed", e.getMessage()))
+        .build();
+
+    }
+  }
+
+  @Path("{accountId}/vpc/{vpcId}")
+  @DELETE
+  @Produces("application/json")
+  public Response deleteVPC(@PathParam("accountId") int accountId,  @PathParam("vpcId") int vpcId){
+
+    try {
+      DataManagementServiceImpl.getInstance().deleteVPC(accountId,vpcId);
+      return Response.ok().entity(Utils.getJsonOK()).build();
+    } catch (VPCNotFoundException e) {
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJsonError("VPC not found"))
+        .build();
+    }
+    catch(RuntimeException e) {
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("VPC delete Failed",e.getMessage()))
+        .build();
+
+    }
+  }
+
 }

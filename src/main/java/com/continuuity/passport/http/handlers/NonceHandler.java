@@ -1,7 +1,8 @@
-package com.continuuity.passport.http.server;
+package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.http.server.Utils;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 
 import javax.ws.rs.GET;
@@ -19,9 +20,9 @@ public class NonceHandler {
   @Path("getNonce/{id}")
   @GET
   @Produces("application/json")
-  public Response getNonce(@PathParam("id") int id){
+  public Response getSessionNonce(@PathParam("id") int id){
     try {
-      int nonce = DataManagementServiceImpl.getInstance().getNonce(id);
+      int nonce = DataManagementServiceImpl.getInstance().getSessionNonce(id);
       if (nonce != -1){
         return Response.ok(Utils.getNonceJson(nonce)).build();
       }
@@ -37,14 +38,14 @@ public class NonceHandler {
     }
   }
 
-  @Path("getNonce/{nonce}")
+  @Path("getId/{nonce}")
   @GET
   @Produces("application/json")
-  public Response getId(@PathParam("nonce") int nonce){
+  public Response getSessionId(@PathParam("nonce") int nonce){
     try {
-      int id = DataManagementServiceImpl.getInstance().getId(nonce);
+      int id = DataManagementServiceImpl.getInstance().getSessionId(nonce);
       if (id != -1){
-        return Response.ok(Utils.getNonceJson(nonce)).build();
+        return Response.ok(Utils.getNonceJson(id)).build();
       }
       else {
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
