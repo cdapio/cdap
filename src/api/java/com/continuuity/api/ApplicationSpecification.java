@@ -99,20 +99,25 @@ public interface ApplicationSpecification {
     /**
      * @return A new instance of {@link Builder}.
      */
-    public static Builder with() {
-      return new Builder();
+    public static NameSetter with() {
+      return new Builder().new NameSetter();
     }
 
     /**
-     * Sets the application name.
-     *
-     * @param name Name of the application.
-     * @return A {@link DescriptionSetter} for setting description.
+     * Class for setting name.
      */
-    public DescriptionSetter setName(String name) {
-      Preconditions.checkArgument(name != null, "Name cannot be null.");
-      this.name = name;
-      return new DescriptionSetter();
+    public final class NameSetter {
+      /**
+       * Sets the application name.
+       *
+       * @param name Name of the application.
+       * @return A {@link DescriptionSetter} for setting description.
+       */
+      public DescriptionSetter setName(String name) {
+        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        Builder.this.name = name;
+        return new DescriptionSetter();
+      }
     }
 
     /**

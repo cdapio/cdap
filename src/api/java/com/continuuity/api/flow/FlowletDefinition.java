@@ -57,7 +57,7 @@ public final class FlowletDefinition {
     this.instances = instances;
     this.resourceSpec = resourceSpec;
 
-    Set<String> datasets = Sets.newHashSet();
+    Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
     try {

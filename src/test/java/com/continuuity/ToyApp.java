@@ -8,11 +8,13 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
@@ -69,11 +71,24 @@ public class ToyApp implements Application {
   }
 
   public static final class A extends AbstractFlowlet {
+    @UseDataSet("data1")
+    private KeyValueTable myDataSet;
+
     private OutputEmitter<String> out;
     @Output("out1")
     private OutputEmitter<Float> out1;
 
+    @Override
+    public FlowletSpecification configure() {
+      return FlowletSpecification.Builder.with()
+        .setName("A")
+        .setDescription("A flowlet")
+        .useDataSet("data2", "data3")
+        .build();
+    }
+
     public void process(StreamEvent event) {
+      KeyValueTable table = flowletContext.getDataSet("data2");
       out.emit("out");
       out1.emit(2.3f);
     }

@@ -79,19 +79,24 @@ public interface FlowSpecification {
      *
      * @return a new builder instance.
      */
-    public static Builder with() {
-      return new Builder();
+    public static NameSetter with() {
+      return new Builder().new NameSetter();
     }
 
     /**
-     * Sets the name of the Flow
-     * @param name of the flow.
-     * @return An instance of {@link DescriptionSetter}
+     * Class for setting flow name.
      */
-    public DescriptionSetter setName(String name) {
-      Preconditions.checkArgument(name != null, "Name cannot be null.");
-      this.name = name;
-      return new DescriptionSetter();
+    public final class NameSetter {
+      /**
+       * Sets the name of the Flow
+       * @param name of the flow.
+       * @return An instance of {@link DescriptionSetter}
+       */
+      public DescriptionSetter setName(String name) {
+        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        Builder.this.name = name;
+        return new DescriptionSetter();
+      }
     }
 
     /**
