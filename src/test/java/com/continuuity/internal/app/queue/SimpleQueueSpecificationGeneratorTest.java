@@ -103,7 +103,7 @@ public class SimpleQueueSpecificationGeneratorTest {
                         .iterator().next().getQueueName().toString().equals("stream://demo/text"));
     Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSucker", "Tokenizer")
                         .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSucker/out"));
-    Assert.assertEquals(2, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
+    Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 
   private void dumpConnectionQueue(Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table) {
