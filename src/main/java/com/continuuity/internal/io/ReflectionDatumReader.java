@@ -158,14 +158,15 @@ public final class ReflectionDatumReader<T> {
 
     int len = decoder.readInt();
     Map<Object, Object> map = (Map<Object, Object>) create(targetTypeToken);
-    for(int i = 0; i < len; i++) {
-      Map.Entry<Schema, Schema> sourceEntry = sourceSchema.getMapSchema();
-      Map.Entry<Schema, Schema> targetEntry = targetSchema.getMapSchema();
+    while (len != 0) {
+      for(int i = 0; i < len; i++) {
+        Map.Entry<Schema, Schema> sourceEntry = sourceSchema.getMapSchema();
+        Map.Entry<Schema, Schema> targetEntry = targetSchema.getMapSchema();
 
-      map.put(
-               read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
-               read(decoder, sourceEntry.getValue(), targetEntry.getValue(), TypeToken.of(typeArgs[1]))
-      );
+        map.put(read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
+                read(decoder, sourceEntry.getValue(), targetEntry.getValue(), TypeToken.of(typeArgs[1])));
+      }
+      len = decoder.readInt();
     }
 
     return map;
