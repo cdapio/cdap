@@ -5,6 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.io.Schema;
+import com.continuuity.common.utils.ImmutablePair;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -60,32 +61,32 @@ public final class SchemaFinder {
    * </p>
    * @param output
    * @param input
-   * @return
+   * @return An {@link ImmutablePair} with first as input schema and second as output schema.
    */
   @Nullable
-  public static Schema findSchema(Set<Schema> output, Set<Schema> input) {
-    Schema compatibleSchema = null;
+  public static ImmutablePair<Schema, Schema> findSchema(Set<Schema> output, Set<Schema> input) {
+    ImmutablePair<Schema, Schema> compatibleSchema = null;
     int compatible = 0;
 
     for(Schema outputSchema : output) {
       for(Schema inputSchema : input) {
         if(outputSchema.equals(inputSchema)) {
-          return inputSchema;
+          return new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
         }
 
-        if(outputSchema.isCompatible(inputSchema)) {
-          compatibleSchema = inputSchema;
+        if (outputSchema.isCompatible(inputSchema)) {
           compatible++;
+
+          // If there are more than one compatible, then it's a problem
+          // we should have only strictly one.
+          if (compatible > 1) {
+            return null;
+          }
+          compatibleSchema = new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
         }
       }
     }
 
-    // If there are more than one compatible, then it's a problem
-    // we should have only strictly one.
-    if(compatible == 1) {
-      return compatibleSchema;
-    }
-
-    return null;
+    return compatibleSchema;
   }
 }

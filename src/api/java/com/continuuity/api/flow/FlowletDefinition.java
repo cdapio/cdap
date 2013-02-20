@@ -188,7 +188,8 @@ public final class FlowletDefinition {
             types = Sets.newHashSet();
             outputs.put(outputName, types);
           }
-          types.add(outputType);
+          Preconditions.checkArgument(types.add(outputType),
+                                      "Same output name cannot have same type; class: %s, field: %s", type, field);
         }
       }
 
@@ -231,10 +232,9 @@ public final class FlowletDefinition {
             types = Sets.newHashSet();
             inputs.put(inputName, types);
           }
-          Preconditions.checkArgument(!types.contains(inputType),
+          Preconditions.checkArgument(types.add(inputType),
                                       "Same type already defined for the same input. Type: %s, input: %s",
                                       inputType, inputName);
-          types.add(inputType);
         }
       }
     }

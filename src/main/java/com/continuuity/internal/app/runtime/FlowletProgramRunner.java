@@ -13,9 +13,15 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Flowlet;
+import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.io.Schema;
+import com.continuuity.api.io.SchemaGenerator;
+import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -25,16 +31,25 @@ import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -42,19 +57,21 @@ import java.util.List;
 public final class FlowletProgramRunner implements ProgramRunner {
 
   private final OperationExecutor opex;
-  private final OperationContext opCtx;
 
-  public FlowletProgramRunner(OperationExecutor opex, OperationContext opCtx) {
+  @Inject
+  public FlowletProgramRunner(OperationExecutor opex) {
     this.opex = opex;
-    this.opCtx = opCtx;
   }
 
   @Override
   public Controller run(Program program, ProgramOptions options) {
     try {
+      // Extract and verify parameters
       Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
 
       String flowletName = options.getName();
+      int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
+      Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -77,35 +94,53 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
+      // Creates opex related objects
+      OperationContext opCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
       TransactionProxy transactionProxy = new TransactionProxy();
       TransactionAgentSupplier txAgentSupplier = new SmartTransactionAgentSupplier(opex, opCtx, transactionProxy);
       DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
-      DataSetContext dataSetCtxr = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
+      dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
 
-      final FlowletProcessDriver driver = instantiateFlowlet(flowSpec, flowletDef, flowletName,
-                                                       flowletClass, dataSetCtxr, txAgentSupplier);
+      // Creates flowlet context
+      BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
+                                                                   createDataSets(dataSetInstantiator, flowletDef));
 
-      driver.start();
-      return new Controller() {
-        @Override public void suspend() { driver.suspend(); }
-        @Override public void resume() { driver.resume(); }
-        @Override public void stop() { driver.stopAndWait(); }
-      };
+      // Creates QueueSpecification
+//      Table<String,String,Set<QueueSpecification>> queueSpecs =
+//        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
+//            .create(flowSpec);
+//
+//      final FlowletProcessDriver driver = instantiateFlowlet(flowletClass,
+//                                                             flowletContext,
+//                                                             outputEmitterFactory(flowletContext.getQueueProducer(),
+//                                                                                  queueSpecs));
+
+//      driver.start();
+//      return new Controller() {
+//        @Override public void suspend() { driver.suspend(); }
+//        @Override public void resume() { driver.resume(); }
+//        @Override public void stop() { driver.stopAndWait(); }
+//      };
+      return null;
 
     } catch(Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  private FlowletProcessDriver instantiateFlowlet(FlowSpecification flowSpec, FlowletDefinition flowletDef,
+  private FlowletProcessDriver instantiateFlowlet(Class<? extends Flowlet> flowletClass,
+                                                  FlowletContext flowletContext,
+                                                  OutputEmitterFactory outputEmitterFactory,
+                                                  SchemaCache schemaCache,
+                                                  FlowletDefinition flowletDef,
+                                                  FlowSpecification flowSpec,
                                                   String flowletName,
-                                                  Class<? extends Flowlet> flowletClass,
-                                                  DataSetContext dataSetCtx,
                                                   TransactionAgentSupplier txAgentSupplier) throws Exception {
 
     TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
     Flowlet flowlet = flowletClass.newInstance();
-    List<OutputEmitter<?>> outputEmitters = Lists.newArrayList();
+    ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
 
     // Walk up the hierarchy of flowlet class.
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
@@ -118,13 +153,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
         // Inject DataSet
         if (DataSet.class.isAssignableFrom(field.getType())) {
           UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset == null || dataset.value().isEmpty()) {
-            continue;
+          if (dataset != null && !dataset.value().isEmpty()) {
+            setField(flowlet, field, flowletContext.getDataSet(dataset.value()));
           }
-          if (!field.isAccessible()) {
-            field.setAccessible(true);
-          }
-          field.set(flowlet, dataSetCtx.getDataSet(dataset.value()));
           continue;
         }
         // Inject OutputEmitter
@@ -134,19 +165,23 @@ public final class FlowletProgramRunner implements ProgramRunner {
           String outputName = field.isAnnotationPresent(Output.class) ?
                     field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
 
-          // TODO: Lookup queue name by output name
-          // TODO: Find way to create QueueProducer
-
-//          TransactionOutputEmitter<?> outputEmitter =
-//            new ReflectionOutputEmitter(new QueueProducer(), queueName, flowletDef.getOutputs().get(outputName).iterator().next());
-//          if (!field.isAccessible()) {
-//            field.setAccessible(true);
-//          }
-//          field.set(flowlet, outputEmitter);
-//          outputEmitters.add(outputEmitter);
+          OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputType);
+          setField(flowlet, field, outputEmitter);
+          if (outputEmitter instanceof OutputSubmitter) {
+            outputSubmitters.add((OutputSubmitter)outputEmitter);
+          }
         }
       }
+    }
 
+    OutputSubmitter outputSubmitter = new MultiOutputSubmitter(outputSubmitters.build());
+
+    // Walk up the hierarchy of flowlet class again to get all process methods
+    // It needs to be traverse twice because process method needs to know all output emitters.
+    for (TypeToken<?> type : flowletType.getTypes().classes()) {
+      if (type.getRawType().equals(Object.class)) {
+        break;
+      }
       // Extracts all process methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
         Process processAnnotation = method.getAnnotation(Process.class);
@@ -167,5 +202,68 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
     }
     return null;
+  }
+
+  private Map<String, DataSet> createDataSets(DataSetContext dataSetContext,
+                                              FlowletDefinition flowletDef) {
+
+    ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
+
+    for (String dataSetName : flowletDef.getDatasets()) {
+      builder.put(dataSetName, dataSetContext.getDataSet(dataSetName));
+    }
+
+    return builder.build();
+  }
+
+  private OutputEmitterFactory outputEmitterFactory(final String flowletName,
+                                                    final QueueProducer queueProducer,
+                                                    final Table<String, String, Set<QueueSpecification>> queueSpecs) {
+    final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
+
+    return new OutputEmitterFactory() {
+      @Override
+      public OutputEmitter<?> create(TypeToken<?> type) {
+        try {
+          Schema schema = schemaGenerator.generate(type.getType());
+
+          for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowletName).values())) {
+            if (queueSpec.getInputSchema().equals(schema)) {
+              return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema);
+            }
+          }
+
+          throw new IllegalArgumentException(String.format("No queue specification found for %s, %s",
+                                                           flowletName, type));
+
+        } catch (UnsupportedTypeException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+
+  private void setField(Flowlet flowlet, Field field, Object value) throws IllegalAccessException {
+    if (!field.isAccessible()) {
+      field.setAccessible(true);
+    }
+    field.set(flowlet, value);
+  }
+
+  private SchemaCache createSchemaCache(Program program) throws ClassNotFoundException {
+    ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
+
+    for (FlowSpecification flowSpec : program.getSpecification().getFlows().values()) {
+      for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
+        schemas.addAll(Iterables.concat(flowletDef.getInputs().values()));
+        schemas.addAll(Iterables.concat(flowletDef.getOutputs().values()));
+      }
+    }
+
+    return new SchemaCache(schemas.build(), program.getMainClass().getClassLoader());
+  }
+
+  private static interface OutputEmitterFactory {
+    OutputEmitter<?> create(TypeToken<?> type);
   }
 }

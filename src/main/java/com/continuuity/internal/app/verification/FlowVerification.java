@@ -7,6 +7,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.error.Err;
 import com.continuuity.internal.app.SchemaFinder;
 
@@ -135,7 +136,7 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
         // are same (equal or compatible)
         if(outputName.equals(inputName)) {
           found = SchemaFinder.checkSchema(entryOutput.getValue(), entryInput.getValue());
-          Schema c = SchemaFinder.findSchema(entryOutput.getValue(), entryInput.getValue());
+          ImmutablePair<Schema, Schema> c = SchemaFinder.findSchema(entryOutput.getValue(), entryInput.getValue());
         }
 
         // If not found there, we do a small optimization where we check directly if

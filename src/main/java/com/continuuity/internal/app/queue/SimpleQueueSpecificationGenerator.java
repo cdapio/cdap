@@ -13,16 +13,13 @@ import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.continuuity.internal.app.SchemaFinder;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
-import com.google.common.reflect.TypeToken;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +28,19 @@ import java.util.Set;
  * names.
  */
 public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecificationGenerator {
+
+  private static final Schema STREAM_EVENT_SCHEMA;
+
+  static {
+    Schema schema = null;
+    try {
+      schema = new ReflectionSchemaGenerator().generate(StreamEvent.class);
+    } catch (UnsupportedTypeException e) {
+      schema = null;
+    }
+    STREAM_EVENT_SCHEMA = schema;
+  }
+
   /**
    * Account Name under which the stream names to generated.
    */
@@ -64,47 +74,21 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
       final String target = connection.getTargetName();
       final Node sourceNode = new Node(connection.getSourceType(), source);
 
-      // If the source type is a flowlet, then we attempt to find a matching
-      // connection that is equal or compatible. Equality has higher priority
-      // over compatibility.
-      if(connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
-        List<SchemaURIHolder> holders = findSchema(flow, flowlets.get(source), flowlets.get(target));
-        for(SchemaURIHolder holder : holders) {
-          if(table.contains(sourceNode, target)) {
-            table.get(sourceNode, target).add(createSpec(holder.getOutput(), holder.getSchema()));
-          } else {
-            table.put(sourceNode, target, Sets.newHashSet(createSpec(holder.getOutput(), holder.getSchema())));
-          }
-        }
+      Set<QueueSpecification> queueSpec;
+      if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        queueSpec = generateQueueSpecification(account, flow, connection,
+                                               flowlets.get(target).getInputs(), flowlets.get(source).getOutputs());
+      } else {
+        queueSpec = generateQueueSpecification(account, flow, connection, flowlets.get(target).getInputs(),
+                                               ImmutableMap.<String, Set<Schema>>of(
+                                                  connection.getSourceName(), ImmutableSet.of(STREAM_EVENT_SCHEMA)));
       }
-
-      // Connection is a Stream.
-      if(connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        try {
-          // Create schema for StreamEvent and compare that with the inputs of the flowlet.
-          final Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<StreamEvent>() {}).getType                                                                                                     ());
-          Schema foundSchema = null;
-          for(Map.Entry<String, Set<Schema>> entry : flowlets.get(target).getInputs().entrySet()) {
-            foundSchema = SchemaFinder.findSchema(ImmutableSet.of(schema), entry.getValue());
-            if(foundSchema != null) {
-              break;
-            }
-          }
-
-          if(foundSchema != null) {
-            if(table.contains(sourceNode, target)) {
-              table.get(sourceNode, target).add(createSpec(streamURI(account, source), foundSchema));
-            } else {
-              table.put(sourceNode, target,Sets.newHashSet(createSpec(streamURI(account, source), foundSchema)));
-            }
-          } else {
-            throw new RuntimeException("Unable to find matching schema for connection between "
-                                        + source + " and %s " + target);
-          }
-        } catch(UnsupportedTypeException e) {
-          throw Throwables.propagate(e);
-        }
+      Set<QueueSpecification> queueSpecifications = table.get(sourceNode, target);
+      if (queueSpecifications == null) {
+        queueSpecifications = Sets.newHashSet();
+        table.put(sourceNode, target, queueSpecifications);
       }
+      queueSpecifications.addAll(queueSpec);
     }
     return table;
   }
