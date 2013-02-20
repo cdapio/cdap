@@ -41,8 +41,6 @@ import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
-import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -50,12 +48,10 @@ import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -554,17 +550,10 @@ public class OmidTransactionalOperationExecutor
     // Execute operations
     List<Undo> undos = new ArrayList<Undo>(writes.size());
 
-    // Track a map from increment operation ids to post-increment values
-    Map<Long,Long> incrementResults = new TreeMap<Long,Long>();
     boolean abort = false;
-
     WriteTransactionResult writeTxReturn = null;
     for (WriteOperation write : orderedWrites) {
 
-      // See if write operation is an enqueue, and if so, update serialized data
-      if (write instanceof QueueEnqueue) {
-        processEnqueue((QueueEnqueue)write, incrementResults);
-      }
       writeTxReturn = dispatchWrite(context, write, transaction);
 
       if (!writeTxReturn.success) {
@@ -575,16 +564,6 @@ public class OmidTransactionalOperationExecutor
       } else {
         // Write was successful.  Store undo if we need to abort and continue
         undos.addAll(writeTxReturn.undos);
-        // See if write operation was an Increment, and if so, add result to map
-        if (write instanceof Increment) {
-          // TODO this is for the old increment pass-through. It only works for a single column
-          // TODO remove this as soon as increment pass-thru is obsolete
-          Map<byte[], Long> result = writeTxReturn.incrementResult;
-          if (result != null && result.size() > 0) {
-            incrementResults.put(write.getId(), result.values().iterator().next());
-          }
-
-        }
       }
     }
 
@@ -701,53 +680,6 @@ public class OmidTransactionalOperationExecutor
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
       abort(context, transaction);
       throw new OmidTransactionException(writeTxReturn.statusCode, writeTxReturn.message);
-    }
-  }
-
-  /**
-   * Deserializes enqueue data into enqueue payload, checks if any fields are
-   * marked to contain increment values, construct a dequeue payload, update any
-   * fields necessary, and finally update the enqueue data to contain a dequeue
-   * payload.
-   */
-  private void processEnqueue(QueueEnqueue enqueue,
-      Map<Long, Long> incrementResults) throws OperationException {
-    if (DISABLE_QUEUE_PAYLOADS) return;
-    // Deserialize enqueue payload
-    byte [] enqueuePayloadBytes = enqueue.getData();
-    EnqueuePayload enqueuePayload;
-    try {
-      enqueuePayload = EnqueuePayload.read(enqueuePayloadBytes);
-    } catch (IOException e) {
-      // Unable to deserialize the enqueue payload, fatal error (if queues are
-      // not using payloads, change DISABLE_QUEUE_PAYLOADS=true
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-    Map<String,Long> fieldsToIds = enqueuePayload.getOperationIds();
-    Map<String,Long> fieldsToValues = new TreeMap<String,Long>();
-
-    // For every field-to-id mapping, find increment result
-    for (Map.Entry<String,Long> fieldAndId : fieldsToIds.entrySet()) {
-      String field = fieldAndId.getKey();
-      Long operationId = fieldAndId.getValue();
-      Long incrementValue = incrementResults.get(operationId);
-      if (incrementValue == null) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR,
-            "Field specified as containing an increment result but no " +
-                "matching increment operation found");
-      }
-      // Store field-to-value in map for dequeue payload
-      fieldsToValues.put(field, incrementValue);
-    }
-
-    // Serialize dequeue payload and overwrite enqueue data
-    try {
-      enqueue.setData(DequeuePayload.write(fieldsToValues, enqueuePayload.getSerializedTuple()));
-    } catch (IOException e) {
-      // Fatal error serializing dequeue payload
-      e.printStackTrace();
-      throw new RuntimeException(e);
     }
   }
 
