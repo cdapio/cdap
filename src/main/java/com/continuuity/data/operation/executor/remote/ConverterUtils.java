@@ -545,8 +545,10 @@ public class ConverterUtils {
    * by data fabric, we log an error and default to random.
    */
   TQueuePartitioner wrap(PartitionerType partitioner) {
-    if (PartitionerType.HASH_ON_VALUE.equals(partitioner))
+    if (PartitionerType.HASH.equals(partitioner))
       return TQueuePartitioner.HASH;
+    if (PartitionerType.HASH_ON_VALUE.equals(partitioner))
+      return TQueuePartitioner.HASH_ON_VALUE;
     if (PartitionerType.FIFO.equals(partitioner))
       return TQueuePartitioner.FIFO;
     if (PartitionerType.ROUND_ROBIN.equals(partitioner))
@@ -562,6 +564,8 @@ public class ConverterUtils {
    */
   PartitionerType unwrap(TQueuePartitioner tPartitioner) {
     if (TQueuePartitioner.HASH.equals(tPartitioner))
+      return PartitionerType.HASH;
+    if (TQueuePartitioner.HASH_ON_VALUE.equals(tPartitioner))
       return PartitionerType.HASH_ON_VALUE;
     if (TQueuePartitioner.FIFO.equals(tPartitioner))
       return PartitionerType.FIFO;

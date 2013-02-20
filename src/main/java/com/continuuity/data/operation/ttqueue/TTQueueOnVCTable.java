@@ -528,8 +528,11 @@ public class TTQueueOnVCTable implements TTQueue {
         QueueEntry entry=QueueEntrySerializer.deserialize(headerPlusData.getValue());
         byte[] data=entry.getData();
         QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
-
-        if (!partitioner.shouldEmit(consumer, entryPointer.getEntryId(), data)) {
+        if (config.getPartitionerType()== QueuePartitioner.PartitionerType.HASH
+            && !partitioner.shouldEmit(consumer, entryPointer.getEntryId(),
+                                       entry.getHash(consumer.getPartitioningKey())) ||
+          config.getPartitionerType()!= QueuePartitioner.PartitionerType.HASH
+            && !partitioner.shouldEmit(consumer, entryPointer.getEntryId(), entry.getData())) {
           // Partitioner says skip, flag as available, move to next entry in shard
 
           if (TRACE) log("Partitioner rejected this entry, skip");
