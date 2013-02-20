@@ -32,7 +32,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
   private static final Schema STREAM_EVENT_SCHEMA;
 
   static {
-    Schema schema = null;
+    Schema schema;
     try {
       schema = new ReflectionSchemaGenerator().generate(StreamEvent.class);
     } catch (UnsupportedTypeException e) {

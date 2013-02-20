@@ -13,14 +13,9 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.app.SchemaFinder;
-import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,19 +37,24 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
 
     ImmutableSet.Builder<QueueSpecification> builder = ImmutableSet.builder();
 
-    // Iterate through all the outputs and for each output we go over
-    // all the inputs. If there is exact match of schema then we pick
-    // that over the compatible one.
+    // Iterate through all the outputs and look for an input with compatible schema.
+    // If no such input is found, look for one with ANY_INPUT.
+    // If there is exact match of schema then we pick that over the compatible one.
     for(Map.Entry<String, Set<Schema>> entryOutput : outputSchemas.entrySet()) {
       String outputName = entryOutput.getKey();
 
       Set<Schema> nameOutputSchemas = inputSchemas.get(outputName);
-      if (nameOutputSchemas == null) {
-        nameOutputSchemas = inputSchemas.get(FlowletDefinition.ANY_INPUT);
+      ImmutablePair<Schema, Schema> schemas =
+        (nameOutputSchemas == null) ? null : SchemaFinder.findSchema(entryOutput.getValue(), nameOutputSchemas);
+
+      if (schemas == null) {
+        // Try ANY_INPUT
+        Set<Schema> anyInputSchemas = inputSchemas.get(FlowletDefinition.ANY_INPUT);
+        if (anyInputSchemas != null) {
+          schemas = SchemaFinder.findSchema(entryOutput.getValue(), anyInputSchemas);
+        }
       }
 
-      ImmutablePair<Schema, Schema> schemas =
-            (nameOutputSchemas == null) ? null : SchemaFinder.findSchema(entryOutput.getValue(), nameOutputSchemas);
       if (schemas == null) {
         continue;
       }

@@ -6,11 +6,8 @@ import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
-import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.common.logging.common.LocalLogWriter;
-import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -26,8 +23,10 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,12 +36,12 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FlowletProcessDriver.class);
-  private static final int TX_EXECUTOR_POOL_SIZE = 2;
+  private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
-  private static int PROCESS_MAX_RETRY = 10;
+  private static final int PROCESS_MAX_RETRY = 10;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -72,11 +71,17 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     if (flowletContext.isAsyncMode()) {
-      transactionExecutor = Executors.newFixedThreadPool(TX_EXECUTOR_POOL_SIZE,
-                                                         new ThreadFactoryBuilder()
-                                                           .setDaemon(true)
-                                                           .setNameFormat("tx-executor-%d")
-                                                           .build());
+      ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("tx-executor-%d").build();
+
+      // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
+      // 60 seconds wait time before killing idle threads.
+      // Keep no idle threads more than 60 seconds.
+      // If max thread pool size reached, execute the task in the submitter thread
+      // (basically fallback to sync mode if things comes too fast
+      transactionExecutor = new ThreadPoolExecutor(0, TX_EXECUTOR_POOL_SIZE,
+                                    60L, TimeUnit.SECONDS,
+                                    new SynchronousQueue<Runnable>(),
+                                    threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
     } else {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }

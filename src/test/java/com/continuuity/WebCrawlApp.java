@@ -127,8 +127,8 @@ public class WebCrawlApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("CrawlFlow")
         .setDescription("Flow for crawling pages")
-        .withFlowlets().add(new UrlSanitizer()).apply()
-        .add(new UrlCrawler()).apply()
+        .withFlowlets().add(new UrlSanitizer())
+        .add(new UrlCrawler())
         .connect().from(new Stream("url")).to(new UrlSanitizer())
         .from(new UrlSanitizer()).to(new UrlCrawler())
         .build();

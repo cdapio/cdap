@@ -18,36 +18,12 @@ public final class SchemaFinder {
   /**
    * Given two schema's checks if there exists compatibility or equality.
    *
-   * @param output Output {@link Schema} of source flowlet.
-   * @param input  Input {@link Schema} of target flowlet.
+   * @param output Set of output {@link Schema}.
+   * @param input  Set of input {@link Schema}.
    * @return true if and only if they are equal or compatible with constraints
    */
   public static boolean checkSchema(Set<Schema> output, Set<Schema> input) {
-    for(Schema outputSchema : output) {
-      int equal = 0;
-      int compatible = 0;
-      for(Schema inputSchema : input) {
-        if(outputSchema.equals(inputSchema)) {
-          equal++;
-        }
-        if(outputSchema.isCompatible(inputSchema)) {
-          compatible++;
-        }
-      }
-
-      // There is max of one output schema that is capable of handling
-      // the input.
-      if(equal > 1) {
-        return false;
-      }
-
-      // There is min of 1 compatible in light of none being equal to handle
-      // input.
-      if(equal < 1 && compatible < 1) {
-        return false;
-      }
-    }
-    return true;
+    return findSchema(output, input) != null;
   }
 
   /**
@@ -59,14 +35,13 @@ public final class SchemaFinder {
    *     <li>In case of compatible, we try to find one schema and only one. More than one is a error.</li>
    *   </ul>
    * </p>
-   * @param output
-   * @param input
+   * @param output Set of output {@link Schema}.
+   * @param input  Set of input {@link Schema}.
    * @return An {@link ImmutablePair} with first as input schema and second as output schema.
    */
   @Nullable
   public static ImmutablePair<Schema, Schema> findSchema(Set<Schema> output, Set<Schema> input) {
     ImmutablePair<Schema, Schema> compatibleSchema = null;
-    int compatible = 0;
 
     for(Schema outputSchema : output) {
       for(Schema inputSchema : input) {
@@ -75,11 +50,9 @@ public final class SchemaFinder {
         }
 
         if (outputSchema.isCompatible(inputSchema)) {
-          compatible++;
-
           // If there are more than one compatible, then it's a problem
           // we should have only strictly one.
-          if (compatible > 1) {
+          if (compatibleSchema != null) {
             return null;
           }
           compatibleSchema = new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
@@ -89,4 +62,6 @@ public final class SchemaFinder {
 
     return compatibleSchema;
   }
+
+  private SchemaFinder() {}
 }

@@ -5,10 +5,8 @@
 package com.continuuity.api.flow;
 
 import com.continuuity.api.data.stream.Stream;
-import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.internal.api.flow.DefaultFlowSpecification;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -135,18 +133,39 @@ public interface FlowSpecification {
     public interface FlowletAdder {
       /**
        * Add a flowlet to the flow.
-       * @param flowlet to be added to flow.
-       * @return An instance of {@link ResourceSpecification.Builder}
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets
        */
-      ResourceSpecification.Builder<MoreFlowlet> add(Flowlet flowlet);
+      MoreFlowlet add(Flowlet flowlet);
 
       /**
-       * Add a flowlet to flow with minimum number of instance to begin with.
-       * @param flowlet to be added to flow.
-       * @param instances of flowlet
-       * @return An instance of {@link ResourceSpecification.Builder}
+       * Add a flowlet to flow with minimum number of instances to begin with.
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @param instances Number of instances for the flowlet
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets
        */
-      ResourceSpecification.Builder<MoreFlowlet> add(Flowlet flowlet, int instances);
+      MoreFlowlet add(Flowlet flowlet, int instances);
+
+      /**
+       * Add a flowlet to flow with the given name. The name given would overrides the one
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * returned by {@link Flowlet#configure()}.
+       * @param name Name of the flowlet
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets.
+       */
+      MoreFlowlet add(String name, Flowlet flowlet);
+
+      /**
+       * Add a flowlet to flow with the given name with minimum number of instances to begin with.
+       * The name given would overrides the one
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * returned by {@link Flowlet#configure()}.
+       * @param name Name of the flowlet
+       * @param flowlet {@link Flowlet} instance to be added to flow.
+       * @return An instance of {@link MoreFlowlet} for adding more flowlets.
+       */
+      MoreFlowlet add(String name, Flowlet flowlet, int instances);
     }
 
     /**
@@ -154,38 +173,32 @@ public interface FlowSpecification {
      */
     public final class MoreFlowlet implements FlowletAdder {
 
-      /**
-       * Add a flowlet to the flow.
-       * @param flowlet to be added to flow.
-       * @return An instance of {@link ResourceSpecification.Builder}
-       */
       @Override
-      public ResourceSpecification.Builder<MoreFlowlet> add(Flowlet flowlet) {
+      public MoreFlowlet add(Flowlet flowlet) {
         return add(flowlet, 1);
       }
 
-      /**
-       * Adds a flowlet to flow with minimum number of instance to begin with.
-       * @param flowlet to be added to flow.
-       * @param instances of flowlet
-       * @return An instance of {@link ResourceSpecification.Builder}
-       */
       @Override
-      public ResourceSpecification.Builder<MoreFlowlet> add(final Flowlet flowlet, final int instances) {
+      public MoreFlowlet add(final Flowlet flowlet, int instances) {
+        return add(null, flowlet, instances);
+      }
+
+      @Override
+      public MoreFlowlet add(String name, Flowlet flowlet) {
+        return add(name, flowlet, 1);
+      }
+
+      @Override
+      public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
         Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
         Preconditions.checkArgument(instances > 0, "Number of instances must be > 0");
 
-        final MoreFlowlet moreFlowlet = this;
-        return ResourceSpecification.<MoreFlowlet>builder(new Function<ResourceSpecification, MoreFlowlet>() {
-          @Override
-          public MoreFlowlet apply(ResourceSpecification resourceSpec) {
-            FlowletDefinition flowletDef = new FlowletDefinition(flowlet, instances, resourceSpec);
-            String flowletName = flowletDef.getFlowletSpec().getName();
-            Preconditions.checkArgument(!flowlets.containsKey(flowletName), "Flowlet %s already defined", flowletName);
-            flowlets.put(flowletName, flowletDef);
-            return moreFlowlet;
-          }
-        });
+        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
+        String flowletName = flowletDef.getFlowletSpec().getName();
+        Preconditions.checkArgument(!flowlets.containsKey(flowletName), "Flowlet %s already defined", flowletName);
+        flowlets.put(flowletName, flowletDef);
+
+        return this;
       }
 
       /**
@@ -214,6 +227,20 @@ public interface FlowSpecification {
        * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       ConnectTo from(Stream stream);
+
+      /**
+       * Defines the flowlet that is at run of the connection by the flowlet name.
+       * @param flowlet Name of the flowlet.
+       * @return And instance of {@link ConnectTo} specifying the flowlet it will connect to.
+       */
+      ConnectTo from(String flowlet);
+
+      /**
+       * Defines the stream that the connection is reading from by the stream name.
+       * @param stream Instance of stream.
+       * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
+       */
+      ConnectTo fromStream(String stream);
     }
 
     /**
@@ -226,6 +253,13 @@ public interface FlowSpecification {
        * @return A instance of {@link MoreConnect} to define more connections of flowlets in a flow.
        */
       MoreConnect to(Flowlet flowlet);
+
+      /**
+       * Defines the flowlet that connection is connecting to by the flowlet name.
+       * @param flowlet Name of the flowlet the connection connects to.
+       * @return A instance of {@link MoreConnect} to define more connections of flowlets in a flow.
+       */
+      MoreConnect to(String flowlet);
     }
 
     /**
@@ -255,13 +289,7 @@ public interface FlowSpecification {
       @Override
       public ConnectTo from(Flowlet flowlet) {
         Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
-        String flowletName = flowlet.configure().getName();
-        Preconditions.checkArgument(flowlets.containsKey(flowletName), "Undefined flowlet %s", flowletName);
-
-        fromFlowlet = flowlets.get(flowletName);
-        fromStream = null;
-
-        return this;
+        return from(flowlet.configure().getName());
       }
 
       /**
@@ -272,11 +300,22 @@ public interface FlowSpecification {
       @Override
       public ConnectTo from(Stream stream) {
         Preconditions.checkArgument(stream != null, "Stream cannot be null");
-        StreamSpecification streamSpec = stream.configure();
+        return fromStream(stream.configure().getName());
+      }
 
+      @Override
+      public ConnectTo from(String flowlet) {
+        Preconditions.checkArgument(flowlets.containsKey(flowlet), "Undefined flowlet %s", flowlet);
+        fromFlowlet = flowlets.get(flowlet);
+        fromStream = null;
+        return this;
+      }
+
+      @Override
+      public ConnectTo fromStream(String stream) {
+        Preconditions.checkArgument(stream != null, "Stream cannot be null");
         fromFlowlet = null;
-        fromStream = streamSpec.getName();
-
+        fromStream = stream;
         return this;
       }
 
@@ -288,8 +327,13 @@ public interface FlowSpecification {
       @Override
       public MoreConnect to(Flowlet flowlet) {
         Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
-        String flowletName = flowlet.configure().getName();
-        Preconditions.checkArgument(flowlets.containsKey(flowletName), "Undefined flowlet %s", flowletName);
+        return to(flowlet.configure().getName());
+      }
+
+      @Override
+      public MoreConnect to(String flowlet) {
+        Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
+        Preconditions.checkArgument(flowlets.containsKey(flowlet), "Undefined flowlet %s", flowlet);
 
         FlowletConnection.Type sourceType;
         String sourceName;
@@ -300,8 +344,9 @@ public interface FlowSpecification {
           sourceType = FlowletConnection.Type.FLOWLET;
           sourceName = fromFlowlet.getFlowletSpec().getName();
         }
-        connections.add(new FlowletConnection(sourceType, sourceName, flowletName));
+        connections.add(new FlowletConnection(sourceType, sourceName, flowlet));
         return this;
+
       }
 
       @Override
