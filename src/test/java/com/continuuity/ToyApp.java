@@ -80,6 +80,10 @@ public class ToyApp implements Application {
     @Output("out1")
     private OutputEmitter<Float> out1;
 
+    public A() {
+      super("A");
+    }
+
     @Override
     public FlowletSpecification configure() {
       return FlowletSpecification.Builder.with()
@@ -99,6 +103,10 @@ public class ToyApp implements Application {
   public static final class B extends AbstractFlowlet {
     private OutputEmitter<Boolean> out;
 
+    public B() {
+      super("B");
+    }
+
     public void process(StreamEvent event) {
       out.emit(false);
     }
@@ -111,6 +119,10 @@ public class ToyApp implements Application {
     @Output("c2")
     private OutputEmitter<Integer> c2;
 
+    public C() {
+      super("C");
+    }
+
     public void process(String A) {
       c1.emit(1L);
       c2.emit(1);
@@ -119,6 +131,10 @@ public class ToyApp implements Application {
 
   public static final class E extends AbstractFlowlet {
     private OutputEmitter<Double> out;
+
+    public E() {
+      super("E");
+    }
 
     @Process("out1")
     void process(Float f) {
@@ -134,6 +150,10 @@ public class ToyApp implements Application {
     @Output("d1")
     private OutputEmitter<List<String>> out;
 
+    public D() {
+      super("D");
+    }
+
     @Process("c1")
     void process(Long l) {
       List<String> p = Lists.newArrayList();
@@ -145,6 +165,10 @@ public class ToyApp implements Application {
     @Output("f1")
     private OutputEmitter<URI> f1;
 
+    public F() {
+      super("F");
+    }
+
     @Process("c2")
     void process(Integer i) {
       f1.emit(URI.create("http://www.google.com"));
@@ -152,6 +176,10 @@ public class ToyApp implements Application {
   }
 
   public static final class G extends AbstractFlowlet {
+    public G() {
+      super("G");
+    }
+
     @Process("d1")
     public void process(List<String> s) {
 

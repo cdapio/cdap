@@ -11,7 +11,6 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.common.metrics.Metrics;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -28,14 +27,12 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -108,6 +105,10 @@ public class WordCountApp implements Application {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
 
+    public StreamSucker() {
+      super("StreamSucker");
+    }
+
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
       if (!"text".equals(context.getName())) {
         return;
@@ -126,6 +127,10 @@ public class WordCountApp implements Application {
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
+
+    public Tokenizer() {
+      super("Tokenizer");
+    }
 
     @Process
     public void foo(MyRecord data) {
@@ -148,6 +153,10 @@ public class WordCountApp implements Application {
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
+
+    public CountByField() {
+      super("CountByField");
+    }
 
     @Process("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
@@ -180,6 +189,10 @@ public class WordCountApp implements Application {
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
+
+    public WordFrequency() {
+      super("WordFrequency");
+    }
 
     @Handle("wordfreq")
     public void process(String word) throws OperationException {
