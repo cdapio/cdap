@@ -18,8 +18,8 @@ public class Status {
 
   private final String reason;
 
-  public Status( final Value value) {
-    this (value, "");
+  public Status(final Value value) {
+    this(value, "");
   }
 
   public Status(Value value, String reason) {

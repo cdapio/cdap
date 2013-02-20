@@ -8,14 +8,14 @@ import java.sql.SQLException;
 
 
 /**
- *  Test Helper for unit/integration tests
- *  Uses HSQLDB instance for testing
+ * Test Helper for unit/integration tests
+ * Uses HSQLDB instance for testing
  */
 public class TestHelper {
 
-  private  static Server server = null;
-  private static final String CREATE_TABLE_ACCOUNT ="CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
-                                               ", company VARCHAR(100))";
+  private static Server server = null;
+  private static final String CREATE_TABLE_ACCOUNT = "CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
+    ", company VARCHAR(100))";
   private static final String CREATE_TABLE_VPC = "CREATE TABLE vpc (account_name VARCHAR(100), vpc_name VARCHAR(100))";
 
   private static final String DROP_TABLE_ACCOUNT = "DROP TABLE account";
@@ -36,7 +36,7 @@ public class TestHelper {
     server.start();
     Class.forName("org.hsqldb.jdbcDriver");
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
-                                            "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
+      "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
     connection.createStatement().execute(CREATE_TABLE_ACCOUNT);
     connection.createStatement().execute(CREATE_TABLE_VPC);
 

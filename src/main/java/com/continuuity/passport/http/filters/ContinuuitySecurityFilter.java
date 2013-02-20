@@ -1,11 +1,6 @@
-package com.continuuity.passport.http.server;
+package com.continuuity.passport.http.filters;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -16,7 +11,7 @@ import java.io.IOException;
 public class ContinuuitySecurityFilter implements Filter {
 
   private final static String CONTINUUITY_SIGNATURE = "abcdef";
-  private final static String  CONTINUUITY_SIGNATURE_HEADER = "X-Continuuity-Signature";
+  private final static String CONTINUUITY_SIGNATURE_HEADER = "X-Continuuity-Signature";
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -27,11 +22,10 @@ public class ContinuuitySecurityFilter implements Filter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
     ServletException {
     HttpServletRequest req = (HttpServletRequest) request;
-    String continuuitySignature  = req.getHeader(CONTINUUITY_SIGNATURE_HEADER);
-    if (validContinuuitySignature(continuuitySignature)){
-     chain.doFilter(request,response);
-    }
-    else {
+    String continuuitySignature = req.getHeader(CONTINUUITY_SIGNATURE_HEADER);
+    if (validContinuuitySignature(continuuitySignature)) {
+      chain.doFilter(request, response);
+    } else {
       HttpServletResponse httpResponse = (HttpServletResponse) response;
       httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
     }
@@ -41,11 +35,10 @@ public class ContinuuitySecurityFilter implements Filter {
   public void destroy() {
   }
 
-  private boolean validContinuuitySignature(String signature){
-    if (signature!=null && !signature.isEmpty()) {
+  private boolean validContinuuitySignature(String signature) {
+    if (signature != null && !signature.isEmpty()) {
       return CONTINUUITY_SIGNATURE.equals(signature.trim());
-    }
-    else {
+    } else {
       return false;
     }
   }

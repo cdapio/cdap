@@ -16,7 +16,7 @@ public class Role {
   }
 
   public Role(String roleName, String permissions) {
-    this("",roleName,permissions);
+    this("", roleName, permissions);
   }
 
   public String getRoleType() {

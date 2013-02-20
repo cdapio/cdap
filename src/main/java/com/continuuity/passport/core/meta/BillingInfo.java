@@ -1,8 +1,8 @@
 package com.continuuity.passport.core.meta;
 
 /**
-*
-*/
+ *
+ */
 public class BillingInfo {
 
   private final String creditCardName;

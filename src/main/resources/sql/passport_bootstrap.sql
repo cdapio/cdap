@@ -2,18 +2,18 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
-CREATE SCHEMA IF NOT EXISTS `continuuity` DEFAULT CHARACTER SET latin1 ;
-USE `continuuity` ;
+CREATE SCHEMA IF NOT EXISTS `passport` DEFAULT CHARACTER SET latin1 ;
+USE `passport` ;
 
 -- -----------------------------------------------------
--- Table `continuuity`.`account`
+-- Table `passport`.`account`
 -- Table to hold the account information
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
+CREATE  TABLE IF NOT EXISTS `passport`.`account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `first_name` VARCHAR(50) NOT NULL ,
-  `last_name` VARCHAR(50) NOT NULL ,
-  `company` VARCHAR(100) NOT NULL ,
+  `first_name` VARCHAR(50) NULL DEFAULT NULL ,
+  `last_name` VARCHAR(50) NULL DEFAULT NULL ,
+  `company` VARCHAR(100) NULL DEFAULT NULL,
   `email_id` VARCHAR(100) NOT NULL ,
   `salt`  VARCHAR(20) NULL DEFAULT NULL,
   `password` VARCHAR(100) NULL DEFAULT NULL ,
@@ -29,10 +29,10 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`account_payment`
+-- Table `passport`.`account_payment`
 -- Store payment information for the accounts
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`account_payment` (
+CREATE  TABLE IF NOT EXISTS `passport`.`account_payment` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
   `credit_card_number` VARCHAR(20) NULL DEFAULT NULL ,
@@ -43,47 +43,47 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account_payment` (
   INDEX `account_id` (`account_id` ASC) ,
   CONSTRAINT `account_payment_ibfk_1`
     FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ))
+    REFERENCES `passport`.`account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`account_role_types`
+-- Table `passport`.`account_role_types`
 -- Stores role definitions for account. The role defnitions
 -- can be used in any of the VPCs created in the account
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`account_role_types` (
+CREATE  TABLE IF NOT EXISTS `passport`.`account_role_types` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
-  `name` VARCHAR(100) NULL DEFAULT NULL ,
+  `NAME` VARCHAR(100) NULL DEFAULT NULL ,
   `permissions` VARCHAR(100) NULL DEFAULT NULL ,
   PRIMARY KEY (`id`) ,
   INDEX `account_id` (`account_id` ASC) ,
   CONSTRAINT `account_role_ibfk_1`
     FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ))
+    REFERENCES `passport`.`account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`component_type`
+-- Table `passport`.`component_type`
 -- Defines component type - Example: Datasets, Streams
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`component_type` (
+CREATE  TABLE IF NOT EXISTS `passport`.`component_type` (
   `id` INT(11) NOT NULL ,
-  `name` VARCHAR(100) NOT NULL ,
+  `NAME` VARCHAR(100) NOT NULL ,
   PRIMARY KEY (`id`) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`vpc_component`
+-- Table `passport`.`vpc_component`
 -- Stores component information for each VPC
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_component` (
+CREATE  TABLE IF NOT EXISTS `passport`.`vpc_component` (
   `id` INT(11) NOT NULL ,
   `vpc_id` INT(11) NOT NULL ,
   `component_name` VARCHAR(100) NOT NULL ,
@@ -92,16 +92,16 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_component` (
   INDEX `component_type` (`component_type` ASC) ,
   CONSTRAINT `vpc_component_ibfk_1`
     FOREIGN KEY (`component_type` )
-    REFERENCES `continuuity`.`component_type` (`id` ))
+    REFERENCES `passport`.`component_type` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`component_acls`
+-- Table `passport`.`component_acls`
 -- Stores ACLS for each components
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`component_acls` (
+CREATE  TABLE IF NOT EXISTS `passport`.`component_acls` (
   `component_id` INT(11) NOT NULL ,
   `account_id` INT(11) NOT NULL ,
   `acl` VARCHAR(100) NULL DEFAULT NULL ,
@@ -109,19 +109,19 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`component_acls` (
   INDEX `account_id` (`account_id` ASC) ,
   CONSTRAINT `component_acls_ibfk_1`
     FOREIGN KEY (`component_id` )
-    REFERENCES `continuuity`.`vpc_component` (`id` ),
+    REFERENCES `passport`.`vpc_component` (`id` ),
   CONSTRAINT `component_acls_ibfk_2`
     FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ))
+    REFERENCES `passport`.`account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`vpc_account`
+-- Table `passport`.`vpc_account`
 -- Stores VPC for each account
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
+CREATE  TABLE IF NOT EXISTS `passport`.`vpc_account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
   `vpc_name` VARCHAR(100) NOT NULL ,
@@ -132,16 +132,16 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC),
   CONSTRAINT `vpc_ibfk_1`
     FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ))
+    REFERENCES `passport`.`account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`vpc_roles`
+-- Table `passport`.`vpc_roles`
 -- Store the role information for each user in the VPC
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
+CREATE  TABLE IF NOT EXISTS `passport`.`vpc_roles` (
   `vpc_id` INT(11) NOT NULL ,
   `account_id` INT(11) NOT NULL DEFAULT '0' ,
   `role_type` INT(11) NULL DEFAULT NULL ,
@@ -151,32 +151,32 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
   INDEX `role_type` (`role_type` ASC) ,
   CONSTRAINT `vpc_roles_ibfk_1`
     FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ),
+    REFERENCES `passport`.`account` (`id` ),
   CONSTRAINT `vpc_roles_ibfk_2`
     FOREIGN KEY (`role_type` )
-    REFERENCES `continuuity`.`account_role_types` (`id` ),
+    REFERENCES `passport`.`account_role_types` (`id` ),
   CONSTRAINT `vpc_roles_ibfk_3`
     FOREIGN KEY (`vpc_id` )
-    REFERENCES `continuuity`.`vpc_account` (`id` ))
+    REFERENCES `passport`.`vpc_account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 -- -----------------------------------------------------
--- Table `continuuity`.`nonce`
+-- Table `passport`.`nonce`
 -- Entity to store nonce
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS `continuuity`.`nonce` (
+CREATE  TABLE IF NOT EXISTS `passport`.`nonce` (
   `nonce_id` INT(11) NOT NULL,
   `id` INT(11) NOT NULL ,
   `nonce_expires_at` DATETIME NOT NULL,
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ,
   UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
 
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
-USE `continuuity` ;
+USE `passport` ;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;

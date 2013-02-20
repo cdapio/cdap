@@ -1,4 +1,4 @@
-package com.continuuity.passport.core.meta;
+package com.continuuity.passport.core.security;
 
 /*
  * Abstract class that defines Credentials that qualify an {@code Entity}
@@ -13,7 +13,7 @@ public abstract class Credentials {
     return type;
   }
 
-  public void setClientType( final String type) {
+  public void setClientType(final String type) {
     this.type = type;
   }
 

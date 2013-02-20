@@ -1,43 +1,51 @@
 package com.continuuity.passport.http.server;
 
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
+import com.continuuity.passport.http.modules.PassportGuiceServletContextListener;
+import com.google.inject.servlet.GuiceFilter;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
-
-
-
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PassportHttpServer  {
+public class PassportHttpServer {
 
-  private int gracefulShutdownTime = 1000;
-  private int port = 7777;
+  private final int gracefulShutdownTime;
+  private final int port;
+
+  private final Map<String, String> configuration;
+
+  public PassportHttpServer(int port, Map<String, String> configuration, int gracefulShutdownTime) {
+    this.port = port;
+    this.configuration = configuration;
+    this.gracefulShutdownTime = gracefulShutdownTime;
+  }
+
   private void start() {
-    try{
+
+    try {
+
       Server server = new Server(port);
       server.setStopAtShutdown(true);
       server.setGracefulShutdown(gracefulShutdownTime);
 
+
       Context context = new Context(server, "/", Context.SESSIONS);
+      context.addEventListener(new PassportGuiceServletContextListener(configuration));
+      context.addServlet(DefaultServlet.class, "/");
+      context.addFilter(GuiceFilter.class, "/*", 0);
 
-      context.addServlet(new ServletHolder(new ServletContainer(
-        new PackagesResourceConfig("com.continuuity.passport.http"))), "/*");
-
-    //  context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/*",0);
-
-        //JMX jetty
+      //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       MBeanContainer mBeanContainer = new MBeanContainer(mBeanServer);
       server.getContainer().addEventListener(mBeanContainer);
@@ -46,27 +54,33 @@ public class PassportHttpServer  {
       server.start();
       server.join();
 
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public static void main(String [] args) {
+  public static void main(String[] args) {
 
-    Map<String,String> config = new HashMap<String,String>();
+    Map<String, String> config = new HashMap<String, String>();
 
-    //TODO: Move this configurations to a central place
-    config.put("jdbcType","mysql");
-    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    //config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+    CConfiguration conf = CConfiguration.create();
+    conf.addResource("continuuity-passport.xml");
+
+    String jdbcType = conf.get("passport.jdbc.type");
+    String connectionString  = conf.get("passport.jdbc.connection.string");
+    System.out.println(jdbcType);
+    int port = Integer.parseInt(conf.get("passport.http.server.port"));
+    int gracefulShutdownTime = Integer.parseInt(conf.get("passport.http.graceful.shutdown.time"));
+
+    config.put("jdbcType", jdbcType);
+    config.put("connectionString",connectionString);
 
     Realm realm = new JDBCAuthrozingRealm(config);
 
     org.apache.shiro.mgt.SecurityManager securityManager = new DefaultSecurityManager(realm);
     SecurityUtils.setSecurityManager(securityManager);
 
-    PassportHttpServer server = new PassportHttpServer();
+    PassportHttpServer server = new PassportHttpServer(port, config, gracefulShutdownTime);
     server.start();
 
 

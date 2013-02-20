@@ -22,44 +22,46 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *  Shiro Realm that is responsible for Communicating with Database to get the credentials for authentication
- *  and authorizations
+ * Shiro Realm that is responsible for Communicating with Database to get the credentials for authentication
+ * and authorizations
  */
 public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
 
-  private Map<String,String> configurations;
-  private DBConnectionPoolManager poolManager =null;
+  private Map<String, String> configurations;
+  private DBConnectionPoolManager poolManager = null;
 
-  private final String SQL_LOOKUP_BY_EMAIL = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
-                                                             DBUtils.AccountTable.FIRST_NAME_COLUMN,
-                                                             DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                                             DBUtils.AccountTable.COMPANY_COLUMN,
-                                                             DBUtils.AccountTable.ID_COLUMN,
-                                                             DBUtils.AccountTable.PASSWORD_COLUMN,
-                                                             DBUtils.AccountTable.API_KEY_COLUMN,
-                                                             DBUtils.AccountTable.TABLE_NAME,
-                                                             DBUtils.AccountTable.EMAIL_COLUMN);
+  private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+    DBUtils.AccountTable.FIRST_NAME_COLUMN,
+    DBUtils.AccountTable.LAST_NAME_COLUMN,
+    DBUtils.AccountTable.COMPANY_COLUMN,
+    DBUtils.AccountTable.ID_COLUMN,
+    DBUtils.AccountTable.PASSWORD_COLUMN,
+    DBUtils.AccountTable.API_KEY_COLUMN,
+    DBUtils.AccountTable.CONFIRMED_COLUMN,
+    DBUtils.AccountTable.TABLE_NAME,
+    DBUtils.AccountTable.EMAIL_COLUMN);
 
-  private final String SQL_LOOKUP_BY_APIKEY = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
-                                                                DBUtils.AccountTable.FIRST_NAME_COLUMN,
-                                                                DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                                                DBUtils.AccountTable.COMPANY_COLUMN,
-                                                                DBUtils.AccountTable.ID_COLUMN,
-                                                                DBUtils.AccountTable.PASSWORD_COLUMN,
-                                                                DBUtils.AccountTable.API_KEY_COLUMN,
-                                                                DBUtils.AccountTable.TABLE_NAME,
-                                                                DBUtils.AccountTable.API_KEY_COLUMN);
+  private final String SQL_LOOKUP_BY_APIKEY = String.format("SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+    DBUtils.AccountTable.FIRST_NAME_COLUMN,
+    DBUtils.AccountTable.LAST_NAME_COLUMN,
+    DBUtils.AccountTable.COMPANY_COLUMN,
+    DBUtils.AccountTable.ID_COLUMN,
+    DBUtils.AccountTable.PASSWORD_COLUMN,
+    DBUtils.AccountTable.API_KEY_COLUMN,
+    DBUtils.AccountTable.CONFIRMED_COLUMN,
+    DBUtils.AccountTable.TABLE_NAME,
+    DBUtils.AccountTable.API_KEY_COLUMN);
 
 
-  public JDBCAuthrozingRealm(Map<String,String> configurations) {
+  public JDBCAuthrozingRealm(Map<String, String> configurations) {
     this.configurations = configurations;
     String connectionString = this.configurations.get("connectionString");
     String jdbcType = this.configurations.get("jdbcType");
 
     if (jdbcType.toLowerCase().equals("mysql")) {
 
-      MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
+      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
 
@@ -77,7 +79,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
    */
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    if ( principals == null) {
+    if (principals == null) {
       throw new AuthorizationException("PrincipalCollection argument cannot be null");
     }
 
@@ -88,25 +90,25 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     try {
       Connection connection = this.poolManager.getConnection();
 
-      String SQL = String.format( "SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
 
-                                  //SELECT COLS
-                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
-                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
-                                  DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN,
+        //SELECT COLS
+        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
+        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
+        DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN,
 
-                                  //TABLE NAMES
-                                  DBUtils.AccountRoleType.TABLE_NAME, DBUtils.VPCRole.TABLE_NAME,
+        //TABLE NAMES
+        DBUtils.AccountRoleType.TABLE_NAME, DBUtils.VPCRole.TABLE_NAME,
 
-                                  //JOIN CONDITION
-                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
-                                  DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+        //JOIN CONDITION
+        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
+        DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
 
-                                  //WHERE CLAUSE
-                                  DBUtils.VPCRole.USER_ID_COLUMN);
+        //WHERE CLAUSE
+        DBUtils.VPCRole.USER_ID_COLUMN);
 
       PreparedStatement ps = connection.prepareStatement(SQL);
-      ps.setInt(1,accountId);
+      ps.setInt(1, accountId);
       ResultSet rs = ps.executeQuery();
 
       while (rs.next()) {
@@ -114,17 +116,16 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         String roleName = rs.getString(1);
         String permissions = rs.getString(2);
         String overrides = rs.getString(3);
-        if (overrides!=null && !overrides.isEmpty()) {
+        if (overrides != null && !overrides.isEmpty()) {
           rolePermissions.add(overrides);
-        }
-        else {
+        } else {
           rolePermissions.add(permissions);
         }
         roleNames.add(roleName);
       }
 
 
-      info  = new SimpleAuthorizationInfo(roleNames);
+      info = new SimpleAuthorizationInfo(roleNames);
       info.setStringPermissions(rolePermissions);
 
     } catch (SQLException e) {
@@ -166,20 +167,19 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       String SQL = null;
       PreparedStatement ps = null;
       //Precedence for lookup if emailID is present use that to lookup. Else use apIKey.
-      if (emailId !=null && !emailId.isEmpty()) {
+      if (emailId != null && !emailId.isEmpty()) {
         SQL = SQL_LOOKUP_BY_EMAIL;
         ps = connection.prepareStatement(SQL);
-        ps.setString(1,emailId);
+        ps.setString(1, emailId);
 
-      }
-      else if (apiKey!=null && ! apiKey.isEmpty()) {
+      } else if (apiKey != null && !apiKey.isEmpty()) {
         SQL = SQL_LOOKUP_BY_APIKEY;
         ps = connection.prepareStatement(SQL);
-        ps.setString(1,apiKey);
+        ps.setString(1, apiKey);
 
       }
 
-      if (ps == null){
+      if (ps == null) {
         throw new AuthenticationException("ApiKey or emailId should be set.");
       }
 
@@ -192,28 +192,29 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       String lastName = null;
       String company = null;
       String apiToken = null;
-
-      while(rs.next()) {
+      boolean confirmed = false;
+      while (rs.next()) {
         firstName = rs.getString(1);
         lastName = rs.getString(2);
         company = rs.getString(3);
 
-        accountId  = rs.getInt(4);
+        accountId = rs.getInt(4);
         password = rs.getString(5);
         apiToken = rs.getString(6);
+        confirmed = rs.getBoolean(7);
         count++;
-        if(count > 1) {
+        if (count > 1) {
           // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
       }
 
-      if (password ==null || password.isEmpty()) {
-        throw new RuntimeException(String.format("Password not found for %s",emailId));
+      if (password == null || password.isEmpty()) {
+        throw new RuntimeException(String.format("Password not found for %s", emailId));
       }
 
-      Account account = new Account(firstName,lastName,company,emailId,accountId,apiToken);
-      info = new SimpleAuthenticationInfo(account,password,getName());
+      Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
+      info = new SimpleAuthenticationInfo(account, password, getName());
 
     } catch (SQLException e) {
       //TODO: Log and throw exception

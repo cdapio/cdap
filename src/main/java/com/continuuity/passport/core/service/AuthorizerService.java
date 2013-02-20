@@ -4,12 +4,12 @@ import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Component;
 import com.continuuity.passport.core.meta.ComponentACL;
-import com.continuuity.passport.core.meta.Credentials;
+import com.continuuity.passport.core.security.Credentials;
 
 /**
  *
  */
-public interface Authorizer {
+public interface AuthorizerService {
 
   /**
    * Authorize component for the user with the request ACLType
