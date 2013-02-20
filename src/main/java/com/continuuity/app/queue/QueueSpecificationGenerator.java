@@ -29,6 +29,14 @@ public interface QueueSpecificationGenerator {
     private final FlowletConnection.Type type;
     private final String name;
 
+    public static Node flowlet(String name) {
+      return new Node(FlowletConnection.Type.FLOWLET, name);
+    }
+
+    public static Node stream(String name) {
+      return new Node(FlowletConnection.Type.STREAM, name);
+    }
+
     public Node(FlowletConnection.Type type, String name) {
       this.type = type;
       this.name = name;

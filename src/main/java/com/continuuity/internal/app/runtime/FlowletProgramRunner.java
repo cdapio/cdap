@@ -12,41 +12,56 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.Callback;
+import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.queue.QueueName;
+import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,10 +72,12 @@ import java.util.Set;
 public final class FlowletProgramRunner implements ProgramRunner {
 
   private final OperationExecutor opex;
+  private final SchemaGenerator schemaGenerator;
 
   @Inject
-  public FlowletProgramRunner(OperationExecutor opex) {
+  public FlowletProgramRunner(OperationExecutor opex, SchemaGenerator schemaGenerator) {
     this.opex = opex;
+    this.schemaGenerator = schemaGenerator;
   }
 
   @Override
@@ -107,10 +124,29 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                    createDataSets(dataSetInstantiator, flowletDef));
 
       // Creates QueueSpecification
-//      Table<String,String,Set<QueueSpecification>> queueSpecs =
-//        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
-//            .create(flowSpec);
-//
+      Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs =
+        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
+            .create(flowSpec);
+
+      // Create Logging context
+      LoggingContext loggingContext = new FlowletLoggingContext(program.getAccountId(),
+                                                                program.getApplicationId(),
+                                                                program.getProgramName(),
+                                                                flowletName);
+
+      Flowlet flowlet = flowletClass.newInstance();
+      TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
+
+      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext,
+                                                     outputEmitterFactory(flowletName,
+                                                                          flowletContext.getQueueProducer(),
+                                                                          queueSpecs));
+
+
+//      createProcessSpecification()
+//      new FlowletProcessDriver(flowlet, flowletContext, loggingContext, processSpecs, createCallback(flowlet, flowletDef.getFlowletSpec()));
+
+
 //      final FlowletProcessDriver driver = instantiateFlowlet(flowletClass,
 //                                                             flowletContext,
 //                                                             outputEmitterFactory(flowletContext.getQueueProducer(),
@@ -129,17 +165,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
     }
   }
 
-  private FlowletProcessDriver instantiateFlowlet(Class<? extends Flowlet> flowletClass,
-                                                  FlowletContext flowletContext,
-                                                  OutputEmitterFactory outputEmitterFactory,
-                                                  SchemaCache schemaCache,
-                                                  FlowletDefinition flowletDef,
-                                                  FlowSpecification flowSpec,
-                                                  String flowletName,
-                                                  TransactionAgentSupplier txAgentSupplier) throws Exception {
+  /**
+   * Injects all {@link DataSet} and {@link OutputEmitter} fields.
+   *
+   * @return an {@link OutputSubmitter} that encapsulate all injected {@link OutputEmitter}
+   *         that are {@link OutputSubmitter} as well.
+   */
+  private OutputSubmitter injectFields(Flowlet flowlet,
+                                       TypeToken<? extends Flowlet> flowletType,
+                                       FlowletContext flowletContext,
+                                       OutputEmitterFactory outputEmitterFactory) throws IllegalAccessException {
 
-    TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
-    Flowlet flowlet = flowletClass.newInstance();
     ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
 
     // Walk up the hierarchy of flowlet class.
@@ -163,9 +199,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
           TypeToken<?> outputType = TypeToken.of(((ParameterizedType)field.getGenericType())
                                                    .getActualTypeArguments()[0]);
           String outputName = field.isAnnotationPresent(Output.class) ?
-                    field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
+            field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
 
-          OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputType);
+          OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputName, outputType);
           setField(flowlet, field, outputEmitter);
           if (outputEmitter instanceof OutputSubmitter) {
             outputSubmitters.add((OutputSubmitter)outputEmitter);
@@ -174,9 +210,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
     }
 
-    OutputSubmitter outputSubmitter = new MultiOutputSubmitter(outputSubmitters.build());
+    return new MultiOutputSubmitter(outputSubmitters.build());
+  }
 
-    // Walk up the hierarchy of flowlet class again to get all process methods
+  private Collection<ProcessSpecification> createProcessSpecification(TypeToken<? extends Flowlet> flowletType,
+                                                                      ProcessMethodFactory processMethodFactory,
+                                                                      ProcessSpecificationFactory processSpecFactory,
+                                                                      Collection<ProcessSpecification> result)
+                                                                      throws UnsupportedTypeException {
+
+    // Walk up the hierarchy of flowlet class to get all process methods
     // It needs to be traverse twice because process method needs to know all output emitters.
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
       if (type.getRawType().equals(Object.class)) {
@@ -189,19 +232,40 @@ public final class FlowletProgramRunner implements ProgramRunner {
           continue;
         }
 
-        List<String> inputNames;
+        Set<String> inputNames;
         if (processAnnotation == null || processAnnotation.value().length == 0) {
-          inputNames = ImmutableList.of(FlowletDefinition.ANY_INPUT);
+          inputNames = ImmutableSet.of(FlowletDefinition.ANY_INPUT);
         } else {
-          inputNames = ImmutableList.copyOf(processAnnotation.value());
+          inputNames = ImmutableSet.copyOf(processAnnotation.value());
         }
 
-        // TODO: Find out the queue name by input name
-        // TODO: Create method invoker
+        TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
+        Schema schema = schemaGenerator.generate(dataType.getType());
 
+        ProcessMethod processMethod = processMethodFactory.create(method, dataType, schema);
+        result.add(processSpecFactory.create(inputNames, schema, processMethod));
       }
     }
-    return null;
+    return result;
+  }
+
+  private Callback createCallback(Flowlet flowlet, FlowletSpecification flowletSpec) {
+    if (flowlet instanceof Callback) {
+      return (Callback)flowlet;
+    }
+    final FailurePolicy failurePolicy = flowletSpec.getFailurePolicy();
+    return new Callback() {
+      @Override
+      public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+        // No-op
+      }
+
+      @Override
+      public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason
+        reason) {
+        return failurePolicy;
+      }
+    };
   }
 
   private Map<String, DataSet> createDataSets(DataSetContext dataSetContext,
@@ -218,17 +282,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,
                                                     final QueueProducer queueProducer,
-                                                    final Table<String, String, Set<QueueSpecification>> queueSpecs) {
-    final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
-
+                                                    final Table<QueueSpecificationGenerator.Node,
+                                                                String,
+                                                                Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
-      public OutputEmitter<?> create(TypeToken<?> type) {
+      public OutputEmitter<?> create(String outputName, TypeToken<?> type) {
         try {
           Schema schema = schemaGenerator.generate(type.getType());
 
-          for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowletName).values())) {
-            if (queueSpec.getInputSchema().equals(schema)) {
+          QueueSpecificationGenerator.Node flowlet = QueueSpecificationGenerator.Node.flowlet(flowletName);
+          for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
+            if (queueSpec.getQueueName().getSimpleName().equals(outputName)
+                && queueSpec.getOutputSchema().equals(schema)) {
               return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema);
             }
           }
@@ -239,6 +305,49 @@ public final class FlowletProgramRunner implements ProgramRunner {
         } catch (UnsupportedTypeException e) {
           throw Throwables.propagate(e);
         }
+      }
+    };
+  }
+
+  private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
+                                                    final SchemaCache schemaCache,
+                                                    final TransactionAgentSupplier txAgentSupplier,
+                                                    final OutputSubmitter outputSubmitter) {
+    return new ProcessMethodFactory() {
+      @Override
+      public ProcessMethod create(Method method, TypeToken<?> dataType, Schema schema) {
+        return ReflectionProcessMethod.create(flowlet, method, dataType, schema,
+                                              schemaCache, txAgentSupplier, outputSubmitter);
+
+
+      }
+    };
+  }
+
+  private ProcessSpecificationFactory processSpecificationFactory(final OperationExecutor opex,
+                                                                  final OperationContext operationCtx,
+                                                                  final QueueConsumer queueConsumer,
+                                                                  final String flowletName,
+                                                                  final Table<QueueSpecificationGenerator.Node,
+                                                                              String,
+                                                                              Set<QueueSpecification>> queueSpecs) {
+    return new ProcessSpecificationFactory() {
+      @Override
+      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) {
+        List<QueueReader> queueReaders = Lists.newLinkedList();
+
+        for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletName).values())) {
+          QueueName queueName = queueSpec.getQueueName();
+          if (queueSpec.getInputSchema().equals(schema)
+              && (inputNames.contains(queueName.getSimpleName())
+                  || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
+
+            queueReaders.add(new SingleQueueReader(opex, operationCtx, queueName, queueConsumer));
+          }
+        }
+
+        Preconditions.checkArgument(!queueReaders.isEmpty(), "No queue reader found for %s %s", flowletName, schema);
+        return new ProcessSpecification(new RoundRobinQueueReader(queueReaders), method);
       }
     };
   }
@@ -264,6 +373,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface OutputEmitterFactory {
-    OutputEmitter<?> create(TypeToken<?> type);
+    OutputEmitter<?> create(String outputName, TypeToken<?> type);
+  }
+
+  private static interface ProcessMethodFactory {
+    ProcessMethod create(Method method, TypeToken<?> dataType, Schema schema);
+  }
+
+  private static interface ProcessSpecificationFactory {
+    ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method);
   }
 }

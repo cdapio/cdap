@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import java.util.Map;
  * Represents single event from {@link com.continuuity.api.data.stream.Stream Stream} that is ready to be
  * consumed by {@link Flowlet}.
  */
+@Nonnull
 public interface StreamEvent {
 
   /**

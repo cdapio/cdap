@@ -1,8 +1,9 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import java.util.Map;
  * This class is temporary until the serialization API uses ASM for bytecode generation, as
  * this implementation would be generated on the fly by implementing the StreamEvent interface.
  */
+@Nonnull
 public final class DefaultStreamEvent implements StreamEvent {
 
   private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
