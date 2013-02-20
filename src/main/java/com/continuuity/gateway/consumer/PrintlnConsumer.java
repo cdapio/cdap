@@ -1,10 +1,9 @@
 package com.continuuity.gateway.consumer;
 
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.gateway.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.gateway.Consumer;
 
 /**
  * Println Consumer is a very simple consumer that INFO logs all events in the
@@ -25,7 +24,7 @@ public class PrintlnConsumer extends Consumer {
    * @throws Exception
    */
   @Override
-  protected void single(Event event) throws Exception {
+  protected void single(StreamEvent event) throws Exception {
     LOG.info("[ Headers: " + event.getHeaders() + " | "
         + "Body: " + event.getBody());
   }

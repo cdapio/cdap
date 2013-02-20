@@ -4,27 +4,28 @@
 
 package com.continuuity.gateway.collector;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.streamevent.DefaultStreamEvent;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
-import com.continuuity.gateway.Collector;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * /**
@@ -111,7 +112,7 @@ class FlumeAdapter implements AvroSourceProtocol {
         return Status.FAILED;
       }
       this.collector.getConsumer().consumeEvents(
-          convertFlume2Event(events, helper));
+          convertFlume2Events(events, helper));
       helper.finish(Success);
       return Status.OK;
     } catch (Exception e) {
@@ -122,7 +123,7 @@ class FlumeAdapter implements AvroSourceProtocol {
   }
 
   /**
-   * Converts a Flume event to am Event. This is a pure copy of the headers
+   * Converts a Flume event to a StreamEvent. This is a pure copy of the headers
    * and body. In addition, the collector name header is set.
    *
    * @param flumeEvent the flume event to be converted
@@ -130,25 +131,34 @@ class FlumeAdapter implements AvroSourceProtocol {
    *               the scope of this helper is updated to include it.
    * @return the resulting event
    */
-  protected Event convertFlume2Event(AvroFlumeEvent flumeEvent,
-                                     MetricsHelper helper)
+  protected StreamEvent convertFlume2Event(AvroFlumeEvent flumeEvent,
+                                           MetricsHelper helper)
       throws Exception {
-    EventBuilder builder = new EventBuilder();
-    builder.setBody(flumeEvent.getBody().array());
+
+    // first construct the map of headers, just copy from flume event, plus:
+    // - add the name of this collector
+    // - drop the API key
+    // - find the destination stream
+
+    Map<String, String> headers = new TreeMap<String, String>();
+    String destination = null;
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
       String headerKey = header.toString();
-      if (headerKey.equals(GatewayAuthenticator.CONTINUUITY_API_KEY))
-        continue;
-      builder.setHeader(header.toString(),
-          flumeEvent.getHeaders().get(header).toString());
+      if (!headerKey.equals(GatewayAuthenticator.CONTINUUITY_API_KEY)) {
+        String headerValue =  flumeEvent.getHeaders().get(header).toString();
+        headers.put(headerKey, headerValue);
+        if (headerKey.equals(Constants.HEADER_DESTINATION_STREAM)) {
+          destination = headerValue;
+        }
+      }
     }
-    builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
-        this.getCollector().getName());
-    Event event = builder.create();
-    String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
+    headers.put(Constants.HEADER_FROM_COLLECTOR, this.getCollector().getName());
+
     if (destination == null) {
       throw new Exception("Cannot enqueue event without destination stream");
     }
+
+    DefaultStreamEvent event = new DefaultStreamEvent(headers, flumeEvent.getBody());
     helper.setScope(destination);
     if (!this.collector.getStreamCache().validateStream(
         OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
@@ -168,10 +178,10 @@ class FlumeAdapter implements AvroSourceProtocol {
    *               the scope of this helper is updated to include it.
    * @return the resulting events
    */
-  protected List<Event> convertFlume2Event(List<AvroFlumeEvent> flumeEvents,
-                                           MetricsHelper helper)
+  protected List<StreamEvent> convertFlume2Events(List<AvroFlumeEvent> flumeEvents,
+                                                  MetricsHelper helper)
   throws Exception {
-    List<Event> events = new ArrayList<Event>();
+    List<StreamEvent> events = new ArrayList<StreamEvent>(flumeEvents.size());
     for (AvroFlumeEvent flumeEvent : flumeEvents) {
       events.add(convertFlume2Event(flumeEvent, helper));
     }

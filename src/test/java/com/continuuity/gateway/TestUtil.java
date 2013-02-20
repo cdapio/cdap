@@ -1,8 +1,8 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -18,10 +18,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.internal.EventSerializer;
-import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-
+import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -221,49 +219,19 @@ public class TestUtil {
    *                      If null, then this method checks whether the number
    *                      in the header matches the body.
    */
-  static void verifyEvent(Event event, String collectorName,
+  static void verifyEvent(StreamEvent event, String collectorName,
                           String destination, Integer expectedNo) {
-    Assert.assertNotNull(event.getHeader("messageNumber"));
-    int messageNumber = Integer.valueOf(event.getHeader("messageNumber"));
+    Assert.assertNotNull(event.getHeaders().get("messageNumber"));
+    int messageNumber = Integer.valueOf(event.getHeaders().get("messageNumber"));
     if (expectedNo != null)
       Assert.assertEquals(messageNumber, expectedNo.intValue());
     if (collectorName != null)
       Assert.assertEquals(collectorName,
-          event.getHeader(Constants.HEADER_FROM_COLLECTOR));
+          event.getHeaders().get(Constants.HEADER_FROM_COLLECTOR));
     if (destination != null)
       Assert.assertEquals(destination,
-          event.getHeader(Constants.HEADER_DESTINATION_STREAM));
-    Assert.assertArrayEquals(createMessage(messageNumber), event.getBody());
-  }
-
-  /**
-   * Verify that an tuple corresponds to an event of the form as created by
-   * createFlumeEvent or createHttpPost
-   *
-   * @param tuple         The tuple to verify
-   * @param collectorName The name of the collector that the event was sent to
-   * @param destination   The name of the destination that the event was routed
-   *                      to
-   * @param expectedNo    The number of the event, it should be both in the
-   *                      messageNumber header and in the body.
-   *                      If null, then this method checks whether the number
-   *                      in the header matches the body.
-   */
-  static void verifyTuple(Tuple tuple, String collectorName,
-                          String destination, Integer expectedNo) {
-    Map<String, String> headers = tuple.get("headers");
-    Assert.assertNotNull(headers.get("messageNumber"));
-    int messageNumber = Integer.valueOf(headers.get("messageNumber"));
-    if (expectedNo != null)
-      Assert.assertEquals(messageNumber, expectedNo.intValue());
-    if (collectorName != null)
-      Assert.assertEquals(collectorName,
-          headers.get(Constants.HEADER_FROM_COLLECTOR));
-    if (destination != null)
-      Assert.assertEquals(destination,
-          headers.get(Constants.HEADER_DESTINATION_STREAM));
-    Assert.assertArrayEquals(
-        createMessage(messageNumber), (byte[]) tuple.get("body"));
+          event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM));
+    Assert.assertArrayEquals(createMessage(messageNumber), Bytes.toBytes(event.getBody()));
   }
 
   public static void verifyQueueInfo(OperationExecutor executor,
@@ -310,7 +278,7 @@ public class TestUtil {
    */
   static class NoopConsumer extends Consumer {
     @Override
-    public void single(Event event) {
+    public void single(StreamEvent event) {
     }
   }
 
@@ -334,7 +302,7 @@ public class TestUtil {
     }
 
     @Override
-    protected void single(Event event) throws Exception {
+    protected void single(StreamEvent event) throws Exception {
       TestUtil.verifyEvent(event, this.collectorName,
           this.destination, this.expectedNumber);
     }
@@ -359,11 +327,10 @@ public class TestUtil {
     byte[] queueURI = FlowStream.buildStreamURI(
         Constants.defaultAccount, destination).toString().getBytes();
     // one deserializer to reuse
-    EventSerializer deserializer = new EventSerializer();
+    StreamEventCodec deserializer = new StreamEventCodec();
     // prepare the queue consumer
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -371,56 +338,11 @@ public class TestUtil {
       Assert.assertTrue(result.isSuccess());
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
-      Event event = deserializer.deserialize(result.getValue());
+      StreamEvent event = deserializer.decodePayload(result.getEntry().getData());
       TestUtil.verifyEvent(event, collectorName, destination, null);
       // message number should be in the header "messageNumber"
       LOG.info("Popped one event, message number: " +
-          event.getHeader("messageNumber"));
-      // ack the event so that it disappers from the queue
-      QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
-      List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
-      operations.add(ack);
-      executor.commit(context, operations);
-    }
-  }
-
-  /**
-   * Consume the tuples in a queue and verify that the are events as created by
-   * createHttpPost() or createFlumeEvent()
-   *
-   * @param executor       The executor to use for access to the data fabric
-   * @param destination    The name of the flow (destination) that the events
-   *                       were sent to
-   * @param collectorName  The name of the collector that received the events
-   * @param tuplesExpected How many tuples should be read
-   * @throws Exception
-   */
-  static void consumeQueueAsTuples(OperationExecutor executor,
-                                   String destination,
-                                   String collectorName,
-                                   int tuplesExpected) throws Exception {
-    // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(
-        Constants.defaultAccount, destination).toString().getBytes();
-    // one deserializer to reuse
-    TupleSerializer deserializer = new TupleSerializer(false);
-    // prepare the queue consumer
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-    QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
-    for (int remaining = tuplesExpected; remaining > 0; --remaining) {
-      // dequeue one event and remember its ack pointer
-      DequeueResult result = executor.execute(context, dequeue);
-      Assert.assertTrue(result.isSuccess());
-      QueueEntryPointer ackPointer = result.getEntryPointer();
-      // deserialize and verify the event
-      Tuple tuple = deserializer.deserialize(result.getValue());
-      TestUtil.verifyTuple(tuple, collectorName, destination, null);
-      // message number should be in the header "messageNumber"
-      Map<String, String> headers = tuple.get("headers");
-      LOG.info("Popped one event, message number: " +
-          headers.get("messageNumber"));
+          event.getHeaders().get("messageNumber"));
       // ack the event so that it disappers from the queue
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);

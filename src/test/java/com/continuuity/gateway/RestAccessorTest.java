@@ -1,9 +1,9 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Operation;
@@ -17,14 +17,15 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.consumer.TupleWritingConsumer;
+import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
+import com.continuuity.streamevent.StreamEventCodec;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
@@ -40,6 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +130,7 @@ public class RestAccessorTest {
         Constants.CONFIG_PATH_MIDDLE), middle);
     restCollector.configure(configuration);
 
-    TupleWritingConsumer consumer = new TupleWritingConsumer();
+    StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
     consumer.setExecutor(this.executor);
     restCollector.setConsumer(consumer);
     restCollector.setExecutor(this.executor);
@@ -149,6 +151,8 @@ public class RestAccessorTest {
       {"nønäscîi", "value\u0000with\u0000nulls"},
       {"key\u0000with\u0000nulls", "foo"}
   };
+
+  static final ByteBuffer emptyBody = ByteBuffer.wrap(new byte[0]);
 
   /**
    * Starts up a REST accessor, then tests retrieval of several combinations
@@ -502,7 +506,7 @@ public class RestAccessorTest {
     // verify data is gone, rest is still there
     verifyKeyGone("key");
     verifyEvent("foo", 1);
-    verifyTuple("queue://foo/bar", 2);
+    verifyInteger("queue://foo/bar", 2);
 
     // write and verify some data
     TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
@@ -513,7 +517,7 @@ public class RestAccessorTest {
     // verify data is gone, rest is still there
     verifyStreamGone("foo");
     verifyKeyValue("key", "value");
-    verifyTuple("queue://foo/bar", 2);
+    verifyInteger("queue://foo/bar", 2);
 
     // write and verify some stream
     sendAndVerify(collectorUrl, "foo", 1);
@@ -539,27 +543,43 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
     String streamUri = FlowStream.buildStreamURI(
-        Constants.defaultAccount, stream).toString();
+      Constants.defaultAccount, stream).toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
-    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
     // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-    QueueDequeue dequeue =
-        new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
+    QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
     Assert.assertFalse(result.isEmpty());
-    // try to deserialize into an event (tuple)
-    TupleSerializer serializer = new TupleSerializer(false);
-    Tuple tuple = serializer.deserialize(result.getValue());
-    Map<String, String> headers = tuple.get("headers");
-    byte[] body = tuple.get("body");
+    // try to deserialize into an event
+    StreamEventCodec deserializer = new StreamEventCodec();
+    StreamEvent event = deserializer.decodePayload(result.getEntry().getData());
+    Map<String, String> headers = event.getHeaders();
+    byte[] body = Bytes.toBytes(event.getBody());
     Assert.assertEquals(Integer.toString(n), headers.get("number"));
     Assert.assertEquals(new String(body), "This is event number " + n);
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
-        QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
+      QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
+    this.collector.getExecutor().commit(context, ack);
+  }
+
+  void verifyInteger(String queueUri, int n) throws Exception {
+    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
+    long id = this.executor.execute(context, op);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
+    // singleEntry = true means we must ack before we can see the next entry
+    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    DequeueResult result = this.executor.execute(context, dequeue);
+    Assert.assertFalse(result.isEmpty());
+    // try to deserialize into an integer
+    int num = Bytes.toInt(result.getEntry().getData());
+    Assert.assertEquals(n, num);
+    // ack the entry so that the next request can see the next entry
+    QueueAck ack = new
+      QueueAck(queueUri.getBytes(), result.getEntryPointer(), queueConsumer);
     this.collector.getExecutor().commit(context, ack);
   }
 
@@ -568,34 +588,15 @@ public class RestAccessorTest {
     verifyEvent(stream, n);
   }
 
-  void sendTuple(String queueUri, int n) throws OperationException {
-    Tuple tuple = new TupleBuilder().set("number", n).create();
-    byte[] bytes = new TupleSerializer(false).serialize(tuple);
-    QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), bytes);
+  void queueAndVerify(String queueUri, int n) throws Exception {
+    sendInteger(queueUri, n);
+    verifyInteger(queueUri, n);
+  }
+
+  void sendInteger(String queueUri, int n) throws OperationException {
+    byte[] bytes = Bytes.toBytes(n);
+    QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), new QueueEntryImpl(bytes));
     this.executor.commit(context, enqueue);
-  }
-
-  void verifyTuple(String queueUri, int n) throws Exception {
-    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
-    long id = this.executor.execute(context, op);
-    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
-    // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-    QueueDequeue dequeue =
-        new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(context, dequeue);
-    Assert.assertFalse(result.isEmpty());
-    // try to deserialize into a tuple
-    TupleSerializer serializer = new TupleSerializer(false);
-    Tuple tuple = serializer.deserialize(result.getValue());
-    // verify
-    Assert.assertEquals(tuple.get("number"), n);
-  }
-
-  void queueAndVerify(String streamUri, int n) throws Exception {
-    sendTuple(streamUri, n);
-    verifyTuple(streamUri, n);
   }
 
   void verifyKeyGone(String key) throws Exception {
@@ -613,12 +614,10 @@ public class RestAccessorTest {
   void verifyQueueGone(String queueUri) throws Exception {
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
     long id = this.executor.execute(context, op);
-    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+    QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
     // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig =
-        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-    QueueDequeue dequeue =
-        new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
     Assert.assertTrue(result.isEmpty());
   }

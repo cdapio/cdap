@@ -1,34 +1,47 @@
 package com.continuuity.gateway.collector;
 
-import com.continuuity.data.operation.OperationContext;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
-import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.streamevent.DefaultStreamEvent;
+import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.collect.Maps;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -234,30 +247,23 @@ public class RestHandler extends NettyRestHandler {
 
       switch(operation) {
         case ENQUEUE: {
-          // build a new event from the request
-          EventBuilder builder = new EventBuilder();
+          // build a new event from the request, start with the headers
+          Map<String, String> headers = Maps.newHashMap();
           // set some built-in headers
-          builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
-              this.collector.getName());
-          builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
+          headers.put(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
+          headers.put(Constants.HEADER_DESTINATION_STREAM, destination);
           // and transfer all other headers that are to be preserved
           String prefix = destination + ".";
-          Set<String> headers = request.getHeaderNames();
-          for (String header : headers) {
+          for (String header : request.getHeaderNames()) {
             String preservedHeader = isPreservedHeader(prefix, header);
             if (preservedHeader != null) {
-              builder.setHeader(preservedHeader, request.getHeader(header));
+              headers.put(preservedHeader, request.getHeader(header));
             }
           }
-          // read the body of the request and add it to the event
-          ChannelBuffer content = request.getContent();
-          int length = content.readableBytes();
-          if (length > 0) {
-            byte[] bytes = new byte[length];
-            content.readBytes(bytes);
-            builder.setBody(bytes);
-          }
-          Event event = builder.create();
+          // read the body of the request
+          ByteBuffer body = request.getContent().toByteBuffer();
+          // and create a stream event
+          StreamEvent event = new DefaultStreamEvent(headers, body);
 
           LOG.trace("Sending event to consumer: " + event);
           // let the consumer process the event.
@@ -376,12 +382,10 @@ public class RestHandler extends NettyRestHandler {
           String queueURI = FlowStream.buildStreamURI(
               Constants.defaultAccount, destination).toString();
           // 0th instance of group 'id' of size 1
-          QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+          QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+          QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
           // singleEntry = true means we must ack before we can see the next entry
-          QueueConfig queueConfig =
-              new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-          QueueDequeue dequeue = new QueueDequeue(
-              queueURI.getBytes(), queueConsumer, queueConfig);
+          QueueDequeue dequeue = new QueueDequeue(queueURI.getBytes(), queueConsumer, queueConfig);
           DequeueResult result;
           try {
             result = this.collector.getExecutor().
@@ -397,20 +401,20 @@ public class RestHandler extends NettyRestHandler {
                 OperationContext.DEFAULT_ACCOUNT_ID, destination);
             return;
           }
-          if (result.isEmpty()) {
+          if (result.isEmpty() || result.getEntry().getData() == null) {
             respondSuccess(message.getChannel(), request,
                 HttpResponseStatus.NO_CONTENT);
             helper.finish(NoData);
             return;
           }
-          // try to deserialize into an event (tuple)
+          // try to deserialize into an event
           Map<String, String> headers;
           byte[] body;
           try {
-            TupleSerializer serializer = new TupleSerializer(false);
-            Tuple tuple = serializer.deserialize(result.getValue());
-            headers = tuple.get("headers");
-            body = tuple.get("body");
+            StreamEventCodec deserializer = new StreamEventCodec();
+            StreamEvent event = deserializer.decodePayload(result.getEntry().getData());
+            headers = event.getHeaders();
+            body = Bytes.toBytes(event.getBody());
           } catch (Exception e) {
             LOG.error("Exception when deserializing data from stream "
                 + queueURI + " into an event: " + e.getMessage());
