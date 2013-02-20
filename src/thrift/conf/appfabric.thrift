@@ -1,24 +1,6 @@
 namespace java com.continuuity.app.services
 
 /**
- * Indicates the client is not authorized to talk to DeploymentService or 
- * RuntimeService. This can happen when the access has been revoked or
- * the delegation token has been expired.
- */
-exception NotAuthorizedException {
-  1:string message,
-}
-
-/**
- * Exception thrown when a blocking operation times out. Blocking
- * operation for which a timeout is specified need a means to indicate that 
- * the timeout has occurred.
- */
-exception AuthorizationTimeoutException {
-  1:string message,
-}
-
-/**
  * Delegation token is an encoded token received by the client as part of
  * consent token issues by the Overlord. It is compact, encrypted of data
  * representing the consent information provided by Overlord to
@@ -26,19 +8,6 @@ exception AuthorizationTimeoutException {
  */
 struct AuthToken {
  1: string token,
-}
-
-/**
- * Provides authorization service. This service returns a AuthToken that
- * is then used in every call to DeploymentService or RuntimeService.
- */
-service AuthorizationService {
-  AuthToken authenticate(1:string user, 2:string password )
-    throws (1:NotAuthorizedException noauth,
-            2:AuthorizationTimeoutException authtimeout),
-  AuthToken renew(1:AuthToken token)
-    throws (1:NotAuthorizedException noauth,
-            2:AuthorizationTimeoutException authtimeout),
 }
 
 /**
@@ -71,9 +40,9 @@ struct ResourceIdentifier {
  }
 
 /**
- * Exception raised when issues are observed during uploading of resource.
+ * Exception raised when issues are observed during management of archive and running of applications.
  */
-exception DeploymentServiceException {
+exception AppFabricServiceException {
   1:string message,
 }
 
@@ -105,69 +74,6 @@ struct FlowIdentifier {
  3:required string flowId,
  4:required i32 version = -1,
  5:optional EntityType type = EntityType.FLOW,
-}
-
-/**
- * Provides service for managing Flow Archive Resource
- */
-service DeploymentService {
-
-  /**
-   * Begins uploading of FAR
-   */
-  ResourceIdentifier init(1:AuthToken token, 2:ResourceInfo info)
-    throws (1:DeploymentServiceException e),
-
-  /**
-   * Chunk of FAR is uploaded
-   */
-  void chunk(1:AuthToken token,
-             2:ResourceIdentifier resource, 3:binary chunk)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Finalizes uploading of FAR
-   */
-  void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Status of upload
-   */
-  DeploymentStatus status(1:AuthToken token, 2:ResourceIdentifier resource)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Promote an application an it's resource to cloud.
-   */
-  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Disables a Flow
-   */
-  void remove(1:AuthToken token, 2:FlowIdentifier identifier)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Disables all Flows and Queries
-   */
-  void removeAll(1:AuthToken token, 2:string accountId)
-    throws (1: DeploymentServiceException e),
-
-  /**
-   * Wipes out everything for an account
-   */
-  void reset(1:AuthToken token, 2:string accountId)
-    throws (1: DeploymentServiceException e),
-
-}
-
-/**
- * Exception raised when there is an issue in start/stop/status/pausing of Flows
- */
-exception RuntimeServiceException {
-  1:string message,
 }
 
 /**
@@ -224,54 +130,104 @@ struct FlowRunRecord {
 /**
  * Flow Service for managing flows. 
  */
-service RuntimeService {
+service AppFabricService {
 
   /**
    * Starts a Flow
    */
   RunIdentifier start(1:AuthToken token,  2: FlowDescriptor descriptor)
-    throws (1: RuntimeServiceException e),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Checks the status of a Flow
    */
   FlowStatus status(1:AuthToken token, 2: FlowIdentifier identifier)
-    throws (1: RuntimeServiceException e),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Stops a Flow
    */
   RunIdentifier stop(1: AuthToken token,  2: FlowIdentifier identifier)
-    throws (1: RuntimeServiceException e),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Set number of instance of a flowlet.
    */
   void setInstances(1: AuthToken token, 2: FlowIdentifier identifier,
                     3: string flowletId, 4:i16 instances )
-    throws (1: RuntimeServiceException e),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Returns the state of flows within a given account id.
    */
   list<ActiveFlow> getFlows(1: string accountId)
-     throws(1: RuntimeServiceException e),
+     throws(1: AppFabricServiceException e),
 
   /**
    * Returns definition of a flow.
    */
   string getFlowDefinition(1: FlowIdentifier id)
-    throws (1: RuntimeServiceException e),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
   list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id)
-      throws (1: RuntimeServiceException e),
+      throws (1: AppFabricServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
   void stopAll(1: string accountId)
-   throws (1: RuntimeServiceException e),
+   throws (1: AppFabricServiceException e),
+
+
+  /**
+   * Begins uploading of FAR
+   */
+  ResourceIdentifier init(1:AuthToken token, 2:ResourceInfo info)
+    throws (1:AppFabricServiceException e),
+
+  /**
+   * Chunk of FAR is uploaded
+   */
+  void chunk(1:AuthToken token,
+             2:ResourceIdentifier resource, 3:binary chunk)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Finalizes uploading of FAR
+   */
+  void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Status of upload
+   */
+  DeploymentStatus dstatus(1:AuthToken token, 2:ResourceIdentifier resource)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Promote an application an it's resource to cloud.
+   */
+  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Disables a Flow
+   */
+  void remove(1:AuthToken token, 2:FlowIdentifier identifier)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Disables all Flows and Queries
+   */
+  void removeAll(1:AuthToken token, 2:string accountId)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Wipes out everything for an account
+   */
+  void reset(1:AuthToken token, 2:string accountId)
+    throws (1: AppFabricServiceException e),
 }

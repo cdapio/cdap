@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -45,11 +46,11 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     schemes.put(TupleScheme.class, new FlowStatusTupleSchemeFactory());
   }
 
-  public String applicationId; // required
-  public String flowId; // required
-  public int version; // required
-  public RunIdentifier runId; // required
-  public String status; // required
+  private String applicationId; // required
+  private String flowId; // required
+  private int version; // required
+  private RunIdentifier runId; // required
+  private String status; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -199,9 +200,8 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     return this.applicationId;
   }
 
-  public FlowStatus setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -223,9 +223,8 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     return this.flowId;
   }
 
-  public FlowStatus setFlowId(String flowId) {
+  public void setFlowId(String flowId) {
     this.flowId = flowId;
-    return this;
   }
 
   public void unsetFlowId() {
@@ -247,10 +246,9 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     return this.version;
   }
 
-  public FlowStatus setVersion(int version) {
+  public void setVersion(int version) {
     this.version = version;
     setVersionIsSet(true);
-    return this;
   }
 
   public void unsetVersion() {
@@ -270,9 +268,8 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     return this.runId;
   }
 
-  public FlowStatus setRunId(RunIdentifier runId) {
+  public void setRunId(RunIdentifier runId) {
     this.runId = runId;
-    return this;
   }
 
   public void unsetRunId() {
@@ -294,9 +291,8 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
     return this.status;
   }
 
-  public FlowStatus setStatus(String status) {
+  public void setStatus(String status) {
     this.status = status;
-    return this;
   }
 
   public void unsetStatus() {
@@ -464,7 +460,34 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_flowId = true && (isSetFlowId());
+    builder.append(present_flowId);
+    if (present_flowId)
+      builder.append(flowId);
+
+    boolean present_version = true;
+    builder.append(present_version);
+    if (present_version)
+      builder.append(version);
+
+    boolean present_runId = true && (isSetRunId());
+    builder.append(present_runId);
+    if (present_runId)
+      builder.append(runId);
+
+    boolean present_status = true && (isSetStatus());
+    builder.append(present_status);
+    if (present_status)
+      builder.append(status);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowStatus other) {
@@ -671,8 +694,6 @@ public class FlowStatus implements org.apache.thrift.TBase<FlowStatus, FlowStatu
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

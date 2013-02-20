@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -47,17 +48,13 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     schemes.put(TupleScheme.class, new ActiveFlowTupleSchemeFactory());
   }
 
-  public String applicationId; // required
-  public String flowId; // required
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType type; // required
-  public long lastStopped; // required
-  public long lastStarted; // required
-  public String currentState; // required
-  public int runs; // required
+  private String applicationId; // required
+  private String flowId; // required
+  private EntityType type; // required
+  private long lastStopped; // required
+  private long lastStarted; // required
+  private String currentState; // required
+  private int runs; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -235,9 +232,8 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.applicationId;
   }
 
-  public ActiveFlow setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -259,9 +255,8 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.flowId;
   }
 
-  public ActiveFlow setFlowId(String flowId) {
+  public void setFlowId(String flowId) {
     this.flowId = flowId;
-    return this;
   }
 
   public void unsetFlowId() {
@@ -291,9 +286,8 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
    * 
    * @see EntityType
    */
-  public ActiveFlow setType(EntityType type) {
+  public void setType(EntityType type) {
     this.type = type;
-    return this;
   }
 
   public void unsetType() {
@@ -315,10 +309,9 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.lastStopped;
   }
 
-  public ActiveFlow setLastStopped(long lastStopped) {
+  public void setLastStopped(long lastStopped) {
     this.lastStopped = lastStopped;
     setLastStoppedIsSet(true);
-    return this;
   }
 
   public void unsetLastStopped() {
@@ -338,10 +331,9 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.lastStarted;
   }
 
-  public ActiveFlow setLastStarted(long lastStarted) {
+  public void setLastStarted(long lastStarted) {
     this.lastStarted = lastStarted;
     setLastStartedIsSet(true);
-    return this;
   }
 
   public void unsetLastStarted() {
@@ -361,9 +353,8 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.currentState;
   }
 
-  public ActiveFlow setCurrentState(String currentState) {
+  public void setCurrentState(String currentState) {
     this.currentState = currentState;
-    return this;
   }
 
   public void unsetCurrentState() {
@@ -385,10 +376,9 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
     return this.runs;
   }
 
-  public ActiveFlow setRuns(int runs) {
+  public void setRuns(int runs) {
     this.runs = runs;
     setRunsIsSet(true);
-    return this;
   }
 
   public void unsetRuns() {
@@ -598,7 +588,44 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_flowId = true && (isSetFlowId());
+    builder.append(present_flowId);
+    if (present_flowId)
+      builder.append(flowId);
+
+    boolean present_type = true && (isSetType());
+    builder.append(present_type);
+    if (present_type)
+      builder.append(type.getValue());
+
+    boolean present_lastStopped = true;
+    builder.append(present_lastStopped);
+    if (present_lastStopped)
+      builder.append(lastStopped);
+
+    boolean present_lastStarted = true;
+    builder.append(present_lastStarted);
+    if (present_lastStarted)
+      builder.append(lastStarted);
+
+    boolean present_currentState = true && (isSetCurrentState());
+    builder.append(present_currentState);
+    if (present_currentState)
+      builder.append(currentState);
+
+    boolean present_runs = true;
+    builder.append(present_runs);
+    if (present_runs)
+      builder.append(runs);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(ActiveFlow other) {
@@ -848,8 +875,6 @@ public class ActiveFlow implements org.apache.thrift.TBase<ActiveFlow, ActiveFlo
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

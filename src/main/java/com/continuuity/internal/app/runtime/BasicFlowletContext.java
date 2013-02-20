@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.common.metrics.Metrics;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.app.logging.FlowletLoggingContext;

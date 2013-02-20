@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,10 +45,10 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     schemes.put(TupleScheme.class, new ResourceIdentifierTupleSchemeFactory());
   }
 
-  public String accountId; // required
-  public String applicationId; // required
-  public String resource; // required
-  public int version; // required
+  private String accountId; // required
+  private String applicationId; // required
+  private String resource; // required
+  private int version; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -186,9 +187,8 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     return this.accountId;
   }
 
-  public ResourceIdentifier setAccountId(String accountId) {
+  public void setAccountId(String accountId) {
     this.accountId = accountId;
-    return this;
   }
 
   public void unsetAccountId() {
@@ -210,9 +210,8 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     return this.applicationId;
   }
 
-  public ResourceIdentifier setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -234,9 +233,8 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     return this.resource;
   }
 
-  public ResourceIdentifier setResource(String resource) {
+  public void setResource(String resource) {
     this.resource = resource;
-    return this;
   }
 
   public void unsetResource() {
@@ -258,10 +256,9 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
     return this.version;
   }
 
-  public ResourceIdentifier setVersion(int version) {
+  public void setVersion(int version) {
     this.version = version;
     setVersionIsSet(true);
-    return this;
   }
 
   public void unsetVersion() {
@@ -405,7 +402,29 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_accountId = true && (isSetAccountId());
+    builder.append(present_accountId);
+    if (present_accountId)
+      builder.append(accountId);
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_resource = true && (isSetResource());
+    builder.append(present_resource);
+    if (present_resource)
+      builder.append(resource);
+
+    boolean present_version = true;
+    builder.append(present_version);
+    if (present_version)
+      builder.append(version);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(ResourceIdentifier other) {
@@ -509,16 +528,22 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (accountId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' was not present! Struct: " + toString());
+    if (!isSetAccountId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' is unset! Struct:" + toString());
     }
-    if (applicationId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' was not present! Struct: " + toString());
+
+    if (!isSetApplicationId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' is unset! Struct:" + toString());
     }
-    if (resource == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'resource' was not present! Struct: " + toString());
+
+    if (!isSetResource()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'resource' is unset! Struct:" + toString());
     }
-    // alas, we cannot check 'version' because it's a primitive and you chose the non-beans generator.
+
+    if (!isSetVersion()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'version' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -595,11 +620,6 @@ public class ResourceIdentifier implements org.apache.thrift.TBase<ResourceIdent
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
-      if (!struct.isSetVersion()) {
-        throw new org.apache.thrift.protocol.TProtocolException("Required field 'version' was not found in serialized data! Struct: " + toString());
-      }
       struct.validate();
     }
 

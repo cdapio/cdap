@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,7 +45,7 @@ public class AuthToken implements org.apache.thrift.TBase<AuthToken, AuthToken._
     schemes.put(TupleScheme.class, new AuthTokenTupleSchemeFactory());
   }
 
-  public String token; // required
+  private String token; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -146,9 +147,8 @@ public class AuthToken implements org.apache.thrift.TBase<AuthToken, AuthToken._
     return this.token;
   }
 
-  public AuthToken setToken(String token) {
+  public void setToken(String token) {
     this.token = token;
-    return this;
   }
 
   public void unsetToken() {
@@ -228,7 +228,14 @@ public class AuthToken implements org.apache.thrift.TBase<AuthToken, AuthToken._
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_token = true && (isSetToken());
+    builder.append(present_token);
+    if (present_token)
+      builder.append(token);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(AuthToken other) {
@@ -332,8 +339,6 @@ public class AuthToken implements org.apache.thrift.TBase<AuthToken, AuthToken._
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

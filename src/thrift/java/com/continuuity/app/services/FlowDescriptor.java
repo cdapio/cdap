@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,8 +45,8 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
     schemes.put(TupleScheme.class, new FlowDescriptorTupleSchemeFactory());
   }
 
-  public FlowIdentifier identifier; // required
-  public List<String> arguments; // required
+  private FlowIdentifier identifier; // required
+  private List<String> arguments; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -163,9 +164,8 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
     return this.identifier;
   }
 
-  public FlowDescriptor setIdentifier(FlowIdentifier identifier) {
+  public void setIdentifier(FlowIdentifier identifier) {
     this.identifier = identifier;
-    return this;
   }
 
   public void unsetIdentifier() {
@@ -202,9 +202,8 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
     return this.arguments;
   }
 
-  public FlowDescriptor setArguments(List<String> arguments) {
+  public void setArguments(List<String> arguments) {
     this.arguments = arguments;
-    return this;
   }
 
   public void unsetArguments() {
@@ -306,7 +305,19 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_identifier = true && (isSetIdentifier());
+    builder.append(present_identifier);
+    if (present_identifier)
+      builder.append(identifier);
+
+    boolean present_arguments = true && (isSetArguments());
+    builder.append(present_arguments);
+    if (present_arguments)
+      builder.append(arguments);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowDescriptor other) {
@@ -447,8 +458,6 @@ public class FlowDescriptor implements org.apache.thrift.TBase<FlowDescriptor, F
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

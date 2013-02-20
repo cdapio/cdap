@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -43,9 +44,9 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     schemes.put(TupleScheme.class, new DeploymentStatusTupleSchemeFactory());
   }
 
-  public int overall; // required
-  public String message; // required
-  public List<VerificationStatus> verification; // required
+  private int overall; // required
+  private String message; // required
+  private List<VerificationStatus> verification; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -178,10 +179,9 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     return this.overall;
   }
 
-  public DeploymentStatus setOverall(int overall) {
+  public void setOverall(int overall) {
     this.overall = overall;
     setOverallIsSet(true);
-    return this;
   }
 
   public void unsetOverall() {
@@ -201,9 +201,8 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     return this.message;
   }
 
-  public DeploymentStatus setMessage(String message) {
+  public void setMessage(String message) {
     this.message = message;
-    return this;
   }
 
   public void unsetMessage() {
@@ -240,9 +239,8 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
     return this.verification;
   }
 
-  public DeploymentStatus setVerification(List<VerificationStatus> verification) {
+  public void setVerification(List<VerificationStatus> verification) {
     this.verification = verification;
-    return this;
   }
 
   public void unsetVerification() {
@@ -366,7 +364,24 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_overall = true;
+    builder.append(present_overall);
+    if (present_overall)
+      builder.append(overall);
+
+    boolean present_message = true && (isSetMessage());
+    builder.append(present_message);
+    if (present_message)
+      builder.append(message);
+
+    boolean present_verification = true && (isSetVerification());
+    builder.append(present_verification);
+    if (present_verification)
+      builder.append(verification);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(DeploymentStatus other) {
@@ -531,8 +546,6 @@ public class DeploymentStatus implements org.apache.thrift.TBase<DeploymentStatu
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 
