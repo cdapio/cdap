@@ -1,7 +1,9 @@
 package com.continuuity.internal.io;
 
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
 import com.continuuity.common.io.Decoder;
+import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
@@ -31,7 +33,10 @@ public final class ReflectionDatumReader<T> {
 
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
-    this.type = type;
+
+    // FIXME: This is a hack. Until we support class generation based on interface
+    this.type = type.getRawType().equals(StreamEvent.class)
+                      ? (TypeToken<T>) TypeToken.of(DefaultStreamEvent.class) : type;
 
     this.creatorFactory = new InstantiatorFactory();
     this.creators = Maps.newIdentityHashMap();

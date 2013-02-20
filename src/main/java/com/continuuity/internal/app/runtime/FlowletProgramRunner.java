@@ -348,7 +348,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
         }
 
-        Preconditions.checkArgument(!queueReaders.isEmpty(), "No queue reader found for %s %s", flowletName, schema);
+        Preconditions.checkArgument(!queueReaders.isEmpty(),
+                                    "No queue reader found for %s, schema %s", flowletName, schema);
         return new ProcessSpecification(new RoundRobinQueueReader(queueReaders), method);
       }
     };
