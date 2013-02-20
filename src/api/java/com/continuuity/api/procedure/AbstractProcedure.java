@@ -16,7 +16,12 @@ package com.continuuity.api.procedure;
  */
 public abstract class AbstractProcedure implements Procedure {
 
-  protected ProcedureContext procedureContext;
+  private final String name;
+  private ProcedureContext procedureContext;
+
+  protected AbstractProcedure(String name) {
+    this.name = name;
+  }
 
   /**
    * Default implementation of configure that returns a default {@link ProcedureSpecification}
@@ -45,6 +50,14 @@ public abstract class AbstractProcedure implements Procedure {
   @Override
   public void destroy() {
     // Nothing to do
+  }
+
+  /**
+   * @return An instance of {@link ProcedureContext} when this Procedure is running. Otherwise return
+   *         {@code null} if it is not running or not yet initialized by the runtime environment.
+   */
+  public ProcedureContext getContext() {
+    return procedureContext;
   }
 
   /**

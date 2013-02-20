@@ -6,30 +6,33 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
+import com.continuuity.api.common.metrics.Metrics;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.Callback;
+import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,11 +103,19 @@ public class WordCountApp implements Application {
 
   public static class StreamSucker extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
+    private Metrics metrics;
+
+    public StreamSucker() {
+      super("StreamSucker");
+    }
 
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
       if (!"text".equals(context.getName())) {
         return;
       }
+
+      metrics.count("stream.event", 1);
+
       ByteBuffer buf = event.getBody();
       output.emit(new MyRecord(
         event.getHeaders().get("title"),
@@ -116,6 +127,10 @@ public class WordCountApp implements Application {
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
+
+    public Tokenizer() {
+      super("Tokenizer");
+    }
 
     @Process
     public void foo(MyRecord data) {
@@ -134,12 +149,19 @@ public class WordCountApp implements Application {
     }
   }
 
-  public static class CountByField extends AbstractFlowlet {
+  @Async
+  public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
 
+    public CountByField() {
+      super("CountByField");
+    }
+
     @Process("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
+      LOG.info("process count by field: " + fieldToken);
+
       String token = fieldToken.get("word");
       if (token == null) {
         return;
@@ -150,13 +172,27 @@ public class WordCountApp implements Application {
       }
 
       this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
-      LOG.info(token + " : " + Longs.fromByteArray(counters.read(token.getBytes(Charsets.UTF_8))));
+//      LOG.info(token + " : " + Longs.fromByteArray(counters.read(token.getBytes(Charsets.UTF_8))));
+    }
+
+    @Override
+    public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+      LOG.info("Success: " + input);
+    }
+
+    @Override
+    public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
+      return FailurePolicy.RETRY;
     }
   }
 
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
+
+    public WordFrequency() {
+      super("WordFrequency");
+    }
 
     @Handle("wordfreq")
     public void process(String word) throws OperationException {

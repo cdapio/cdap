@@ -16,7 +16,12 @@ package com.continuuity.api.flow.flowlet;
  */
 public abstract class AbstractFlowlet implements Flowlet {
 
+  private final String name;
   private FlowletContext flowletContext;
+
+  protected AbstractFlowlet(String name) {
+    this.name = name;
+  }
 
   @Override
   public FlowletSpecification configure() {
@@ -48,13 +53,13 @@ public abstract class AbstractFlowlet implements Flowlet {
    * @return {@link Class#getSimpleName() Simple classname} of this {@link Flowlet}
    */
   protected String getName() {
-    return getClass().getSimpleName();
+    return name;
   }
 
   /**
    * @return A descriptive message about this {@link Flowlet}.
    */
   protected String getDescription() {
-    return String.format("Flowlet for doing %s.", getName());
+    return String.format("Flowlet of %s.", getName());
   }
 }
