@@ -1,15 +1,14 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.consumer.EventWritingConsumer;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
-import com.continuuity.gateway.consumer.TupleWritingConsumer;
+import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
@@ -17,7 +16,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,58 +92,21 @@ public class GatewayRestCollectorTest {
 
   } // end of setupGateway
 
-
-  /**
-   * Test that we can send simulated REST events to a Queue using
-   * TupleWriteConsumer.
-   *
-   * @throws Exception If any exceptions happen during the test
-   */
-  @Test
-  public void testRestToQueueWithTupleWriteConsumer() throws Exception {
-    // now switch the consumer to write the events as tuples
-    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
-    tupleWritingConsumer.setExecutor(this.executor);
-
-    // and restart the gateway
-    theGateway.setConsumer(tupleWritingConsumer);
-    theGateway.start(null, myConfiguration);
-
-    // Send some REST events and verify them
-    TestUtil.sendRestEvents(port, prefix, path, stream, eventsToSend);
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
-
-    // get queue info and verify that it is equal to the native one
-    TestUtil.verifyQueueInfo(executor, port, prefix, path, stream);
-    // just for fun, verify that queue info works for non-existent streams
-    TestUtil.verifyQueueInfo(executor, port, prefix, path, "xyz");
-
-    // Stop the Gateway
-    theGateway.stop(false);
-  }
-
   /**
    * Test that we can send simulated REST events to a Queue using
    * EventWritingConsumer.
    *
-   * NOTE: This has been seperated out from the above test till we figure
-   * out how OMID can handle multiple write format that gets on queue. No
-   * Ignore is added for test on purpose.
-   *
    * @throws Exception If any exceptions happen during the test
    */
-  @Test @Ignore
-  public void testRestToQueueWithEventWriteConsumer() throws Exception {
+  @Test
+  public void testRestToQueueWithStreamEventWriteConsumer() throws Exception {
 
     // Set up our consumer and queues
-    EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
-    eventWritingConsumer.setExecutor(this.executor);
+    StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
+    consumer.setExecutor(this.executor);
 
     // Initialize and start the Gateway
-    theGateway.setConsumer(eventWritingConsumer);
+    theGateway.setConsumer(consumer);
 
     try {
       theGateway.start(null, myConfiguration);
@@ -156,9 +117,9 @@ public class GatewayRestCollectorTest {
 
     // Send some REST events and verify them
     TestUtil.sendRestEvents(port, prefix, path, stream, eventsToSend);
-    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
+    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    Assert.assertEquals(0, consumer.eventsFailed());
     TestUtil.consumeQueueAsEvents(this.executor, stream, name, eventsToSend);
 
     // Stop the Gateway

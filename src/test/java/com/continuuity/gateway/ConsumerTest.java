@@ -1,13 +1,15 @@
 package com.continuuity.gateway;
 
-import java.util.ArrayList;
-
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.streamevent.DefaultStreamEvent;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class ConsumerTest {
 
@@ -18,25 +20,25 @@ public class ConsumerTest {
   public void testConsumer() throws Exception {
     Consumer consumer = new Consumer() {
       @Override
-      protected void single(Event event) throws Exception {
-        if (event.hasHeader("dummy")) {
+      protected void single(StreamEvent event) throws Exception {
+        if (event.getHeaders().containsKey("dummy")) {
           throw new Exception("dummy header found");
         }
       }
     };
     consumer.configure(CConfiguration.create());
 
-    Event goodEvent = new EventBuilder().setHeader("goody", "ok").create();
-    Event badEvent = new EventBuilder().setHeader("dummy", "not ok").create();
-    ArrayList<Event> goodBatch = new ArrayList<Event>();
-    goodBatch.add(goodEvent);
-    goodBatch.add(goodEvent);
-    ArrayList<Event> badBatch = new ArrayList<Event>();
-    badBatch.add(badEvent);
-    badBatch.add(badEvent);
-    ArrayList<Event> mixedBatch = new ArrayList<Event>();
-    mixedBatch.add(goodEvent);
-    mixedBatch.add(badEvent);
+    Map<String, String> goodHeaders = new TreeMap<String, String>();
+    goodHeaders.put("goody", "ok");
+    StreamEvent goodEvent = new DefaultStreamEvent(goodHeaders, null);
+
+    Map<String, String> badHeaders = new TreeMap<String, String>();
+    badHeaders.put("dummy", "not ok");
+    StreamEvent badEvent = new DefaultStreamEvent(badHeaders, null);
+
+    List<StreamEvent> goodBatch = Lists.newArrayList(goodEvent, goodEvent);
+    List<StreamEvent> badBatch = Lists.newArrayList(badEvent, badEvent);
+    List<StreamEvent> mixedBatch = Lists.newArrayList(goodEvent, badEvent);
 
     // Start the consumer and verify that all counters are zero
     consumer.startConsumer();

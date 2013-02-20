@@ -1,20 +1,14 @@
 package com.continuuity.gateway;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
-import com.continuuity.gateway.consumer.EventWritingConsumer;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
-import com.continuuity.gateway.consumer.TupleWritingConsumer;
+import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
@@ -25,6 +19,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This tests whether Flume events are properly transmitted through the Gateway
@@ -111,50 +110,6 @@ public class GatewayFlumeCollectorAuthTest {
 
   /**
    * Test that we can send simulated Flume events to a Queue using
-   * TupleWritingConsumer
-   *
-   * @throws Exception If any exceptions happen during the test
-   */
-  @Test
-  public void testFlumeToQueueTupleWritingConsumer() throws Exception {
-    // now switch the consumer to write the events as tuples
-    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
-    tupleWritingConsumer.setExecutor(this.executor);
-
-    // and restart the gateway
-    theGateway.setConsumer(tupleWritingConsumer);
-    try {
-      theGateway.start(null, myConfiguration);
-    } catch (ServerException e) {
-      // We don't care about the reconfigure problem in this test
-      LOG.debug(e.getMessage());
-    }
-
-    // Send some events
-    TestUtil.enableAuth(apiKey);
-    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsTuples(this.executor, destination, name,
-        eventsToSend);
-
-    // Sending events without auth sould fail
-    TestUtil.disableAuth();
-    try {
-      TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-      Assert.assertTrue("Unauthenticated flume request worked but should fail",
-          false);
-    } catch (Exception e) {
-      // Expected
-    }
-
-    // Stop the Gateway
-    theGateway.stop(false);
-  }
-
-  /**
-   * Test that we can send simulated Flume events to a Queue using
    * EventWritingConsumer.
    *
    * NOTE: This has been seperated out from the above test till we figure
@@ -163,14 +118,15 @@ public class GatewayFlumeCollectorAuthTest {
    *
    * @throws Exception If any exceptions happen during the test
    */
-  public void testFlumeToQueueWithEventWritingConsumer() throws Exception {
+  @Test
+  public void testFlumeToQueueWithStreamEventWritingConsumer() throws Exception {
 
     // Set up our consumer and queues
-    EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
-    eventWritingConsumer.setExecutor(this.executor);
+    StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
+    consumer.setExecutor(this.executor);
 
     // Initialize and start the Gateway
-    theGateway.setConsumer(eventWritingConsumer);
+    theGateway.setConsumer(consumer);
 
     try {
       theGateway.start(null, myConfiguration);
@@ -182,9 +138,9 @@ public class GatewayFlumeCollectorAuthTest {
     // Send some events
     TestUtil.enableAuth(apiKey);
     TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
+    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    Assert.assertEquals(0, consumer.eventsFailed());
     TestUtil.consumeQueueAsEvents(this.executor, destination, name,
                                   eventsToSend);
 

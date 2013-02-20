@@ -1,6 +1,6 @@
 package com.continuuity.gateway.consumer;
 
-import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.gateway.Consumer;
 
 import java.util.List;
@@ -12,12 +12,12 @@ import java.util.List;
 public class NoopConsumer extends Consumer {
 
   @Override
-  protected void single(Event event) {
+  protected void single(StreamEvent event) {
     // do nothing on purpose
   }
 
   @Override
-  protected void batch(List<Event> events) {
+  protected void batch(List<StreamEvent> events) {
     // do nothing on purpose
   }
 }
