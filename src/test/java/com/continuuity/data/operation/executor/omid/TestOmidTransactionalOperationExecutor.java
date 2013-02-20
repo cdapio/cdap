@@ -28,8 +28,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
-import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -42,7 +40,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -573,90 +570,6 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(valueTwo, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
   }
 
-  @Test
-  public void testIncrementPassThru() throws Exception {
-
-    byte [] key = Bytes.toBytes("testIncrementPassThru");
-
-    byte [] columnOne = Bytes.toBytes("colOne");
-    byte [] columnTwo = Bytes.toBytes("colTwo");
-
-    byte [] queueOne = Bytes.toBytes("qOne");
-    byte [] queueTwo = Bytes.toBytes("qTwo");
-
-    byte [] queueOneData = Bytes.toBytes("queueOneData");
-    byte [] queueTwoData = Bytes.toBytes("queueTwoData");
-
-    // Generate a list of write operations that contain two increments and
-    // two enqueue operations, one points to one operation, the other points to
-    // both operations
-
-    // Increment one (will tie to field "one/ONE" of first and second enqueues)
-    Increment incrementOne = new Increment(key, columnOne, 1);
-
-    // Increment two (will tie to field "two" of first enqueue)
-    Increment incrementTwo = new Increment(key, columnTwo, 2);
-
-    // Generate first enqueue payload tied to both increments
-    Map<String,Long> enqueueOneMap = new TreeMap<String,Long>();
-    enqueueOneMap.put("one", incrementOne.getId());
-    enqueueOneMap.put("two", incrementTwo.getId());
-
-    // Make the first enqueue operation using an enqueue payload with the map
-    QueueEnqueue enqueueOne = new QueueEnqueue(queueOne,
-        EnqueuePayload.write(enqueueOneMap, queueOneData));
-
-    // Generate second enqueue payload tied to the first increment
-    Map<String,Long> enqueueTwoMap = new TreeMap<String,Long>();
-    enqueueTwoMap.put("ONE", incrementOne.getId());
-
-    // Make the second enqueue operation using an enqueue payload with the map
-    QueueEnqueue enqueueTwo = new QueueEnqueue(queueTwo,
-        EnqueuePayload.write(enqueueTwoMap, queueTwoData));
-
-    // Make a batch of operations, putting enqueues first knowing that these
-    // must be reordered to after the increment operations
-    List<WriteOperation> batch = new ArrayList<WriteOperation>(4);
-    batch.add(enqueueOne);
-    batch.add(enqueueTwo);
-    batch.add(incrementOne);
-    batch.add(incrementTwo);
-
-    // Execute the batch!
-    executor.commit(context, batch);
-
-    // Dequeueing from these queues should yield the post increment values
-    QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-
-    // Dequeue from queue one, expect two fields, one=1 and two=2
-    QueueDequeue dequeueOne = new QueueDequeue(queueOne, consumer, config);
-    DequeueResult dequeueOneResult = executor.execute(context, dequeueOne);
-    assertTrue(dequeueOneResult.isSuccess());
-    assertFalse(dequeueOneResult.isEmpty());
-    byte [] dequeueOneData = dequeueOneResult.getValue();
-    DequeuePayload dequeueOnePayload = DequeuePayload.read(dequeueOneData);
-    Map<String,Long> dequeueOneValues = dequeueOnePayload.getValues();
-    assertEquals(2, dequeueOneValues.size());
-    assertEquals(new Long(1), dequeueOneValues.get("one"));
-    assertEquals(new Long(2), dequeueOneValues.get("two"));
-    assertTrue(Bytes.equals(queueOneData,
-        dequeueOnePayload.getSerializedTuple()));
-
-    // Dequeue from queue two, expect one field, ONE=1
-    QueueDequeue dequeueTwo = new QueueDequeue(queueTwo, consumer, config);
-    DequeueResult dequeueTwoResult = executor.execute(context, dequeueTwo);
-    assertTrue(dequeueTwoResult.isSuccess());
-    assertFalse(dequeueTwoResult.isEmpty());
-    byte [] dequeueTwoData = dequeueTwoResult.getValue();
-    DequeuePayload dequeueTwoPayload = DequeuePayload.read(dequeueTwoData);
-    Map<String,Long> dequeueTwoValues = dequeueTwoPayload.getValues();
-    assertEquals(1, dequeueTwoValues.size());
-    assertEquals(new Long(1), dequeueTwoValues.get("ONE"));
-    assertTrue(Bytes.equals(queueTwoData,
-        dequeueTwoPayload.getSerializedTuple()));
-  }
-
   private static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
   }
@@ -1101,15 +1014,14 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte[] value = executor.execute(context, tx1, new Read(table, f, x)).getValue().get(x);
     Assert.assertArrayEquals(eleven, value);
     // enqueue the value and commit
-    executor.commit(context, tx1, batch(new QueueEnqueue(qname, EnqueuePayload.write(new TreeMap<String, Long>(),
-                                                                                     value))));
+    executor.commit(context, tx1, batch(new QueueEnqueue(qname, value)));
     // dequeue
     DequeueResult deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
                                 new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertFalse(deqres.isEmpty());
-    Assert.assertArrayEquals(value, DequeuePayload.read(deqres.getValue()).getSerializedTuple());
+    Assert.assertArrayEquals(value, deqres.getValue());
     // in a new transaction, write the dequeued value and ack the queue entry
     executor.commit(context, batch(new Write(table, g, x, value),
                                    new QueueAck(qname, deqres.getEntryPointer(),
