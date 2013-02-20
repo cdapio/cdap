@@ -53,7 +53,7 @@ public class RuntimeServiceImplTest {
     Assert.assertEquals(1, flowDef.getFlowStreams().size());
 
     // checking connections (most important stuff)
-    Assert.assertEquals(4, flowDef.getConnections().size());
+    Assert.assertEquals(3, flowDef.getConnections().size());
     int[] connectionFound = new int[3];
     for (ConnectionDefinition conn : flowDef.getConnections()) {
       if (conn.getFrom().isFlowStream()) {
@@ -70,7 +70,7 @@ public class RuntimeServiceImplTest {
       }
     }
 
-    Assert.assertArrayEquals(new int[]{1, 2, 1}, connectionFound);
+    Assert.assertArrayEquals(new int[]{1, 1, 1}, connectionFound);
   }
 
   @Test
