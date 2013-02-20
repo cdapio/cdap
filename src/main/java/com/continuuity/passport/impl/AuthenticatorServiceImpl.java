@@ -5,7 +5,7 @@ import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
-import com.continuuity.passport.core.service.Authenticator;
+import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -18,13 +18,13 @@ import java.util.Map;
  *
  */
 
-public class AuthenticatorImpl implements Authenticator {
+public class AuthenticatorServiceImpl implements AuthenticatorService {
 
   private final Map<String,String> configuration;
 
 
   @Inject
-  public AuthenticatorImpl(@Named("passport.config") Map<String,String> config) {
+  public AuthenticatorServiceImpl(@Named("passport.config") Map<String, String> config) {
        this.configuration = config;
   }
 

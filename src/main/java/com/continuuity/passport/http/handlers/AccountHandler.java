@@ -7,7 +7,7 @@ import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.meta.VPC;
-import com.continuuity.passport.core.service.Authenticator;
+import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.http.server.Utils;
@@ -37,13 +37,13 @@ import java.util.Map;
 public class AccountHandler {
 
   private final DataManagementService dataManagementService;
-  private final Authenticator authenticator;
+  private final AuthenticatorService authenticatorService;
 
 
   @Inject
-  public AccountHandler(DataManagementService dataManagementService, Authenticator authenticator) {
+  public AccountHandler(DataManagementService dataManagementService, AuthenticatorService authenticatorService) {
     this.dataManagementService = dataManagementService;
-    this.authenticator = authenticator;
+    this.authenticatorService = authenticatorService;
   }
 
   @Path("{id}")
@@ -369,7 +369,7 @@ public class AccountHandler {
 
     try {
 
-      AuthenticationStatus status = authenticator.authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
+      AuthenticationStatus status = authenticatorService.authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
         StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?

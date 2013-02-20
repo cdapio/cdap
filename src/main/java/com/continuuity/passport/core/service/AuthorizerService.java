@@ -9,7 +9,7 @@ import com.continuuity.passport.core.meta.Credentials;
 /**
  *
  */
-public interface Authorizer {
+public interface AuthorizerService {
 
   /**
    * Authorize component for the user with the request ACLType

@@ -10,7 +10,7 @@ import java.util.Map;
  * Interface for user authentication
  * Use this interface to implement different kinds of authentication mechanisms
  */
-public interface Authenticator {
+public interface AuthenticatorService {
 
   /**
    * Authenticates User with the Credentials passed

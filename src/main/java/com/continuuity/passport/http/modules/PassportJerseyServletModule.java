@@ -1,6 +1,6 @@
 package com.continuuity.passport.http.modules;
 
-import com.continuuity.passport.core.service.Authenticator;
+import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
@@ -12,7 +12,7 @@ import com.continuuity.passport.http.handlers.AccountHandler;
 import com.continuuity.passport.http.handlers.ActivationHandler;
 import com.continuuity.passport.http.handlers.NonceHandler;
 import com.continuuity.passport.http.handlers.VPCHandler;
-import com.continuuity.passport.impl.AuthenticatorImpl;
+import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
@@ -53,9 +53,9 @@ public class PassportJerseyServletModule extends JerseyServletModule {
     bind(NonceHandler.class);
     bind(VPCHandler.class);
 
-    //Bind DataManagementService and Authenticator to default implementations
+    //Bind DataManagementService and AuthenticatorService to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
-    bind(Authenticator.class).to(AuthenticatorImpl.class);
+    bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
 
     //Bind Data Access objects
     bind(AccountDAO.class).to(AccountDBAccess.class);
