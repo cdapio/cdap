@@ -4,6 +4,7 @@ import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.http.server.Utils;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
  *
  */
 @Path("passport/v1/sso/")
+@Singleton
 public class NonceHandler {
 
   private final DataManagementService dataManagementService;

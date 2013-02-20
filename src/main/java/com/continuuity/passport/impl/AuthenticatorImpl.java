@@ -7,6 +7,8 @@ import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
@@ -18,18 +20,14 @@ import java.util.Map;
 
 public class AuthenticatorImpl implements Authenticator {
 
-  private static AuthenticatorImpl instance  = null;
+  private final Map<String,String> configuration;
 
-  private AuthenticatorImpl(){
 
+  @Inject
+  public AuthenticatorImpl(@Named("passport.config") Map<String,String> config) {
+       this.configuration = config;
   }
 
-  public static AuthenticatorImpl getInstance() {
-    if ( instance == null) {
-      instance = new AuthenticatorImpl();
-    }
-    return instance;
-  }
 
   /**
    * Authenticates User with the Credentials passed

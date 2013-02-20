@@ -2,9 +2,10 @@ package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
-import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.utils.NonceUtils;
 import com.continuuity.passport.dal.NonceDAO;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import java.sql.*;
@@ -20,7 +21,8 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   private static final int  ACTIVATION_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24 * 3;
 
 
-  public NonceDBAccess(Map<String,String> configurations) {
+  @Inject
+  public NonceDBAccess(@Named("passport.config") Map<String,String> configurations) {
 
     String connectionString = configurations.get("connectionString");
     String jdbcType = configurations.get("jdbcType");

@@ -7,10 +7,10 @@ import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.http.server.Utils;
-import com.continuuity.passport.impl.AuthenticatorImpl;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -32,15 +32,18 @@ import java.util.Map;
  */
 
 
-@Singleton
 @Path("/passport/v1/account/")
+@Singleton
 public class AccountHandler {
 
   private final DataManagementService dataManagementService;
+  private final Authenticator authenticator;
+
 
   @Inject
-  public AccountHandler(DataManagementService dataManagementService) {
+  public AccountHandler(DataManagementService dataManagementService, Authenticator authenticator) {
     this.dataManagementService = dataManagementService;
+    this.authenticator = authenticator;
   }
 
   @Path("{id}")
@@ -159,7 +162,7 @@ public class AccountHandler {
         updateParams.put("company",company);
       }
 
-      dataManagementService.updateAccount(id,updateParams);
+      dataManagementService.updateAccount(id, updateParams);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
       Account account = dataManagementService.getAccount(id);
@@ -276,7 +279,7 @@ public class AccountHandler {
       String vpcLabel = jsonObject.get("vpc_label") == null ? null : jsonObject.get("vpc_label").getAsString();
 
       if ( (vpcName!= null) && (!vpcName.isEmpty()) && (vpcLabel!=null) && ( !vpcLabel.isEmpty()) ){
-        VPC vpc= dataManagementService.addVPC(id, new VPC(vpcName,vpcLabel));
+        VPC vpc= dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel));
         return Response.ok(vpc.toString()).build();
       }
       else {
@@ -365,9 +368,9 @@ public class AccountHandler {
 
 
     try {
-      AuthenticationStatus status = AuthenticatorImpl.getInstance()
-        .authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
-          StringUtils.EMPTY_STRING));
+
+      AuthenticationStatus status = authenticator.authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
+        StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
@@ -412,7 +415,7 @@ public class AccountHandler {
   public Response deleteVPC(@PathParam("accountId") int accountId,  @PathParam("vpcId") int vpcId){
 
     try {
-      dataManagementService.deleteVPC(accountId,vpcId);
+      dataManagementService.deleteVPC(accountId, vpcId);
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (VPCNotFoundException e) {
       return Response.status(Response.Status.NOT_FOUND)

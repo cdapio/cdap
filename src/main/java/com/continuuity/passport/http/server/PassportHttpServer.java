@@ -2,12 +2,14 @@ package com.continuuity.passport.http.server;
 
 
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
-import com.continuuity.passport.http.modules.*;
+import com.continuuity.passport.http.modules.PassportGuiceServletContextListener;
+import com.google.inject.servlet.GuiceFilter;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
 
 import javax.management.MBeanServer;
@@ -38,9 +40,8 @@ public class PassportHttpServer  {
 
       Context context = new Context(server, "/", Context.SESSIONS);
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
-      //TODO: Uncomment line below. Was commented out to ease testing.
-      //context.addFilter(GuiceFilter.class, "/*",0);
-
+      context.addServlet(DefaultServlet.class,"/");
+      context.addFilter(GuiceFilter.class, "/*",0);
 
         //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -61,10 +62,10 @@ public class PassportHttpServer  {
 
     Map<String,String> config = new HashMap<String,String>();
 
-    //TODO: Move this configurations to a central place
+    //TODO: READ Config from the file.
     config.put("jdbcType","mysql");
     //config.put("connectionString","jdbc:mysql://ppdb101.joyent.continuuity.net:3306/continuuity?user=passport_user");
-   config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
 
     Realm realm = new JDBCAuthrozingRealm(config);
 

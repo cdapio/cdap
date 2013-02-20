@@ -10,11 +10,7 @@ import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
 import com.continuuity.passport.dal.VpcDAO;
-import com.continuuity.passport.dal.db.AccountDBAccess;
-import com.continuuity.passport.dal.db.NonceDBAccess;
-import com.continuuity.passport.dal.db.VpcDBAccess;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.util.List;
 import java.util.Map;
@@ -25,23 +21,27 @@ import java.util.Map;
 public class DataManagementServiceImpl implements DataManagementService {
 
 
-  private AccountDAO accountDAO = null;
+  private final AccountDAO accountDAO;
 
-  private VpcDAO vpcDao = null;
+  private final VpcDAO vpcDao;
 
-  private NonceDAO nonceDAO = null;
+  private final NonceDAO nonceDAO ;
 
 
   @Inject
-  public DataManagementServiceImpl(@Named("passport.config") Map<String,String> config) {
-    accountDAO = new AccountDBAccess();
+//  public DataManagementServiceImpl(@Named("passport.config") Map<String,String> config) {
+  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, NonceDAO nonceDAO) {
 
-    accountDAO.configure(config);
-    vpcDao = new VpcDBAccess();
-    //TODO: Remove configure
-    vpcDao.configure(config);
+    this.accountDAO = accountDAO;
+    this.vpcDao = vpcDAO;
+    this.nonceDAO = nonceDAO;
 
-    nonceDAO = new NonceDBAccess(config);
+  }
+
+  private void  checkValidDAO( )throws RuntimeException{
+    if ( (accountDAO ==null) || (vpcDao == null) || (nonceDAO == null)  ) {
+      throw new RuntimeException("Could not init data access Object");
+    }
   }
 
   /**
@@ -53,10 +53,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Account registerAccount(Account account) throws RuntimeException, AccountAlreadyExistsException {
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
+    checkValidDAO();
 
-    }
     try {
       return accountDAO.createAccount(account);
     } catch (ConfigurationException e) {
@@ -67,10 +65,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public Status confirmRegistration(Account account, String password) throws RuntimeException {
 
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-
-    }
+    checkValidDAO();
     try {
       accountDAO.confirmRegistration(account, password);
     } catch (ConfigurationException e) {
@@ -81,9 +76,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public void confirmDownload(int accountId) throws RuntimeException {
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
     try {
       accountDAO.confirmDownload(accountId);
     } catch (ConfigurationException e) {
@@ -130,9 +123,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void deleteAccount(int accountId) throws RuntimeException, AccountNotFoundException {
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
+
     try {
       accountDAO.deleteAccount(accountId);
     } catch (ConfigurationException e) {
@@ -162,10 +154,8 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public Account getAccount(int accountId) throws RuntimeException {
 
+    checkValidDAO();
     Account account = null;
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
     try {
      account= accountDAO.getAccount(accountId);
     } catch (ConfigurationException e) {
@@ -176,9 +166,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public VPC getVPC(int accountId, int vpcId) {
-    if(vpcDao == null) {
-      throw new RuntimeException("Could not initialize data access object");
-    }
+    checkValidDAO();
     try {
       return vpcDao.getVPC(accountId,vpcId);
     } catch (ConfigurationException e) {
@@ -188,9 +176,8 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public void deleteVPC(int accountId, int vpcId) throws RuntimeException, VPCNotFoundException {
-    if(vpcDao == null) {
-      throw new RuntimeException("Could not initialize data access object");
-    }
+    checkValidDAO();
+
     try {
        vpcDao.removeVPC(accountId, vpcId);
     } catch (ConfigurationException e) {
@@ -202,10 +189,11 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public Account getAccount(String emailId) throws RuntimeException {
+
+    checkValidDAO();
+
     Account account = null;
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+
     try {
       account= accountDAO.getAccount(emailId);
     } catch (ConfigurationException e) {
@@ -216,10 +204,10 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public List<VPC> getVPC(int accountId) {
+
+    checkValidDAO();
     List<VPC> vpcs;
-    if(vpcDao == null) {
-      throw new RuntimeException("Could not initialize data access object");
-    }
+
     try {
        vpcs = vpcDao.getVPC(accountId);
     } catch (ConfigurationException e) {
@@ -236,10 +224,10 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public List<VPC> getVPC(String apiKey) {
+
+    checkValidDAO();
+
     List<VPC> vpcs;
-    if(vpcDao == null) {
-      throw new RuntimeException("Could not initialize data access object");
-    }
     try {
       vpcs = vpcDao.getVPC(apiKey);
     } catch (ConfigurationException e) {
@@ -258,9 +246,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public void updateAccount(int accountId, Map<String, Object> params) throws RuntimeException {
 
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
     try {
       accountDAO.updateAccount(accountId, params);
     } catch (Exception e) {
@@ -271,9 +257,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException {
-    if (accountDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
     try {
       accountDAO.changePassword(accountId, oldPassword, newPassword);
     } catch (Exception e) {
@@ -284,9 +268,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public int getActivationNonce(int id) throws RuntimeException {
-    if (nonceDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
     try {
       return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.ACTIVATION);
     }catch (Exception e) {
@@ -297,9 +279,8 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public int getSessionNonce(int id) throws RuntimeException {
-    if (nonceDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
+
     try {
       return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
     }catch (Exception e) {
@@ -310,9 +291,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public int getActivationId(int nonce) throws RuntimeException {
-    if (nonceDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
     try {
       return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
     }catch (Exception e) {
@@ -322,9 +301,8 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public int getSessionId(int nonce) throws RuntimeException {
-    if (nonceDAO ==null) {
-      throw new RuntimeException("Could not init data access Object");
-    }
+    checkValidDAO();
+
     try {
       return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
     }catch (Exception e) {
@@ -333,9 +311,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   public VPC addVPC(int accountId, VPC vpc) throws RuntimeException {
-    if(vpcDao == null) {
-      throw new RuntimeException("Could not initialize data access object");
-    }
+    checkValidDAO();
     try {
      return vpcDao.addVPC(accountId, vpc);
     } catch (ConfigurationException e) {

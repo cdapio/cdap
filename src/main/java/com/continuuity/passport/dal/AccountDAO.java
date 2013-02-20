@@ -4,7 +4,6 @@ import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
 import com.continuuity.passport.core.meta.Role;
 
@@ -71,11 +70,6 @@ public interface AccountDAO {
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)
                                                                   throws ConfigurationException, RuntimeException;
 
-  /**
-   * Configure the Data access objects
-   * @param configurations Key value params for configuring the DAO
-   */
-  public void configure (Map<String,String> configurations);
 
   public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException;
 

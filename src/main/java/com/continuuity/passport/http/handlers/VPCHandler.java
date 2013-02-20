@@ -4,6 +4,7 @@ import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.http.server.Utils;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -15,7 +16,9 @@ import java.util.List;
 /**
  *
  */
+
 @Path("passport/v1/vpc")
+@Singleton
 public class VPCHandler {
 
   private final DataManagementService dataManagementService;

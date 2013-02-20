@@ -5,32 +5,43 @@ import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.dal.AccountDAO;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Date;
+import java.sql.*;
 import java.util.Map;
 
 /**
  * AccountDAO implementation that uses database as the persistence store
  */
+
+
 public class AccountDBAccess extends DBAccess implements AccountDAO {
 
-  private Map<String, String> configuration;
 
   private DBConnectionPoolManager poolManager = null;
 
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
+
+  @Inject
+  public void AccountDBAccess(@Named("passport.config") Map<String,String> config) {
+
+
+    String connectionString = config.get("connectionString");
+    String jdbcType = config.get("jdbcType");
+
+    if (jdbcType.toLowerCase().equals("mysql")) {
+      MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
+      mysqlDataSource.setUrl(connectionString);
+      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
+    }
+  }
 
   /**
    * Create Account in the system
@@ -365,26 +376,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
 
-  /**
-   * Configure the Data access objects. Creates a connection pool manager
-   * @param configuration Key value params for configuring the DAO
-   */
-  @Override
-  public void configure(Map<String, String> configuration) {
 
-    this.configuration = configuration;
-    String connectionString = configuration.get("connectionString");
-
-    String jdbcType = configuration.get("jdbcType");
-
-    if (jdbcType.toLowerCase().equals("mysql")) {
-
-      MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-
-    }
-  }
 
   @Override
   public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException {

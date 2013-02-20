@@ -6,13 +6,11 @@ import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.dal.VpcDAO;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +24,20 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
   private Map<String, String> configuration;
 
   private DBConnectionPoolManager poolManager =null;
+
+
+  @Inject
+  public void VpcDBAccess(@Named("passport.config")Map<String, String> configuration) {
+
+    String connectionString = configuration.get("connectionString");
+    String jdbcType = configuration.get("jdbcType");
+
+    if (jdbcType.toLowerCase().equals("mysql")) {
+      MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
+      mysqlDataSource.setUrl(connectionString);
+      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
+    }
+  }
 
   @Override
   public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
@@ -142,21 +154,7 @@ public class VpcDBAccess extends  DBAccess implements VpcDAO {
   }
 
 
-  @Override
-  public void configure(Map<String, String> configuration) {
-    this.configuration = configuration;
-    String connectionString = configuration.get("connectionString");
 
-    String jdbcType = configuration.get("jdbcType");
-
-    if (jdbcType.toLowerCase().equals("mysql")) {
-
-      MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-
-    }
-  }
 
   @Override
   public List<VPC> getVPC(int accountId) throws RuntimeException, ConfigurationException {
