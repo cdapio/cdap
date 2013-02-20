@@ -9,6 +9,7 @@ import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
@@ -17,7 +18,6 @@ import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -25,7 +25,6 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.app.Id;
-import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -35,7 +34,6 @@ import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
@@ -130,17 +128,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
             .create(flowSpec);
 
-      // Create Logging context
-      LoggingContext loggingContext = new FlowletLoggingContext(program.getAccountId(),
-                                                                program.getApplicationId(),
-                                                                program.getProgramName(),
-                                                                flowletName);
-
       Flowlet flowlet = flowletClass.newInstance();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
-      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext, outputEmitterFactory
-        (flowletName, flowletContext.getQueueProducer(), queueSpecs));
+      // Inject DataSet, OutputEmitter, Metric fields
+      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext,
+                                                     outputEmitterFactory(flowletName,
+                                                                          flowletContext.getQueueProducer(),
+                                                                          queueSpecs));
 
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletType,
@@ -155,7 +150,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    Lists.<ProcessSpecification>newLinkedList());
 
       final FlowletProcessDriver driver = new FlowletProcessDriver(
-            flowlet, flowletContext, loggingContext, processSpecs,
+            flowlet, flowletContext, processSpecs,
             createCallback(flowlet, flowletDef.getFlowletSpec()));
 
       driver.start();
@@ -178,7 +173,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
    */
   private OutputSubmitter injectFields(Flowlet flowlet,
                                        TypeToken<? extends Flowlet> flowletType,
-                                       FlowletContext flowletContext,
+                                       BasicFlowletContext flowletContext,
                                        OutputEmitterFactory outputEmitterFactory) throws IllegalAccessException {
 
     ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
@@ -189,7 +184,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         break;
       }
 
-      // Inject DataSet and Emitter fields
+      // Inject DataSet, OutputEmitter and Metrics fields.
       for (Field field : type.getRawType().getDeclaredFields()) {
         // Inject DataSet
         if (DataSet.class.isAssignableFrom(field.getType())) {
@@ -211,6 +206,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
           if (outputEmitter instanceof OutputSubmitter) {
             outputSubmitters.add((OutputSubmitter)outputEmitter);
           }
+          continue;
+        }
+        if (Metrics.class.equals(field.getType())) {
+          setField(flowlet, field, flowletContext.getMetrics());
         }
       }
     }

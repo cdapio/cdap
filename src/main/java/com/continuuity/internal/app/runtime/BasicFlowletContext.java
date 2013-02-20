@@ -1,8 +1,12 @@
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.api.common.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.app.logging.FlowletLoggingContext;
+import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
@@ -112,6 +116,16 @@ public class BasicFlowletContext implements FlowletContext {
     // TODO: Consumer partitioning
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
     return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
+  }
+
+  public LoggingContext getLoggingContext() {
+    return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
+
+  }
+
+  public Metrics getMetrics() {
+    return new FlowletMetrics(getAccountId(), getApplicationId(), getFlowId(),
+                              getFlowletId(), getRunId().toString(), getInstanceId());
   }
 
   private String getMetricName() {

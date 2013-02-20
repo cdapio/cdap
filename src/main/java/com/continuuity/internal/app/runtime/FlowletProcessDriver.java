@@ -55,12 +55,11 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   public FlowletProcessDriver(Flowlet flowlet,
                               BasicFlowletContext flowletContext,
-                              LoggingContext loggingContext,
                               Collection<ProcessSpecification> processSpecs,
                               Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
-    this.loggingContext = loggingContext;
+    this.loggingContext = flowletContext.getLoggingContext();
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
 
