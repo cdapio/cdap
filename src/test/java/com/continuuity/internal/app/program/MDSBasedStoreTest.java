@@ -39,17 +39,18 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class MDSBasedStoreTest {
-  private static MDSBasedStore store;
-  private static MetadataService.Iface metadataService;
+  private MDSBasedStore store;
+  private MetadataService.Iface metadataService;
 
-  @BeforeClass
-  public static void beforeClass() {
+  // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
+  @Before
+  public void before() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                                    new StoreModule4Test());
 
@@ -285,7 +286,7 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(FlowImpl.class.getName(),
                         stored.getFlows().get("flow2").getClassName());
 
-    // Checking that resources were registered in metadataService (UI still uses this)
+    // Checking that resources were registered in metadataService (UI still uses this).
     // app
     Application app = metadataService.getApplication(new Account("account1"), new Application("application1"));
     Assert.assertNotNull(app);
