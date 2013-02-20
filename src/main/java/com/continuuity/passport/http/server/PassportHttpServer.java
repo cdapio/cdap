@@ -12,6 +12,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
+import org.mortbay.thread.QueuedThreadPool;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
@@ -48,6 +49,10 @@ public class PassportHttpServer {
       System.out.println("Starting Server with params: ");
       System.out.println(String.format("Port: %d",port));
       System.out.println(String.format("MaxThreads: %d",maxThreads));
+      System.out.println(String.format("GracefulShutdownTime: %s", gracefulShutdownTime));
+      for(Map.Entry<String,String> entry : configuration.entrySet()){
+        System.out.println(String.format( "%s: %s",entry.getKey(), entry.getValue()));
+      }
 
 
       Context context = new Context(server, "/", Context.SESSIONS);
@@ -56,9 +61,9 @@ public class PassportHttpServer {
       context.addFilter(GuiceFilter.class, "/*", 0);
 
 
-//      QueuedThreadPool threadPool = new QueuedThreadPool();
-//      threadPool.setMaxThreads(5);
-//      server.setThreadPool(threadPool);
+      QueuedThreadPool threadPool = new QueuedThreadPool();
+      threadPool.setMaxThreads(maxThreads);
+      server.setThreadPool(threadPool);
 
       //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
