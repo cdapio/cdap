@@ -4,14 +4,13 @@
 
 package com.continuuity.gateway;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.CConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.conf.CConfiguration;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The consumer is responsible for the actual ingestion of an event
@@ -110,7 +109,7 @@ public abstract class Consumer {
    *
    * @param configuration The configuration that has all the options
    */
-  public void configure(CConfiguration configuration) {
+  public void configure(@SuppressWarnings("unused")CConfiguration configuration) {
   }
 
   /**
@@ -133,7 +132,7 @@ public abstract class Consumer {
    * @param event the event to be consumed
    * @throws Exception if anything goes wrong
    */
-  protected abstract void single(Event event) throws Exception;
+  protected abstract void single(StreamEvent event) throws Exception;
 
   /**
    * Consume a batch of events. By default calls single() for every event in
@@ -142,8 +141,8 @@ public abstract class Consumer {
    * @param events the batch of events to be consumed
    * @throws Exception if anything goes wrong
    */
-  protected void batch(List<Event> events) throws Exception {
-    for (Event event : events) {
+  protected void batch(List<StreamEvent> events) throws Exception {
+    for (StreamEvent event : events) {
       this.single(event);
     }
   }
@@ -188,7 +187,7 @@ public abstract class Consumer {
    * @param event The event to be consumed
    * @throws Exception if anything goes wrong
    */
-  final public void consumeEvent(Event event) throws Exception {
+  final public void consumeEvent(StreamEvent event) throws Exception {
     this.callsReceived.incrementAndGet();
     this.eventsReceived.incrementAndGet();
     try {
@@ -210,7 +209,7 @@ public abstract class Consumer {
    * @param events The events to be consumed
    * @throws Exception if anything goes wrong
    */
-  final public void consumeEvents(List<Event> events) throws Exception {
+  final public void consumeEvents(List<StreamEvent> events) throws Exception {
     this.callsReceived.incrementAndGet();
     this.eventsReceived.addAndGet(events.size());
     try {

@@ -3,7 +3,7 @@ package com.continuuity.gateway.runtime;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.gateway.Consumer;
 import com.continuuity.gateway.consumer.NoopConsumer;
-import com.continuuity.gateway.consumer.TupleWritingConsumer;
+import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
@@ -26,7 +26,7 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(Consumer.class).to(TupleWritingConsumer.class);
+        bind(Consumer.class).to(StreamEventWritingConsumer.class);
       }
     };
   }
@@ -36,7 +36,7 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(Consumer.class).to(TupleWritingConsumer.class);
+        bind(Consumer.class).to(StreamEventWritingConsumer.class);
       }
     };
   }
@@ -46,7 +46,7 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(Consumer.class).to(TupleWritingConsumer.class);
+        bind(Consumer.class).to(StreamEventWritingConsumer.class);
       }
     };
   }
