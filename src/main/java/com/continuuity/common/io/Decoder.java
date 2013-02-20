@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * Interface for decoding data.
  */
 public interface Decoder {
-
   /**
    * Returns a null value.
    *
