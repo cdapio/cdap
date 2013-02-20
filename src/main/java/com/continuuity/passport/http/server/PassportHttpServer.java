@@ -1,6 +1,7 @@
 package com.continuuity.passport.http.server;
 
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.continuuity.passport.http.modules.PassportGuiceServletContextListener;
 import com.google.inject.servlet.GuiceFilter;
@@ -19,14 +20,15 @@ import java.util.Map;
 
 public class PassportHttpServer {
 
-  private final int gracefulShutdownTime = 1000;
+  private final int gracefulShutdownTime;
   private final int port;
 
   private final Map<String, String> configuration;
 
-  public PassportHttpServer(int port, Map<String, String> configuration) {
+  public PassportHttpServer(int port, Map<String, String> configuration, int gracefulShutdownTime) {
     this.port = port;
     this.configuration = configuration;
+    this.gracefulShutdownTime = gracefulShutdownTime;
   }
 
   private void start() {
@@ -61,18 +63,24 @@ public class PassportHttpServer {
 
     Map<String, String> config = new HashMap<String, String>();
 
-    //TODO: READ Config from the file.
-    config.put("jdbcType", "mysql");
-    //config.put("connectionString","jdbc:mysql://ppdb101.joyent.continuuity.net:3306/continuuity?user=passport_user");
-    config.put("connectionString", "jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+    CConfiguration conf = CConfiguration.create();
+    conf.addResource("continuuity-passport.xml");
+
+    String jdbcType = conf.get("passport.jdbc.type");
+    String connectionString  = conf.get("passport.jdbc.connection.string");
+    System.out.println(jdbcType);
+    int port = Integer.parseInt(conf.get("passport.http.server.port"));
+    int gracefulShutdownTime = Integer.parseInt(conf.get("passport.http.graceful.shutdown.time"));
+
+    config.put("jdbcType", jdbcType);
+    config.put("connectionString",connectionString);
 
     Realm realm = new JDBCAuthrozingRealm(config);
 
     org.apache.shiro.mgt.SecurityManager securityManager = new DefaultSecurityManager(realm);
     SecurityUtils.setSecurityManager(securityManager);
 
-    int port = 7777; //TODO: Read from Config file
-    PassportHttpServer server = new PassportHttpServer(port, config);
+    PassportHttpServer server = new PassportHttpServer(port, config, gracefulShutdownTime);
     server.start();
 
 

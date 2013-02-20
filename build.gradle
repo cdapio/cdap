@@ -31,5 +31,4 @@ dependencies {
     testCompile 'org.hsqldb:hsqldb:2.2.6' //TODO: Move this to central dependency
 
 }
-jar.exclude '*.xml'
 
