@@ -15,7 +15,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.shiro.util.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -379,22 +378,51 @@ public class AccountHandler extends  PassportHandler{
   @POST
   @Produces("application/json")
   @Consumes("application/json")
-  public Response authenticate(String data) {
+  public Response authenticate(String data, @HeaderParam("X-Continuuity-ApiKey") String apiKey) {
+
+    //Logic -
+    //  Either use emailId and password if present for auth
+    //  if not present use ApiKey
+    // If username and password is passed it can't be null
+    // Dummy username and password is used if apiKey is passed to enable it to work with shiro
 
     requestReceived();
+    String emailId = UsernamePasswordApiKeyToken.DUMMY_USER;
+    String password = UsernamePasswordApiKeyToken.DUMMY_PASSWORD;
+    boolean useApiKey = true;
 
-    JsonParser parser = new JsonParser();
-    JsonElement element = parser.parse(data);
-    JsonObject jsonObject = element.getAsJsonObject();
+    if (data != null && ! data.isEmpty() ){
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
 
-    String password = jsonObject.get("password") == null ? null : jsonObject.get("password").getAsString();
-    String emailId = jsonObject.get("email_id") == null ? null : jsonObject.get("email_id").getAsString();
+      password = jsonObject.get("password") == null ? null
+                                                    : jsonObject.get("password").getAsString();
+      emailId = jsonObject.get("email_id") == null ? null
+                                                   : jsonObject.get("email_id").getAsString();
+      useApiKey = false;
+    }
 
+    if ( emailId == null || emailId.isEmpty() || password == null || password.isEmpty()) {
+      requestFailed();
+      return Response.status(Response.Status.BAD_REQUEST).entity(
+        Utils.getAuthenticatedJson("Bad Request.", "Username and password can't be null"))
+        .build();
+    }
+
+    UsernamePasswordApiKeyToken token  = null;
+    if ( useApiKey) {
+      token = new UsernamePasswordApiKeyToken(UsernamePasswordApiKeyToken.DUMMY_USER,
+                                              UsernamePasswordApiKeyToken.DUMMY_PASSWORD,
+                                              apiKey, true);
+    }
+    else {
+      token = new UsernamePasswordApiKeyToken(emailId,password,apiKey,false);
+    }
 
     try {
 
-      AuthenticationStatus status = authenticatorService.authenticate(new UsernamePasswordApiKeyToken(emailId, password,
-        StringUtils.EMPTY_STRING));
+      AuthenticationStatus status = authenticatorService.authenticate(token);
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         requestSuccess();

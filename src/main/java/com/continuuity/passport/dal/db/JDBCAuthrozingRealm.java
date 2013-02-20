@@ -181,22 +181,20 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     ResultSet rs = null;
     SimpleAuthenticationInfo info = null;
     try {
-       connection = this.poolManager.getConnection();
-
+      connection = this.poolManager.getConnection();
 
       String SQL = null;
-       ps = null;
-      //Precedence for lookup if emailID is present use that to lookup. Else use apIKey.
-      if (emailId != null && !emailId.isEmpty()) {
-        SQL = SQL_LOOKUP_BY_EMAIL;
-        ps = connection.prepareStatement(SQL);
-        ps.setString(1, emailId);
+      ps = null;
 
-      } else if (apiKey != null && !apiKey.isEmpty()) {
+      if (upToken.isUseApiKey()) {
         SQL = SQL_LOOKUP_BY_APIKEY;
         ps = connection.prepareStatement(SQL);
         ps.setString(1, apiKey);
-
+      }
+      else {
+        SQL = SQL_LOOKUP_BY_EMAIL;
+        ps = connection.prepareStatement(SQL);
+        ps.setString(1, emailId);
       }
 
       if (ps == null) {
@@ -230,11 +228,18 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       }
 
       if (password == null || password.isEmpty()) {
-        throw new RuntimeException(String.format("Password not found for %s", emailId));
+        throw new RuntimeException(String.format("Password not found for %s in the data store", emailId));
       }
 
       Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
-      info = new SimpleAuthenticationInfo(account, password, getName());
+      //if we are authenticating with API Key then existence of apiKey with a password is authenticating.
+      // So set the password to a dummy password
+      if (upToken.isUseApiKey()) {
+        info = new SimpleAuthenticationInfo(account, UsernamePasswordApiKeyToken.DUMMY_PASSWORD, getName());
+      }
+      else {
+        info = new SimpleAuthenticationInfo(account, password, getName());
+        }
 
     } catch (SQLException e) {
       return null;

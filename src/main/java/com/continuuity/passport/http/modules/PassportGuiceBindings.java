@@ -71,7 +71,6 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(GuiceContainer.class).asEagerSingleton();
     bind(DefaultServlet.class).asEagerSingleton();
     serve("/*").with(DefaultServlet.class);
-    System.out.println("Bindings");
 
   }
 
