@@ -1,10 +1,15 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.gateway.util.NettyRestHandler;
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -18,17 +23,14 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.gateway.util.NettyRestHandler;
 
 /**
  * This is the http request handler for the query rest accessor.
@@ -106,7 +108,6 @@ public class QueryRestHandler extends NettyRestHandler {
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!accessor.getAuthenticator().authenticateRequest(request)) {
-        LOG.info("Received an unauthorized request");
         respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
         helper.finish(BadRequest);
         return;

@@ -13,6 +13,7 @@ import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -95,10 +96,10 @@ public class RestHandler extends NettyRestHandler {
    * @return the name to use for the header if it is preserved, null otherwise.
    */
   private String isPreservedHeader(String destinationPrefix, String name) {
-    if (Constants.HEADER_CLIENT_TOKEN.equals(name))
-      return name;
     if (name.startsWith(destinationPrefix))
       return name.substring(destinationPrefix.length());
+    if (name.equals(GatewayAuthenticator.CONTINUUITY_API_KEY))
+      return name;
     return null;
   }
 

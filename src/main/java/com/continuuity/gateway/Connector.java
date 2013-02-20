@@ -1,7 +1,5 @@
 package com.continuuity.gateway;
 
-import org.jboss.netty.handler.codec.http.HttpRequest;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;

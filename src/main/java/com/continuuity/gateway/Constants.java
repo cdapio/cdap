@@ -25,13 +25,6 @@ public class Constants {
       = CONTINUUITY_PREFIX + "stream.consumer";
 
   /**
-   * Used by the external client to identify and authenticate the client
-   */
-  public static final String HEADER_CLIENT_TOKEN
-      = CONTINUUITY_PREFIX + "token";
-  // TODO: Remove this client token header?
-
-  /**
    * Used by the external client to indicate what end point an event goes to
    */
   public static final String HEADER_DESTINATION_STREAM
@@ -83,11 +76,6 @@ public class Constants {
    * Default cluster name.
    */
   public static final String CONFIG_CLUSTER_NAME_DEFAULT = "localhost";
-
-  /**
-   * URL parameter name for authentication.
-   */
-  public static final String URL_AUTHENTICATION_PARAM_NAME = "token";
 
   /**
    * Class name of a named connector

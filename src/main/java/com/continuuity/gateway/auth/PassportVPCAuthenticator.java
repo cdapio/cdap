@@ -1,12 +1,13 @@
 package com.continuuity.gateway.auth;
 
 import java.util.List;
+import java.util.Map;
 
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.passport.http.client.PassportClient;
 
 /**
@@ -39,10 +40,16 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   }
 
   @Override
-  public boolean authenticateRequest(Event event) {
-    String apiKey = event.getHeader(CONTINUUITY_API_KEY);
-    if (apiKey == null) return false;
-    return authenticate(apiKey);
+  public boolean authenticateRequest(AvroFlumeEvent event) {
+    for (Map.Entry<CharSequence,CharSequence> headerEntry :
+      event.getHeaders().entrySet()) {
+      String headerKey = headerEntry.getKey().toString();
+      if (headerKey.equals(CONTINUUITY_API_KEY)) {
+        return authenticate(headerEntry.getValue().toString());
+      }
+    }
+    // Key not found in headers
+    return false;
   }
 
   /**
@@ -59,7 +66,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
       for (String authorizedCluster : authorizedClusters) {
         if (clusterName.equals(authorizedCluster)) return true;
       }
-      LOG.debug("Failed to authenticate request using key: " + apiKey);
+      LOG.trace("Failed to authenticate request using key: " + apiKey);
       return false;
     } catch (Exception e) {
       LOG.error("Exception authorizing with passport service", e);
