@@ -197,7 +197,9 @@ public class MDSBasedStore implements Store {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
       entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
 
-      metaDataStore.updateField(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId(), FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
+      metaDataStore.updateField(context, id.getAccountId(), null,
+                                FieldTypes.Application.ENTRY_TYPE, id.getId(),
+                                FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
     }
 
@@ -234,7 +236,8 @@ public class MDSBasedStore implements Store {
     }
   }
 
-  private void updateInMetadataService(Id.Application id, ApplicationSpecification spec, Account account) throws MetadataServiceException, TException {
+  private void updateInMetadataService(Id.Application id, ApplicationSpecification spec, Account account)
+    throws MetadataServiceException, TException {
     Application application = new Application(id.getId());
     application.setName(spec.getName());
     application.setDescription(spec.getDescription());
@@ -246,7 +249,8 @@ public class MDSBasedStore implements Store {
     }
   }
 
-  private void updateProceduresInMetadataService(Id.Application id, ApplicationSpecification spec, Account account) throws MetadataServiceException, TException {
+  private void updateProceduresInMetadataService(Id.Application id, ApplicationSpecification spec, Account account)
+    throws MetadataServiceException, TException {
     Map<String, Query> toStore = new HashMap<String, Query>();
     for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
       Query query = new Query(procedureSpec.getName(), id.getId());
@@ -285,7 +289,8 @@ public class MDSBasedStore implements Store {
     }
   }
 
-  private void updateFlowsInMetadataService(Id.Application id, ApplicationSpecification spec) throws MetadataServiceException, TException {
+  private void updateFlowsInMetadataService(Id.Application id, ApplicationSpecification spec)
+    throws MetadataServiceException, TException {
     Map<String, Flow> toStore = new HashMap<String, Flow>();
     for (FlowSpecification flowSpec : spec.getFlows().values()) {
       Flow flow = new Flow(flowSpec.getName(), id.getId());
