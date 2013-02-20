@@ -1,6 +1,7 @@
 package com.continuuity.gateway.tools;
 
-import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.collect.AllCollector;
 import com.continuuity.common.collect.Collector;
 import com.continuuity.common.collect.FirstNCollector;
@@ -8,11 +9,11 @@ import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
+import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -27,10 +28,12 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This is a command line tool to send events to the data fabric using REST
@@ -395,7 +398,7 @@ public class StreamClient {
     }
 
     else if ("fetch".equals(command)) {
-      Event event;
+      StreamEvent event;
       try {
         event = fetchOne(requestUrl, consumer);
       } catch (Exception e) {
@@ -407,10 +410,10 @@ public class StreamClient {
         // unless --verbose was given, we suppress continuuity headers
         if (!verbose && Constants.isContinuuityHeader(name))
           continue;
-        System.out.println(name + ": " + event.getHeader(name));
+        System.out.println(name + ": " + event.getHeaders().get(name));
       }
       // and finally write out the body
-      return writeBody(event.getBody());
+      return writeBody(Bytes.toBytes(event.getBody()));
     }
 
     else if ("view".equals(command)) {
@@ -438,13 +441,13 @@ public class StreamClient {
         }
         consumer = new String(binaryValue);
       }
-      Collector<Event> collector =
-          all ? new AllCollector<Event>(Event.class) :
-              first != null ? new FirstNCollector<Event>(first, Event.class) :
-                  last != null ? new LastNCollector<Event>(last, Event.class) :
-                      new FirstNCollector<Event>(10, Event.class);
+      Collector<StreamEvent> collector =
+          all ? new AllCollector<StreamEvent>(StreamEvent.class) :
+              first != null ? new FirstNCollector<StreamEvent>(first, StreamEvent.class) :
+                  last != null ? new LastNCollector<StreamEvent>(last, StreamEvent.class) :
+                      new FirstNCollector<StreamEvent>(10, StreamEvent.class);
       try {
-        Event[] events =
+        StreamEvent[] events =
             fetchAll(requestUrl + "?q=dequeue", consumer, collector);
         return printEvents(events);
       } catch (Exception e) {
@@ -531,10 +534,10 @@ public class StreamClient {
    * @return all events collected
    * @throws Exception if something goes wrong
    */
-  Event[] fetchAll(String uri, String consumer, Collector<Event> collector)
+  StreamEvent[] fetchAll(String uri, String consumer, Collector<StreamEvent> collector)
       throws Exception {
     while (true) {
-      Event event = fetchOne(uri, consumer);
+      StreamEvent event = fetchOne(uri, consumer);
       if (event == null) return collector.finish();
       boolean collectMore = collector.addElement(event);
       if (!collectMore) return collector.finish();
@@ -550,7 +553,7 @@ public class StreamClient {
    * @return the event that was fetched, or null if the stream is empty
    * @throws Exception if something goes wrong
    */
-  Event fetchOne(String uri, String consumer) throws Exception {
+  StreamEvent fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(uri);
@@ -578,18 +581,17 @@ public class StreamClient {
       throw new Exception("Unexpected response without body.");
 
     // collect all the headers
-    EventBuilder builder = new EventBuilder();
-    builder.setBody(binaryValue);
+    Map<String, String> headers = new TreeMap<String, String>();
     for (org.apache.http.Header header : response.getAllHeaders()) {
       String name = header.getName();
       // ignore common HTTP headers. All the headers of the actual
       // event are transmitted with the stream name as a prefix
       if (name.startsWith(destination)) {
         String actualName = name.substring(destination.length() + 1);
-        builder.setHeader(actualName, header.getValue());
+        headers.put(actualName, header.getValue());
       }
     }
-    return builder.create();
+    return new DefaultStreamEvent(headers, ByteBuffer.wrap(binaryValue));
   }
 
   /**
@@ -598,21 +600,21 @@ public class StreamClient {
    * @param events An array of events
    * @return a String indicating how many events were printed
    */
-  String printEvents(Event[] events) {
+  String printEvents(StreamEvent[] events) {
     System.out.println(events.length + " events: ");
-    for (Event event : events) {
+    for (StreamEvent event : events) {
       String sep = "";
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
         if (!verbose && Constants.isContinuuityHeader(name))
           continue;
-        System.out.print(sep + name + "=" + event.getHeader(name));
+        System.out.print(sep + name + "=" + event.getHeaders().get(name));
         sep = ", ";
       }
       System.out.print(": ");
-      if (hex) System.out.print(Util.toHex(event.getBody()));
-      else if (urlenc) System.out.print(Util.urlEncode(event.getBody()));
-      else System.out.print(new String(event.getBody()));
+      if (hex) System.out.print(Util.toHex(Bytes.toBytes(event.getBody())));
+      else if (urlenc) System.out.print(Util.urlEncode(Bytes.toBytes(event.getBody())));
+      else System.out.print(new String(Bytes.toBytes(event.getBody())));
       System.out.println();
     }
     return events.length + " events.";
