@@ -163,7 +163,7 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public Map<byte[], Long> increment(OperationContext context,
-                                                      Increment increment)
+                                     Increment increment)
     throws OperationException;
 
   /**
@@ -181,8 +181,8 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public Map<byte[], Long> increment(OperationContext context,
-                                                      @Nullable Transaction transaction,
-                                                      Increment increment)
+                                     @Nullable Transaction transaction,
+                                     Increment increment)
     throws OperationException;
 
   /**

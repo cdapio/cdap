@@ -58,12 +58,6 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
     getQueue(queueName).invalidate(entryPointer, writeVersion);
   }
 
-//  @Override
-//  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-//      QueueConfig config, ReadPointer readPointer) throws OperationException {
-//    return getQueue(queueName).dequeue(consumer, config, readPointer);
-//  }
-
   @Override
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, ReadPointer readPointer)
                                throws OperationException {

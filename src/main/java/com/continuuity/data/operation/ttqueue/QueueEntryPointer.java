@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.hbase.ttqueue.HBQEntryPointer;
 import com.google.common.base.Objects;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A pointer which completely addresses an entry in a queue.
@@ -45,8 +45,7 @@ public class QueueEntryPointer {
 
   @Override
   public int hashCode() {
-    return Bytes.hashCode(
-        Bytes.toBytes(entryId)) ^ Bytes.hashCode(Bytes.toBytes(shardId));
+    return Bytes.hashCode(Bytes.toBytes(entryId)) ^ Bytes.hashCode(Bytes.toBytes(shardId));
   }
 
   @Override

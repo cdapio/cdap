@@ -32,12 +32,13 @@ public final class QueueEntrySerializer {
    * @throws IOException if serialization fails
    */
   public static byte[] serialize(QueueEntry entry) throws IOException {
-    Map<String, Integer> map = entry.getPartioningMap();
-    byte[] data = entry.getData();
-
+    if (entry == null) {
+      return null;
+    }
     try {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
+      Map<String, Integer> map = entry.getPartitioningMap();
       if (map==null || map.size()==0)
         encoder.writeInt(0);
       else {
@@ -47,10 +48,11 @@ public final class QueueEntrySerializer {
           encoder.writeInt(e.getValue());
         }
       }
+      byte[] data = entry.getData();
       if (data==null || data.length==0)
-        encoder.writeLong(0L);
+        encoder.writeInt(0);
       else {
-        encoder.writeLong(data.length);
+        encoder.writeInt(data.length);
         encoder.writeBytes(data);
       }
       return bos.toByteArray();
@@ -67,34 +69,33 @@ public final class QueueEntrySerializer {
    * @throws IOException if deserialization fails
    */
   public static QueueEntry deserialize(byte[] bytes) throws IOException {
-    QueueEntry queueEntry;
+    if (bytes == null) {
+      return null;
+    }
     try {
-      if (bytes == null) return null;
-      else {
-        ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
-        Decoder decoder=new BinaryDecoder(bis);
-        int headerSize;
-        headerSize=decoder.readInt();
-        Map<String,Integer> map=null;
-        if (headerSize>0) {
-          map=Maps.newHashMap();
-          for(int i=0; i<headerSize; i++) {
-            map.put(decoder.readString(),decoder.readInt());
-          }
+      ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
+      Decoder decoder=new BinaryDecoder(bis);
+      int headerSize;
+      headerSize=decoder.readInt();
+      Map<String,Integer> map=null;
+      if (headerSize>0) {
+        map=Maps.newHashMap();
+        for(int i=0; i<headerSize; i++) {
+          map.put(decoder.readString(),decoder.readInt());
         }
-        long dataSize=decoder.readLong();
-        byte[] data=null;
-        if (dataSize>0) {
-          data=decoder.readBytes().array();
-        }
-        queueEntry=new QueueEntryImpl(data);
-        if (map!=null) {
-          for(Map.Entry<String, Integer> e: map.entrySet()) {
-            queueEntry.addPartitioningKey(e.getKey(),e.getValue());
-          }
-        }
-        return queueEntry;
       }
+      int dataSize=decoder.readInt();
+      byte[] data=null;
+      if (dataSize>0) {
+        data=decoder.readBytes().array();
+      }
+      QueueEntry queueEntry=new QueueEntryImpl(data);
+      if (map!=null) {
+        for(Map.Entry<String, Integer> e: map.entrySet()) {
+          queueEntry.addPartitioningKey(e.getKey(),e.getValue());
+        }
+      }
+      return queueEntry;
     } catch (IOException e) {
       LOG.error("Failed to deserialize queue entry", e);
       throw e;

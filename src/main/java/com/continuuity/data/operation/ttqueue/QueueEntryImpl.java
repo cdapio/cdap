@@ -29,7 +29,7 @@ public class QueueEntryImpl implements QueueEntry {
   }
 
   @Override
-  public Map<String, Integer> getPartioningMap() {
+  public Map<String, Integer> getPartitioningMap() {
     return header;
   }
 
