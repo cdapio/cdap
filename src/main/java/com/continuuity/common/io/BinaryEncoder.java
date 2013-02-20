@@ -116,11 +116,12 @@ public final class BinaryEncoder implements Encoder {
     writeInt(buffer.remaining());
     if (buffer.hasArray()) {
       output.write(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
-      buffer.position(buffer.limit());
     } else {
       byte[] bytes = new byte[buffer.remaining()];
+      int pos = buffer.position();
       buffer.get(bytes);
       output.write(bytes);
+      buffer.position(pos);
     }
 
     return this;
