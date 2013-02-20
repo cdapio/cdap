@@ -10,6 +10,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.metadata.thrift.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class MetadataService extends MetadataHelper
    * Construction of metadata service handler
    * @param opex instance of opex.
    */
+  @Inject
   public MetadataService(OperationExecutor opex) {
     this.mds = new SerializingMetaDataStore(opex);
   }
