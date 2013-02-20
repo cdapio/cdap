@@ -4,8 +4,9 @@
 
 package com.continuuity.common.logging;
 
+import com.google.common.collect.Maps;
+
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Map;
  */
 public abstract class AbstractLoggingContext implements LoggingContext {
   // Map looks not efficient here, it might be better to use set
-  private Map<String, SystemTag> systemTags = new HashMap<String, SystemTag>();
+  private Map<String, SystemTag> systemTags = Maps.newHashMap();
 
   /**
    * Sets system tag
@@ -34,6 +35,9 @@ public abstract class AbstractLoggingContext implements LoggingContext {
     return systemTags.get(name).getValue();
   }
 
+  /**
+   * @see com.continuuity.common.logging.LoggingContext#getSystemTags()
+   */
   @Override
   public Collection<SystemTag> getSystemTags() {
     return systemTags.values();
