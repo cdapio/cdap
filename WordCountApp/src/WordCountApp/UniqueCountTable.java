@@ -1,5 +1,9 @@
 package WordCountApp;
 
+import java.util.Map;
+
+import org.jruby.compiler.ir.Tuple;
+
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -8,23 +12,11 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
-
-import java.util.Map;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
  */
 public class UniqueCountTable extends DataSet {
-
-  public static final TupleSchema UNIQUE_COUNT_TABLE_TUPLE_SCHEMA =
-      new TupleSchemaBuilder()
-          .add("entry", String.class)
-          .add("count", Long.class)
-          .create();
 
   private Table uniqueCountTable;
   private Table entryCountTable;
@@ -83,27 +75,12 @@ public class UniqueCountTable extends DataSet {
    * @return tuple that will be passed
    * @throws OperationException
    */
-  public Tuple writeEntryAndCreateTuple(String entry)
+  public void updateUniqueCount(String entry)
       throws OperationException {
     Long newCount = this.entryCountTable.
       increment(new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L)).
       get(ENTRY_COUNT);
-    return new TupleBuilder()
-      .set("entry", entry)
-      .set("count", newCount)
-      .create();
-  }
-
-  /**
-   * Updates the unique count based on the passed-through Tuple from the
-   * upstream Flowlet.
-   * @param tuple
-   * @throws OperationException
-   */
-  public void updateUniqueCount(Tuple tuple)
-      throws OperationException {
-    Long count = tuple.get("count");
-    if (count == 1L) {
+    if (newCount == 1L) {
       this.uniqueCountTable.write(
           new Increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L));
     }
