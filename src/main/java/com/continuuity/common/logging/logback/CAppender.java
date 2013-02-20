@@ -75,7 +75,6 @@ public class CAppender extends AppenderBase<ILoggingEvent> {
     String msg = format.format(this.getLayout().doLayout(event),
                                          traceLines, context, null);
 
-
-    logWriter.write(context.getLogPartition(), msg, event.getLevel().toString());
+    logWriter.write(context.getLogPartition(), event.getLevel().toString(), msg);
   }
 }
