@@ -22,7 +22,7 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.internal.app.store.MDSStoreFactory;
-import com.continuuity.internal.factories.PassportAuthorizationFactory;
+import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.filesystem.LocationFactory;

@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.factories;
+package com.continuuity.internal.app.authorization;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.authorization.AuthorizationHandler;

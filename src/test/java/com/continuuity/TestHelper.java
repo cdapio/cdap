@@ -21,10 +21,12 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
 
 import java.util.jar.Manifest;
 
@@ -67,6 +69,8 @@ public class TestHelper {
             bind(LocationFactory.class).to(LocalLocationFactory.class);
             bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
             bind(StoreFactory.class).to(MDSStoreFactory.class);
+            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+            bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
           }
         }
       );
