@@ -2,7 +2,6 @@ package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.service.DataManagementService;
-import com.continuuity.passport.http.server.Utils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

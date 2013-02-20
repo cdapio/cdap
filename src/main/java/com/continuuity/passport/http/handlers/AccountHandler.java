@@ -10,7 +10,6 @@ import com.continuuity.passport.core.security.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
-import com.continuuity.passport.http.server.Utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

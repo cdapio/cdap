@@ -1,4 +1,4 @@
-package com.continuuity.passport.http.server;
+package com.continuuity.passport.http.handlers;
 
 /**
  *
