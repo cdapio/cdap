@@ -10,7 +10,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -20,7 +19,6 @@ import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,8 +81,7 @@ public class QueueBenchmark extends OpexBenchmark {
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = null;
     try {
-      enqueue = new QueueEnqueue(queueBytes, TupleMetaDataAnnotator
-                                               .EnqueuePayload.write(new HashMap<String, Long>(), value));
+      enqueue = new QueueEnqueue(queueBytes, value);
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
