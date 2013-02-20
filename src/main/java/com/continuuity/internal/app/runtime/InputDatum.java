@@ -27,11 +27,7 @@ public class InputDatum {
   }
 
   public QueueAck asAck() {
-    return new QueueAck(
-                         dequeueResult.getEntryPointer().getQueueName(),
-                         dequeueResult.getEntryPointer(),
-                         consumer
-    );
+    return new QueueAck(queueName.toBytes(), dequeueResult.getEntryPointer(), consumer);
   }
 
   public boolean isEmpty() {
