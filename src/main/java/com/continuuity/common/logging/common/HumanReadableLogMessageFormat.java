@@ -32,7 +32,7 @@ public class HumanReadableLogMessageFormat implements LogMessageFormat {
     // Build the message to be logged and add it to queue.
     final StringBuilder sb = new StringBuilder();
 
-    sb.append(contextToString(context)).append("");
+    sb.append(contextToString(context)).append(" ");
 
     sb.append(message);
 
@@ -46,12 +46,7 @@ public class HumanReadableLogMessageFormat implements LogMessageFormat {
   }
 
   private String contextToString(final LoggingContext context) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("{");
-    for (LoggingContext.SystemTag sysTag : context.getSystemTags()) {
-      sb.append(sysTag);
-    }
-    sb.append("}");
-    return null;
+    // For now we don't need to inject context info in log message (with old logging back-end)
+    return "";
   }
 }
