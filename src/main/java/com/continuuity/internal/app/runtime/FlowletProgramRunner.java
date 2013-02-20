@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
@@ -34,8 +35,8 @@ import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
@@ -121,7 +122,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates flowlet context
       BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
-                                                                   createDataSets(dataSetInstantiator, flowletDef));
+                                                                   createDataSets(dataSetInstantiator, flowletDef),
+                                                                   flowletClass.isAnnotationPresent(Async.class));
 
       // Creates QueueSpecification
       Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs =
@@ -140,10 +142,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
       OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext, outputEmitterFactory
         (flowletName, flowletContext.getQueueProducer(), queueSpecs));
 
-      Collection<ProcessSpecification> processSpecs = createProcessSpecification(flowletType, processMethodFactory
-        (flowlet, createSchemaCache(program), txAgentSupplier, outputSubmitter), processSpecificationFactory(opex,
-                                                                                                             opCtx,
-                                                                                                             flowletContext.getQueueConsumer(), flowletName, queueSpecs), Lists.<ProcessSpecification>newLinkedList());
+      Collection<ProcessSpecification> processSpecs =
+        createProcessSpecification(flowletType,
+                                   processMethodFactory(flowlet,
+                                                        createSchemaCache(program),
+                                                        txAgentSupplier,
+                                                        outputSubmitter),
+                                   processSpecificationFactory(opex,
+                                                               opCtx,
+                                                               flowletContext.getQueueConsumer(),
+                                                               flowletName, queueSpecs),
+                                   Lists.<ProcessSpecification>newLinkedList());
 
       final FlowletProcessDriver driver = new FlowletProcessDriver(
             flowlet, flowletContext, loggingContext, processSpecs,
