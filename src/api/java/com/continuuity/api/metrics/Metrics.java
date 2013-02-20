@@ -1,4 +1,4 @@
-package com.continuuity.api.common.metrics;
+package com.continuuity.api.metrics;
 
 /**
  * Defines a way to collect metrics.
