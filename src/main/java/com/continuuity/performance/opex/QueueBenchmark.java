@@ -3,7 +3,6 @@ package com.continuuity.performance.opex;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.continuuity.performance.benchmark.*;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
@@ -69,10 +68,7 @@ public class QueueBenchmark extends OpexBenchmark {
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = null;
     try {
-      enqueue = new QueueEnqueue(queueBytes, TupleMetaDataAnnotator
-                                               .EnqueuePayload.write(new
-                                                                       HashMap<String, Long>(),
-                                                                     value));
+      enqueue = new QueueEnqueue(queueBytes, value);
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
