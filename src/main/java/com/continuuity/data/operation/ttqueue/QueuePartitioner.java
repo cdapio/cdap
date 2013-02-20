@@ -68,7 +68,7 @@ public interface QueuePartitioner {
 
     @Override
     public boolean usesHeaderData() {
-      return true;
+      return false;
     }
 
     @Override

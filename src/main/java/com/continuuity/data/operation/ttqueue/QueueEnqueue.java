@@ -4,6 +4,7 @@ import com.continuuity.data.operation.OperationBase;
 import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.WriteOperation;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -32,6 +33,7 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   }
 
   public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final QueueEntry entry) {
+     Preconditions.checkArgument(entry!=null);
     this.id = id;
     this.producer = producer;
     this.queueName = queueName;
@@ -60,7 +62,6 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
    * @deprecated
    */
   public void setData(byte[] data) {
-    assert(this.entry!=null);
     this.entry.setData(data);
   }
 
