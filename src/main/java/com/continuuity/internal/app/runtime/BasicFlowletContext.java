@@ -3,7 +3,11 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.app.program.Program;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -101,6 +105,13 @@ public class BasicFlowletContext implements FlowletContext {
 
   public QueueProducer getQueueProducer() {
     return new QueueProducer(getMetricName());
+  }
+
+  public QueueConsumer getQueueConsumer() {
+    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
+    // TODO: Consumer partitioning
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
+    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
   }
 
   private String getMetricName() {
