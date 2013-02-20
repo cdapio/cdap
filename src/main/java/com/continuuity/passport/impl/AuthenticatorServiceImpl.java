@@ -44,9 +44,10 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
     UsernamePasswordApiKeyToken token = new UsernamePasswordApiKeyToken(userCredentials.getUserName(),
       userCredentials.getPassword(),
       userCredentials.getApiKey());
+    Subject currentUser = null;
 
     try {
-      Subject currentUser = SecurityUtils.getSubject();
+      currentUser = SecurityUtils.getSubject();
       currentUser.login(token);
       Account account = (Account) currentUser.getPrincipal();
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED, account.toString());
@@ -54,6 +55,11 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
         "Authentication Failed. " + e.getMessage());
 
+    }
+    finally {
+      if (currentUser != null) {
+        currentUser.logout();
+      }
     }
 
   }

@@ -83,12 +83,15 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       throw new AuthorizationException("PrincipalCollection argument cannot be null");
     }
 
+    Connection connection  = null;
+    PreparedStatement ps  = null;
+    ResultSet rs = null;
     int accountId = (Integer) getAvailablePrincipal(principals);
     Set<String> rolePermissions = null;
     Set<String> roleNames = null;
     SimpleAuthorizationInfo info = null;
     try {
-      Connection connection = this.poolManager.getConnection();
+       connection = this.poolManager.getConnection();
 
       String SQL = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
 
@@ -107,9 +110,9 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         //WHERE CLAUSE
         DBUtils.VPCRole.USER_ID_COLUMN);
 
-      PreparedStatement ps = connection.prepareStatement(SQL);
-      ps.setInt(1, accountId);
-      ResultSet rs = ps.executeQuery();
+       ps = connection.prepareStatement(SQL);
+       ps.setInt(1, accountId);
+       rs = ps.executeQuery();
 
       while (rs.next()) {
 
@@ -129,8 +132,22 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       info.setStringPermissions(rolePermissions);
 
     } catch (SQLException e) {
-      //TODO: Log and throw exception
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      return null;
+    }
+    finally {
+      try {
+        if (connection != null) {
+          connection.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+        if (rs != null) {
+          rs.close();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException(e.getMessage(), e.getCause());
+      }
     }
 
 
@@ -158,14 +175,16 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     UsernamePasswordApiKeyToken upToken = (UsernamePasswordApiKeyToken) token;
     String emailId = upToken.getUsername();
     String apiKey = upToken.getApiKey();
-
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
     SimpleAuthenticationInfo info = null;
     try {
-      Connection connection = this.poolManager.getConnection();
+       connection = this.poolManager.getConnection();
 
 
       String SQL = null;
-      PreparedStatement ps = null;
+       ps = null;
       //Precedence for lookup if emailID is present use that to lookup. Else use apIKey.
       if (emailId != null && !emailId.isEmpty()) {
         SQL = SQL_LOOKUP_BY_EMAIL;
@@ -183,7 +202,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         throw new AuthenticationException("ApiKey or emailId should be set.");
       }
 
-      ResultSet rs = ps.executeQuery();
+       rs = ps.executeQuery();
 
       int count = 0;
       String password = null;
@@ -217,9 +236,24 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       info = new SimpleAuthenticationInfo(account, password, getName());
 
     } catch (SQLException e) {
-      //TODO: Log and throw exception
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      return null;
     }
+    finally {
+      try {
+        if (connection != null) {
+          connection.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+        if (rs != null) {
+          rs.close();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException(e.getMessage(), e.getCause());
+      }
+    }
+
     return info;
   }
 }
