@@ -23,8 +23,8 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.app.Id;
 import com.continuuity.app.logging.FlowletLoggingContext;
-import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -134,15 +134,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Flowlet flowlet = flowletClass.newInstance();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
-      OutputSubmitter outputSubmitter = injectFields(
-            flowlet, flowletType, flowletContext,
-            outputEmitterFactory(flowletName, flowletContext.getQueueProducer(), queueSpecs));
+      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext, outputEmitterFactory
+        (flowletName, flowletContext.getQueueProducer(), queueSpecs));
 
-      Collection<ProcessSpecification> processSpecs = createProcessSpecification(
-            flowletType,
-            processMethodFactory(flowlet, createSchemaCache(program), txAgentSupplier, outputSubmitter),
-            processSpecificationFactory(opex, opCtx, flowletContext.getQueueConsumer(), flowletName, queueSpecs),
-            Lists.<ProcessSpecification>newLinkedList());
+      Collection<ProcessSpecification> processSpecs = createProcessSpecification(flowletType, processMethodFactory
+        (flowlet, createSchemaCache(program), txAgentSupplier, outputSubmitter), processSpecificationFactory(opex,
+                                                                                                             opCtx,
+                                                                                                             flowletContext.getQueueConsumer(), flowletName, queueSpecs), Lists.<ProcessSpecification>newLinkedList());
 
       final FlowletProcessDriver driver = new FlowletProcessDriver(
             flowlet, flowletContext, loggingContext, processSpecs,

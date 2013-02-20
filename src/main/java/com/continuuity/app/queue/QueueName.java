@@ -1,6 +1,6 @@
 package com.continuuity.app.queue;
 
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
