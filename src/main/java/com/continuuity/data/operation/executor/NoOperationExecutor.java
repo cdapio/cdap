@@ -15,6 +15,7 @@ import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,18 +76,19 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment)
+  public Map<byte[], Long> increment(OperationContext context, Increment increment)
     throws OperationException {
-    // do nothing
-    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    // do nothing and return nothing
+    return Collections.EMPTY_MAP;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
-                                                      Increment increment)
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Transaction transaction,
+                                     Increment increment)
     throws OperationException {
-    // do nothing
-    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    // do nothing and return nothing
+    return Collections.EMPTY_MAP;
   }
 
   @Override
@@ -103,8 +105,8 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueInfo>
-  execute(OperationContext context, QueueAdmin.GetQueueInfo getQueueInfo) {
+  public OperationResult<QueueInfo> execute(OperationContext context,
+                                            QueueAdmin.GetQueueInfo getQueueInfo) {
     // pretend the queue does not exist
     return new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND);
   }
@@ -123,7 +125,8 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context, Read read) throws OperationException {
+  execute(OperationContext context, Read read)
+    throws OperationException {
     // return empty result, key not found
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }
@@ -138,7 +141,7 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public OperationResult<List<byte[]>> execute(
-      OperationContext context, ReadAllKeys readKeys) {
+    OperationContext context, ReadAllKeys readKeys) {
     return new OperationResult<List<byte[]>>(StatusCode.KEY_NOT_FOUND);
 
   }
@@ -168,7 +171,7 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public void commit(OperationContext context, WriteOperation write)
-      throws OperationException {
+    throws OperationException {
     // do nothing
   }
 

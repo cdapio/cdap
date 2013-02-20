@@ -41,8 +41,6 @@ import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
-import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -50,17 +48,13 @@ import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -71,8 +65,7 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
  * See https://github.com/yahoo/omid/ for more information on the Omid design.
  */
 @Singleton
-public class OmidTransactionalOperationExecutor
-implements TransactionalOperationExecutor {
+public class OmidTransactionalOperationExecutor implements TransactionalOperationExecutor {
 
   private static final Logger Log
     = LoggerFactory.getLogger(OmidTransactionalOperationExecutor.class);
@@ -317,8 +310,7 @@ implements TransactionalOperationExecutor {
     return ("random_" + context.getAccount() + "_" + name).getBytes();
   }
 
-  private OrderedVersionedColumnarTable waitForTableToMaterialize(
-      ImmutablePair<String, String> tableKey) {
+  private OrderedVersionedColumnarTable waitForTableToMaterialize(ImmutablePair<String, String> tableKey) {
     while (true) {
       ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
           this.namedTables.get(tableKey);
@@ -339,8 +331,9 @@ implements TransactionalOperationExecutor {
     // TODO should this time out after some time or number of attempts?
   }
 
-  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(
-      OperationContext context, String name, MetaDataEntry meta)
+  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(OperationContext context,
+                                                                String name,
+                                                                MetaDataEntry meta)
     throws OperationException {
 
     while(true) {
@@ -404,7 +397,7 @@ implements TransactionalOperationExecutor {
   @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
-      throws OperationException {
+    throws OperationException {
     return execute(context, null, readKeys);
   }
 
@@ -426,17 +419,10 @@ implements TransactionalOperationExecutor {
     return new OperationResult<List<byte[]>>(result);
   }
 
-  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
-                                           Read read, ReadPointer pointer)
-    throws OperationException {
-    OrderedVersionedColumnarTable table =
-      this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), read.getColumns(), pointer);
-  }
-
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
-      throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
+    throws OperationException {
     return execute(context, null, read);
   }
 
@@ -459,9 +445,9 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context,
-          ReadColumnRange readColumnRange) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
     return execute(context, null, readColumnRange);
   }
 
@@ -488,6 +474,7 @@ implements TransactionalOperationExecutor {
   }
 
   // Administrative calls
+
 
   @Override
   public void execute(OperationContext context,
@@ -563,17 +550,10 @@ implements TransactionalOperationExecutor {
     // Execute operations
     List<Undo> undos = new ArrayList<Undo>(writes.size());
 
-    // Track a map from increment operation ids to post-increment values
-    Map<Long,Long> incrementResults = new TreeMap<Long,Long>();
     boolean abort = false;
-
     WriteTransactionResult writeTxReturn = null;
     for (WriteOperation write : orderedWrites) {
 
-      // See if write operation is an enqueue, and if so, update serialized data
-      if (write instanceof QueueEnqueue) {
-        processEnqueue((QueueEnqueue)write, incrementResults);
-      }
       writeTxReturn = dispatchWrite(context, write, transaction);
 
       if (!writeTxReturn.success) {
@@ -584,15 +564,6 @@ implements TransactionalOperationExecutor {
       } else {
         // Write was successful.  Store undo if we need to abort and continue
         undos.addAll(writeTxReturn.undos);
-        // See if write operation was an Increment, and if so, add result to map
-        if (write instanceof Increment) {
-          // TODO this is for the old increment pass-through. It only works for a single column
-          // TODO remove this as soon as increment pass-thru is obsolete
-          Map<byte[], Long> result = writeTxReturn.incrementResult;
-          if (result != null && result.size() > 0) {
-            incrementResults.put(write.getId(), result.values().iterator().next());
-          }
-        }
       }
     }
 
@@ -606,13 +577,15 @@ implements TransactionalOperationExecutor {
       abort(context, transaction);
       throw new OmidTransactionException(
         writeTxReturn.statusCode, writeTxReturn.message);
-    }
+      }
     return transaction; // TODO auto generated body
-  }
+    }
 
   @Override
   public void commit(OperationContext context,
-                     Transaction transaction) throws OperationException {
+                     Transaction transaction)
+    throws OperationException {
+
     // attempt to commit in Oracle
     TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
@@ -673,17 +646,19 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Increment increment) throws
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Increment increment) throws
     OperationException {
     // start transaction, execute increment, commit transaction, return result
     Transaction tx = startTransaction();
-    OperationResult<Map<byte[], Long>> result = increment(context, tx, increment);
+    Map<byte[], Long> result = increment(context, tx, increment);
     commit(context, tx);
     return result;
   }
 
   @Override
-  public OperationResult<Map<byte[], Long>> increment(OperationContext context, Transaction transaction,
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Transaction transaction,
                                                       Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
@@ -699,61 +674,12 @@ implements TransactionalOperationExecutor {
     }
     if (writeTxReturn.success) {
       // increment was successful. the return value is in the write transaction result
-      return new OperationResult<Map<byte[], Long>>(writeTxReturn.incrementResult);
+      return writeTxReturn.incrementResult;
     } else {
       // operation failed
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
       abort(context, transaction);
-      throw new OmidTransactionException(
-        writeTxReturn.statusCode, writeTxReturn.message);
-    }
-  }
-
-  /**
-   * Deserializes enqueue data into enqueue payload, checks if any fields are
-   * marked to contain increment values, construct a dequeue payload, update any
-   * fields necessary, and finally update the enqueue data to contain a dequeue
-   * payload.
-   */
-  private void processEnqueue(QueueEnqueue enqueue,
-      Map<Long, Long> incrementResults) throws OperationException {
-    if (DISABLE_QUEUE_PAYLOADS) return;
-    // Deserialize enqueue payload
-    byte [] enqueuePayloadBytes = enqueue.getData();
-    EnqueuePayload enqueuePayload;
-    try {
-      enqueuePayload = EnqueuePayload.read(enqueuePayloadBytes);
-    } catch (IOException e) {
-      // Unable to deserialize the enqueue payload, fatal error (if queues are
-      // not using payloads, change DISABLE_QUEUE_PAYLOADS=true
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-    Map<String,Long> fieldsToIds = enqueuePayload.getOperationIds();
-    Map<String,Long> fieldsToValues = new TreeMap<String,Long>();
-
-    // For every field-to-id mapping, find increment result
-    for (Map.Entry<String,Long> fieldAndId : fieldsToIds.entrySet()) {
-      String field = fieldAndId.getKey();
-      Long operationId = fieldAndId.getValue();
-      Long incrementValue = incrementResults.get(operationId);
-      if (incrementValue == null) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR,
-            "Field specified as containing an increment result but no " +
-                "matching increment operation found");
-      }
-      // Store field-to-value in map for dequeue payload
-      fieldsToValues.put(field, incrementValue);
-    }
-
-    // Serialize dequeue payload and overwrite enqueue data
-    try {
-      enqueue.setData(DequeuePayload.write(fieldsToValues,
-          enqueuePayload.getSerializedTuple()));
-    } catch (IOException e) {
-      // Fatal error serializing dequeue payload
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw new OmidTransactionException(writeTxReturn.statusCode, writeTxReturn.message);
     }
   }
 
@@ -886,16 +812,16 @@ implements TransactionalOperationExecutor {
   // TTQueues
 
   /**
-   * EnqueuePayload operations always succeed but can be rolled back.
+   * Enqueue operations always succeed but can be rolled back.
    *
    * They are rolled back with an invalidate.
    */
-  WriteTransactionResult write(QueueEnqueue enqueue,
-      Transaction transaction) throws OperationException {
+  WriteTransactionResult write(QueueEnqueue enqueue, Transaction transaction) throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
+    //TODO: need to store header version
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
                                                                    transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
@@ -903,20 +829,18 @@ implements TransactionalOperationExecutor {
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
-  WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused") Transaction pointer)
-      throws OperationException {
+  WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)
+    throws  OperationException {
 
     initialize();
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(),
-          ack.getEntryPointer(), ack.getConsumer());
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
+                                      transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
-      return new WriteTransactionResult(StatusCode.ILLEGAL_ACK,
-          "Attempt to ack a dequeue of a different consumer");
+      return new WriteTransactionResult(e.getStatus(), e.getMessage());
     } finally {
       end("QueueAck", begin);
     }
@@ -925,9 +849,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(OperationContext context,
-                               QueueDequeue dequeue)
-      throws OperationException {
+  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
     initialize();
     requestMetric("QueueDequeue");
     long begin = begin();
@@ -935,8 +857,7 @@ implements TransactionalOperationExecutor {
     long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
     while (retries < MAX_DEQUEUE_RETRIES) {
-      DequeueResult result = queueTable.dequeue(dequeue.getKey(),
-          dequeue.getConsumer(), dequeue.getConfig(),
+      DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
           this.oracle.getReadPointer());
       if (result.shouldRetry()) {
         retries++;
@@ -959,9 +880,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public long execute(OperationContext context,
-                      GetGroupID getGroupId)
-      throws OperationException {
+  public long execute(OperationContext context, GetGroupID getGroupId) throws OperationException {
     initialize();
     requestMetric("GetGroupID");
     long begin = begin();
@@ -972,9 +891,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueInfo>
-  execute(OperationContext context, GetQueueInfo getQueueInfo)
-      throws OperationException
+  public OperationResult<QueueAdmin.QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
+                                                       throws OperationException
   {
     initialize();
     requestMetric("GetQueueInfo");
@@ -1074,5 +992,4 @@ implements TransactionalOperationExecutor {
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
-
 } // end of OmitTransactionalOperationExecutor

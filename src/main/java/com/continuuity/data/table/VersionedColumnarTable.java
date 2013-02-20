@@ -175,6 +175,18 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer, long writeVersion)
     throws OperationException;
 
+  /**
+   * Increments (atomically and dirtily) the specified row and column by the specified
+   * amount.
+   * @param row
+   * @param column
+   * @param amount amount to increment column by
+   * @return value of counter after this increment is performed
+   */
+  public long incrementAtomicDirtily(
+    byte [] row, byte[] column, long amount)
+    throws OperationException;
+
 
   /**
    * Increments (atomically) the specified row and columns by the specified
@@ -189,8 +201,8 @@ public interface VersionedColumnarTable {
    * @return values of counters after the increments are performed, never null
    */
   public Map<byte[],Long> increment(
-      byte [] row, byte[][] columns, long[] amounts,
-      ReadPointer readPointer, long writeVersion)
+    byte [] row, byte[][] columns, long[] amounts,
+    ReadPointer readPointer, long writeVersion)
     throws OperationException;
 
   /**

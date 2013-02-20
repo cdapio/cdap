@@ -14,13 +14,25 @@ public interface TTQueueTable {
    * Inserts an entry into the tail of the queue using the specified write
    * version.
    * @param queueName name of the queue
-   * @param data the data to be inserted into the queue
+   * @param entry the queue entry to be inserted into the queue
    * @param writeVersion
    * @return return code, and if success, the unique entryId of the queue entry
    * @throws OperationException if something goes wrong
    */
-  public EnqueueResult enqueue(byte [] queueName, byte [] data,
-      long writeVersion) throws OperationException;
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry entry, long writeVersion) throws OperationException;
+
+  /**
+   * Inserts an entry into the tail of the queue using the specified write
+   * version.
+   * @param queueName name of the queue
+   * @param data the data to be inserted into the queue
+   * @param writeVersion
+   * @return return code, and if success, the unique entryId of the queue entry
+   * @throws OperationException if something goes wrong
+   * @deprecated
+   */
+//  public EnqueueResult enqueue(byte [] queueName, byte [] data, byte[] headerData, long writeVersion)
+//    throws OperationException;
 
   /**
    * Invalidates an entry that was enqueued into the queue.  This is used only
@@ -40,13 +52,27 @@ public interface TTQueueTable {
    * and read pointer.
    * @param queueName name of the queue
    * @param consumer
-   * @param config
    * @param readPointer
    * @return dequeue result object
    * @throws OperationException if something goes wrong
    */
-  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer) throws OperationException;
+  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, ReadPointer readPointer)
+                               throws OperationException;
+
+  /**
+   * Attempts to mark and return an entry from the queue for the specified
+   * consumer from the specified group, according to the specified configuration
+   * and read pointer.
+   * @param queueName name of the queue
+   * @param consumer
+   * @param config
+   * @param readPointer
+   * @return dequeue result object
+   * @throws OperationException if something goes wrong
+   * @deprecated
+   */
+//  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+//                               throws OperationException;
 
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
@@ -55,10 +81,10 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
+   * @param readPointer
    * @throws OperationException if something goes wrong
    */
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
-                  QueueConsumer consumer) throws OperationException;
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Finalizes an ack.
@@ -79,10 +105,10 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @throws OperationException if something goes wrong
+   * @param readPointer
    */
-  void unack(byte[] queueName, QueueEntryPointer entryPointer,
-             QueueConsumer consumer) throws OperationException;
+  void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+             throws OperationException;
 
   /**
    * Generates and returns a unique group id for the specified queue.

@@ -38,7 +38,7 @@ public class SimpleTimeseriesTableTest extends DataSetTestBase {
   @Test
   public void testDataSet() throws Exception {
 
-    newCollector();
+    newTransaction(Mode.Sync);
 
     byte[] metric1 = Bytes.toBytes("metric1");
     byte[] metric2 = Bytes.toBytes("metric2");

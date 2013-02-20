@@ -75,13 +75,13 @@ public abstract class BenchTTQueue {
     log("Dequeueing " + iterations + " entries");
     long dstart = now();
     last = dstart;
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
     for (int i=0; i<iterations; i++) {
-      DequeueResult result = queue.dequeue(consumer, config, rp);
+      DequeueResult result = queue.dequeue(consumer, rp);
       assertTrue(result.isSuccess());
-      queue.ack(result.getEntryPointer(), consumer);
+      queue.ack(result.getEntryPointer(), consumer, rp);
       queue.finalize(result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }

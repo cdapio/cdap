@@ -7,8 +7,10 @@ import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
+import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncReads;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
+import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -47,6 +49,7 @@ public class DataSetTestBase {
 
   public static boolean useProxy = false;
 
+  protected enum Mode { Sync, Batch, Smart }
   /**
    * Sets up the in-memory operation executor and the data fabric
    */
@@ -80,11 +83,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    if (useProxy) {
-      instantiator = new DataSetInstantiator(fabric, proxy, null);
-    } else {
-      instantiator = new DataSetInstantiator(fabric, collectionClient, null);
-    }
+    instantiator = new DataSetInstantiator(fabric, proxy, null);
     instantiator.setDataSets(specs);
   }
 
@@ -96,14 +95,18 @@ public class DataSetTestBase {
    */
   public static void newCollector() throws OperationException {
     if (useProxy) {
-      newTransaction();
+      newTransaction(Mode.Batch);
     } else {
       collector = new SimpleBatchCollector();
       collectionClient.setCollector(collector);
     }
   }
-  public static void newTransaction() throws OperationException {
-    agent = new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+  public static void newTransaction(Mode mode) throws OperationException {
+    switch (mode) {
+      case Sync: agent = new SynchronousTransactionAgent(opex, OperationContext.DEFAULT); break;
+      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationContext.DEFAULT); break;
+      case Smart: agent = new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+    }
     agent.start();
     proxy.setTransactionAgent(agent);
   }
@@ -127,10 +130,6 @@ public class DataSetTestBase {
     }
   }
   public static void commitTransaction() throws OperationException {
-    try {
-      agent.finish();
-    } finally {
-      newTransaction();
-    }
+    agent.finish();
   }
 }

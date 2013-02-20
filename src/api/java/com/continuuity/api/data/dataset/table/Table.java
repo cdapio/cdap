@@ -9,17 +9,11 @@ import java.util.Map;
  * defined by embedding instances Table (and other DataSets).
  *
  * A Table can execute operations on its data, including read, write,
- * delete etc. These operations can be performed in one of two ways:
- * <li>Synchronously: The operation is executed immediately against the
- *   data fabric, in its own transaction. This is supported for all types
- *   of operations. </li>
- * <li>Asynchronously: The operation is staged for execution as part of
- *   the transaction of the context in which this data set was
- *   instantiated (a flowlet, or a procedure). In this case,
- *   the actual execution is delegated to the context. This is useful
- *   when multiple operations, possibly over multiple table,
- *   must be performed atomically. This is only supported for write
- *   operations.</li>
+ * delete etc. Internally, the table delegates all operations to the
+ * current transaction of the context in which this data set was
+ * instantiated (a flowlet, or a procedure). Depending on that context,
+ * operations may be executed immediately or deferred until the transaction
+ * is committed.
  *
  * The Table relies on injection of the data fabric by the execution context.
  * (@see DataSet).
@@ -70,7 +64,7 @@ public class Table extends DataSet {
   }
 
   /**
-   * Perform a read as a synchronous operation.
+   * Perform a read in the context of the current transaction.
    * @param read a Read operation
    * @return the result of the read
    * @throws OperationException if the operation fails
@@ -84,57 +78,33 @@ public class Table extends DataSet {
   }
 
   /**
-   * Add a write operation to the current transaction. The execution is
-   * deferred until the time when the current transaction is executed and
-   * (asynchronously) committed as a batch, by the executing context (a
-   * flowlet or a query etc.)
+   * Perform a write operation in the context of the current transaction.
    * @param op The write operation
    * @throws OperationException if something goes wrong
    *
    * TODO this method will be renamed to write() in the new flow system
    */
   // @Deprecated
-  public void stage(WriteOperation op) throws OperationException {
+  public void write(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    this.delegate.stage(op);
+    this.delegate.write(op);
   }
 
   /**
-   * Perform a write operation synchronously. It is executed immediately in
-   * its own transaction, outside of the current transaction of the
-   * execution context (flowlet, query, etc.).
-   * @param op The write operation
+   * Perform an increment and return the incremented value(s).
+   * @param increment the increment operation
+   * @return a map with the incremented values as Long
    * @throws OperationException if something goes wrong
    *
    * TODO this method will go away with the new flow system
    */
-  // @Deprecated
-  public void exec(WriteOperation op) throws OperationException {
+  public Map<byte[], Long> increment(Increment increment) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    this.delegate.exec(op);
-  }
-
-  /**
-   * Returns a "closure", that is an encapsulated operation that,
-   * when executed, returns a value that can be used by another operation.
-   * The only supported type of closure at this time is an Incrememt: it
-   * returns a long value, which can be used as a field value in a tuple.
-   * @param op the increment operation, must be on a single column.
-   * @return a closure encapsulating the increment operation
-   * @throws OperationException if something goes wrong
-   *
-   * TODO this method will go away with the new flow system
-   */
-  // @Deprecated
-  public Closure closure(Increment op) {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.closure(op);
+    return this.delegate.increment(increment);
   }
 
 }

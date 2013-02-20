@@ -5,19 +5,25 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.internal.*;
+import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
+import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
-import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
+import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
+import com.continuuity.data.operation.ttqueue.internal.GroupState;
+import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,29 +53,29 @@ public class TTQueueOnVCTable implements TTQueue {
   AtomicLong dequeueReturns = new AtomicLong(0);
 
   // Row header names and flags
-  static final byte [] GLOBAL_ENTRY_HEADER = bytes((byte)10);
-  static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = bytes((byte)20);
-  static final byte [] GLOBAL_SHARDS_HEADER = bytes((byte)30);
-  static final byte [] GLOBAL_GROUPS_HEADER = bytes((byte)40);
-  static final byte [] GLOBAL_DATA_HEADER = bytes((byte)50);
+  static final byte [] GLOBAL_ENTRY_HEADER = { 10 };
+  static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = { 20 };
+  static final byte [] GLOBAL_SHARDS_HEADER = { 30 } ;
+  static final byte [] GLOBAL_GROUPS_HEADER = { 40 };
+  static final byte [] GLOBAL_DATA_HEADER = { 50 };
 
   // Columns for row = GLOBAL_ENTRY_HEADER
-  static final byte [] GLOBAL_ENTRYID_COUNTER = bytes((byte)10);
+  static final byte [] GLOBAL_ENTRYID_COUNTER = { 10 };
 
   // Columns for row = GLOBAL_ENTRY_WRITEPOINTER_HEADER
-  static final byte [] GLOBAL_ENTRYID_WRITEPOINTER_COUNTER = bytes((byte)10);
+  static final byte [] GLOBAL_ENTRYID_WRITEPOINTER_COUNTER = { 10 };
 
   // Columns for row = GLOBAL_SHARDS_HEADER
-  static final byte [] GLOBAL_SHARD_META = bytes((byte)10);
+  static final byte [] GLOBAL_SHARD_META = { 10 };
 
   // Columns for row = GLOBAL_GROUPS_HEADER
-  static final byte [] GROUP_ID_GEN = bytes((byte)5);
-  static final byte [] GROUP_STATE = bytes((byte)10);
+  static final byte [] GROUP_ID_GEN = { 5 };
+  static final byte [] GROUP_STATE = { 10 };
 
   // Columns for row = GLOBAL_DATA_HEADER
-  static final byte [] ENTRY_META = bytes((byte)10);
-  static final byte [] ENTRY_GROUP_META = bytes((byte)20);
-  static final byte [] ENTRY_DATA = bytes((byte)30);
+  static final byte [] ENTRY_META = { 10 };
+  static final byte [] ENTRY_GROUP_META = { 20 };
+  static final byte [] ENTRY_DATA = { 30 };
 
   /**
    * Constructs a TTQueue with the specified queue name, backed by the specified
@@ -84,21 +90,24 @@ public class TTQueueOnVCTable implements TTQueue {
     this.queueName = queueName;
     this.timeOracle = timeOracle;
     this.maxEntriesPerShard = conf.getLong("ttqueue.shard.max.entries", 1024);
-    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes",
-        1024*1024*1024);
-    this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max",
-        120 * 1000); // 120 seconds default
-    this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
-        "ttqueue.entry.semiacked.max",
-        10 * 1000); // 10 second default
+    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024);
+    this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max", 120 * 1000); // 120 seconds default
+    this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
   }
-  //Mario, look at the next method!
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
-      throws OperationException {
-    if (TRACE)
-      log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
-        cleanWriteVersion + ")");
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+  }
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
+    byte[] data;
+    try {
+      data = QueueEntrySerializer.serialize(entry);
+    } catch (IOException e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException");
+    }
+
+    if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
@@ -106,8 +115,8 @@ public class TTQueueOnVCTable implements TTQueue {
     // Get our unique entry id
     long entryId;
     try {
-      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER),
-          GLOBAL_ENTRYID_COUNTER, 1, dirty.getFirst(), dirty.getSecond());
+      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 1,
+                                     dirty.getFirst(), dirty.getSecond());
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
           "of global entry id failed with status code " + e.getStatus() +
@@ -198,9 +207,21 @@ public class TTQueueOnVCTable implements TTQueue {
     log("Invalidated " + entryPointer);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
+    return dequeueInternal(consumer, config, readPointer);
+  }
+
   @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
-      ReadPointer readPointer) throws OperationException {
+  public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
+  }
+
+  private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
 
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
@@ -462,10 +483,15 @@ public class TTQueueOnVCTable implements TTQueue {
                   dirty.getFirst(), dirty.getSecond());
               // Successfully updated timestamp, still own it, return this
               this.dequeueReturns.incrementAndGet();
-              return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
-                  this.table.get(shardRow,
-                      makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
-                      dirty.getFirst()).getValue());
+
+              byte[] combinedHeaderPlusData=this.table.get(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst()).getValue();
+              try {
+                QueueEntry entry=QueueEntrySerializer.deserialize(combinedHeaderPlusData);
+                return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, entry);
+              } catch (IOException e) {
+                throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                             "Queue entry deserialization failed.", e);
+              }
             } catch (com.continuuity.api.data.OperationException e) {
               // Failed to update group meta, someone else must own it now,
               // move to next entry in shard
@@ -494,50 +520,51 @@ public class TTQueueOnVCTable implements TTQueue {
       if (TRACE) log("Fell through, entry is available!");
 
       // Get the data and check the partitioner
-      OperationResult<byte[]> data = this.table.get(shardRow,
-          makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
-      assert(!data.isEmpty());
-
-      if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer,
-          entryPointer.getEntryId(), data.getValue())) {
-
-        // Partitioner says skip, flag as available, move to next entry in shard
-        if (TRACE) log("Partitioner rejected this entry, skip");
-        entryPointer = new EntryPointer(
-            entryPointer.getEntryId() + 1, entryPointer.getShardId());
-        continue;
-      }
-
-      // Atomically update group meta to point to this consumer and return!
-      EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
-          EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
+      OperationResult<byte[]> combinedHeaderPlusDataResult = this.table.get(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
+      assert(!combinedHeaderPlusDataResult.isEmpty());
       try {
-        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-            entryGroupMetaData, newEntryGroupMeta.getBytes(),
-            dirty.getFirst(), dirty.getSecond());
-
-        // We own it!  Return it.
-        this.dequeueReturns.incrementAndGet();
-        if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
-
-        return new DequeueResult(DequeueStatus.SUCCESS,
-            entryPointer, data.getValue());
-      } catch (com.continuuity.api.data.OperationException e) {
-        // Someone else has grabbed it, on to the next one
-        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
-        entryPointer = new EntryPointer(
+        QueueEntry entry=QueueEntrySerializer.deserialize(combinedHeaderPlusDataResult.getValue());
+        byte[] data=entry.getData();
+        if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer, entryPointer.getEntryId(), data)) {
+          // Partitioner says skip, flag as available, move to next entry in shard
+          if (TRACE) log("Partitioner rejected this entry, skip");
+          entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
-        // continue and loop on
+          continue;
+        }
+
+        // Atomically update group meta to point to this consumer and return!
+        EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
+          EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
+        try {
+          this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+                                    entryGroupMetaData, newEntryGroupMeta.getBytes(),
+                                    dirty.getFirst(), dirty.getSecond());
+
+          // We own it!  Return it.
+          this.dequeueReturns.incrementAndGet();
+          if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
+
+          return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, entry);
+        } catch (com.continuuity.api.data.OperationException e) {
+          // Someone else has grabbed it, on to the next one
+          if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
+          entryPointer = new EntryPointer(
+            entryPointer.getEntryId() + 1, entryPointer.getShardId());
+          // continue and loop on
+        }
+      } catch (IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     "Queue entry deserialization failed.", e);
       }
     }
-
     // If you exit this loop, something is wrong.  Fail.
     throw new OperationException(StatusCode.INTERNAL_ERROR,
         "Somehow broke from loop, bug in TTQueue");
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
 
     // Get a dirty pointer
@@ -664,8 +691,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer,
-                    QueueConsumer consumer) throws OperationException {
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry

@@ -3,12 +3,16 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.hbase.ttqueue.*;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
+import com.continuuity.hbase.ttqueue.HBQQueueMeta;
+import com.continuuity.hbase.ttqueue.HBQShardConfig;
+import com.continuuity.hbase.ttqueue.HBQUnack;
+import com.continuuity.hbase.ttqueue.HBReadPointer;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
@@ -52,10 +56,15 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+  }
+
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion)
       throws OperationException {
     if (TRACE)
-      log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
+      log("Enqueueing (data.len=" + entry.getData().length + ", writeVersion=" +
           cleanWriteVersion + ")");
 
     // Get a read pointer that sees everything (dirty read pointer)
@@ -64,7 +73,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     HBQEnqueueResult result;
     try {
       result = this.table.enqueue(
-          new HBQEnqueue(this.queueName, data,
+          new HBQEnqueue(this.queueName, entry.getData(),
               new HBReadPointer(cleanWriteVersion, now), this.shardConfig));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
@@ -92,8 +101,21 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
+    return dequeueInternal(consumer, config, readPointer);
+  }
+
+  @Override
+  public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
+  }
+
+  private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) throws OperationException {
 
     if (TRACE)
@@ -125,7 +147,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
     if (TRACE) log("Acking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
@@ -161,8 +183,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer,
-      QueueConsumer consumer) throws OperationException {
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     if (TRACE) log("Unacking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
     try {

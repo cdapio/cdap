@@ -17,6 +17,4 @@ public class UndoWrite extends Delete implements Undo {
   public RowSet.Row getRow() {
     return new RowSet.Row(this.getTable(), this.getKey());
   }
-
-
 }

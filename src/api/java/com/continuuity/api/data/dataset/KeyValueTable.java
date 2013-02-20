@@ -1,6 +1,5 @@
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
@@ -11,8 +10,9 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.api.data.dataset.table.WriteOperation;
+import com.continuuity.api.data.StatusCode;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -39,8 +39,6 @@ public class KeyValueTable extends DataSet {
   /**
    * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification))
    * @param spec the data set spec for this data set
-   * @throws OperationException if the underlying table cannot be opened in
-   *         the data fabric
    */
   @SuppressWarnings("unused")
   public KeyValueTable(DataSetSpecification spec) {
@@ -51,17 +49,19 @@ public class KeyValueTable extends DataSet {
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        dataset(this.table.configure()).create();
+      dataset(this.table.configure()).create();
   }
 
   /**
    * Read the value for a given key.
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
+   * @throws OperationException if the read fails
    */
+  @Nullable
   public byte[] read(byte[] key) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result =
-        this.table.read(new Read(key, KEY_COLUMN));
+      this.table.read(new Read(key, KEY_COLUMN));
     if (result.isEmpty()) {
       return null;
     } else {
@@ -70,87 +70,64 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * Synchronous execution of a write operation
-   * @param op the write operation
-   * @throws OperationException if the operation fails
+   * Increment the value for a given key and return the resulting value.
+   * @param key the key to incrememt
+   * @return the incremented value of that key
+   * @throws OperationException if the increment fails
    */
-  public void exec(KeyOperation op) throws OperationException {
-    this.table.exec(op);
-  }
-
-  /**
-   * Asynchronous execution of a write operation
-   * @param op the write operation
-   * @throws OperationException if the operation fails
-   */
-  public void stage(KeyOperation op) throws OperationException {
-    this.table.stage(op);
-  }
-
-  /**
-   * Get a closure for an increment operation
-   * @param increment the increment operation.
-   * @return a closure encapsulating the increment operation
-   */
-  public Closure closure(IncrementKey increment) {
-    return this.table.closure(increment);
-  }
-
-  /**
-   * Base interface for all key/value operations
-   */
-  static interface KeyOperation extends WriteOperation {  }
-
-  /**
-   * A read operation for a given key
-   */
-  public static class ReadKey extends Read implements KeyOperation {
-    public ReadKey(byte[] key) {
-      super(key, KEY_COLUMN);
+  public long incrementAndGet(byte[] key, long value) throws OperationException {
+    Map<byte[], Long> result =
+      this.table.increment(new Increment(key, KEY_COLUMN, value));
+    Long newValue = result.get(KEY_COLUMN);
+    if (newValue == null) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Incremented value not part of operation result.");
+    } else {
+      return newValue;
     }
   }
 
   /**
-   * An operation to write a new value for a given key
+   * Write a value to a key
+   * @param key the key
+   * @param value the new value
+   * @throws OperationException if the write fails
    */
-  public static class WriteKey extends Write implements KeyOperation {
-    public WriteKey(byte[] key, byte[] value) {
-      super(key, KEY_COLUMN, value);
-    }
+  public void write(byte[] key, byte[] value) throws OperationException {
+    this.table.write(new Write(key, KEY_COLUMN, value));
   }
 
   /**
-   * An operation to increment the value for a given key
+   * Increment the value tof a key. The key must either not exist yet, or its
+   * current value must be 8 bytes long to be interpretable as a long.
+   * @param key the key
+   * @param value the new value
+   * @throws OperationException if the increment fails
    */
-  public static class IncrementKey extends Increment implements KeyOperation {
-    public IncrementKey(byte[] key, long value) {
-      super(key, KEY_COLUMN, value);
-    }
-    public IncrementKey(byte[] key) {
-      this(key, 1L);
-    }
+  public void increment(byte[] key, long value) throws OperationException {
+    this.table.write(new Increment(key, KEY_COLUMN, value));
   }
 
   /**
-   * An operation to delete a given key
+   * Delete a key
+   * @param key the key to delete
+   * @throws OperationException if the delete fails
    */
-  public static class DeleteKey extends Delete implements KeyOperation {
-    public DeleteKey(byte[] key) {
-      super(key, KEY_COLUMN);
-    }
+  public void delete(byte[] key) throws OperationException {
+    this.table.write(new Delete(key, KEY_COLUMN));
   }
 
   /**
-   * An operation to compare the value for key with an expected value, and,
+   * Compare the value for key with an expected value, and,
    * if they match, to replace the value with a new value. If they don't
-   * match, the operation fails with status code WRITE_CONFLICT.
+   * match, this operation fails with status code WRITE_CONFLICT.
    *
    * An expected value of null means that the key must not exist. A new value
    * of null means that the key shall be deleted instead of replaced.
+   *
+   * @param key the key to delete
+   * @throws OperationException if the swap fails
    */
-  public static class SwapKey extends Swap implements KeyOperation {
-    public SwapKey(byte[] row, byte[] expected, byte[] value) {
-      super(row, KEY_COLUMN, expected, value);
-    }
+  public void swap(byte[] key, byte[] oldValue, byte[] newValue) throws OperationException {
+    this.table.write(new Swap(key, KEY_COLUMN, oldValue, newValue));
   }
 }

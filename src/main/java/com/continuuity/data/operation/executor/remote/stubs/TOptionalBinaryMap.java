@@ -491,16 +491,16 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           case 1: // THE_MAP
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map56 = iprot.readMapBegin();
-                struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map56.size);
-                for (int _i57 = 0; _i57 < _map56.size; ++_i57)
+                org.apache.thrift.protocol.TMap _map66 = iprot.readMapBegin();
+                struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map66.size);
+                for (int _i67 = 0; _i67 < _map66.size; ++_i67)
                 {
-                  ByteBuffer _key58; // optional
-                  TOptionalBinary _val59; // required
-                  _key58 = iprot.readBinary();
-                  _val59 = new TOptionalBinary();
-                  _val59.read(iprot);
-                  struct.theMap.put(_key58, _val59);
+                  ByteBuffer _key68; // optional
+                  TOptionalBinary _val69; // required
+                  _key68 = iprot.readBinary();
+                  _val69 = new TOptionalBinary();
+                  _val69.read(iprot);
+                  struct.theMap.put(_key68, _val69);
                 }
                 iprot.readMapEnd();
               }
@@ -545,10 +545,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           oprot.writeFieldBegin(THE_MAP_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.theMap.size()));
-            for (Map.Entry<ByteBuffer, TOptionalBinary> _iter60 : struct.theMap.entrySet())
+            for (Map.Entry<ByteBuffer, TOptionalBinary> _iter70 : struct.theMap.entrySet())
             {
-              oprot.writeBinary(_iter60.getKey());
-              _iter60.getValue().write(oprot);
+              oprot.writeBinary(_iter70.getKey());
+              _iter70.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -598,10 +598,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       if (struct.isSetTheMap()) {
         {
           oprot.writeI32(struct.theMap.size());
-          for (Map.Entry<ByteBuffer, TOptionalBinary> _iter61 : struct.theMap.entrySet())
+          for (Map.Entry<ByteBuffer, TOptionalBinary> _iter71 : struct.theMap.entrySet())
           {
-            oprot.writeBinary(_iter61.getKey());
-            _iter61.getValue().write(oprot);
+            oprot.writeBinary(_iter71.getKey());
+            _iter71.getValue().write(oprot);
           }
         }
       }
@@ -619,16 +619,16 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TMap _map62 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map62.size);
-          for (int _i63 = 0; _i63 < _map62.size; ++_i63)
+          org.apache.thrift.protocol.TMap _map72 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map72.size);
+          for (int _i73 = 0; _i73 < _map72.size; ++_i73)
           {
-            ByteBuffer _key64; // optional
-            TOptionalBinary _val65; // required
-            _key64 = iprot.readBinary();
-            _val65 = new TOptionalBinary();
-            _val65.read(iprot);
-            struct.theMap.put(_key64, _val65);
+            ByteBuffer _key74; // optional
+            TOptionalBinary _val75; // required
+            _key74 = iprot.readBinary();
+            _val75 = new TOptionalBinary();
+            _val75.read(iprot);
+            struct.theMap.put(_key74, _val75);
           }
         }
         struct.setTheMapIsSet(true);

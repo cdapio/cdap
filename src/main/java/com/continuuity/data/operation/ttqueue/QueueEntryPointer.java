@@ -1,9 +1,8 @@
 package com.continuuity.data.operation.ttqueue;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.hbase.ttqueue.HBQEntryPointer;
 import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A pointer which completely addresses an entry in a queue.
@@ -18,6 +17,12 @@ public class QueueEntryPointer {
     this.queueName = queueName;
     this.entryId = entryId;
     this.shardId = shardId;
+  }
+
+  public QueueEntryPointer(byte[] queueName, long entryId) {
+    this.queueName = queueName;
+    this.entryId = entryId;
+    this.shardId = -1; // Single shard
   }
 
   public byte [] getQueueName() {

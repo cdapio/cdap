@@ -29,8 +29,8 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
-  public TTQueueTableOnHBaseNative(HTable table,
-      TimestampOracle timeOracle, CConfiguration conf, Configuration hbaseConf) {
+  public TTQueueTableOnHBaseNative(HTable table, TimestampOracle timeOracle, CConfiguration conf,
+                                   Configuration hbaseConf) {
     this.table = table;
     this.timeOracle = timeOracle;
     this.conf = conf;
@@ -47,9 +47,9 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public EnqueueResult enqueue(byte [] queueName, byte [] data,
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry entry,
       long writeVersion) throws OperationException {
-    return getQueue(queueName).enqueue(data, writeVersion);
+    return getQueue(queueName).enqueue(entry, writeVersion);
   }
 
   @Override
@@ -58,16 +58,21 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
     getQueue(queueName).invalidate(entryPointer, writeVersion);
   }
 
+//  @Override
+//  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
+//      QueueConfig config, ReadPointer readPointer) throws OperationException {
+//    return getQueue(queueName).dequeue(consumer, config, readPointer);
+//  }
+
   @Override
-  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer) throws OperationException {
-    return getQueue(queueName).dequeue(consumer, config, readPointer);
+  public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer, ReadPointer readPointer)
+                               throws OperationException {
+    return getQueue(queueName).dequeue(consumer, readPointer);
   }
 
   @Override
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer) throws OperationException {
-    getQueue(queueName).ack(entryPointer, consumer);
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).ack(entryPointer, consumer, readPointer);
   }
 
   @Override
@@ -77,9 +82,8 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void unack(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer) throws OperationException {
-    getQueue(queueName).unack(entryPointer, consumer);
+  public void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).unack(entryPointer, consumer, readPointer);
   }
 
   @Override

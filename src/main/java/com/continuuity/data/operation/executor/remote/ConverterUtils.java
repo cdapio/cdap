@@ -32,6 +32,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueConfig;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConsumer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEnqueue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueEntry;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TQueuePartitioner;
@@ -47,10 +48,11 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -98,7 +100,6 @@ public class ConverterUtils {
       longs[i++] = value;
     return longs;
   }
-
   /** wrap a byte array into a byte buffer */
   ByteBuffer wrap(byte[] bytes) {
     if (bytes == null)
@@ -114,17 +115,6 @@ public class ConverterUtils {
       return TBaseHelper.byteBufferToByteArray(buf);
   }
 
-  /** wrap a byte array into an optional binary */
-  TOptionalBinary wrapBinary(OperationResult<byte[]> result) {
-    TOptionalBinary binary = new TOptionalBinary();
-    if (result.isEmpty()) {
-      binary.setStatus(result.getStatus());
-      binary.setMessage(result.getMessage());
-    } else {
-      binary.setValue(result.getValue());
-    }
-    return binary;
-  }
   /** wrap a byte array into an optional binary */
   TOptionalBinary wrapBinary(byte[] bytes) {
     TOptionalBinary binary = new TOptionalBinary();
@@ -406,12 +396,38 @@ public class ConverterUtils {
         tReadColumnRange.getStopColumn(),
         tReadColumnRange.getLimit());
   }
-
+//  /** wrap a queue entry */
+//  TQueueEntry wrap(QueueEntry entry) {
+//    return new TQueueEntry(
+//      wrap(entry.getData()),
+//      wrap(entry.getHeader())
+//    );
+//  }
+//
+//  /** unwrap a queue entry */
+//  QueueEntry unwrap(TQueueEntry entry) {
+//    return new QueueEntry(
+//      entry.getHeader(),
+//      entry.getData()
+//    );
+//  }
   /** wrap an EnqueuePayload operation */
+
+
+  QueueEntry unwrap(TQueueEntry entry) {
+    return new QueueEntryImpl(entry.getHeader(), entry.getData());
+  }
+
+  TQueueEntry wrap(QueueEntry entry) {
+    TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
+    tQueueEntry.setHeader(entry.getPartioningMap());
+    return tQueueEntry;
+  }
+
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
-        wrap(enqueue.getData()),
+        wrap(enqueue.getEntry()),
         enqueue.getId());
     if (enqueue.getProducer() != null)
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
@@ -423,7 +439,7 @@ public class ConverterUtils {
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
-        tEnqueue.getValue());
+        unwrap(tEnqueue.getEntry()));
   }
 
   /** wrap a DequeuePayload operation */
@@ -502,12 +518,6 @@ public class ConverterUtils {
         tPointer.getEntryId(),
         tPointer.getShardId());
   }
-  /** wrap a queue entry pointer (to an entry pointer) */
-  EntryPointer unwrapEntryPointer(TQueueEntryPointer tPointer) {
-    return new EntryPointer(
-        tPointer.getEntryId(),
-        tPointer.getShardId());
-  }
 
   /** wrap a queue consumer */
   TQueueConsumer wrap(QueueConsumer consumer) {
@@ -517,6 +527,8 @@ public class ConverterUtils {
         consumer.getGroupSize());
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
+    if (consumer.getQueueConfig() != null)
+      tQueueConsumer.setQueueConfig(wrap(consumer.getQueueConfig()));
     return tQueueConsumer;
   }
   /** unwrap a queue consumer */
@@ -525,7 +537,8 @@ public class ConverterUtils {
         tQueueConsumer.getInstanceId(),
         tQueueConsumer.getGroupId(),
         tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null);
+        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
+        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
   }
 
   /** wrap a queue producer */
@@ -551,13 +564,13 @@ public class ConverterUtils {
   TQueuePartitioner wrap(PartitionerType partitioner) {
     if (PartitionerType.HASH_ON_VALUE.equals(partitioner))
       return TQueuePartitioner.HASH;
-    if (PartitionerType.RANDOM.equals(partitioner))
-      return TQueuePartitioner.RANDOM;
-    if (PartitionerType.MODULO_LONG_VALUE.equals(partitioner))
-      return TQueuePartitioner.LONGMOD;
+    if (PartitionerType.FIFO.equals(partitioner))
+      return TQueuePartitioner.FIFO;
+    if (PartitionerType.ROUND_ROBIN.equals(partitioner))
+      return TQueuePartitioner.ROBIN;
     Log.error("Internal Error: Received an unknown QueuePartitioner with " +
         "class " + partitioner + ". Defaulting to RANDOM.");
-    return TQueuePartitioner.RANDOM;
+    return TQueuePartitioner.FIFO;
   }
   /**
    * unwrap a queue partitioner. We can only do this for the known
@@ -567,13 +580,13 @@ public class ConverterUtils {
   PartitionerType unwrap(TQueuePartitioner tPartitioner) {
     if (TQueuePartitioner.HASH.equals(tPartitioner))
       return PartitionerType.HASH_ON_VALUE;
-    if (TQueuePartitioner.RANDOM.equals(tPartitioner))
-      return PartitionerType.RANDOM;
-    if (TQueuePartitioner.LONGMOD.equals(tPartitioner))
-      return PartitionerType.MODULO_LONG_VALUE;
+    if (TQueuePartitioner.FIFO.equals(tPartitioner))
+      return PartitionerType.FIFO;
+    if (TQueuePartitioner.ROBIN.equals(tPartitioner))
+      return PartitionerType.ROUND_ROBIN;
     Log.error("Internal Error: Received unknown QueuePartitioner " +
-        tPartitioner + ". Defaulting to " + PartitionerType.RANDOM + ".");
-    return PartitionerType.RANDOM;
+        tPartitioner + ". Defaulting to " + PartitionerType.FIFO + ".");
+    return PartitionerType.FIFO;
   }
 
   /** wrap a queue config */
@@ -629,9 +642,13 @@ public class ConverterUtils {
       Log.error(message);
       throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
     }
-    return new TDequeueResult(status,
-        wrap(result.getEntryPointer()),
-        wrap(result.getValue()));
+    TDequeueResult tQueueResult=new TDequeueResult(status, wrap(result.getEntryPointer()));
+    QueueEntry entry=result.getEntry();
+    if (entry!=null) {
+      TQueueEntry tQueueEntry=wrap(entry);
+      tQueueResult.setEntry(tQueueEntry);
+    }
+    return tQueueResult;
   }
   /**
    * unwrap a dequeue result
@@ -642,7 +659,7 @@ public class ConverterUtils {
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
           unwrap(tDequeueResult.getPointer()),
-          tDequeueResult.getValue());
+          unwrap(tDequeueResult.getEntry()));
     } else {
       DequeueResult.DequeueStatus status;
       TDequeueStatus tStatus = tDequeueResult.getStatus();
