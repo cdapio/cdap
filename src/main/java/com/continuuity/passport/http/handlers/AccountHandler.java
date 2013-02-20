@@ -33,10 +33,12 @@ import java.util.Map;
 
 @Path("/passport/v1/account/")
 @Singleton
-public class AccountHandler {
+public class AccountHandler extends  PassportHandler{
 
   private final DataManagementService dataManagementService;
   private final AuthenticatorService authenticatorService;
+
+
 
 
   @Inject
@@ -49,6 +51,8 @@ public class AccountHandler {
   @GET
   @Produces("application/json")
   public Response getAccountInfo(@PathParam("id") int id) {
+
+    requestReceived();
 
     Account account = dataManagementService.getAccount(id);
     if (account != null) {
@@ -68,6 +72,8 @@ public class AccountHandler {
   public Response changePassword(@PathParam("id") int id, String data) {
 
     try {
+      requestReceived();
+
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
@@ -77,6 +83,7 @@ public class AccountHandler {
 
       if ((oldPassword == null) || (oldPassword.isEmpty()) ||
         (newPassword == null) || (newPassword.isEmpty())) {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.BAD_REQUEST)
           .entity(Utils.getJson("FAILED", "Must pass in old_password and new_password"))
           .build();
@@ -87,13 +94,16 @@ public class AccountHandler {
       // updated account
       Account account = dataManagementService.getAccount(id);
       if (account != null) {
+        requestSuccess();
         return Response.ok(account.toString()).build();
       } else {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", "Download confirmation failed", e))
         .build();
@@ -104,6 +114,7 @@ public class AccountHandler {
   @PUT
   @Produces("application/json")
   public Response confirmDownload(@PathParam("id") int id) {
+    requestReceived();
 
     try {
 
@@ -112,13 +123,16 @@ public class AccountHandler {
       // updated account
       Account account = dataManagementService.getAccount(id);
       if (account != null) {
+        requestSuccess();
         return Response.ok(account.toString()).build();
       } else {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", "Download confirmation failed", e))
         .build();
@@ -130,6 +144,7 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response updateAccount(@PathParam("id") int id, String data) {
+    requestReceived();
 
     try {
       JsonParser parser = new JsonParser();
@@ -160,13 +175,16 @@ public class AccountHandler {
       // updated account
       Account account = dataManagementService.getAccount(id);
       if (account != null) {
+        requestSuccess();
         return Response.ok(account.toString()).build();
       } else {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Account Update Failed", e))
         .build();
@@ -177,6 +195,8 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAccount(String data) {
+    requestReceived();
+
     String emailId = null;
     try {
       JsonParser parser = new JsonParser();
@@ -190,15 +210,18 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED", "Email id is missing")).build();
       } else {
         Account account = dataManagementService.registerAccount(new Account("", "", "", emailId));
+        requestSuccess();
         return Response.ok(account.toString()).build();
       }
     } catch (AccountAlreadyExistsException e) {
       //If the account already exists - return the existing account so that the caller can take appropriate action
       Account account = dataManagementService.getAccount(emailId);
+      requestFailed(); // Request failed
       return Response.status(Response.Status.CONFLICT)
         .entity(Utils.getJsonError("FAILED", account.toString()))
         .build();
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Account Creation Failed", e))
         .build();
@@ -210,6 +233,8 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response confirmAccount(String data, @PathParam("id") int id) {
+    requestReceived();
+
     try {
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
@@ -225,6 +250,7 @@ public class AccountHandler {
         (firstName == null) || (firstName.isEmpty()) ||
         (lastName == null) || (lastName.isEmpty()) ||
         (company == null) || (company.isEmpty())) {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.BAD_REQUEST)
           .entity(Utils.getJson("FAILED", "password, first_name, last_name, company should be passed in")).build();
       } else {
@@ -235,14 +261,17 @@ public class AccountHandler {
         // updated account
         Account accountFetched = dataManagementService.getAccount(id);
         if (accountFetched != null) {
+          requestSuccess();
           return Response.ok(accountFetched.toString()).build();
         } else {
+          requestFailed(); // Request failed
           return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
             .entity(Utils.getJson("FAILED", "Failed to get updated account"))
             .build();
         }
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Account Confirmation Failed", e))
         .build();
@@ -255,6 +284,7 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response createVPC(String data, @PathParam("id") int id) {
+    requestReceived();
 
     try {
       JsonParser parser = new JsonParser();
@@ -266,13 +296,16 @@ public class AccountHandler {
 
       if ((vpcName != null) && (!vpcName.isEmpty()) && (vpcLabel != null) && (!vpcLabel.isEmpty())) {
         VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel));
+        requestSuccess();
         return Response.ok(vpc.toString()).build();
       } else {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.BAD_REQUEST)
           .entity(Utils.getJson("FAILED", "VPC creation failed. vpc_name is missing"))
           .build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "VPC Creation Failed", e))
         .build();
@@ -284,6 +317,7 @@ public class AccountHandler {
   @GET
   @Produces("application/json")
   public Response getVPC(@PathParam("id") int id) {
+    requestReceived();
 
     try {
       List<VPC> vpcList = dataManagementService.getVPC(id);
@@ -302,9 +336,12 @@ public class AccountHandler {
           sb.append(vpc.toString());
         }
         sb.append("]");
+        requestSuccess();
         return Response.ok(sb.toString()).build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
+
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
@@ -315,17 +352,21 @@ public class AccountHandler {
   @GET
   @Produces("application/json")
   public Response getSingleVPC(@PathParam("accountId") int accountId, @PathParam("vpcId") int vpcId) {
+    requestReceived();
 
     try {
       VPC vpc = dataManagementService.getVPC(accountId, vpcId);
       if (vpc == null) {
+        requestFailed(); // Request failed
         return Response.status(Response.Status.NOT_FOUND)
           .entity(Utils.getJsonError("VPC not found")).build();
 
       } else {
+        requestSuccess();
         return Response.ok(vpc.toString()).build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
@@ -337,6 +378,8 @@ public class AccountHandler {
   @Produces("application/json")
   @Consumes("application/json")
   public Response authenticate(String data) {
+
+    requestReceived();
 
     JsonParser parser = new JsonParser();
     JsonElement element = parser.parse(data);
@@ -352,14 +395,16 @@ public class AccountHandler {
         StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
+        requestSuccess();
         return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
       } else {
+        requestFailed(); //Failed request
         return Response.status(Response.Status.UNAUTHORIZED).entity(
           Utils.getAuthenticatedJson("Authentication Failed.", "Either user doesn't exist or password doesn't match"))
           .build();
       }
     } catch (Exception e) {
-
+      requestFailed(); //Failed request
       return Response.status(Response.Status.UNAUTHORIZED).entity(
         Utils.getAuthenticatedJson("Authentication Failed.", e.getMessage())).build();
     }
@@ -369,16 +414,20 @@ public class AccountHandler {
   @DELETE
   @Produces("application/json")
   public Response deleteAccount(@PathParam("id") int id) {
+    requestReceived();
 
     try {
 
       dataManagementService.deleteAccount(id);
+      requestSuccess();
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (AccountNotFoundException e) {
+      requestFailed(); //Failed request
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("Account not found"))
         .build();
     } catch (RuntimeException e) {
+      requestFailed(); //Failed request
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("Account delete Failed", e.getMessage()))
         .build();
@@ -390,15 +439,19 @@ public class AccountHandler {
   @DELETE
   @Produces("application/json")
   public Response deleteVPC(@PathParam("accountId") int accountId, @PathParam("vpcId") int vpcId) {
+    requestReceived();
 
     try {
       dataManagementService.deleteVPC(accountId, vpcId);
+      requestSuccess();
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (VPCNotFoundException e) {
+      requestFailed(); //Failed request
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("VPC not found"))
         .build();
     } catch (RuntimeException e) {
+      requestFailed(); //Failed request
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("VPC delete Failed", e.getMessage()))
         .build();

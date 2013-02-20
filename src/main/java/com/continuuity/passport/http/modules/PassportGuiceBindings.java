@@ -46,7 +46,8 @@ public class PassportGuiceBindings extends JerseyServletModule {
   private void bindings() {
 
 
-    MapBinder<String, String> configBinder = MapBinder.newMapBinder(binder(), String.class, String.class, Names.named("passport.config"));
+    MapBinder<String, String> configBinder = MapBinder.newMapBinder(binder(), String.class, String.class,
+                                             Names.named("passport.config"));
     for (Map.Entry<String, String> entry : config.entrySet()) {
       configBinder.addBinding(entry.getKey()).toInstance(entry.getValue());
     }
@@ -70,6 +71,7 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(GuiceContainer.class).asEagerSingleton();
     bind(DefaultServlet.class).asEagerSingleton();
     serve("/*").with(DefaultServlet.class);
+    System.out.println("Bindings");
 
   }
 
