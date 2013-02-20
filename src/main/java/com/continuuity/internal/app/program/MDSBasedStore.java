@@ -177,84 +177,188 @@ public class MDSBasedStore implements Store {
   @Override
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec) throws OperationException {
-    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
-                                            id.getId());
     ApplicationSpecificationAdapter adapter =
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     String jsonSpec = adapter.toJson(spec);
-    entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
 
     OperationContext context = new OperationContext(id.getAccountId());
+    LOG.trace("Application being stored: id: {}: spec: {}", id.getId(), jsonSpec);
+    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), null,
+                                               FieldTypes.Application.ENTRY_TYPE, id.getId());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
+      entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
 
-    LOG.trace("Application being added: id: {}: spec: {}", id.getId(), jsonSpec);
-    metaDataStore.add(context, entry);
-    LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
+      metaDataStore.add(context, entry);
+      LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
+    } else {
+      LOG.trace("Application exists in mds: id: {}, spec: {}",
+                id.getId(), existing.getTextField(FieldTypes.Application.SPEC_JSON));
+      MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
+      entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
 
+      metaDataStore.updateField(context, id.getAccountId(), null,
+                                FieldTypes.Application.ENTRY_TYPE, id.getId(),
+                                FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
+      LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
+    }
+
+    updateInMetadataService(id, spec);
+  }
+
+  private void updateInMetadataService(final Id.Application id, final ApplicationSpecification spec) {
     try {
       Account account = new Account(id.getAccountId());
+
       // application
-      Application application = new Application(id.getId());
-      application.setName(spec.getName());
-      application.setDescription(spec.getDescription());
-      metaDataService.createApplication(account, application);
+      updateInMetadataService(id, spec, account);
 
       // datasets
       for (DataSetSpecification datasetSpec : spec.getDataSets().values()) {
-        Dataset dataset = new Dataset(datasetSpec.getName());
-        // no description in datasetSpec
-        dataset.setName(datasetSpec.getName());
-        dataset.setDescription("");
-        dataset.setType(datasetSpec.getType());
-        dataset.setSpecification(new Gson().toJson(datasetSpec));
-        // NOTE: we ignore result of adding, since it is assumed that all validation has happened before calling
-        //       addApplication() and hence the call is successful
-        metaDataService.assertDataset(account, dataset);
+        updateInMetadataService(account, datasetSpec);
       }
 
       // streams
       for (StreamSpecification streamSpec: spec.getStreams().values()) {
-        Stream stream = new Stream(streamSpec.getName());
-        stream.setName(streamSpec.getName());
-        // NOTE: we ignore result of adding, since it is assumed that all validation has happened before calling
-        //       addApplication() and hence the call is successful
-        metaDataService.assertStream(account, stream);
+        updateInMetadataService(account, streamSpec);
       }
 
       // flows
-      for (FlowSpecification flowSpec : spec.getFlows().values()) {
-        Flow flow = new Flow(flowSpec.getName(), id.getId());
-        flow.setName(flowSpec.getName());
-
-        Set<String> streams = new HashSet<String>();
-        for (FlowletConnection con : flowSpec.getConnections()) {
-          if (FlowletConnection.Type.STREAM == con.getSourceType()) {
-            streams.add(con.getSourceName());
-          }
-        }
-        flow.setStreams(new ArrayList<String>(streams));
-
-        Set<String> datasets = new HashSet<String>();
-        for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-          datasets.addAll(flowlet.getDatasets());
-        }
-        flow.setDatasets(new ArrayList<String>(datasets));
-        metaDataService.createFlow(id.getAccountId(), flow);
-      }
+      updateFlowsInMetadataService(id, spec);
 
       // procedures
-      for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
-        Query query = new Query(procedureSpec.getName(), id.getId());
-        query.setName(procedureSpec.getName());
-        query.setServiceName(procedureSpec.getName());
-        // TODO: datasets are missing in ProcedureSpecification
-        query.setDatasets(new ArrayList<String>());
-        metaDataService.createQuery(account, query);
-      }
+      updateProceduresInMetadataService(id, spec, account);
+
     } catch(MetadataServiceException e) {
       throw Throwables.propagate(e);
     } catch(TException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private void updateInMetadataService(Id.Application id, ApplicationSpecification spec, Account account)
+    throws MetadataServiceException, TException {
+    Application application = new Application(id.getId());
+    application.setName(spec.getName());
+    application.setDescription(spec.getDescription());
+    Application existing = metaDataService.getApplication(account, application);
+    if (existing.isExists()) {
+      metaDataService.updateApplication(account, application);
+    } else {
+      metaDataService.createApplication(account, application);
+    }
+  }
+
+  private void updateProceduresInMetadataService(Id.Application id, ApplicationSpecification spec, Account account)
+    throws MetadataServiceException, TException {
+    Map<String, Query> toStore = new HashMap<String, Query>();
+    for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
+      Query query = new Query(procedureSpec.getName(), id.getId());
+      query.setName(procedureSpec.getName());
+      query.setServiceName(procedureSpec.getName());
+      // TODO: datasets are missing in ProcedureSpecification
+      query.setDatasets(new ArrayList<String>());
+
+      toStore.put(query.getId(), query);
+    }
+
+    List<Query> toUpdate = new ArrayList<Query>();
+    List<Query> toDelete = new ArrayList<Query>();
+
+    List<Query> existingQueries = metaDataService.getQueries(account);
+    for (Query existing : existingQueries) {
+      if (id.getId().equals(existing.getApplication())) {
+        String queryId = existing.getId();
+        if (toStore.containsKey(queryId)) {
+          toUpdate.add(toStore.get(queryId));
+          toStore.remove(queryId);
+        } else {
+          toDelete.add(existing);
+        }
+      }
+    }
+    for (Query query : toDelete) {
+      metaDataService.deleteQuery(account, query);
+    }
+    for (Query query : toUpdate) {
+      metaDataService.updateQuery(account, query);
+    }
+    // all flows that remain in toStore are going to be created
+    for (Query query : toStore.values()) {
+      metaDataService.createQuery(account, query);
+    }
+  }
+
+  private void updateFlowsInMetadataService(Id.Application id, ApplicationSpecification spec)
+    throws MetadataServiceException, TException {
+    Map<String, Flow> toStore = new HashMap<String, Flow>();
+    for (FlowSpecification flowSpec : spec.getFlows().values()) {
+      Flow flow = new Flow(flowSpec.getName(), id.getId());
+      flow.setName(flowSpec.getName());
+
+      Set<String> streams = new HashSet<String>();
+      for (FlowletConnection con : flowSpec.getConnections()) {
+        if (FlowletConnection.Type.STREAM == con.getSourceType()) {
+          streams.add(con.getSourceName());
+        }
+      }
+      flow.setStreams(new ArrayList<String>(streams));
+
+      Set<String> datasets = new HashSet<String>();
+      for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+        datasets.addAll(flowlet.getDatasets());
+      }
+      flow.setDatasets(new ArrayList<String>(datasets));
+      toStore.put(flow.getId(), flow);
+    }
+
+    List<Flow> toUpdate = new ArrayList<Flow>();
+    List<Flow> toDelete = new ArrayList<Flow>();
+
+    List<Flow> existingFlows = metaDataService.getFlows(id.getAccountId());
+    for (Flow existing : existingFlows) {
+      if (id.getId().equals(existing.getApplication())) {
+        String flowId = existing.getId();
+        if (toStore.containsKey(flowId)) {
+          toUpdate.add(toStore.get(flowId));
+          toStore.remove(flowId);
+        } else {
+          toDelete.add(existing);
+        }
+      }
+    }
+    for (Flow flow : toDelete) {
+      metaDataService.deleteFlow(id.getAccountId(), id.getId(), flow.getId());
+    }
+    for (Flow flow : toUpdate) {
+      metaDataService.updateFlow(id.getAccountId(), flow);
+    }
+    // all flows that remain in toStore are going to be created
+    for (Flow flow : toStore.values()) {
+      metaDataService.createFlow(id.getAccountId(), flow);
+    }
+  }
+
+  private void updateInMetadataService(final Account account, final StreamSpecification streamSpec)
+    throws MetadataServiceException, TException {
+    Stream stream = new Stream(streamSpec.getName());
+    stream.setName(streamSpec.getName());
+    // NOTE: we ignore result of adding, since it is assumed that all validation has happened before calling
+    //       addApplication() and hence the call is successful
+    metaDataService.assertStream(account, stream);
+  }
+
+  private void updateInMetadataService(final Account account, final DataSetSpecification datasetSpec)
+    throws MetadataServiceException, TException {
+    Dataset dataset = new Dataset(datasetSpec.getName());
+    // no description in datasetSpec
+    dataset.setName(datasetSpec.getName());
+    dataset.setDescription("");
+    dataset.setType(datasetSpec.getType());
+    dataset.setSpecification(new Gson().toJson(datasetSpec));
+    // NOTE: we ignore result of adding, since it is assumed that all validation has happened before calling
+    //       addApplication() and hence the call is successful
+    metaDataService.assertDataset(account, dataset);
   }
 
   @Override
