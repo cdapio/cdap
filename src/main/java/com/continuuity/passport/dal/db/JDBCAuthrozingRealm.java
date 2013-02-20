@@ -110,6 +110,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         //WHERE CLAUSE
         DBUtils.VPCRole.USER_ID_COLUMN);
 
+
        ps = connection.prepareStatement(SQL);
        ps.setInt(1, accountId);
        rs = ps.executeQuery();

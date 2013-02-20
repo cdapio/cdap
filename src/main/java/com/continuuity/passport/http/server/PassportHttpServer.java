@@ -12,22 +12,29 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
+import org.mortbay.thread.QueuedThreadPool;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Jetty based Http Servers
+ */
 public class PassportHttpServer {
 
   private final int gracefulShutdownTime;
   private final int port;
+  private final int maxThreads;
 
   private final Map<String, String> configuration;
 
-  public PassportHttpServer(int port, Map<String, String> configuration, int gracefulShutdownTime) {
+  public PassportHttpServer(int port, Map<String, String> configuration,
+                            int maxThreads, int gracefulShutdownTime) {
     this.port = port;
     this.configuration = configuration;
+    this.maxThreads = maxThreads;
     this.gracefulShutdownTime = gracefulShutdownTime;
   }
 
@@ -44,6 +51,11 @@ public class PassportHttpServer {
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
       context.addServlet(DefaultServlet.class, "/");
       context.addFilter(GuiceFilter.class, "/*", 0);
+
+
+      QueuedThreadPool threadPool = new QueuedThreadPool();
+      threadPool.setMaxThreads(5);
+      server.setThreadPool(threadPool);
 
       //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -71,6 +83,7 @@ public class PassportHttpServer {
     System.out.println(jdbcType);
     int port = Integer.parseInt(conf.get("passport.http.server.port"));
     int gracefulShutdownTime = Integer.parseInt(conf.get("passport.http.graceful.shutdown.time"));
+    int maxThreads = Integer.parseInt(conf.get("passport.http.max.threads"));
 
     config.put("jdbcType", jdbcType);
     config.put("connectionString",connectionString);
@@ -80,7 +93,7 @@ public class PassportHttpServer {
     org.apache.shiro.mgt.SecurityManager securityManager = new DefaultSecurityManager(realm);
     SecurityUtils.setSecurityManager(securityManager);
 
-    PassportHttpServer server = new PassportHttpServer(port, config, gracefulShutdownTime);
+    PassportHttpServer server = new PassportHttpServer(port, config, maxThreads,gracefulShutdownTime);
     server.start();
 
 

@@ -31,5 +31,11 @@
         <description>Time before the service is down after issuing a shutdown signal</description>
     </property>
 
+    <property>
+        <name>passport.http.max.threads</name>
+        <value>100</value>
+        <description>Time before the service is down after issuing a shutdown signal</description>
+    </property>
+
 
 </configuration>

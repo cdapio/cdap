@@ -7,7 +7,8 @@ import com.continuuity.passport.core.meta.ComponentACL;
 import com.continuuity.passport.core.security.Credentials;
 
 /**
- *
+ * Authorize Components and ACLs
+ * This is not implemented yet for initial use case
  */
 public interface AuthorizerService {
 

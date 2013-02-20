@@ -12,16 +12,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * Handle Nonce operation for Session nonce
  */
 @Path("passport/v1/sso/")
 @Singleton
-public class NonceHandler {
+public class SessionNonceHandler {
 
   private final DataManagementService dataManagementService;
 
   @Inject
-  public NonceHandler(DataManagementService dataManagementService) {
+  public SessionNonceHandler(DataManagementService dataManagementService) {
     this.dataManagementService = dataManagementService;
   }
 
@@ -39,7 +39,7 @@ public class NonceHandler {
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
-    } catch (StaleNonceException e) {
+    } catch (RuntimeException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();

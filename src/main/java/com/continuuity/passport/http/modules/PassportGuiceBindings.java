@@ -9,8 +9,8 @@ import com.continuuity.passport.dal.db.AccountDBAccess;
 import com.continuuity.passport.dal.db.NonceDBAccess;
 import com.continuuity.passport.dal.db.VpcDBAccess;
 import com.continuuity.passport.http.handlers.AccountHandler;
-import com.continuuity.passport.http.handlers.ActivationHandler;
-import com.continuuity.passport.http.handlers.NonceHandler;
+import com.continuuity.passport.http.handlers.ActivationNonceHandler;
+import com.continuuity.passport.http.handlers.SessionNonceHandler;
 import com.continuuity.passport.http.handlers.VPCHandler;
 import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
@@ -23,13 +23,17 @@ import org.mortbay.jetty.servlet.DefaultServlet;
 import java.util.Map;
 
 /**
- *
+ * Guice bindings for passport services
+ * Glue together
+ * 1) Service to implementations
+ * 2) DAO to Implementations
+ * 3) ReST  Handlers
  */
-public class PassportJerseyServletModule extends JerseyServletModule {
+public class PassportGuiceBindings extends JerseyServletModule {
 
   private final Map<String, String> config;
 
-  public PassportJerseyServletModule(Map<String, String> config) {
+  public PassportGuiceBindings(Map<String, String> config) {
     this.config = config;
   }
 
@@ -49,8 +53,8 @@ public class PassportJerseyServletModule extends JerseyServletModule {
 
     //Bind ReST resources
     bind(AccountHandler.class);
-    bind(ActivationHandler.class);
-    bind(NonceHandler.class);
+    bind(ActivationNonceHandler.class);
+    bind(SessionNonceHandler.class);
     bind(VPCHandler.class);
 
     //Bind DataManagementService and AuthenticatorService to default implementations
