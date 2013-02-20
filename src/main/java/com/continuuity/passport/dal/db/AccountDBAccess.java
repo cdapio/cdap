@@ -18,7 +18,7 @@ import java.sql.*;
 import java.util.Map;
 
 /**
- * AccountDAO implementation that uses database as the persistence store
+ * AccountDAO implementation that uses mysql as the persistence store
  */
 
 
@@ -30,8 +30,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
 
   @Inject
+  /**
+   * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
+   */
   public void AccountDBAccess(@Named("passport.config") Map<String, String> config) {
-
 
     String connectionString = config.get("connectionString");
     String jdbcType = config.get("jdbcType");
@@ -100,7 +102,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       close(connection, ps, result);
     }
   }
-
 
   public boolean confirmRegistration(Account account, String password)
     throws ConfigurationException, RuntimeException {
@@ -486,10 +487,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
   }
 
+  //TODO: Implement this functionality
   private String generateSaltedHashedPassword(String password) {
-    //TODO: Add this
     return password;
-
   }
 
 }

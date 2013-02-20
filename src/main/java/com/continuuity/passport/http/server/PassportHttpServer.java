@@ -19,6 +19,9 @@ import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Jetty based Http Servers
+ */
 public class PassportHttpServer {
 
   private final int gracefulShutdownTime;

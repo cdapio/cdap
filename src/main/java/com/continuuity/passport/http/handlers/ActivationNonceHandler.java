@@ -13,16 +13,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * Defines end points for Account activation based nonce
  */
 @Path("/passport/v1")
 @Singleton
-public class ActivationHandler {
+public class ActivationNonceHandler {
 
   private final DataManagementService dataManagementService;
 
   @Inject
-  public ActivationHandler(DataManagementService dataManagementService) {
+  public ActivationNonceHandler(DataManagementService dataManagementService) {
     this.dataManagementService = dataManagementService;
   }
 
@@ -39,7 +39,7 @@ public class ActivationHandler {
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
-    } catch (StaleNonceException e) {
+    } catch (RuntimeException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();

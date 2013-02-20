@@ -6,7 +6,7 @@ import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.VPC;
-import com.continuuity.passport.core.security.UsernamePasswordApiKeyCredentials;
+import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
@@ -348,7 +348,7 @@ public class AccountHandler {
 
     try {
 
-      AuthenticationStatus status = authenticatorService.authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
+      AuthenticationStatus status = authenticatorService.authenticate(new UsernamePasswordApiKeyToken(emailId, password,
         StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?

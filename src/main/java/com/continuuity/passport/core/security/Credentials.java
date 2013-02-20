@@ -5,16 +5,7 @@ package com.continuuity.passport.core.security;
  * Designed to be used for userCredentials, dataSetCrendentials   etc
  */
 
-public abstract class Credentials {
+public interface Credentials {
 
-  private String type;
-
-  public String getClientType() {
-    return type;
-  }
-
-  public void setClientType(final String type) {
-    this.type = type;
-  }
 
 }

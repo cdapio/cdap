@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
  * Client to communicate to the passport service.
  */
 
-//TODO: Thread safety?
 public class PassportClient {
 
   public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
@@ -40,6 +39,7 @@ public class PassportClient {
   }
 
   public PassportClient() {
+    //Cache valid responses from Servers for 10 mins
     responseCache = CacheBuilder.newBuilder()
       .maximumSize(10000)
       .expireAfterAccess(10, TimeUnit.MINUTES)

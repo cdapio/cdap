@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 /**
- *
+ * Defines End point for vpc
  */
 
 @Path("passport/v1/vpc")

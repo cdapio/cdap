@@ -10,7 +10,7 @@ import java.util.Map;
 
 
 /**
- *
+ *  Guice module to glue in Jetty server and bindings
  */
 public class PassportGuiceServletContextListener extends GuiceServletContextListener {
 
@@ -34,7 +34,7 @@ public class PassportGuiceServletContextListener extends GuiceServletContextList
    */
   @Override
   protected Injector getInjector() {
-    return Guice.createInjector(new PassportJerseyServletModule(config));
+    return Guice.createInjector(new PassportGuiceBindings(config));
     //TODO: Add shiro module
   }
 }

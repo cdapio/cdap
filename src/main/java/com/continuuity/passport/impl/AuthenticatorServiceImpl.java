@@ -3,7 +3,6 @@ package com.continuuity.passport.impl;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.security.Credentials;
-import com.continuuity.passport.core.security.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
@@ -15,7 +14,7 @@ import org.apache.shiro.subject.Subject;
 import java.util.Map;
 
 /**
- *
+ *  Implementation of Authentication Service
  */
 
 public class AuthenticatorServiceImpl implements AuthenticatorService {
@@ -39,15 +38,11 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
   @Override
   public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
 
-    UsernamePasswordApiKeyCredentials userCredentials = (UsernamePasswordApiKeyCredentials) credentials;
-
-    UsernamePasswordApiKeyToken token = new UsernamePasswordApiKeyToken(userCredentials.getUserName(),
-      userCredentials.getPassword(),
-      userCredentials.getApiKey());
+    UsernamePasswordApiKeyToken userCredentials = (UsernamePasswordApiKeyToken) credentials;
 
     try {
       Subject currentUser = SecurityUtils.getSubject();
-      currentUser.login(token);
+      currentUser.login(userCredentials);
       Account account = (Account) currentUser.getPrincipal();
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED, account.toString());
     } catch (Exception e) {

@@ -1,7 +1,7 @@
 package com.continuuity.passport.core.meta;
 
 /**
- *
+ *  Billing info
  */
 public class BillingInfo {
 

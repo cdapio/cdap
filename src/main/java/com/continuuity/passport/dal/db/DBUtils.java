@@ -1,10 +1,13 @@
 package com.continuuity.passport.dal.db;
 
 /**
- *
+ * Stores all DB tables and columns in a central place so that can be used everywhere.
  */
 public class DBUtils {
 
+  /**
+   * Account Table
+   */
   public static class AccountTable {
 
     public static final String TABLE_NAME = "account";
@@ -22,6 +25,10 @@ public class DBUtils {
     public static final int ACCOUNT_CONFIRMED = 1;
   }
 
+  /**
+   * Account payment table
+   * TODO: This is not being used now
+   */
   public static class AccountPayment {
 
     public static final String TABLE_NAME = "account_payment";
@@ -32,7 +39,10 @@ public class DBUtils {
     public static final String CREDIT_CARD_EXPIRY_COLUMN = "credit_card_expiration";
 
   }
-
+  /**
+   * Defines RoleType for account
+   * TODO: This is not being used now
+   */
   public static class AccountRoleType {
     public static final String TABLE_NAME = "account_role";
     public static final String ACCOUNT_ID_COLUMN = "account_id";
@@ -40,6 +50,9 @@ public class DBUtils {
     public static final String PERMISSIONS_COLUMN = "permissions";
   }
 
+  /**
+   * Defines VPC
+   */
   public static class VPC {
     public static final String TABLE_NAME = "vpc_account";
     public static final String VPC_ID_COLUMN = "id";
@@ -49,6 +62,10 @@ public class DBUtils {
     public static final String VPC_CREATED_AT = "vpc_created_at";
   }
 
+  /**
+   * Roles for VPC
+   * TODO: Note: This is not being used now
+   */
   public static class VPCRole {
     public static final String TABLE_NAME = "vpc_role";
     public static final String VPC_ID_COLUMN = "vpc_id";
@@ -58,6 +75,9 @@ public class DBUtils {
     public static final String ROLE_OVERRIDES_COLUMN = "role_overrides";
   }
 
+  /**
+   * Store nonce values for session and activation
+   */
   public static class Nonce {
     public static final String TABLE_NAME = "nonce";
     public static final String NONCE_ID_COLUMN = "nonce_id";
