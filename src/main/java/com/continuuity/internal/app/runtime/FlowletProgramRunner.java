@@ -83,8 +83,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   public Controller run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
-
       String flowletName = options.getName();
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
