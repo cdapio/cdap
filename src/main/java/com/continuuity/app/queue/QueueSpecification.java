@@ -7,7 +7,6 @@ package com.continuuity.app.queue;
 import com.continuuity.api.io.Schema;
 
 import java.net.URI;
-import java.util.Set;
 
 /**
  * This interface defines the specification for associated with either

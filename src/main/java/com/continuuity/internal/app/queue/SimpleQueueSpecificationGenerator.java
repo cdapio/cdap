@@ -10,7 +10,7 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.UnsupportedTypeException;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.SchemaFinder;

@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.filesystem.Location;
 
 /**

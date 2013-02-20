@@ -6,11 +6,10 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
-import com.continuuity.app.program.Id;
-import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -31,7 +30,7 @@ import java.io.StringWriter;
  *
  * @see SandboxConfigurator
  */
-public class InMemoryConfigurator implements Configurator {
+public final class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */

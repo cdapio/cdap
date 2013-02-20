@@ -17,7 +17,7 @@ import java.net.URI;
 /**
  * A concrete implementation of {@link Location} for the Local filesystem.
  */
-final class LocalLocation implements Location {
+public final class LocalLocation implements Location {
   private final File file;
 
   /**

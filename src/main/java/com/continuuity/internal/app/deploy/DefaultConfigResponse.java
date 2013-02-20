@@ -14,7 +14,7 @@ import java.io.Reader;
  * Immutable class that hold exit code and stream of input.
  * </p>
  */
-public class DefaultConfigResponse implements ConfigResponse {
+public final class DefaultConfigResponse implements ConfigResponse {
   private final int exit;
   private final InputSupplier<? extends Reader> input;
 

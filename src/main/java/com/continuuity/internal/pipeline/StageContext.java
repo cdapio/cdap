@@ -4,14 +4,13 @@
 
 package com.continuuity.internal.pipeline;
 
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Context;
 
 /**
  * Concrete implementation of {@link Context} for moving data from downstream
  * and to upstream stages.
  */
-final class StageContext implements Context {
+public final class StageContext implements Context {
   private Object upStream;
   private Object downStream;
 

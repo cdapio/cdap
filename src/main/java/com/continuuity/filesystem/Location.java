@@ -80,7 +80,7 @@ public interface Location {
    * This method should therefore be used with care.
    * </p>
    */
-  public void deleteOnExit() throws IOException;
+  void deleteOnExit() throws IOException;
 
   /**
    * Creates the directory named by this abstract pathname, including any necessary
@@ -88,5 +88,5 @@ public interface Location {
    *
    * @return true if and only if the renaming succeeded; false otherwise
    */
-  public boolean mkdirs() throws IOException;
+  boolean mkdirs() throws IOException;
 }

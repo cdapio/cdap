@@ -3,7 +3,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -18,21 +18,16 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.OutputSupplier;
 import com.google.common.reflect.TypeToken;
-import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 /**
  *
@@ -86,7 +81,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     try {
       // Make sure we have a directory to store the original artifact.
-      Location outputDir = locationFactory.create(configuration.get("app.output.dir"));
+      Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
       Location newOutputDir = outputDir
         .append(o.getApplicationId().getAccountId())
         .append(applicationName);

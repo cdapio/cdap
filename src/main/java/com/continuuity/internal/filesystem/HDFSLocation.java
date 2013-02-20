@@ -16,7 +16,7 @@ import java.net.URI;
 /**
  * A concrete implementation of {@link Location} for the HDFS filesystem.
  */
-final class HDFSLocation implements Location {
+public final class HDFSLocation implements Location {
   private final FileSystem fs;
   private final Path path;
 

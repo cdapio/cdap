@@ -4,25 +4,20 @@
 
 package com.continuuity.app.program;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.filesystem.Location;
-import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
  * Represents the archive that is uploaded by the user using the dpeloyment
  * service.
  */
-public class Archive {
+public final class Archive {
   /**
    * Class loader for holding
    */

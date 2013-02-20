@@ -28,7 +28,7 @@ import java.io.Reader;
  *
  * @see InMemoryConfigurator
  */
-public class SandboxConfigurator implements Configurator {
+public final class SandboxConfigurator implements Configurator {
   /**
    * Prefix of temporary file.
    */

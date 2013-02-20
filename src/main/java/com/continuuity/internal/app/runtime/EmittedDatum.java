@@ -11,7 +11,6 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 
 /**

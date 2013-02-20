@@ -1,19 +1,18 @@
 package com.continuuity.internal.pipeline;
 
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 
 /**
  * A factory for providing synchronous pipeline.
  */
-public class SynchronousPipelineFactory implements PipelineFactory {
+public class SynchronousPipelineFactory<T> implements PipelineFactory<T> {
 
   /**
    * @return A synchronous pipeline.
    */
   @Override
-  public Pipeline getPipeline() {
+  public Pipeline<T> getPipeline() {
     return new SynchronousPipeline();
   }
 }

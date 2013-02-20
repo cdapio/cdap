@@ -5,17 +5,16 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.ToyApp;
-import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.pipeline.StageContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,6 +33,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
+    pgmStage.process(new StageContext(null));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationSpecLocation(Id.Application.DEFAULT(), newSpec, appArchive));
     Assert.assertTrue(true);
   }

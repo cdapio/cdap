@@ -6,7 +6,7 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.io.Schema;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
@@ -71,21 +71,16 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
         if(outputName.equals(inputName)) {
           Schema s = SchemaFinder.findSchema(entryOutput.getValue(), entryInput.getValue());
           HOLDER.add(new SchemaURIHolder(s, queueURI(flow, source.getFlowletSpec().getName(), outputName)));
-        }
-
-        // If not found there, we do a small optimization where we check directly if
-        // the output matches the schema of ANY_INPUT schema. If it doesn't then we
-        // have an issue else we are good.
-        if(input.containsKey(FlowletDefinition.ANY_INPUT)) {
+        } else if(input.containsKey(FlowletDefinition.ANY_INPUT)) {
           foundSchema = SchemaFinder.findSchema(entryOutput.getValue(), input.get(FlowletDefinition.ANY_INPUT));
           foundOutputName = outputName;
+          HOLDER.add(new SchemaURIHolder(foundSchema, queueURI(flow, source.getFlowletSpec().getName(), outputName)));
         }
       }
     }
-
-    if(foundSchema != null){
-      HOLDER.add(new SchemaURIHolder(foundSchema, queueURI(flow, source.getFlowletSpec().getName(), foundOutputName)));
-    }
+//    if(foundSchema != null){
+//      HOLDER.add(new SchemaURIHolder(foundSchema, queueURI(flow, source.getFlowletSpec().getName(), foundOutputName)));
+//    }
     return HOLDER.build();
   }
 
