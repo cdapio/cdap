@@ -49,23 +49,25 @@ public class ToyApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("ToyFlow")
         .setDescription("Complex Toy Flow")
-        .withFlowlets().add(new A()).apply()
-        .add(new B()).apply()
-        .add(new C()).apply()
-        .add(new D()).apply()
-        .add(new E()).apply()
-        .add(new F()).apply()
-        .add(new G()).apply()
-        .connect().from(new Stream("X")).to(new A())
-        .from(new Stream("Y")).to(new B())
-        .from(new A()).to(new C())
-        .from(new B()).to(new E())
-        .from(new A()).to(new E())
-        .from(new C()).to(new D())
-        .from(new C()).to(new F())
-        .from(new D()).to(new G())
-        .from(new F()).to(new G())
-        .from(new E()).to(new G())
+        .withFlowlets()
+          .add(new A())
+          .add(new B())
+          .add(new C())
+          .add(new D())
+          .add(new E())
+          .add(new F())
+          .add(new G())
+        .connect()
+          .fromStream("X").to("A")
+          .fromStream("Y").to("B")
+          .from("A").to("C")
+          .from("B").to("E")
+          .from("A").to("E")
+          .from("C").to("D")
+          .from("C").to("F")
+          .from("D").to("G")
+          .from("F").to("G")
+          .from("E").to("G")
         .build();
     }
   }
@@ -88,7 +90,7 @@ public class ToyApp implements Application {
     }
 
     public void process(StreamEvent event) {
-      KeyValueTable table = flowletContext.getDataSet("data2");
+      KeyValueTable table = getContext().getDataSet("data2");
       out.emit("out");
       out1.emit(2.3f);
     }
