@@ -16,7 +16,6 @@ public abstract class PassportHandler  {
     requestsReceived.inc();
   }
 
-
   public void requestSuccess() {
     requestsSuccess.inc();
   }
