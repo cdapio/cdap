@@ -51,7 +51,7 @@ public class IndexedTable extends DataSet {
 
   /** runtime constructor from data set spec */
   @SuppressWarnings("unused")
-  public IndexedTable(DataSetSpecification spec) throws OperationException {
+  public IndexedTable(DataSetSpecification spec) {
     super(spec);
     this.init(this.getName(), spec.getProperty(indexColumnProperty).getBytes());
     this.table = new Table(spec.getSpecificationFor(this.tableName));
