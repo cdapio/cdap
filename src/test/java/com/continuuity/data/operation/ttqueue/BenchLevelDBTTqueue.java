@@ -24,12 +24,12 @@ public class BenchLevelDBTTqueue extends BenchTTQueue {
     // TODO: See if any leveldb knobs are worth configuring
   }
 
-  // Configuration for hypersql bench
+  // Configuration for leveldb bench
   private static final BenchConfig config = new BenchConfig();
   static {
-    config.numJustEnqueues = 4000;
+    config.numJustEnqueues = 100;
     config.queueEntrySize = 10;
-    config.numEnqueuesThenSyncDequeueAckFinalize = 4000;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 100;
   }
 
   @Override

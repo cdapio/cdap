@@ -36,7 +36,7 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 
 /**
- * Implementation of an OVCTable over a HyperSQL table.
+ * Implementation of an OVCTable over a LevelDB Database.
  */
 public class LevelDBOVCTable
 implements OrderedVersionedColumnarTable {

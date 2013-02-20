@@ -14,7 +14,7 @@ public class BenchHyperSQLTTqueue extends BenchTTQueue {
 
   private static final Properties hsqlProperties = new Properties();
 
-//  private static final String hsql = "jdbc:hsqldb:file:/tmp/db/benchdb";
+//  private static final String hsql = "jdbc:hsqldb:file:/db/benchdb";
   private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
 
   private static final DataFabricLocalModule module =
