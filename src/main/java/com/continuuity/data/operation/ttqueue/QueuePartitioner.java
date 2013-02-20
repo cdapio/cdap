@@ -29,8 +29,10 @@ public interface QueuePartitioner {
   public boolean shouldEmit(QueueConsumer consumer, long entryId);
 
   public static enum PartitionerType {
-    HASH_ON_VALUE, FIFO, ROUND_ROBIN;
+    HASH_ON_VALUE, HASH, FIFO, ROUND_ROBIN;
 
+    private static final QueuePartitioner PARTITIONER_HASH_ON_VALUE =
+      new HashOnValuePartitioner();
     private static final QueuePartitioner PARTITIONER_HASH =
       new HashPartitioner();
     private static final QueuePartitioner PARTITIONER_FIFO =
@@ -40,7 +42,8 @@ public interface QueuePartitioner {
 
     public QueuePartitioner getPartitioner() {
       switch (this) {
-        case HASH_ON_VALUE: return PARTITIONER_HASH;
+        case HASH_ON_VALUE: return PARTITIONER_HASH_ON_VALUE;
+        case HASH: return PARTITIONER_HASH;
         case ROUND_ROBIN: return PARTITIONER_ROUND_ROBIN;
         case FIFO: return PARTITIONER_FIFO;
         default: return PARTITIONER_FIFO;
@@ -51,8 +54,42 @@ public interface QueuePartitioner {
       switch (this) {
         case FIFO: return HBQPartitionerType.RANDOM; // TODO whatever we do with HBQ, rename this too
         case HASH_ON_VALUE: return HBQPartitionerType.HASH_ON_VALUE;
+        case HASH: return HBQPartitionerType.HASH_ON_VALUE; // TODO: Not 100% the same !!!
         default: return HBQPartitionerType.RANDOM;
       }
+    }
+  }
+
+  public static class HashOnValuePartitioner implements QueuePartitioner {
+    @Override
+    public boolean isDisjoint() {
+      return true;
+    }
+
+    @Override
+    public boolean usesHeaderData() {
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(QueueConsumer consumer, long entryId) {
+      return false;
+    }
+
+    @Override
+    public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
+      int hash = Bytes.hashCode(value);
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+    }
+
+    @Override
+    public boolean shouldEmit(QueueConsumer consumer, long entryId, int hash) {
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this).toString();
     }
   }
 
