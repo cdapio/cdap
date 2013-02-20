@@ -191,7 +191,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
     PreparedStatement ps = null;
     Connection connection = null;
-    //TODO: accountId to int
     if (this.poolManager == null) {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
