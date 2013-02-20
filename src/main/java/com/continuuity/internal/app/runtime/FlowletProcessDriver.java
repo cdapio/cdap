@@ -9,6 +9,8 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.common.LocalLogWriter;
+import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;

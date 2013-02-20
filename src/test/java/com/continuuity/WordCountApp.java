@@ -23,6 +23,9 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -34,6 +37,9 @@ import java.util.Map;
  * many places.
  */
 public class WordCountApp implements Application {
+
+  private static final Logger LOG = LoggerFactory.getLogger(WordCountApp.class);
+
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
    * {@link com.continuuity.api.ApplicationSpecification}
@@ -144,6 +150,7 @@ public class WordCountApp implements Application {
       }
 
       this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
+      LOG.info(token + " : " + Longs.fromByteArray(counters.read(token.getBytes(Charsets.UTF_8))));
     }
   }
 

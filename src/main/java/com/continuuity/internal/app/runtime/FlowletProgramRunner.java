@@ -34,7 +34,9 @@ import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.Controller;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -74,9 +76,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SchemaGenerator schemaGenerator;
 
   @Inject
-  public FlowletProgramRunner(OperationExecutor opex, SchemaGenerator schemaGenerator) {
+  public FlowletProgramRunner(OperationExecutor opex, SchemaGenerator schemaGenerator, LogWriter logWriter) {
     this.opex = opex;
     this.schemaGenerator = schemaGenerator;
+    CAppender.logWriter = logWriter;
   }
 
   @Override
