@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation for Datamanagement service
+ * Implementation for Data-management service
  */
 public class DataManagementServiceImpl implements DataManagementService {
 
