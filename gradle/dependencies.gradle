@@ -11,6 +11,7 @@ versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.netflixCuratorVersion = '1.1.18'
 versions.minaVersion = '2.0.4'
+versions.leveldbVersion = '1.5'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -101,5 +102,8 @@ libraries.kryo = "kryo:kryo:2.12"
 libraries.cglib_no_dep = "cglib:cglib-nodep:2.2.2"
 
 libraries.continuuity_eclipse_plugin  = "com.continuuity:continuuity-eclipse-plugin:1.0.0"
+
+// LevelDB
+libraries.leveldb = "org.fusesource.leveldbjni:leveldbjni-all:$versions.leveldbVersion"
 
 //--------------------------------------------------------------------------
