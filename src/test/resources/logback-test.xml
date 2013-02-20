@@ -8,70 +8,22 @@
 <!--                                                                         -->
 
 <configuration>
-
-    <!--
-      Disabling some chatty loggers.
-    -->
-    <logger name="org.apache.mina.core.filterchain" level="WARN"/>
-    <logger name="org.apache.mina.filter.codec" level="WARN"/>
-    <logger name="org.apache.zookeeper.server" level="ERROR"/>
-    <logger name="org.apache.zookeeper" level="ERROR"/>
-
-    <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
-
-        <file>logs/appfabric.log</file>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/appfabric.log.%i</FileNamePattern>
-        </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>50000KB</MaxFileSize>
-        </triggeringPolicy>
-    </appender>
-
-    <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/appfabric-debug.log</file>
-        <encoder>
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/appfabric-debug.log.%i</FileNamePattern>
-        </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>50000KB</MaxFileSize>
-        </triggeringPolicy>
-    </appender>
-
-    <appender name="Error" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
     </appender>
 
     <appender name="CLOG" class="com.continuuity.common.logging.logback.CAppender">              
         <layout>                      
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>       
+            <!-- Note: we don't insert new line in the pattern as this is done on higher level (in old back-end) -->
+            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m</pattern>       
         </layout>
     </appender>
 
     <root level="DEBUG">
         <appender-ref ref="CLOG"/>
-        <appender-ref ref="Rolling"/>
-        <appender-ref ref="Debug"/>
-        <appender-ref ref="Error"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 
 </configuration>
