@@ -1,4 +1,6 @@
-package com.continuuity.passport.core.meta;
+package com.continuuity.passport.core.security;
+
+import com.continuuity.passport.core.security.Credentials;
 
 /**
  *

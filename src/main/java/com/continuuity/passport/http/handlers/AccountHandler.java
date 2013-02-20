@@ -5,7 +5,7 @@ import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
-import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
+import com.continuuity.passport.core.security.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;

@@ -1,4 +1,4 @@
-package com.continuuity.passport.core.meta;
+package com.continuuity.passport.core.security;
 
 /*
  * Abstract class that defines Credentials that qualify an {@code Entity}
