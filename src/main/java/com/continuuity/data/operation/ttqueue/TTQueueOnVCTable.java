@@ -104,7 +104,7 @@ public class TTQueueOnVCTable implements TTQueue {
     try {
       data = QueueEntrySerializer.serialize(entry);
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException");
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException", e);
     }
 
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
@@ -520,16 +520,20 @@ public class TTQueueOnVCTable implements TTQueue {
       if (TRACE) log("Fell through, entry is available!");
 
       // Get the data and check the partitioner
-      OperationResult<byte[]> combinedHeaderPlusDataResult = this.table.get(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
-      assert(!combinedHeaderPlusDataResult.isEmpty());
+      OperationResult<byte[]> headerPlusData = this.table.get(shardRow,
+                                                              makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
+                                                              dirty.getFirst());
+      assert(!headerPlusData.isEmpty());
       try {
-        QueueEntry entry=QueueEntrySerializer.deserialize(combinedHeaderPlusDataResult.getValue());
+        QueueEntry entry=QueueEntrySerializer.deserialize(headerPlusData.getValue());
         byte[] data=entry.getData();
-        if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer, entryPointer.getEntryId(), data)) {
+        QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+
+        if (!partitioner.shouldEmit(consumer, entryPointer.getEntryId(), data)) {
           // Partitioner says skip, flag as available, move to next entry in shard
+
           if (TRACE) log("Partitioner rejected this entry, skip");
-          entryPointer = new EntryPointer(
-            entryPointer.getEntryId() + 1, entryPointer.getShardId());
+          entryPointer = new EntryPointer(entryPointer.getEntryId() + 1, entryPointer.getShardId());
           continue;
         }
 
@@ -540,7 +544,6 @@ public class TTQueueOnVCTable implements TTQueue {
           this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
                                     entryGroupMetaData, newEntryGroupMeta.getBytes(),
                                     dirty.getFirst(), dirty.getSecond());
-
           // We own it!  Return it.
           this.dequeueReturns.incrementAndGet();
           if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);

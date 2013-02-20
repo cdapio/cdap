@@ -53,13 +53,14 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
    * @deprecated
   */
   public byte[] getData() {
-    return this.entry.getData();
+    return this.entry == null ? null : this.entry.getData();
   }
 
   /**
    * @deprecated
    */
   public void setData(byte[] data) {
+    assert(this.entry!=null);
     this.entry.setData(data);
   }
 

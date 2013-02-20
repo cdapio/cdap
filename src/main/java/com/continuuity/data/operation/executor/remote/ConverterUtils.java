@@ -396,23 +396,6 @@ public class ConverterUtils {
         tReadColumnRange.getStopColumn(),
         tReadColumnRange.getLimit());
   }
-//  /** wrap a queue entry */
-//  TQueueEntry wrap(QueueEntry entry) {
-//    return new TQueueEntry(
-//      wrap(entry.getData()),
-//      wrap(entry.getHeader())
-//    );
-//  }
-//
-//  /** unwrap a queue entry */
-//  QueueEntry unwrap(TQueueEntry entry) {
-//    return new QueueEntry(
-//      entry.getHeader(),
-//      entry.getData()
-//    );
-//  }
-  /** wrap an EnqueuePayload operation */
-
 
   QueueEntry unwrap(TQueueEntry entry) {
     return new QueueEntryImpl(entry.getHeader(), entry.getData());
@@ -420,7 +403,7 @@ public class ConverterUtils {
 
   TQueueEntry wrap(QueueEntry entry) {
     TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
-    tQueueEntry.setHeader(entry.getPartioningMap());
+    tQueueEntry.setHeader(entry.getPartitioningMap());
     return tQueueEntry;
   }
 

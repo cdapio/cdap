@@ -1,16 +1,14 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Interface used to determine whether a queue entry should be returned to a
  * given consumer.
  */
 public interface QueuePartitioner {
-
-
 
   public boolean isDisjoint();
   public boolean usesHeaderData();

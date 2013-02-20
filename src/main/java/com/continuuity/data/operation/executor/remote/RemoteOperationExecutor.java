@@ -272,7 +272,7 @@ public class RemoteOperationExecutor
   @Override
   public Map<byte[], Long> increment(OperationContext context,
                                      Transaction transaction,
-                                                      Increment increment)
+                                     Increment increment)
     throws OperationException {
     // TODO implement this properly
     execute(context, transaction, Collections.singletonList((WriteOperation)increment));

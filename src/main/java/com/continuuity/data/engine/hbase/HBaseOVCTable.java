@@ -536,7 +536,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Increment increment = new Increment(row);
       increment.addColumn(this.family, column, amount);
       Result result = this.readTable.increment(increment);
-      if (result.isEmpty()) return 0L;
       return Bytes.toLong(result.value());
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -625,8 +624,11 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       if (equalValues(latestVisibleKV, expectedValue)) {
         byte[] newPrependedValue;
         //if (expectedValue!=null) expectedPrependedValue=prependWithTypePrefix(DATA, expectedValue);
-        if (newValue == null) newPrependedValue=DELETE_ALL_VALUE;
-        else newPrependedValue=prependWithTypePrefix(DATA, newValue);
+        if (newValue == null) {
+          newPrependedValue=DELETE_ALL_VALUE;
+        } else {
+          newPrependedValue=prependWithTypePrefix(DATA, newValue);
+        }
         if (this.readTable.checkAndPut(row, this.family, column, expectedPrependedValue, readPointer.getMaximum(),
                                    new Put(row).add(this.family, column, writeVersion, newPrependedValue))) {
           return;

@@ -69,7 +69,8 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
  * See https://github.com/yahoo/omid/ for more information on the Omid design.
  */
 @Singleton
-public class OmidTransactionalOperationExecutor implements TransactionalOperationExecutor {
+public class OmidTransactionalOperationExecutor
+  implements TransactionalOperationExecutor {
 
   private static final Logger Log
     = LoggerFactory.getLogger(OmidTransactionalOperationExecutor.class);
@@ -479,7 +480,6 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
   // Administrative calls
 
-
   @Override
   public void execute(OperationContext context,
                       ClearFabric clearFabric) throws OperationException {
@@ -508,7 +508,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
   @Override
   public void execute(OperationContext context, OpenTable openTable)
-      throws OperationException {
+    throws OperationException {
     initialize();
     findRandomTable(context, openTable.getTableName());
   }
@@ -517,7 +517,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
 
   @Override
   public void commit(OperationContext context, List<WriteOperation> writes)
-      throws OperationException {
+    throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
     long begin = begin();
@@ -680,7 +680,7 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
   @Override
   public Map<byte[], Long> increment(OperationContext context,
                                      Transaction transaction,
-                                                      Increment increment) throws OperationException {
+                                     Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
     if (transaction == null) {
@@ -888,7 +888,6 @@ public class OmidTransactionalOperationExecutor implements TransactionalOperatio
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    //TODO: need to store header version
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
                                                                    transaction.getTransactionId());
     end("QueueEnqueue", begin);
