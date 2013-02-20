@@ -25,7 +25,7 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
 
   @Inject
   public AuthenticatorServiceImpl(@Named("passport.config") Map<String, String> config) {
-       this.configuration = config;
+    this.configuration = config;
   }
 
 
@@ -53,14 +53,9 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
     }
     catch (Exception e){
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
-                                      "Authentication Failed. "+e.getMessage());
+        "Authentication Failed. "+e.getMessage());
 
     }
 
-  }
-
-  @Override
-  public void configure(Map<String, String> configurations) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 }

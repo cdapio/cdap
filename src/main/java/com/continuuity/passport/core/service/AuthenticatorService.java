@@ -22,6 +22,4 @@ public interface AuthenticatorService {
    */
   AuthenticationStatus authenticate(Credentials credentials) throws RetryException;
 
-  public void configure (Map<String,String> configurations);
-
 }
