@@ -407,7 +407,7 @@ public class RestHandler extends NettyRestHandler {
             helper.finish(NoData);
             return;
           }
-          // try to deserialize into an event (tuple)
+          // try to deserialize into an event
           Map<String, String> headers;
           byte[] body;
           try {
