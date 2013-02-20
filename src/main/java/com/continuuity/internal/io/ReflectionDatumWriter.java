@@ -4,6 +4,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.common.io.Encoder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -65,11 +67,7 @@ public final class ReflectionDatumWriter {
         encoder.writeString(object.toString());
         break;
       case BYTES:
-        if(object instanceof ByteBuffer) {
-          encoder.writeBytes((ByteBuffer) object);
-        } else {
-          encoder.writeBytes((byte[]) object);
-        }
+        writeBytes(object, encoder);
         break;
       case ENUM:
         writeEnum(object.toString(), encoder, objSchema);
@@ -85,6 +83,19 @@ public final class ReflectionDatumWriter {
     }
   }
 
+  private void writeBytes(Object object, Encoder encoder) throws IOException {
+    if(object instanceof ByteBuffer) {
+      encoder.writeBytes((ByteBuffer) object);
+    } else if (object instanceof UUID) {
+      UUID uuid = (UUID)object;
+      ByteBuffer buf = ByteBuffer.allocate(Longs.BYTES * 2);
+      buf.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+      encoder.writeBytes((ByteBuffer)buf.flip());
+    } else {
+      encoder.writeBytes((byte[]) object);
+    }
+  }
+
   private void writeEnum(String value, Encoder encoder, Schema schema) throws IOException {
     int idx = schema.getEnumIndex(value);
     if(idx < 0) {
@@ -95,30 +106,38 @@ public final class ReflectionDatumWriter {
 
   private void writeArray(Object array, Encoder encoder,
                           Schema componentSchema, Set<Object> seenRefs) throws IOException {
+    int size = 0;
     if(array instanceof Collection) {
       Collection col = (Collection) array;
       encoder.writeInt(col.size());
       for(Object obj : col) {
         write(obj, encoder, componentSchema, seenRefs);
       }
+      size = col.size();
     } else {
-      int len = Array.getLength(array);
-      encoder.writeInt(len);
-      for(int i = 0; i < len; i++) {
+      size = Array.getLength(array);
+      encoder.writeInt(size);
+      for(int i = 0; i < size; i++) {
         write(Array.get(array, i), encoder, componentSchema, seenRefs);
       }
     }
-    encoder.writeInt(0);
+    if (size > 0) {
+      encoder.writeInt(0);
+    }
   }
 
   private void writeMap(Object map, Encoder encoder, Map.Entry<Schema,
                                                                 Schema> mapSchema,
                         Set<Object> seenRefs) throws IOException {
     Map<?, ?> objMap = (Map<?, ?>) map;
-    encoder.writeInt(objMap.size());
+    int size = objMap.size();
+    encoder.writeInt(size);
     for(Map.Entry<?, ?> entry : objMap.entrySet()) {
       write(entry.getKey(), encoder, mapSchema.getKey(), seenRefs);
       write(entry.getValue(), encoder, mapSchema.getValue(), seenRefs);
+    }
+    if (size > 0) {
+      encoder.writeInt(0);
     }
   }
 

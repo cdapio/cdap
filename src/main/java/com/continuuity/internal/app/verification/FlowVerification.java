@@ -7,7 +7,9 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.error.Err;
+import com.continuuity.internal.app.SchemaFinder;
 
 import java.util.Map;
 import java.util.Set;
@@ -80,13 +82,13 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       String target = connection.getTargetName();
 
       // Let's start with a simple case, when the type of source is FLOWLET
-      if(connection.getSourceType() == FlowletConnection.SourceType.FLOWLET) {
-        VerifyResult result = VerifyFlowletConnections(flowlets.get(source), flowlets.get(target));
+      if(connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        VerifyResult result = connectionVerification(flowlets.get(source), flowlets.get(target));
         // If validation have failed, then we return the status of failure and not proceed further.
         if(result.getStatus() != VerifyResult.Status.SUCCESS) {
           return result;
         }
-      } else if(connection.getSourceType() == FlowletConnection.SourceType.STREAM) {
+      } else if(connection.getSourceType() == FlowletConnection.Type.STREAM) {
         // We know that output type is a stream, but there should be a input that can handle this.
       }
     }
@@ -112,81 +114,44 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    * @param target flowlet definition
    * @return An instance of {@link VerifyResult}
    */
-  private VerifyResult VerifyFlowletConnections(FlowletDefinition source, FlowletDefinition target) {
+  private VerifyResult connectionVerification(FlowletDefinition source, FlowletDefinition target) {
     Map<String, Set<Schema>> output = source.getOutputs();
     Map<String, Set<Schema>> input = target.getInputs();
 
-    // We iterate through the outputs of a source flowlet.
-    for(Map.Entry<String, Set<Schema>> entrySource : output.entrySet()) {
-      String outputName = entrySource.getKey();
-      Set<Schema> outputSchema = entrySource.getValue();
+    boolean found = false;
+    for(Map.Entry<String, Set<Schema>> entryOutput : output.entrySet()) {
+      String outputName = entryOutput.getKey();
 
-      // Check if input connection has same as output connection.
-      if(!input.containsKey(outputName)) {
-        // Now, we input has defined ANY_INPUT.
-        if(!input.containsKey(FlowletDefinition.ANY_INPUT)) {
-          return VerifyResult.FAILURE(
-                                       Err.Flow.NO_INPUT_FOR_OUTPUT, target.getFlowletSpec().getName(),
-                                       source.getFlowletSpec().getName()
-          );
+      // Check also caught in the configure during creation phase.
+      // We restrict number of schema's an output can have.
+      if(entryOutput.getValue().size() > 1) {
+        return VerifyResult.FAILURE(Err.Flow.MORE_OUTPUT_NOT_ALLOWED, entryOutput.getKey(),
+                                    source.getFlowletSpec().getName());
+      }
+
+      for(Map.Entry<String, Set<Schema>> entryInput : input.entrySet()) {
+        String inputName = entryInput.getKey();
+
+        // When the output name is same as input name - we check if their schema's
+        // are same (equal or compatible)
+        if(outputName.equals(inputName)) {
+          found = SchemaFinder.checkSchema(entryOutput.getValue(), entryInput.getValue());
+          ImmutablePair<Schema, Schema> c = SchemaFinder.findSchema(entryOutput.getValue(), entryInput.getValue());
         }
-        // Aha! ANY_INPUT exists, we check if the schema of ANY_INPUT is compatible with schema of output.
-        if(!VerifyFlowletConnectionSchema(outputSchema, input.get(FlowletDefinition.ANY_INPUT))) {
-          // Schema's of input ANY doesn't match the schema of output. There is no method on input that can handle the
-          // Output being emitted. This is a problem.
-          return VerifyResult.FAILURE(
-                                       Err.Flow.NO_INPUT_FOR_OUTPUT, target.getFlowletSpec().getName(),
-                                       source.getFlowletSpec().getName()
-          );
+
+        // If not found there, we do a small optimization where we check directly if
+        // the output matches the schema of ANY_INPUT schema. If it doesn't then we
+        // have an issue else we are good.
+        if(! found && input.containsKey(FlowletDefinition.ANY_INPUT)) {
+          found = SchemaFinder.checkSchema(entryOutput.getValue(), input.get(FlowletDefinition.ANY_INPUT));
         }
-      } else {
-        // We know now that there is a input with the same that matches the output.
-        // We need to check and make sure the schemas are compatible.
-        if(!VerifyFlowletConnectionSchema(outputSchema, input.get(entrySource.getKey()))) {
-          // ERROR: Input connection matches the output connection, but their schema are not
-          // compatible.
-          return VerifyResult.FAILURE(
-                                       Err.Flow.INCOMPATIBLE_CONNECTION, target.getFlowletSpec().getName(),
-                                       source.getFlowletSpec().getName()
-          );
+        // If we found a schema that matches then we are good.
+        if(found){
+          return VerifyResult.SUCCESS();
         }
       }
     }
-    return VerifyResult.SUCCESS();
-  }
-
-  /**
-   * Given a outputs of a Flowlet, we compare the outputs with the inputs of a Flowlet
-   *
-   * @param output {@link Schema} of a {@link com.continuuity.api.flow.flowlet.Flowlet}
-   * @param input  {@link Schema} of a {@link com.continuuity.api.flow.flowlet.Flowlet}
-   * @return true if they matched; false otherwise.
-   *         // Max 1 equal and Min 1 compatible.
-   */
-  private boolean VerifyFlowletConnectionSchema(Set<Schema> output, Set<Schema> input) {
-    for(Schema outputSchema : output) {
-      int equal = 0;
-      int compatible = 0;
-      for(Schema inputSchema : input) {
-        if(outputSchema.equals(inputSchema)) {
-          equal++;
-        }
-        if(outputSchema.isCompatible(inputSchema)) {
-          compatible++;
-        }
-      }
-      // There is max of one output schema that is capable of handling
-      // the input.
-      if(equal > 1) {
-        return false;
-      }
-
-      // There is min of 1 compatible in light of none being equal to handle
-      // input.
-      if(equal < 1 && compatible < 1) {
-        return false;
-      }
-    }
-    return true;
+    return VerifyResult.FAILURE(
+      Err.Flow.NO_INPUT_FOR_OUTPUT, target.getFlowletSpec().getName(), source.getFlowletSpec().getName());
   }
 }

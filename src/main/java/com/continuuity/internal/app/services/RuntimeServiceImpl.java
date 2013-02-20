@@ -94,7 +94,8 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
     return null;
   }
 
-  private QueryDefinitionImpl getQueryDefinition(final FlowIdentifier identifier) throws RuntimeServiceException {ApplicationSpecification appSpec = null;
+  private QueryDefinitionImpl getQueryDefinition(final FlowIdentifier identifier) throws RuntimeServiceException {
+    ApplicationSpecification appSpec = null;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
@@ -111,7 +112,8 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
     return queryDef;
   }
 
-  private FlowDefinitionImpl getFlowDef(final FlowIdentifier identifier) throws RuntimeServiceException {ApplicationSpecification appSpec = null;
+  private FlowDefinitionImpl getFlowDef(final FlowIdentifier identifier) throws RuntimeServiceException {
+    ApplicationSpecification appSpec = null;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
@@ -135,38 +137,43 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
     return flowDef;
   }
 
-  private void fillConnectionsAndStreams(final FlowIdentifier identifier, final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
+  private void fillConnectionsAndStreams(final FlowIdentifier identifier, final FlowSpecification flowSpec,
+                                         final FlowDefinitionImpl flowDef) {
+    List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
     // we gather streams across all connections, hence we need to eliminate duplicate streams hence using map
     Map<String, FlowStreamDefinitionImpl> flowStreams = new HashMap<String, FlowStreamDefinitionImpl>();
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(identifier.getAccountId());
-    Table<String, String, QueueSpecification> queues =  generator.create(flowSpec);
+    QueueSpecificationGenerator generator =
+      new SimpleQueueSpecificationGenerator(new Id.Account(identifier.getAccountId()));
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(flowSpec);
 
-    for (Table.Cell<String, String, QueueSpecification> con : queues.cellSet()) {
-      String srcName = con.getRowKey();
-      String destName = con.getColumnKey();
-      FlowletStreamDefinitionImpl from;
-      // TODO: put check on stream type here
-      if (false) {
-        // stream source
-        from =  new FlowletStreamDefinitionImpl(srcName);
-        flowStreams.put("srcName", new FlowStreamDefinitionImpl(srcName, null));
-      } else {
-        // flowlet source
-        from =  new FlowletStreamDefinitionImpl(srcName, con.getValue().getQueueName().getSimpleName());
+    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
+      for (QueueSpecification queueSpec : conSet.getValue()) {
+        String srcName = conSet.getRowKey().getName();
+        String destName = conSet.getColumnKey();
+        FlowletStreamDefinitionImpl from;
+        if (!flowSpec.getFlowlets().containsKey(srcName)) {
+          // stream source
+          from =  new FlowletStreamDefinitionImpl(srcName);
+          flowStreams.put(srcName, new FlowStreamDefinitionImpl(srcName, null));
+        } else {
+          // flowlet source
+          from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName());
+        }
+
+        FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
+                                                                         queueSpec.getQueueName().getSimpleName());
+
+        connections.add(new ConnectionDefinitionImpl(from, to));
       }
-
-      FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
-                                                                       con.getValue().getQueueName().getSimpleName());
-
-      connections.add(new ConnectionDefinitionImpl(from, to));
     }
 
     flowDef.setConnections(connections);
     flowDef.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
   }
 
-  private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {Set<String> datasets = new HashSet<String>();
+  private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {
+    Set<String> datasets = new HashSet<String>();
     List<FlowletDefinitionImpl> flowlets = new ArrayList<FlowletDefinitionImpl>();
 
     for (FlowletDefinition flowletSpec : flowSpec.getFlowlets().values()) {

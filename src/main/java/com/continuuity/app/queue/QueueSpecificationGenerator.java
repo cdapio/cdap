@@ -6,8 +6,10 @@ package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.google.common.base.Objects;
 import com.google.common.collect.Table;
+
+import java.util.Set;
 
 /**
  * This interface specifies how the {@link QueueSpecification} is generated
@@ -24,20 +26,42 @@ public interface QueueSpecificationGenerator {
    * This class represents a node in the DAG.
    */
   public static final class Node {
-    private final FlowletConnection.SourceType type;
-    private final String source;
+    private final FlowletConnection.Type type;
+    private final String name;
 
-    public Node(FlowletConnection.SourceType type, String source) {
-      this.type = type;
-      this.source = source;
+    public static Node flowlet(String name) {
+      return new Node(FlowletConnection.Type.FLOWLET, name);
     }
 
-    public FlowletConnection.SourceType getSourceType() {
+    public static Node stream(String name) {
+      return new Node(FlowletConnection.Type.STREAM, name);
+    }
+
+    public Node(FlowletConnection.Type type, String name) {
+      this.type = type;
+      this.name = name;
+    }
+
+    public FlowletConnection.Type getType() {
       return type;
     }
 
-    public String getSourceName() {
-      return source;
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(type, name);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if(o == null) {
+        return false;
+      }
+      Node other = (Node) o;
+      return Objects.equal(type, other.getType()) && Objects.equal(name, other.getName());
     }
   }
 
@@ -48,5 +72,5 @@ public interface QueueSpecificationGenerator {
    * @param specification of a Flow
    * @return A {@link Table} consisting of From, To Flowlet and QueueSpecification.
    */
-  Table<String, String, QueueSpecification> create(FlowSpecification specification);
+  Table<Node, String, Set<QueueSpecification>> create(FlowSpecification specification);
 }

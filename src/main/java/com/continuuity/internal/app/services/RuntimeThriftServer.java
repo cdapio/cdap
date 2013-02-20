@@ -32,9 +32,9 @@ public final class RuntimeThriftServer implements RuntimeServer {
   private ExecutorService executorService;
 
   /**
-   * Program Service handler.
+   * Runtime Service handler.
    */
-  private RuntimeService.Iface RuntimeService;
+  private RuntimeService.Iface runtimeService;
 
   /**
    * Half-Sync, Half-Async Thrift server.
@@ -43,7 +43,7 @@ public final class RuntimeThriftServer implements RuntimeServer {
 
   @Inject
   public RuntimeThriftServer(RuntimeService.Iface RuntimeService) {
-    this.RuntimeService = RuntimeService;
+    this.runtimeService = RuntimeService;
   }
 
   /**
@@ -69,7 +69,7 @@ public final class RuntimeThriftServer implements RuntimeServer {
         new THsHaServer
           .Args(new TNonblockingServerSocket(port))
           .executorService(executorService)
-          .processor(new RuntimeService.Processor(RuntimeService))
+          .processor(new RuntimeService.Processor(runtimeService))
           .workerThreads(threads);
 
       OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
@@ -80,7 +80,7 @@ public final class RuntimeThriftServer implements RuntimeServer {
       serverArgs.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
 
       server = new THsHaServer(serverArgs);
-      LOG.info("Starting program service on port {}", port);
+      LOG.info("Starting runtime service on port {}", port);
       new Thread ( new Runnable() {
         @Override
         public void run() {
@@ -97,7 +97,7 @@ public final class RuntimeThriftServer implements RuntimeServer {
         client.register(Constants.SERVICE_FLOW_SERVER,
             info.getAddress(), info.getPort(), info.getPayload());
       } catch (ServiceDiscoveryClientException e) {
-        String message = "Error registering program service with service " +
+        String message = "Error registering runtime service with service " +
             "discovery: " + e.getMessage();
         LOG.error(message);
         throw new ServerException(message, e);

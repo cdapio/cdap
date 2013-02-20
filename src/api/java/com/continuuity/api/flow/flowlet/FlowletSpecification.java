@@ -6,6 +6,9 @@ package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Set;
 
 /**
  * This class provides specification of a Flowlet. Instance of this class should be created through
@@ -46,6 +49,12 @@ public interface FlowletSpecification {
   FailurePolicy getFailurePolicy();
 
   /**
+   * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} name that
+   *         used by the {@link Flowlet}.
+   */
+  Set<String> getDataSets();
+
+  /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.
@@ -55,25 +64,28 @@ public interface FlowletSpecification {
     private String name;
     private String description;
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
+    private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     /**
      * Creates a {@link Builder} for building instance of this class.
      *
      * @return a new builder instance.
      */
-    public static Builder with() {
-      return new Builder();
+    public static NameSetter with() {
+      return new Builder().new NameSetter();
     }
 
-    /**
-     * Sets the name of a flowlet.
-     * @param name of the flowlet.
-     * @return An instance of {@link DescriptionSetter}
-     */
-    public DescriptionSetter setName(String name) {
-      Preconditions.checkArgument(name != null, "Name cannot be null.");
-      this.name = name;
-      return new DescriptionSetter();
+    public final class NameSetter {
+      /**
+       * Sets the name of a flowlet.
+       * @param name of the flowlet.
+       * @return An instance of {@link DescriptionSetter}
+       */
+      public DescriptionSetter setName(String name) {
+        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        Builder.this.name = name;
+        return new DescriptionSetter();
+      }
     }
 
     /**
@@ -109,11 +121,23 @@ public interface FlowletSpecification {
       }
 
       /**
+       * Adds the names of {@link com.continuuity.api.data.DataSet DataSets} used by the flowlet.
+       *
+       * @param dataSet DataSet name.
+       * @param moreDataSets More DataSet names.
+       * @return An instance of {@link AfterDescription}.
+       */
+      public AfterDescription useDataSet(String dataSet, String...moreDataSets) {
+        dataSets.add(dataSet).add(moreDataSets);
+        return this;
+      }
+
+      /**
        * Creates an instance of {@link FlowletSpecification}
        * @return An instance of {@link FlowletSpecification}
        */
       public FlowletSpecification build() {
-        return new DefaultFlowletSpecification(name, description, failurePolicy);
+        return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets.build());
       }
     }
 

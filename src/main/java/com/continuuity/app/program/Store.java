@@ -50,7 +50,7 @@ public interface Store {
   List<RunRecord> getRunHistory(Id.Program id) throws OperationException;
 
   /**
-   * Stores application specification
+   * Creates new application if it doesn't exist. Updates existing one otherwise.
    *
    * @param id            application id
    * @param specification application specification to store

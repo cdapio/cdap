@@ -5,21 +5,53 @@
 package com.continuuity.internal.app.queue;
 
 import com.continuuity.ToyApp;
+import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.flow.FlowletConnection;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Table;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
+import java.util.Set;
 
 /**
  * The tests here test whether the queue naming working correctly.
  * The <code>ToyApp</code> is to check for connectivity.
  */
 public class SimpleQueueSpecificationGeneratorTest {
+  private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
+    = HashBasedTable.create();
+
+  private Set<QueueSpecification> get(FlowletConnection.Type sourceType, String sourceName, String target) {
+    QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(sourceType, sourceName);
+    return table.get(node, target);
+  }
+
+  private boolean containsQueue(Set<QueueSpecification> spec, final String queueName) {
+    return Iterables.any(spec, new Predicate<QueueSpecification>() {
+      @Override
+      public boolean apply(QueueSpecification input) {
+        return input.getQueueName().toString().equals(queueName);
+      }
+    });
+  }
+
+  @Before
+  public void before() throws Exception {
+    table.clear();
+  }
 
   @Test
   public void testQueueSpecificationGenWithToyApp() throws Exception {
@@ -27,31 +59,64 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator("demo");
-    Table<String, String, QueueSpecification> table = generator.create(newSpec.getFlows().values().iterator().next());
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(Id.Account.DEFAULT());
+    table = generator.create(newSpec.getFlows().values().iterator().next());
+
+    dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(table.row("X").get("A").getQueueName().toString().equals("stream://demo/X"));
-    Assert.assertTrue(table.row("Y").get("B").getQueueName().toString().equals("stream://demo/Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream://demo/X"));
+
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream://demo/Y"));
 
     // Node A
-    Assert.assertTrue(table.row("A").get("E").getQueueName().toString().equals("queue://ToyFlow/A/out1"));
-    Assert.assertTrue(table.row("A").get("C").getQueueName().toString().equals("queue://ToyFlow/A/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue://ToyFlow/A/out"));
 
     // Node B
-    Assert.assertTrue(table.row("B").get("E").getQueueName().toString().equals("queue://ToyFlow/B/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue://ToyFlow/B/out"));
 
     // Node C
-    Assert.assertTrue(table.row("C").get("D").getQueueName().toString().equals("queue://ToyFlow/C/c1"));
-    Assert.assertTrue(table.row("C").get("F").getQueueName().toString().equals("queue://ToyFlow/C/c2"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"), "queue://ToyFlow/C/c1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"), "queue://ToyFlow/C/c2"));
 
     // Node D
-    Assert.assertTrue(table.row("D").get("G").getQueueName().toString().equals("queue://ToyFlow/D/d1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"), "queue://ToyFlow/D/d1"));
 
     // Node E
-    Assert.assertTrue(table.row("E").get("G").getQueueName().toString().equals("queue://ToyFlow/E/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue://ToyFlow/E/out"));
 
     // Node F
-    Assert.assertTrue(table.row("F").get("G").getQueueName().toString().equals("queue://ToyFlow/F/f1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"), "queue://ToyFlow/F/f1"));
+  }
+
+  @Test
+  public void testQueueSpecificationGenWithWordCount() throws Exception {
+    ApplicationSpecification appSpec = new WordCountApp().configure();
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
+
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(Id.Account.DEFAULT());
+    table = generator.create(newSpec.getFlows().values().iterator().next());
+
+    Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSucker")
+                        .iterator().next().getQueueName().toString().equals("stream://demo/text"));
+    Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSucker", "Tokenizer")
+                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSucker/out"));
+    Assert.assertEquals(2, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
+  }
+
+  private void dumpConnectionQueue(Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table) {
+    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell : table.cellSet()) {
+      System.out.print(cell.getRowKey().getType() + ":" + cell.getRowKey().getName() + " -> " + cell.getColumnKey() +
+                         " = ");
+
+      System.out.println(Joiner.on(" , ").join(Iterables.transform(cell.getValue(), new Function<QueueSpecification, String>() {
+        @Override
+        public String apply(QueueSpecification input) {
+          return input.getQueueName().toString();
+        }
+      })));
+    }
   }
 }

@@ -57,7 +57,7 @@ public final class FlowletDefinition {
     this.instances = instances;
     this.resourceSpec = resourceSpec;
 
-    Set<String> datasets = Sets.newHashSet();
+    Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
     try {
@@ -188,7 +188,8 @@ public final class FlowletDefinition {
             types = Sets.newHashSet();
             outputs.put(outputName, types);
           }
-          types.add(outputType);
+          Preconditions.checkArgument(types.add(outputType),
+                                      "Same output name cannot have same type; class: %s, field: %s", type, field);
         }
       }
 
@@ -231,10 +232,9 @@ public final class FlowletDefinition {
             types = Sets.newHashSet();
             inputs.put(inputName, types);
           }
-          Preconditions.checkArgument(!types.contains(inputType),
+          Preconditions.checkArgument(types.add(inputType),
                                       "Same type already defined for the same input. Type: %s, input: %s",
                                       inputType, inputName);
-          types.add(inputType);
         }
       }
     }

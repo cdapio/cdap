@@ -13,10 +13,13 @@ import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * An abstract base class for generating schema. It knows how to generate
@@ -51,6 +54,11 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
       .put(String.class, Schema.of(Schema.Type.STRING))
       .put(byte[].class, Schema.of(Schema.Type.BYTES))
       .put(ByteBuffer.class, Schema.of(Schema.Type.BYTES))
+
+      // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
+      .put(URI.class, Schema.of(Schema.Type.STRING))
+      .put(URL.class, Schema.of(Schema.Type.STRING))
+      .put(UUID.class, Schema.of(Schema.Type.BYTES))
       .build();
 
   @Override

@@ -141,8 +141,6 @@ public class WebCrawlApp implements Application {
   public static final class UrlSanitizer extends AbstractFlowlet {
     private OutputEmitter<DocumentURL> output;
 
-    private OutputEmitter<String> str;
-
     public void process(StreamEvent event) {
       // Does some-fancy sanitization of url.
       output.emit(new DocumentURLImpl(event.getHeaders().get("url")));
@@ -156,7 +154,7 @@ public class WebCrawlApp implements Application {
     @UseDataSet("crawled-pages")
     private KeyValueTable crawledPages;
 
-    public void process(DocumentURL url) throws UnsupportedEncodingException {
+    public void process(DocumentURL url) throws UnsupportedEncodingException, OperationException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
       try {

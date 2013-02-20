@@ -12,6 +12,17 @@ smartyFacts {
 }
 
 /**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
+}
+
+/**
  * Specify all the dependencies for smartyFacts & main.
  */
 dependencies {
@@ -20,6 +31,9 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+
+  // Dependencies required by api.
+  apiCompile libraries.jsr_305
 
   // Dependencies required by main.
   compile libraries.slf4j_api
@@ -30,6 +44,7 @@ dependencies {
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
   compile libraries.jsr_305
+
 
   // Thrift related stuff.
   thriftCompile libraries.thrift

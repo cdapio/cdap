@@ -7,19 +7,19 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
-import com.continuuity.app.queue.QueueName;
+import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,166 +27,69 @@ import java.util.Set;
  * Concrete implementation of {@link QueueSpecificationGenerator} for generating queue
  * names.
  */
-public final class SimpleQueueSpecificationGenerator implements QueueSpecificationGenerator {
+public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecificationGenerator {
+
+  private static final Schema STREAM_EVENT_SCHEMA;
+
+  static {
+    Schema schema = null;
+    try {
+      schema = new ReflectionSchemaGenerator().generate(StreamEvent.class);
+    } catch (UnsupportedTypeException e) {
+      schema = null;
+    }
+    STREAM_EVENT_SCHEMA = schema;
+  }
+
   /**
    * Account Name under which the stream names to generated.
    */
-  private final String account;
+  private final Id.Account account;
 
   /**
    * Constructor that takes an account.
    *
    * @param account under which the stream is represented.
    */
-  public SimpleQueueSpecificationGenerator(String account) {
+  public SimpleQueueSpecificationGenerator(Id.Account account) {
     this.account = account;
   }
 
+  /**
+   * Given a {@link FlowSpecification}
+   *
+   * @param input {@link FlowSpecification}
+   * @return A {@link Table}
+   */
   @Override
-  public Table<String, String, QueueSpecification> create(FlowSpecification specification) {
-    Table<String, String, QueueSpecification> table = HashBasedTable.create();
-    final String flow = specification.getName();
-    Map<String, FlowletDefinition> flowlets = specification.getFlowlets();
+  public Table<Node, String, Set<QueueSpecification>> create(FlowSpecification input) {
+    Table<Node, String, Set<QueueSpecification>> table = HashBasedTable.create();
 
-    // Create Adjacency List first to simplfy further processing.
-    Map<String, List<Node>> adjacencyList = Maps.newHashMap();
-    for(FlowletConnection connection : specification.getConnections()) {
-      if(adjacencyList.containsKey(connection.getTargetName())) {
-        adjacencyList.get(connection.getTargetName())
-          .add(new Node(connection.getSourceType(), connection.getSourceName()));
+    String flow = input.getName();
+    Map<String, FlowletDefinition> flowlets = input.getFlowlets();
+
+    // Iterate through connections of a flow.
+    for(FlowletConnection connection : input.getConnections()) {
+      final String source = connection.getSourceName();
+      final String target = connection.getTargetName();
+      final Node sourceNode = new Node(connection.getSourceType(), source);
+
+      Set<QueueSpecification> queueSpec;
+      if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        queueSpec = generateQueueSpecification(account, flow, connection,
+                                               flowlets.get(target).getInputs(), flowlets.get(source).getOutputs());
       } else {
-        List<Node> a = Lists.newArrayList();
-        a.add(new Node(connection.getSourceType(), connection.getSourceName()));
-        adjacencyList.put(connection.getTargetName(), a);
+        queueSpec = generateQueueSpecification(account, flow, connection, flowlets.get(target).getInputs(),
+                                               ImmutableMap.<String, Set<Schema>>of(
+                                                  connection.getSourceName(), ImmutableSet.of(STREAM_EVENT_SCHEMA)));
       }
-    }
-
-    // Iterate through adjacency list.
-    for(Map.Entry<String, List<Node>> entry : adjacencyList.entrySet()) {
-      String targetNodeName = entry.getKey();
-      final Map<String, Set<Schema>> inputs = flowlets.get(targetNodeName).getInputs();
-
-      // Within in each node, go through all the nodes the targetNodeName
-      // is connected to. If source node type is stream, then generate
-      // stream URI, if for flowlet, then check if there is input available
-      // to process the output generated. If there is not, check if there
-      // ANY available. If it's available, then please make sure the schema's
-      // are equal. Not sure, if we have to check for compatibility.
-      for(Node source : entry.getValue()) {
-        final String sourceNodeName = source.getSourceName();
-        FlowletConnection.SourceType sourceNodeType = source.getSourceType();
-
-        if(sourceNodeType == FlowletConnection.SourceType.STREAM) {
-          final Map<String, Set<Schema>> outputs = flowlets.get(targetNodeName).getInputs();
-          QueueSpecification s = new QueueSpecification() {
-            @Override
-            public QueueName getQueueName() {
-              return QueueName.from(generateStreamURI(account, sourceNodeName));
-            }
-
-            @Override
-            public Set<Schema> getSchemas() {
-              return outputs.get(FlowletDefinition.ANY_INPUT);
-            }
-          };
-          table.put(sourceNodeName, targetNodeName, s);
-        }
-
-        if(sourceNodeType == FlowletConnection.SourceType.FLOWLET) {
-          final Map<String, Set<Schema>> outputs = flowlets.get(sourceNodeName).getOutputs();
-          for(final Map.Entry<String, Set<Schema>> output : outputs.entrySet()) {
-            if(inputs.containsKey(output.getKey())) {
-              QueueSpecification s = new QueueSpecification() {
-                @Override
-                public QueueName getQueueName() {
-                  return QueueName.from(generateQueueURI(flow, sourceNodeName, output.getKey()));
-                }
-
-                @Override
-                public Set<Schema> getSchemas() {
-                  return output.getValue();
-                }
-              };
-              table.put(sourceNodeName, targetNodeName, s);
-            } else {
-              if(inputs.containsKey(FlowletDefinition.ANY_INPUT)) {
-                if(compareSchema(inputs.get(FlowletDefinition.ANY_INPUT), outputs.get("out"))) {
-                  QueueSpecification s = new QueueSpecification() {
-                    @Override
-                    public QueueName getQueueName() {
-                      return QueueName.from(generateQueueURI(flow, sourceNodeName, "out"));
-                    }
-
-                    @Override
-                    public Set<Schema> getSchemas() {
-                      return outputs.get(FlowletDefinition.ANY_INPUT);
-                    }
-                  };
-                  table.put(sourceNodeName, targetNodeName, s);
-                }
-              }
-            }
-          }
-        }
+      Set<QueueSpecification> queueSpecifications = table.get(sourceNode, target);
+      if (queueSpecifications == null) {
+        queueSpecifications = Sets.newHashSet();
+        table.put(sourceNode, target, queueSpecifications);
       }
+      queueSpecifications.addAll(queueSpec);
     }
     return table;
-  }
-
-  /**
-   * Generates a Queue URI for connectivity between two flowlets.
-   *
-   * @param flow    Name of the Flow for which this queue is being generated
-   * @param flowlet Of the queue is connected to
-   * @param output  name of the queue.
-   * @return An {@link URI} with schema as queue
-   */
-  private URI generateQueueURI(String flow, String flowlet, String output) {
-    try {
-      URI uri = new URI("queue", Joiner.on("/").join(new Object[]{ "/", flow, flowlet, output }), null);
-      return uri;
-    } catch(Exception e) {
-      Throwables.propagate(e);
-      // Unreachable.
-      return null;
-    }
-  }
-
-  /**
-   * Generates an URI for the queue.
-   *
-   * @param account The stream belongs to
-   * @param stream  connected to flow
-   * @return An {@link URI} with schema as stream
-   */
-  private URI generateStreamURI(String account, String stream) {
-    try {
-      URI uri = new URI("stream", Joiner.on("/").join(new Object[]{ "/", account, stream }), null);
-      return uri;
-    } catch(Exception e) {
-      Throwables.propagate(e);
-      // Unreachable.
-      return null;
-    }
-  }
-
-  /**
-   * Checks complete schema for equality.
-   *
-   * @param output Schema
-   * @param input  Schema
-   * @return true if they same; false otherwise.
-   */
-  private boolean compareSchema(Set<Schema> output, Set<Schema> input) {
-    for(Schema outputSchema : output) {
-      int equal = 0;
-      int compatible = 0;
-      for(Schema inputSchema : input) {
-        if(!outputSchema.equals(inputSchema)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 }

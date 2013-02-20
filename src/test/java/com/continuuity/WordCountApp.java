@@ -135,7 +135,7 @@ public class WordCountApp implements Application {
     @Process
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
-      tokenize(data.getText(), "title");
+      tokenize(data.getText(), "text");
     }
 
     private void tokenize(String str, String field) {
@@ -154,7 +154,7 @@ public class WordCountApp implements Application {
     private KeyValueTable counters;
 
     @Process("field")
-    public void process(Map<String, String> fieldToken) {
+    public void process(Map<String, String> fieldToken) throws OperationException {
       String token = fieldToken.get("word");
       if (token == null) {
         return;
@@ -163,7 +163,13 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      //this.counters.write(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
+
+      this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
+    }
+
+    @Process("mylist")
+    public void processMyList(List<String> list) {
+
     }
   }
 

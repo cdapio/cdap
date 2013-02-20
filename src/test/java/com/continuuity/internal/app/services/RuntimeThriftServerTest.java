@@ -29,6 +29,8 @@ import org.apache.thrift.transport.TTransport;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 public class RuntimeThriftServerTest {
   private static MDSBasedStore store;
   private static RuntimeThriftServer server;
@@ -36,7 +38,8 @@ public class RuntimeThriftServerTest {
   @BeforeClass
   public static void beforeClass() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new StoreModule4Test(), new ServicesModule4Test());
+                                                   new StoreModule4Test(),
+                                                   new ServicesModule4Test(new CConfiguration()));
 
     store = injector.getInstance(MDSBasedStore.class);
     server = injector.getInstance(RuntimeThriftServer.class);
@@ -50,7 +53,9 @@ public class RuntimeThriftServerTest {
     store.addApplication(appId, spec);
 
     // ZK is needed to register server
-    new InMemoryZookeeper(FileUtils.getTempDirectory());
+    File tempDir = FileUtils.getTempDirectory();
+    new InMemoryZookeeper(tempDir);
+    tempDir.deleteOnExit();
     // starting server
     CConfiguration conf = new CConfiguration();
     server.start(new String[]{}, conf);
