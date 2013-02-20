@@ -1,22 +1,27 @@
 package WordCountApp;
 
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.flow.Application;
-import com.continuuity.api.flow.ApplicationSpecification;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.stream.Stream;
 
 public class WordCountApp implements Application {
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
-        .setApplicationName("WordCountApp")
-        .addStream(new Stream("wordStream"))
-        .addDataSet(new Table("wordStats"))
-        .addDataSet(new Table("wordCounts"))
-        .addDataSet(new UniqueCountTable("uniqueCount"))
-        .addDataSet(new WordAssocTable("wordAssocs"))
-        .addFlow(WordCountFlow.class)
-        .addQuery(WordCountQuery.class)
-        .create();
+    return ApplicationSpecification.Builder.with()
+        .setName("WordCountApp")
+        .setDescription("Example Word Count Application")
+        .withStreams()
+            .add(new Stream("wordStream"))
+        .withDataSets()
+            .add(new Table("wordStats"))
+            .add(new Table("wordCounts"))
+            .add(new UniqueCountTable("uniqueCount"))
+            .add(new WordAssocTable("wordAssocs"))
+        .withFlows()
+            .add(new WordCountFlow())
+        .withProcedures()
+            .add(new WordCountProcedure())
+        .build();
   }
 }
