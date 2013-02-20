@@ -39,7 +39,6 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
   public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
 
     UsernamePasswordApiKeyToken userCredentials = (UsernamePasswordApiKeyToken) credentials;
-
     try {
       Subject currentUser = SecurityUtils.getSubject();
       currentUser.login(userCredentials);
