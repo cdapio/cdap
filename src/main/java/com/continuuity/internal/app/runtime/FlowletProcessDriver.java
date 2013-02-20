@@ -40,7 +40,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
-  private static int PROCESS_MAX_RETRY = 10;
+  private static final int PROCESS_MAX_RETRY = 10;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
