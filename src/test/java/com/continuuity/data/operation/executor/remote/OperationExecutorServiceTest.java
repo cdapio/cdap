@@ -359,12 +359,11 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, write);
     write = new Write(keyD, kvcol, "0".getBytes());
     remote.commit(context, write);
+    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, "0".getBytes()));
     remote.commit(context, new QueueEnqueue(q, "1".getBytes()));
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
-    QueueConfig config =
-        new QueueConfig(PartitionerType.RANDOM, true);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(context, dequeue);
     Assert.assertNotNull(dequeueResult);
@@ -452,8 +451,8 @@ public abstract class OperationExecutorServiceTest extends
 
     // verify that all is gone
     Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
-    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     Assert.assertTrue(remote.execute(
         context, new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertTrue(remote.execute(
@@ -505,8 +504,7 @@ public abstract class OperationExecutorServiceTest extends
 
   /** tests enqueue, getGroupId and dequeue with ack for different groups */
   @Test
-  public void testEnqueueThenDequeueAndAckWithDifferentGroups() throws
-      Exception {
+  public void testEnqueueThenDequeueAndAckWithDifferentGroups() throws Exception {
     final byte[] q = "queue://tWTDAAWDG/q".getBytes();
 
     // enqueue a bunch of entries, each one twice.
@@ -531,27 +529,21 @@ public abstract class OperationExecutorServiceTest extends
     long id2 = remote.execute(context, new QueueAdmin.GetGroupID(q));
     Assert.assertFalse(id1 == id2);
 
-    // create 2 consumers for each groupId
-    QueueConsumer cons11 = new QueueConsumer(0, id1, 2);
-    QueueConsumer cons12 = new QueueConsumer(1, id1, 2);
-    QueueConsumer cons21 = new QueueConsumer(0, id2, 2);
-    QueueConsumer cons22 = new QueueConsumer(1, id2, 2);
-
     // creeate two configs, one hash, one random, one single, one multi
-    QueueConfig conf1 =
-        new QueueConfig(PartitionerType.HASH_ON_VALUE, false);
-    QueueConfig conf2 =
-        new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig conf1 = new QueueConfig(PartitionerType.HASH_ON_VALUE, false);
+    QueueConfig conf2 = new QueueConfig(PartitionerType.FIFO, true);
+
+    // create 2 consumers for each groupId
+    QueueConsumer cons11 = new QueueConsumer(0, id1, 2, conf1);
+    QueueConsumer cons12 = new QueueConsumer(1, id1, 2, conf1);
+    QueueConsumer cons21 = new QueueConsumer(0, id2, 2, conf2);
+    QueueConsumer cons22 = new QueueConsumer(1, id2, 2, conf2);
 
     // dequeue with each consumer
-    DequeueResult res11 =
-        remote.execute(context, new QueueDequeue(q, cons11, conf1));
-    DequeueResult res12 =
-        remote.execute(context, new QueueDequeue(q, cons12, conf1));
-    DequeueResult res21 =
-        remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    DequeueResult res22 =
-        remote.execute(context, new QueueDequeue(q, cons22, conf2));
+    DequeueResult res11 = remote.execute(context, new QueueDequeue(q, cons11, conf1));
+    DequeueResult res12 = remote.execute(context, new QueueDequeue(q, cons12, conf1));
+    DequeueResult res21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
+    DequeueResult res22 = remote.execute(context, new QueueDequeue(q, cons22, conf2));
 
     // verify that all results are successful
     Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
@@ -565,8 +557,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals(res21.getValue(), res22.getValue());
 
     // verify that group1 (multi-entry config) can dequeue more elements
-    DequeueResult next11 =
-        remote.execute(context, new QueueDequeue(q, cons11, conf1));
+    DequeueResult next11 =  remote.execute(context, new QueueDequeue(q, cons11, conf1));
     Assert.assertTrue(next11.isSuccess() && !next11.isEmpty());
     // for the second read we expect the same value again (enqueued twice)
     Assert.assertArrayEquals(res11.getValue(), next11.getValue());
@@ -576,8 +567,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertFalse(Arrays.equals(res11.getValue(), next11.getValue()));
 
     // verify that group2 (single-entry config) cannot dequeue more elements
-    DequeueResult next21 =
-        remote.execute(context, new QueueDequeue(q, cons21, conf2));
+    DequeueResult next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
     Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
     // other than for group1 above, we would see a different value right
     // away (because the first two, identical value have been dequeued)
@@ -610,8 +600,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertFalse(Arrays.equals(res21.getValue(), next21.getValue()));
 
     // verify that consumer 2 of group 2 can still not see new entries
-    DequeueResult next22 =
-        remote.execute(context, new QueueDequeue(q, cons22, conf2));
+    DequeueResult next22 = remote.execute(context, new QueueDequeue(q, cons22, conf2));
     Assert.assertTrue(next22.isSuccess() && !next22.isEmpty());
     Assert.assertArrayEquals(res22.getValue(), next22.getValue());
 

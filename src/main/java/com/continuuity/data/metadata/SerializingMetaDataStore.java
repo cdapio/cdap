@@ -10,6 +10,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +111,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     return this.serializers.get();
   }
 
+  @Inject
   public SerializingMetaDataStore(OperationExecutor opex) {
     this.opex = opex;
   }

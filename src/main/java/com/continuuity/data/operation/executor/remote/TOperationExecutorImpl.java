@@ -128,8 +128,7 @@ public class TOperationExecutorImpl
       else if (tWriteOp.isSetCompareAndSwap())
         writeOp = unwrap(tWriteOp.getCompareAndSwap());
       else if (tWriteOp.isSetQueueEnqueue())
-        writeOp = new QueueEnqueue(tWriteOp.getQueueEnqueue().getQueueName(),
-            tWriteOp.getQueueEnqueue().getValue());
+        writeOp = unwrap(tWriteOp.getQueueEnqueue());
       else if (tWriteOp.isSetQueueAck())
         writeOp = unwrap(tWriteOp.getQueueAck());
       else {

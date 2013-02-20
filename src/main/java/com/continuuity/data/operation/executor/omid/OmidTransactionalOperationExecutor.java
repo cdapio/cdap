@@ -48,7 +48,6 @@ import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +55,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -67,8 +65,7 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
  * See https://github.com/yahoo/omid/ for more information on the Omid design.
  */
 @Singleton
-public class OmidTransactionalOperationExecutor
-implements TransactionalOperationExecutor {
+public class OmidTransactionalOperationExecutor implements TransactionalOperationExecutor {
 
   private static final Logger Log
     = LoggerFactory.getLogger(OmidTransactionalOperationExecutor.class);
@@ -400,7 +397,7 @@ implements TransactionalOperationExecutor {
   @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
-      throws OperationException {
+    throws OperationException {
     return execute(context, null, readKeys);
   }
 
@@ -425,7 +422,7 @@ implements TransactionalOperationExecutor {
   @Override
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
                                                       Read read)
-      throws OperationException {
+    throws OperationException {
     return execute(context, null, read);
   }
 
@@ -477,6 +474,7 @@ implements TransactionalOperationExecutor {
   }
 
   // Administrative calls
+
 
   @Override
   public void execute(OperationContext context,
@@ -579,9 +577,9 @@ implements TransactionalOperationExecutor {
       abort(context, transaction);
       throw new OmidTransactionException(
         writeTxReturn.statusCode, writeTxReturn.message);
-    }
+      }
     return transaction; // TODO auto generated body
-  }
+    }
 
   @Override
   public void commit(OperationContext context,
@@ -661,7 +659,7 @@ implements TransactionalOperationExecutor {
   @Override
   public Map<byte[], Long> increment(OperationContext context,
                                      Transaction transaction,
-                                     Increment increment) throws OperationException {
+                                                      Increment increment) throws OperationException {
     // if a null transaction is passed in,
     // call the companion method that wraps this into a new transaction
     if (transaction == null) {
@@ -814,16 +812,16 @@ implements TransactionalOperationExecutor {
   // TTQueues
 
   /**
-   * EnqueuePayload operations always succeed but can be rolled back.
+   * Enqueue operations always succeed but can be rolled back.
    *
    * They are rolled back with an invalidate.
    */
-  WriteTransactionResult write(QueueEnqueue enqueue,
-      Transaction transaction) throws OperationException {
+  WriteTransactionResult write(QueueEnqueue enqueue, Transaction transaction) throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
+    //TODO: need to store header version
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
                                                                    transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
@@ -831,20 +829,18 @@ implements TransactionalOperationExecutor {
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
-  WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused") Transaction pointer)
-      throws OperationException {
+  WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)
+    throws  OperationException {
 
     initialize();
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(),
-          ack.getEntryPointer(), ack.getConsumer());
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
+                                      transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
-      return new WriteTransactionResult(StatusCode.ILLEGAL_ACK,
-          "Attempt to ack a dequeue of a different consumer");
+      return new WriteTransactionResult(e.getStatus(), e.getMessage());
     } finally {
       end("QueueAck", begin);
     }
@@ -853,9 +849,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(OperationContext context,
-                               QueueDequeue dequeue)
-      throws OperationException {
+  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
     initialize();
     requestMetric("QueueDequeue");
     long begin = begin();
@@ -863,8 +857,7 @@ implements TransactionalOperationExecutor {
     long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
     while (retries < MAX_DEQUEUE_RETRIES) {
-      DequeueResult result = queueTable.dequeue(dequeue.getKey(),
-          dequeue.getConsumer(), dequeue.getConfig(),
+      DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
           this.oracle.getReadPointer());
       if (result.shouldRetry()) {
         retries++;
@@ -887,9 +880,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public long execute(OperationContext context,
-                      GetGroupID getGroupId)
-      throws OperationException {
+  public long execute(OperationContext context, GetGroupID getGroupId) throws OperationException {
     initialize();
     requestMetric("GetGroupID");
     long begin = begin();
@@ -900,9 +891,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueInfo>
-  execute(OperationContext context, GetQueueInfo getQueueInfo)
-      throws OperationException
+  public OperationResult<QueueAdmin.QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
+                                                       throws OperationException
   {
     initialize();
     requestMetric("GetQueueInfo");
@@ -1002,5 +992,4 @@ implements TransactionalOperationExecutor {
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
-
 } // end of OmitTransactionalOperationExecutor

@@ -141,7 +141,7 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public OperationResult<List<byte[]>> execute(
-      OperationContext context, ReadAllKeys readKeys) {
+    OperationContext context, ReadAllKeys readKeys) {
     return new OperationResult<List<byte[]>>(StatusCode.KEY_NOT_FOUND);
 
   }
@@ -171,7 +171,7 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public void commit(OperationContext context, WriteOperation write)
-      throws OperationException {
+    throws OperationException {
     // do nothing
   }
 

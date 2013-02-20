@@ -12,9 +12,9 @@ import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum TQueuePartitioner implements org.apache.thrift.TEnum {
-  RANDOM(0),
+  FIFO(0),
   HASH(1),
-  LONGMOD(2);
+  ROBIN(2);
 
   private final int value;
 
@@ -36,11 +36,11 @@ public enum TQueuePartitioner implements org.apache.thrift.TEnum {
   public static TQueuePartitioner findByValue(int value) { 
     switch (value) {
       case 0:
-        return RANDOM;
+        return FIFO;
       case 1:
         return HASH;
       case 2:
-        return LONGMOD;
+        return ROBIN;
       default:
         return null;
     }

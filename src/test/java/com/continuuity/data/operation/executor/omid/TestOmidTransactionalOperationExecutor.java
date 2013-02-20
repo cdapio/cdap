@@ -106,8 +106,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] queueKey = Bytes.toBytes("queue://queueKey");
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
 
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // insert to all three types
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
@@ -415,10 +415,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, batch(new QueueEnqueue(queueName, queueName)));
 
     // DequeuePayload it
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
-    DequeueResult dequeueResult = executor.execute(context,
-        new QueueDequeue(queueName, consumer, config));
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    DequeueResult dequeueResult = executor.execute(context, new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isSuccess());
 
     // Start our ack operation
@@ -1018,16 +1017,20 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, tx1, batch(new QueueEnqueue(qname, value)));
     // dequeue
     DequeueResult deqres = executor.execute(
-      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
+                                new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertFalse(deqres.isEmpty());
     Assert.assertArrayEquals(value, deqres.getValue());
     // in a new transaction, write the dequeued value and ack the queue entry
-    executor.commit(context, batch(new Write(table, g, x, value), new QueueAck(qname, deqres.getEntryPointer(),
-                                                                               new QueueConsumer(0, 0, 1))));
+    executor.commit(context, batch(new Write(table, g, x, value),
+                                   new QueueAck(qname, deqres.getEntryPointer(),
+                                                new QueueConsumer(0, 0, 1,
+                                                                  new QueueConfig(PartitionerType.FIFO, true)))));
     // attempt to dequeue again, should be empty
     deqres = executor.execute(
-      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
+                                new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertTrue(deqres.isEmpty());
     // verify the write
@@ -1103,5 +1106,4 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, tx2); // no conflict between named table and default table
     executor.commit(context, tx3); // no conflict between two named tables
   }
-
 }

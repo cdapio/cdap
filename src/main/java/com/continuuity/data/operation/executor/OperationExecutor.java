@@ -9,7 +9,6 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
-
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
@@ -164,7 +163,7 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public Map<byte[], Long> increment(OperationContext context,
-                                     Increment increment)
+                                                      Increment increment)
     throws OperationException;
 
   /**
@@ -182,8 +181,8 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public Map<byte[], Long> increment(OperationContext context,
-                                     @Nullable Transaction transaction,
-                                     Increment increment)
+                                                      @Nullable Transaction transaction,
+                                                      Increment increment)
     throws OperationException;
 
   /**

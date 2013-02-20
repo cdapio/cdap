@@ -50,7 +50,6 @@ public class DataSetTestBase {
   public static boolean useProxy = false;
 
   protected enum Mode { Sync, Batch, Smart }
-
   /**
    * Sets up the in-memory operation executor and the data fabric
    */
