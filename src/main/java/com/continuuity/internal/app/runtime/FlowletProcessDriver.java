@@ -23,8 +23,9 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,14 +71,17 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     if (flowletContext.isAsyncMode()) {
+      ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("tx-executor-%d").build();
+
       // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
-      // 10 seconds wait time before killing idle threads.
-      // Keep no idle threads more than 10 seconds.
-      transactionExecutor = new ThreadPoolExecutor(0, TX_EXECUTOR_POOL_SIZE, 10L, TimeUnit.SECONDS,
-                                                   new LinkedBlockingQueue<Runnable>(),
-                                                   new ThreadFactoryBuilder()
-                                                     .setDaemon(true)
-                                                     .setNameFormat("tx-executor-%d").build());
+      // 60 seconds wait time before killing idle threads.
+      // Keep no idle threads more than 60 seconds.
+      // If max thread pool size reached, execute the task in the submitter thread
+      // (basically fallback to sync mode if things comes too fast
+      transactionExecutor = new ThreadPoolExecutor(0, TX_EXECUTOR_POOL_SIZE,
+                                    60L, TimeUnit.SECONDS,
+                                    new SynchronousQueue<Runnable>(),
+                                    threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
     } else {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
