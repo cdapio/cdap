@@ -2,8 +2,6 @@ package WordCountApp;
 
 import java.util.Map;
 
-import org.jruby.compiler.ir.Tuple;
-
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
