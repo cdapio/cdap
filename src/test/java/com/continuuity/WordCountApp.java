@@ -51,37 +51,26 @@ public class WordCountApp implements Application {
       .withProcedures().add(new WordFrequency()).build();
   }
 
-  public static interface MyRecord {
-    String getTitle();
-
-    String getText();
-
-    boolean isExpired();
-  }
-
-  public static final class MyRecordImpl implements MyRecord {
+  public static final class MyRecord {
 
     private final String title;
     private final String text;
     private final boolean expired;
 
-    public MyRecordImpl(String title, String text, boolean expired) {
+    public MyRecord(String title, String text, boolean expired) {
       this.title = title;
       this.text = text;
       this.expired = expired;
     }
 
-    @Override
     public String getTitle() {
       return title;
     }
 
-    @Override
     public String getText() {
       return text;
     }
 
-    @Override
     public boolean isExpired() {
       return expired;
     }
@@ -111,24 +100,14 @@ public class WordCountApp implements Application {
         return;
       }
       ByteBuffer buf = event.getBody();
-      output.emit(new MyRecordImpl(
+      output.emit(new MyRecord(
         event.getHeaders().get("title"),
         buf == null ? null : Charsets.UTF_8.newDecoder().decode(buf).toString(),
         false));
     }
   }
 
-  public static class TokenizerParent extends AbstractFlowlet {
-    @Output("mylist")
-    private OutputEmitter<List<String>> outputList;
-
-    @com.continuuity.api.annotation.Process("bar")
-    public void bar(String str) {
-
-    }
-  }
-
-  public static class Tokenizer extends TokenizerParent {
+  public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
 
@@ -163,12 +142,8 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
+
       this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
-    }
-
-    @Process("mylist")
-    public void processMyList(List<String> list) {
-
     }
   }
 

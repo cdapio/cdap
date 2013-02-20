@@ -30,7 +30,7 @@ public final class SingleQueueReader implements QueueReader {
   @Override
   public InputDatum dequeue() throws OperationException {
     byte[] queueNameBytes = queueName.toBytes();
-    QueueDequeue dequeue = null; // new QueueDequeue(queueNameBytes, queueConsumer, queueConsumer.getQueueConfig());
-    return new InputDatum(queueConsumer, opex.execute(operationCtx, dequeue));
+    QueueDequeue dequeue = new QueueDequeue(queueNameBytes, queueConsumer, queueConsumer.getQueueConfig());
+    return new InputDatum(queueConsumer, queueName, opex.execute(operationCtx, dequeue));
   }
 }

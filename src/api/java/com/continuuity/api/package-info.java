@@ -231,7 +231,7 @@
  *         if(field != null) {
  *           word = field + ":" + word;
  *         }
- *         counters.stage(new KeyValueTable.IncrementKey(word.getBytes(Charset.forName("UTF-8"))));
+ *         counters.write(new KeyValueTable.IncrementKey(word.getBytes(Charset.forName("UTF-8"))));
  *       }
  *     }
  *   </pre>

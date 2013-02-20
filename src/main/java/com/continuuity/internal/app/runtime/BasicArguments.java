@@ -13,6 +13,10 @@ public final class BasicArguments implements Arguments {
 
   private final Map<String, String> options;
 
+  public BasicArguments() {
+    this(ImmutableMap.<String, String>of());
+  }
+
   public BasicArguments(Map<String, String> options) {
     this.options = ImmutableMap.copyOf(options);
   }

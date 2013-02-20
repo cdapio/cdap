@@ -150,6 +150,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         processQueue.peek().await();
       } catch (InterruptedException e) {
         // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
+        LOGGER.info("Process queue await interruped.", e);
         continue;
       }
 
@@ -163,6 +164,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
           if (input.isEmpty()) {
+
+            LOGGER.info("Input is empty.");
+
             entry.backOff();
             continue;
           }
@@ -170,11 +174,15 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
           try {
             // Call the process method and commit the transaction
-            entry.processSpec.getProcessMethod().invoke(input)
+            ProcessMethod processMethod = entry.processSpec.getProcessMethod();
+
+            LOGGER.info("Invoke " + processMethod);
+
+            processMethod.invoke(input)
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec));
+            LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec), t);
           }
         } catch (OperationException e) {
           LOGGER.error("Queue operation failure", e);
@@ -196,7 +204,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private void initFlowlet() {
     try {
+      LOGGER.info("Initializing flowlet: " + flowlet.getClass());
       flowlet.initialize(flowletContext);
+      LOGGER.info("Flowlet initialized: " + flowlet.getClass());
     } catch (Throwable t) {
       LOGGER.error("Flowlet throws exception during flowlet initialize.", t);
       throw Throwables.propagate(t);
@@ -205,7 +215,9 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private void destroyFlowlet() {
     try {
+      LOGGER.info("Destroying flowlet: " + flowlet.getClass());
       flowlet.destroy();
+      LOGGER.info("Flowlet destroyed: " + flowlet.getClass());
     } catch (Throwable t) {
       LOGGER.error("Flowlet throws exception during flowlet destroy.", t);
       throw Throwables.propagate(t);

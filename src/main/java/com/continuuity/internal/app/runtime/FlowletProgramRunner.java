@@ -57,7 +57,6 @@ import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -84,8 +83,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   public Controller run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
-
       String flowletName = options.getName();
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
@@ -105,9 +102,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
       ClassLoader classLoader = program.getMainClass().getClassLoader();
-      Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>)
-                                                  Class.forName(flowletDef.getFlowletSpec().getClassName(),
-                                                                true, classLoader);
+      Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>)Class.forName(
+                                                      flowletDef.getFlowletSpec().getClassName(),
+                                                      true, classLoader);
 
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
@@ -137,28 +134,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Flowlet flowlet = flowletClass.newInstance();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
-      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext,
-                                                     outputEmitterFactory(flowletName,
-                                                                          flowletContext.getQueueProducer(),
-                                                                          queueSpecs));
+      OutputSubmitter outputSubmitter = injectFields(
+            flowlet, flowletType, flowletContext,
+            outputEmitterFactory(flowletName, flowletContext.getQueueProducer(), queueSpecs));
 
+      Collection<ProcessSpecification> processSpecs = createProcessSpecification(
+            flowletType,
+            processMethodFactory(flowlet, createSchemaCache(program), txAgentSupplier, outputSubmitter),
+            processSpecificationFactory(opex, opCtx, flowletContext.getQueueConsumer(), flowletName, queueSpecs),
+            Lists.<ProcessSpecification>newLinkedList());
 
-//      createProcessSpecification()
-//      new FlowletProcessDriver(flowlet, flowletContext, loggingContext, processSpecs, createCallback(flowlet, flowletDef.getFlowletSpec()));
+      final FlowletProcessDriver driver = new FlowletProcessDriver(
+            flowlet, flowletContext, loggingContext, processSpecs,
+            createCallback(flowlet, flowletDef.getFlowletSpec()));
 
-
-//      final FlowletProcessDriver driver = instantiateFlowlet(flowletClass,
-//                                                             flowletContext,
-//                                                             outputEmitterFactory(flowletContext.getQueueProducer(),
-//                                                                                  queueSpecs));
-
-//      driver.start();
-//      return new Controller() {
-//        @Override public void suspend() { driver.suspend(); }
-//        @Override public void resume() { driver.resume(); }
-//        @Override public void stop() { driver.stopAndWait(); }
-//      };
-      return null;
+      driver.start();
+      return new Controller() {
+        @Override public void suspend() { driver.suspend(); }
+        @Override public void resume() { driver.resume(); }
+        @Override public void stop() { driver.stopAndWait(); }
+      };
 
     } catch(Exception e) {
       throw Throwables.propagate(e);
@@ -213,11 +208,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new MultiOutputSubmitter(outputSubmitters.build());
   }
 
+  /**
+   * Creates all {@link ProcessSpecification} for the process methods of the flowlet class.
+   *
+   * @param flowletType Type of the flowlet class represented by {@link TypeToken}.
+   * @param processMethodFactory A {@link ProcessMethodFactory} for creating {@link ProcessMethod}.
+   * @param processSpecFactory A {@link ProcessSpecificationFactory} for creating {@link ProcessSpecification}.
+   * @param result A {@link Collection} for storing newly created {@link ProcessSpecification}.
+   * @return The same {@link Collection} as the {@code result} parameter.
+   */
   private Collection<ProcessSpecification> createProcessSpecification(TypeToken<? extends Flowlet> flowletType,
                                                                       ProcessMethodFactory processMethodFactory,
                                                                       ProcessSpecificationFactory processSpecFactory,
-                                                                      Collection<ProcessSpecification> result)
-                                                                      throws UnsupportedTypeException {
+                                                                      Collection<ProcessSpecification> result) {
 
     // Walk up the hierarchy of flowlet class to get all process methods
     // It needs to be traverse twice because process method needs to know all output emitters.
@@ -239,11 +242,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
           inputNames = ImmutableSet.copyOf(processAnnotation.value());
         }
 
-        TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
-        Schema schema = schemaGenerator.generate(dataType.getType());
+        try {
+          TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
+          Schema schema = schemaGenerator.generate(dataType.getType());
 
-        ProcessMethod processMethod = processMethodFactory.create(method, dataType, schema);
-        result.add(processSpecFactory.create(inputNames, schema, processMethod));
+          ProcessMethod processMethod = processMethodFactory.create(method, dataType, schema);
+          result.add(processSpecFactory.create(inputNames, schema, processMethod));
+        } catch (UnsupportedTypeException e) {
+          throw Throwables.propagate(e);
+        }
       }
     }
     return result;
@@ -256,27 +263,22 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final FailurePolicy failurePolicy = flowletSpec.getFailurePolicy();
     return new Callback() {
       @Override
-      public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+      public void onSuccess(Object input, InputContext inputContext) {
         // No-op
       }
 
       @Override
-      public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason
-        reason) {
+      public FailurePolicy onFailure(Object input, InputContext inputContext, FailureReason reason) {
         return failurePolicy;
       }
     };
   }
 
-  private Map<String, DataSet> createDataSets(DataSetContext dataSetContext,
-                                              FlowletDefinition flowletDef) {
-
+  private Map<String, DataSet> createDataSets(DataSetContext dataSetContext, FlowletDefinition flowletDef) {
     ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
-
     for (String dataSetName : flowletDef.getDatasets()) {
       builder.put(dataSetName, dataSetContext.getDataSet(dataSetName));
     }
-
     return builder.build();
   }
 
@@ -346,7 +348,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
         }
 
-        Preconditions.checkArgument(!queueReaders.isEmpty(), "No queue reader found for %s %s", flowletName, schema);
+        Preconditions.checkArgument(!queueReaders.isEmpty(),
+                                    "No queue reader found for %s, schema %s", flowletName, schema);
         return new ProcessSpecification(new RoundRobinQueueReader(queueReaders), method);
       }
     };
