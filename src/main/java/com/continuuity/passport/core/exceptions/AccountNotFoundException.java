@@ -8,7 +8,7 @@ public class AccountNotFoundException extends Exception {
     super(message);
   }
 
-  public AccountNotFoundException (String message, Exception cause) {
+  public AccountNotFoundException(String message, Exception cause) {
     super(message, cause);
   }
 

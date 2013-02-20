@@ -15,7 +15,7 @@ import java.util.Map;
 public class PassportGuiceServletContextListener extends GuiceServletContextListener {
 
 
-  private final Map<String,String> config;
+  private final Map<String, String> config;
   private ServletContext servletContext;
 
   public PassportGuiceServletContextListener(Map<String, String> config) {

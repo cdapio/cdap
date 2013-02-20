@@ -56,7 +56,7 @@ DEFAULT CHARACTER SET = latin1;
 CREATE  TABLE IF NOT EXISTS `continuuity`.`account_role_types` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
-  `name` VARCHAR(100) NULL DEFAULT NULL ,
+  `NAME` VARCHAR(100) NULL DEFAULT NULL ,
   `permissions` VARCHAR(100) NULL DEFAULT NULL ,
   PRIMARY KEY (`id`) ,
   INDEX `account_id` (`account_id` ASC) ,
@@ -73,7 +73,7 @@ DEFAULT CHARACTER SET = latin1;
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`component_type` (
   `id` INT(11) NOT NULL ,
-  `name` VARCHAR(100) NOT NULL ,
+  `NAME` VARCHAR(100) NOT NULL ,
   PRIMARY KEY (`id`) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;

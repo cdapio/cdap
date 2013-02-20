@@ -1,8 +1,8 @@
 package com.continuuity.passport.core.meta;
 
 /**
-*
-*/
+ *
+ */
 public class AccountSecurity {
   private final Account account;
   private final String password;

@@ -10,22 +10,22 @@ import java.util.Set;
  */
 public class Component {
 
-  private final  String name;
+  private final String name;
 
-  private final  String componentType;
+  private final String componentType;
 
   private final String id;
 
   private final Set<ComponentACL> acls;
 
-  public Component( final String name,  final String id,  final String type,  final Set<ComponentACL> acls) {
+  public Component(final String name, final String id, final String type, final Set<ComponentACL> acls) {
     this.name = name;
     this.id = id;
     this.componentType = type;
     this.acls = acls;
   }
 
-  public Component( final String name,  final String id,  final String type) {
+  public Component(final String name, final String id, final String type) {
     this.name = name;
     this.id = id;
     this.componentType = type;

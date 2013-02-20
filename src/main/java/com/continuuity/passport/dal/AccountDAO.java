@@ -19,7 +19,7 @@ public interface AccountDAO {
   /**
    * Create Account in the system
    *
-   * @param account   Instance of {@code Account}
+   * @param account Instance of {@code Account}
    * @return int account Id that was generated
    * @throws {@code RetryException}
    */
@@ -46,7 +46,7 @@ public interface AccountDAO {
    * @throws {@code RetryException}
    */
   public boolean deleteAccount(int accountId)
-                        throws ConfigurationException, RuntimeException, AccountNotFoundException;
+    throws ConfigurationException, RuntimeException, AccountNotFoundException;
 
   /**
    * GetAccount
@@ -68,12 +68,12 @@ public interface AccountDAO {
 
 
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)
-                                                                  throws ConfigurationException, RuntimeException;
+    throws ConfigurationException, RuntimeException;
 
 
   public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException;
 
-  public void updateAccount(int accountId, Map<String,Object> keyValueParams)
+  public void updateAccount(int accountId, Map<String, Object> keyValueParams)
     throws ConfigurationException, RuntimeException;
 
   public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;

@@ -13,7 +13,7 @@ public interface AuthenticatorService {
   /**
    * Authenticates User with the Credentials passed
    *
-   * @param userId        User to be authenticated
+   * @param userId      User to be authenticated
    * @param credentials UserCredentials that authenticates the user
    * @return {@code AuthenticationStatus}
    * @throws {@code RetryException}

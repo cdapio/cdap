@@ -9,15 +9,16 @@ import com.google.gson.GsonBuilder;
  */
 public class VPC {
 
-  private final int vpcId ;
+  private final int vpcId;
 
   private final String vpcName;
 
   private final String vpcLabel;
 
   public VPC(String vpcName, String vpcLabel) {
-    this(-1,vpcName, vpcLabel);
+    this(-1, vpcName, vpcLabel);
   }
+
   public VPC(int vpcId, String vpcName, String vpcLabel) {
     this.vpcId = vpcId;
     this.vpcName = vpcName;

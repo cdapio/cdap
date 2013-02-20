@@ -16,7 +16,7 @@ public class Account {
 
   private final String company;
 
-  private final  String emailId;
+  private final String emailId;
 
   private final int accountId;
 
@@ -25,15 +25,15 @@ public class Account {
   private final boolean confirmed;
 
   public Account(String firstName, String lastName, String emailId) {
-    this(firstName,lastName, StringUtils.EMPTY,emailId,-1);
+    this(firstName, lastName, StringUtils.EMPTY, emailId, -1);
   }
 
   public Account(String firstName, String lastName, String company, String emailId, int accountId) {
-    this(firstName,lastName,company,emailId,accountId,StringUtils.EMPTY,false);
+    this(firstName, lastName, company, emailId, accountId, StringUtils.EMPTY, false);
   }
 
   public Account(String firstName, String lastName, String company, String emailId,
-                 int accountId,String apiKey, boolean confirmed) {
+                 int accountId, String apiKey, boolean confirmed) {
     this.firstName = firstName;
     this.lastName = lastName;
     this.company = company;
@@ -44,13 +44,12 @@ public class Account {
   }
 
   public Account(String firstName, String lastName, String company, int accountId) {
-    this(firstName,lastName,company,"",accountId);
+    this(firstName, lastName, company, "", accountId);
   }
 
 
-
   public Account(String firstName, String lastName, String company, String emailId) {
-    this(firstName,lastName,company,emailId,-1);
+    this(firstName, lastName, company, emailId, -1);
   }
 
 

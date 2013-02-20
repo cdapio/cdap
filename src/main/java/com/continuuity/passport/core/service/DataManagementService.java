@@ -4,8 +4,8 @@ package com.continuuity.passport.core.service;
 import com.continuuity.passport.core.exceptions.*;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Component;
-import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
 
 import java.util.List;
@@ -59,7 +59,7 @@ public interface DataManagementService {
   /**
    * Delete an {@code Account} in the system
    *
-   * @param accountId   account to be deleted
+   * @param accountId account to be deleted
    * @throws RuntimeException
    */
   public void deleteAccount(int accountId) throws RuntimeException, AccountNotFoundException;
@@ -85,6 +85,7 @@ public interface DataManagementService {
 
   /**
    * Get VPC list for accountID
+   *
    * @param accountId accountId identifying accounts
    * @return List of {@code VPC}
    */
@@ -92,6 +93,7 @@ public interface DataManagementService {
 
   /**
    * Get VPC List based on the ApiKey
+   *
    * @param apiKey apiKey of the account
    * @return List of {@code VPC}
    */
@@ -99,20 +101,21 @@ public interface DataManagementService {
 
   /**
    * Update account with passed Params
+   *
    * @param accountId accountId
-   * @param params  Map<"keyName", "value">
+   * @param params    Map<"keyName", "value">
    */
-  public void updateAccount(int accountId, Map<String,Object> params) throws RuntimeException;
+  public void updateAccount(int accountId, Map<String, Object> params) throws RuntimeException;
 
   public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
 
-  public int getActivationNonce(int id)  throws RuntimeException, StaleNonceException;
+  public int getActivationNonce(int id) throws RuntimeException, StaleNonceException;
 
-  public int getActivationId(int nonce)  throws RuntimeException, StaleNonceException;
+  public int getActivationId(int nonce) throws RuntimeException, StaleNonceException;
 
-  public int getSessionNonce(int id)  throws RuntimeException, StaleNonceException;
+  public int getSessionNonce(int id) throws RuntimeException, StaleNonceException;
 
-  public int getSessionId(int nonce)  throws RuntimeException, StaleNonceException;
+  public int getSessionId(int nonce) throws RuntimeException, StaleNonceException;
 
   public VPC getVPC(int accountId, int vpcID);
 

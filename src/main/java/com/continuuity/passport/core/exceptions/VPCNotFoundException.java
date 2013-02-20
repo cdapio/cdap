@@ -10,7 +10,7 @@ public class VPCNotFoundException extends Exception {
     super(message);
   }
 
-  public VPCNotFoundException (String message, Exception cause) {
+  public VPCNotFoundException(String message, Exception cause) {
     super(message, cause);
   }
 

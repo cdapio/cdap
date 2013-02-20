@@ -17,12 +17,12 @@ import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PassportHttpServer  {
+public class PassportHttpServer {
 
   private final int gracefulShutdownTime = 1000;
   private final int port;
 
-  private final Map<String,String> configuration;
+  private final Map<String, String> configuration;
 
   public PassportHttpServer(int port, Map<String, String> configuration) {
     this.port = port;
@@ -31,7 +31,7 @@ public class PassportHttpServer  {
 
   private void start() {
 
-    try{
+    try {
 
       Server server = new Server(port);
       server.setStopAtShutdown(true);
@@ -40,10 +40,10 @@ public class PassportHttpServer  {
 
       Context context = new Context(server, "/", Context.SESSIONS);
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
-      context.addServlet(DefaultServlet.class,"/");
-      context.addFilter(GuiceFilter.class, "/*",0);
+      context.addServlet(DefaultServlet.class, "/");
+      context.addFilter(GuiceFilter.class, "/*", 0);
 
-        //JMX jetty
+      //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       MBeanContainer mBeanContainer = new MBeanContainer(mBeanServer);
       server.getContainer().addEventListener(mBeanContainer);
@@ -52,20 +52,19 @@ public class PassportHttpServer  {
       server.start();
       server.join();
 
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public static void main(String [] args) {
+  public static void main(String[] args) {
 
-    Map<String,String> config = new HashMap<String,String>();
+    Map<String, String> config = new HashMap<String, String>();
 
     //TODO: READ Config from the file.
-    config.put("jdbcType","mysql");
+    config.put("jdbcType", "mysql");
     //config.put("connectionString","jdbc:mysql://ppdb101.joyent.continuuity.net:3306/continuuity?user=passport_user");
-    config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+    config.put("connectionString", "jdbc:mysql://localhost:3306/continuuity?user=passport_user");
 
     Realm realm = new JDBCAuthrozingRealm(config);
 

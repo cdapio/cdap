@@ -30,20 +30,19 @@ public class ActivationHandler {
   @Path("generateActivationKey/{id}")
   @GET
   @Produces("application/json")
-  public Response getActivationNonce(@PathParam("id") int id){
+  public Response getActivationNonce(@PathParam("id") int id) {
     try {
       int nonce = dataManagementService.getActivationNonce(id);
-      if (nonce != -1){
+      if (nonce != -1) {
         return Response.ok(Utils.getNonceJson(nonce)).build();
-      }
-      else {
+      } else {
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
     } catch (StaleNonceException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("Couldn't generate nonce",id))
+        .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();
     }
   }
@@ -51,20 +50,19 @@ public class ActivationHandler {
   @Path("getActivationId/{id}")
   @GET
   @Produces("application/json")
-  public Response getActivationId(@PathParam("id") int id){
+  public Response getActivationId(@PathParam("id") int id) {
     try {
       int nonce = dataManagementService.getActivationId(id);
-      if (nonce != -1){
+      if (nonce != -1) {
         return Response.ok(Utils.getNonceJson(nonce)).build();
-      }
-      else {
+      } else {
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("ID not found for nonce", id))
           .build();
       }
     } catch (StaleNonceException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("ID not found for nonce",id))
+        .entity(Utils.getNonceJson("ID not found for nonce", id))
         .build();
     }
   }

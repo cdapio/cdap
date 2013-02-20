@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class AuthenticatorServiceImpl implements AuthenticatorService {
 
-  private final Map<String,String> configuration;
+  private final Map<String, String> configuration;
 
 
   @Inject
@@ -41,19 +41,18 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
 
     UsernamePasswordApiKeyCredentials userCredentials = (UsernamePasswordApiKeyCredentials) credentials;
 
-    UsernamePasswordApiKeyToken token  =  new UsernamePasswordApiKeyToken(userCredentials.getUserName(),
-                                                                          userCredentials.getPassword(),
-                                                                          userCredentials.getApiKey());
+    UsernamePasswordApiKeyToken token = new UsernamePasswordApiKeyToken(userCredentials.getUserName(),
+      userCredentials.getPassword(),
+      userCredentials.getApiKey());
 
     try {
       Subject currentUser = SecurityUtils.getSubject();
       currentUser.login(token);
       Account account = (Account) currentUser.getPrincipal();
-      return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED,account.toString());
-    }
-    catch (Exception e){
+      return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED, account.toString());
+    } catch (Exception e) {
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
-        "Authentication Failed. "+e.getMessage());
+        "Authentication Failed. " + e.getMessage());
 
     }
 

@@ -30,21 +30,19 @@ public class VPCHandler {
 
   @GET
   @Produces("application/json")
-  public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey){
-    try{
+  public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey) {
+    try {
       List<VPC> vpcList = dataManagementService.getVPC(apiKey);
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
-      }
-      else {
+      } else {
         StringBuilder returnJson = new StringBuilder();
         returnJson.append("[");
         boolean first = true;
-        for(VPC vpc : vpcList) {
+        for (VPC vpc : vpcList) {
           if (first) {
-            first= false;
-          }
-          else {
+            first = false;
+          } else {
             returnJson.append(",");
           }
           returnJson.append(vpc.toString());
@@ -53,8 +51,7 @@ public class VPCHandler {
         returnJson.append("]");
         return Response.ok(returnJson.toString()).build();
       }
-    }
-    catch(Exception e){
+    } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJsonError("VPC get Failed", e))
         .build();

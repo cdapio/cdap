@@ -30,20 +30,19 @@ public class NonceHandler {
   @Path("getNonce/{id}")
   @GET
   @Produces("application/json")
-  public Response getSessionNonce(@PathParam("id") int id){
+  public Response getSessionNonce(@PathParam("id") int id) {
     try {
       int nonce = dataManagementService.getSessionNonce(id);
-      if (nonce != -1){
+      if (nonce != -1) {
         return Response.ok(Utils.getNonceJson(nonce)).build();
-      }
-      else {
+      } else {
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
     } catch (StaleNonceException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("Couldn't generate nonce",id))
+        .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();
     }
   }
@@ -51,20 +50,19 @@ public class NonceHandler {
   @Path("getId/{nonce}")
   @GET
   @Produces("application/json")
-  public Response getSessionId(@PathParam("nonce") int nonce){
+  public Response getSessionId(@PathParam("nonce") int nonce) {
     try {
       int id = dataManagementService.getSessionId(nonce);
-      if (id != -1){
+      if (id != -1) {
         return Response.ok(Utils.getNonceJson(id)).build();
-      }
-      else {
+      } else {
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("ID not found for nonce", nonce))
           .build();
       }
     } catch (StaleNonceException e) {
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("ID not found for nonce",nonce))
+        .entity(Utils.getNonceJson("ID not found for nonce", nonce))
         .build();
     }
   }

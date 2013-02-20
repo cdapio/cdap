@@ -5,10 +5,11 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Authentication Status type indicates the status and an optional message
  */
-//TODO: Encoding account info in message - find a better way
 public class AuthenticationStatus {
 
-  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED};
+  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED}
+
+  ;
 
   private Type type;
 

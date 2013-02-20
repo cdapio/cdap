@@ -9,7 +9,7 @@ public class ComponentACL {
   private final Type acl;
   private final String userId;
 
-  public ComponentACL( final Type acl,  final String userId) {
+  public ComponentACL(final Type acl, final String userId) {
     this.acl = acl;
     this.userId = userId;
   }

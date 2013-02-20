@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 
 /**
- *  Various test cases for SQL functions
+ * Various test cases for SQL functions
  */
 public class TestSQLInsert {
 
@@ -20,8 +20,8 @@ public class TestSQLInsert {
 
     //Startup HSQL instance
     TestHelper.startHsqlDB();
-    Connection connection =DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
-                             "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
+    Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
+      "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
 
     //TODO: Add test cases

@@ -3,8 +3,8 @@ package com.continuuity.passport.impl;
 import com.continuuity.passport.core.exceptions.*;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Component;
-import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
@@ -22,24 +22,19 @@ public class DataManagementServiceImpl implements DataManagementService {
 
 
   private final AccountDAO accountDAO;
-
   private final VpcDAO vpcDao;
-
-  private final NonceDAO nonceDAO ;
+  private final NonceDAO nonceDAO;
 
 
   @Inject
-//  public DataManagementServiceImpl(@Named("passport.config") Map<String,String> config) {
   public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, NonceDAO nonceDAO) {
-
     this.accountDAO = accountDAO;
     this.vpcDao = vpcDAO;
     this.nonceDAO = nonceDAO;
-
   }
 
-  private void  checkValidDAO( )throws RuntimeException{
-    if ( (accountDAO ==null) || (vpcDao == null) || (nonceDAO == null)  ) {
+  private void checkValidDAO() throws RuntimeException {
+    if ((accountDAO == null) || (vpcDao == null) || (nonceDAO == null)) {
       throw new RuntimeException("Could not init data access Object");
     }
   }
@@ -95,7 +90,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component)
-                                                                                    throws RuntimeException {
+    throws RuntimeException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -110,14 +105,14 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status unRegisterComponent(String accountId, Credentials credentials, Component component)
-                                                                                    throws RetryException {
+    throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   /**
    * Delete an {@code Account} in the system
    *
-   * @param accountId   account to be deleted
+   * @param accountId account to be deleted
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
@@ -141,7 +136,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status updateComponent(String accountId, Credentials credentials, Component component)
-                                                                          throws RetryException {
+    throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -157,7 +152,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     checkValidDAO();
     Account account = null;
     try {
-     account= accountDAO.getAccount(accountId);
+      account = accountDAO.getAccount(accountId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -168,7 +163,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   public VPC getVPC(int accountId, int vpcId) {
     checkValidDAO();
     try {
-      return vpcDao.getVPC(accountId,vpcId);
+      return vpcDao.getVPC(accountId, vpcId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -179,7 +174,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     checkValidDAO();
 
     try {
-       vpcDao.removeVPC(accountId, vpcId);
+      vpcDao.removeVPC(accountId, vpcId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -195,7 +190,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     Account account = null;
 
     try {
-      account= accountDAO.getAccount(emailId);
+      account = accountDAO.getAccount(emailId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -209,7 +204,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     List<VPC> vpcs;
 
     try {
-       vpcs = vpcDao.getVPC(accountId);
+      vpcs = vpcDao.getVPC(accountId);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -271,7 +266,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     checkValidDAO();
     try {
       return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.ACTIVATION);
-    }catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
 
@@ -283,7 +278,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
     try {
       return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
-    }catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
 
@@ -294,7 +289,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     checkValidDAO();
     try {
       return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
-    }catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -305,7 +300,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
     try {
       return nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
-    }catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -313,7 +308,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   public VPC addVPC(int accountId, VPC vpc) throws RuntimeException {
     checkValidDAO();
     try {
-     return vpcDao.addVPC(accountId, vpc);
+      return vpcDao.addVPC(accountId, vpc);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }

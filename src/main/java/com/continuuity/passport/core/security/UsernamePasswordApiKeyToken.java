@@ -9,9 +9,9 @@ public class UsernamePasswordApiKeyToken extends UsernamePasswordToken {
 
   private final String apiKey;
 
-  public UsernamePasswordApiKeyToken(String username, String password, String apiKey){
-    super(username,password);
-    this.apiKey= apiKey;
+  public UsernamePasswordApiKeyToken(String username, String password, String apiKey) {
+    super(username, password);
+    this.apiKey = apiKey;
   }
 
   public String getApiKey() {
