@@ -401,4 +401,19 @@
         <description>Root location for collecting logs</description>
     </property>
 
+    <!--
+        Account service configuration
+    -->
+    <property>
+        <name>account.server.host</name>
+        <value>localhost</value>
+        <description>Specifies the host for account server</description>
+    </property>
+
+    <property>
+        <name>account.server.port</name>
+        <value>8080</value>
+        <description>Specifies the port for account server</description>
+    </property>
+
 </configuration>
