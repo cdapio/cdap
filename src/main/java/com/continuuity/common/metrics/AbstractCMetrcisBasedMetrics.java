@@ -1,6 +1,6 @@
 package com.continuuity.common.metrics;
 
-import com.continuuity.api.common.metrics.Metrics;
+import com.continuuity.api.metrics.Metrics;
 
 /**
  * Provides handy abstract implementation for metrics collector
