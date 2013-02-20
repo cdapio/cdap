@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.app.runtime.Arguments;
@@ -12,6 +16,10 @@ import java.util.Map;
 public final class BasicArguments implements Arguments {
 
   private final Map<String, String> options;
+
+  public BasicArguments() {
+    this(ImmutableMap.<String, String>of());
+  }
 
   public BasicArguments(Map<String, String> options) {
     this.options = ImmutableMap.copyOf(options);

@@ -79,7 +79,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
   @Override
   public String toString() {
-    return method.toString();
+    return flowlet.getClass() + "." + method.toString();
   }
 
   private PostProcess doInvoke(final InputDatum input) {

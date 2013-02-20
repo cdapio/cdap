@@ -6,9 +6,7 @@ package com.continuuity;
 
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.program.Store;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -17,16 +15,19 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.program.MDSBasedStore;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
 
-import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
@@ -63,13 +64,18 @@ public class TestHelper {
           @Override
           protected void configure() {
             bind(OperationExecutor.class).to(NoOperationExecutor.class);
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+            bind(ManagerFactory.class).to(SyncManagerFactory.class);
+            bind(LocationFactory.class).to(LocalLocationFactory.class);
+            bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
+            bind(StoreFactory.class).to(MDSStoreFactory.class);
+            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+            bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
           }
         }
       );
 
-    Store store = injector.getInstance(MDSBasedStore.class);
-    return new LocalManager(configuration, pf, lf, store);
+    ManagerFactory factory = injector.getInstance(ManagerFactory.class);
+    return (Manager<Location, ApplicationWithPrograms>)factory.create(configuration);
   }
 }

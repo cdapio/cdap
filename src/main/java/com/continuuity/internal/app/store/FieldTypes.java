@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.app.program;
+package com.continuuity.internal.app.store;
 
 /**
  * Constants used to serialize objects when storing into MDSBasedStore

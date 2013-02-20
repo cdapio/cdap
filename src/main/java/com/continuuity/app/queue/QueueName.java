@@ -1,6 +1,8 @@
 package com.continuuity.app.queue;
 
+import com.continuuity.app.Id;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 import java.io.File;
@@ -41,6 +43,24 @@ public final class QueueName {
   public static QueueName from(byte[] bytes) {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
+
+  public static QueueName fromFlowlet(String flow, String flowlet, String output) {
+    URI uri = URI.create(Joiner.on("/").join("queue:", "", flow, flowlet, output));
+    return new QueueName(uri);
+  }
+
+  /**
+   * Generates an QueueName for the stream.
+   *
+   * @param account The stream belongs to
+   * @param stream  connected to flow
+   * @return An {@link QueueName} with schema as stream
+   */
+  public static QueueName fromStream(Id.Account account, String stream) {
+    URI uri = URI.create(Joiner.on("/").join("stream:", "", account.getId(), stream));
+    return new QueueName(uri);
+  }
+
 
   /**
    * Called from static method {@code QueueName#from(URI)} and {@code QueueName#from(bytes[])}

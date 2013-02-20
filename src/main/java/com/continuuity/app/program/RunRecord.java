@@ -4,7 +4,7 @@
 
 package com.continuuity.app.program;
 
-public class RunRecord {
+public final class RunRecord {
   private String pid;
   private long startTs;
   private long stopTs;

@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.pipeline;
 
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.pipeline.Context;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.Stage;
@@ -19,7 +18,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * to be available.
  * </p>
  */
-final class SynchronousPipeline extends AbstractPipeline {
+public final class SynchronousPipeline extends AbstractPipeline {
   /**
    * Executes a pipeline in synchronous mode.
    * <p>

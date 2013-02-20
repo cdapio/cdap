@@ -1,8 +1,13 @@
-package com.continuuity.app.services;
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
+package com.continuuity.internal.app;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -18,7 +23,7 @@ public final class BufferFileInputStream {
   /**
    * Inputs stream for the file to be read.
    */
-  private final FileInputStream stream;
+  private final InputStream stream;
 
   /**
    * Constructor of BufferFileInputStream with defined buffer size.
@@ -28,8 +33,7 @@ public final class BufferFileInputStream {
    * @throws java.io.FileNotFoundException
    */
   public BufferFileInputStream(String file, int bufferSize) throws FileNotFoundException {
-    stream = new FileInputStream(file);
-    buffer = new byte[bufferSize];
+    this(new FileInputStream(file), bufferSize);
   }
 
   /**
@@ -40,6 +44,17 @@ public final class BufferFileInputStream {
    */
   public BufferFileInputStream(String file) throws FileNotFoundException {
     this(file, 100*1024);
+  }
+
+  /**
+   * Constructor of BufferFileInputStream using an input stream.
+   *
+   * @param stream to be read from
+   * @param size of the buffer.
+   */
+  public BufferFileInputStream(InputStream stream, int size) {
+    this.stream = stream;
+    this.buffer = new byte[size];
   }
 
   /**

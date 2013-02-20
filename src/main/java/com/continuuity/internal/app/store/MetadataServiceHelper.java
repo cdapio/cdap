@@ -1,4 +1,9 @@
-package com.continuuity.internal.app.program;
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
+package com.continuuity.internal.app.store;
+
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSetSpecification;
@@ -7,7 +12,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;

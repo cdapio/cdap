@@ -20,18 +20,14 @@ public class InputDatum {
   private final QueueName queueName;
   private int retry;
 
-  public InputDatum(QueueConsumer consumer, DequeueResult dequeueResult) {
+  public InputDatum(QueueConsumer consumer, QueueName queueName, DequeueResult dequeueResult) {
     this.consumer = consumer;
     this.dequeueResult = dequeueResult;
-    this.queueName = QueueName.from(dequeueResult.getEntryPointer().getQueueName());
+    this.queueName = queueName;
   }
 
   public QueueAck asAck() {
-    return new QueueAck(
-                         dequeueResult.getEntryPointer().getQueueName(),
-                         dequeueResult.getEntryPointer(),
-                         consumer
-    );
+    return new QueueAck(queueName.toBytes(), dequeueResult.getEntryPointer(), consumer);
   }
 
   public boolean isEmpty() {

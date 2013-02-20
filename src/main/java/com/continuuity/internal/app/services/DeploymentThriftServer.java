@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.services.DeploymentServer;
 import com.continuuity.app.services.DeploymentService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -12,11 +11,11 @@ import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.common.service.RegisteredServerInfo;
+import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.zookeeper.ZookeeperClientProvider;
 import com.google.inject.Inject;
-import com.netflix.curator.framework.CuratorFramework;
 import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of DeploymentServer as Thrift server
  */
-public class DeploymentThriftServer implements DeploymentServer {
+public class DeploymentThriftServer implements Server {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeThriftServer.class);
 
   /**

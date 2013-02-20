@@ -7,7 +7,7 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.io.Schema;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
@@ -29,26 +29,6 @@ import java.util.Set;
  * different implementation. We don't know how it would look for this yet :-)
  */
 public abstract class AbstractQueueSpecificationGenerator implements QueueSpecificationGenerator {
-//  /**
-//   * Holds the matched schema and uri for a connection.
-//   */
-//  protected static class SchemaURIHolder {
-//    private Schema schema;
-//    private URI output;
-//
-//    SchemaURIHolder(final Schema schema, final URI output) {
-//      this.schema = schema;
-//      this.output = output;
-//    }
-//
-//    Schema getSchema() {
-//      return schema;
-//    }
-//
-//    URI getOutput() {
-//      return output;
-//    }
-//  }
 
   /**
    * Finds a equal or compatible schema connection between <code>source</code> and <code>target</code>
@@ -80,40 +60,15 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(queueNameFromStream(account, outputName),
+        builder.add(createSpec(QueueName.fromStream(account, outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
-        builder.add(createSpec(queueNameFromFlowlet(flow, connection.getSourceName(), outputName),
+        builder.add(createSpec(QueueName.fromFlowlet(flow, connection.getSourceName(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       }
     }
 
     return builder.build();
-  }
-
-  /**
-   * Generates a QueueName for output from flowlet
-   *
-   * @param flow    Name of the Flow for which this queue is being generated
-   * @param flowlet Of the queue is connected to
-   * @param output  name of the queue.
-   * @return An {@link QueueName} with schema as queue
-   */
-  protected QueueName queueNameFromFlowlet(String flow, String flowlet, String output) {
-    URI uri = URI.create(Joiner.on("/").join("queue:", "", flow, flowlet, output));
-    return QueueName.from(uri);
-  }
-
-  /**
-   * Generates an QueueName for the stream.
-   *
-   * @param account The stream belongs to
-   * @param stream  connected to flow
-   * @return An {@link QueueName} with schema as stream
-   */
-  protected QueueName queueNameFromStream(Id.Account account, String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", account.getId(), stream));
-    return QueueName.from(uri);
   }
 
   /**

@@ -1,6 +1,7 @@
 package com.continuuity.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.filesystem.Location;
