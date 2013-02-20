@@ -8,7 +8,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.util.concurrent.ListenableFuture;

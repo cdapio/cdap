@@ -1,14 +1,22 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.deploy;
 
+import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.filesystem.Location;
 import com.google.common.base.Objects;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
- * Registration data that is stored in Zookeeper under a resource id.
+ * Session information associated with uploading of an archive.
  */
-public final class DeployableRegInfo {
+public final class SessionInfo {
 
   /**
    * Time of registration.
@@ -26,31 +34,42 @@ public final class DeployableRegInfo {
   private int size;
 
   /**
-   * Location of the jar file.
+   * Location of the archive file.
    */
-  private Location jar;
+  private Location archive;
 
   /**
    * Redundant, but useful resource information.
    */
-  private ResourceIdentifier identifier;
+  private transient ResourceIdentifier identifier;
+
+  /**
+   * Outputstream associated with file.
+   */
+  private transient OutputStream stream = null;
+
+  /**
+   * Status of deployment.
+   */
+  private DeployStatus status;
 
   /**
    * No-Op constructor.
    */
-  public DeployableRegInfo() {}
+  public SessionInfo() {}
 
   /**
    * Constructs the object with identifier and resource info provided.
    *
    * @param info about the resource being uploaded.
    */
-  public DeployableRegInfo(ResourceIdentifier identifier, ResourceInfo info, Location jar) {
+  public SessionInfo(ResourceIdentifier identifier, ResourceInfo info, Location archive, DeployStatus status) {
     this.identifier = identifier;
     this.regtime = System.currentTimeMillis()/1000;
     this.filename = info.getFilename();
     this.size = info.getSize();
-    this.jar = jar;
+    this.archive = archive;
+    this.status = status;
   }
 
   /**
@@ -66,8 +85,9 @@ public final class DeployableRegInfo {
    * Sets a registeration time.
    * @param registrationTime time the resource was registered in the system.
    */
-  public void setRegistrationTime(long registrationTime) {
+  public SessionInfo setRegistrationTime(long registrationTime) {
     this.regtime = registrationTime;
+    return this;
   }
 
   /**
@@ -91,8 +111,8 @@ public final class DeployableRegInfo {
    * Returns location of the resource.
    * @return Location to the resource.
    */
-  public Location getJarLocation() {
-    return jar;
+  public Location getArchiveLocation() {
+    return archive;
   }
 
   /**
@@ -102,6 +122,27 @@ public final class DeployableRegInfo {
    */
   public int getFileSize() {
     return size;
+  }
+
+  public DeployStatus getStatus() {
+    return status;
+  }
+
+  public SessionInfo setStatus(DeployStatus status) {
+    this.status = status;
+    return this;
+  }
+
+  /**
+   * Why synchronized ? Add comment.
+   * @return
+   * @throws IOException
+   */
+  public synchronized OutputStream getOutputStream() throws IOException {
+    if(stream == null) {
+      stream = archive.getOutputStream();
+    }
+    return stream;
   }
 
   /**
@@ -115,12 +156,12 @@ public final class DeployableRegInfo {
     if(other == null) {
       return false;
     }
-    DeployableRegInfo that = (DeployableRegInfo) other;
+    SessionInfo that = (SessionInfo) other;
     return
       Objects.equal(filename, that.filename) &&
       Objects.equal(size, that.size) &&
       Objects.equal(regtime, that.regtime) &&
-      Objects.equal(jar, that.jar) &&
+      Objects.equal(archive, that.archive) &&
       Objects.equal(identifier, that.identifier);
   }
 
@@ -130,7 +171,7 @@ public final class DeployableRegInfo {
    * @return hash code for this object.
    */
   public int hashCode() {
-    return Objects.hashCode(filename, size, regtime, jar, identifier);
+    return Objects.hashCode(filename, size, regtime, archive, identifier);
   }
 
   /**
@@ -143,7 +184,7 @@ public final class DeployableRegInfo {
       .add("filename", filename)
       .add("size", size)
       .add("regtime", regtime)
-      .add("jar", jar)
+      .add("archive", archive)
       .add("identifier", identifier)
       .toString();
   }

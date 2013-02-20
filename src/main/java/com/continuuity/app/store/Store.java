@@ -2,17 +2,20 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app.program;
+package com.continuuity.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.app.Id;
+import com.continuuity.app.program.RunRecord;
+import com.continuuity.app.program.Status;
 import com.continuuity.metadata.thrift.MetadataService;
 
 import java.util.List;
 
 /**
- * {@link Store} operates on a {@link Program}. It's responsible
- * for managing the non-runtime lifecycle of a {@link Program}
+ * {@link Store} operates on a {@link com.continuuity.app.program.Program}. It's responsible
+ * for managing the non-runtime lifecycle of a {@link com.continuuity.app.program.Program}
  */
 public interface Store {
   /**

@@ -4,10 +4,10 @@
 
 package com.continuuity.internal.app.deploy;
 
+import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
-import com.continuuity.app.program.Id;
-import com.continuuity.app.program.Store;
-import com.continuuity.common.conf.Configuration;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
@@ -26,16 +26,16 @@ import com.google.inject.Inject;
 public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
   private final PipelineFactory pipelineFactory;
   private final LocationFactory locationFactory;
-  private final Configuration configuration;
-  private final Store store;
+  private final StoreFactory storeFactory;
+  private final CConfiguration configuration;
 
   @Inject
-  public LocalManager(Configuration configuration, PipelineFactory pipelineFactory,
-                      LocationFactory locationFactory, Store store) {
+  public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+                      LocationFactory locationFactory, StoreFactory storeFactory) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
-    this.store = store;
+    this.storeFactory = storeFactory;
   }
 
   /**
@@ -51,7 +51,7 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
-    pipeline.addLast(new ApplicationRegistrationStage(store));
+    pipeline.addLast(new ApplicationRegistrationStage(storeFactory.create(configuration)));
     return pipeline.execute(archive);
   }
 }

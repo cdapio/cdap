@@ -6,14 +6,14 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.RuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.internal.app.program.MDSBasedStore;
+import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.internal.app.program.StoreModule4Test;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
 import com.google.gson.Gson;

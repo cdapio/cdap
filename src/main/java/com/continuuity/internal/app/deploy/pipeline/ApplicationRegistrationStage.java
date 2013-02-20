@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.app.program.Store;
+import com.continuuity.app.store.Store;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 

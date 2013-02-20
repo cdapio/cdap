@@ -10,7 +10,6 @@ import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.verification.VerifyResult;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.verification.ApplicationVerification;
 import com.continuuity.internal.app.verification.DataSetVerification;
 import com.continuuity.internal.app.verification.FlowVerification;

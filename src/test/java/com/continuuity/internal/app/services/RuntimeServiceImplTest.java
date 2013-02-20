@@ -6,13 +6,13 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.internal.app.program.MDSBasedStore;
+import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.internal.app.program.StoreModule4Test;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
@@ -21,7 +21,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;

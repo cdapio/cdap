@@ -6,7 +6,6 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;

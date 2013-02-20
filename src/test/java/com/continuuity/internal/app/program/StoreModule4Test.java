@@ -4,9 +4,10 @@
 
 package com.continuuity.internal.app.program;
 
-import com.continuuity.app.program.Store;
+import com.continuuity.app.store.Store;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.AbstractModule;
 

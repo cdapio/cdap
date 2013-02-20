@@ -4,8 +4,6 @@
 
 package com.continuuity.pipeline;
 
-import com.continuuity.common.conf.Configuration;
-
 /**
  * A factory interface for creating pipelines. This class allows to
  * implement different {@link com.continuuity.pipeline.Pipeline} based on external constraints.

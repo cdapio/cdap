@@ -4,7 +4,7 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.app.program.Id;
+import com.continuuity.app.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**

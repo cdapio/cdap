@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app.program;
+package com.continuuity.app;
 
 /**
  *
