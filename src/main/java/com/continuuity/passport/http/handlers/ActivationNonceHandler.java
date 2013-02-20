@@ -17,7 +17,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/passport/v1")
 @Singleton
-public class ActivationNonceHandler {
+public class ActivationNonceHandler extends PassportHandler {
 
   private final DataManagementService dataManagementService;
 
@@ -30,16 +30,20 @@ public class ActivationNonceHandler {
   @GET
   @Produces("application/json")
   public Response getActivationNonce(@PathParam("id") int id) {
+    requestReceived();
     try {
       int nonce = dataManagementService.getActivationNonce(id);
       if (nonce != -1) {
+        requestSuccess();
         return Response.ok(Utils.getNonceJson(nonce)).build();
       } else {
+        requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
     } catch (RuntimeException e) {
+      requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();
@@ -50,16 +54,20 @@ public class ActivationNonceHandler {
   @GET
   @Produces("application/json")
   public Response getActivationId(@PathParam("id") int id) {
+    requestReceived();
     try {
       int nonce = dataManagementService.getActivationId(id);
       if (nonce != -1) {
+        requestSuccess();
         return Response.ok(Utils.getNonceJson(nonce)).build();
       } else {
+        requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("ID not found for nonce", id))
           .build();
       }
     } catch (StaleNonceException e) {
+      requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("ID not found for nonce", id))
         .build();

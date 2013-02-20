@@ -16,7 +16,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("passport/v1/sso/")
 @Singleton
-public class SessionNonceHandler {
+public class SessionNonceHandler extends PassportHandler {
 
   private final DataManagementService dataManagementService;
 
@@ -30,16 +30,20 @@ public class SessionNonceHandler {
   @GET
   @Produces("application/json")
   public Response getSessionNonce(@PathParam("id") int id) {
+    requestReceived();
     try {
       int nonce = dataManagementService.getSessionNonce(id);
       if (nonce != -1) {
+        requestSuccess();
         return Response.ok(Utils.getNonceJson(nonce)).build();
       } else {
+        requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", id))
           .build();
       }
     } catch (RuntimeException e) {
+      requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", id))
         .build();
@@ -50,16 +54,20 @@ public class SessionNonceHandler {
   @GET
   @Produces("application/json")
   public Response getSessionId(@PathParam("nonce") int nonce) {
+    requestReceived();
     try {
       int id = dataManagementService.getSessionId(nonce);
       if (id != -1) {
+        requestSuccess();
         return Response.ok(Utils.getNonceJson(id)).build();
       } else {
+        requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("ID not found for nonce", nonce))
           .build();
       }
     } catch (StaleNonceException e) {
+      requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("ID not found for nonce", nonce))
         .build();

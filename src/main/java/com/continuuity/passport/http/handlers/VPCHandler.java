@@ -18,7 +18,7 @@ import java.util.List;
 
 @Path("passport/v1/vpc")
 @Singleton
-public class VPCHandler {
+public class VPCHandler  extends PassportHandler {
 
   private final DataManagementService dataManagementService;
 
@@ -31,6 +31,7 @@ public class VPCHandler {
   @Produces("application/json")
   public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey) {
     try {
+      requestReceived();
       List<VPC> vpcList = dataManagementService.getVPC(apiKey);
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
@@ -48,9 +49,11 @@ public class VPCHandler {
 
         }
         returnJson.append("]");
+        requestSuccess();
         return Response.ok(returnJson.toString()).build();
       }
     } catch (Exception e) {
+      requestFailed();
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
