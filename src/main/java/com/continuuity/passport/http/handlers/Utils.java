@@ -28,11 +28,11 @@ public class Utils {
   }
 
   public static String getAuthenticatedJson(String result) {
-    return String.format("{\"error\": null, \"result\": %s }", result);
+    return String.format("{\"error\": null, \"result\": \"%s\" }", result);
   }
 
   public static String getAuthenticatedJson(String error, String result) {
-    return String.format("{\"error\": \"%s\", \"result\": %s }", error, result);
+    return String.format("{\"error\": \"%s\", \"result\": \" %s \" }", error, result);
   }
 
   public static String getNonceJson(int result) {
