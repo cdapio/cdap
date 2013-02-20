@@ -56,8 +56,10 @@ public class AccountHandler extends  PassportHandler{
 
     Account account = dataManagementService.getAccount(id);
     if (account != null) {
+      requestSuccess();
       return Response.ok(account.toString()).build();
     } else {
+      requestFailed();
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("Account not found"))
         .build();

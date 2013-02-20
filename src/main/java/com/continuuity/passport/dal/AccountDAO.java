@@ -31,7 +31,6 @@ public interface AccountDAO {
 
   /**
    * @param accountId
-   * @return
    * @throws ConfigurationException
    * @throws RuntimeException
    */

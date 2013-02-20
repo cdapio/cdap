@@ -113,7 +113,6 @@ public class DataManagementServiceImpl implements DataManagementService {
    * Delete an {@code Account} in the system
    *
    * @param accountId account to be deleted
-   * @return Instance of {@code Status}
    * @throws RuntimeException
    */
   @Override
