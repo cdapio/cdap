@@ -51,9 +51,9 @@ public class BenchHBaseTTqueue extends BenchTTQueue {
   // Configuration for hypersql bench
   private static final BenchConfig config = new BenchConfig();
   static {
-    config.numJustEnqueues = 500;
+    config.numJustEnqueues = 100;
     config.queueEntrySize = 10;
-    config.numEnqueuesThenSyncDequeueAckFinalize = 500;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 100;
   }
 
   @Override

@@ -31,6 +31,8 @@ dependencies {
 
     testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
     testCompile libraries.hadoop_minicluster
+
+    compile 'org.fusesource.leveldbjni:leveldbjni-all:1.5'
 }
 
 sourceSets{

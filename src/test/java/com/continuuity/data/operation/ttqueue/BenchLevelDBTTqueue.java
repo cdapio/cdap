@@ -1,45 +1,35 @@
 package com.continuuity.data.operation.ttqueue;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricLocalModule;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.Properties;
+public class BenchLevelDBTTqueue extends BenchTTQueue {
 
-public class BenchHyperSQLTTqueue extends BenchTTQueue {
-
-  private static final Properties hsqlProperties = new Properties();
-
-//  private static final String hsql = "jdbc:hsqldb:file:/tmp/db/benchdb";
-  private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
-
-  private static final DataFabricLocalModule module =
-      new DataFabricLocalModule(hsql, hsqlProperties);
+  private static final DataFabricLevelDBModule module =
+      new DataFabricLevelDBModule();
 
   private static final Injector injector = Guice.createInjector(module);
 
   private static final OVCTableHandle handle =
       injector.getInstance(OVCTableHandle.class);
 
-  // Configuration for hypersql
+  // Configuration for leveldb
   static {
-    // Assume 1K rows and 512MB cache size
-    hsqlProperties.setProperty("hsqldb.cache_rows", "" + 512000);
-    hsqlProperties.setProperty("hsqldb.cache_size", "" + 512000);
-    // Disable logging
-    hsqlProperties.setProperty("hsqldb.log_data", "false");
+    // TODO: See if any leveldb knobs are worth configuring
   }
 
   // Configuration for hypersql bench
   private static final BenchConfig config = new BenchConfig();
   static {
-    config.numJustEnqueues = 100;
+    config.numJustEnqueues = 4000;
     config.queueEntrySize = 10;
-    config.numEnqueuesThenSyncDequeueAckFinalize = 100;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 4000;
   }
 
   @Override
