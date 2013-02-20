@@ -32,6 +32,9 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
+  // Dependencies required by api.
+  apiCompile libraries.jsr_305
+
   // Dependencies required by main.
   compile libraries.slf4j_api
   compile libraries.apache_commons_cli
@@ -41,6 +44,7 @@ dependencies {
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
   compile libraries.jsr_305
+
 
   // Thrift related stuff.
   thriftCompile libraries.thrift
