@@ -6,6 +6,9 @@ import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.app.logging.FlowletLoggingContext;
+import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -41,6 +44,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
+  private final LoggingContext loggingContext;
   private final Collection<ProcessSpecification> processSpecs;
   private final Callback txCallback;
   private final AtomicReference<CountDownLatch> suspension;
@@ -50,10 +54,12 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   public FlowletProcessDriver(Flowlet flowlet,
                               BasicFlowletContext flowletContext,
+                              LoggingContext loggingContext,
                               Collection<ProcessSpecification> processSpecs,
                               Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
+    this.loggingContext = loggingContext;
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
 
@@ -116,6 +122,8 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() {
+    LoggingContextAccessor.setLoggingContext(loggingContext);
+
     initFlowlet();
 
     // Insert all into priority queue, ordered by next deque time.

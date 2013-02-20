@@ -10,17 +10,22 @@ import java.net.URI;
 
 /**
  * This interface defines the specification for associated with either
- * input or output binds to it's respective {@link URI} and {@link Schema}
+ * input or output binds to it's respective {@link QueueName} and {@link Schema}
  */
 public interface QueueSpecification {
 
   /**
-   * @return {@link URI} associated with the queue.
+   * @return {@link QueueName} associated with the queue.
    */
   QueueName getQueueName();
 
   /**
-   * @return {@link Schema} associated with the respective {@link URI}
+   * @return {@link Schema} associated with the reader schema of the queue.
    */
-  Schema getSchemas();
+  Schema getInputSchema();
+
+  /**
+   * @return {@link Schema} associated with data written to the queue.
+   */
+  Schema getOutputSchema();
 }

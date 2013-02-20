@@ -16,7 +16,8 @@ import java.util.concurrent.ExecutionException;
 /**
  * Dynamic loading of schema from classloader and caching of known schemas
  */
-public final class SchemaCache {
+public final class
+  SchemaCache {
 
   private final LoadingCache<SchemaHash, Schema> cache;
 
@@ -25,7 +26,7 @@ public final class SchemaCache {
    *
    * @param schemas Set of known schemas
    */
-  public SchemaCache(Collection<Schema> schemas) {
+  public SchemaCache(Iterable<Schema> schemas, ClassLoader classLoader) {
 
     // TODO: Later on we should use ClassLoader.getResource
     final Map<SchemaHash, Schema> schemaMap = Maps.newHashMap();
@@ -33,12 +34,12 @@ public final class SchemaCache {
       schemaMap.put(schema.getSchemaHash(), schema);
     }
 
-    cache = CacheBuilder.newBuilder().build(
-                                             new CacheLoader<SchemaHash, Schema>() {
+    cache = CacheBuilder.newBuilder().build(new CacheLoader<SchemaHash, Schema>() {
                                                @Override
                                                public Schema load(SchemaHash key) throws Exception {
                                                  Schema schema = schemaMap.get(key);
                                                  Preconditions.checkNotNull(schema);
+                                                 // TODO: Load from classloader
                                                  return schema;
                                                }
                                              }

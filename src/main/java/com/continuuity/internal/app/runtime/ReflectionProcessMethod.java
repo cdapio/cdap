@@ -42,11 +42,20 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final ByteBufferInputStream byteBufferInput;
   private final BinaryDecoder decoder;
 
-  public ReflectionProcessMethod(Flowlet flowlet, Method method,
-                                 TypeToken<T> dataType,
-                                 Schema schema, SchemaCache schemaCache,
-                                 TransactionAgentSupplier txAgentSupplier,
-                                 OutputSubmitter outputSubmitter) {
+  public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, Method method,
+                                                      TypeToken<T> dataType,
+                                                      Schema schema, SchemaCache schemaCache,
+                                                      TransactionAgentSupplier txAgentSupplier,
+                                                      OutputSubmitter outputSubmitter) {
+    return new ReflectionProcessMethod<T>(flowlet, method, dataType, schema,
+                                          schemaCache, txAgentSupplier, outputSubmitter);
+  }
+
+  private ReflectionProcessMethod(Flowlet flowlet, Method method,
+                                  TypeToken<T> dataType,
+                                  Schema schema, SchemaCache schemaCache,
+                                  TransactionAgentSupplier txAgentSupplier,
+                                  OutputSubmitter outputSubmitter) {
     this.flowlet = flowlet;
     this.method = method;
     this.schemaCache = schemaCache;

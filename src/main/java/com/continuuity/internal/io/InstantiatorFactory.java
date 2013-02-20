@@ -5,7 +5,7 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.internal.app.runtime.DefaultStreamEvent;
+import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
