@@ -32,6 +32,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 
@@ -708,6 +709,13 @@ implements OrderedVersionedColumnarTable {
           readPointer, writeVersion));
     }
     return ret;
+  }
+
+  @Override
+  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
+      throws OperationException {
+    return increment(row, column, amount,
+        new MemoryReadPointer(Long.MAX_VALUE), 1L);
   }
 
   @Override
