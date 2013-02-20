@@ -25,12 +25,6 @@ public class Constants {
       = CONTINUUITY_PREFIX + "stream.consumer";
 
   /**
-   * Used by the external client to identify and authenticate the client
-   */
-  public static final String HEADER_CLIENT_TOKEN
-      = CONTINUUITY_PREFIX + "token";
-
-  /**
    * Used by the external client to indicate what end point an event goes to
    */
   public static final String HEADER_DESTINATION_STREAM
@@ -60,6 +54,28 @@ public class Constants {
    */
   public static final String CONFIG_DO_SERVICE_DISCOVERY
       = GATEWAY_PREFIX + "discovery";
+
+  /**
+   * Whether gateway should authenticate requests.
+   */
+  public static final String CONFIG_AUTHENTICATION_REQUIRED
+      = GATEWAY_PREFIX + "authenticate";
+
+  /**
+   * Default setting for whether gateway should authenticate (false for local).
+   */
+  public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
+
+  /**
+   * Configuration parameter name for setting the cluster name.
+   */
+  public static final String CONFIG_CLUSTER_NAME
+      = GATEWAY_PREFIX + "cluster.name";
+
+  /**
+   * Default cluster name.
+   */
+  public static final String CONFIG_CLUSTER_NAME_DEFAULT = "localhost";
 
   /**
    * Class name of a named connector
@@ -141,5 +157,4 @@ public class Constants {
       com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
   public static final String flowServiceName =
       com.continuuity.common.conf.Constants.SERVICE_FLOW_SERVER;
-
 } // end of Constants class

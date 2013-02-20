@@ -10,6 +10,7 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
@@ -61,6 +62,7 @@ public class StreamClient {
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the rest collector
+  String apikey = null;          // the api key for authentication
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
@@ -95,6 +97,8 @@ public class StreamClient {
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      " +
         "To specify the name of the rest collector");
+    out.println("  --apikey <apikey>       " +
+        "To specify an API key for authentication");
     out.println("  --stream <name>         " +
         "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
@@ -159,6 +163,9 @@ public class StreamClient {
       } else if ("--connector".equals(arg)) {
         if (++pos >= args.length) usage(true);
         connector = args[pos];
+      } else if ("--apikey".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        apikey = args[pos];
       } else if ("--stream".equals(arg)) {
         if (++pos >= args.length) usage(true);
         destination = args[pos];
@@ -347,6 +354,9 @@ public class StreamClient {
 
       }
       post.setEntity(new ByteArrayEntity(binaryBody));
+      if (apikey != null) {
+        post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      }
       // post is now fully constructed, ready to send
 
       // prepare for HTTP
@@ -408,6 +418,9 @@ public class StreamClient {
         // prepare for HTTP
         HttpClient client = new DefaultHttpClient();
         HttpGet get = new HttpGet(requestUrl + "?q=newConsumer");
+        if (apikey != null) {
+          get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
         HttpResponse response;
         try {
           response = client.execute(get);
@@ -451,6 +464,9 @@ public class StreamClient {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(requestUrl + "?q=newConsumer");
+    if (apikey != null) {
+      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+    }
     HttpResponse response;
     try {
       response = client.execute(get);
@@ -481,6 +497,9 @@ public class StreamClient {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(requestUrl);
+    if (apikey != null) {
+      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+    }
     HttpResponse response;
     try {
       response = client.execute(get);
@@ -536,6 +555,9 @@ public class StreamClient {
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(uri);
     get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer);
+    if (apikey != null) {
+      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+    }
     HttpResponse response;
     try {
       response = client.execute(get);

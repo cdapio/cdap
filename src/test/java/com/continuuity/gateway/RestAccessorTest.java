@@ -22,6 +22,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.accessor.DataRestAccessor;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
@@ -88,6 +89,7 @@ public class RestAccessorTest {
     // bring up a new accessor
     DataRestAccessor restAccessor = new DataRestAccessor();
     restAccessor.setName(name);
+    restAccessor.setAuthenticator(new NoAuthenticator());
     // find a free port
     int port = PortDetector.findFreePort();
     // configure it
@@ -113,6 +115,7 @@ public class RestAccessorTest {
     // bring up a new collector
     RestCollector restCollector = new RestCollector();
     restCollector.setName(name);
+    restCollector.setAuthenticator(new NoAuthenticator());
     // find a free port
     int port = PortDetector.findFreePort();
     // configure it

@@ -4,23 +4,27 @@
 
 package com.continuuity.gateway.collector;
 
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.flow.flowlet.internal.EventBuilder;
-import com.continuuity.gateway.Collector;
-import com.continuuity.gateway.Constants;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.flow.flowlet.internal.EventBuilder;
+import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 
 /**
  * /**
@@ -78,6 +82,11 @@ class FlumeAdapter implements AvroSourceProtocol {
         this.metrics, this.collector.getMetricsQualifier(), "append");
     LOG.trace("Received event: " + event);
     try {
+      // perform authentication of request
+      if (!collector.getAuthenticator().authenticateRequest(event)) {
+        helper.finish(Error);
+        return Status.FAILED;
+      }
       this.collector.getConsumer().consumeEvent(
           convertFlume2Event(event, helper));
       helper.finish(MetricsHelper.Status.Success);
@@ -96,6 +105,11 @@ class FlumeAdapter implements AvroSourceProtocol {
         this.metrics, this.collector.getMetricsQualifier(), "batch");
     LOG.trace("Received batch: " + events);
     try {
+      // perform authentication of request
+      if (!collector.getAuthenticator().authenticateRequest(events.get(0))) {
+        helper.finish(Error);
+        return Status.FAILED;
+      }
       this.collector.getConsumer().consumeEvents(
           convertFlume2Event(events, helper));
       helper.finish(Success);
@@ -122,6 +136,9 @@ class FlumeAdapter implements AvroSourceProtocol {
     EventBuilder builder = new EventBuilder();
     builder.setBody(flumeEvent.getBody().array());
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
+      String headerKey = header.toString();
+      if (headerKey.equals(GatewayAuthenticator.CONTINUUITY_API_KEY))
+        continue;
       builder.setHeader(header.toString(),
           flumeEvent.getHeaders().get(header).toString());
     }

@@ -13,6 +13,7 @@ import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.*;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -96,10 +96,10 @@ public class RestHandler extends NettyRestHandler {
    * @return the name to use for the header if it is preserved, null otherwise.
    */
   private String isPreservedHeader(String destinationPrefix, String name) {
-    if (Constants.HEADER_CLIENT_TOKEN.equals(name))
-      return name;
     if (name.startsWith(destinationPrefix))
       return name.substring(destinationPrefix.length());
+    if (name.equals(GatewayAuthenticator.CONTINUUITY_API_KEY))
+      return name;
     return null;
   }
 
@@ -135,6 +135,15 @@ public class RestHandler extends NettyRestHandler {
       // we do not support a query or parameters in the URL
       QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
       Map<String, List<String>> parameters = decoder.getParameters();
+
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!collector.getAuthenticator().authenticateRequest(request)) {
+        LOG.info("Received an unauthorized request");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
+        return;
+      }
 
       int operation = UNKNOWN;
       if (method == HttpMethod.POST) {

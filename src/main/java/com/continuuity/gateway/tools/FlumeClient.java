@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
@@ -45,6 +46,7 @@ public class FlumeClient {
   int port = -1;                 // the Flume port of the gateway
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the flume collector
+  String apikey = null;          // the api key for authentication
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
@@ -69,7 +71,9 @@ public class FlumeClient {
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      " +
-        "To specify the name of the flume` collector");
+        "To specify the name of the flume collector");
+    out.println("  --apikey <apikey>       " +
+        "To specify an API key for authentication");
     out.println("  --stream <name>         " +
         "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
@@ -124,6 +128,9 @@ public class FlumeClient {
       } else if ("--connector".equals(arg)) {
         if (++pos >= args.length) usage(true);
         connector = args[pos];
+      } else if ("--apikey".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        apikey = args[pos];
       } else if ("--stream".equals(arg)) {
         if (++pos >= args.length) usage(true);
         destination = args[pos];
@@ -246,6 +253,10 @@ public class FlumeClient {
     event.getHeaders().put(Constants.HEADER_DESTINATION_STREAM, destination);
     for (String header : headers.keySet()) {
       event.getHeaders().put(header, headers.get(header));
+    }
+    // add apikey if specified
+    if (apikey != null) {
+      event.getHeaders().put(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
 
     // event is now fully constructed, ready to send

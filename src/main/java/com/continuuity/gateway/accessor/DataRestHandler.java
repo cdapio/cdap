@@ -122,6 +122,14 @@ public class DataRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       List<String> clearParams = null;
       int operation = UNKNOWN;
+      
+      // if authentication is enabled, verify an authentication token has been
+      // passed and then verify the token is valid
+      if (!accessor.getAuthenticator().authenticateRequest(request)) {
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
+        return;
+      }
       if (method == HttpMethod.PUT) {
         operation = WRITE;
         helper.setMethod("write");

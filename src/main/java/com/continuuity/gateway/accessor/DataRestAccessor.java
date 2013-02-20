@@ -1,10 +1,8 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Accessor;
-import com.continuuity.gateway.util.NettyRequestHandlerFactory;
-import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.NettyHttpPipelineFactory;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -12,8 +10,11 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.util.HttpConfig;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
+import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 
 /**
  * This is the Rest accessor for the data fabric. For now it only support GETs

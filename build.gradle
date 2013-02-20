@@ -8,6 +8,7 @@ tasks.withType(Compile) {
 
 dependencies {
   compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")

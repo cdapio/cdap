@@ -4,14 +4,14 @@
 
 package com.continuuity.gateway;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.conf.CConfiguration;
 
 /**
  * The consumer is responsible for the actual ingestion of an event
@@ -110,8 +110,7 @@ public abstract class Consumer {
    *
    * @param configuration The configuration that has all the options
    */
-  public void configure(@SuppressWarnings("unused")
-                        CConfiguration configuration) {
+  public void configure(CConfiguration configuration) {
   }
 
   /**

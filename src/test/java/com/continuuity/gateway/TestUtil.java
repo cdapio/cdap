@@ -20,6 +20,8 @@ import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventSerializer;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -53,6 +55,16 @@ public class TestUtil {
 
   static final OperationContext context = OperationContext.DEFAULT;
 
+  private static String apiKey = null;
+
+  static void enableAuth(String apiKey) {
+    TestUtil.apiKey = apiKey;
+  }
+
+  static void disableAuth() {
+    TestUtil.apiKey = null;
+  }
+
   /**
    * Creates a string containing a number
    *
@@ -81,6 +93,11 @@ public class TestUtil {
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("messageNumber", Integer.toString(i));
     headers.put(Constants.HEADER_DESTINATION_STREAM, dest);
+    if (TestUtil.apiKey != null) {
+      headers.put(GatewayAuthenticator.CONTINUUITY_API_KEY,
+          TestUtil.apiKey);
+      LOG.warn("Set the API key on the flume event: " + apiKey);
+    }
     event.setHeaders(headers);
     event.setBody(createMessage(i));
     return event;
@@ -439,10 +456,17 @@ public class TestUtil {
 
     // and issue a GET request to the server
     HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(new HttpGet(getUrl));
+    HttpGet get = new HttpGet(getUrl);
+    if (TestUtil.apiKey != null) {
+      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
+          TestUtil.apiKey);
+    }
+    HttpResponse response = client.execute(get);
     client.getConnectionManager().shutdown();
 
-    // verify the response is ok
+    // verify the response is ok, throw exception if 403
+    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode())
+      throw new SecurityException("Authentication failed, access denied");
     Assert.assertEquals(HttpStatus.SC_OK,
         response.getStatusLine().getStatusCode());
 
@@ -538,11 +562,17 @@ public class TestUtil {
     // and issue a PUT request to the server
     HttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(putUrl);
+    if (TestUtil.apiKey != null) {
+      put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
+          TestUtil.apiKey);
+    }
     put.setEntity(new ByteArrayEntity(value));
     HttpResponse response = client.execute(put);
     client.getConnectionManager().shutdown();
 
-    // verify the response is ok
+    // verify the response is ok, throw exception if 403
+    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode())
+      throw new SecurityException("Authentication failed, access denied");
     Assert.assertEquals(HttpStatus.SC_OK,
         response.getStatusLine().getStatusCode());
 
