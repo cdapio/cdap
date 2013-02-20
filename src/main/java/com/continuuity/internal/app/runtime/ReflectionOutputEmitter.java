@@ -66,6 +66,6 @@ public final class ReflectionOutputEmitter implements OutputEmitter<Object>, Out
   public void submit(TransactionAgent agent) throws OperationException {
     List<EmittedDatum> outputs = Lists.newArrayListWithExpectedSize(dataQueue.size());
     dataQueue.drainTo(outputs);
-    agent.submit(ImmutableList.copyOf(Iterables.transform(dataQueue, DATUM_TO_WRITE_OP)));
+    agent.submit(ImmutableList.copyOf(Iterables.transform(outputs, DATUM_TO_WRITE_OP)));
   }
 }

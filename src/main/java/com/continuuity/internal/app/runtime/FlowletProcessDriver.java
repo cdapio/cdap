@@ -164,9 +164,6 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
           if (input.isEmpty()) {
-
-            LOGGER.info("Input is empty.");
-
             entry.backOff();
             continue;
           }
@@ -175,9 +172,6 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           try {
             // Call the process method and commit the transaction
             ProcessMethod processMethod = entry.processSpec.getProcessMethod();
-
-            LOGGER.info("Invoke " + processMethod);
-
             processMethod.invoke(input)
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
