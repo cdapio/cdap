@@ -11,6 +11,7 @@ import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -84,6 +85,9 @@ public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
         database.close();
         database = null;
       }
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     } finally {
       database = null;
     }
