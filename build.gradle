@@ -17,6 +17,7 @@ dependencies {
     compile libraries.logback_core
     compile libraries.logback_classic
     compile libraries.google_guice
+    compile libraries.leveldb
 
     testCompile libraries.mockito_core
     testCompile libraries.junit
@@ -31,8 +32,6 @@ dependencies {
 
     testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
     testCompile libraries.hadoop_minicluster
-
-    compile 'org.fusesource.leveldbjni:leveldbjni-all:1.5'
 }
 
 sourceSets{
