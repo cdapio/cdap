@@ -33,10 +33,10 @@ dependencies {
     compile libraries.mina_core
     compile libraries.mina_jmx
     compile libraries.http_client
+    compile libraries.leveldb
 
     // Possible removal.
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
-    compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.1'
 
     // Needed for compiling thrift
     thriftCompile libraries.thrift
