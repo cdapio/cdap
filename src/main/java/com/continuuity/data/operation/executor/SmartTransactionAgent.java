@@ -34,7 +34,6 @@ import java.util.Map;
  * it is a read operation. After a failure, no more operations may be submitted.
  *
  * This class is not thread-safe - any synchronization is up to the caller.
- *
  */
 public class SmartTransactionAgent implements TransactionAgent {
 
