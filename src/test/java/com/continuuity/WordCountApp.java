@@ -88,12 +88,12 @@ public class WordCountApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
-        .withFlowlets().add(new StreamSucker()).apply()
-                       .add(new Tokenizer()).apply()
-                       .add(new CountByField()).apply()
-        .connect().from(new Stream("text")).to(new StreamSucker())
-                  .from(new StreamSucker()).to(new Tokenizer())
-                  .from(new Tokenizer()).to(new CountByField())
+        .withFlowlets().add("StreamSource", new StreamSucker())
+                       .add(new Tokenizer())
+                       .add(new CountByField())
+        .connect().fromStream("text").to("StreamSource")
+                  .from("StreamSource").to("Tokenizer")
+                  .from("Tokenizer").to("CountByField")
         .build();
     }
   }

@@ -44,7 +44,6 @@ public final class FlowletDefinition {
 
   private final FlowletSpecification flowletSpec;
   private final int instances;
-  private final ResourceSpecification resourceSpec;
   private final Set<String> datasets;
 
   private final transient Map<String, Set<Type>> inputTypes;
@@ -52,10 +51,15 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
-    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(), flowlet.configure());
+  FlowletDefinition(String name, Flowlet flowlet, int instances) {
+    FlowletSpecification flowletSpec = flowlet.configure();
+    if (name != null && !name.equals(flowletSpec.getName())) {
+      flowletSpec = new DefaultFlowletSpecification(name, flowletSpec.getDescription(),
+                                                    flowletSpec.getFailurePolicy(), flowletSpec.getDataSets());
+    }
+
+    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(), flowletSpec);
     this.instances = instances;
-    this.resourceSpec = resourceSpec;
 
     Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
@@ -83,13 +87,6 @@ public final class FlowletDefinition {
    */
   public int getInstances() {
     return instances;
-  }
-
-  /**
-   * @return Specification for resource.
-   */
-  public ResourceSpecification getResourceSpec() {
-    return resourceSpec;
   }
 
   /**
