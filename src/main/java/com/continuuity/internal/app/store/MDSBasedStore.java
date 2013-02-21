@@ -249,7 +249,7 @@ public class MDSBasedStore implements Store {
   public void remove(Id.Program id) throws OperationException {
     LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(), id.getId());
     ApplicationSpecification appSpec = getAppSpecSafely(id);
-    ApplicationSpecification newAppSpec = removeFlowFromAppSpec(appSpec, id);
+    ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
     addApplication(id.getApplication(), newAppSpec);
 
     try {
@@ -354,14 +354,22 @@ public class MDSBasedStore implements Store {
     };
   }
 
-  private ApplicationSpecification removeFlowFromAppSpec(final ApplicationSpecification appSpec,
-                                                           final Id.Program id) {
+  private ApplicationSpecification removeProgramFromAppSpec(final ApplicationSpecification appSpec, final Id.Program id) {
+    // we try to remove from both procedures and flows as both of them are "programs"
+    // this somewhat ugly api dictated by old UI
     return new ForwardingApplicationSpecification(appSpec) {
       @Override
       public Map<String, FlowSpecification> getFlows() {
         Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
         flows.remove(id.getId());
         return flows;
+      }
+
+      @Override
+      public Map<String, ProcedureSpecification> getProcedures() {
+        Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
+        procedures.remove(id.getId());
+        return procedures;
       }
     };
   }
