@@ -411,4 +411,28 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
   }
 
+  @Test
+  public void testRemoveAll() throws Exception {
+    ApplicationSpecification spec = new WordCountApp().configure();
+    Id.Account accountId = new Id.Account("account1");
+    Id.Application appId = new Id.Application(accountId, "application1");
+    store.addApplication(appId, spec);
+
+    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
+    Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
+
+    // removing flow
+    store.removeAll(accountId);
+
+    Assert.assertNull(store.getApplication(appId));
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    // Streams and DataSets should survive deletion
+    Assert.assertEquals(0, metadataService.getStreams(new Account("account1")).size());
+    Assert.assertEquals(0, metadataService.getDatasets(new Account("account1")).size());
+  }
+
 }

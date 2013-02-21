@@ -26,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,7 +256,7 @@ public class MDSBasedStore implements Store {
   @Override
   public void removeAllApplications(Id.Account id) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
-    LOG.trace("Removing all programs of application with id: {}", id.getId());
+    LOG.trace("Removing all applications of account with id: {}", id.getId());
     List<MetaDataEntry> applications =
       metaDataStore.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
 
@@ -266,6 +267,27 @@ public class MDSBasedStore implements Store {
       removeAllFlowsFromMetadataStore(id, appSpec);
       removeAllProceduresFromMetadataStore(id, appSpec);
       metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
+    }
+  }
+
+  @Override
+  public void removeAll(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    LOG.trace("Removing all metadata of account with id: {}", id.getId());
+    List<MetaDataEntry> applications =
+      metaDataStore.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+
+    // removing apps
+    for (MetaDataEntry entry : applications) {
+      metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
+    }
+
+    try {
+      metadataServiceHelper.deleteAll(id);
+    } catch (TException e) {
+      throw Throwables.propagate(e);
+    } catch (MetadataServiceException e) {
+      throw Throwables.propagate(e);
     }
   }
 

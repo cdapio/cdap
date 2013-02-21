@@ -231,4 +231,8 @@ class MetadataServiceHelper {
     }
 
   }
+
+  public void deleteAll(Id.Account id) throws TException, MetadataServiceException {
+    metaDataService.deleteAll(id.getId());
+  }
 }

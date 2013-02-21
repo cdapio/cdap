@@ -563,17 +563,13 @@ public class AppFabricServer implements AppFabricService.Iface {
   public void reset(AuthToken token, String account) throws AppFabricServiceException {
     Preconditions.checkNotNull(account);
 
-    deleteMetrics(account);
-    // delete all meta data
     try {
-      mds.deleteAll(account);
-    } catch (Exception e) {
-      String message = String.format("Error deleting all meta data for " +
-                                       "account '%s': %s. At %s", account, e.getMessage(),
-                                     StackTraceUtil.toStringStackTrace(e));
-      LOG.error(message);
-      throw new AppFabricServiceException(message);
+      store.removeAll(new Id.Account(account));
+    } catch (OperationException e) {
+      throw new AppFabricServiceException("Unable to remove programs, accountId: " + account + e.getMessage());
     }
+
+    deleteMetrics(account);
 
     // wipe the data fabric
     try {

@@ -92,4 +92,10 @@ public interface Store {
    * @param id account id whose applications to remove
    */
   void removeAllApplications(Id.Account id) throws OperationException;
+
+  /**
+   * Remove all metadata associated with account
+   * @param id account id whose items to remove
+   */
+  void removeAll(Id.Account id) throws OperationException;
 }
