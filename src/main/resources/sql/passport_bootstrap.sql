@@ -21,7 +21,7 @@ CREATE  TABLE IF NOT EXISTS `passport`.`account` (
   `locked` TINYINT(1) NULL DEFAULT NULL ,
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
   `account_created_at` DATETIME NOT NULL,
-  `dev_suite_downloaded_at` DATETIME NOT NULL,
+  `dev_suite_downloaded_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`) ,
   UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
 ENGINE = InnoDB
