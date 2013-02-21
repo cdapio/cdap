@@ -15,7 +15,8 @@ import com.continuuity.api.data.stream.Stream;
 public class DumbProgrammerApp implements Application {
 
   /**
-   * Configures the {@link com.continuuity.api.Application} by returning an {@link com.continuuity.api.ApplicationSpecification}
+   * Configures the {@link com.continuuity.api.Application} by
+   * returning an {@link com.continuuity.api.ApplicationSpecification}
    *
    * @return An instance of {@code ApplicationSpecification}.
    */

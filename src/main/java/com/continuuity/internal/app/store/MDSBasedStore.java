@@ -335,7 +335,8 @@ public class MDSBasedStore implements Store {
     });
   }
 
-  private ApplicationSpecification replaceFlowInAppSpec(final ApplicationSpecification appSpec, final Id.Program id, final FlowSpecification newFlowSpec) {
+  private ApplicationSpecification replaceFlowInAppSpec(final ApplicationSpecification appSpec, final Id.Program id,
+                                                        final FlowSpecification newFlowSpec) {
     // as app spec is immutable we have to do this trick
     return new ForwardingApplicationSpecification(appSpec) {
       @Override
@@ -362,7 +363,6 @@ public class MDSBasedStore implements Store {
   @Override
   public ApplicationSpecification getApplication(final Id.Application id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
-
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 

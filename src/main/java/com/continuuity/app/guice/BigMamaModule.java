@@ -8,7 +8,8 @@ import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.services.AppFabricServerFactory;
+import com.continuuity.app.services.AppFabricServiceFactory;
+import com.continuuity.app.services.ServerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
@@ -17,7 +18,8 @@ import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.runtime.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.internal.app.services.InMemoryAppFabricServerFactory;
+import com.continuuity.internal.app.services.AppFabricServerFactory;
+import com.continuuity.internal.app.services.SimpleAppFabricServiceFactory;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -42,7 +44,7 @@ public class BigMamaModule extends AbstractModule {
   protected void configure() {
     bind(ProgramRunnerFactory.class).to(InMemoryProgramRunnerFactory.class);
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
-    bind(AppFabricServerFactory.class).to(InMemoryAppFabricServerFactory.class);
+    bind(AppFabricServiceFactory.class).to(SimpleAppFabricServiceFactory.class);
     bind(LocationFactory.class).to(LocalLocationFactory.class);
     bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
     bind(ManagerFactory.class).to(SyncManagerFactory.class);
@@ -50,6 +52,8 @@ public class BigMamaModule extends AbstractModule {
     bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
     bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
     bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+    bind(AppFabricServiceFactory.class).to(SimpleAppFabricServiceFactory.class);
+    bind(ServerFactory.class).to(AppFabricServerFactory.class);
   }
 
   @Singleton

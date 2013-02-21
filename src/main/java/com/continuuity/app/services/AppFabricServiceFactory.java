@@ -9,7 +9,7 @@ import com.continuuity.common.conf.CConfiguration;
 /**
  * An interface defines away to create a Server factory.
  */
-public interface AppFabricServerFactory {
+public interface AppFabricServiceFactory {
   /**
    * Creates an instance of {@link AppFabricService.Iface}.
    *

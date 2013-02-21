@@ -4,7 +4,7 @@ import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
-import com.continuuity.app.guice.FlowRuntimeModule;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -37,7 +37,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +49,11 @@ public class FlowTest {
   @Test
   public void testFlow() throws Exception {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp");
-    configuration.set("app.output.dir", "/tmp/" + UUID.randomUUID());
+    configuration.set("app.temp.dir", "/tmp/app/temp");
+    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new FlowRuntimeModule(),
+                                             new BigMamaModule(),
                                              new AbstractModule() {
                                                @Override
                                                protected void configure() {
@@ -67,6 +66,7 @@ public class FlowTest {
     Location deployedJar = lf.create(
       JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(WordCountApp.class))
     );
+    deployedJar.deleteOnExit();
 
     ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
     final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();

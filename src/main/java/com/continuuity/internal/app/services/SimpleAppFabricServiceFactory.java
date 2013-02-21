@@ -6,7 +6,7 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.services.AppFabricServerFactory;
+import com.continuuity.app.services.AppFabricServiceFactory;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -15,13 +15,13 @@ import com.continuuity.filesystem.LocationFactory;
 import com.google.inject.Inject;
 
 /**
- * An concrete implementation of simple {@link com.continuuity.app.services.AppFabricServerFactory}.
+ * An concrete implementation of simple {@link com.continuuity.app.services.AppFabricServiceFactory}.
  * <p>
  *   This implementation creates the default version of the server used
  *   for deployment of archives and management of those.
  * </p>
  */
-public class InMemoryAppFabricServerFactory implements AppFabricServerFactory {
+public class SimpleAppFabricServiceFactory implements AppFabricServiceFactory {
   private final OperationExecutor opex;
   private final LocationFactory lFactory;
   private final ManagerFactory mFactory;
@@ -29,8 +29,8 @@ public class InMemoryAppFabricServerFactory implements AppFabricServerFactory {
   private final StoreFactory sFactory;
 
   @Inject
-  public InMemoryAppFabricServerFactory(OperationExecutor opex, LocationFactory lFactory, ManagerFactory mFactory,
-                                        AuthorizationFactory aFactory, StoreFactory sFactory) {
+  public SimpleAppFabricServiceFactory(OperationExecutor opex, LocationFactory lFactory, ManagerFactory mFactory,
+                                       AuthorizationFactory aFactory, StoreFactory sFactory) {
     this.opex = opex;
     this.lFactory = lFactory;
     this.mFactory = mFactory;
@@ -40,6 +40,6 @@ public class InMemoryAppFabricServerFactory implements AppFabricServerFactory {
 
   @Override
   public AppFabricService.Iface create(CConfiguration configuration) {
-    return new AppFabricServer(configuration, opex, lFactory, mFactory, aFactory, sFactory);
+    return new DefaultAppFabricService(configuration, opex, lFactory, mFactory, aFactory, sFactory);
   }
 }
