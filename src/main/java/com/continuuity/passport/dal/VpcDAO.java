@@ -17,19 +17,18 @@ import java.util.List;
 public interface VpcDAO {
 
   public VPC addVPC(int accountId, VPC vpc)
-    throws ConfigurationException, RuntimeException;
+    throws ConfigurationException;
 
   public void removeVPC(int accountId, int vpcId)
-    throws ConfigurationException, RuntimeException, VPCNotFoundException;
+    throws ConfigurationException, VPCNotFoundException;
 
   public boolean addRoles(int accountId, int vpcId, int userId, Role role, String overrides)
-    throws ConfigurationException, RuntimeException;
+    throws ConfigurationException;
 
-  public List<VPC> getVPC(int accountId) throws RuntimeException, ConfigurationException;
+  public List<VPC> getVPC(int accountId) throws ConfigurationException;
 
-  public VPC getVPC(int accountId, int vpcId) throws RuntimeException, ConfigurationException;
+  public VPC getVPC(int accountId, int vpcId) throws ConfigurationException;
 
-
-  public List<VPC> getVPC(String apiKey) throws RuntimeException, ConfigurationException;
+  public List<VPC> getVPC(String apiKey) throws ConfigurationException;
 
 }

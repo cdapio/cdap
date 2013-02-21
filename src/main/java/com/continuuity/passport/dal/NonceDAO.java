@@ -27,7 +27,7 @@ public interface NonceDAO {
    * @return  random nonce
    * @throws RuntimeException on errors from underlying DAO
    */
-  public int getNonce(int id, NONCE_TYPE type) throws RuntimeException;
+  public int getNonce(int id, NONCE_TYPE type);
 
   /**
    * Get Id for nonce
@@ -37,5 +37,5 @@ public interface NonceDAO {
    * @throws RuntimeException on errors from underlying DAO
    * @throws StaleNonceException on time elapsed greater than expiration time set
    */
-  public int getId(int nonce, NONCE_TYPE type) throws RuntimeException, StaleNonceException;
+  public int getId(int nonce, NONCE_TYPE type) throws StaleNonceException;
 }
