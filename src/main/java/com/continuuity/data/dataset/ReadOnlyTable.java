@@ -72,7 +72,7 @@ public class ReadOnlyTable extends RuntimeTable {
     } else {
       // this is a column-range red
       ReadColumnRange op = new ReadColumnRange(
-        this.tableName(), read.getRow(), read.getStartCol(), read.getStopCol());
+        this.tableName(), read.getRow(), read.getStartCol(), read.getStopCol(), read.getLimit());
       if (this.proxy != null) {
         // new-style: use transaction agent
         return this.getTransactionAgent().execute(op);
