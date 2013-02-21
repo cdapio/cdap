@@ -8,6 +8,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
@@ -194,6 +195,8 @@ public class MDSBasedStore implements Store {
   public int incFlowletInstances(final Id.Program id, final String flowletId, int delta)
     throws OperationException {
 
+    LOG.trace("Increasing flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances to add: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, delta);
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
@@ -208,6 +211,8 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
     addApplication(id.getApplication(), newAppSpec);
+
+    LOG.trace("Increased flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, instances);
 
     return instances;
   }
@@ -235,6 +240,7 @@ public class MDSBasedStore implements Store {
 
   @Override
   public void remove(Id.Program id) throws OperationException {
+    LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(), id.getId());
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ApplicationSpecification newAppSpec = removeFlowFromAppSpec(appSpec, id);
     addApplication(id.getApplication(), newAppSpec);
@@ -243,6 +249,43 @@ public class MDSBasedStore implements Store {
       metadataServiceHelper.deleteFlow(id);
     } catch (MetadataServiceException e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void removeAllApplications(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    LOG.trace("Removing all programs of application with id: {}", id.getId());
+    List<MetaDataEntry> applications =
+      metaDataStore.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+
+    for (MetaDataEntry entry : applications) {
+      ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
+      removeAllFlowsFromMetadataStore(id, appSpec);
+      removeAllProceduresFromMetadataStore(id, appSpec);
+      metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
+    }
+  }
+
+  private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
+    for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
+      try {
+        metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
+      } catch (MetadataServiceException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  }
+
+  private void removeAllFlowsFromMetadataStore(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
+    for (FlowSpecification flow : appSpec.getFlows().values()) {
+      try {
+        metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), flow.getName()));
+      } catch (MetadataServiceException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 

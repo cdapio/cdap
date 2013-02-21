@@ -549,6 +549,14 @@ public class AppFabricServer implements AppFabricService.Iface {
   @Override
   public void removeAll(AuthToken token, String account) throws AppFabricServiceException {
     Preconditions.checkNotNull(token);
+
+    // TODO: make sure no programs are running
+
+    try {
+      store.removeAllApplications(new Id.Account(account));
+    } catch (OperationException e) {
+      throw new AppFabricServiceException("Unable to remove programs, accountId: " + account + e.getMessage());
+    }
   }
 
   @Override

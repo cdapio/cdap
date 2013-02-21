@@ -83,7 +83,13 @@ public interface Store {
 
   /**
    * Removes program data
-   * @param program program to remove
+   * @param id program to remove
    */
-  void remove(Id.Program program) throws OperationException;
+  void remove(Id.Program id) throws OperationException;
+
+  /**
+   * Removes all applications (with programs) of the given account
+   * @param id account id whose applications to remove
+   */
+  void removeAllApplications(Id.Account id) throws OperationException;
 }

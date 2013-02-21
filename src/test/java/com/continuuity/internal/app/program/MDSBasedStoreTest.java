@@ -359,6 +359,9 @@ public class MDSBasedStoreTest {
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(id, spec);
 
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+
     // removing flow
     store.remove(new Id.Program(id, "WordCountFlow"));
 
@@ -371,7 +374,41 @@ public class MDSBasedStoreTest {
     // do we need to check that streams and datasets were not removed?
     Assert.assertNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
 
-    // TODO: test deletion of query
+    // removing query
+    store.remove(new Id.Program(id, "WordFrequency"));
+
+    updated = store.getApplication(id);
+
+    // checking that query was removed
+    Assert.assertEquals(0, updated.getProcedures().size());
+
+    // checking that it was removed from metadatastore too
+    // do we need to check that streams and datasets were not removed?
+    Assert.assertNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+  }
+
+  @Test
+  public void testRemoveAllApplications() throws Exception {
+    ApplicationSpecification spec = new WordCountApp().configure();
+    Id.Account accountId = new Id.Account("account1");
+    Id.Application appId = new Id.Application(accountId, "application1");
+    store.addApplication(appId, spec);
+
+    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
+    Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
+
+    // removing flow
+    store.removeAllApplications(accountId);
+
+    Assert.assertNull(store.getApplication(appId));
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    // Streams and DataSets should survive deletion
+    Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
+    Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
   }
 
 }
