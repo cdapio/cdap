@@ -6,8 +6,11 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
 
 /**
  * This class builds an http pipeline for Netty. Note that all of our Http
@@ -64,6 +67,9 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
 
     // SSL is not yet implemented but this is where we would insert it
     if (this.config.isSsl()) {
+      SSLEngine engine =  SecureSSLContextFactory.getServerContext().createSSLEngine();
+      engine.setUseClientMode(false);
+      pipeline.addLast("ssl", new SslHandler(engine));
       // SSLEngine engine = ...
       // engine.setUseClientMode(false);
       // pipeline.addLast("ssl", new SslHandler(engine));
