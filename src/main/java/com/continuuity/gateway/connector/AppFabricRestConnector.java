@@ -1,4 +1,4 @@
-package com.continuuity.gateway.accessor;
+package com.continuuity.gateway.connector;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Connector;
@@ -16,9 +16,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 /**
- * This is the Rest accessor for the data fabric. For now it only support GETs
- * of values by key, but eventually it will expose more opretaions such as puts
- * and deletes, retrieve by secondary key etc.
+ * This is the Rest collector for the app fabric. For now it only supports deployment
+ * of applications.
  */
 public class AppFabricRestConnector extends Connector implements NettyRequestHandlerFactory {
 
@@ -28,7 +27,7 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("accessor.rest")
+      new HttpConfig("collector.rest")
           //Todo: Find out which port should be used for AppFabric Http service, using 10007 for now
           .setPort(10007)
           //Todo: Which path should be used?
@@ -65,21 +64,6 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
     return new AppFabricRestHandler(this);
   }
 
-//  private static class ServerPipelineFactory implements ChannelPipelineFactory {
-//
-//    @Override
-//    public ChannelPipeline getPipeline() throws Exception {
-//      ChannelPipeline pipeline = Channels.pipeline();
-//
-//      pipeline.addLast("decoder", new HttpRequestDecoder());
-//      pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
-//      pipeline.addLast("encoder", new HttpResponseEncoder());
-//      pipeline.addLast("handler", new TestRequestHandler());
-//      pipeline.addLast("handler", new NettyHttpPipelineFactory(this.httpConfig, this)());
-//
-//      return pipeline;
-//    }
-
   @Override
   public void start() throws Exception {
     LOG.info("Starting up " + this);
@@ -101,7 +85,7 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
       this.serverChannel = bootstrap.bind(address);
       // server is now running
     } catch (Exception e) {
-      LOG.error("Failed to startup accessor '" + this.getName()
+      LOG.error("Failed to startup collector '" + this.getName()
           + "' at " + this.httpConfig.getBaseUrl() + ".");
       throw e;
     }
