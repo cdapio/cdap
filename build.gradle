@@ -14,36 +14,30 @@ smartyFacts {
  * Specify all the dependencies
  */
 dependencies {
-
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    // Self dependencies.
+    compile apiJar.outputs.files
 
-    apiCompile libraries.http_client
+    apiCompile libraries.apache_http_client
     apiCompile libraries.apache_commons_io
+
     apiCompile libraries.google_gson
     apiCompile libraries.google_guava
 
-    //TODO: Move this to central dependency
-
-    apiCompile "org.apache.httpcomponents:httpclient:4.1.2"
-
-    // Self dependencies.
-    compile apiJar.outputs.files
     compile libraries.mysql
+
     compile libraries.google_guice
     compile libraries.google_guice_multibindings
     compile libraries.google_guice_assistedinject
-    compile libraries.http_client
-    compile libraries.apache_commons_io
 
+    compile libraries.shiro_core
 
-    compile "com.yammer.metrics:metrics-core:2.2.0"
+    compile libraries.yammer_metrics
 
-    //TODO: Move this to central dependency
-    compile 'org.apache.shiro:shiro-core:1.2.1'
     compile libraries.jetty
-    compile 'jetty:jetty-management:6.0.0'
-    testCompile libraries.junit
-    testCompile 'org.hsqldb:hsqldb:2.2.6' //TODO: Move this to central dependency
+    compile libraries.jetty_management
 
+    testCompile libraries.junit
+    testCompile libraries.hsql
 }
 
