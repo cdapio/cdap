@@ -1,14 +1,13 @@
 package com.continuuity.gateway.auth;
 
-import java.util.List;
-import java.util.Map;
-
+import com.continuuity.passport.http.client.PassportClient;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.passport.http.client.PassportClient;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Authenticator that uses a PassportClient to verify that requests using a
@@ -25,11 +24,14 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   private final PassportClient passportClient;
 
-  public PassportVPCAuthenticator(String clusterName, String passportHostname,
+  private final int passportPort;
+
+  public PassportVPCAuthenticator(String clusterName, String passportHostname, int passportPort,
       PassportClient passportClient) {
     this.clusterName = clusterName;
     this.passportHostname = passportHostname;
     this.passportClient = passportClient;
+    this.passportPort = passportPort;
   }
 
   @Override
@@ -60,7 +62,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   private boolean authenticate(String apiKey) {
     try {
       List<String> authorizedClusters =
-          this.passportClient.getVPCList(this.passportHostname, apiKey);
+          this.passportClient.getVPCList(this.passportHostname, this.passportPort, apiKey);
       if (authorizedClusters == null || authorizedClusters.isEmpty())
         return false;
       for (String authorizedCluster : authorizedClusters) {

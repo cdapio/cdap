@@ -9,6 +9,7 @@ import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -301,10 +302,11 @@ public class Gateway implements Server {
       }
       // Get the hostname for the passport service from config for now
       // TODO: Use constant from passport once committed
-      String passportHostname = myConfiguration.get("passport.hostname",
+      String passportHostname = myConfiguration.get(PassportConstants.CFG_PASSPORT_SERVER_ADDRESS_KEY,
           "localhost");
+      int passportPort = myConfiguration.getInt(PassportConstants.CFG_PASSPORT_SERVER_PORT_KEY, 7777);
       this.authenticator = new PassportVPCAuthenticator(this.clusterName,
-          passportHostname, this.passportClient);
+          passportHostname, passportPort, this.passportClient);
     } else {
       this.authenticator = new NoAuthenticator();
     }
