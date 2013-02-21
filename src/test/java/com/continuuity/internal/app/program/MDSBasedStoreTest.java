@@ -4,6 +4,8 @@
 
 package com.continuuity.internal.app.program;
 
+import com.continuuity.TestHelper;
+import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
@@ -19,8 +21,13 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
+import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
+import com.continuuity.app.program.Type;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -50,12 +57,18 @@ import java.util.List;
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
   private MetadataService.Iface metadataService;
+  private static CConfiguration configuration;
+
+  static {
+    configuration = CConfiguration.create();
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
+  }
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new StoreModule4Test());
+                                                   new BigMamaModule(configuration));
 
     metadataService = injector.getInstance(MetadataService.Iface.class);
     store = injector.getInstance(MDSBasedStore.class);
@@ -77,6 +90,13 @@ public class MDSBasedStoreTest {
 
     MDSBasedStore store = injector.getInstance(MDSBasedStore.class);
     Assert.assertNotNull(store.getMetaDataService());
+  }
+
+  @Test
+  public void testLoadingProgram() throws Exception {
+    TestHelper.deployApplication(ToyApp.class);
+    Program program = store.loadProgram(Id.Program.from("demo", "ToyApp", "ToyFlow"), Type.FLOW);
+    Assert.assertNotNull(program);
   }
 
   @Test

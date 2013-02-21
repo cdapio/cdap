@@ -179,7 +179,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
-
     return null;
   }
 
