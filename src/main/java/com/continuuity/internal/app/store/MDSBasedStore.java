@@ -329,7 +329,7 @@ public class MDSBasedStore implements Store {
       @Override
       public Map<String, FlowletDefinition> getFlowlets() {
         Map<String, FlowletDefinition> flowlets = Maps.newHashMap(super.getFlowlets());
-        flowlets.put(id.getId(), adjustedFlowletDef);
+        flowlets.put(adjustedFlowletDef.getFlowletSpec().getName(), adjustedFlowletDef);
         return flowlets;
       }
     });
