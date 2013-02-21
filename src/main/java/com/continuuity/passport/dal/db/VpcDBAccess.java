@@ -1,9 +1,15 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -44,12 +50,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet result = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
+    Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
+
     try {
       connection = this.poolManager.getConnection();
-
       String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?,?,?,?)",
         DBUtils.VPC.TABLE_NAME,
         DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
@@ -72,8 +76,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       result.next();
       return new VPC(result.getInt(1), vpc.getVpcName(), vpc.getVpcLabel());
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, result);
     }
@@ -106,8 +109,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       }
 
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -172,13 +174,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.setInt(1, accountId);
       rs = ps.executeQuery();
 
-
       while (rs.next()) {
         VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
         vpcList.add(vpc);
-
       }
-
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
@@ -190,8 +189,6 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   @Override
   public VPC getVPC(int accountId, int vpcId) throws RuntimeException, ConfigurationException {
-
-
     VPC vpc = null;
     Connection connection = null;
     PreparedStatement ps = null;
@@ -213,11 +210,9 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.setInt(2, vpcId);
       rs = ps.executeQuery();
 
-
       while (rs.next()) {
         vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
       }
-
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
@@ -255,9 +250,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       while (rs.next()) {
         VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
         vpcList.add(vpc);
-
       }
-
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());

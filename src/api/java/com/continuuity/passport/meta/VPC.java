@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.meta;
 
 import com.google.gson.FieldNamingPolicy;
@@ -5,7 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- *
+ * TODO: Add a API getJSON() that returns JSONObject instead of toString override.
  */
 public class VPC {
 

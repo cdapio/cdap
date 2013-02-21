@@ -1,5 +1,10 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.http.handlers;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.google.inject.Inject;
@@ -29,7 +34,7 @@ public class VPCHandler  extends PassportHandler {
 
   @GET
   @Produces("application/json")
-  public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey) {
+  public Response getVPC(@HeaderParam(Constants.CONTINUUITY_API_KEY_HEADER) String apiKey) {
     try {
       requestReceived();
       List<VPC> vpcList = dataManagementService.getVPC(apiKey);

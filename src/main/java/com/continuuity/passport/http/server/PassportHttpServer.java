@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.http.server;
 
 
@@ -46,15 +50,13 @@ public class PassportHttpServer {
       server.setStopAtShutdown(true);
       server.setGracefulShutdown(gracefulShutdownTime);
 
-      System.out.println("Starting Server with params: ");
-      System.out.println(String.format("Port: %d",port));
-      System.out.println(String.format("MaxThreads: %d",maxThreads));
-      System.out.println(String.format("GracefulShutdownTime: %s", gracefulShutdownTime));
-      for(Map.Entry<String,String> entry : configuration.entrySet()){
-        System.out.println(String.format( "%s: %s",entry.getKey(), entry.getValue()));
-      }
-
-
+//      System.out.println("Starting Server with params: ");
+//      System.out.println(String.format("Port: %d",port));
+//      System.out.println(String.format("MaxThreads: %d",maxThreads));
+//      System.out.println(String.format("GracefulShutdownTime: %s", gracefulShutdownTime));
+//      for(Map.Entry<String,String> entry : configuration.entrySet()){
+//        System.out.println(String.format( "%s: %s",entry.getKey(), entry.getValue()));
+//      }
       Context context = new Context(server, "/", Context.SESSIONS);
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
       context.addServlet(DefaultServlet.class, "/");
@@ -84,6 +86,8 @@ public class PassportHttpServer {
     Map<String, String> config = new HashMap<String, String>();
 
     CConfiguration conf = CConfiguration.create();
+
+    //TODO: Remove this.
     conf.addResource("continuuity-passport.xml");
 
     String jdbcType = conf.get("passport.jdbc.type");

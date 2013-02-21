@@ -1,8 +1,14 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -26,8 +32,6 @@ import java.util.Set;
  * and authorizations
  */
 public class JDBCAuthrozingRealm extends AuthorizingRealm {
-
-
   private Map<String, String> configurations;
   private DBConnectionPoolManager poolManager = null;
 
@@ -60,11 +64,9 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     String jdbcType = this.configurations.get("jdbcType");
 
     if (jdbcType.toLowerCase().equals("mysql")) {
-
       MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-
     }
   }
 
@@ -79,9 +81,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
    */
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    if (principals == null) {
-      throw new AuthorizationException("PrincipalCollection argument cannot be null");
-    }
+    Preconditions.checkNotNull(principals);
 
     Connection connection  = null;
     PreparedStatement ps  = null;
@@ -91,32 +91,28 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     Set<String> roleNames = null;
     SimpleAuthorizationInfo info = null;
     try {
-       connection = this.poolManager.getConnection();
-
+      connection = this.poolManager.getConnection();
       String SQL = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+                                 //SELECT COLS
+                                 DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
+                                 DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
+                                 DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN,
 
-        //SELECT COLS
-        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
-        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
-        DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN,
+                                 //TABLE NAMES
+                                 DBUtils.AccountRoleType.TABLE_NAME, DBUtils.VPCRole.TABLE_NAME,
 
-        //TABLE NAMES
-        DBUtils.AccountRoleType.TABLE_NAME, DBUtils.VPCRole.TABLE_NAME,
+                                 //JOIN CONDITION
+                                 DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
+                                 DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
 
-        //JOIN CONDITION
-        DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
-        DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+                                 //WHERE CLAUSE
+                                 DBUtils.VPCRole.USER_ID_COLUMN);
 
-        //WHERE CLAUSE
-        DBUtils.VPCRole.USER_ID_COLUMN);
-
-
-       ps = connection.prepareStatement(SQL);
-       ps.setInt(1, accountId);
-       rs = ps.executeQuery();
+      ps = connection.prepareStatement(SQL);
+      ps.setInt(1, accountId);
+      rs = ps.executeQuery();
 
       while (rs.next()) {
-
         String roleName = rs.getString(1);
         String permissions = rs.getString(2);
         String overrides = rs.getString(3);
@@ -128,12 +124,10 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         roleNames.add(roleName);
       }
 
-
       info = new SimpleAuthorizationInfo(roleNames);
       info.setStringPermissions(rolePermissions);
-
     } catch (SQLException e) {
-      return null;
+      throw Throwables.propagate(e);
     }
     finally {
       try {
@@ -147,11 +141,9 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
           rs.close();
         }
       } catch (SQLException e) {
-        throw new RuntimeException(e.getMessage(), e.getCause());
+        throw Throwables.propagate(e);
       }
     }
-
-
     return info;
   }
 
@@ -172,7 +164,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
    *          realm-specific authentication logic for the specified <tt>token</tt>
    */
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
     UsernamePasswordApiKeyToken upToken = (UsernamePasswordApiKeyToken) token;
     String emailId = upToken.getUsername();
     String apiKey = upToken.getApiKey();
@@ -197,11 +189,9 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         ps.setString(1, emailId);
       }
 
-      if (ps == null) {
-        throw new AuthenticationException("ApiKey or emailId should be set.");
-      }
+      Preconditions.checkNotNull(ps,"ApiKey or emailId should be set.");
 
-       rs = ps.executeQuery();
+      rs = ps.executeQuery();
 
       int count = 0;
       String password = null;
@@ -215,34 +205,26 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         firstName = rs.getString(1);
         lastName = rs.getString(2);
         company = rs.getString(3);
-
         accountId = rs.getInt(4);
         password = rs.getString(5);
         apiToken = rs.getString(6);
         confirmed = rs.getBoolean(7);
         count++;
-        if (count > 1) {
-          // Note: This condition should never occur since ids are auto generated.
-          throw new RuntimeException("Multiple accounts with same account ID");
-        }
+        Preconditions.checkArgument(count > 1, "Multiple accounts with same account ID");
       }
 
-      if (password == null || password.isEmpty()) {
-        throw new RuntimeException(String.format("Password not found for %s in the data store", emailId));
-      }
-
+      Preconditions.checkNotNull(password, "Password not found for %s in the data store", emailId);
+      Preconditions.checkArgument(password.isEmpty(),"Password not found for %s in the data store", emailId);
       Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
       //if we are authenticating with API Key then existence of apiKey with a password is authenticating.
       // So set the password to a dummy password
       if (upToken.isUseApiKey()) {
         info = new SimpleAuthenticationInfo(account, UsernamePasswordApiKeyToken.DUMMY_PASSWORD, getName());
-      }
-      else {
+      } else {
         info = new SimpleAuthenticationInfo(account, password, getName());
-        }
-
+      }
     } catch (SQLException e) {
-      return null;
+      throw Throwables.propagate(e);
     }
     finally {
       try {
@@ -256,10 +238,9 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
           rs.close();
         }
       } catch (SQLException e) {
-        throw new RuntimeException(e.getMessage(), e.getCause());
+        throw Throwables.propagate(e);
       }
     }
-
     return info;
   }
 }

@@ -1,4 +1,10 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.core.utils;
+
+import com.google.common.hash.Hasher;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -7,10 +13,9 @@ import java.security.SecureRandom;
 
 /**
  * Utility class to generate API KEY
+ * TODO: Use Guava Hasher.
  */
-public class ApiKey {
-
-
+public final class ApiKey {
   /**
    * Generates Random APIKey
    *
@@ -26,14 +31,12 @@ public class ApiKey {
 
     String raw = salt + data;
 
-
     byte[] hash = MessageDigest.getInstance("SHA1").digest(raw.getBytes());
     StringBuffer sb = new StringBuffer();
     for (byte b : hash)
       sb.append(String.format("%02x", b & 0xff));
 
     return sb.toString();
-
   }
 
 }

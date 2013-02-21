@@ -1,4 +1,10 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
+
+import com.google.common.base.Throwables;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +24,7 @@ public abstract class DBAccess {
    * @param rs         Result set
    * @throws RuntimeException
    */
-  public void close(Connection connection, PreparedStatement ps, ResultSet rs) throws RuntimeException {
+  public void close(Connection connection, PreparedStatement ps, ResultSet rs) {
     try {
       if (connection != null) {
         connection.close();
@@ -30,7 +36,7 @@ public abstract class DBAccess {
         rs.close();
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     }
   }
 
@@ -41,7 +47,7 @@ public abstract class DBAccess {
    * @param ps         Prepared Statement
    * @throws RuntimeException
    */
-  public void close(Connection connection, PreparedStatement ps) throws RuntimeException {
+  public void close(Connection connection, PreparedStatement ps) {
     try {
       if (connection != null) {
         connection.close();
@@ -50,7 +56,7 @@ public abstract class DBAccess {
         ps.close();
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     }
   }
 

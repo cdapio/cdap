@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.core.status;
 
 import org.apache.commons.lang.StringUtils;
@@ -7,9 +11,7 @@ import org.apache.commons.lang.StringUtils;
  */
 public class AuthenticationStatus {
 
-  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED}
-
-  ;
+  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED};
 
   private Type type;
 

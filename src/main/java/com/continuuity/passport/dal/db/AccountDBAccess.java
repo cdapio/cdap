@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
@@ -9,10 +13,13 @@ import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
 import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.dal.AccountDAO;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Map;
@@ -20,21 +27,15 @@ import java.util.Map;
 /**
  * AccountDAO implementation that uses mysql as the persistence store
  */
-
-
 public class AccountDBAccess extends DBAccess implements AccountDAO {
-
-
   private DBConnectionPoolManager poolManager = null;
-
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
 
-  @Inject
   /**
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
+  @Inject
   public void AccountDBAccess(@Named("passport.config") Map<String, String> config) {
-
     String connectionString = config.get("connectionString");
     String jdbcType = config.get("jdbcType");
 
@@ -53,8 +54,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public Account createAccount(Account account)
-    throws ConfigurationException, RuntimeException, AccountAlreadyExistsException {
+  public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException {
     //TODO: Return boolean?
     Connection connection = null;
     PreparedStatement ps = null;
@@ -70,7 +70,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
         DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.ACCOUNT_CREATED_AT
       );
-
 
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setString(1, account.getEmailId());
@@ -149,7 +148,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws RuntimeException
    */
   @Override
-  public void confirmDownload(int accountId) throws ConfigurationException, RuntimeException {
+  public void confirmDownload(int accountId) throws ConfigurationException {
     Connection connection = null;
     PreparedStatement ps = null;
     if (this.poolManager == null) {
@@ -188,7 +187,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    */
   @Override
   public boolean deleteAccount(int accountId)
-    throws ConfigurationException, RuntimeException, AccountNotFoundException {
+    throws ConfigurationException, AccountNotFoundException {
 
     PreparedStatement ps = null;
     Connection connection = null;
@@ -224,7 +223,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(int accountId) throws ConfigurationException, RuntimeException {
+  public Account getAccount(int accountId) throws ConfigurationException {
 
     Account account = null;
     Connection connection = null;
@@ -277,7 +276,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(String emailId) throws ConfigurationException, RuntimeException {
+  public Account getAccount(String emailId) throws ConfigurationException {
 
     Account account = null;
     Connection connection = null;
@@ -323,7 +322,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
 
   @Override
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException, RuntimeException {
+  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -364,7 +363,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
 
   @Override
-  public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException {
+  public boolean addRoleType(int accountId, Role role) throws ConfigurationException {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -397,7 +396,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   @Override
-  public void updateAccount(int accountId, Map<String, Object> keyValueParams) throws ConfigurationException, RuntimeException {
+  public void updateAccount(int accountId, Map<String, Object> keyValueParams) throws ConfigurationException {
     Connection connection = null;
     PreparedStatement ps = null;
     if (this.poolManager == null) {
@@ -457,7 +456,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   @Override
-  public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException {
+  public void changePassword(int accountId, String oldPassword, String newPassword) {
     Connection connection = null;
     PreparedStatement ps = null;
     try {
@@ -484,7 +483,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     } finally {
       close(connection, ps);
     }
-
   }
 
   //TODO: Implement this functionality
