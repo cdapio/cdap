@@ -66,6 +66,11 @@ public class Constants {
   public static final String CFG_APP_FABRIC_TEMP_DIR    = "app.temp.dir";
 
   /**
+   * Default.
+   */
+  public static final int DEFAULT_APP_FABRIC_SERVER_PORT = 45000;
+
+  /**
    * Configuration key names used by resource manager.
    */
   @Deprecated
