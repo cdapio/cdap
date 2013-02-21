@@ -531,6 +531,19 @@ public class AppFabricServer implements AppFabricService.Iface {
   @Override
   public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
     Preconditions.checkNotNull(token);
+
+    // TODO: make sure program is not running
+
+    try {
+      store.remove(Id.Program.from(identifier.getAccountId(),
+                                   identifier.getApplicationId(),
+                                   identifier.getFlowId()));
+    } catch (OperationException e) {
+      throw new AppFabricServiceException("Unable to remove program, accountId: " + identifier.getAccountId() +
+                                                                   ", applicationId: " + identifier.getApplicationId() +
+                                                                   ", programId: " + identifier.getFlowId() + " " +
+                                            e.getMessage());
+    }
   }
 
   @Override

@@ -5,13 +5,9 @@
 package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
@@ -20,20 +16,15 @@ import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.ForwardingApplicationSpecification;
+import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.gson.Gson;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Implementation of the Store that ultimately places data into
@@ -199,6 +188,110 @@ public class MDSBasedStore implements Store {
 
     // hack hack hack: time constraints. See details in metadataServiceHelper javadoc
     metadataServiceHelper.updateInMetadataService(id, spec);
+  }
+
+  @Override
+  public int incFlowletInstances(final Id.Program id, final String flowletId, int delta)
+    throws OperationException {
+
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
+    FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
+
+    int instances = flowletDef.getInstances() + delta;
+    if (instances < 0) {
+      throw new IllegalArgumentException("cannot change number of flowlet instances to " + instances +
+                                 ", current number: " + flowletDef.getInstances() + ", attempted to inc by: " + delta);
+    }
+
+    final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, instances);
+    ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
+
+    addApplication(id.getApplication(), newAppSpec);
+
+    return instances;
+  }
+
+  private FlowletDefinition getFlowletDefinitionSafely(FlowSpecification flowSpec, String flowletId, Id.Program id) {
+    FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletId);
+    if (flowletDef == null) {
+      throw new IllegalArgumentException("no such flowlet @ account id: " + id.getAccountId() +
+                                           ", app id: " + id.getApplication() +
+                                           ", flow id: " + id.getId() +
+                                           ", flowlet id: " + id.getId());
+    }
+    return flowletDef;
+  }
+
+  private FlowSpecification getFlowSpecSafely(Id.Program id, ApplicationSpecification appSpec) {
+    FlowSpecification flowSpec = appSpec.getFlows().get(id.getId());
+    if (flowSpec == null) {
+      throw new IllegalArgumentException("no such flow @ account id: " + id.getAccountId() +
+                                           ", app id: " + id.getApplication() +
+                                           ", flow id: " + id.getId());
+    }
+    return flowSpec;
+  }
+
+  @Override
+  public void remove(Id.Program id) throws OperationException {
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    ApplicationSpecification newAppSpec = removeFlowFromAppSpec(appSpec, id);
+    addApplication(id.getApplication(), newAppSpec);
+
+    try {
+      metadataServiceHelper.deleteFlow(id);
+    } catch (MetadataServiceException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
+    ApplicationSpecification appSpec = getApplication(id.getApplication());
+    if (appSpec == null) {
+      throw new IllegalArgumentException("no such application @ account id: " + id.getAccountId() +
+                                           ", app id: " + id.getApplication());
+    }
+    return appSpec;
+  }
+
+  private ApplicationSpecification replaceFlowletInAppSpec(final ApplicationSpecification appSpec,
+                                                           final Id.Program id,
+                                                           final FlowSpecification flowSpec,
+                                                           final FlowletDefinition adjustedFlowletDef) {
+    // as app spec is immutable we have to do this trick
+    return replaceFlowInAppSpec(appSpec, id, new ForwardingFlowSpecification(flowSpec) {
+      @Override
+      public Map<String, FlowletDefinition> getFlowlets() {
+        Map<String, FlowletDefinition> flowlets = Maps.newHashMap(super.getFlowlets());
+        flowlets.put(id.getId(), adjustedFlowletDef);
+        return flowlets;
+      }
+    });
+  }
+
+  private ApplicationSpecification replaceFlowInAppSpec(final ApplicationSpecification appSpec, final Id.Program id, final FlowSpecification newFlowSpec) {
+    // as app spec is immutable we have to do this trick
+    return new ForwardingApplicationSpecification(appSpec) {
+      @Override
+      public Map<String, FlowSpecification> getFlows() {
+        Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
+        flows.put(id.getId(), newFlowSpec);
+        return flows;
+      }
+    };
+  }
+
+  private ApplicationSpecification removeFlowFromAppSpec(final ApplicationSpecification appSpec,
+                                                           final Id.Program id) {
+    return new ForwardingApplicationSpecification(appSpec) {
+      @Override
+      public Map<String, FlowSpecification> getFlows() {
+        Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
+        flows.remove(id.getId());
+        return flows;
+      }
+    };
   }
 
   @Override

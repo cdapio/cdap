@@ -38,16 +38,20 @@ public final class Id  {
    * Application is global unique if used within context of account.
    */
   public static final class Application {
-    private final Account accountId;
+    private final Account account;
     private final String applicationId;
 
-    public Application(final Account accountId, final String applicationId) {
-      this.accountId = accountId;
+    public Application(final Account account, final String applicationId) {
+      this.account = account;
       this.applicationId = applicationId;
     }
 
+    public Account getAccount() {
+      return account;
+    }
+
     public String getAccountId() {
-      return accountId.getId();
+      return account.getId();
     }
 
     public String getId() {
@@ -86,6 +90,10 @@ public final class Id  {
 
     public String getAccountId() {
       return application.getAccountId();
+    }
+
+    public Application getApplication() {
+      return application;
     }
 
     public static Program from(Account id) {

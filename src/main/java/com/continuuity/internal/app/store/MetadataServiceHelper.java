@@ -207,4 +207,28 @@ class MetadataServiceHelper {
     metaDataService.assertDataset(account, dataset);
   }
 
+  public void deleteFlow(Id.Program id) throws MetadataServiceException {
+    // unregister this flow in the meta data service
+    Throwable toThrow = null;
+    try {
+      // we don't know whether this is a flow or query -> delete both
+      metaDataService.deleteFlow(id.getAccountId(), id.getApplicationId(), id.getId());
+    } catch (Throwable e) {
+      toThrow = e;
+    }
+    try {
+      metaDataService.deleteQuery(new Account(id.getAccountId()), new Query(id.getId(), id.getApplicationId()));
+      toThrow = null;
+    } catch (Throwable e) {
+      toThrow = e;
+    }
+    if (toThrow != null) {
+      String message = String.format("Error deleting program %s meta data for " +
+                                       "account %s: %s", id.getId(), id.getAccountId(),
+                                     toThrow.getMessage());
+
+      throw new MetadataServiceException(message);
+    }
+
+  }
 }
