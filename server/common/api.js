@@ -1,4 +1,3 @@
-
 var http = require('http'),
 	thrift = require('thrift'),
 	fs = require('fs'),
@@ -7,14 +6,13 @@ var http = require('http'),
 /**
  * Configure thrift.
  */
-var FARService = require('./thrift_bindings/FARService.js'),
+var AppFabricService = require('./thrift_bindings/AppFabricService.js'),
 	MetricsFrontendService = require('./thrift_bindings/MetricsFrontendService.js'),
-	MetadataService = require('./thrift_bindings/MetadataService.js'),
-	FlowService = require('./thrift_bindings/FlowService.js');
+	MetadataService = require('./thrift_bindings/MetadataService.js');
 
 var metadataservice_types = require('./thrift_bindings/metadataservice_types.js'),
 	metricsservice_types = require('./thrift_bindings/metricsservice_types.js'),
-	flowservices_types = require('./thrift_bindings/flowservices_types.js');
+	appfabricservice_types = require('./thrift_bindings/app-fabric_types.js');
 
 var SubscriptionService;
 var ttransport, tprotocol;
@@ -101,11 +99,11 @@ logger.setLevel(LOG_LEVEL);
 		params = params || [];
 		params.unshift(accountID);
 
-		var auth_token = new flowservices_types.DelegationToken({ token: null });
+		var auth_token = new appfabricservices_types.AuthToken({ token: null });
 
 		var conn = thrift.createConnection(
-			this.config['flow.manager.server.address'],
-			this.config['flow.manager.server.port'], {
+			this.config['resource.manager.server.address'],
+			this.config['resource.manager.server.port'], {
 			transport: ttransport.TFramedTransport,
 			protocol: tprotocol.TBinaryProtocol
 		});
@@ -114,24 +112,24 @@ logger.setLevel(LOG_LEVEL);
 			done('Could not connect to FlowMonitor.');
 		});
 		
-		var Manager = thrift.createClient(FlowService, conn);
-		var identifier = new flowservices_types.FlowIdentifier({
+		var Manager = thrift.createClient(AppFabricService, conn);
+		var identifier = new appfabricservice_types.FlowIdentifier({
 			applicationId: params[1],
 			flowId: params[2],
 			version: params[3] ? parseInt(params[3], 10) : -1,
 			accountId: params[0],
-			type: flowservices_types.EntityType[params[4] || 'FLOW']
+			type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 		});
 
 		switch (method) {
 			case 'start':
-				identifier = new flowservices_types.FlowDescriptor({
-					identifier: new flowservices_types.FlowIdentifier({
+				identifier = new appfabricservice_types.FlowDescriptor({
+					identifier: new appfabricservice_types.FlowIdentifier({
 						applicationId: params[1],
 						flowId: params[2],
 						version: parseInt(params[3], 10),
 						accountId: accountID,
-						type: flowservices_types.EntityType[params[4] || 'FLOW']
+						type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 					}),
 					"arguments": []
 				});
@@ -154,7 +152,7 @@ logger.setLevel(LOG_LEVEL);
 				var flowlet_id = params[4];
 				var instances = params[5];
 
-				var identifier = new flowservices_types.FlowIdentifier({
+				var identifier = new appfabricservice_types.FlowIdentifier({
 					accountId: params[0],
 					applicationId: params[1],
 					flowId: params[2],
@@ -186,7 +184,7 @@ logger.setLevel(LOG_LEVEL);
 
 		var identifier, conn, FAR,
 			accountId = accountID,
-			auth_token = new flowservices_types.DelegationToken({ token: null });
+			auth_token = new appfabricservice_types.AuthToken({ token: null });
 
 		conn = thrift.createConnection(
 			this.config['resource.manager.server.address'],
@@ -196,16 +194,16 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			done('Could not connect to FARService');
+			done('Could not connect to AppFabricService');
 		});
 		
-		FAR = thrift.createClient(FARService, conn);
-
+		FAR = thrift.createClient(AppFabricService, conn);
+            
 		switch (method) {
 
 			case 'remove':
 
-				identifier = new flowservices_types.FlowIdentifier({
+				identifier = new appfabricservice_types.FlowIdentifier({
 					applicationId: params[0],
 					flowId: params[1],
 					version: params[2],
@@ -216,7 +214,7 @@ logger.setLevel(LOG_LEVEL);
 
 			case 'promote':
 
-				identifier = new flowservices_types.FlowIdentifier({
+				identifier = new appfabricservice_types.FlowIdentifier({
 					applicationId: params[0],
 					flowId: params[1],
 					version: params[2],
@@ -391,9 +389,8 @@ logger.setLevel(LOG_LEVEL);
 	};
 
 	this.upload = function (accountID, req, res, file, socket) {
-
 		var self = this;
-		var auth_token = new flowservices_types.DelegationToken({ token: null });
+		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 		var length = req.header('Content-length');
 
 		var data = new Buffer(parseInt(length, 10));
@@ -405,7 +402,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		req.on('end', function() {
-
+                        console.log("Upload ended");
 			res.redirect('back');
 			res.end();
 
@@ -416,11 +413,11 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-				socket.emit('upload', {'error': 'Could not connect to FARService'});
+				socket.emit('upload', {'error': 'Could not connect to AppFabricService'});
 			});
 
-			var FAR = thrift.createClient(FARService, conn);
-			FAR.init(auth_token, new flowservices_types.ResourceInfo({
+			var FAR = thrift.createClient(AppFabricService, conn);
+			FAR.init(auth_token, new appfabricservice_types.ResourceInfo({
 				'accountId': accountID,
 				'applicationId': 'nil',
 				'filename': file,
@@ -428,7 +425,7 @@ logger.setLevel(LOG_LEVEL);
 				'modtime': new Date().getTime()
 			}), function (error, resource_identifier) {
 				if (error) {
-					logger.warn('FARManager Init', error);
+					logger.warn('AppFabric Init', error);
 				} else {
 
 					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
@@ -441,7 +438,6 @@ logger.setLevel(LOG_LEVEL);
 							if (error) {
 								logger.warn('FARManager deploy', error);
 							} else {
-
 								socket.emit('upload', {step: 0, 'status': 'Verifying...', result: arguments});
 
 								var current_status = -1;
