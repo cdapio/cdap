@@ -6,8 +6,8 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.services.AppFabricServerFactory;
 import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.DeploymentServerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -15,13 +15,13 @@ import com.continuuity.filesystem.LocationFactory;
 import com.google.inject.Inject;
 
 /**
- * An concrete implementation of simple {@link com.continuuity.app.services.DeploymentServerFactory}.
+ * An concrete implementation of simple {@link com.continuuity.app.services.AppFabricServerFactory}.
  * <p>
  *   This implementation creates the default version of the server used
  *   for deployment of archives and management of those.
  * </p>
  */
-public class InMemoryAppFabricServerFactory implements DeploymentServerFactory {
+public class InMemoryAppFabricServerFactory implements AppFabricServerFactory {
   private final OperationExecutor opex;
   private final LocationFactory lFactory;
   private final ManagerFactory mFactory;
