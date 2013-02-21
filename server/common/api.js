@@ -443,7 +443,7 @@ logger.setLevel(LOG_LEVEL);
 								var current_status = -1;
 
 								var status_interval = setInterval(function () {
-									FAR.status(auth_token, resource_identifier, function (error, result) {
+									FAR.dstatus(auth_token, resource_identifier, function (error, result) {
 										if (error) {
 											logger.warn('FARManager verify', error);
 										} else {
