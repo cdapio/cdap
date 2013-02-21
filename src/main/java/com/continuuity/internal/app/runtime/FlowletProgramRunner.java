@@ -9,7 +9,6 @@ import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
@@ -24,6 +23,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -154,7 +154,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             createCallback(flowlet, flowletDef.getFlowletSpec()));
 
       driver.start();
-      return new AbstractProgramController(program.getProgramName() + ":" + flowletName) {
+      return new AbstractProgramController(program.getProgramName() + ":" + flowletName, flowletContext.getRunId()) {
         @Override
         protected void doSuspend() throws Exception {
           driver.suspend();

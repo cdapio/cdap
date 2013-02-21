@@ -8,6 +8,7 @@ import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -21,6 +22,7 @@ import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.runtime.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
@@ -32,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
@@ -67,7 +70,10 @@ public class BigMamaModule extends AbstractModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
 
-    bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class);
+    bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+    // Bind runtime service
+    bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
 
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
 

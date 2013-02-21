@@ -6,6 +6,7 @@ import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
@@ -33,7 +34,7 @@ public class BasicFlowletContext implements FlowletContext {
   private final String applicationId;
   private final String flowId;
   private final String flowletId;
-  private final UUID runId;
+  private final RunId runId;
   private final int instanceId;
   private final Map<String, DataSet> datasets;
 
@@ -50,7 +51,7 @@ public class BasicFlowletContext implements FlowletContext {
     this.applicationId = program.getApplicationId();
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
-    this.runId = generateUUIDFromCurrentTime();
+    this.runId = RunId.generate();
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
     this.instanceCount = new AtomicInteger(program.getSpecification().getFlows().get(flowId)
@@ -103,7 +104,7 @@ public class BasicFlowletContext implements FlowletContext {
     return instanceId;
   }
 
-  public UUID getRunId() {
+  public RunId getRunId() {
     return runId;
   }
 
@@ -136,43 +137,5 @@ public class BasicFlowletContext implements FlowletContext {
                          getRunId(),
                          getFlowletId(),
                          getInstanceId());
-  }
-
-  private UUID generateUUIDFromCurrentTime() {
-    // Number of 100ns since 15 October 1582 00:00:000000000
-    final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
-
-    long time = System.currentTimeMillis() * 10000 + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
-    long timeLow = time & 0xffffffffL;
-    long timeMid = time & 0xffff00000000L;
-    long timeHi = time & 0xfff000000000000L;
-    long upperLong = (timeLow << 32) | (timeMid >> 16) | (1 << 12) | (timeHi >> 48) ;
-
-    // Random clock ID
-    Random random = new Random();
-    int clockId = random.nextInt() & 0x3FFF;
-    long nodeId;
-
-    try {
-      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-      NetworkInterface networkInterface = null;
-      while (interfaces.hasMoreElements()) {
-        networkInterface = interfaces.nextElement();
-        if (!networkInterface.isLoopback()) {
-          break;
-        }
-      }
-      byte[] mac = networkInterface.getHardwareAddress();
-      nodeId = ((long)Ints.fromBytes(mac[0], mac[1], mac[2], mac[3]) << 16)
-                    | Ints.fromBytes((byte)0, (byte)0, mac[4], mac[5]);
-
-    } catch (SocketException e) {
-      // Generate random node ID
-      nodeId = random.nextLong() & 0xFFFFFFL;
-    }
-
-    long lowerLong = ((long)clockId | 0x8000) << 48 | nodeId;
-
-    return new java.util.UUID(upperLong, lowerLong);
   }
 }

@@ -70,6 +70,8 @@ public interface ProgramController {
     ERROR
   }
 
+  RunId getRunId();
+
   /**
    * Suspend the running {@link ProgramRunner}.
    * @return A {@link ListenableFuture} that will be completed when the program is actually suspended.

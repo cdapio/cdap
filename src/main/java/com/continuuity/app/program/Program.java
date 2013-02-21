@@ -24,7 +24,7 @@ public final class Program {
   private final String mainClassName;
   private final Type processorType;
   private final ApplicationSpecification specification;
-  private Id.Program id;
+  private final Id.Program id;
 
   @Deprecated
   public Program(File file) throws IOException {
