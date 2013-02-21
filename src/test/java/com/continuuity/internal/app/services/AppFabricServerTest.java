@@ -10,7 +10,9 @@ import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Status;
+import com.continuuity.app.services.AppFabricServerFactory;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
@@ -35,7 +37,6 @@ import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.filesystem.LocationFactory;
-import com.continuuity.app.services.DeploymentServerFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.app.store.StoreFactory;
@@ -60,28 +61,11 @@ public class AppFabricServerTest {
   private static StoreFactory sFactory;
   private static CConfiguration configuration;
 
-  private static class SimpleDeploymentServerModule extends AbstractModule {
-    /**
-     * Configures a {@link com.google.inject.Binder} via the exposed methods.
-     */
-    @Override
-    protected void configure() {
-      bind(DeploymentServerFactory.class).to(InMemoryAppFabricServerFactory.class);
-      bind(LocationFactory.class).to(LocalLocationFactory.class);
-      bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
-      bind(ManagerFactory.class).to(SyncManagerFactory.class);
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-      bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-      bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-    }
-  }
-
   @BeforeClass
   public static void before() throws Exception {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new SimpleDeploymentServerModule());
-    DeploymentServerFactory factory = injector.getInstance(DeploymentServerFactory.class);
+                                                   new BigMamaModule());
+    AppFabricServerFactory factory = injector.getInstance(AppFabricServerFactory.class);
 
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", "/tmp/app");
