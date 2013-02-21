@@ -480,7 +480,7 @@ public class TableTest extends DataSetTestBase {
     result = table.read(new Read(key1, allColumns[7], null));
     verifyColumns(result, makeColumns(7, 8, 9), makeValues(7, 8, 9));
 
-    // read a column range from the beginning to 5
+    // read a column range from the beginning to exclusive) 2, that is inclusive 1
     result = table.read(new Read(key1, null, allColumns[2]));
     verifyColumns(result, makeColumns(0, 1), makeValues(0, 1));
 
