@@ -7,6 +7,7 @@ package com.continuuity.passport.http.handlers;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
+import com.continuuity.passport.core.utils.PasswordUtils;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
@@ -417,7 +418,9 @@ public class AccountHandler extends  PassportHandler{
                                               apiKey, true);
     }
     else {
-      token = new UsernamePasswordApiKeyToken(emailId,password,apiKey,false);
+      String hashed = PasswordUtils.generateHashedPassword(password);
+      token = new UsernamePasswordApiKeyToken(emailId,
+                                              hashed,apiKey,false);
     }
 
     try {
