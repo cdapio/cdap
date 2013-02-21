@@ -86,4 +86,12 @@ public class DBUtils {
 
   }
 
+  /**
+   * Stores list of profane words
+   */
+  public static class Profanity {
+    public static final String TABLE_NAME = "profane_list";
+    public static final String PROFANE_WORDS = "name";
+  }
+
 }

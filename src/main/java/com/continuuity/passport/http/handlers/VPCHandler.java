@@ -1,6 +1,6 @@
 package com.continuuity.passport.http.handlers;
 
-import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

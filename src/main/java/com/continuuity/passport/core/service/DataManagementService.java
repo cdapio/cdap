@@ -2,9 +2,9 @@ package com.continuuity.passport.core.service;
 
 
 import com.continuuity.passport.core.exceptions.*;
-import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.meta.Component;
-import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.meta.Account;
+import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
 
