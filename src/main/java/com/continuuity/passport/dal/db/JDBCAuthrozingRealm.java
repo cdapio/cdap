@@ -211,7 +211,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         count++;
       }
 
-      Preconditions.checkArgument(count==1, "Account not found in DB");
+      Preconditions.checkArgument(count > 1, "Account not found in DB");
       Preconditions.checkArgument(!password.isEmpty(),"Password not found for %s in the data store", emailId);
 
       Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
