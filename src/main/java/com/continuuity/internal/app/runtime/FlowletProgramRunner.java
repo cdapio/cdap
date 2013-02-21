@@ -31,7 +31,7 @@ import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.continuuity.app.runtime.Controller;
+import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.logging.common.LogWriter;
@@ -82,7 +82,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   @Override
-  public Controller run(Program program, ProgramOptions options) {
+  public ProgramController run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
       String flowletName = options.getName();
@@ -154,10 +154,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
             createCallback(flowlet, flowletDef.getFlowletSpec()));
 
       driver.start();
-      return new Controller() {
-        @Override public void suspend() { driver.suspend(); }
-        @Override public void resume() { driver.resume(); }
-        @Override public void stop() { driver.stopAndWait(); }
+      return new AbstractProgramController(program.getProgramName() + ":" + flowletName) {
+        @Override
+        protected void doSuspend() throws Exception {
+          driver.suspend();
+        }
+
+        @Override
+        protected void doResume() throws Exception {
+          driver.resume();
+        }
+
+        @Override
+        protected void doStop() throws Exception {
+          driver.stopAndWait();
+        }
+
+        @Override
+        protected void doCommand(String name, Object value) throws Exception {
+          // TODO: Increase no. of instances
+        }
       };
 
     } catch(Exception e) {

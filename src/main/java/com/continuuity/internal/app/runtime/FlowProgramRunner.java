@@ -6,12 +6,16 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.app.runtime.Controller;
+import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -30,7 +34,7 @@ public class FlowProgramRunner implements ProgramRunner {
   }
 
   @Override
-  public Controller run(Program program, ProgramOptions options) {
+  public ProgramController run(Program program, ProgramOptions options) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -43,34 +47,51 @@ public class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
 
     // Launch flowlet program runners
-    final List<Controller> controllers = Lists.newArrayListWithCapacity(flowSpec.getFlowlets().size());
+    final List<ProgramController> controllers = Lists.newArrayListWithCapacity(flowSpec.getFlowlets().size());
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       for (int instanceId = 0; instanceId < entry.getValue().getInstances(); instanceId++) {
         controllers.add(programRunnerFactory.create().run(program, new FlowletOptions(entry.getKey(), instanceId)));
       }
     }
 
-    return new Controller() {
+    return new AbstractProgramController(program.getProgramName()) {
 
       @Override
-      public void suspend() {
-        for (Controller controller : controllers) {
-          controller.suspend();
-        }
+      protected void doSuspend() throws Exception {
+        Futures.successfulAsList(
+          Iterables.transform(controllers, new Function<ProgramController, ListenableFuture<ProgramController>>() {
+            @Override
+            public ListenableFuture<ProgramController> apply(ProgramController input) {
+              return input.suspend();
+            }
+        })).get();
       }
 
       @Override
-      public void resume() {
-        for (Controller controller : controllers) {
-          controller.resume();
-        }
+      protected void doResume() throws Exception {
+        Futures.successfulAsList(
+          Iterables.transform(controllers, new Function<ProgramController, ListenableFuture<ProgramController>>() {
+            @Override
+            public ListenableFuture<ProgramController> apply(ProgramController input) {
+              return input.resume();
+            }
+          })).get();
       }
 
       @Override
-      public void stop() {
-        for (Controller controller : controllers) {
-          controller.stop();
-        }
+      protected void doStop() throws Exception {
+        Futures.successfulAsList(
+          Iterables.transform(controllers, new Function<ProgramController, ListenableFuture<ProgramController>>() {
+            @Override
+            public ListenableFuture<ProgramController> apply(ProgramController input) {
+              return input.stop();
+            }
+          })).get();
+      }
+
+      @Override
+      protected void doCommand(String name, Object value) throws Exception {
+        // TODO: Increase no. of instances
       }
     };
   }
