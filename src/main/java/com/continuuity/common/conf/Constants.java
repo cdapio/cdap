@@ -19,8 +19,11 @@ public class Constants {
     SERVICE_METRICS_FRONTEND_SERVER = "metricsfrontend";
   public static final String
       SERVICE_METADATA_SERVER = "metadata";
+  @Deprecated
   public static final String
       SERVICE_FLOW_SERVER = "flow-service";
+  public static final String
+      SERVICE_APPFABRIC_SERVER = "app-fabric-service";
 
   /**
    * Common across components.
@@ -32,9 +35,11 @@ public class Constants {
 
   // ENG-440 Connection URL for location used for storing the flows states
   // and history.
+  @Deprecated
   public static final String CFG_STATE_STORAGE_CONNECTION_URL =
     "state.storage.connection.url";
 
+  @Deprecated
   public static final String CFG_COMMAND_PORT_ENABLED =
     "command.port.enabled";
 
@@ -54,26 +59,46 @@ public class Constants {
   public static final boolean DEFAULT_COMMAND_PORT_ENABLED = false;
 
   /**
+   * App Fabric Server
+   */
+  public static final String CFG_APP_FABRIC_SERVER_PORT = "app.server.port";
+  public static final String CFG_APP_FABRIC_OUTPUT_DIR  = "app.output.dir";
+  public static final String CFG_APP_FABRIC_TEMP_DIR    = "app.temp.dir";
+
+  /**
+   * Default.
+   */
+  public static final int DEFAULT_APP_FABRIC_SERVER_PORT = 45000;
+
+  /**
    * Configuration key names used by resource manager.
    */
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_REMOTE_DIR = "resource.manager.remote.dir";
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_LOCAL_DIR = "resource.manager.local.dir";
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_SERVER_PORT = "resource.manager.server.port";
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_SERVER_THREADS = "resource.manager.server.threads";
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_SERVER_ADDRESS = "resource.manager.server.address";
 
   /**
    * Defaults for resource manager.
    */
+  @Deprecated
   public static final String
     DEFAULT_RESOURCE_MANAGER_LOCAL_DIR = "build/continuuity/flow/manager/local";
+  @Deprecated
   public static final String
     DEFAULT_RESOURCE_MANAGER_REMOTE_DIR = "build/continuuity/flow/manager/remote";
+  @Deprecated
   public static final String
     DEFAULT_RESOURCE_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
@@ -88,22 +113,28 @@ public class Constants {
   /**
    * Default constants defined for resource manager
    */
+  @Deprecated
   public static final int DEFAULT_RESOURCE_MANAGER_SERVER_PORT = 45000;
+  @Deprecated
   public static final int DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = 2;
 
 
   /**
    * Constants used by Tuple serializer
    */
+  @Deprecated
   public static final int MAX_SERDE_BUFFER = 1024 * 1024;
 
   /**
    * Configuration key names used by flow manager
    */
+  @Deprecated
   public static final String CFG_FLOW_MANAGER_SERVER_PORT =
         "flow.manager.server.port";
+  @Deprecated
   public static final String CFG_FLOW_MANAGER_SERVER_THREADS =
         "flow.manager.server.threads";
+  @Deprecated
   public static final String CFG_FLOW_MANAGER_SERVER_ADDRESS =
         "flow.manager.server.address";
 
@@ -111,20 +142,27 @@ public class Constants {
   /**
    * Default constants defined for flow manager.
    */
+  @Deprecated
   public static final int DEFAULT_FLOW_MANAGER_SERVER_PORT = 45001;
+  @Deprecated
   public static final int DEFAULT_FLOW_MANAGER_SERVER_THREADS = 2;
+  @Deprecated
   public static final String DEFAULT_FLOW_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
 
   /**
    * Configuration for Cloud FAR Service.
    */
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_CLOUD_HOST = "resource.manager.cloud.hostname";
+  @Deprecated
   public static final String
     CFG_RESOURCE_MANAGER_CLOUD_PORT = "resource.manager.cloud.port";
+  @Deprecated
   public static final String
     DEFAULT_RESOURCE_MANAGER_CLOUD_HOST = "localhost";
+  @Deprecated
   public static final int
     DEFAULT_RESOURCE_MANAGER_CLOUD_PORT = DEFAULT_RESOURCE_MANAGER_SERVER_PORT;
 
@@ -251,5 +289,13 @@ public class Constants {
       "log.collection.server.address";
   public static final String DEFAULT_LOG_COLLECTION_SERVER_ADDRESS =
       "localhost";
+
+  /**
+   * Constants related to Passport
+   */
+  public final static String CFG_PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
+  public final static String CFG_PASSPORT_SERVER_PORT_KEY = "passport.server.port";
+  public final static String CONTINUUITY_API_KEY_HEADER = "X-Continuuity-ApiKey";
+
 
 }
