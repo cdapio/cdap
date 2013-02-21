@@ -60,7 +60,7 @@ public class VPCHandler  extends PassportHandler {
     } catch (Exception e) {
       requestFailed();
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJsonError("VPC get Failed", e))
+        .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e)))
         .build();
     }
   }

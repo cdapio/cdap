@@ -47,6 +47,5 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
         "Authentication Failed. " + e.getMessage());
     }
-
   }
 }

@@ -7,6 +7,7 @@ package com.continuuity.passport.http.handlers;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
+import com.continuuity.passport.core.utils.PasswordUtils;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
@@ -107,7 +108,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", "Download confirmation failed", e))
+        .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -136,7 +137,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", "Download confirmation failed", e))
+        .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -188,7 +189,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "Account Update Failed", e))
+        .entity(Utils.getJson("FAILED", String.format("Account Update Failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -225,7 +226,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "Account Creation Failed", e))
+        .entity(Utils.getJson("FAILED", String.format("Account Creation Failed. %s", e)))
         .build();
     }
   }
@@ -274,7 +275,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "Account Confirmation Failed", e))
+        .entity(Utils.getJson( "FAILED", String.format("Account Confirmation Failed. %s", e)))
         .build();
     }
   }
@@ -308,7 +309,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC Creation Failed", e))
+        .entity(Utils.getJson("FAILED", String.format("VPC Creation Failed. %s", e)))
         .build();
 
     }
@@ -344,7 +345,7 @@ public class AccountHandler extends  PassportHandler{
       requestFailed(); // Request failed
 
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJsonError("VPC get Failed", e))
+        .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -369,7 +370,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJsonError("VPC get Failed", e))
+        .entity(Utils.getJsonError( String.format("VPC get Failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -417,7 +418,9 @@ public class AccountHandler extends  PassportHandler{
                                               apiKey, true);
     }
     else {
-      token = new UsernamePasswordApiKeyToken(emailId,password,apiKey,false);
+      String hashed = PasswordUtils.generateHashedPassword(password);
+      token = new UsernamePasswordApiKeyToken(emailId,
+                                              hashed,apiKey,false);
     }
 
     try {

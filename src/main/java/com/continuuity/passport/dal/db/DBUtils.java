@@ -74,7 +74,7 @@ public class DBUtils {
     public static final String TABLE_NAME = "vpc_role";
     public static final String VPC_ID_COLUMN = "vpc_id";
     public static final String ACCOUNT_ID_COLUMN = "account_id";
-    public static final String USER_ID_COLUMN = "user_id"; //TODO: Name better!
+    public static final String USER_ID_COLUMN = "user_id";
     public static final String ROLE_TYPE_COLUMN = "role_type";
     public static final String ROLE_OVERRIDES_COLUMN = "role_overrides";
   }
