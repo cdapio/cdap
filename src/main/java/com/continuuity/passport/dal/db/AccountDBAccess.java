@@ -168,7 +168,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -205,7 +205,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         throw new AccountNotFoundException("Account doesn't exists");
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -257,7 +257,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -309,7 +309,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -351,7 +351,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -385,7 +385,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -446,7 +446,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -475,9 +475,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } catch (NoSuchAlgorithmException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
