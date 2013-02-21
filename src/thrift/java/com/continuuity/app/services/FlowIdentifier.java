@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -45,15 +46,11 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
     schemes.put(TupleScheme.class, new FlowIdentifierTupleSchemeFactory());
   }
 
-  public String accountId; // required
-  public String applicationId; // required
-  public String flowId; // required
-  public int version; // required
-  /**
-   * 
-   * @see EntityType
-   */
-  public EntityType type; // optional
+  private String accountId; // required
+  private String applicationId; // required
+  private String flowId; // required
+  private int version; // required
+  private EntityType type; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -211,9 +208,8 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
     return this.accountId;
   }
 
-  public FlowIdentifier setAccountId(String accountId) {
+  public void setAccountId(String accountId) {
     this.accountId = accountId;
-    return this;
   }
 
   public void unsetAccountId() {
@@ -235,9 +231,8 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
     return this.applicationId;
   }
 
-  public FlowIdentifier setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -259,9 +254,8 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
     return this.flowId;
   }
 
-  public FlowIdentifier setFlowId(String flowId) {
+  public void setFlowId(String flowId) {
     this.flowId = flowId;
-    return this;
   }
 
   public void unsetFlowId() {
@@ -283,10 +277,9 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
     return this.version;
   }
 
-  public FlowIdentifier setVersion(int version) {
+  public void setVersion(int version) {
     this.version = version;
     setVersionIsSet(true);
-    return this;
   }
 
   public void unsetVersion() {
@@ -314,9 +307,8 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
    * 
    * @see EntityType
    */
-  public FlowIdentifier setType(EntityType type) {
+  public void setType(EntityType type) {
     this.type = type;
-    return this;
   }
 
   public void unsetType() {
@@ -484,7 +476,34 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_accountId = true && (isSetAccountId());
+    builder.append(present_accountId);
+    if (present_accountId)
+      builder.append(accountId);
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_flowId = true && (isSetFlowId());
+    builder.append(present_flowId);
+    if (present_flowId)
+      builder.append(flowId);
+
+    boolean present_version = true;
+    builder.append(present_version);
+    if (present_version)
+      builder.append(version);
+
+    boolean present_type = true && (isSetType());
+    builder.append(present_type);
+    if (present_type)
+      builder.append(type.getValue());
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowIdentifier other) {
@@ -608,16 +627,22 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (accountId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' was not present! Struct: " + toString());
+    if (!isSetAccountId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' is unset! Struct:" + toString());
     }
-    if (applicationId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' was not present! Struct: " + toString());
+
+    if (!isSetApplicationId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' is unset! Struct:" + toString());
     }
-    if (flowId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'flowId' was not present! Struct: " + toString());
+
+    if (!isSetFlowId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'flowId' is unset! Struct:" + toString());
     }
-    // alas, we cannot check 'version' because it's a primitive and you chose the non-beans generator.
+
+    if (!isSetVersion()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'version' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -702,11 +727,6 @@ public class FlowIdentifier implements org.apache.thrift.TBase<FlowIdentifier, F
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
-      if (!struct.isSetVersion()) {
-        throw new org.apache.thrift.protocol.TProtocolException("Required field 'version' was not found in serialized data! Struct: " + toString());
-      }
       struct.validate();
     }
 

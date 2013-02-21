@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,10 +45,10 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
     schemes.put(TupleScheme.class, new VerificationStatusTupleSchemeFactory());
   }
 
-  public String applicationId; // required
-  public String program; // required
-  public int status; // required
-  public String message; // required
+  private String applicationId; // required
+  private String program; // required
+  private int status; // required
+  private String message; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -186,9 +187,8 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
     return this.applicationId;
   }
 
-  public VerificationStatus setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -210,9 +210,8 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
     return this.program;
   }
 
-  public VerificationStatus setProgram(String program) {
+  public void setProgram(String program) {
     this.program = program;
-    return this;
   }
 
   public void unsetProgram() {
@@ -234,10 +233,9 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
     return this.status;
   }
 
-  public VerificationStatus setStatus(int status) {
+  public void setStatus(int status) {
     this.status = status;
     setStatusIsSet(true);
-    return this;
   }
 
   public void unsetStatus() {
@@ -257,9 +255,8 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
     return this.message;
   }
 
-  public VerificationStatus setMessage(String message) {
+  public void setMessage(String message) {
     this.message = message;
-    return this;
   }
 
   public void unsetMessage() {
@@ -405,7 +402,29 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_program = true && (isSetProgram());
+    builder.append(present_program);
+    if (present_program)
+      builder.append(program);
+
+    boolean present_status = true;
+    builder.append(present_status);
+    if (present_status)
+      builder.append(status);
+
+    boolean present_message = true && (isSetMessage());
+    builder.append(present_message);
+    if (present_message)
+      builder.append(message);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(VerificationStatus other) {
@@ -585,8 +604,6 @@ public class VerificationStatus implements org.apache.thrift.TBase<VerificationS
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

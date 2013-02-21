@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,10 +45,10 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
     schemes.put(TupleScheme.class, new FlowRunRecordTupleSchemeFactory());
   }
 
-  public String runId; // required
-  public long startTime; // required
-  public long endTime; // required
-  public String endStatus; // required
+  private String runId; // required
+  private long startTime; // required
+  private long endTime; // required
+  private String endStatus; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -187,9 +188,8 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
     return this.runId;
   }
 
-  public FlowRunRecord setRunId(String runId) {
+  public void setRunId(String runId) {
     this.runId = runId;
-    return this;
   }
 
   public void unsetRunId() {
@@ -211,10 +211,9 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
     return this.startTime;
   }
 
-  public FlowRunRecord setStartTime(long startTime) {
+  public void setStartTime(long startTime) {
     this.startTime = startTime;
     setStartTimeIsSet(true);
-    return this;
   }
 
   public void unsetStartTime() {
@@ -234,10 +233,9 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
     return this.endTime;
   }
 
-  public FlowRunRecord setEndTime(long endTime) {
+  public void setEndTime(long endTime) {
     this.endTime = endTime;
     setEndTimeIsSet(true);
-    return this;
   }
 
   public void unsetEndTime() {
@@ -257,9 +255,8 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
     return this.endStatus;
   }
 
-  public FlowRunRecord setEndStatus(String endStatus) {
+  public void setEndStatus(String endStatus) {
     this.endStatus = endStatus;
-    return this;
   }
 
   public void unsetEndStatus() {
@@ -405,7 +402,29 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_runId = true && (isSetRunId());
+    builder.append(present_runId);
+    if (present_runId)
+      builder.append(runId);
+
+    boolean present_startTime = true;
+    builder.append(present_startTime);
+    if (present_startTime)
+      builder.append(startTime);
+
+    boolean present_endTime = true;
+    builder.append(present_endTime);
+    if (present_endTime)
+      builder.append(endTime);
+
+    boolean present_endStatus = true && (isSetEndStatus());
+    builder.append(present_endStatus);
+    if (present_endStatus)
+      builder.append(endStatus);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowRunRecord other) {
@@ -581,8 +600,6 @@ public class FlowRunRecord implements org.apache.thrift.TBase<FlowRunRecord, Flo
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 

@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -45,11 +46,11 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     schemes.put(TupleScheme.class, new ResourceInfoTupleSchemeFactory());
   }
 
-  public String accountId; // required
-  public String applicationId; // required
-  public String filename; // required
-  public int size; // required
-  public long modtime; // required
+  private String accountId; // required
+  private String applicationId; // required
+  private String filename; // required
+  private int size; // required
+  private long modtime; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -200,9 +201,8 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     return this.accountId;
   }
 
-  public ResourceInfo setAccountId(String accountId) {
+  public void setAccountId(String accountId) {
     this.accountId = accountId;
-    return this;
   }
 
   public void unsetAccountId() {
@@ -224,9 +224,8 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     return this.applicationId;
   }
 
-  public ResourceInfo setApplicationId(String applicationId) {
+  public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
-    return this;
   }
 
   public void unsetApplicationId() {
@@ -248,9 +247,8 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     return this.filename;
   }
 
-  public ResourceInfo setFilename(String filename) {
+  public void setFilename(String filename) {
     this.filename = filename;
-    return this;
   }
 
   public void unsetFilename() {
@@ -272,10 +270,9 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     return this.size;
   }
 
-  public ResourceInfo setSize(int size) {
+  public void setSize(int size) {
     this.size = size;
     setSizeIsSet(true);
-    return this;
   }
 
   public void unsetSize() {
@@ -295,10 +292,9 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
     return this.modtime;
   }
 
-  public ResourceInfo setModtime(long modtime) {
+  public void setModtime(long modtime) {
     this.modtime = modtime;
     setModtimeIsSet(true);
-    return this;
   }
 
   public void unsetModtime() {
@@ -464,7 +460,34 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_accountId = true && (isSetAccountId());
+    builder.append(present_accountId);
+    if (present_accountId)
+      builder.append(accountId);
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_filename = true && (isSetFilename());
+    builder.append(present_filename);
+    if (present_filename)
+      builder.append(filename);
+
+    boolean present_size = true;
+    builder.append(present_size);
+    if (present_size)
+      builder.append(size);
+
+    boolean present_modtime = true;
+    builder.append(present_modtime);
+    if (present_modtime)
+      builder.append(modtime);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(ResourceInfo other) {
@@ -582,17 +605,26 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (accountId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' was not present! Struct: " + toString());
+    if (!isSetAccountId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' is unset! Struct:" + toString());
     }
-    if (applicationId == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' was not present! Struct: " + toString());
+
+    if (!isSetApplicationId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' is unset! Struct:" + toString());
     }
-    if (filename == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'filename' was not present! Struct: " + toString());
+
+    if (!isSetFilename()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'filename' is unset! Struct:" + toString());
     }
-    // alas, we cannot check 'size' because it's a primitive and you chose the non-beans generator.
-    // alas, we cannot check 'modtime' because it's a primitive and you chose the non-beans generator.
+
+    if (!isSetSize()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'size' is unset! Struct:" + toString());
+    }
+
+    if (!isSetModtime()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'modtime' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -677,14 +709,6 @@ public class ResourceInfo implements org.apache.thrift.TBase<ResourceInfo, Resou
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
-      if (!struct.isSetSize()) {
-        throw new org.apache.thrift.protocol.TProtocolException("Required field 'size' was not found in serialized data! Struct: " + toString());
-      }
-      if (!struct.isSetModtime()) {
-        throw new org.apache.thrift.protocol.TProtocolException("Required field 'modtime' was not found in serialized data! Struct: " + toString());
-      }
       struct.validate();
     }
 

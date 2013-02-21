@@ -11,10 +11,10 @@ import com.continuuity.common.conf.CConfiguration;
  */
 public interface DeploymentServerFactory {
   /**
-   * Creates an instance of {@link DeploymentService.Iface}.
+   * Creates an instance of {@link AppFabricService.Iface}.
    *
    * @param configuration to be used for configuring
-   * @return An instance of {@link DeploymentService.Iface}
+   * @return An instance of {@link AppFabricService.Iface}
    */
-  public DeploymentService.Iface create(CConfiguration configuration);
+  public AppFabricService.Iface create(CConfiguration configuration);
 }

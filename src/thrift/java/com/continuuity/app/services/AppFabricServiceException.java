@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -28,20 +29,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Exception raised when there is an issue in start/stop/status/pausing of Flows
+ * Exception raised when issues are observed during management of archive and running of applications.
  */
-public class RuntimeServiceException extends Exception implements org.apache.thrift.TBase<RuntimeServiceException, RuntimeServiceException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RuntimeServiceException");
+public class AppFabricServiceException extends Exception implements org.apache.thrift.TBase<AppFabricServiceException, AppFabricServiceException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("AppFabricServiceException");
 
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new RuntimeServiceExceptionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new RuntimeServiceExceptionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new AppFabricServiceExceptionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new AppFabricServiceExceptionTupleSchemeFactory());
   }
 
-  public String message; // required
+  private String message; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -108,13 +109,13 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RuntimeServiceException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AppFabricServiceException.class, metaDataMap);
   }
 
-  public RuntimeServiceException() {
+  public AppFabricServiceException() {
   }
 
-  public RuntimeServiceException(
+  public AppFabricServiceException(
     String message)
   {
     this();
@@ -124,14 +125,14 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public RuntimeServiceException(RuntimeServiceException other) {
+  public AppFabricServiceException(AppFabricServiceException other) {
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  public RuntimeServiceException deepCopy() {
-    return new RuntimeServiceException(this);
+  public AppFabricServiceException deepCopy() {
+    return new AppFabricServiceException(this);
   }
 
   @Override
@@ -143,9 +144,8 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
     return this.message;
   }
 
-  public RuntimeServiceException setMessage(String message) {
+  public void setMessage(String message) {
     this.message = message;
-    return this;
   }
 
   public void unsetMessage() {
@@ -202,12 +202,12 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof RuntimeServiceException)
-      return this.equals((RuntimeServiceException)that);
+    if (that instanceof AppFabricServiceException)
+      return this.equals((AppFabricServiceException)that);
     return false;
   }
 
-  public boolean equals(RuntimeServiceException that) {
+  public boolean equals(AppFabricServiceException that) {
     if (that == null)
       return false;
 
@@ -225,16 +225,23 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_message = true && (isSetMessage());
+    builder.append(present_message);
+    if (present_message)
+      builder.append(message);
+
+    return builder.toHashCode();
   }
 
-  public int compareTo(RuntimeServiceException other) {
+  public int compareTo(AppFabricServiceException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    RuntimeServiceException typedOther = (RuntimeServiceException)other;
+    AppFabricServiceException typedOther = (AppFabricServiceException)other;
 
     lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
@@ -263,7 +270,7 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("RuntimeServiceException(");
+    StringBuilder sb = new StringBuilder("AppFabricServiceException(");
     boolean first = true;
 
     sb.append("message:");
@@ -297,15 +304,15 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
     }
   }
 
-  private static class RuntimeServiceExceptionStandardSchemeFactory implements SchemeFactory {
-    public RuntimeServiceExceptionStandardScheme getScheme() {
-      return new RuntimeServiceExceptionStandardScheme();
+  private static class AppFabricServiceExceptionStandardSchemeFactory implements SchemeFactory {
+    public AppFabricServiceExceptionStandardScheme getScheme() {
+      return new AppFabricServiceExceptionStandardScheme();
     }
   }
 
-  private static class RuntimeServiceExceptionStandardScheme extends StandardScheme<RuntimeServiceException> {
+  private static class AppFabricServiceExceptionStandardScheme extends StandardScheme<AppFabricServiceException> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, RuntimeServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, AppFabricServiceException struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -329,12 +336,10 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, RuntimeServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, AppFabricServiceException struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -349,16 +354,16 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
 
   }
 
-  private static class RuntimeServiceExceptionTupleSchemeFactory implements SchemeFactory {
-    public RuntimeServiceExceptionTupleScheme getScheme() {
-      return new RuntimeServiceExceptionTupleScheme();
+  private static class AppFabricServiceExceptionTupleSchemeFactory implements SchemeFactory {
+    public AppFabricServiceExceptionTupleScheme getScheme() {
+      return new AppFabricServiceExceptionTupleScheme();
     }
   }
 
-  private static class RuntimeServiceExceptionTupleScheme extends TupleScheme<RuntimeServiceException> {
+  private static class AppFabricServiceExceptionTupleScheme extends TupleScheme<AppFabricServiceException> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, RuntimeServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, AppFabricServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetMessage()) {
@@ -371,7 +376,7 @@ public class RuntimeServiceException extends Exception implements org.apache.thr
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, RuntimeServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, AppFabricServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {

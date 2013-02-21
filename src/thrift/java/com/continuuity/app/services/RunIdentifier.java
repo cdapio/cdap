@@ -6,6 +6,7 @@
  */
 package com.continuuity.app.services;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -41,7 +42,7 @@ public class RunIdentifier implements org.apache.thrift.TBase<RunIdentifier, Run
     schemes.put(TupleScheme.class, new RunIdentifierTupleSchemeFactory());
   }
 
-  public String id; // required
+  private String id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -143,9 +144,8 @@ public class RunIdentifier implements org.apache.thrift.TBase<RunIdentifier, Run
     return this.id;
   }
 
-  public RunIdentifier setId(String id) {
+  public void setId(String id) {
     this.id = id;
-    return this;
   }
 
   public void unsetId() {
@@ -225,7 +225,14 @@ public class RunIdentifier implements org.apache.thrift.TBase<RunIdentifier, Run
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_id = true && (isSetId());
+    builder.append(present_id);
+    if (present_id)
+      builder.append(id);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(RunIdentifier other) {
@@ -329,8 +336,6 @@ public class RunIdentifier implements org.apache.thrift.TBase<RunIdentifier, Run
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
-      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 
