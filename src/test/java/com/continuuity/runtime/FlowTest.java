@@ -9,6 +9,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.archive.JarFinder;
@@ -69,10 +70,11 @@ public class FlowTest {
 
     ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
     final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {
         ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
-        runner.run(program, new ProgramOptions() {
+        controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
             return program.getProgramName();
@@ -109,5 +111,7 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(5);
+
+    controller.stop().get();
   }
 }
