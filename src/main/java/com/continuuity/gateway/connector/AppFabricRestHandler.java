@@ -1,44 +1,28 @@
 package com.continuuity.gateway.connector;
 
-import com.continuuity.app.authorization.AuthorizationFactory;
-import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.DeploymentServerFactory;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
-import com.continuuity.internal.app.deploy.SyncManagerFactory;
-import com.continuuity.internal.app.services.InMemoryAppFabricServerFactory;
-import com.continuuity.internal.app.store.MDSStoreFactory;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.pipeline.PipelineFactory;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.TypeLiteral;
+import com.continuuity.passport.PassportConstants;
+import com.continuuity.passport.http.client.PassportClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -66,25 +50,9 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public class AppFabricRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
-  private final static String CONTINUUITY_API_KEY = Constants.CONTINUUITY_API_KEY_HEADER;
+  private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
   private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
 
-  private static class SimpleDeploymentServerModule extends AbstractModule {
-    /**
-     * Configures a {@link com.google.inject.Binder} via the exposed methods.
-     */
-    @Override
-    protected void configure() {
-      bind(DeploymentServerFactory.class).to(InMemoryAppFabricServerFactory.class);
-      bind(LocationFactory.class).to(LocalLocationFactory.class);
-      bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
-      bind(ManagerFactory.class).to(SyncManagerFactory.class);
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-      bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-      bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-    }
-  }
 
   /**
    * The allowed methods for this handler
@@ -108,9 +76,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
   private String pathPrefix;
 
-  CConfiguration configuration;
-
-  AppFabricService.Iface server;
+  CConfiguration configuration=CConfiguration.create();
 
   /**
    * Constructor requires the connector that created this
@@ -123,17 +89,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
     this.pathPrefix =
         connector.getHttpConfig().getPathPrefix() +
         connector.getHttpConfig().getPathMiddle();
-
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new SimpleDeploymentServerModule());
-    DeploymentServerFactory factory = injector.getInstance(DeploymentServerFactory.class);
-
-    configuration = CConfiguration.create();
-    configuration.set("app.output.dir", "/tmp/app");
-    configuration.set("app.tmp.dir", "/tmp/temp");
-
-    // Create the server.
-    server = factory.create(configuration);
   }
 
   private static final int BAD = -1;
@@ -238,14 +193,17 @@ public class AppFabricRestHandler extends NettyRestHandler {
             return;
           }
           int length = content.readableBytes();
+          String jarFileName=request.getHeader(CONTINUUITY_JAR_FILE_NAME);
           byte[] jarFileBytes = new byte[length];
           content.readBytes(jarFileBytes);
           String apiKey=request.getHeader(CONTINUUITY_API_KEY);
+          int port=configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+          int passportPort=configuration.getInt(PassportConstants.CFG_PASSPORT_SERVER_PORT_KEY, 7777);
+          String passportHost=configuration.get(PassportConstants.CFG_PASSPORT_SERVER_ADDRESS_KEY, "localhost");
+          AppFabricService.Client client=getAppFabricClient("localhost", port);
           try {
-            String accountId=getAccountId(configuration.get("passport.hostname", "localhost"),
-                                          request.getHeader(CONTINUUITY_API_KEY));
-            String jarFileName=request.getHeader(CONTINUUITY_JAR_FILE_NAME);
-            deploy(server, configuration, jarFileName, jarFileBytes, accountId, apiKey);
+            int accountId=getAccountId(passportHost, passportPort, apiKey);
+            deploy(client, configuration, jarFileName, jarFileBytes, accountId, apiKey);
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
           } catch (Exception e) {
@@ -263,6 +221,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
         }
       }
     } catch (Exception e) {
+      e.printStackTrace();
       LOG.error("Exception caught for connector '" + this.connector.getName() + "'. ", e.getCause());
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
@@ -285,58 +244,41 @@ public class AppFabricRestHandler extends NettyRestHandler {
     }
   }
 
-  public void deploy(AppFabricService.Iface server,
+  public void deploy(AppFabricService.Client client,
                      CConfiguration config,
                      String jarFileName,
                      byte[] jarFileBytes,
-                     String accountId,
+                     int accountId,
                      String apiKey)
     throws Exception {
 
     // Call init to get a session identifier - yes, the name needs to be changed.
     AuthToken token = new AuthToken(apiKey);
     ResourceInfo ri = new ResourceInfo();
-    ri.setAccountId(accountId);
+    ri.setAccountId(String.valueOf(accountId));
+    ri.setApplicationId("");
     ri.setFilename(jarFileName);
     ri.setSize(jarFileBytes.length);
-    ResourceIdentifier id = server.init(token, ri);
+    ri.setModtime(System.currentTimeMillis());
+    ResourceIdentifier id = client.init(token, ri);
     // Upload the jar file to remote location.
     byte[] toSubmit=jarFileBytes;
-    server.chunk(token, id, ByteBuffer.wrap(toSubmit));
-    DeploymentStatus status = server.dstatus(token, id);
+    client.chunk(token, id, ByteBuffer.wrap(toSubmit));
+    DeploymentStatus status = client.dstatus(token, id);
 
 
-    server.deploy(token, id);
-    int dstatus = server.dstatus(token, id).getOverall();
+    client.deploy(token, id);
+    int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
-      dstatus = server.dstatus(token, id).getOverall();
+      dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
 
   }
 
-  private String getAccountId(String hostname, String apiKey) {
-    String accountId;
-    String url  = getEndPoint(hostname,"passport/v1/vpc");
-    try {
-      String data = httpGet(url,apiKey);
-      if (data!= null ) {
-        JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(data);
-        JsonArray jsonArray = element.getAsJsonArray();
-        //for( )
-
-        for (JsonElement elements : jsonArray) {
-          JsonObject authResponse = elements.getAsJsonObject();
-          if (authResponse.get("vpc_name") != null ) {
-            return authResponse.get("vpc_name").getAsString();
-          }
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return null;
+  private int getAccountId(String hostname, int port, String apiKey) {
+    PassportClient ppc=new PassportClient();
+    return (ppc.getAccount(hostname, port, apiKey)).getAccountId();
   }
   private String httpGet(String url,String apiKey) throws Exception {
     String payload  = null;
@@ -372,5 +314,23 @@ public class AppFabricRestHandler extends NettyRestHandler {
   }
   private String getEndPoint(String hostname, String endpoint){
     return String.format("http://%s:7777/%s",hostname,endpoint);
+  }
+  private AppFabricService.Client getAppFabricClient(String host, int port)
+    throws ServerException {
+
+    TTransport transport = new TFramedTransport(
+      new TSocket("localhost", port));
+    try {
+      transport.open();
+    } catch (TTransportException e) {
+      e.printStackTrace();
+      String message = String.format("Unable to connect to thrift " +
+                                       "at %s:%d. Reason: %s", "localhost",
+                                     port, e.getMessage());
+      LOG.error(message);
+      throw new ServerException(message, e);
+    }
+    // now try to connect the thrift client
+    return new AppFabricService.Client(new TBinaryProtocol(transport));
   }
 }
