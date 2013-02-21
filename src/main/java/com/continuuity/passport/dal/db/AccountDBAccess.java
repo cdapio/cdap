@@ -14,6 +14,7 @@ import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
+import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
@@ -55,7 +56,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    */
   @Override
   public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException {
-    //TODO: Return boolean?
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet result = null;
@@ -143,9 +143,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
   /**
    * @param accountId
-   * @throws com.continuuity.passport.core.exceptions.ConfigurationException
-   *
-   * @throws RuntimeException
+   * @throws ConfigurationException
    */
   @Override
   public void confirmDownload(int accountId) throws ConfigurationException {
@@ -170,7 +168,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -207,7 +205,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         throw new AccountNotFoundException("Account doesn't exists");
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -259,7 +257,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -311,7 +309,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -353,7 +351,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -387,7 +385,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -448,7 +446,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -477,9 +475,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
