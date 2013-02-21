@@ -1,0 +1,9 @@
+{
+	"name": "reactor-ui-server-common",
+	"version": "0.0.1",
+	"main": "./api.js",
+	"dependencies": {
+		"thrift": "0.7.0",
+		"log4js": "0.5.6"
+	}
+}

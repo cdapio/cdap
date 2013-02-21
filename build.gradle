@@ -1,49 +1,4 @@
-// Pull the JS plugin from a Maven Repo
-buildscript {
-repositories {
-  maven {
-    credentials {
-      username nexusUsername
-      password nexusPassword
-    }
-    url "https://repository.continuuity.com/content/groups/public"
-  }
-  dependencies {
-    classpath 'com.eriwen:gradle-js-plugin:1.1'
-   }
- }
-}
 
-// Invoke the plugin
-apply plugin: 'js'
-
-defaultTasks 'build'
-
-//project.ext.set("edition", "developer")
-
-//define source for JSHint
-javascript.source {
-    prod {
-        js {
-            srcDir "server" 
-            srcDir "client/core"
-            srcDir "client/core/models"
-            srcDir "client/core/views"
-            srcDir "client/core/controllers"
-            srcDir "client/developer/**/*.js"
-            srcDir "client/enterprise/**/*.js"
-            srcDir "client/cloud/**/*.js"
-            include "*.js"
-        }
-    }
-}
-
-// this writes it's output to dest file only. does not fail build
-task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
-    project.buildDir.mkdirs()
-    source = javascript.source.prod.js.files
-    dest = file("${buildDir}/jshint.out")
-}
 
 // check jshint output file and if non-zero length, then fail build 
 task x_syntax() {
@@ -99,7 +54,7 @@ task y_server_cloud(type:Copy, description: 'Copies relevant server files to bui
 	into 'build/' + "cloud" + '/server'
 }
 y_server_dev.configure {
-	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
+	include('common/**/*', 'developer/**/*', 'bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
 }
 y_server_cloud.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
@@ -183,6 +138,6 @@ task build (overwrite: true, dependsOn: ['build_dev', 'build_cloud']) << {
 }
 
 task run (type: Exec, dependsOn: ['build']) {
-	commandLine = ['node', 'build/developer/server/main.js']
+	commandLine = ['node', 'build/developer/server/developer/main.js']
 }
 

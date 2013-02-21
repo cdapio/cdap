@@ -1,0 +1,11 @@
+{
+	"name": "reactor-ui-developer",
+	"version": "0.0.1",
+	"main": "./main.js",
+	"dependencies": {
+		"express": "2.5.9",
+		"socket.io": "0.9.6",
+		"xml2js": "0.1.14",
+		"log4js": "0.5.6"
+	}
+}
