@@ -334,8 +334,6 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(IndexedTable.class.getName(), dataset3.getType());
   }
 
-  // forwarding app spec serde (json) doesn't work. Should be un-ignored after it is fixed
-  @Ignore
   @Test
   public void testIncFlowletInstances() throws OperationException {
     ApplicationSpecification spec = new WordCountApp().configure();
@@ -351,8 +349,6 @@ public class MDSBasedStoreTest {
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
   }
 
-  // forwarding app spec serde (json) doesn't work. Should be un-ignored after it is fixed
-  @Ignore
   @Test
   public void testRemoveProgram() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
@@ -372,7 +368,7 @@ public class MDSBasedStoreTest {
 
     // checking that it was removed from metadatastore too
     // do we need to check that streams and datasets were not removed?
-    Assert.assertNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertFalse(metadataService.getFlow("account1", "application1", "WordCountFlow").isExists());
 
     // removing query
     store.remove(new Id.Program(id, "WordFrequency"));
@@ -384,7 +380,7 @@ public class MDSBasedStoreTest {
 
     // checking that it was removed from metadatastore too
     // do we need to check that streams and datasets were not removed?
-    Assert.assertNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    Assert.assertFalse(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")).isExists());
   }
 
   @Test
