@@ -1,16 +1,15 @@
 package com.continuuity.passport.http.client;
 
+import com.continuuity.passport.meta.Account;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.continuuity.passport.meta.Account;
+import com.google.gson.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.IOException;
@@ -64,7 +63,7 @@ public class PassportClient {
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String hostname, int port,  String apiKey) throws Exception {
+  public List<String> getVPCList(String hostname, int port,  String apiKey) throws RuntimeException {
     String url = getEndPoint(hostname,port, "passport/v1/vpc");
     //Check in cache- if present return it.
     List<String> vpcList = new ArrayList<String>();
@@ -92,11 +91,7 @@ public class PassportClient {
           }
         }
       }
-    } catch (IOException e) {
-      e.printStackTrace();
-      ;
-      throw new RuntimeException(e.getMessage());
-    } catch (Exception e) {
+    }  catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
     return vpcList;
@@ -112,27 +107,30 @@ public class PassportClient {
    * @return Instance of {@Account}
    * @throws Exception RunTimeExceptions
    */
-  public Account getAccount(String hostname, int port, String apiKey) throws Exception {
+  public Account getAccount(String hostname, int port, String apiKey) throws RuntimeException {
+    Preconditions.checkNotNull(hostname);
     String url = getEndPoint(hostname, port, "passport/v1/account/authenticate");
     Account account = null;
 
     try {
       account = accountCache.getIfPresent(apiKey);
       if (account == null) {
-        String data = httpGet(url, apiKey);
-        account = Account.fromString(data);
+        String data = httpPost(url, apiKey);
+        Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        AuthenticateJson authJson = gson.fromJson(data, AuthenticateJson.class);
+        account = authJson.getResult();
+      }
+      if(account != null) {
+        accountCache.put(apiKey,account);
       }
       return account;
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e.getMessage());
-    } catch (Exception e) {
+    }  catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
   }
 
 
-  private String httpGet(String url, String apiKey) throws Exception {
+  private String httpGet(String url, String apiKey) throws RuntimeException {
     String payload = null;
     HttpGet get = new HttpGet(url);
     get.addHeader(CONTINUUITY_API_KEY, apiKey);
@@ -151,9 +149,13 @@ public class PassportClient {
     try {
       response = client.execute(get);
       payload = IOUtils.toString(response.getEntity().getContent());
-      client.getConnectionManager().shutdown();
       if (debugEnabled) {
         System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
+      }
+
+      if(response.getStatusLine().getStatusCode()!=200){
+        throw new RuntimeException(String.format("Call failed with status : %d",
+          response.getStatusLine().getStatusCode()));
       }
     } catch (IOException e) {
       if (debugEnabled) {
@@ -161,6 +163,54 @@ public class PassportClient {
         e.printStackTrace();
       }
       throw new RuntimeException(e);
+    }
+     finally {
+      client.getConnectionManager().shutdown();
+
+    }
+
+    return payload;
+  }
+
+  private String httpPost(String url, String apiKey) throws RuntimeException {
+    String payload = null;
+    HttpPost get = new HttpPost(url);
+    get.addHeader(CONTINUUITY_API_KEY, apiKey);
+    get.addHeader("X-Continuuity-Signature", "abcdef");
+
+    if (debugEnabled) {
+      System.out.println(String.format("Headers: %s ", get.getAllHeaders().toString()));
+      System.out.println(String.format("URL: %s ", url));
+      System.out.println(String.format("Method: %s ", "POST"));
+    }
+
+    // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response;
+
+    try {
+      response = client.execute(get);
+      payload = IOUtils.toString(response.getEntity().getContent());
+
+      if (debugEnabled) {
+        System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
+        System.out.println(payload);
+      }
+
+      if(response.getStatusLine().getStatusCode()!=200){
+        throw new RuntimeException(String.format("Call failed with status : %d",
+          response.getStatusLine().getStatusCode()));
+      }
+
+    } catch (IOException e) {
+      if (debugEnabled) {
+        System.out.println(String.format("Caught exception while running http post call: Exception - %s", e.getMessage()));
+        e.printStackTrace();
+      }
+      throw new RuntimeException(e);
+    }
+    finally{
+      client.getConnectionManager().shutdown();
     }
 
 
@@ -170,6 +220,24 @@ public class PassportClient {
 
   private String getEndPoint(String hostname, int port, String endpoint) {
     return String.format("http://%s:%d/%s", hostname, port, endpoint);
+  }
+
+  private static class AuthenticateJson {
+    private final String error;
+    private final Account result;
+
+    private AuthenticateJson(String error, Account result) {
+      this.error = error;
+      this.result = result;
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public Account getResult() {
+      return result;
+    }
   }
 
 
