@@ -80,6 +80,5 @@ public class PassportGuiceBindings extends JerseyServletModule {
 
   private void filters() {
     filter("/passport/*").through(GuiceContainer.class);
-    //TODO: Add shiro filters
   }
 }

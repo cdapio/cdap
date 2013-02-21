@@ -39,6 +39,5 @@ public class PassportGuiceServletContextListener extends GuiceServletContextList
   @Override
   protected Injector getInjector() {
     return Guice.createInjector(new PassportGuiceBindings(config));
-    //TODO: Add shiro module
   }
 }
