@@ -83,16 +83,19 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       // Make sure we have a directory to store the original artifact.
       Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
       Location newOutputDir = outputDir
-        .append(o.getApplicationId().getAccountId())
-        .append(applicationName);
+        .append(o.getApplicationId().getAccountId());
       if(! newOutputDir.exists() && !newOutputDir.mkdirs()) {
         throw new IOException("Failed to create directory");
       }
 
       // Now, we iterate through FlowSpecification and generate programs
       for(FlowSpecification flow : o.getSpecification().getFlows().values()) {
-        String name = String.format(Locale.ENGLISH, "%s.%s.%s", Type.FLOW.toString(), applicationName, flow.getName());
-        Location output = newOutputDir.append(name + ".jar");
+        String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
+        Location flowAppDir = newOutputDir.append(name);
+        if(! flowAppDir.exists()) {
+          flowAppDir.mkdirs();
+        }
+        Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
         Location loc = clone(o.getApplicationId(), bundler, output, flow.getName(),
                              flow.getClassName(), Type.FLOW, appSpecFile);
         PROGRAMS.add(new Program(loc));
@@ -100,11 +103,14 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
       // Iterate through ProcedureSpecification and generate program
       for(ProcedureSpecification procedure : o.getSpecification().getProcedures().values()) {
-        String name = String.format(Locale.ENGLISH, "%s.%s.%s", Type.PROCEDURE.toString(),
-                                    applicationName, procedure.getName());
-        Location output = newOutputDir.append(name + ".jar");
+        String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
+        Location procedureAppDir = newOutputDir.append(name);
+        if(! procedureAppDir.exists()) {
+          procedureAppDir.mkdirs();
+        }
+        Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
         Location loc = clone(o.getApplicationId(), bundler, output, procedure.getName(),
-                             procedure.getClassName(), Type.PROCEDURE, appSpecFile);
+                             procedure.getClassName(), Type.FLOW, appSpecFile);
         PROGRAMS.add(new Program(loc));
       }
 

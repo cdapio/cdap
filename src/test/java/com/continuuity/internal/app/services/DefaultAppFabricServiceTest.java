@@ -67,38 +67,7 @@ public class DefaultAppFabricServiceTest {
 
   @Test
   public void testUploadToDeploymentServer() throws Exception {
-    // Create a local jar - simulate creation of application archive.
-    Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    // Call init to get a session identifier - yes, the name needs to be changed.
-    AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo("demo","",deployedJar.getName(), 123455, 45343));
-
-    // Upload the jar file to remote location.
-    BufferFileInputStream is =
-      new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
-    try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        server.chunk(token, id, ByteBuffer.wrap(toSubmit));
-        DeploymentStatus status = server.dstatus(token, id);
-        Assert.assertEquals(2, status.getOverall());
-      }
-    } finally {
-      is.close();
-    }
-
-    server.deploy(token, id);
-    int status = server.dstatus(token, id).getOverall();
-    while(status == 3) {
-      status = server.dstatus(token, id).getOverall();
-      Thread.sleep(100);
-    }
-    Assert.assertEquals(5, status); // Deployed successfully.
+    TestHelper.deployApplication(ToyApp.class);
   }
 
   @Test

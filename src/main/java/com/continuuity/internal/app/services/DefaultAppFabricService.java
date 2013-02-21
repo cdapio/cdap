@@ -163,7 +163,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
-    //descriptor.getIdentifier().getType().
     return null;
   }
 
@@ -176,6 +175,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public FlowStatus status(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
+
     return null;
   }
 
@@ -202,7 +202,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
-
   }
 
   /**

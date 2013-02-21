@@ -7,10 +7,13 @@ package com.continuuity.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.Id;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
+import com.continuuity.app.program.Type;
 import com.continuuity.metadata.thrift.MetadataService;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -18,6 +21,9 @@ import java.util.List;
  * for managing the non-runtime lifecycle of a {@link com.continuuity.app.program.Program}
  */
 public interface Store {
+
+  Program loadProgram(Id.Program program, Type type) throws IOException;
+
   /**
    * @return MetaDataService to access program configuration data
    */

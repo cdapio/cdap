@@ -5,6 +5,7 @@ import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.filesystem.Location;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
