@@ -8,6 +8,7 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.utils.NonceUtils;
 import com.continuuity.passport.dal.NonceDAO;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -38,10 +39,11 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   @Override
-  public int getNonce(int id, NONCE_TYPE type) throws RuntimeException {
+  public int getNonce(int id, NONCE_TYPE type) {
 
     Connection connection = null;
     PreparedStatement ps = null;
+    int nonce= -1;
     try {
       connection = this.poolManager.getConnection();
       String SQL = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
@@ -49,7 +51,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         DBUtils.Nonce.NONCE_ID_COLUMN, DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN);
 
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
-      int nonce = NonceUtils.getNonce();
+      nonce = NonceUtils.getNonce();
       ps.setInt(1, nonce);
       ps.setInt(2, id);
       if (type.equals(NONCE_TYPE.SESSION)) {
@@ -61,21 +63,23 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       }
       ps.executeUpdate();
 
-      return nonce;
+
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
+      return nonce;
     }
-
   }
 
   @Override
-  public int getId(int nonce, NONCE_TYPE type) throws RuntimeException, StaleNonceException {
+  public int getId(int nonce, NONCE_TYPE type) throws StaleNonceException {
 
     Connection connection = null;
     PreparedStatement ps = null;
+    int id = -1;
+
     try {
       connection = this.poolManager.getConnection();
       String SQL = String.format("SELECT %s, %s FROM %s WHERE %s = ?",
@@ -88,7 +92,6 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       ps.setInt(1, nonce);
       ResultSet rs = ps.executeQuery();
 
-      int id = -1;
       int count = 0;
       while (rs.next()) {
         id = rs.getInt(1);
@@ -101,11 +104,11 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
           throw new RuntimeException("Multiple nonce with same  ID");
         }
       }
-      return id;
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      Throwables.propagate(e);
     } finally {
       close(connection, ps);
+      return id;
     }
-  }
+ }
 }
