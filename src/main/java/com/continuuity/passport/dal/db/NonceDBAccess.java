@@ -66,7 +66,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
       return nonce;
@@ -105,7 +105,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         }
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
       return id;

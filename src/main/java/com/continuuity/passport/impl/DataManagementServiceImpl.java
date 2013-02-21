@@ -51,7 +51,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountCreated = accountDAO.createAccount(account);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return accountCreated;
   }
@@ -65,7 +65,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountDAO.confirmRegistration(account, password);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -78,7 +78,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountDAO.confirmDownload(accountId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -122,7 +122,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountDAO.deleteAccount(accountId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -153,7 +153,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       account = accountDAO.getAccount(accountId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return account;
   }
@@ -167,7 +167,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       vpc  =  vpcDao.getVPC(accountId, vpcId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return vpc;
   }
@@ -180,7 +180,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       vpcDao.removeVPC(accountId, vpcId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
 
 
@@ -197,7 +197,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       account = accountDAO.getAccount(emailId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return account;
   }
@@ -214,7 +214,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       vpcs = vpcDao.getVPC(accountId);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return vpcs;
   }
@@ -235,7 +235,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       vpcs = vpcDao.getVPC(apiKey);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return vpcs;
  }
@@ -255,7 +255,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountDAO.updateAccount(accountId, params);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -268,7 +268,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       accountDAO.changePassword(accountId, oldPassword, newPassword);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
 
   }
@@ -282,7 +282,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       nonce =  nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.ACTIVATION);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return nonce;
   }
@@ -296,7 +296,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       nonce =  nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return nonce;
   }
@@ -310,7 +310,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       id = nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return id;
   }
@@ -325,7 +325,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       id =  nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return id;
   }
@@ -339,7 +339,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
       vpcReturned =  vpcDao.addVPC(accountId, vpc);
     } catch (ConfigurationException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     return vpcReturned;
   }

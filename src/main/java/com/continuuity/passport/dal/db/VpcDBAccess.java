@@ -143,7 +143,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -178,7 +178,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -212,7 +212,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -249,7 +249,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
