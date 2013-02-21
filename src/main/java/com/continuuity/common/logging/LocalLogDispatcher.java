@@ -11,6 +11,7 @@ import java.util.Date;
 /**
  * Local Log dispatcher.
  */
+@Deprecated
 public class LocalLogDispatcher extends AbstractLogDispatcher {
   private final CConfiguration configuration;
   private final Configuration hConfiguration;

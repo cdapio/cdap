@@ -3,6 +3,7 @@ package com.continuuity.api.common;
 /**
  * Log dispatcher
  */
+@Deprecated
 public interface LogDispatcher {
   /**
    * Defines log level. TRACE, DEBUG, WARN, ERROR, INFO

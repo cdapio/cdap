@@ -3,6 +3,7 @@ package com.continuuity.api.common;
 /**
  * Metrics interface
  */
+@Deprecated
 public interface CMetricsIntfc {
   /**
    * Set the counter for specified key with the value
