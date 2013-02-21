@@ -21,8 +21,9 @@ public class GatewayKeyStore {
     return "secret".toCharArray();
   }
 
+  //TODO:
   public static InputStream asInputStream(){
-    return new ByteArrayInputStream("sercret".getBytes()) ;
+    return new ByteArrayInputStream("secret".getBytes()) ;
 
   }
 

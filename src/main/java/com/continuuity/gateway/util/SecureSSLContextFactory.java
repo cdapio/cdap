@@ -1,5 +1,7 @@
 package com.continuuity.gateway.util;
 
+import com.google.common.base.Throwables;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import java.security.KeyStore;
@@ -15,8 +17,9 @@ public class SecureSSLContextFactory {
 
   static {
     String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
+
     if (algorithm == null) {
-      algorithm = "SunX";
+      algorithm = "RSA";
     }
 
     SSLContext serverContext = null;
@@ -33,15 +36,13 @@ public class SecureSSLContextFactory {
       serverContext = SSLContext.getInstance(PROTOCOL);
       serverContext.init(keyManagerFactory.getKeyManagers(), null, null);
     } catch (Exception e) {
-      throw new Error(
-        "Failed to initialize the server-side SSLContext", e);
+     throw Throwables.propagate(e);
     }
     try {
       clientContext = SSLContext.getInstance(PROTOCOL);
       clientContext.init(null,SecureGatewayTrustManagerFactory.getTrustManagers(),null);
     } catch (Exception e) {
-      throw new Error(
-        "Failed to initialize the client-side SSLContext", e);
+     throw Throwables.propagate(e);
     }
     SERVER_CONTEXT = serverContext;
     CLIENT_CONTEXT = clientContext;

@@ -70,9 +70,6 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
       SSLEngine engine =  SecureSSLContextFactory.getServerContext().createSSLEngine();
       engine.setUseClientMode(false);
       pipeline.addLast("ssl", new SslHandler(engine));
-      // SSLEngine engine = ...
-      // engine.setUseClientMode(false);
-      // pipeline.addLast("ssl", new SslHandler(engine));
     }
 
     // use the default HTTP decoder from netty
