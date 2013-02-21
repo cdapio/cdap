@@ -1,6 +1,5 @@
 package com.continuuity.passport.meta;
 
-import com.continuuity.passport.core.meta.Account;
 import org.junit.Test;
 
 /**
@@ -15,6 +14,7 @@ public class TestAccount {
       "\"api_key\":\"25b5243627dbf551110cf95884cfa23b11e6e3d8\",\"confirmed\":true}";
 
     Account account  = Account.fromString(json);
+
     assert ("Sree".equals(account.getFirstName()));
     assert ("Raman".equals(account.getLastName()));
     assert("Continuuity".equals(account.getCompany()));

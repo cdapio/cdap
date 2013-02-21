@@ -1,4 +1,4 @@
-package com.continuuity.passport.core.meta;
+package com.continuuity.passport.meta;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;

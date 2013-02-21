@@ -2,8 +2,8 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
-import com.continuuity.passport.core.meta.Role;
-import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.meta.Role;
+import com.continuuity.passport.meta.VPC;
 
 import java.util.List;
 

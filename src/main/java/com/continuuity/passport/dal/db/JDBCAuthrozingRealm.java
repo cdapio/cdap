@@ -1,7 +1,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.shiro.authc.AuthenticationException;

@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.continuuity.passport.meta.Account;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -25,9 +26,15 @@ public class PassportClient {
 
   public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
 
+  public final static String PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
+
+  public final static String PASSPORT_SERVER_PORT_KEY = "passport.server.port";
+
+
   private boolean debugEnabled = false;
 
   private static Cache<String, String> responseCache = null;
+  private static Cache<String, Account> accountCache = null;
 
   /**
    * Enable debug - prints debug messages in std.out
@@ -44,6 +51,8 @@ public class PassportClient {
       .maximumSize(10000)
       .expireAfterAccess(10, TimeUnit.MINUTES)
       .build();
+
+    accountCache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterAccess(10,TimeUnit.MINUTES).build();
   }
 
 
@@ -55,8 +64,8 @@ public class PassportClient {
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String hostname, String apiKey) throws Exception {
-    String url = getEndPoint(hostname, "passport/v1/vpc");
+  public List<String> getVPCList(String hostname, int port,  String apiKey) throws Exception {
+    String url = getEndPoint(hostname,port, "passport/v1/vpc");
     //Check in cache- if present return it.
     List<String> vpcList = new ArrayList<String>();
 
@@ -94,6 +103,35 @@ public class PassportClient {
 
   }
 
+
+  /**
+   * Get List of VPC for the apiKey
+   *
+   * @param hostname Host of the service
+   * @param apiKey   apiKey of the developer
+   * @return Instance of {@Account}
+   * @throws Exception RunTimeExceptions
+   */
+  public Account getAccount(String hostname, int port, String apiKey) throws Exception {
+    String url = getEndPoint(hostname, port, "passport/v1/account/authenticate");
+    Account account = null;
+
+    try {
+      account = accountCache.getIfPresent(apiKey);
+      if (account == null) {
+        String data = httpGet(url, apiKey);
+        account = Account.fromString(data);
+      }
+      return account;
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage());
+    } catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
+
+
   private String httpGet(String url, String apiKey) throws Exception {
     String payload = null;
     HttpGet get = new HttpGet(url);
@@ -130,8 +168,8 @@ public class PassportClient {
   }
 
 
-  private String getEndPoint(String hostname, String endpoint) {
-    return String.format("http://%s:7777/%s", hostname, endpoint);
+  private String getEndPoint(String hostname, int port, String endpoint) {
+    return String.format("http://%s:%d/%s", hostname, port, endpoint);
   }
 
 

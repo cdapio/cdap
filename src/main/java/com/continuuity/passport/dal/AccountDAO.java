@@ -3,9 +3,9 @@ package com.continuuity.passport.dal;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
-import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.meta.BillingInfo;
-import com.continuuity.passport.core.meta.Role;
+import com.continuuity.passport.meta.Account;
+import com.continuuity.passport.meta.BillingInfo;
+import com.continuuity.passport.meta.Role;
 
 import java.util.Map;
 

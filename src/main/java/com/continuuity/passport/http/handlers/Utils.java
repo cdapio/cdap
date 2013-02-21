@@ -28,7 +28,7 @@ public class Utils {
   }
 
   public static String getAuthenticatedJson(String result) {
-    return String.format("{\"error\": null, \"result\": \"%s\" }", result);
+    return String.format("{\"error\": null, \"result\": %s }", result);
   }
 
   public static String getAuthenticatedJson(String error, String result) {

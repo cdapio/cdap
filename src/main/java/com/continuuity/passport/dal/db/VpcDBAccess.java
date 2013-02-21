@@ -3,12 +3,12 @@ package com.continuuity.passport.dal.db;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
-import com.continuuity.passport.core.meta.Role;
-import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.dal.VpcDAO;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.continuuity.passport.meta.VPC;
+import com.continuuity.passport.meta.Role;
 
 import java.sql.*;
 import java.util.ArrayList;
