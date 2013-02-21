@@ -43,7 +43,8 @@ public class TableTest extends DataSetTestBase {
     DataSet t1 = new Table("t1");
     DataSet t2 = new Table("t2");
     DataSet t3 = new Table("t3");
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3));
+    DataSet t4 = new Table("t4");
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4));
     table = instantiator.getDataSet("test");
   }
 
@@ -86,6 +87,21 @@ public class TableTest extends DataSetTestBase {
                                 byte[][] columns) {
     Assert.assertTrue(columns.length > 0);
     Assert.assertTrue(result.isEmpty());
+  }
+
+  private byte[][] makeArray(String prefix, Integer ... numbers) {
+    byte[][] array = new byte[numbers.length][];
+    int idx = 0;
+    for (int i : numbers) {
+      array[idx++] = (prefix + i).getBytes();
+    }
+    return array;
+  }
+  private byte[][] makeColumns(Integer ... numbers) {
+    return makeArray("c", numbers);
+  }
+  private byte[][] makeValues(Integer ... numbers) {
+    return makeArray("v", numbers);
   }
 
   // attempt to compare and swap, expect failure
@@ -442,6 +458,41 @@ public class TableTest extends DataSetTestBase {
     } catch (IllegalStateException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testColumnRange() throws OperationException {
+    Table table = instantiator.getDataSet("t4");
+    // start a transaction
+    newTransaction(Mode.Sync);
+
+    // write a row with 10 columns
+    byte[][] allColumns = makeColumns(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    byte[][] allValues =  makeValues(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    table.write(new Write(key1, allColumns, allValues));
+
+    // read a column range of all columns
+    OperationResult<Map<byte[], byte[]>> result;
+    result = table.read(new Read(key1, null, null));
+    verifyColumns(result, allColumns, allValues);
+
+    // read a column range from 7 to the end
+    result = table.read(new Read(key1, allColumns[7], null));
+    verifyColumns(result, makeColumns(7, 8, 9), makeValues(7, 8, 9));
+
+    // read a column range from the beginning to 5
+    result = table.read(new Read(key1, null, allColumns[2]));
+    verifyColumns(result, makeColumns(0, 1), makeValues(0, 1));
+
+    // read a column range with limit
+    result = table.read(new Read(key1, allColumns[2], null, 4));
+    verifyColumns(result, makeColumns(2, 3, 4, 5), makeValues(2, 3, 4, 5));
+
+    // read a column range with limit that return less then limit
+    result = table.read(new Read(key1, allColumns[8], null, 4));
+    verifyColumns(result, makeColumns(8, 9), makeValues(8, 9));
+
+
   }
 
 }
