@@ -57,10 +57,10 @@ public class AppFabricServerTest {
         Assert.assertTrue(false);
       }
     });
+
     Service.State state = future.get();
     Assert.assertTrue(state == Service.State.RUNNING);
-    while(true) {
-      Thread.sleep(1000);
-    }
+    state = service.stopAndWait();
+    Assert.assertTrue(state == Service.State.TERMINATED);
   }
 }

@@ -70,8 +70,5 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   protected void triggerShutdown() {
     runnerThread.interrupt();
-    if(server.isServing()) {
-      server.stop();
-    }
   }
 }
