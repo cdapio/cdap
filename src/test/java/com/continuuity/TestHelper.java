@@ -76,7 +76,7 @@ public class TestHelper {
   public static Manifest getManifestWithMainClass(Class<?> klass) {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getCanonicalName());
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
     return manifest;
   }
 
@@ -94,9 +94,6 @@ public class TestHelper {
     return (Manager<Location, ApplicationWithPrograms>)factory.create(configuration);
   }
 
-  public interface Enqueuer {
-
-  }
 //
 //  /**
 //   * Runs an application.

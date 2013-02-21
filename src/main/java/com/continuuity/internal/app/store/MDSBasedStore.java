@@ -24,13 +24,13 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,13 +45,16 @@ public class MDSBasedStore implements Store {
   private static final Logger LOG
     = LoggerFactory.getLogger(MDSBasedStore.class);
 
-  private static final ProgramRunRecordStartTimeComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
-    new ProgramRunRecordStartTimeComparator();
+  private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
+    new RunRecordComparator();
   /**
    * We re-use metadataService to store configuration type data
    */
   private final MetadataService.Iface metaDataService;
 
+  /**
+   * Helper class
+   */
   private final MetadataServiceHelper metadataServiceHelper;
 
   /**
@@ -112,11 +115,17 @@ public class MDSBasedStore implements Store {
     metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
                               FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                               FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
-    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
-                              FieldTypes.ProgramRun.ENTRY_TYPE, pid,
-                              FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1);
+    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
+                              pid, FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1);
   }
 
+  /**
+   * Given a program returns the history of it's run.
+   *
+   * @param id program id
+   * @return list of run record.
+   * @throws OperationException
+   */
   @Override
   public List<RunRecord> getRunHistory(final Id.Program id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
@@ -126,8 +135,7 @@ public class MDSBasedStore implements Store {
                                                      id.getAccountId(),
                                                      id.getApplicationId(),
                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
-
-    List<RunRecord> runHistory = new ArrayList<RunRecord>();
+    List<RunRecord> runHistory = Lists.newArrayList();
     for(MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
       if(endTsStr == null) {
@@ -139,16 +147,14 @@ public class MDSBasedStore implements Store {
                                    Long.valueOf(endTsStr),
                                    Status.valueOf(entry.getTextField(FieldTypes.ProgramRun.END_STATE))));
     }
-
     Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
-
     return runHistory;
   }
 
   /**
    * Compares RunRecord using their start time.
    */
-  private static final class ProgramRunRecordStartTimeComparator implements Comparator<RunRecord> {
+  private static final class RunRecordComparator implements Comparator<RunRecord> {
     @Override
     public int compare(final RunRecord left, final RunRecord right) {
       if(left.getStartTs() > right.getStartTs()) {

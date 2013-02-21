@@ -33,6 +33,7 @@ import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
@@ -55,6 +56,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
@@ -86,13 +88,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is a concrete implementation of DeploymentService thrift Interface.
- * Following are the highlights of this service.
- * <p>
- *   <ul>This service does not talk to zookeeper. The states are maintained on the filesystem.</ul>
- *   <ul>In case of server crash, any states maintained within the server in terms of upload sessions
- *   will be lost. The client anyway has to connect back to the server.</ul>
- * </p>
+ * This is a concrete implementation of AppFabric thrift Interface.
  */
 public class DefaultAppFabricService implements AppFabricService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
@@ -154,7 +150,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.managerFactory = managerFactory;
     this.authFactory = authFactory;
     this.store = storeFactory.create(configuration);
-    this.archiveDir = configuration.get("app.output.dir", "/tmp") + "/archive";
+    this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp") + "/archive";
     this.mds = new MetadataService(opex);
   }
 
@@ -165,7 +161,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param descriptor
    */
   @Override
-  public RunIdentifier start(AuthToken token, FlowDescriptor descriptor) throws AppFabricServiceException, TException {
+  public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
+    throws AppFabricServiceException, TException {
     return null;
   }
 
@@ -176,7 +173,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param identifier
    */
   @Override
-  public FlowStatus status(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException, TException {
+  public FlowStatus status(AuthToken token, FlowIdentifier identifier)
+    throws AppFabricServiceException, TException {
     return null;
   }
 
@@ -212,7 +210,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param accountId
    */
   @Override
-  public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, TException {
+  public List<ActiveFlow> getFlows(String accountId)
+    throws AppFabricServiceException, TException {
+    List<ActiveFlow> f = Lists.newArrayList();
+    ActiveFlow a = new ActiveFlow();
+    a.setApplicationId("ToyRun");
+    a.setRuns(0);
+    a.setType(EntityType.FLOW);
+    a.setFlowId("ToyFlow");
     return null;
   }
 
@@ -222,29 +227,26 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param id
    */
   @Override
-  public String getFlowDefinition(FlowIdentifier id) throws AppFabricServiceException, TException {
-
-    // in this code XXXspec is new API class, XXXdef is legacy
-
+  public String getFlowDefinition(FlowIdentifier id)
+    throws AppFabricServiceException, TException {
     if(id.getType() == EntityType.FLOW) {
       FlowDefinitionImpl flowDef = getFlowDef(id);
       return new Gson().toJson(flowDef);
-
     } else if(id.getType() == EntityType.QUERY) {
-      QueryDefinitionImpl queryDef = getQueryDefinition(id);
+      QueryDefinitionImpl queryDef = getQueryDefn(id);
       return new Gson().toJson(queryDef);
     }
-
     return null;
   }
 
-  private QueryDefinitionImpl getQueryDefinition(final FlowIdentifier identifier) throws AppFabricServiceException {
+  private QueryDefinitionImpl getQueryDefn(final FlowIdentifier identifier)
+    throws AppFabricServiceException {
     ApplicationSpecification appSpec = null;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
     } catch(OperationException e) {
-      throw  new AppFabricServiceException("Could NOT retrieve application spec for " +
+      throw  new AppFabricServiceException("Could not retrieve application spec for " +
                                            identifier.toString() + ", reason: " + e.getMessage());
     }
 
@@ -256,64 +258,55 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return queryDef;
   }
 
-  private FlowDefinitionImpl getFlowDef(final FlowIdentifier identifier) throws AppFabricServiceException {
+  private FlowDefinitionImpl getFlowDef(final FlowIdentifier id)
+    throws AppFabricServiceException {
     ApplicationSpecification appSpec = null;
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
-                                                        identifier.getApplicationId()));
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
+                                                        id.getApplicationId()));
     } catch(OperationException e) {
-      throw  new AppFabricServiceException("Could NOT retrieve application spec for " +
-                                           identifier.toString() + ", reason: " + e.getMessage());
+      throw  new AppFabricServiceException("Could not retrieve application spec for " + id.toString() + "." +
+                                             e.getMessage());
     }
 
-    FlowSpecification flowSpec = appSpec.getFlows().get(identifier.getFlowId());
-
+    Preconditions.checkArgument(appSpec != null, "Not application specification found.");
+    FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
     FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
-
     fillFlowletsAndDataSets(flowSpec, flowDef);
-
-    fillConnectionsAndStreams(identifier, flowSpec, flowDef);
-
+    fillConnectionsAndStreams(id, flowSpec, flowDef);
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
-    metaDefinition.setApp(identifier.getApplicationId());
-
-    // user info (email, company, etc.) is left empty
+    metaDefinition.setApp(id.getApplicationId());
     return flowDef;
   }
 
-  private void fillConnectionsAndStreams(final FlowIdentifier identifier, final FlowSpecification flowSpec,
-                                         final FlowDefinitionImpl flowDef) {
+  private void fillConnectionsAndStreams(final FlowIdentifier id, final FlowSpecification spec,
+                                         final FlowDefinitionImpl def) {
     List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
     // we gather streams across all connections, hence we need to eliminate duplicate streams hence using map
     Map<String, FlowStreamDefinitionImpl> flowStreams = new HashMap<String, FlowStreamDefinitionImpl>();
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(new Id.Account(identifier.getAccountId()));
-    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(flowSpec);
+      new SimpleQueueSpecificationGenerator(new Id.Account(id.getAccountId()));
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(spec);
 
     for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
       for (QueueSpecification queueSpec : conSet.getValue()) {
         String srcName = conSet.getRowKey().getName();
         String destName = conSet.getColumnKey();
         FlowletStreamDefinitionImpl from;
-        if (!flowSpec.getFlowlets().containsKey(srcName)) {
-          // stream source
+        if (!spec.getFlowlets().containsKey(srcName)) {
           from =  new FlowletStreamDefinitionImpl(srcName);
           flowStreams.put(srcName, new FlowStreamDefinitionImpl(srcName, null));
         } else {
-          // flowlet source
           from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName());
         }
-
         FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
                                                                          queueSpec.getQueueName().getSimpleName());
-
         connections.add(new ConnectionDefinitionImpl(from, to));
       }
     }
-
-    flowDef.setConnections(connections);
-    flowDef.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
+    def.setConnections(connections);
+    def.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
   }
 
   private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {
@@ -346,7 +339,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Returns run information for a given flow id.
    *
-   * @param id
+   * @param id of the program.
    */
   @Override
   public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws AppFabricServiceException, TException {
@@ -360,7 +353,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
     List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
     for (RunRecord runRecord : log) {
-      history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(), runRecord.getStopTs(),runRecord.getEndStatus().name()));
+      history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
+                                    runRecord.getStopTs(),runRecord.getEndStatus().name())
+      );
     }
     return history;
   }
@@ -368,11 +363,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Returns run information for a given flow id.
    *
-   * @param accountId
+   * @param id
    */
   @Override
-  public void stopAll(String accountId) throws AppFabricServiceException, TException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void stopAll(String id) throws AppFabricServiceException, TException {
+
   }
 
   /**

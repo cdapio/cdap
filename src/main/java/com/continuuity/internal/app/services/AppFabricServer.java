@@ -28,6 +28,12 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private TThreadedSelectorServer.Args options;
   private int port;
 
+  /**
+   * Construct the AppFabricServer with service factory and configuration coming from factory.
+   *
+   * @param factory
+   * @param configuration
+   */
   public AppFabricServer(AppFabricServiceFactory factory, CConfiguration configuration) {
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
     service = factory.create(CConfiguration.create());

@@ -9,11 +9,15 @@ import com.continuuity.app.services.ServerFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.metadata.MetadataServerInterface;
+import com.continuuity.runtime.MetadataModules;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -42,7 +46,21 @@ public class AppFabricServerTest {
   public void startStopServer() throws Exception {
     Service service = server.create(configuration);
     ListenableFuture<Service.State> future = service.start();
-    future.cancel(true);
-    Thread.sleep(10000);
+    Futures.addCallback(future, new FutureCallback<Service.State>() {
+      @Override
+      public void onSuccess(Service.State result) {
+        Assert.assertTrue(true);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        Assert.assertTrue(false);
+      }
+    });
+    Service.State state = future.get();
+    Assert.assertTrue(state == Service.State.RUNNING);
+    while(true) {
+      Thread.sleep(1000);
+    }
   }
 }

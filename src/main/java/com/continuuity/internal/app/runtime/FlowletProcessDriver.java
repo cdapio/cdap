@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(FlowletProcessDriver.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
@@ -91,7 +91,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     transactionExecutor.shutdown();
     if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-      LOGGER.error("The transaction executor took more than 10 seconds to shutdown.");
+      LOG.error("The transaction executor took more than 10 seconds to shutdown.");
     }
   }
 
@@ -110,7 +110,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (BrokenBarrierException e) {
-        LOGGER.error("Exception during suspend.", e);
+        LOG.error("Exception during suspend.", e);
       }
     }
   }
@@ -156,7 +156,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         processQueue.peek().await();
       } catch (InterruptedException e) {
         // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
-        LOGGER.info("Process queue await interruped.", e);
+        LOG.info("Process queue await interruped.", e);
         continue;
       }
 
@@ -182,10 +182,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOGGER.error(String.format("Fail to invoke process method: %s", entry.processSpec), t);
+            LOG.error(String.format("Fail to invoke process method: %s", entry.processSpec), t);
           }
         } catch (OperationException e) {
-          LOGGER.error("Queue operation failure", e);
+          LOG.error("Queue operation failure", e);
         } finally {
           // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
           if (!entry.isRetry()) {
@@ -204,22 +204,22 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private void initFlowlet() {
     try {
-      LOGGER.info("Initializing flowlet: " + flowlet.getClass());
+      LOG.info("Initializing flowlet: " + flowlet.getClass());
       flowlet.initialize(flowletContext);
-      LOGGER.info("Flowlet initialized: " + flowlet.getClass());
+      LOG.info("Flowlet initialized: " + flowlet.getClass());
     } catch (Throwable t) {
-      LOGGER.error("Flowlet throws exception during flowlet initialize.", t);
+      LOG.error("Flowlet throws exception during flowlet initialize.", t);
       throw Throwables.propagate(t);
     }
   }
 
   private void destroyFlowlet() {
     try {
-      LOGGER.info("Destroying flowlet: " + flowlet.getClass());
+      LOG.info("Destroying flowlet: " + flowlet.getClass());
       flowlet.destroy();
-      LOGGER.info("Flowlet destroyed: " + flowlet.getClass());
+      LOG.info("Flowlet destroyed: " + flowlet.getClass());
     } catch (Throwable t) {
-      LOGGER.error("Flowlet throws exception during flowlet destroy.", t);
+      LOG.error("Flowlet throws exception during flowlet destroy.", t);
       throw Throwables.propagate(t);
     }
   }
@@ -233,7 +233,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
-          LOGGER.info("Exception on onSuccess call.", t);
+          LOG.info("Exception on onSuccess call.", t);
         }
       }
 
@@ -245,7 +245,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
-          LOGGER.info("Exception on onFailure call.", t);
+          LOG.info("Exception on onFailure call.", t);
           failurePolicy = FailurePolicy.RETRY;
         }
 
@@ -267,7 +267,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           try {
             inputAcknowledger.ack();
           } catch (OperationException e) {
-            LOGGER.error("Fatal problem, fail to ack an input.", e);
+            LOG.error("Fatal problem, fail to ack an input.", e);
           }
         }
       }
