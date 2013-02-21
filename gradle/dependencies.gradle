@@ -56,6 +56,12 @@ libraries.apache_commons_logging = "commons-logging:commons-logging:1.1.1"
 libraries.apache_commons_math = "org.apache.commons:commons-math:2.2"
 libraries.apache_commons_io = "org.apache.commons:commons-io:1.3.2"
 
+//Apache Http
+libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"
+
+//Shiro
+libraries.shiro_core = "org.apache.shiro:shiro-core:1.2.1"
+
 // Netflix Curator
 libraries.netflix_curator_framework = "com.netflix.curator:curator-framework:$versions.netflixCuratorVersion"
 libraries.netflix_curator_client = "com.netflix.curator:curator-client:$versions.netflixCuratorVersion"
@@ -73,6 +79,10 @@ libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.h
 
 // Jetty
 libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"
+libraries.jetty_management = "jetty:jetty-management:6.0.0"
+
+//Yammer
+libraries.yammer_metrics = "com.yammer.metrics:metrics-core:2.1.5"
 
 // Netty
 libraries.netty = "org.jboss.netty:netty:3.2.4.Final"
