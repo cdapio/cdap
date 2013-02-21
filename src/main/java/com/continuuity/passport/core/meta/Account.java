@@ -24,6 +24,12 @@ public class Account {
 
   private final boolean confirmed;
 
+  public static Account fromString(String jsonString) {
+   // Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE).create();
+    return gson.fromJson(jsonString, Account.class);
+  }
+
   public Account(String firstName, String lastName, String emailId) {
     this(firstName, lastName, StringUtils.EMPTY, emailId, -1);
   }
