@@ -5,10 +5,10 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AppFabricServiceFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Inject;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 
@@ -31,12 +31,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   /**
    * Construct the AppFabricServer with service factory and configuration coming from factory.
    *
-   * @param factory
+   * @param service
    * @param configuration
    */
-  public AppFabricServer(AppFabricServiceFactory factory, CConfiguration configuration) {
+  @Inject
+  public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration) {
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
-    service = factory.create(CConfiguration.create());
+    this.service = service;
     port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
   }
 

@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Abstract implementation of {@link Pipeline}.
  */
-public abstract class AbstractPipeline implements Pipeline {
+public abstract class AbstractPipeline<T> implements Pipeline<T> {
   /**
    * List of stages in the pipeline.
    */

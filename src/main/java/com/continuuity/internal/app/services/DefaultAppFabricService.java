@@ -149,7 +149,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.authFactory = authFactory;
-    this.store = storeFactory.create(configuration);
+    this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp") + "/archive";
     this.mds = new MetadataService(opex);
   }
@@ -163,6 +163,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
+    //descriptor.getIdentifier().getType().
     return null;
   }
 
@@ -459,7 +460,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         sessions.get(resource.getAccountId()).setStatus(DeployStatus.VERIFYING);
         Manager<Location, ApplicationWithPrograms> manager
-          = (Manager<Location, ApplicationWithPrograms>)managerFactory.create(configuration);
+          = (Manager<Location, ApplicationWithPrograms>)managerFactory.create();
         ListenableFuture<ApplicationWithPrograms> future = manager.deploy(id, archiveLocation);
         Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
           @Override

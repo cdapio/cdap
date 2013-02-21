@@ -6,5 +6,13 @@ import com.continuuity.app.runtime.ProgramRunner;
  *
  */
 public interface ProgramRunnerFactory {
-  ProgramRunner create();
+
+  public enum Type {
+    FLOW,
+    FLOWLET,
+    PROCEDURE,
+    BATCH
+  }
+
+  ProgramRunner create(Type programType);
 }

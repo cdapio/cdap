@@ -4,59 +4,22 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueName;
-import com.continuuity.app.runtime.Arguments;
-import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.common.LocalLogWriter;
-import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.runtime.BasicArguments;
-import com.continuuity.internal.app.runtime.FlowProgramRunner;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.store.StoreFactory;
-import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
-import com.continuuity.streamevent.DefaultStreamEvent;
-import com.continuuity.streamevent.StreamEventCodec;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.TypeLiteral;
 
-import java.nio.ByteBuffer;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
@@ -87,11 +50,12 @@ public class TestHelper {
     LocationFactory lf = new LocalLocationFactory();
     PipelineFactory pf = new SynchronousPipelineFactory();
 
-    final Injector injector = Guice.createInjector(new BigMamaModule(),
+    final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
                                                    new DataFabricModules().getInMemoryModules());
 
+
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-    return (Manager<Location, ApplicationWithPrograms>)factory.create(configuration);
+    return (Manager<Location, ApplicationWithPrograms>)factory.create();
   }
 
 //

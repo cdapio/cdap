@@ -53,13 +53,7 @@ public class FlowTest {
     configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
-                                               }
-                                             });
+                                             new BigMamaModule(configuration));
 
     LocalLocationFactory lf = new LocalLocationFactory();
 

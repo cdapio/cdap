@@ -12,7 +12,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Status;
-import com.continuuity.app.services.AppFabricServiceFactory;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
@@ -22,15 +21,15 @@ import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
-import com.continuuity.filesystem.LocationFactory;
-import com.continuuity.app.store.StoreFactory;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -50,16 +49,14 @@ public class DefaultAppFabricServiceTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new BigMamaModule());
-    AppFabricServiceFactory factory = injector.getInstance(AppFabricServiceFactory.class);
-
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", "/tmp/app");
     configuration.set("app.tmp.dir", "/tmp/temp");
 
-    // Create the server.
-    server = factory.create(configuration);
+    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                                   new BigMamaModule(configuration));
+
+    server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
     lf = injector.getInstance(LocationFactory.class);
@@ -153,7 +150,7 @@ public class DefaultAppFabricServiceTest {
 
   @Test
   public void testGetFlowDefinition() throws Exception {
-    Store store = sFactory.create(configuration);
+    Store store = sFactory.create();
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application appId = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(appId, spec);
@@ -187,7 +184,7 @@ public class DefaultAppFabricServiceTest {
 
   @Test
   public void testGetFlowHistory() throws Exception {
-    Store store = sFactory.create(configuration);
+    Store store = sFactory.create();
     // record finished flow
     Id.Program programId = new Id.Program(new Id.Application(new Id.Account("account1"), "application1"), "flow1");
     store.setStart(programId, "run1", 20);

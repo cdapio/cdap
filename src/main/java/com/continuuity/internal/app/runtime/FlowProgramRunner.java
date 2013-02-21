@@ -54,7 +54,8 @@ public class FlowProgramRunner implements ProgramRunner {
     final List<ProgramController> controllers = Lists.newArrayListWithCapacity(flowSpec.getFlowlets().size());
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       for (int instanceId = 0; instanceId < entry.getValue().getInstances(); instanceId++) {
-        controllers.add(programRunnerFactory.create().run(program, new FlowletOptions(entry.getKey(), instanceId)));
+        controllers.add(programRunnerFactory.create(ProgramRunnerFactory.Type.FLOWLET)
+                          .run(program, new FlowletOptions(entry.getKey(), instanceId)));
       }
     }
 
