@@ -290,12 +290,4 @@ public class Constants {
   public static final String DEFAULT_LOG_COLLECTION_SERVER_ADDRESS =
       "localhost";
 
-  /**
-   * Constants related to Passport
-   */
-  public final static String CFG_PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
-  public final static String CFG_PASSPORT_SERVER_PORT_KEY = "passport.server.port";
-  public final static String CONTINUUITY_API_KEY_HEADER = "X-Continuuity-ApiKey";
-
-
 }
