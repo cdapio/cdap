@@ -10,6 +10,7 @@ import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.services.AppFabricServerFactory;
 import com.continuuity.app.services.AppFabricService;
@@ -60,27 +61,10 @@ public class AppFabricServerTest {
   private static StoreFactory sFactory;
   private static CConfiguration configuration;
 
-  private static class SimpleDeploymentServerModule extends AbstractModule {
-    /**
-     * Configures a {@link com.google.inject.Binder} via the exposed methods.
-     */
-    @Override
-    protected void configure() {
-      bind(AppFabricServerFactory.class).to(InMemoryAppFabricServerFactory.class);
-      bind(LocationFactory.class).to(LocalLocationFactory.class);
-      bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
-      bind(ManagerFactory.class).to(SyncManagerFactory.class);
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-      bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-      bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-    }
-  }
-
   @BeforeClass
   public static void before() throws Exception {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new SimpleDeploymentServerModule());
+                                                   new BigMamaModule());
     AppFabricServerFactory factory = injector.getInstance(AppFabricServerFactory.class);
 
     configuration = CConfiguration.create();
