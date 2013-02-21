@@ -69,7 +69,7 @@ public final class ApplicationSpecificationAdapter {
           flowletDef.generateSchema(schemaGenerator);
         }
       }
-      gson.toJson(appSpec, appendable);
+      gson.toJson(appSpec, ApplicationSpecification.class, appendable);
 
     } catch(UnsupportedTypeException e) {
       throw new IOException(e);
