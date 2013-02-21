@@ -16,19 +16,22 @@ import com.google.inject.Inject;
  *
  */
 public final class SyncManagerFactory implements ManagerFactory {
+  private final CConfiguration configuration;
   private final PipelineFactory<?> pFactory;
   private final LocationFactory lFactory;
   private final StoreFactory sFactory;
 
   @Inject
-  public SyncManagerFactory(PipelineFactory<?> pFactory, LocationFactory lFactory, StoreFactory sFactory) {
+  public SyncManagerFactory(CConfiguration configuration, PipelineFactory<?> pFactory,
+                            LocationFactory lFactory, StoreFactory sFactory) {
+    this.configuration = configuration;
     this.pFactory = pFactory;
     this.lFactory = lFactory;
     this.sFactory = sFactory;
   }
 
   @Override
-  public Manager<?, ?> create(CConfiguration configuration) {
+  public Manager<?, ?> create() {
     return new LocalManager(configuration, pFactory, lFactory, sFactory);
   }
 }

@@ -43,7 +43,7 @@ public final class FlowletDefinition {
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
-  private final int instances;
+  private int instances;
   private final Set<String> datasets;
 
   private final transient Map<String, Set<Type>> inputTypes;
@@ -73,6 +73,26 @@ public final class FlowletDefinition {
     this.datasets = ImmutableSet.copyOf(datasets);
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
+  }
+
+  /**
+   * Creates a definition from a copy and overrides the number of instances
+   * @param definition definition o copy from
+   * @param instances new number of instances
+   */
+  public FlowletDefinition(FlowletDefinition definition, int instances) {
+    this(definition);
+    this.instances = instances;
+  }
+
+  private FlowletDefinition(FlowletDefinition definition) {
+    this.flowletSpec = definition.flowletSpec;
+    this.instances = definition.instances;
+    this.datasets = definition.datasets;
+    this.inputTypes = definition.inputTypes;
+    this.outputTypes = definition.outputTypes;
+    this.inputs = definition.inputs;
+    this.outputs = definition.outputs;
   }
 
   /**

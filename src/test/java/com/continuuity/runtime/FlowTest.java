@@ -4,11 +4,12 @@ import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
-import com.continuuity.app.guice.FlowRuntimeModule;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.archive.JarFinder;
@@ -36,7 +37,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,30 +49,26 @@ public class FlowTest {
   @Test
   public void testFlow() throws Exception {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp");
-    configuration.set("app.output.dir", "/tmp/" + UUID.randomUUID());
+    configuration.set("app.temp.dir", "/tmp/app/temp");
+    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new FlowRuntimeModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
-                                               }
-                                             });
+                                             new BigMamaModule(configuration));
 
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
       JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(WordCountApp.class))
     );
+    deployedJar.deleteOnExit();
 
     ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
     final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {
         ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
-        runner.run(program, new ProgramOptions() {
+        controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
             return program.getProgramName();
@@ -109,5 +105,7 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(5);
+
+    controller.stop().get();
   }
 }

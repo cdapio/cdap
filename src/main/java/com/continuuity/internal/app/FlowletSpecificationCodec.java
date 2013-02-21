@@ -24,7 +24,7 @@ import java.util.Set;
  *
  */
 final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecification>,
-                                                   JsonDeserializer<FlowletSpecification> {
+                                                 JsonDeserializer<FlowletSpecification> {
 
   @Override
   public JsonElement serialize(FlowletSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -40,7 +40,8 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
   }
 
   @Override
-  public FlowletSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+  public FlowletSpecification deserialize(JsonElement json, Type typeOfT,
+                                          JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();

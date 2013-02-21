@@ -25,7 +25,7 @@ public class MDSStoreFactory implements StoreFactory {
   }
 
   @Override
-  public Store create(CConfiguration configuration) {
+  public Store create() {
     return new MDSBasedStore(store, mdsService);
   }
 }

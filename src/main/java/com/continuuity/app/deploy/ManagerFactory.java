@@ -4,11 +4,9 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.common.conf.CConfiguration;
-
 /**
  *
  */
 public interface ManagerFactory {
-  Manager<?, ?> create(CConfiguration configuration);
+  Manager<?, ?> create();
 }

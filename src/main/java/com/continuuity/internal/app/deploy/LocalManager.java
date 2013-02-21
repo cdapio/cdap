@@ -18,19 +18,17 @@ import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Inject;
 
 /**
  * This class is concrete implementation of {@link Manager}
  */
 public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
-  private final PipelineFactory pipelineFactory;
+  private final PipelineFactory<?> pipelineFactory;
   private final LocationFactory locationFactory;
   private final StoreFactory storeFactory;
   private final CConfiguration configuration;
 
-  @Inject
-  public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+  public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
@@ -47,11 +45,11 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
    */
   @Override
   public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, Location archive) throws Exception {
-    Pipeline<ApplicationWithPrograms> pipeline = pipelineFactory.getPipeline();
+    Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
-    pipeline.addLast(new ApplicationRegistrationStage(storeFactory.create(configuration)));
+    pipeline.addLast(new ApplicationRegistrationStage(storeFactory.create()));
     return pipeline.execute(archive);
   }
 }

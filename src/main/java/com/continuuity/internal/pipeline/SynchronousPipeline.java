@@ -18,7 +18,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * to be available.
  * </p>
  */
-public final class SynchronousPipeline extends AbstractPipeline {
+public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
   /**
    * Executes a pipeline in synchronous mode.
    * <p>
@@ -29,7 +29,7 @@ public final class SynchronousPipeline extends AbstractPipeline {
    * @param o argument to run the pipeline.
    */
   @Override
-  public ListenableFuture<?> execute(Object o) throws Exception {
+  public ListenableFuture<T> execute(Object o) throws Exception {
     Object input = o;
     Object output = null;
     for(Stage stage : getStages()) {
@@ -38,7 +38,7 @@ public final class SynchronousPipeline extends AbstractPipeline {
       output = ctx.getDownStream();
       input = output;  // Output of previous stage is input to next stage.
     }
-    return Futures.immediateFuture(output);
+    return (ListenableFuture<T>) Futures.immediateFuture(output);
   }
 
 }

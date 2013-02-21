@@ -70,4 +70,32 @@ public interface Store {
    * @throws OperationException
    */
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
+
+  /**
+   * Increases number of instances of specific flowlet by delta
+   * @param id flow id
+   * @param flowletId flowlet id
+   * @param delta delta to increase by
+   * @return number of instances of flowlet after increase
+   * @throws OperationException
+   */
+  int incFlowletInstances(Id.Program id, String flowletId, int delta) throws OperationException;
+
+  /**
+   * Removes program data
+   * @param id program to remove
+   */
+  void remove(Id.Program id) throws OperationException;
+
+  /**
+   * Removes all applications (with programs) of the given account
+   * @param id account id whose applications to remove
+   */
+  void removeAllApplications(Id.Account id) throws OperationException;
+
+  /**
+   * Remove all metadata associated with account
+   * @param id account id whose items to remove
+   */
+  void removeAll(Id.Account id) throws OperationException;
 }
