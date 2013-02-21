@@ -1,9 +1,12 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.meta;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 
 /**
  * Defines account
@@ -25,7 +28,6 @@ public class Account {
   private final boolean confirmed;
 
   public static Account fromString(String jsonString) {
-   // Gson gson = new Gson();
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(jsonString, Account.class);
   }

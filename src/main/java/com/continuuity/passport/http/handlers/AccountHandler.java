@@ -1,10 +1,13 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.meta.Account;
-import com.continuuity.passport.meta.AccountSecurity;
 import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
@@ -36,8 +39,6 @@ public class AccountHandler extends  PassportHandler{
 
   private final DataManagementService dataManagementService;
   private final AuthenticatorService authenticatorService;
-
-
 
 
   @Inject
@@ -256,7 +257,6 @@ public class AccountHandler extends  PassportHandler{
           .entity(Utils.getJson("FAILED", "password, first_name, last_name, company should be passed in")).build();
       } else {
         Account account = new Account(firstName, lastName, company, id);
-        AccountSecurity security = new AccountSecurity(account, accountPassword);
         dataManagementService.confirmRegistration(account, accountPassword);
         //Contract for the api is to return updated account to avoid a second call from the caller to get the
         // updated account

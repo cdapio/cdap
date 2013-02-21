@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.exceptions.RetryException;
@@ -16,17 +20,13 @@ import java.util.Map;
 /**
  *  Implementation of Authentication Service
  */
-
 public class AuthenticatorServiceImpl implements AuthenticatorService {
-
   private final Map<String, String> configuration;
-
 
   @Inject
   public AuthenticatorServiceImpl(@Named("passport.config") Map<String, String> config) {
     this.configuration = config;
   }
-
 
   /**
    * Authenticates User with the Credentials passed
@@ -37,7 +37,6 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
    */
   @Override
   public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
-
     UsernamePasswordApiKeyToken userCredentials = (UsernamePasswordApiKeyToken) credentials;
     try {
       Subject currentUser = SecurityUtils.getSubject();
@@ -47,7 +46,6 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
     } catch (Exception e) {
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
         "Authentication Failed. " + e.getMessage());
-
     }
 
   }

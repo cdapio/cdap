@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.core.exceptions;
 
 /**
@@ -5,13 +9,7 @@ package com.continuuity.passport.core.exceptions;
  * This exception indicates that the client recall the method throwing this exception at a later point in time
  */
 public class RetryException extends Exception {
-
   public RetryException(String message) {
     super(message);
   }
-
-  public RetryException(String message, Exception cause) {
-    super(message, cause);
-  }
-
 }

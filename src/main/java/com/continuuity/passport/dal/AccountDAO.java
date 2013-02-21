@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
@@ -23,10 +27,10 @@ public interface AccountDAO {
    * @return int account Id that was generated
    * @throws {@code RetryException}
    */
-  public Account createAccount(Account account) throws ConfigurationException, RuntimeException, AccountAlreadyExistsException;
+  public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException;
 
 
-  public boolean confirmRegistration(Account account, String password) throws ConfigurationException, RuntimeException;
+  public boolean confirmRegistration(Account account, String password) throws ConfigurationException;
 
 
   /**
@@ -34,7 +38,7 @@ public interface AccountDAO {
    * @throws ConfigurationException
    * @throws RuntimeException
    */
-  public void confirmDownload(int accountId) throws ConfigurationException, RuntimeException;
+  public void confirmDownload(int accountId) throws ConfigurationException;
 
 
   /**
@@ -54,7 +58,7 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(int accountId) throws ConfigurationException, RuntimeException;
+  public Account getAccount(int accountId) throws ConfigurationException;
 
   /**
    * GetAccount
@@ -63,17 +67,17 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(String emailId) throws ConfigurationException, RuntimeException;
+  public Account getAccount(String emailId) throws ConfigurationException;
 
 
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)
-    throws ConfigurationException, RuntimeException;
+    throws ConfigurationException;
 
 
-  public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException;
+  public boolean addRoleType(int accountId, Role role) throws ConfigurationException;
 
   public void updateAccount(int accountId, Map<String, Object> keyValueParams)
-    throws ConfigurationException, RuntimeException;
+    throws ConfigurationException;
 
-  public void changePassword(int accountId, String oldPassword, String newPassword) throws RuntimeException;
+  public void changePassword(int accountId, String oldPassword, String newPassword);
 }

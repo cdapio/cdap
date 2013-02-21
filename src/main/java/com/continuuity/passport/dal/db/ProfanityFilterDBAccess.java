@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.dal.ProfanityFilter;
@@ -49,8 +53,6 @@ public class ProfanityFilterDBAccess extends DBAccess  implements ProfanityFilte
       close(connection, ps);
     }
   }
-
-
 
   @Override
   /**

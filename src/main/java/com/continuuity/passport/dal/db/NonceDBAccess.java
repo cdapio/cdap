@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
@@ -23,7 +27,6 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   @Inject
   public NonceDBAccess(@Named("passport.config") Map<String, String> configurations) {
-
     String connectionString = configurations.get("connectionString");
     String jdbcType = configurations.get("jdbcType");
 
@@ -93,14 +96,12 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         if (t.getTime() < System.currentTimeMillis()) {
           throw new StaleNonceException("Older timestamp");
         }
-
         count++;
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple nonce with same  ID");
         }
       }
       return id;
-
     } catch (SQLException e) {
       throw new RuntimeException(e.getMessage(), e.getCause());
     } finally {

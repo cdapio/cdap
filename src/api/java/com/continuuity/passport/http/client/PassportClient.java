@@ -1,9 +1,16 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.passport.http.client;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import com.google.gson.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -22,27 +29,9 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class PassportClient {
-
-  public final static String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
-
-  public final static String PASSPORT_SERVER_ADDRESS_KEY = "passport.server.address";
-
-  public final static String PASSPORT_SERVER_PORT_KEY = "passport.server.port";
-
-
   private boolean debugEnabled = false;
-
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
-
-  /**
-   * Enable debug - prints debug messages in std.out
-   *
-   * @param enableDebug true enables debugging. Default is false
-   */
-  public void enableDebug(boolean enableDebug) {
-    this.debugEnabled = enableDebug;
-  }
 
   public PassportClient() {
     //Cache valid responses from Servers for 10 mins
@@ -64,9 +53,9 @@ public class PassportClient {
    * @throws Exception RunTimeExceptions
    */
   public List<String> getVPCList(String hostname, int port,  String apiKey) throws RuntimeException {
-    String url = getEndPoint(hostname,port, "passport/v1/vpc");
+    String url = getEndPoint(hostname, port, "passport/v1/vpc");
     //Check in cache- if present return it.
-    List<String> vpcList = new ArrayList<String>();
+    List<String> vpcList = Lists.newArrayList();
 
     try {
       String data = responseCache.getIfPresent(apiKey);
@@ -82,7 +71,6 @@ public class PassportClient {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(data);
         JsonArray jsonArray = element.getAsJsonArray();
-        //for( )
 
         for (JsonElement elements : jsonArray) {
           JsonObject vpc = elements.getAsJsonObject();
@@ -133,14 +121,7 @@ public class PassportClient {
   private String httpGet(String url, String apiKey) throws RuntimeException {
     String payload = null;
     HttpGet get = new HttpGet(url);
-    get.addHeader(CONTINUUITY_API_KEY, apiKey);
-    get.addHeader("X-Continuuity-Signature", "abcdef");
-
-    if (debugEnabled) {
-      System.out.println(String.format("Headers: %s ", get.getAllHeaders().toString()));
-      System.out.println(String.format("URL: %s ", url));
-      System.out.println(String.format("Method: %s ", "GET"));
-    }
+    get.addHeader(Constants.CONTINUUITY_API_KEY_HEADER, apiKey);
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
@@ -149,40 +130,24 @@ public class PassportClient {
     try {
       response = client.execute(get);
       payload = IOUtils.toString(response.getEntity().getContent());
-      if (debugEnabled) {
-        System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
-      }
 
-      if(response.getStatusLine().getStatusCode()!=200){
+      if(response.getStatusLine().getStatusCode() != 200){
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }
     } catch (IOException e) {
-      if (debugEnabled) {
-        System.out.println(String.format("Caught exception while running http post call: Exception - %s", e.getMessage()));
-        e.printStackTrace();
-      }
-      throw new RuntimeException(e);
+      throw Throwables.propagate(e);
     }
      finally {
       client.getConnectionManager().shutdown();
-
     }
-
     return payload;
   }
 
   private String httpPost(String url, String apiKey) throws RuntimeException {
     String payload = null;
     HttpPost get = new HttpPost(url);
-    get.addHeader(CONTINUUITY_API_KEY, apiKey);
-    get.addHeader("X-Continuuity-Signature", "abcdef");
-
-    if (debugEnabled) {
-      System.out.println(String.format("Headers: %s ", get.getAllHeaders().toString()));
-      System.out.println(String.format("URL: %s ", url));
-      System.out.println(String.format("Method: %s ", "POST"));
-    }
+    get.addHeader(Constants.CONTINUUITY_API_KEY_HEADER, apiKey);
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
@@ -192,31 +157,17 @@ public class PassportClient {
       response = client.execute(get);
       payload = IOUtils.toString(response.getEntity().getContent());
 
-      if (debugEnabled) {
-        System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
-        System.out.println(payload);
-      }
-
-      if(response.getStatusLine().getStatusCode()!=200){
+      if(response.getStatusLine().getStatusCode() != 200){
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }
-
     } catch (IOException e) {
-      if (debugEnabled) {
-        System.out.println(String.format("Caught exception while running http post call: Exception - %s", e.getMessage()));
-        e.printStackTrace();
-      }
-      throw new RuntimeException(e);
-    }
-    finally{
+      throw Throwables.propagate(e);
+    } finally{
       client.getConnectionManager().shutdown();
     }
-
-
     return payload;
   }
-
 
   private String getEndPoint(String hostname, int port, String endpoint) {
     return String.format("http://%s:%d/%s", hostname, port, endpoint);
