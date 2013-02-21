@@ -4,7 +4,7 @@
 
 package com.continuuity.passport.http.client;
 
-import com.continuuity.common.conf.Constants;
+import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -20,7 +20,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class PassportClient {
+
   private boolean debugEnabled = false;
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
@@ -121,7 +121,7 @@ public class PassportClient {
   private String httpGet(String url, String apiKey) throws RuntimeException {
     String payload = null;
     HttpGet get = new HttpGet(url);
-    get.addHeader(Constants.CONTINUUITY_API_KEY_HEADER, apiKey);
+    get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
@@ -147,7 +147,7 @@ public class PassportClient {
   private String httpPost(String url, String apiKey) throws RuntimeException {
     String payload = null;
     HttpPost get = new HttpPost(url);
-    get.addHeader(Constants.CONTINUUITY_API_KEY_HEADER, apiKey);
+    get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();

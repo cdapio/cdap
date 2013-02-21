@@ -4,9 +4,9 @@
 
 package com.continuuity.passport.http.handlers;
 
-import com.continuuity.common.conf.Constants;
-import com.continuuity.passport.meta.VPC;
+import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.core.service.DataManagementService;
+import com.continuuity.passport.meta.VPC;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -34,7 +34,7 @@ public class VPCHandler  extends PassportHandler {
 
   @GET
   @Produces("application/json")
-  public Response getVPC(@HeaderParam(Constants.CONTINUUITY_API_KEY_HEADER) String apiKey) {
+  public Response getVPC(@HeaderParam(PassportConstants.CONTINUUITY_API_KEY_HEADER) String apiKey) {
     try {
       requestReceived();
       List<VPC> vpcList = dataManagementService.getVPC(apiKey);
