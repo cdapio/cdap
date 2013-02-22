@@ -88,8 +88,6 @@ public class DeployRunStopTest {
       public void generate() throws Exception {
         if (i < 10000) {
           output.emit("Testing " + ++i);
-        } else if (i == 100000) {
-          messageSemaphore.release();
         }
       }
     }
@@ -109,6 +107,8 @@ public class DeployRunStopTest {
 
       public void process(String text) throws InterruptedException {
         if (messageCount.incrementAndGet() == 5000) {
+          messageSemaphore.release();
+        } else if (messageCount.get() == 10000) {
           messageSemaphore.release();
         }
       }
