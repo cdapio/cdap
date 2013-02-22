@@ -416,4 +416,29 @@
         <description>Specifies the port for account server</description>
     </property>
 
+    <!-- App Fabric related changes -->
+    <property>
+        <name>app.server.port</name>
+        <value>45000</value>
+        <description>App Fabric Server Port</description>
+    </property>
+
+    <property>
+        <name>app.server.address</name>
+        <value>localhost</value>
+        <description>Host address on which the app fabric server is started.</description>
+    </property>
+
+    <property>
+        <name>app.output.dir</name>
+        <value>/tmp</value>
+        <description>Directory where all archives are stored.</description>
+    </property>
+
+    <property>
+        <name>app.temp.dir</name>
+        <value>/tmp</value>
+        <description>Directory temp.</description>
+    </property>
+
 </configuration>
