@@ -31,7 +31,7 @@ public final class ProcedureResponse {
 
     /**
      * Writes the given byte array to the response. Same as calling
-     * {@link #write(byte[], int, int)} with {@code off=0} and {@code len=bytes.length}.
+     * {@link #write(byte[], int, int) write(bytes, 0, bytes.length)}.
      *
      * @param bytes bytes to be written out.
      * @return The same {@link Writer} instance for writing more data.
