@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaHash;
@@ -9,15 +9,13 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Dynamic loading of schema from classloader and caching of known schemas
  */
-public final class
-  SchemaCache {
+public final class SchemaCache {
 
   private final LoadingCache<SchemaHash, Schema> cache;
 
