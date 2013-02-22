@@ -67,7 +67,7 @@ public class WebCloudAppService {
       String line;
       while ((line = br.readLine()) != null) {
         logger.debug("[User Interface output] " + line);
-        if (line.startsWith("Listening on port ")) {
+        if (line.contains("Listening on port ")) {
           successful = true;
           break;
         }
@@ -76,7 +76,6 @@ public class WebCloudAppService {
         logger.info("User interface started successfully.");
       } else {
         String message = "User interface terminated unexpectedly.";
-        logger.error(message);
         throw new ServerException(message);
       }
 
