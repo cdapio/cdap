@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
@@ -30,18 +31,15 @@ public class BasicFlowletContext implements FlowletContext {
   private final RunId runId;
   private final int instanceId;
   private final Map<String, DataSet> datasets;
+  private final FlowletSpecification flowletSpec;
 
   private volatile int instanceCount;
   private final QueueProducer queueProducer;
   private volatile QueueConsumer queueConsumer;
   private final boolean asyncMode;
 
-  public BasicFlowletContext(Program program, String flowletId, int instanceId, Map<String, DataSet> datasets) {
-    this(program, flowletId, instanceId, datasets, false);
-  }
-
   public BasicFlowletContext(Program program, String flowletId, int instanceId,
-                             Map<String, DataSet> datasets, boolean asyncMode) {
+                             Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
     this.flowId = program.getProgramName();
@@ -49,6 +47,7 @@ public class BasicFlowletContext implements FlowletContext {
     this.runId = RunId.generate();
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
+    this.flowletSpec = flowletSpec;
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
     this.queueProducer = new QueueProducer(getMetricName());
     this.queueConsumer = createQueueConsumer();
@@ -76,6 +75,11 @@ public class BasicFlowletContext implements FlowletContext {
     T dataSet = (T) datasets.get(name);
     Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
     return dataSet;
+  }
+
+  @Override
+  public FlowletSpecification getSpecification() {
+    return flowletSpec;
   }
 
   public void setInstanceCount(int count) {
