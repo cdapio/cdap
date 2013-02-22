@@ -99,7 +99,7 @@ logger.setLevel(LOG_LEVEL);
 		params = params || [];
 		params.unshift(accountID);
 
-		var auth_token = new appfabricservices_types.AuthToken({ token: null });
+		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 
 		var conn = thrift.createConnection(
 			this.config['resource.manager.server.address'],
