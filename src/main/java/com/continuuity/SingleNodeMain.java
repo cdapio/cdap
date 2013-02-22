@@ -204,7 +204,7 @@ public class SingleNodeMain {
 
     CConfiguration configuration = CConfiguration.create();
     boolean inVPC = false;
-    String environment = configuration.get("devsuite.environment", "devsuite");
+    String environment = configuration.get("appfabric.environment", "devsuite");
     if(environment.equals("vpc")) {
       inVPC = true;
     }
