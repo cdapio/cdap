@@ -161,53 +161,59 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                flowletName, queueSpecs),
                                    Lists.<ProcessSpecification>newLinkedList());
 
-      final FlowletProcessDriver driver = new FlowletProcessDriver(
-            flowlet, flowletContext, processSpecs,
-            createCallback(flowlet, flowletDef.getFlowletSpec()));
+      FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
+                                                             createCallback(flowlet, flowletDef.getFlowletSpec()));
 
       LOG.info("Starting flowlet: " + flowletName);
       driver.start();
       LOG.info("Flowlet started: " + flowletName);
 
-      return new AbstractProgramController(program.getProgramName() + ":" + flowletName, flowletContext.getRunId()) {
-        @Override
-        protected void doSuspend() throws Exception {
-          LOG.info("Suspending flowlet: " + flowletName);
-          driver.suspend();
-          LOG.info("Flowlet suspended: " + flowletName);
-        }
-
-        @Override
-        protected void doResume() throws Exception {
-          LOG.info("Resuming flowlet: " + flowletName);
-          driver.resume();
-          LOG.info("Flowlet resumed: " + flowletName);
-        }
-
-        @Override
-        protected void doStop() throws Exception {
-          LOG.info("Stopping flowlet: " + flowletName);
-          driver.stopAndWait();
-          LOG.info("Flowlet stopped: " + flowletName);
-        }
-
-        @Override
-        protected void doCommand(String name, Object value) throws Exception {
-          if (!"instances".equals(name) || !(value instanceof Integer)) {
-            return;
-          }
-          int instances = (Integer)value;
-          LOG.info("Change flowlet instance count: " + flowletName + ", new count is " + instances);
-          driver.suspend();
-          flowletContext.setInstanceCount(instances);
-          driver.resume();
-          LOG.info("Flowlet instance count changed: " + flowletName + ", new count is " + instances);
-        }
-      };
+      return programController(program.getProgramName(), flowletName, flowletContext, driver);
 
     } catch(Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private ProgramController programController(String programName,
+                                              final String flowletName,
+                                              final BasicFlowletContext flowletContext,
+                                              final FlowletProcessDriver driver) {
+    return new AbstractProgramController(programName + ":" + flowletName, flowletContext.getRunId()) {
+      @Override
+      protected void doSuspend() throws Exception {
+        LOG.info("Suspending flowlet: " + flowletName);
+        driver.suspend();
+        LOG.info("Flowlet suspended: " + flowletName);
+      }
+
+      @Override
+      protected void doResume() throws Exception {
+        LOG.info("Resuming flowlet: " + flowletName);
+        driver.resume();
+        LOG.info("Flowlet resumed: " + flowletName);
+      }
+
+      @Override
+      protected void doStop() throws Exception {
+        LOG.info("Stopping flowlet: " + flowletName);
+        driver.stopAndWait();
+        LOG.info("Flowlet stopped: " + flowletName);
+      }
+
+      @Override
+      protected void doCommand(String name, Object value) throws Exception {
+        if (!"instances".equals(name) || !(value instanceof Integer)) {
+          return;
+        }
+        int instances = (Integer)value;
+        LOG.info("Change flowlet instance count: " + flowletName + ", new count is " + instances);
+        driver.suspend();
+        flowletContext.setInstanceCount(instances);
+        driver.resume();
+        LOG.info("Flowlet instance count changed: " + flowletName + ", new count is " + instances);
+      }
+    };
   }
 
   /**
