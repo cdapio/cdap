@@ -71,9 +71,9 @@ io.sockets.on('connection', function (newSocket) {
 	});
 
 	socket.on('monitor', function (request) {
-		Api.monitor('developer', request.method, request.params, function (error, response) {
+/*		Api.monitor('developer', request.method, request.params, function (error, response) {
 			socketResponse(request, error, response);
-		});
+		});*/
 	});
 
 	socket.on('manager', function (request) {
@@ -112,8 +112,7 @@ io.sockets.on('connection', function (newSocket) {
  * HTTP handlers.
  */
 app.post('/upload/:file', function (req, res) {
-
-	Api.upload(req, res, req.params.file, socket);
+	Api.upload("developer", req, res, req.params.file, socket);
 
 });
 app.on('error', function () {
