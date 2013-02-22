@@ -3,6 +3,8 @@ package com.continuuity.gateway;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.Id;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -17,7 +19,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
@@ -239,8 +240,8 @@ public class TestUtil {
                                      String stream)
       throws Exception {
     // get the queue info from opex
-    byte[] queueName = FlowStream.buildStreamURI(
-        Constants.defaultAccount, stream).toString().getBytes();
+    byte[] queueName = QueueName.fromStream(new Id.Account(Constants.defaultAccount), stream)
+                                .toString().getBytes();
     OperationResult<QueueInfo> info = executor.execute(
         OperationContext.DEFAULT, new QueueAdmin.GetQueueInfo(queueName));
     String json = info.isEmpty() ? null : info.getValue().getJSONString();
@@ -324,8 +325,8 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(
-        Constants.defaultAccount, destination).toString().getBytes();
+    byte[] queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+                               .toString().getBytes();
     // one deserializer to reuse
     StreamEventCodec deserializer = new StreamEventCodec();
     // prepare the queue consumer
@@ -629,6 +630,25 @@ public class TestUtil {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(url);
     post.setEntity(new ByteArrayEntity(new byte[0]));
+    HttpResponse response = client.execute(post);
+    client.getConnectionManager().shutdown();
+    return response.getStatusLine().getStatusCode();
+  }
+
+  /**
+   * Send a POST request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   * @param content binary content
+   * @param headers map with header data
+   */
+  public static int sendPostRequest(String url, byte[] content, Map<String,String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost(url);
+    for(Map.Entry<String,String> header: headers.entrySet()) {
+      post.setHeader(header.getKey(), header.getValue());
+    }
+    post.setEntity(new ByteArrayEntity(content));
     HttpResponse response = client.execute(post);
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();

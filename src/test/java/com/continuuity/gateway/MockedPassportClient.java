@@ -1,9 +1,10 @@
 package com.continuuity.gateway;
 
+import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.passport.meta.Account;
+
 import java.util.List;
 import java.util.Map;
-
-import com.continuuity.passport.http.client.PassportClient;
 
 /**
  * Mocks a PassportClient by returning values based on the intialized data only.
@@ -17,8 +18,13 @@ public class MockedPassportClient extends PassportClient {
   }
 
   @Override
-  public List<String> getVPCList(String hostname, String apiKey)
-      throws Exception {
+  public List<String> getVPCList(String hostname, int port, String apiKey)
+      throws RuntimeException {
     return this.keysAndClusters.get(apiKey);
+  }
+  @Override
+  public Account getAccount(String hostname, int port, String apiKey)
+    throws RuntimeException {
+    return new Account("John","Smith","john@smith.com");
   }
 }

@@ -11,14 +11,12 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-  compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
-  compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
-  compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+
   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'thrift', version: "${version}", changing: true], "app-fabric")
 
   clover elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
   clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-  clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
   compile libraries.slf4j_api
   compile libraries.logback_core
