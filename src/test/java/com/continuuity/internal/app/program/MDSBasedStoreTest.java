@@ -24,7 +24,6 @@ import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -46,10 +45,8 @@ import com.google.common.base.Charsets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -104,11 +101,11 @@ public class MDSBasedStoreTest {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", "flow1");
     store.setStart(programId, "run1", 20);
-    store.setEnd(programId, "run1", 29, Status.FAILED);
+    store.setStop(programId, "run1", 29, "FAILED");
 
     // record another finished flow
     store.setStart(programId, "run2", 10);
-    store.setEnd(programId, "run2", 19, Status.SUCCEEDED);
+    store.setStop(programId, "run2", 19, "SUCCEEDED");
 
     // record not finished flow
     store.setStart(programId, "run3", 50);
@@ -116,7 +113,7 @@ public class MDSBasedStoreTest {
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
     store.setStart(programId2, "run4", 100);
-    store.setEnd(programId2, "run4", 109, Status.SUCCEEDED);
+    store.setStop(programId2, "run4", 109, "SUCCEEDED");
 
     // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
     List<RunRecord> history = store.getRunHistory(programId);
@@ -127,12 +124,12 @@ public class MDSBasedStoreTest {
     RunRecord run = history.get(0);
     Assert.assertEquals(10, run.getStartTs());
     Assert.assertEquals(19, run.getStopTs());
-    Assert.assertEquals(Status.SUCCEEDED, run.getEndStatus());
+    Assert.assertEquals("SUCCEEDED", run.getEndStatus());
 
     run = history.get(1);
     Assert.assertEquals(20, run.getStartTs());
     Assert.assertEquals(29, run.getStopTs());
-    Assert.assertEquals(Status.FAILED, run.getEndStatus());
+    Assert.assertEquals("FAILED", run.getEndStatus());
   }
 
   @Test

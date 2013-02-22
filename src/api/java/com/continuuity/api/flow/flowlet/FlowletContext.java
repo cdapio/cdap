@@ -34,4 +34,9 @@ public interface FlowletContext {
    * @exception IllegalArgumentException When the given name is not referring to a configured {@link DataSet}.
    */
   <T extends DataSet> T getDataSet(String name);
+
+  /**
+   * @return The specification used to configure this {@link Flowlet} instance.
+   */
+  FlowletSpecification getSpecification();
 }

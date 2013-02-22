@@ -8,21 +8,13 @@ import com.continuuity.DumbProgrammerApp;
 import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
-import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
-import com.continuuity.app.program.Status;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.app.services.ResourceIdentifier;
@@ -37,7 +29,6 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -45,12 +36,9 @@ import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class DefaultAppFabricServiceTest {
   private static AppFabricService.Iface server;
@@ -79,6 +67,7 @@ public class DefaultAppFabricServiceTest {
   @Test
   public void testUploadToDeploymentServer() throws Exception {
     TestHelper.deployApplication(ToyApp.class);
+    TestHelper.deployApplication(WordCountApp.class);
   }
 
   @Test
@@ -168,7 +157,7 @@ public class DefaultAppFabricServiceTest {
     // record finished flow
     Id.Program programId = new Id.Program(new Id.Application(new Id.Account("account1"), "application1"), "flow1");
     store.setStart(programId, "run1", 20);
-    store.setEnd(programId, "run1", 29, Status.FAILED);
+    store.setStop(programId, "run1", 29, "FAILED");
 
     FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "flow1", 0);
     List<FlowRunRecord> history = server.getFlowHistory(flowId);
@@ -176,6 +165,6 @@ public class DefaultAppFabricServiceTest {
     FlowRunRecord record = history.get(0);
     Assert.assertEquals(20, record.getStartTime());
     Assert.assertEquals(29, record.getEndTime());
-    Assert.assertEquals(Status.FAILED, Status.valueOf(record.getEndStatus()));
+    Assert.assertEquals("FAILED", record.getEndStatus());
   }
 }

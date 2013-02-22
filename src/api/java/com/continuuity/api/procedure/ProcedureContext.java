@@ -18,4 +18,9 @@ public interface ProcedureContext {
    * @return An instance of {@link DataSet}.
    */
   <T extends DataSet> T getDataSet(String name);
+
+  /**
+   * @return the specification used to configure this {@link Procedure} instance.
+   */
+  ProcedureSpecification getSpecification();
 }

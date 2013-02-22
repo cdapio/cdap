@@ -102,7 +102,7 @@ public abstract class AbstractProgramController implements ProgramController {
         try {
           caller.stopping();
           doStop();
-          state.set(State.ALIVE);
+          state.set(State.STOPPED);
           result.set(AbstractProgramController.this);
           caller.stopped();
         } catch (Throwable t) {

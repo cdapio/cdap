@@ -9,10 +9,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Type;
 import com.continuuity.metadata.thrift.MetadataService;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 import java.io.IOException;
@@ -38,7 +36,7 @@ public interface Store {
    * @param pid       run id
    * @param startTime start timestamp
    */
-  void setStart(Id.Program id, String pid, long startTime) throws OperationException;
+  void setStart(Id.Program id, String pid, long startTime);
 
   /**
    * Logs end of program run
@@ -48,7 +46,7 @@ public interface Store {
    * @param endTime end timestamp
    * @param state   State of program
    */
-  void setEnd(Id.Program id, String pid, long endTime, Status state) throws OperationException;
+  void setStop(Id.Program id, String pid, long endTime, String state);
 
   /**
    * Fetches run history for particular program. Returns only finished runs.

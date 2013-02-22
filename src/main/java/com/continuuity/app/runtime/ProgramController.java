@@ -30,7 +30,7 @@ public interface ProgramController {
    *   Any error during state transitions would end up in ERROR state.
    * </p>
    * <p>
-   *   Any uncoverary error in ALIVE state would also end up in ERROR state.
+   *   Any unrecoverable error in ALIVE state would also end up in ERROR state.
    * </p>
    */
   enum State {
