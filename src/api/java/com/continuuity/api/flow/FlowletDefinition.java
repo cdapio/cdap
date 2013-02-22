@@ -51,14 +51,9 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(String name, Flowlet flowlet, int instances) {
+  FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
     FlowletSpecification flowletSpec = flowlet.configure();
-    if (name != null && !name.equals(flowletSpec.getName())) {
-      flowletSpec = new DefaultFlowletSpecification(name, flowletSpec.getDescription(),
-                                                    flowletSpec.getFailurePolicy(), flowletSpec.getDataSets());
-    }
 
-    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(), flowletSpec);
     this.instances = instances;
 
     Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
@@ -73,6 +68,11 @@ public final class FlowletDefinition {
     this.datasets = ImmutableSet.copyOf(datasets);
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
+
+    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
+                                                       flowletName == null ? flowletSpec.getName() : flowletName,
+                                                       flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
+                                                       datasets);
   }
 
   /**

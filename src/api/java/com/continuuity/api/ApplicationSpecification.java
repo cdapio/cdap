@@ -411,8 +411,7 @@ public interface ApplicationSpecification {
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure.getClass().getName(),
-                                                                        procedure.configure());
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
         procedures.put(spec.getName(), spec);
         return this;
       }
