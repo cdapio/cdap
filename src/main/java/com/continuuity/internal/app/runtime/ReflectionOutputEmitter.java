@@ -8,6 +8,8 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.app.runtime.EmittedDatum;
+import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;

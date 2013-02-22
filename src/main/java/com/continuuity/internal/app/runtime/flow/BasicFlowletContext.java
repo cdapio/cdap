@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
@@ -22,9 +22,9 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- *
+ * Internal implementation of {@link FlowletContext}.
  */
-public class BasicFlowletContext implements FlowletContext {
+final class BasicFlowletContext implements FlowletContext {
 
   private final String accountId;
   private final String applicationId;
@@ -42,8 +42,8 @@ public class BasicFlowletContext implements FlowletContext {
   private final boolean asyncMode;
   private FlowletMetrics flowletMetrics;
 
-  public BasicFlowletContext(Program program, String flowletId, int instanceId,
-                             Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
+  BasicFlowletContext(Program program, String flowletId, int instanceId,
+                      Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
     this.flowId = program.getProgramName();

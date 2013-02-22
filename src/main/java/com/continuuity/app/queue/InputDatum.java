@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.app.queue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.InputContext;

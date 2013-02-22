@@ -1,12 +1,13 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.app.queue.InputDatum;
 
 import java.nio.ByteBuffer;
 
 /**
- * An {@link InputDatum} that has nothing inside and is not from queue.
+ * An {@link com.continuuity.app.queue.InputDatum} that has nothing inside and is not from queue.
  */
 public final class NullInputDatum implements InputDatum {
 

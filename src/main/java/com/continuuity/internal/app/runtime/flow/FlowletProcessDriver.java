@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.Callback;
@@ -6,9 +6,11 @@ import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
+import com.continuuity.internal.app.runtime.PostProcess;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * This class responsible invoking process methods one by one and commit the post process transaction.
  */
-public class FlowletProcessDriver extends AbstractExecutionThreadService {
+final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
   private static final int TX_EXECUTOR_POOL_SIZE = 4;
@@ -55,10 +57,8 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   private ExecutorService transactionExecutor;
   private Thread runnerThread;
 
-  public FlowletProcessDriver(Flowlet flowlet,
-                              BasicFlowletContext flowletContext,
-                              Collection<ProcessSpecification> processSpecs,
-                              Callback txCallback) {
+  FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
+                       Collection<ProcessSpecification> processSpecs, Callback txCallback) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();

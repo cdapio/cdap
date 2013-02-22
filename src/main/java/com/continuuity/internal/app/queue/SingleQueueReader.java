@@ -7,8 +7,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.internal.app.runtime.InputDatum;
-import com.continuuity.internal.app.runtime.QueueInputDatum;
+import com.continuuity.app.queue.InputDatum;
 import com.google.common.base.Supplier;
 
 /**
