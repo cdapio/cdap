@@ -71,9 +71,9 @@ io.sockets.on('connection', function (newSocket) {
 	});
 
 	socket.on('monitor', function (request) {
-		Api.monitor('developer', request.method, request.params, function (error, response) {
+/*		Api.monitor('developer', request.method, request.params, function (error, response) {
 			socketResponse(request, error, response);
-		});
+		});*/
 	});
 
 	socket.on('manager', function (request) {
