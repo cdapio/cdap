@@ -10,6 +10,8 @@ mainClassName = 'com.continuuity.SingleNodeMain'
 jar.exclude '*.xml'
 
 evaluationDependsOn(":app-fabric")
+evaluationDependsOn(":gateway")
+evaluationDependsOn(":passport")
 
 task javadoc(type: Javadoc, overwrite: true) {
   source project.parent.subprojects.collect { proj ->
@@ -89,9 +91,9 @@ tasks.distZip {
     classifier = "beta"
 }
 
-run.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
-installApp.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
-distZip.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
+run.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', ':passport:compileJava'
+installApp.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':passport:compileJava', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
+distZip.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':passport:compileJava', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
 //exclude any .gitignores (used as placeholders for empty dirs: logs, data
 applicationDistribution.exclude(".gitignore")
 

@@ -12,6 +12,8 @@ dependencies {
         compile elastic([ group: 'com.continuuity', name: 'app-fabric', version: "${version}" , changing: true], "app-fabric")
         compile elastic([ group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}" , changing: true], "app-fabric")
 
+        compile elastic([ group: 'com.continuuity', name: 'passport', classifier: 'api', version: "${version}" , changing: true], "passport")
+
        	compile elastic([ group: 'com.continuuity', name: 'gateway', version: "${version}" , changing: true], "gateway")
        	compile elastic([ group: 'com.continuuity', name: 'overlord', version: "${version}" , changing: true], "gateway")
        	compile elastic([ group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: "${version}" , changing: true], "overlord")
