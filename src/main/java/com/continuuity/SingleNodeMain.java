@@ -11,6 +11,7 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Singlenode Main
@@ -155,12 +157,15 @@ public class SingleNodeMain {
   public static boolean nodeExists() {
     try {
       Process proc = Runtime.getRuntime().exec("node -v");
+      TimeUnit.SECONDS.sleep(2);
       int exitValue = proc.exitValue();
       if(exitValue != 0) {
         return false;
       }
     } catch (IOException e) {
       throw new RuntimeException("Nodejs not in path. Please add it to PATH in the shell you are starting devsuite");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
     return true;
   }
@@ -198,6 +203,11 @@ public class SingleNodeMain {
     }
 
     CConfiguration configuration = CConfiguration.create();
+    boolean inVPC = false;
+    String environment = configuration.get("devsuite.environment", "devsuite");
+    if(environment.equals("vpc")) {
+      inVPC = true;
+    }
 
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
       new BigMamaModule(configuration),
@@ -211,7 +221,7 @@ public class SingleNodeMain {
       new BigMamaModule(configuration),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      new DataFabricModules().getSingleNodeModules(),
+      inVPC ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules()
     );
 
@@ -220,9 +230,10 @@ public class SingleNodeMain {
     try {
       main.startUp(args);
     } catch (Exception e) {
+      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
+      System.exit(-2);
     }
-    main.shutDown();
-  }
 
-} // end of SingleNodeMain class
+  }
+}
