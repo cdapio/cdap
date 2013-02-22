@@ -62,7 +62,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .noProcedure().build();
   }
 
   public static final class MyRecord {
@@ -177,7 +177,6 @@ public class WordCountApp implements Application {
       }
 
       this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
-//      LOG.info(token + " : " + Longs.fromByteArray(counters.read(token.getBytes(Charsets.UTF_8))));
     }
 
     @Override
