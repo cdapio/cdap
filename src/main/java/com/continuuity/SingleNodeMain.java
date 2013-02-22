@@ -52,6 +52,14 @@ public class SingleNodeMain {
     this.modules = modules;
     this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService();
+
+    Injector injector = Guice.createInjector(modules);
+    gateway = injector.getInstance(Gateway.class);
+    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
+    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
+    metaDataServer = injector.getInstance(MetadataServerInterface.class);
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -76,14 +84,6 @@ public class SingleNodeMain {
     int port = PortDetector.findFreePort();
     zookeeper = new InMemoryZookeeper(port, temporaryDir);
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
-
-    Injector injector = Guice.createInjector(modules);
-
-    gateway = injector.getInstance(Gateway.class);
-    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
-    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
-    metaDataServer = injector.getInstance(MetadataServerInterface.class);
-    appFabricServer = injector.getInstance(AppFabricServer.class);
 
     // Start all the services.
     Service.State state = appFabricServer.startAndWait();
@@ -158,7 +158,7 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    boolean inMemory = true;
+    boolean inMemory = false;
 
     // We only support 'help' command line options currently
     if (args.length > 0) {
