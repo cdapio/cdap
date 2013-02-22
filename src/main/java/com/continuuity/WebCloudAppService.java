@@ -6,6 +6,7 @@ package com.continuuity;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
+import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,7 @@ public class WebCloudAppService implements Server {
       }
 
       // start a thread to read and log the remaining output from UI
-      new Thread() {
+      Thread nodeThread = new Thread() {
         @Override
         public void run() {
           try {
@@ -92,7 +93,9 @@ public class WebCloudAppService implements Server {
             logger.error(ie.getMessage());
           }
         }
-      }.start();
+      };
+      nodeThread.setDaemon(true);
+      nodeThread.start();
     } catch (IOException e) {
       String message;
       if (StringUtils.contains(e.getCause().getMessage(),
@@ -118,7 +121,9 @@ public class WebCloudAppService implements Server {
    */
   @Override
   public void stop(boolean now) throws ServerException {
-    webAppProcess.destroy();
+    if(webAppProcess != null) {
+      webAppProcess.destroy();
+    }
   }
 
 } // end of WebCloudAppService class

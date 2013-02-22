@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Logger;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
@@ -33,11 +34,16 @@ import java.net.InetAddress;
 
 /**
  * Singlenode Main
- * NOTE: This should be treated like a service with shutdown/startup hooks.
+ * NOTE: Use AbstractIdleService
  */
 public class SingleNodeMain {
   private InMemoryZookeeper zookeeper;
-
+  private final WebCloudAppService webCloudAppService;
+  private Gateway gateway;
+  private MetricsCollectionServerInterface overlordCollection;
+  private MetricsFrontendServerInterface overloadFrontend;
+  private MetadataServerInterface metaDataServer;
+  private AppFabricServer appFabricServer;
   private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
   private final CConfiguration configuration;
   private final ImmutableList<Module> modules;
@@ -45,12 +51,23 @@ public class SingleNodeMain {
   public SingleNodeMain(ImmutableList<Module> modules, CConfiguration configuration) {
     this.modules = modules;
     this.configuration = configuration;
+    this.webCloudAppService = new WebCloudAppService();
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          webCloudAppService.stop(true);
+        } catch (ServerException e) {
+          System.err.println("Failed to shutdown node web cloud app");
+        }
+      }
+    });
   }
 
   /**
    * Start the service.
    */
-  protected void startUp() throws Exception {
+  protected void startUp(String[] args) throws Exception {
     Copyright.print();
 
     // Create temporary directory where zookeeper data files will be stored.
@@ -62,11 +79,11 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
 
-    Gateway gateway = injector.getInstance(Gateway.class);
-    MetricsCollectionServerInterface overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
-    MetricsFrontendServerInterface overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
-    MetadataServerInterface metaDataServer = injector.getInstance(MetadataServerInterface.class);
-    AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
+    gateway = injector.getInstance(Gateway.class);
+    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
+    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
+    metaDataServer = injector.getInstance(MetadataServerInterface.class);
+    appFabricServer = injector.getInstance(AppFabricServer.class);
 
     // Start all the services.
     Service.State state = appFabricServer.startAndWait();
@@ -74,16 +91,32 @@ public class SingleNodeMain {
       throw new Exception("Unable to start Application Fabric.");
     }
 
-    String[] args = new String[0];
-
     metaDataServer.start(args, configuration);
     overlordCollection.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
+    //webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Devsuite AppFabric started successfully. Connect to dashboard at "
                        + "http://" + hostname + ":9999");
+  }
+
+  /**
+   * Shutdown the service.
+   */
+  public void shutDown() {
+    try {
+      //webCloudAppService.stop(true);
+      gateway.stop(true);
+      metaDataServer.stop(true);
+      overloadFrontend.stop(true);
+      overlordCollection.stop(true);
+      metaDataServer.stop(true);
+      appFabricServer.startAndWait();
+    } catch (ServerException e) {
+      // There is nothing we can do.
+    }
   }
 
   /**
@@ -160,8 +193,9 @@ public class SingleNodeMain {
     SingleNodeMain main = inMemory ? new SingleNodeMain(inMemoryModules, configuration)
       : new SingleNodeMain(singleNodeModules, configuration);
     try {
-      main.startUp();
+      main.startUp(args);
     } catch (Exception e) {
+      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
     }
   }
