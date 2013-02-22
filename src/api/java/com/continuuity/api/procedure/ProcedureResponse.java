@@ -28,6 +28,36 @@ public final class ProcedureResponse {
      * @throws IOException When there is error while writing.
      */
     Writer write(ByteBuffer buffer) throws IOException;
+
+    /**
+     * Writes the given byte array to the response. Same as calling
+     * {@link #write(byte[], int, int)} with {@code off=0} and {@code len=bytes.length}.
+     *
+     * @param bytes bytes to be written out.
+     * @return The same {@link Writer} instance for writing more data.
+     * @throws IOException When there is error while writing.
+     */
+    Writer write(byte[] bytes) throws IOException;
+
+    /**
+     * Writes the given {@code len} bytes from {@code bytes} to the response, starting with the given {@code offset}.
+     *
+     * @param bytes bytes to be written out.
+     * @return The same {@link Writer} instance for writing more data.
+     * @throws IOException When there is error while writing.
+     * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative or if {@code off + len} is greater
+     *                                   than {@code bytes.length}.
+     */
+    Writer write(byte[] bytes, int off, int len) throws IOException;
+
+    /**
+     * Writes the given {@link String} to the response, using {@code UTF-8} {@link java.nio.charset.Charset Charset}.
+     *
+     * @param content {@link String} content to be written out.
+     * @return The same {@link Writer} instance for writing more data.
+     * @throws IOException When there is error while writing.
+     */
+    Writer write(String content) throws IOException;
   }
 
   /**
