@@ -443,14 +443,15 @@
     <!-- Level DB Settings -->
     <property>
         <name>data.local.leveldb</name>
-        <value>data/</value>
+        <value>data/data-fabric</value>
     </property>
 
     <!-- Sets whether Devsuite is in Cloud or no -->
+    <!-- AppFabric will become Reactor later -->
     <property>
-        <name>devsuite.environment</name>
+        <name>appfabric.environment</name>
         <value>devsuite</value>
-        <description>Sets the environment the devsuite is in.</description>
+        <description>Sets the environment the appfabric is in.</description>
     </property>
 
 </configuration>
