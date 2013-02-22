@@ -98,6 +98,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       transactionExecutor = MoreExecutors.sameThreadExecutor();
     }
     runnerThread = Thread.currentThread();
+    flowletContext.getSystemMetrics().counter("instance", 1);
   }
 
   @Override
@@ -184,17 +185,23 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           if (!entry.shouldProcess()) {
             continue;
           }
+          ProcessMethod processMethod = entry.processSpec.getProcessMethod();
+          if (processMethod.needsInput()) {
+            flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+          }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
           if (!input.needProcess()) {
             entry.backOff();
             continue;
+          }
+          if (processMethod.needsInput()) {
+            flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
           }
           entry.nextDeque = 0;
           inflight.getAndIncrement();
 
           try {
             // Call the process method and commit the transaction
-            ProcessMethod processMethod = entry.processSpec.getProcessMethod();
             processMethod.invoke(input)
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 

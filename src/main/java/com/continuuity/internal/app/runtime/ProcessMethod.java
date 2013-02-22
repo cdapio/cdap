@@ -9,5 +9,7 @@ package com.continuuity.internal.app.runtime;
  */
 public interface ProcessMethod {
 
+  boolean needsInput();
+
   PostProcess invoke(InputDatum input);
 }

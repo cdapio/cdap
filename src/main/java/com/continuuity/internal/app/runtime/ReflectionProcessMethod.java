@@ -75,6 +75,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   }
 
   @Override
+  public boolean needsInput() {
+    return hasParam;
+  }
+
+  @Override
   public PostProcess invoke(InputDatum input) {
     return doInvoke(input);
   }
