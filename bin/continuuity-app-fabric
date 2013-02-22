@@ -99,14 +99,14 @@ check_for_updates() {
   l=`ping -c 3 205.186.175.189 | grep "64 bytes" | wc -l`  
   if [ $l -eq 3 ]
   then
-    new=`curl 'http://www.continuuity.com/version.txt' 2>/dev/null`
-    if [[ "x${c}" != "x" ]]; then
+    new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
+    if [[ "x${new}" != "x" ]]; then
      current=`${APP_HOME}/version`
      compare_versions $new $current   
      case $? in 
        0);;
        1) echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
-          echo "        Download it from your account: http://accounts.continuuity.com";;
+          echo "        Download it from your account: https://accounts.continuuity.com";;
        2);;
      esac
     fi
@@ -117,7 +117,6 @@ compare_versions () {
   if [[ $1 == $2 ]]
   then
     return 0
-    echo "$1 = $2"
   fi
   local IFS=.
   local i ver1=($1) ver2=($2)
@@ -136,12 +135,10 @@ compare_versions () {
     if ((10#${ver1[i]} > 10#${ver2[i]}))
     then
       return 1
-      echo "$1 > $2"
     fi
     if ((10#${ver1[i]} < 10#${ver2[i]}))
     then
       return 2
-      echo "$1 < $2"
     fi
   done
   return 0
