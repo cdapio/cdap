@@ -1,13 +1,16 @@
 package com.continuuity.gateway.accessor;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.continuuity.app.services.*;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.metrics2.thrift.Counter;
+import com.continuuity.metrics2.thrift.CounterRequest;
+import com.continuuity.metrics2.thrift.FlowArgument;
+import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -24,21 +27,12 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.flow.manager.stubs.ActiveFlow;
-import com.continuuity.flow.manager.stubs.DelegationToken;
-import com.continuuity.flow.manager.stubs.FlowIdentifier;
-import com.continuuity.flow.manager.stubs.FlowService;
-import com.continuuity.flow.manager.stubs.FlowStatus;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.metrics2.thrift.Counter;
-import com.continuuity.metrics2.thrift.CounterRequest;
-import com.continuuity.metrics2.thrift.FlowArgument;
-import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 
 /**
  * This is the http request handler for the metrics and status REST API.
@@ -104,8 +98,8 @@ public class MonitorRestHandler extends NettyRestHandler {
       new ThreadLocal<MetricsFrontendService.Client>();
 
   // a flow thrift client for every thread
-  ThreadLocal<FlowService.Client> flowClients =
-      new ThreadLocal<FlowService.Client>();
+  ThreadLocal<AppFabricService.Client> flowClients =
+      new ThreadLocal<AppFabricService.Client>();
 
   /**
    * generic method to discover a thrift service and start up the
@@ -164,11 +158,11 @@ public class MonitorRestHandler extends NettyRestHandler {
    * @throws ServerException if service discovery or connecting to the
    * service fails.
    */
-  private FlowService.Client getFlowClient() throws ServerException {
+  private AppFabricService.Client getFlowClient() throws ServerException {
     if (flowClients.get() == null ||
       !flowClients.get().getInputProtocol().getTransport().isOpen()) {
         TProtocol protocol = getThriftProtocol(Constants.flowServiceName);
-      FlowService.Client client = new FlowService.Client(protocol);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
       flowClients.set(client);
     }
     return flowClients.get();
@@ -230,7 +224,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         statusmetrics.put("FAILED", 0);
         statusmetrics.put("STARTING", 0);
         statusmetrics.put("STOPPING", 0);
-        FlowService.Client flowClient = this.getFlowClient();
+        AppFabricService.Client flowClient = this.getFlowClient();
         List<ActiveFlow> activeFlows = flowClient.getFlows(Constants.defaultAccount);
         //iterate through flows, build up response string
         for(ActiveFlow activeFlow : activeFlows) {
@@ -309,8 +303,8 @@ public class MonitorRestHandler extends NettyRestHandler {
       helper.setMethod("query");
 
       if ("status".equals(query)) {
-        FlowService.Client flowClient = this.getFlowClient();
-        FlowStatus status = flowClient.status(new DelegationToken(),
+        AppFabricService.Client flowClient = this.getFlowClient();
+        FlowStatus status = flowClient.status(new AuthToken(),
             new FlowIdentifier(Constants.defaultAccount, appid, flowid, -1));
         String value = status.getStatus();
         respondSuccess(message.getChannel(), request, value.getBytes());

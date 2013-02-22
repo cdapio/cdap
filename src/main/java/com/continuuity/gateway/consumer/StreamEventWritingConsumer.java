@@ -1,12 +1,13 @@
 package com.continuuity.gateway.consumer;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.Id;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
-import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -66,8 +67,8 @@ public class StreamEventWritingConsumer extends Consumer {
       destination = "default";
     }
     // construct the stream URO to use for the data fabric
-    String queueURI = FlowStream.
-        buildStreamURI(Constants.defaultAccount, destination).toString();
+    String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+                               .toString();
     LOG.trace("Sending event to " + queueURI + ", event = " + event);
 
     return new QueueEnqueue(queueURI.getBytes(), new QueueEntryImpl(bytes));

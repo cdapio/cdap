@@ -1,16 +1,12 @@
 package com.continuuity.gateway;
 
-import com.continuuity.TestHelper;
-import com.continuuity.ToyApp;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
@@ -28,6 +24,7 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -110,7 +107,7 @@ public class AppFabricCollectorTest {
    * @return the connector's base URL for REST requests
    */
   String setupConnector(String name, String prefix, String middle)
-      throws Exception {
+    throws Exception {
     // bring up a new connector
     AppFabricRestConnector restConnector = new AppFabricRestConnector();
     restConnector.setName(name);
@@ -124,11 +121,11 @@ public class AppFabricCollectorTest {
     // configure it
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PORT), port);
+                                                              Constants.CONFIG_PORT), port);
     configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
+                                                           Constants.CONFIG_PATH_PREFIX), prefix);
     configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_MIDDLE), middle);
+                                                           Constants.CONFIG_PATH_MIDDLE), middle);
     restConnector.configure(configuration);
     // start the connector
     restConnector.start();
@@ -145,7 +142,7 @@ public class AppFabricCollectorTest {
   @Test
   public void testStopRestart() throws Exception {
     // configure an connector
-    String baseUrl = setupConnector("access.rest", "/continuuity", "/table/");
+    String baseUrl = setupConnector("connector.rest", "/continuuity", "/table/");
     int port = this.connector.getHttpConfig().getPort();
     // test that ping works
     Assert.assertEquals(200, TestUtil.sendGetRequest("http://localhost:" + port + "/ping"));
@@ -155,7 +152,7 @@ public class AppFabricCollectorTest {
     try {
       TestUtil.sendGetRequest("http://localhost:" + port + "/ping");
       Assert.fail("Expected HttpHostConnectException because connector was " +
-          "stopped.");
+                    "stopped.");
     } catch (HttpHostConnectException e) {
       // this is expected
     }
@@ -167,7 +164,7 @@ public class AppFabricCollectorTest {
     this.connector.stop();
   }
 
-  @Test
+  @Test @Ignore
   public void testDeploy() throws Exception {
     // setup connector
     String baseUrl = setupConnector("connector.rest", "/continuuity", "/rest-app/");
@@ -177,13 +174,6 @@ public class AppFabricCollectorTest {
 
     String jarFileName="WordCount.jar";
     File farFile = FileUtils.toFile(this.getClass().getResource("/"+jarFileName));
-
-    // Create a local jar - simulate creation of application archive.
-    Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
-    );
-    deployedJar.deleteOnExit();
-
 
     Map<String,String> headers= Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY,"api-key-example");

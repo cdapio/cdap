@@ -4,18 +4,13 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.Id;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.flow.definition.impl.FlowStream;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
@@ -25,11 +20,7 @@ import com.google.common.collect.Maps;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +28,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -287,8 +275,9 @@ public class RestHandler extends NettyRestHandler {
         }
 
         case INFO: {
-          String queueURI = FlowStream.buildStreamURI(
-              Constants.defaultAccount, destination).toString();
+
+          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+                                     .toString();
           GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
           OperationResult<QueueInfo> info = null;
           boolean notfound = false;
@@ -331,8 +320,8 @@ public class RestHandler extends NettyRestHandler {
         // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
         //    an HTTP header
         case NEWID: {
-          String queueURI = FlowStream.buildStreamURI(
-              Constants.defaultAccount, destination).toString();
+          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+                                     .toString();
           QueueAdmin.GetGroupID op =
               new QueueAdmin.GetGroupID(queueURI.getBytes());
           long id;
@@ -379,8 +368,8 @@ public class RestHandler extends NettyRestHandler {
             return;
           }
           // valid consumer id, dequeue and return it
-          String queueURI = FlowStream.buildStreamURI(
-              Constants.defaultAccount, destination).toString();
+          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+                                     .toString();
           // 0th instance of group 'id' of size 1
           QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
           QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
