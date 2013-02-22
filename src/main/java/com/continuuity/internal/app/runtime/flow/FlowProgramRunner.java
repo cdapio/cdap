@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
@@ -14,6 +14,9 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
@@ -36,7 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  *
  */
-public class FlowProgramRunner implements ProgramRunner {
+public final class FlowProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 

@@ -6,6 +6,7 @@ package com.continuuity.internal.app;
 
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -16,6 +17,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
+import java.util.Set;
 
 /**
  *
@@ -30,6 +32,7 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
 
     return jsonObj;
   }
@@ -42,7 +45,8 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
 
-    return new DefaultProcedureSpecification(className, name, description);
+    return new DefaultProcedureSpecification(className, name, description, dataSets);
   }
 }

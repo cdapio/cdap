@@ -8,11 +8,14 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents an unique ID of a running program.
  */
 public final class RunId {
+
+  private static final AtomicLong lastTimestamp = new AtomicLong();
 
   private final UUID id;
 
@@ -57,7 +60,18 @@ public final class RunId {
     // Number of 100ns since 15 October 1582 00:00:000000000
     final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
-    long time = System.currentTimeMillis() * 10000 + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
+    // Use a unique timestamp
+    long lastTs;
+    long ts;
+    do {
+      lastTs = lastTimestamp.get();
+      ts = System.currentTimeMillis();
+      if (ts == lastTs) {
+        ts++;
+      }
+    } while (!lastTimestamp.compareAndSet(lastTs, ts));
+
+    long time = ts * 10000 + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
     long timeLow = time & 0xffffffffL;
     long timeMid = time & 0xffff00000000L;
     long timeHi = time & 0xfff000000000000L;

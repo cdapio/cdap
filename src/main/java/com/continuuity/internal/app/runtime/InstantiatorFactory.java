@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.internal.app.runtime.Instantiator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;

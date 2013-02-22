@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.app.queue.QueueReader;
 import com.google.common.base.Objects;

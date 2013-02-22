@@ -2,13 +2,14 @@ package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
 /**
- * A {@link OutputSubmitter} that would delegate the {@link #submit(TransactionAgent)}
- * call to all the {@link OutputSubmitter} that it contains one by one.
+ * A {@link com.continuuity.internal.app.runtime.OutputSubmitter} that would delegate the {@link #submit(TransactionAgent)}
+ * call to all the {@link com.continuuity.internal.app.runtime.OutputSubmitter} that it contains one by one.
  */
 public final class MultiOutputSubmitter implements OutputSubmitter {
 

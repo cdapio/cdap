@@ -6,6 +6,9 @@ package com.continuuity.api.procedure;
 
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Set;
 
 /**
  * This class defines an specification for a {@link Procedure}.
@@ -31,11 +34,18 @@ public interface ProcedureSpecification {
   String getDescription();
 
   /**
+   * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} name that
+   *         used by the {@link Procedure}.
+   */
+  Set<String> getDataSets();
+
+  /**
    * Builder for building {@link ProcedureSpecification}
    */
   static final class Builder {
     private String name;
     private String description;
+    private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     public static NameSetter with() {
       return new Builder().new NameSetter();
@@ -78,13 +88,27 @@ public interface ProcedureSpecification {
      * Part of builder for defining next steps after providing description.
      */
     public final class AfterDescription {
+
+      /**
+       * Adds the names of {@link com.continuuity.api.data.DataSet DataSets} used by the procedure.
+       *
+       * @param dataSet DataSet name.
+       * @param moreDataSets More DataSet names.
+       * @return An instance of {@link AfterDescription}.
+       */
+      public AfterDescription useDataSet(String dataSet, String...moreDataSets) {
+        dataSets.add(dataSet).add(moreDataSets);
+        return this;
+      }
+
       /**
        * @return build a {@link ProcedureSpecification}
        */
       public ProcedureSpecification build() {
-        return new DefaultProcedureSpecification(name, description);
+        return new DefaultProcedureSpecification(name, description, dataSets.build());
       }
     }
+
     private Builder() {}
   }
 }
