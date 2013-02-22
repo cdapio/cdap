@@ -202,9 +202,9 @@ public class WordCountApp implements Application {
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       String word = request.getArgument("word");
       int count = Ints.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8)));
-      ProcedureResponse.Writer writer = responder.response(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+      ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
       try {
-        writer.write(ByteBuffer.wrap(Integer.toString(count).getBytes(Charsets.UTF_8)));
+        writer.write(Integer.toString(count));
       } finally {
         writer.close();
       }
