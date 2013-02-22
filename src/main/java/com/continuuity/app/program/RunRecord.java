@@ -8,9 +8,9 @@ public final class RunRecord {
   private String pid;
   private long startTs;
   private long stopTs;
-  private Status endStatus;
+  private String endStatus;
 
-  public RunRecord(final String pid, final long startTs, final long stopTs, final Status endStatus) {
+  public RunRecord(final String pid, final long startTs, final long stopTs, final String endStatus) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
@@ -29,7 +29,7 @@ public final class RunRecord {
     return stopTs;
   }
 
-  public Status getEndStatus() {
+  public String getEndStatus() {
     return endStatus;
   }
 }

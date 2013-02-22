@@ -12,7 +12,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
 import com.continuuity.common.conf.CConfiguration;
@@ -126,7 +125,7 @@ public class MDSBasedStore implements Store {
    * @param startTime start timestamp
    */
   @Override
-  public void setStart(Id.Program id, final String pid, final long startTime) throws OperationException {
+  public void setStart(Id.Program id, final String pid, final long startTime) {
     MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
                                             FieldTypes.ProgramRun.ENTRY_TYPE, pid);
     entry.addField(FieldTypes.ProgramRun.PROGRAM, id.getId());
@@ -134,7 +133,11 @@ public class MDSBasedStore implements Store {
 
     OperationContext context = new OperationContext(id.getAccountId());
     // perform insert, no conflict resolution
-    metaDataStore.add(context, entry, false);
+    try {
+      metaDataStore.add(context, entry, false);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -146,18 +149,21 @@ public class MDSBasedStore implements Store {
    * @param state   State of program
    */
   @Override
-  public void setEnd(Id.Program id, final String pid, final long endTime, final Status state)
-    throws OperationException {
+  public void setStop(Id.Program id, final String pid, final long endTime, final String state) {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
     OperationContext context = new OperationContext(id.getAccountId());
 
     // we want program run info to be in one entry to make things cleaner on reading end
-    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
-                              FieldTypes.ProgramRun.ENTRY_TYPE, pid,
-                              FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
-    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
-                              pid, FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1);
+    try {
+      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
+                                FieldTypes.ProgramRun.ENTRY_TYPE, pid,
+                                FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
+      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
+                                pid, FieldTypes.ProgramRun.END_STATE,state, -1);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -186,7 +192,7 @@ public class MDSBasedStore implements Store {
       runHistory.add(new RunRecord(entry.getId(),
                                    Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
                                    Long.valueOf(endTsStr),
-                                   Status.valueOf(entry.getTextField(FieldTypes.ProgramRun.END_STATE))));
+                                   entry.getTextField(FieldTypes.ProgramRun.END_STATE)));
     }
     Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
     return runHistory;

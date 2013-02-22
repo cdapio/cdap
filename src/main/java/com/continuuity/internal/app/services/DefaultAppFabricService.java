@@ -217,7 +217,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
                                                              new BasicArguments(),
                                                              new BasicArguments()));
-
+      store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
+                     System.currentTimeMillis()/(1000*1000));
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
     } catch (IOException e) {
@@ -229,23 +230,33 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Checks the status of a Program
    *
    * @param token
-   * @param identifier
+   * @param id
    */
   @Override
-  public FlowStatus status(AuthToken token, FlowIdentifier identifier)
+  public FlowStatus status(AuthToken token, FlowIdentifier id)
     throws AppFabricServiceException, TException {
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
     int version = 1;  // FIXME, how to get version?
     if (runtimeInfo == null) {
-      return new FlowStatus(identifier.getApplicationId(), identifier.getFlowId(),
+      return new FlowStatus(id.getApplicationId(), id.getFlowId(),
                             version, null, ProgramController.State.STOPPED.toString());
     }
 
     Id.Program programId = runtimeInfo.getProgramId();
     RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
+
+    // NOTE: This was a temporary hack done to map the status to something that is
+    // UI friendly. Internal states of program controller are reasonable and hence
+    // no point in changing them.
     String status = runtimeInfo.getController().getState().toString();
+    ProgramController.State state = runtimeInfo.getController().getState();
+    if(state == ProgramController.State.ALIVE) {
+      status = "RUNNING";
+    } else if(state == ProgramController.State.ERROR) {
+      status = "FAILED";
+    }
     return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
   }
 
@@ -265,6 +276,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
+      store.setStop(runtimeInfo.getProgramId(), runId.getId(), System.currentTimeMillis()/(1000*1000),
+                    runtimeInfo.getController().getState().toString());
       return new RunIdentifier(runId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -402,8 +415,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     fillConnectionsAndStreams(id, flowSpec, flowDef);
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
     metaDefinition.setApp(id.getApplicationId());
+    metaDefinition.setName(flowSpec.getName());
     flowDef.setMeta(metaDefinition);
-
     return flowDef;
   }
 
@@ -482,7 +495,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
     for (RunRecord runRecord : log) {
       history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
-                                    runRecord.getStopTs(),runRecord.getEndStatus().name())
+                                    runRecord.getStopTs(),runRecord.getEndStatus())
       );
     }
     return history;
@@ -533,7 +546,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException {
-    ResourceIdentifier identifier = new ResourceIdentifier( info.getAccountId(), "", "", 1);
+    ResourceIdentifier identifier = new ResourceIdentifier( info.getAccountId(), "appId", "resourceId", 1);
 
     try {
       if(sessions.containsKey(info.getAccountId())) {

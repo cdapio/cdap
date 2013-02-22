@@ -57,7 +57,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .noProcedure().build();
   }
 
   public static final class MyRecord {
@@ -172,7 +172,6 @@ public class WordCountApp implements Application {
       }
 
       this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
-//      LOG.info(token + " : " + Longs.fromByteArray(counters.read(token.getBytes(Charsets.UTF_8))));
     }
 
     @Override
@@ -185,18 +184,18 @@ public class WordCountApp implements Application {
       return FailurePolicy.RETRY;
     }
   }
-
-  public static class WordFrequency extends AbstractProcedure {
-    @UseDataSet("mydataset")
-    private KeyValueTable counters;
-
-    public WordFrequency() {
-      super("WordFrequency");
-    }
-
-    @Handle("wordfreq")
-    public void process(String word) throws OperationException {
-      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
-    }
-  }
+//
+//  public static class WordFrequency extends AbstractProcedure {
+//    @UseDataSet("mydataset")
+//    private KeyValueTable counters;
+//
+//    public WordFrequency() {
+//      super("WordFrequency");
+//    }
+//
+//    @Handle("wordfreq")
+//    public void process(String word) throws OperationException {
+//      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
+//    }
+//  }
 }
