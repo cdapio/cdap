@@ -11,8 +11,8 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.passport.PassportConstants;
-import com.continuuity.passport.http.client.PassportClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -33,12 +33,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -261,24 +260,30 @@ public class AppFabricRestHandler extends NettyRestHandler {
     ri.setSize(jarFileBytes.length);
     ri.setModtime(System.currentTimeMillis());
     ResourceIdentifier id = client.init(token, ri);
-    // Upload the jar file to remote location.
-    byte[] toSubmit=jarFileBytes;
-    client.chunk(token, id, ByteBuffer.wrap(toSubmit));
-    DeploymentStatus status = client.dstatus(token, id);
 
-
+    BufferFileInputStream is =
+      new BufferFileInputStream(new ByteArrayInputStream(jarFileBytes), 100*1024);
+    try {
+      while(true) {
+        byte[] toSubmit = is.read();
+        if(toSubmit.length==0) break;
+        client.chunk(token, id, ByteBuffer.wrap(toSubmit));
+      }
+    } finally {
+      is.close();
+    }
     client.deploy(token, id);
+
+    DeploymentStatus status = client.dstatus(token, id);
     int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
       dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
-
   }
 
   private int getAccountId(String hostname, int port, String apiKey) {
-    PassportClient ppc=new PassportClient();
-    return (ppc.getAccount(hostname, port, apiKey)).getAccountId();
+    return connector.getPassportClient().getAccount(hostname, port, apiKey).getAccountId();
   }
   private String httpGet(String url,String apiKey) throws Exception {
     String payload  = null;

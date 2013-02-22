@@ -5,13 +5,13 @@ import com.continuuity.gateway.Connector;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
+import com.continuuity.passport.http.client.PassportClient;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 public class AppFabricRestConnector extends Connector implements NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestConnector.class);
+
 
   /**
    * this will provide defaults for the HTTP service, such as port and paths
@@ -38,6 +39,8 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
    */
   private HttpConfig httpConfig = defaultHttpConfig;
 
+  private PassportClient passportClient;
+
   /**
    * return the HTTP configuration for this accessor
    *
@@ -47,6 +50,13 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
     return this.httpConfig;
   }
 
+  public void setPassportClient(PassportClient passportClient) {
+    this.passportClient=passportClient;
+  }
+
+  PassportClient getPassportClient() {
+    return this.passportClient;
+  }
   /**
    * this is the active Netty server channel
    */
