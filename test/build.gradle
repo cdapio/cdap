@@ -7,19 +7,14 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
 
     // Workaround to include sub project dependencies
-    compile (project(":flow")){
+    compile (project(":app-fabric")){
         artifact { artifact ->
-            artifact.name = project(":flow").name
-            artifact.type = 'jar'
-            artifact.classifier = 'testhelper'
-        }
-        artifact { artifact ->
-            artifact.name = project(":flow").name
+            artifact.name = project(":app-fabric").name
             artifact.type = 'jar'
             artifact.classifier = 'api'
         }
         artifact { artifact ->
-            artifact.name = project(":flow").name
+            artifact.name = project(":app-fabric").name
             artifact.type = 'jar'
         }
     }
