@@ -11,7 +11,9 @@ import java.io.IOException;
  */
 public interface ProcedureResponder {
   /**
-   * Adds to the response to be returned to the caller.
+   * Adds the response to be returned to the caller. Calling this method multiple times to the same
+   * {@link ProcedureResponder} will return the same {@link ProcedureResponse.Writer} instance and the
+   * latter submitted {@link ProcedureResponse} would be ignored.
    *
    * @param response An instance of {@link ProcedureResponse} containing the response to be returned.
    * @return  An instance of {@link ProcedureResponse.Writer} for writing data of the response.
