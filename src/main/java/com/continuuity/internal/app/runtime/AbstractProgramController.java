@@ -136,13 +136,14 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> command(final String name, final Object value) {
-    final SettableFuture result = SettableFuture.create();
+    final SettableFuture<ProgramController> result = SettableFuture.create();
     executor("command").execute(new Runnable() {
 
       @Override
       public void run() {
         try {
           doCommand(name, value);
+          result.set(AbstractProgramController.this);
         } catch (Throwable t) {
           error(t, result);
         }

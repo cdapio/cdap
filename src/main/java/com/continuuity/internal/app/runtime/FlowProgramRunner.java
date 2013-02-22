@@ -135,6 +135,7 @@ public class FlowProgramRunner implements ProgramRunner {
 
     @Override
     protected void doSuspend() throws Exception {
+      LOG.info("Suspending flow: " + flowSpec.getName());
       lock.lock();
       try {
         Futures.successfulAsList(
@@ -148,11 +149,12 @@ public class FlowProgramRunner implements ProgramRunner {
       } finally {
         lock.unlock();
       }
-
+      LOG.info("Flow suspended: " + flowSpec.getName());
     }
 
     @Override
     protected void doResume() throws Exception {
+      LOG.info("Resuming flow: " + flowSpec.getName());
       lock.lock();
       try {
         Futures.successfulAsList(
@@ -166,10 +168,12 @@ public class FlowProgramRunner implements ProgramRunner {
       } finally {
         lock.unlock();
       }
+      LOG.info("Flow resumed: " + flowSpec.getName());
     }
 
     @Override
     protected void doStop() throws Exception {
+      LOG.info("Stoping flow: " + flowSpec.getName());
       lock.lock();
       try {
         Futures.successfulAsList(
@@ -183,6 +187,7 @@ public class FlowProgramRunner implements ProgramRunner {
       } finally {
         lock.unlock();
       }
+      LOG.info("Flow stopped: " + flowSpec.getName());
     }
 
     @Override
@@ -205,8 +210,8 @@ public class FlowProgramRunner implements ProgramRunner {
       }
     }
 
-    private void changeInstances(String flowletName, final int newInstanceCount) throws ExecutionException,
-      InterruptedException {
+    private void changeInstances(String flowletName, final int newInstanceCount)
+                                                      throws ExecutionException, InterruptedException {
       Map<Integer, ProgramController> liveFlowlets = flowlets.row(flowletName);
       int liveCount = liveFlowlets.size();
       if (liveCount == newInstanceCount) {
@@ -218,8 +223,6 @@ public class FlowProgramRunner implements ProgramRunner {
         return;
       }
       decreaseInstances(flowletName, newInstanceCount, liveFlowlets, liveCount);
-
-
     }
 
     private void increaseInstances(String flowletName, final int newInstanceCount, Map<Integer, ProgramController>

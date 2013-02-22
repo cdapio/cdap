@@ -89,7 +89,7 @@ public class TestHelper {
 
     // Create a local jar - simulate creation of application archive.
     Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
+      JarFinder.getJar(application, TestHelper.getManifestWithMainClass(application))
     );
     deployedJar.deleteOnExit();
 

@@ -94,7 +94,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     transactionExecutor.shutdown();
     if (!transactionExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-      LOG.error("The transaction executor took more than 10 seconds to shutdown.");
+      LOG.error("The transaction executor took more than 10 seconds to shutdown: " + flowletContext);
     }
   }
 
@@ -113,7 +113,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (BrokenBarrierException e) {
-        LOG.error("Exception during suspend.", e);
+        LOG.error("Exception during suspend: " + flowletContext, e);
       }
     }
   }
@@ -163,7 +163,6 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         processQueue.peek().await();
       } catch (InterruptedException e) {
         // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
-        LOG.info("Process queue await interruped.", e);
         continue;
       }
 
@@ -190,10 +189,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s", entry.processSpec), t);
+            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.processSpec, flowletContext), t);
           }
         } catch (OperationException e) {
-          LOG.error("Queue operation failure", e);
+          LOG.error("Queue operation failure: " + flowletContext, e);
         } finally {
           // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
           if (!entry.isRetry()) {
@@ -212,22 +211,22 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private void initFlowlet() {
     try {
-      LOG.info("Initializing flowlet: " + flowlet.getClass());
+      LOG.info("Initializing flowlet: " + flowletContext);
       flowlet.initialize(flowletContext);
-      LOG.info("Flowlet initialized: " + flowlet.getClass());
+      LOG.info("Flowlet initialized: " + flowletContext);
     } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet initialize.", t);
+      LOG.error("Flowlet throws exception during flowlet initialize: " + flowletContext, t);
       throw Throwables.propagate(t);
     }
   }
 
   private void destroyFlowlet() {
     try {
-      LOG.info("Destroying flowlet: " + flowlet.getClass());
+      LOG.info("Destroying flowlet: " + flowletContext);
       flowlet.destroy();
-      LOG.info("Flowlet destroyed: " + flowlet.getClass());
+      LOG.info("Flowlet destroyed: " + flowletContext);
     } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet destroy.", t);
+      LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, t);
       throw Throwables.propagate(t);
     }
   }
@@ -242,7 +241,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
-          LOG.info("Exception on onSuccess call.", t);
+          LOG.info("Exception on onSuccess call: " + flowletContext, t);
         }
       }
 
@@ -255,7 +254,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
         try {
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
-          LOG.info("Exception on onFailure call.", t);
+          LOG.info("Exception on onFailure call: " + flowletContext, t);
           failurePolicy = FailurePolicy.RETRY;
         }
 
@@ -277,7 +276,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
           try {
             inputAcknowledger.ack();
           } catch (OperationException e) {
-            LOG.error("Fatal problem, fail to ack an input.", e);
+            LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
           }
         }
       }

@@ -48,8 +48,6 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.queue.SingleQueueReader;
-import com.continuuity.internal.io.Instantiator;
-import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -58,10 +56,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -75,6 +74,8 @@ import java.util.Set;
  *
  */
 public final class FlowletProgramRunner implements ProgramRunner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
   private final OperationExecutor opex;
   private final SchemaGenerator schemaGenerator;
@@ -90,7 +91,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   public ProgramController run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      String flowletName = options.getName();
+      final String flowletName = options.getName();
       final int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
@@ -138,7 +139,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
             .create(flowSpec);
 
-      Flowlet flowlet = new InstantiatorFactory().get(TypeToken.of(flowletClass)).create();
+      Flowlet flowlet = new InstantiatorFactory().get(TypeToken.of(flowletClass), false).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
       // Inject DataSet, OutputEmitter, Metric fields
@@ -163,21 +164,30 @@ public final class FlowletProgramRunner implements ProgramRunner {
             flowlet, flowletContext, processSpecs,
             createCallback(flowlet, flowletDef.getFlowletSpec()));
 
+      LOG.info("Starting flowlet: " + flowletName);
       driver.start();
+      LOG.info("Flowlet started: " + flowletName);
+
       return new AbstractProgramController(program.getProgramName() + ":" + flowletName, flowletContext.getRunId()) {
         @Override
         protected void doSuspend() throws Exception {
+          LOG.info("Suspending flowlet: " + flowletName);
           driver.suspend();
+          LOG.info("Flowlet suspended: " + flowletName);
         }
 
         @Override
         protected void doResume() throws Exception {
+          LOG.info("Resuming flowlet: " + flowletName);
           driver.resume();
+          LOG.info("Flowlet resumed: " + flowletName);
         }
 
         @Override
         protected void doStop() throws Exception {
+          LOG.info("Stopping flowlet: " + flowletName);
           driver.stopAndWait();
+          LOG.info("Flowlet stopped: " + flowletName);
         }
 
         @Override
@@ -186,9 +196,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
             return;
           }
           int instances = (Integer)value;
+          LOG.info("Change flowlet instance count: " + flowletName + ", new count is " + instances);
           driver.suspend();
           flowletContext.setInstanceCount(instances);
           driver.resume();
+          LOG.info("Flowlet instance count changed: " + flowletName + ", new count is " + instances);
         }
       };
 

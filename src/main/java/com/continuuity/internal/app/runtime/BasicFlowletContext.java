@@ -17,8 +17,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -55,6 +53,12 @@ public class BasicFlowletContext implements FlowletContext {
     this.queueProducer = new QueueProducer(getMetricName());
     this.queueConsumer = createQueueConsumer();
     this.asyncMode = asyncMode;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("flowlet=%s, instance=%d, groupsize=%s, runid=%s",
+                         getFlowletId(), getInstanceId(), getInstanceCount(), getRunId());
   }
 
   @Override

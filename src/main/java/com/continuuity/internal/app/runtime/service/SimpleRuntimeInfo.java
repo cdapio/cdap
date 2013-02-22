@@ -18,7 +18,7 @@ final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
   SimpleRuntimeInfo(ProgramController controller, Program program) {
     this.controller = controller;
     this.type = program.getProcessorType();
-    this.programId = Id.Program.from(program.getAccountId(), program.getAccountId(), program.getProgramName());
+    this.programId = Id.Program.from(program.getAccountId(), program.getApplicationId(), program.getProgramName());
   }
 
   @Override

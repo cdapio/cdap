@@ -1,4 +1,4 @@
-package com.continuuity.internal.io;
+package com.continuuity.internal.app.runtime;
 
 /**
  *

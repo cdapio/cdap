@@ -328,16 +328,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     switch (identifier.getType()) {
       case FLOW:
         runtimeInfos = runtimeService.list(Type.FLOW).values();
+        break;
       case QUERY:
         runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
+        break;
     }
     Preconditions.checkNotNull(runtimeInfos, "Cannot find any runtime info.");
 
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-
-    int version = 1;  // FIXME, how to get version?
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {
