@@ -101,12 +101,14 @@ check_for_updates() {
   then
     new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
-     current=`${APP_HOME}/version`
+     current=`cat ${APP_HOME}/VERSION`
      compare_versions $new $current   
      case $? in 
        0);;
-       1) echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
-          echo "        Download it from your account: https://accounts.continuuity.com";;
+       1) echo ""
+          echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
+          echo "        Download it from your account: https://accounts.continuuity.com."
+          echo "";;
        2);;
      esac
     fi
@@ -179,6 +181,7 @@ start() {
     echo $! > $pid
 
     print_copyright
+    check_for_updates
     echo -n "Starting Continuuity AppFabric (tm)"
     while kill -0 $! ; do
       if grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then

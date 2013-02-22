@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ import java.io.InputStreamReader;
  *
  * All output is sent to our Logging service.
  */
-public class WebCloudAppService implements Server {
+public class WebCloudAppService {
 
   private static final String NODE_JS_EXECUTABLE="node";
 
@@ -37,7 +38,6 @@ public class WebCloudAppService implements Server {
    */
   Process webAppProcess;
 
-  @Override
   public void start(String[] args, CConfiguration conf) throws ServerException {
 
     // Create a new ProcessBuilder
@@ -119,7 +119,6 @@ public class WebCloudAppService implements Server {
    *
    * @throws ServerException
    */
-  @Override
   public void stop(boolean now) throws ServerException {
     if(webAppProcess != null) {
       webAppProcess.destroy();

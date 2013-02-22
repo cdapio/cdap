@@ -29,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 
@@ -52,6 +53,14 @@ public class SingleNodeMain {
     this.modules = modules;
     this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService();
+
+    Injector injector = Guice.createInjector(modules);
+    gateway = injector.getInstance(Gateway.class);
+    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
+    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
+    metaDataServer = injector.getInstance(MetadataServerInterface.class);
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -68,22 +77,12 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
-    Copyright.print();
-
     // Create temporary directory where zookeeper data files will be stored.
     File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
     temporaryDir.mkdir();
     int port = PortDetector.findFreePort();
     zookeeper = new InMemoryZookeeper(port, temporaryDir);
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
-
-    Injector injector = Guice.createInjector(modules);
-
-    gateway = injector.getInstance(Gateway.class);
-    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
-    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
-    metaDataServer = injector.getInstance(MetadataServerInterface.class);
-    appFabricServer = injector.getInstance(AppFabricServer.class);
 
     // Start all the services.
     Service.State state = appFabricServer.startAndWait();
@@ -95,7 +94,7 @@ public class SingleNodeMain {
     overlordCollection.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    //webCloudAppService.start(args, configuration);
+    webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Devsuite AppFabric started successfully. Connect to dashboard at "
@@ -107,7 +106,7 @@ public class SingleNodeMain {
    */
   public void shutDown() {
     try {
-      //webCloudAppService.stop(true);
+      webCloudAppService.stop(true);
       gateway.stop(true);
       metaDataServer.stop(true);
       overloadFrontend.stop(true);
@@ -130,9 +129,6 @@ public class SingleNodeMain {
     // Which output stream should we use?
     PrintStream out = (error ? System.err : System.out);
 
-    // Print our generic Copyright
-    Copyright.print(out);
-
     // And our requirements and usage
     out.println("Requirements: ");
     out.println("  Java:    JDK 1.6+ must be installed and JAVA_HOME environment variable set to the java executable");
@@ -153,12 +149,41 @@ public class SingleNodeMain {
   }
 
   /**
+   * Checks if node is in path or no.
+   * @return
+   */
+  public static boolean nodeExists() {
+    try {
+      Process proc = Runtime.getRuntime().exec("node -v");
+      int exitValue = proc.exitValue();
+      if(exitValue != 0) {
+        return false;
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Nodejs not in path. Please add it to PATH in the shell you are starting devsuite");
+    }
+    return true;
+  }
+
+  /**
    * The root of all goodness!
    *
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    boolean inMemory = true;
+    Copyright.print(System.out);
+
+    // Checks if node exists.
+    try {
+      if(! nodeExists()) {
+        System.err.println("Unable to find nodejs in path. Please add it to PATH.");
+      }
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    }
+
+    boolean inMemory = false;
 
     // We only support 'help' command line options currently
     if (args.length > 0) {
@@ -195,9 +220,9 @@ public class SingleNodeMain {
     try {
       main.startUp(args);
     } catch (Exception e) {
-      main.shutDown();
       System.err.println("Failed to start server. " + e.getMessage());
     }
+    main.shutDown();
   }
 
 } // end of SingleNodeMain class
