@@ -129,6 +129,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
                                                                    createDataSets(dataSetInstantiator, flowletDef),
+                                                                   flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
       if (instanceCount > 0) {
         flowletContext.setInstanceCount(instanceCount);
