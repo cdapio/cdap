@@ -279,8 +279,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     if (GeneratorFlowlet.class.isAssignableFrom(flowletType.getRawType())) {
       Method method = flowletType.getRawType().getMethod("generate");
-      ProcessMethod generatorMethod = processMethodFactory.create(method, null, null);
-      return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(), null, generatorMethod));
+      ProcessMethod generatorMethod = processMethodFactory.create(method,
+                                                                  TypeToken.of(void.class),
+                                                                  Schema.of(Schema.Type.NULL));
+      return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
+                                                        Schema.of(Schema.Type.NULL),
+                                                        generatorMethod));
     }
 
     // Walk up the hierarchy of flowlet class to get all process methods

@@ -3,7 +3,7 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.internal.app.runtime.InputDatum;
-import com.google.common.base.Preconditions;
+import com.continuuity.internal.app.runtime.NullInputDatum;
 import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
@@ -15,6 +15,8 @@ import java.util.Iterator;
  * {@link QueueReader}, which will return an empty input.
  */
 public final class RoundRobinQueueReader implements QueueReader {
+
+  private static final InputDatum NULL_INPUT = new NullInputDatum();
 
   private final Iterator<QueueReader> readers;
 
@@ -29,7 +31,7 @@ public final class RoundRobinQueueReader implements QueueReader {
   @Override
   public InputDatum dequeue() throws OperationException {
     if (!readers.hasNext()) {
-      return null;
+      return NULL_INPUT;
     }
 
     // Read an input from the underlying QueueReader
@@ -38,7 +40,7 @@ public final class RoundRobinQueueReader implements QueueReader {
 
     // While the input is empty, keep trying to read from subsequent readers,
     // until a non-empty input is read or it loop back to the beginning reader.
-    while (input.isEmpty()) {
+    while (input.needProcess()) {
       QueueReader reader = readers.next();
       if (reader == begin) {
         return input;

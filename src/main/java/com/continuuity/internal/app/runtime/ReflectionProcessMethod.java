@@ -65,7 +65,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needContext = method.getGenericParameterTypes().length == 2;
-    this.datumReader = (schema == null || dataType == null) ? null : new ReflectionDatumReader<T>(schema, dataType);
+    this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
     this.byteBufferInput = new ByteBufferInputStream(null);
     this.decoder = new BinaryDecoder(byteBufferInput);
 
@@ -89,32 +89,29 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     try {
       txAgent.start();
+      Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
 
-      // TODO: This is for generator. Need to refactor to get rid of null things
-      if (input == null) {
-        Preconditions.checkState(!hasParam, "null input not allowed");
-        try {
-          method.invoke(flowlet);
-          outputSubmitter.submit(txAgent);
-          return getPostProcess(txAgent, input, null, null);
-        } catch (Throwable t) {
-          return getFailurePostProcess(t, txAgent, input, null, null);
-        }
+      T event = null;
+      if (hasParam) {
+        ByteBuffer data = input.getData();
+        Schema sourceSchema = schemaCache.get(data);
+        Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+
+        byteBufferInput.reset(data);
+        event = datumReader.read(decoder, sourceSchema);
+
       }
-
-      ByteBuffer data = input.getData();
-      Schema sourceSchema = schemaCache.get(data);
-      Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
-
-      byteBufferInput.reset(data);
-      final T event = datumReader.read(decoder, sourceSchema);
-      final InputContext inputContext = input.getInputContext();
+      InputContext inputContext = input.getInputContext();
 
       try {
-        if(needContext) {
-          method.invoke(flowlet, event, inputContext);
-        } else if (hasParam) {
-          method.invoke(flowlet, event);
+        if (hasParam) {
+          if(needContext) {
+            method.invoke(flowlet, event, inputContext);
+          } else if (hasParam) {
+            method.invoke(flowlet, event);
+          }
+        } else {
+          method.invoke(flowlet);
         }
         outputSubmitter.submit(txAgent);
 
@@ -142,9 +139,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
           @Override
           public void run() {
             try {
-              if (input != null) {
-                txAgent.submit(input.asAck());
-              }
+              input.submitAck(txAgent);
               txAgent.finish();
               callback.onSuccess(event, inputContext);
             } catch (Throwable t) {
@@ -199,12 +194,10 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     @Override
     public void ack() throws OperationException {
-      if (input != null) {
-        TransactionAgent txAgent = txAgentSupplier.get();
-        txAgent.start();
-        txAgent.submit(input.asAck());
-        txAgent.finish();
-      }
+      TransactionAgent txAgent = txAgentSupplier.get();
+      txAgent.start();
+      input.submitAck(txAgent);
+      txAgent.finish();
     }
   }
 }
