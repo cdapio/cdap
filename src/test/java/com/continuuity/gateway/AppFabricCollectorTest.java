@@ -23,16 +23,21 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class AppFabricCollectorTest {
 
@@ -41,6 +46,9 @@ public class AppFabricCollectorTest {
   private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
 
   static final OperationContext context = OperationContext.DEFAULT;
+
+  static final String apiKey = "SampleTestApiKey";
+  static final String cluster = "SampleTestClusterName";
 
   /**
    * this is the executor for all access to the data fabric
@@ -107,6 +115,10 @@ public class AppFabricCollectorTest {
     AppFabricRestConnector restConnector = new AppFabricRestConnector();
     restConnector.setName(name);
     restConnector.setAuthenticator(new NoAuthenticator());
+    Map<String,List<String>> keysAndClusters =
+      new TreeMap<String,List<String>>();
+    keysAndClusters.put(apiKey, Arrays.asList(new String[]{cluster}));
+    restConnector.setPassportClient(new MockedPassportClient(keysAndClusters));
     // find a free port
     int port = PortDetector.findFreePort();
     // configure it
@@ -130,7 +142,7 @@ public class AppFabricCollectorTest {
   /**
    * This tests that the connector can be stopped and restarted
    */
-  @Test @Ignore
+  @Test
   public void testStopRestart() throws Exception {
     // configure an connector
     String baseUrl = setupConnector("access.rest", "/continuuity", "/table/");
@@ -155,7 +167,7 @@ public class AppFabricCollectorTest {
     this.connector.stop();
   }
 
-  @Test @Ignore
+  @Test
   public void testDeploy() throws Exception {
     // setup connector
     String baseUrl = setupConnector("connector.rest", "/continuuity", "/rest-app/");
@@ -163,21 +175,25 @@ public class AppFabricCollectorTest {
     // setup collector
     int port = this.connector.getHttpConfig().getPort();
 
+    String jarFileName="WordCount.jar";
+    File farFile = FileUtils.toFile(this.getClass().getResource("/"+jarFileName));
+
     // Create a local jar - simulate creation of application archive.
     Location deployedJar = lf.create(
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
     deployedJar.deleteOnExit();
 
+
     Map<String,String> headers= Maps.newHashMap();
     headers.put(CONTINUUITY_API_KEY,"api-key-example");
-    headers.put(CONTINUUITY_JAR_FILE_NAME, deployedJar.getName());
+    headers.put(CONTINUUITY_JAR_FILE_NAME, jarFileName);
 
-//    BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+//    BufferedInputStream is = new BufferedInputStream(new FileInputStream(jarFileName));
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
-      ByteStreams.copy(deployedJar.getInputStream(), bos);
+      ByteStreams.copy(new FileInputStream(farFile), bos);
     } finally {
       bos.close();
     }
