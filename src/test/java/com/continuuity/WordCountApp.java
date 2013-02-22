@@ -25,12 +25,17 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.api.procedure.ProcedureResponder;
+import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Ints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
@@ -195,8 +200,15 @@ public class WordCountApp implements Application {
     }
 
     @Handle("wordfreq")
-    public void process(String word) throws OperationException {
-      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+      String word = request.getArgument("word");
+      int count = Ints.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8)));
+      ProcedureResponse.Writer writer = responder.response(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+      try {
+        writer.write(ByteBuffer.wrap(Integer.toString(count).getBytes(Charsets.UTF_8)));
+      } finally {
+        writer.close();
+      }
     }
   }
 }
