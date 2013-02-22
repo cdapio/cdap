@@ -176,7 +176,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public FlowStatus status(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
-    return null;
+    // TODO: implement
+    return new FlowStatus(identifier.getApplicationId(), identifier.getFlowId(), 1, new RunIdentifier("run1"), "status");
   }
 
   /**
@@ -277,6 +278,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     fillConnectionsAndStreams(id, flowSpec, flowDef);
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
     metaDefinition.setApp(id.getApplicationId());
+    flowDef.setMeta(metaDefinition);
+
     return flowDef;
   }
 
