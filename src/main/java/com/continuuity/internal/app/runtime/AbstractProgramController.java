@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime;
 
 import com.continuuity.app.runtime.Cancellable;
 import com.continuuity.app.runtime.ProgramController;
+import com.continuuity.app.runtime.RunId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -25,14 +26,21 @@ public abstract class AbstractProgramController implements ProgramController {
 
   private final AtomicReference<State> state;
   private final String programName;
+  private final RunId runId;
   private final ConcurrentMap<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
 
-  protected AbstractProgramController(String programName) {
+  protected AbstractProgramController(String programName, RunId runId) {
     this.state = new AtomicReference<State>(State.ALIVE);
     this.programName = programName;
+    this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
     this.caller = new MultiListenerCaller();
+  }
+
+  @Override
+  public RunId getRunId() {
+    return runId;
   }
 
   @Override
@@ -51,9 +59,7 @@ public abstract class AbstractProgramController implements ProgramController {
           result.set(AbstractProgramController.this);
           caller.suspended();
         } catch (Throwable t) {
-          state.set(State.ERROR);
-          result.setException(t);
-          caller.error();
+          error(t, result);
         }
       }
     });
@@ -77,9 +83,7 @@ public abstract class AbstractProgramController implements ProgramController {
           result.set(AbstractProgramController.this);
           caller.alive();
         } catch (Throwable t) {
-          state.set(State.ERROR);
-          result.setException(t);
-          caller.error();
+          error(t, result);
         }
       }
     });
@@ -102,9 +106,7 @@ public abstract class AbstractProgramController implements ProgramController {
           result.set(AbstractProgramController.this);
           caller.stopped();
         } catch (Throwable t) {
-          state.set(State.ERROR);
-          result.setException(t);
-          caller.error();
+          error(t, result);
         }
       }
     });
@@ -134,17 +136,16 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> command(final String name, final Object value) {
-    final SettableFuture result = SettableFuture.create();
-    executor(State.ALIVE).execute(new Runnable() {
+    final SettableFuture<ProgramController> result = SettableFuture.create();
+    executor("command").execute(new Runnable() {
 
       @Override
       public void run() {
         try {
           doCommand(name, value);
+          result.set(AbstractProgramController.this);
         } catch (Throwable t) {
-          state.set(State.ERROR);
-          result.setException(t);
-          caller.error();
+          error(t, result);
         }
       }
     });
@@ -156,14 +157,30 @@ public abstract class AbstractProgramController implements ProgramController {
     return state.get();
   }
 
+  protected final void error(Throwable t) {
+    error(t, null);
+  }
+
+  /**
+   * Force this controller into error state.
+   * @param t The
+   */
+  protected final <V> void error(Throwable t, SettableFuture<V> future) {
+    state.set(State.ERROR);
+    if (future != null) {
+      future.setException(t);
+    }
+    caller.error();
+  }
+
   /**
    * Creates a new executor that execute using new thread everytime.
    */
-  protected Executor executor(final State state) {
+  protected Executor executor(final String name) {
     return new Executor() {
       @Override
       public void execute(@Nonnull Runnable command) {
-        Thread t = new Thread(command, programName + "-" + state.name());
+        Thread t = new Thread(command, programName + "-" + state);
         t.setDaemon(true);
         t.start();
       }
@@ -177,6 +194,10 @@ public abstract class AbstractProgramController implements ProgramController {
   protected abstract void doStop() throws Exception;
 
   protected abstract void doCommand(String name, Object value) throws Exception;
+
+  private Executor executor(State state) {
+    return executor(state.name());
+  }
 
   private final class MultiListenerCaller implements Listener {
 

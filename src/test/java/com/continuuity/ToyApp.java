@@ -35,7 +35,7 @@ public class ToyApp implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("ToyFlowApp")
+      .setName("ToyApp")
       .setDescription("Toy Flow Application")
       .withStreams().add(new Stream("X")).add(new Stream("Y"))
       .withDataSets().add(new KeyValueTable("crawled-pages"))

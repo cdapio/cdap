@@ -37,6 +37,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final SchemaCache schemaCache;
   private final TransactionAgentSupplier txAgentSupplier;
   private final OutputSubmitter outputSubmitter;
+  private final boolean hasParam;
   private final boolean needContext;
   private final ReflectionDatumReader<T> datumReader;
   private final ByteBufferInputStream byteBufferInput;
@@ -62,8 +63,9 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     this.txAgentSupplier = txAgentSupplier;
     this.outputSubmitter = outputSubmitter;
 
+    this.hasParam = method.getGenericParameterTypes().length > 0;
     this.needContext = method.getGenericParameterTypes().length == 2;
-    this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
+    this.datumReader = (schema == null || dataType == null) ? null : new ReflectionDatumReader<T>(schema, dataType);
     this.byteBufferInput = new ByteBufferInputStream(null);
     this.decoder = new BinaryDecoder(byteBufferInput);
 
@@ -87,6 +89,19 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     try {
       txAgent.start();
+
+      // TODO: This is for generator. Need to refactor to get rid of null things
+      if (input == null) {
+        Preconditions.checkState(!hasParam, "null input not allowed");
+        try {
+          method.invoke(flowlet);
+          outputSubmitter.submit(txAgent);
+          return getPostProcess(txAgent, input, null, null);
+        } catch (Throwable t) {
+          return getFailurePostProcess(t, txAgent, input, null, null);
+        }
+      }
+
       ByteBuffer data = input.getData();
       Schema sourceSchema = schemaCache.get(data);
       Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
@@ -98,14 +113,14 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
       try {
         if(needContext) {
           method.invoke(flowlet, event, inputContext);
-        } else {
+        } else if (hasParam) {
           method.invoke(flowlet, event);
         }
         outputSubmitter.submit(txAgent);
 
         return getPostProcess(txAgent, input, event, inputContext);
 
-      } catch(final Throwable t) {
+      } catch(Throwable t) {
         return getFailurePostProcess(t, txAgent, input, event, inputContext);
       }
     } catch (Exception e) {
@@ -127,13 +142,15 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
           @Override
           public void run() {
             try {
-              txAgent.submit(input.asAck());
+              if (input != null) {
+                txAgent.submit(input.asAck());
+              }
               txAgent.finish();
               callback.onSuccess(event, inputContext);
-            } catch (OperationException e) {
-              LOGGER.error("Fail to commit transction.", e);
+            } catch (Throwable t) {
+              LOGGER.error("Fail to commit transction.", t);
               callback.onFailure(event, inputContext,
-                                 new FailureReason(FailureReason.Type.IO_ERROR, e.getMessage()),
+                                 new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage()),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             }
           }
@@ -156,8 +173,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
           public void run() {
             try {
               txAgent.abort();
-            } catch (OperationException e) {
-              LOGGER.error("OperationException when aborting transaction.", e);
+            } catch (Throwable t) {
+              LOGGER.error("OperationException when aborting transaction.", t);
             } finally {
               callback.onFailure(event, inputContext,
                                  new FailureReason(FailureReason.Type.USER, t.getMessage()),
@@ -182,10 +199,12 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     @Override
     public void ack() throws OperationException {
-      TransactionAgent txAgent = txAgentSupplier.get();
-      txAgent.start();
-      txAgent.submit(input.asAck());
-      txAgent.finish();
+      if (input != null) {
+        TransactionAgent txAgent = txAgentSupplier.get();
+        txAgent.start();
+        txAgent.submit(input.asAck());
+        txAgent.finish();
+      }
     }
   }
 }

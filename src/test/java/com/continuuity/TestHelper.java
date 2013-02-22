@@ -4,13 +4,22 @@
 
 package com.continuuity;
 
+import com.continuuity.api.Application;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DeploymentStatus;
+import com.continuuity.app.services.ResourceIdentifier;
+import com.continuuity.app.services.ResourceInfo;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
@@ -19,7 +28,9 @@ import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 
+import java.nio.ByteBuffer;
 import java.util.jar.Manifest;
 
 /**
@@ -58,60 +69,57 @@ public class TestHelper {
     return (Manager<Location, ApplicationWithPrograms>)factory.create();
   }
 
-//
-//  /**
-//   * Runs an application.
-//   * @param application
-//   * @throws Exception
-//   */
-//  public static void runProgram(Class<? extends Application> application,
-//                                String programName, ProgramOptions options) throws Exception {
-//
-//    final CConfiguration configuration = CConfiguration.create();
-//    configuration.set("app.temp.dir", "/tmp/app/temp");
-//    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
-//    final Injector injector = Guice.createInjector(new BigMamaModule(),
-//                                                   new DataFabricModules().getInMemoryModules(),
-//                                                   new AbstractModule() {
-//                                                     @Override
-//                                                     protected void configure() {
-//                                                       bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
-//                                                     }
-//                                                   }
-//    );
-//
-//    LocationFactory lf = injector.getInstance(LocationFactory.class);
-//    Location deployedJar = lf.create(
-//      JarFinder.getJar(application, TestHelper.getManifestWithMainClass(application))
-//    );
-//
-//    deployedJar.deleteOnExit();
-//    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
-//    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
-//    for (final Program program : app.getPrograms()) {
-//      if(program.getProgramName().equals(programName)) {
-//        ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
-//        runner.run(program, options);
-//        break;
-//      }
-//    }
-//
-//    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-//    OperationContext  opCtx = new OperationContext(Id.Account.DEFAULT().getId(),
-//                                                  app.getAppSpecLoc().getSpecification().getName());
-//
-//    QueueProducer queueProducer = new QueueProducer("Testing");
-//    QueueName queueName = QueueName.fromStream(Id.Account.DEFAULT(), "text");
-//    StreamEventCodec codec = new StreamEventCodec();
-//    for (int i = 0; i < 10; i++) {
-//      String msg = "Testing message " + i;
-//      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
-//                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
-//      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-//                                              new QueueEntryImpl(codec.encodePayload(event)));
-//      opex.commit(opCtx, enqueue);
-//    }
-//  }
+
+  /**
+   *
+   */
+  public static void deployApplication(Class<? extends Application> application) throws Exception {
+    CConfiguration configuration = CConfiguration.create();
+    AppFabricService.Iface server;
+    configuration.set("app.output.dir", "/tmp/app");
+    configuration.set("app.tmp.dir", "/tmp/temp");
+
+    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                                   new BigMamaModule(configuration));
+
+    server = injector.getInstance(AppFabricService.Iface.class);
+
+    // Create location factory.
+    LocationFactory lf = injector.getInstance(LocationFactory.class);
+
+    // Create a local jar - simulate creation of application archive.
+    Location deployedJar = lf.create(
+      JarFinder.getJar(application, TestHelper.getManifestWithMainClass(application))
+    );
+    deployedJar.deleteOnExit();
+
+    // Call init to get a session identifier - yes, the name needs to be changed.
+    AuthToken token = new AuthToken("12345");
+    ResourceIdentifier id = server.init(token, new ResourceInfo("demo","",deployedJar.getName(), 123455, 45343));
+
+    // Upload the jar file to remote location.
+    BufferFileInputStream is =
+      new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+    try {
+      while(true) {
+        byte[] toSubmit = is.read();
+        if(toSubmit.length==0) break;
+        server.chunk(token, id, ByteBuffer.wrap(toSubmit));
+        DeploymentStatus status = server.dstatus(token, id);
+        Assert.assertEquals(2, status.getOverall());
+      }
+    } finally {
+      is.close();
+    }
+
+    server.deploy(token, id);
+    int status = server.dstatus(token, id).getOverall();
+    while(status == 3) {
+      status = server.dstatus(token, id).getOverall();
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(5, status); // Deployed successfully.
+  }
 
 
 }

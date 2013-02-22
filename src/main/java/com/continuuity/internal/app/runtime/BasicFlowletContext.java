@@ -1,11 +1,12 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
@@ -14,15 +15,8 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
 
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -33,11 +27,13 @@ public class BasicFlowletContext implements FlowletContext {
   private final String applicationId;
   private final String flowId;
   private final String flowletId;
-  private final UUID runId;
+  private final RunId runId;
   private final int instanceId;
   private final Map<String, DataSet> datasets;
 
-  private final AtomicInteger instanceCount;
+  private volatile int instanceCount;
+  private final QueueProducer queueProducer;
+  private volatile QueueConsumer queueConsumer;
   private final boolean asyncMode;
 
   public BasicFlowletContext(Program program, String flowletId, int instanceId, Map<String, DataSet> datasets) {
@@ -50,17 +46,24 @@ public class BasicFlowletContext implements FlowletContext {
     this.applicationId = program.getApplicationId();
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
-    this.runId = generateUUIDFromCurrentTime();
+    this.runId = RunId.generate();
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
-    this.instanceCount = new AtomicInteger(program.getSpecification().getFlows().get(flowId)
-                                             .getFlowlets().get(flowletId).getInstances());
+    this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
+    this.queueProducer = new QueueProducer(getMetricName());
+    this.queueConsumer = createQueueConsumer();
     this.asyncMode = asyncMode;
   }
 
   @Override
+  public String toString() {
+    return String.format("flowlet=%s, instance=%d, groupsize=%s, runid=%s",
+                         getFlowletId(), getInstanceId(), getInstanceCount(), getRunId());
+  }
+
+  @Override
   public int getInstanceCount() {
-    return instanceCount.get();
+    return instanceCount;
   }
 
   @Override
@@ -76,7 +79,8 @@ public class BasicFlowletContext implements FlowletContext {
   }
 
   public void setInstanceCount(int count) {
-    instanceCount.set(count);
+    instanceCount = count;
+    queueConsumer = createQueueConsumer();
   }
 
   public boolean isAsyncMode() {
@@ -103,19 +107,16 @@ public class BasicFlowletContext implements FlowletContext {
     return instanceId;
   }
 
-  public UUID getRunId() {
+  public RunId getRunId() {
     return runId;
   }
 
   public QueueProducer getQueueProducer() {
-    return new QueueProducer(getMetricName());
+    return queueProducer;
   }
 
   public QueueConsumer getQueueConsumer() {
-    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
-    // TODO: Consumer partitioning
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
-    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
+    return queueConsumer;
   }
 
   public LoggingContext getLoggingContext() {
@@ -128,6 +129,13 @@ public class BasicFlowletContext implements FlowletContext {
                               getFlowletId(), getRunId().toString(), getInstanceId());
   }
 
+  private QueueConsumer createQueueConsumer() {
+    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
+    // TODO: Consumer partitioning
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
+    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
+  }
+
   private String getMetricName() {
     return String.format("%s.%s.%s.%s.%s.%d",
                          getAccountId(),
@@ -136,43 +144,5 @@ public class BasicFlowletContext implements FlowletContext {
                          getRunId(),
                          getFlowletId(),
                          getInstanceId());
-  }
-
-  private UUID generateUUIDFromCurrentTime() {
-    // Number of 100ns since 15 October 1582 00:00:000000000
-    final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
-
-    long time = System.currentTimeMillis() * 10000 + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
-    long timeLow = time & 0xffffffffL;
-    long timeMid = time & 0xffff00000000L;
-    long timeHi = time & 0xfff000000000000L;
-    long upperLong = (timeLow << 32) | (timeMid >> 16) | (1 << 12) | (timeHi >> 48) ;
-
-    // Random clock ID
-    Random random = new Random();
-    int clockId = random.nextInt() & 0x3FFF;
-    long nodeId;
-
-    try {
-      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-      NetworkInterface networkInterface = null;
-      while (interfaces.hasMoreElements()) {
-        networkInterface = interfaces.nextElement();
-        if (!networkInterface.isLoopback()) {
-          break;
-        }
-      }
-      byte[] mac = networkInterface.getHardwareAddress();
-      nodeId = ((long)Ints.fromBytes(mac[0], mac[1], mac[2], mac[3]) << 16)
-                    | Ints.fromBytes((byte)0, (byte)0, mac[4], mac[5]);
-
-    } catch (SocketException e) {
-      // Generate random node ID
-      nodeId = random.nextLong() & 0xFFFFFFL;
-    }
-
-    long lowerLong = ((long)clockId | 0x8000) << 48 | nodeId;
-
-    return new java.util.UUID(upperLong, lowerLong);
   }
 }

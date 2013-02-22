@@ -13,9 +13,14 @@ import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
+import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
+import com.continuuity.app.runtime.ProgramController;
+import com.continuuity.app.runtime.ProgramRuntimeService;
+import com.continuuity.app.runtime.RunId;
 import com.continuuity.app.services.ActiveFlow;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
@@ -43,6 +48,8 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
@@ -56,6 +63,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -65,6 +73,7 @@ import com.google.common.io.OutputSupplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -81,6 +90,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -130,6 +140,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final AuthorizationFactory authFactory;
 
+  private final ProgramRuntimeService runtimeService;
+
   private final Store store;
 
   /**
@@ -143,15 +155,47 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex,
                                  LocationFactory locationFactory, ManagerFactory managerFactory,
-                                 AuthorizationFactory authFactory, StoreFactory storeFactory) {
+                                 AuthorizationFactory authFactory, StoreFactory storeFactory, ProgramRuntimeService
+    runtimeService) {
     this.opex = opex;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.authFactory = authFactory;
+    this.runtimeService = runtimeService;
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp") + "/archive";
     this.mds = new MetadataService(opex);
+
+    // FIXME: This is hacky to start service like this.
+    if (this.runtimeService.state() != Service.State.RUNNING) {
+      this.runtimeService.startAndWait();
+    }
+  }
+
+  private Type entityTypeToType(FlowIdentifier identifier) {
+    switch (identifier.getType()) {
+      case FLOW:
+        return Type.FLOW;
+      case QUERY:
+        return Type.PROCEDURE;
+    }
+    // Never hit
+    throw new IllegalArgumentException("Type not support: " + identifier.getType());
+  }
+
+  private EntityType typeToEntityType(Type type) {
+    switch (type) {
+      case FLOW:
+        return EntityType.FLOW;
+      case PROCEDURE:
+        return EntityType.QUERY;
+      case BATCH:
+        // TODO
+        return null;
+    }
+    // Never hit
+    throw new IllegalArgumentException("Type not suppport: " + type);
   }
 
   /**
@@ -163,8 +207,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier start(AuthToken token, FlowDescriptor descriptor)
     throws AppFabricServiceException, TException {
-    //descriptor.getIdentifier().getType().
-    return null;
+
+    FlowIdentifier id = descriptor.getIdentifier();
+    Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+    try {
+      Program program = store.loadProgram(programId, entityTypeToType(id));
+      // TODO: User arguments
+      ProgramRuntimeService.RuntimeInfo runtimeInfo =
+        runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
+                                                             new BasicArguments(),
+                                                             new BasicArguments()));
+
+      return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
+
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -176,8 +234,19 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public FlowStatus status(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
-    // TODO: implement
-    return new FlowStatus(identifier.getApplicationId(), identifier.getFlowId(), 1, new RunIdentifier("run1"), "status");
+
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+
+    int version = 1;  // FIXME, how to get version?
+    if (runtimeInfo == null) {
+      return new FlowStatus(identifier.getApplicationId(), identifier.getFlowId(),
+                            version, null, ProgramController.State.STOPPED.toString());
+    }
+
+    Id.Program programId = runtimeInfo.getProgramId();
+    RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
+    String status = runtimeInfo.getController().getState().toString();
+    return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
   }
 
   /**
@@ -189,7 +258,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier stop(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
-    return null;
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
+
+    try {
+      ProgramController controller = runtimeInfo.getController();
+      RunId runId = controller.getRunId();
+      controller.stop().get();
+      return new RunIdentifier(runId.getId());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -203,7 +282,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
 
+    try {
+      runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -212,14 +298,52 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param accountId
    */
   @Override
-  public List<ActiveFlow> getFlows(String accountId)
-    throws AppFabricServiceException, TException {
-    List<ActiveFlow> f = Lists.newArrayList();
-    ActiveFlow a = new ActiveFlow();
-    a.setApplicationId("ToyRun");
-    a.setRuns(0);
-    a.setType(EntityType.FLOW);
-    a.setFlowId("ToyFlow");
+  public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, TException {
+
+    try {
+      Table<Type, Id.Program, RunRecord> histories = store.getAllRunHistory(Id.Account.from(accountId));
+      List<ActiveFlow> result = Lists.newLinkedList();
+      for (Table.Cell<Type, Id.Program, RunRecord> cell : histories.cellSet()) {
+        Id.Program programId = cell.getColumnKey();
+        RunRecord runRecord = cell.getValue();
+        ActiveFlow activeFlow = new ActiveFlow(programId.getApplicationId(),
+                                               programId.getId(),
+                                               typeToEntityType(cell.getRowKey()),
+                                               runRecord.getStopTs(),
+                                               runRecord.getStartTs(),
+                                               null,        // TODO
+                                               0            // TODO
+                                               );
+          result.add(activeFlow);
+      }
+      return result;
+
+    } catch (OperationException e) {
+      throw new AppFabricServiceException("Exception when getting all run histories: " + e.getMessage());
+    }
+  }
+
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(FlowIdentifier identifier) {
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = null;
+    switch (identifier.getType()) {
+      case FLOW:
+        runtimeInfos = runtimeService.list(Type.FLOW).values();
+        break;
+      case QUERY:
+        runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
+        break;
+    }
+    Preconditions.checkNotNull(runtimeInfos, "Cannot find any runtime info.");
+
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (programId.equals(info.getProgramId())) {
+        return info;
+      }
+    }
     return null;
   }
 
@@ -371,7 +495,23 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void stopAll(String id) throws AppFabricServiceException, TException {
-
+    // FIXME: Is id application id?
+    List<ListenableFuture<?>> futures = Lists.newLinkedList();
+    for (Type type : Type.values()) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(type).entrySet()) {
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = entry.getValue();
+        if (runtimeInfo.getProgramId().getApplicationId().equals(id)) {
+          futures.add(runtimeInfo.getController().stop());
+        }
+      }
+    }
+    if (!futures.isEmpty()) {
+      try {
+        Futures.successfulAsList(futures).get();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
   /**
