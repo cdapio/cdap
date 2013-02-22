@@ -139,10 +139,10 @@ public class AppFabricCollectorTest {
   /**
    * This tests that the connector can be stopped and restarted
    */
-  @Test
+  @Test @Ignore
   public void testStopRestart() throws Exception {
     // configure an connector
-    String baseUrl = setupConnector("connector.rest", "/continuuity", "/table/");
+    String baseUrl = setupConnector("access.rest", "/continuuity", "/table/");
     int port = this.connector.getHttpConfig().getPort();
     // test that ping works
     Assert.assertEquals(200, TestUtil.sendGetRequest("http://localhost:" + port + "/ping"));
