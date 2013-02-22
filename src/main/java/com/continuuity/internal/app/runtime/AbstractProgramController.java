@@ -137,7 +137,7 @@ public abstract class AbstractProgramController implements ProgramController {
   @Override
   public final ListenableFuture<ProgramController> command(final String name, final Object value) {
     final SettableFuture result = SettableFuture.create();
-    executor(State.ALIVE).execute(new Runnable() {
+    executor("command").execute(new Runnable() {
 
       @Override
       public void run() {
@@ -175,11 +175,11 @@ public abstract class AbstractProgramController implements ProgramController {
   /**
    * Creates a new executor that execute using new thread everytime.
    */
-  protected Executor executor(final State state) {
+  protected Executor executor(final String name) {
     return new Executor() {
       @Override
       public void execute(@Nonnull Runnable command) {
-        Thread t = new Thread(command, programName + "-" + state.name());
+        Thread t = new Thread(command, programName + "-" + state);
         t.setDaemon(true);
         t.start();
       }
@@ -193,6 +193,10 @@ public abstract class AbstractProgramController implements ProgramController {
   protected abstract void doStop() throws Exception;
 
   protected abstract void doCommand(String name, Object value) throws Exception;
+
+  private Executor executor(State state) {
+    return executor(state.name());
+  }
 
   private final class MultiListenerCaller implements Listener {
 

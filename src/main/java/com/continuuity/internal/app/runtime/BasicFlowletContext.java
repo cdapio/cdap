@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
@@ -15,15 +15,10 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
 
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -38,7 +33,9 @@ public class BasicFlowletContext implements FlowletContext {
   private final int instanceId;
   private final Map<String, DataSet> datasets;
 
-  private final AtomicInteger instanceCount;
+  private volatile int instanceCount;
+  private final QueueProducer queueProducer;
+  private volatile QueueConsumer queueConsumer;
   private final boolean asyncMode;
 
   public BasicFlowletContext(Program program, String flowletId, int instanceId, Map<String, DataSet> datasets) {
@@ -54,14 +51,15 @@ public class BasicFlowletContext implements FlowletContext {
     this.runId = RunId.generate();
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
-    this.instanceCount = new AtomicInteger(program.getSpecification().getFlows().get(flowId)
-                                             .getFlowlets().get(flowletId).getInstances());
+    this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
+    this.queueProducer = new QueueProducer(getMetricName());
+    this.queueConsumer = createQueueConsumer();
     this.asyncMode = asyncMode;
   }
 
   @Override
   public int getInstanceCount() {
-    return instanceCount.get();
+    return instanceCount;
   }
 
   @Override
@@ -77,7 +75,8 @@ public class BasicFlowletContext implements FlowletContext {
   }
 
   public void setInstanceCount(int count) {
-    instanceCount.set(count);
+    instanceCount = count;
+    queueConsumer = createQueueConsumer();
   }
 
   public boolean isAsyncMode() {
@@ -109,14 +108,11 @@ public class BasicFlowletContext implements FlowletContext {
   }
 
   public QueueProducer getQueueProducer() {
-    return new QueueProducer(getMetricName());
+    return queueProducer;
   }
 
   public QueueConsumer getQueueConsumer() {
-    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
-    // TODO: Consumer partitioning
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
-    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
+    return queueConsumer;
   }
 
   public LoggingContext getLoggingContext() {
@@ -127,6 +123,13 @@ public class BasicFlowletContext implements FlowletContext {
   public Metrics getMetrics() {
     return new FlowletMetrics(getAccountId(), getApplicationId(), getFlowId(),
                               getFlowletId(), getRunId().toString(), getInstanceId());
+  }
+
+  private QueueConsumer createQueueConsumer() {
+    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
+    // TODO: Consumer partitioning
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
+    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
   }
 
   private String getMetricName() {

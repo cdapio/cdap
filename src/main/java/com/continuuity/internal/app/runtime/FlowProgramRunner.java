@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -76,15 +77,15 @@ public class FlowProgramRunner implements ProgramRunner {
 
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       for (int instanceId = 0; instanceId < entry.getValue().getInstances(); instanceId++) {
-        flowlets.put(entry.getKey(), instanceId, startFlowlet(program, entry.getKey(), instanceId));
+        flowlets.put(entry.getKey(), instanceId, startFlowlet(program, entry.getKey(), instanceId, -1));
       }
     }
     return flowlets;
   }
 
-  private ProgramController startFlowlet(Program program, String flowletName, int instanceId) {
+  private ProgramController startFlowlet(Program program, String flowletName, int instanceId, int instances) {
     return programRunnerFactory.create(ProgramRunnerFactory.Type.FLOWLET)
-                               .run(program, new FlowletOptions(flowletName, instanceId));
+                               .run(program, new FlowletOptions(flowletName, instanceId, instances));
   }
 
   private final static class FlowletOptions implements ProgramOptions {
@@ -93,9 +94,11 @@ public class FlowProgramRunner implements ProgramRunner {
     private final Arguments arguments;
     private final Arguments userArguments;
 
-    private FlowletOptions(String name, int instanceId) {
+    private FlowletOptions(String name, int instanceId, int instances) {
       this.name = name;
-      this.arguments = new BasicArguments(ImmutableMap.of("instanceId", Integer.toString(instanceId)));
+      this.arguments = new BasicArguments(
+        ImmutableMap.of("instanceId", Integer.toString(instanceId),
+                        "instances", Integer.toString(instances)));
       this.userArguments = new BasicArguments();
     }
 
@@ -185,7 +188,7 @@ public class FlowProgramRunner implements ProgramRunner {
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-      if (!"instance".equals(name) || !(value instanceof Map)) {
+      if (!"instances".equals(name) || !(value instanceof Map)) {
         return;
       }
       Map<String, Integer> command = (Map<String, Integer>)value;
@@ -193,36 +196,90 @@ public class FlowProgramRunner implements ProgramRunner {
       try {
         for (Map.Entry<String, Integer> entry : command.entrySet()) {
           String flowletName = entry.getKey();
-          Map<Integer, ProgramController> liveFlowlets = flowlets.row(flowletName);
-          int instances = entry.getValue();
-          int liveCount = liveFlowlets.size();
-
-          if (liveCount == instances) {
-            // Same number of instances, no change
-            continue;
-          }
-          if (liveCount < instances) {
-            // Increate number of instances
-            for (int instanceId = liveCount; instanceId < instances; instanceId++) {
-              flowlets.put(flowletName, instanceId, startFlowlet(program, flowletName, instanceId));
-            }
-          } else {
-            // Decrease number of instances
-            List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - instances);
-            for (int instanceId = liveCount - 1; instanceId >= instanceId; instanceId--) {
-              ProgramController controller = flowlets.remove(flowletName, instanceId);
-              if (controller != null) {
-                futures.add(controller.stop());
-              }
-            }
-            Futures.successfulAsList(futures).get();
-          }
+          changeInstances(entry.getKey(), entry.getValue());
         }
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
       } finally {
         lock.unlock();
       }
+    }
+
+    private void changeInstances(String flowletName, final int newInstanceCount) throws ExecutionException,
+      InterruptedException {
+      Map<Integer, ProgramController> liveFlowlets = flowlets.row(flowletName);
+      int liveCount = liveFlowlets.size();
+      if (liveCount == newInstanceCount) {
+        return;
+      }
+
+      if (liveCount < newInstanceCount) {
+        increaseInstances(flowletName, newInstanceCount, liveFlowlets, liveCount);
+        return;
+      }
+      decreaseInstances(flowletName, newInstanceCount, liveFlowlets, liveCount);
+
+
+    }
+
+    private void increaseInstances(String flowletName, final int newInstanceCount, Map<Integer, ProgramController>
+      liveFlowlets, int liveCount) throws InterruptedException, ExecutionException {
+      // Wait for all running flowlets completed changing number of instances.
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.command("instances", newInstanceCount);
+          }
+        })).get();
+
+      // Create more instances
+      for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
+        flowlets.put(flowletName, instanceId, startFlowlet(program, flowletName, instanceId, newInstanceCount));
+      }
+    }
+
+
+    private void decreaseInstances(String flowletName, final int newInstanceCount, Map<Integer, ProgramController>
+      liveFlowlets, int liveCount) throws InterruptedException, ExecutionException {
+      // Shrink number of flowlets
+      // First stop the extra flowlets
+      List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
+      for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
+        futures.add(flowlets.remove(flowletName, instanceId).stop());
+      }
+      Futures.successfulAsList(futures).get();
+
+      // Then pause all flowlets
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.suspend();
+          }
+        })).get();
+
+      // Next updates instance count for each flowlets
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.command("instances", newInstanceCount);
+          }
+        })).get();
+
+      // Last resume all instances
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.resume();
+          }
+        })).get();
     }
   }
 }

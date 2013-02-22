@@ -12,6 +12,8 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Type;
 import com.continuuity.metadata.thrift.MetadataService;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 
 import java.io.IOException;
 import java.util.List;
@@ -57,6 +59,14 @@ public interface Store {
    * @throws OperationException
    */
   List<RunRecord> getRunHistory(Id.Program id) throws OperationException;
+
+  /**
+   * Returns all {@link RunRecord} of the account.
+   * @param account account id
+   * @return An immutable table of program type, id and run record
+   * @throws OperationException
+   */
+  Table<Type, Id.Program, RunRecord> getAllRunHistory(Id.Account account) throws OperationException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

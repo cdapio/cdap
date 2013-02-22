@@ -28,6 +28,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -50,6 +51,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final Callback txCallback;
   private final AtomicReference<CountDownLatch> suspension;
   private final CyclicBarrier suspendBarrier;
+  private final AtomicInteger inflight;
   private ExecutorService transactionExecutor;
   private Thread runnerThread;
 
@@ -62,6 +64,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     this.loggingContext = flowletContext.getLoggingContext();
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
+    inflight = new AtomicInteger(0);
 
     this.suspension = new AtomicReference<CountDownLatch>();
     this.suspendBarrier = new CyclicBarrier(2);
@@ -143,6 +146,10 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
       CountDownLatch suspendLatch = suspension.get();
       if (suspendLatch != null) {
         try {
+          // Use a spin loop to wait for all inflight to be done
+          while (inflight.get() != 0) {
+            TimeUnit.MILLISECONDS.sleep(10);
+          }
           suspendBarrier.await();
           suspendLatch.await();
         } catch (Exception e) {
@@ -169,11 +176,12 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
-          if (input.isEmpty()) {
+          if (input != null && input.isEmpty()) {
             entry.backOff();
             continue;
           }
           entry.nextDeque = 0;
+          inflight.getAndIncrement();
 
           try {
             // Call the process method and commit the transaction
@@ -230,6 +238,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
     return new PostProcess.Callback() {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
+        inflight.decrementAndGet();
         try {
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
@@ -242,6 +251,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
                             PostProcess.InputAcknowledger inputAcknowledger) {
 
         FailurePolicy failurePolicy;
+        inflight.decrementAndGet();
         try {
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {

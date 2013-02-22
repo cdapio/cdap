@@ -29,8 +29,10 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -188,6 +190,34 @@ public class MDSBasedStore implements Store {
     }
     Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
     return runHistory;
+  }
+
+  @Override
+  public Table<Type, Id.Program, RunRecord> getAllRunHistory(Id.Account account) throws OperationException {
+    OperationContext context = new OperationContext(account.getId());
+    LOG.trace("Removing all applications of account with id: {}", account.getId());
+    List<MetaDataEntry> applications =
+      metaDataStore.list(context, account.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+
+    ImmutableTable.Builder<Type, Id.Program, RunRecord> builder = ImmutableTable.builder();
+    for (MetaDataEntry entry : applications) {
+      ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
+      for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+        Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), flowSpec.getName());
+        for (RunRecord runRecord : getRunHistory(programId)) {
+          builder.put(Type.FLOW, programId, runRecord);
+        }
+      }
+      for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+        Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), procedureSpec.getName());
+        for (RunRecord runRecord : getRunHistory(programId)) {
+          builder.put(Type.PROCEDURE, programId, runRecord);
+        }
+      }
+    }
+    return builder.build();
   }
 
   /**
