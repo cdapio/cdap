@@ -19,7 +19,8 @@ package com.continuuity.test;
 /**
  *
  */
-public class SampleQueryTest extends AppFabricTestBase {
+public class SampleQueryTest {
+//extends AppFabricTestBase {
 
 //  /**
 //   * Hello World! QueryProvider that responds with the method
