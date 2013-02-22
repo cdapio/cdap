@@ -24,11 +24,14 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   private final PassportClient passportClient;
 
-  public PassportVPCAuthenticator(String clusterName, String passportHostname,
+  private final int passportPort;
+
+  public PassportVPCAuthenticator(String clusterName, String passportHostname, int passportPort,
       PassportClient passportClient) {
     this.clusterName = clusterName;
     this.passportHostname = passportHostname;
     this.passportClient = passportClient;
+    this.passportPort = passportPort;
   }
 
   @Override
@@ -59,7 +62,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   private boolean authenticate(String apiKey) {
     try {
       List<String> authorizedClusters =
-          this.passportClient.getVPCList(this.passportHostname,7777,apiKey);
+          this.passportClient.getVPCList(this.passportHostname, this.passportPort, apiKey);
       if (authorizedClusters == null || authorizedClusters.isEmpty())
         return false;
       for (String authorizedCluster : authorizedClusters) {
