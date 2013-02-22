@@ -91,13 +91,17 @@ public final class RunId {
           break;
         }
       }
-      byte[] mac = networkInterface.getHardwareAddress();
-      nodeId = ((long) Ints.fromBytes(mac[0], mac[1], mac[2], mac[3]) << 16)
-        | Ints.fromBytes((byte)0, (byte)0, mac[4], mac[5]);
+      byte[] mac = networkInterface == null ? null : networkInterface.getHardwareAddress();
+      if (mac == null) {
+        nodeId = (random.nextLong() & 0xFFFFFFL) | 0x100000L;
+      } else {
+        nodeId = ((long) Ints.fromBytes(mac[0], mac[1], mac[2], mac[3]) << 16)
+          | Ints.fromBytes((byte)0, (byte)0, mac[4], mac[5]);
+      }
 
     } catch (SocketException e) {
       // Generate random node ID
-      nodeId = random.nextLong() & 0xFFFFFFL;
+      nodeId = random.nextLong() & 0xFFFFFFL | 0x100000L;
     }
 
     long lowerLong = ((long)clockId | 0x8000) << 48 | nodeId;
