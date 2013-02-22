@@ -13,7 +13,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +28,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -73,7 +73,17 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     if (flowletContext.isAsyncMode()) {
-      ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("tx-executor-%d").build();
+      ThreadFactory threadFactory = new ThreadFactory() {
+        private final ThreadGroup threadGroup = new ThreadGroup("tx-thread");
+        private final AtomicLong count = new AtomicLong(0);
+
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread t = new Thread(threadGroup, r, String.format("tx-executor-%d", count.getAndIncrement()));
+          t.setDaemon(true);
+          return t;
+        }
+      };
 
       // Thread pool of size max TX_EXECUTOR_POOL_SIZE.
       // 60 seconds wait time before killing idle threads.
@@ -175,7 +185,7 @@ public class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
           InputDatum input = entry.processSpec.getQueueReader().dequeue();
-          if (input != null && input.isEmpty()) {
+          if (!input.needProcess()) {
             entry.backOff();
             continue;
           }

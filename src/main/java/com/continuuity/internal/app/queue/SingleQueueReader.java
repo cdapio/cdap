@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.internal.app.runtime.InputDatum;
+import com.continuuity.internal.app.runtime.QueueInputDatum;
 import com.google.common.base.Supplier;
 
 /**
@@ -33,6 +34,6 @@ public final class SingleQueueReader implements QueueReader {
     QueueConsumer consumer = queueConsumer.get();
     byte[] queueNameBytes = queueName.toBytes();
     QueueDequeue dequeue = new QueueDequeue(queueNameBytes, consumer, consumer.getQueueConfig());
-    return new InputDatum(consumer, queueName, opex.execute(operationCtx, dequeue));
+    return new QueueInputDatum(consumer, queueName, opex.execute(operationCtx, dequeue));
   }
 }
