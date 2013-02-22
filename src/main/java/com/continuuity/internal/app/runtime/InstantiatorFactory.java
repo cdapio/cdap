@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.io;
+package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -42,18 +42,24 @@ public final class InstantiatorFactory {
     UNSAFE = unsafe;
   }
 
-  public <T> Instantiator<T> get(TypeToken<T> type) {
+  public <T> Instantiator<T> get(TypeToken<T> type, boolean useKnownType) {
     Instantiator<T> creator = getByDefaultConstructor(type);
     if(creator != null) {
       return creator;
     }
 
-    creator = getByKnownType(type);
-    if(creator != null) {
-      return creator;
+    if (useKnownType) {
+      creator = getByKnownType(type);
+      if(creator != null) {
+        return creator;
+      }
     }
 
     return getByUnsafe(type);
+  }
+
+  public <T> Instantiator<T> get(TypeToken<T> type) {
+    return get(type, true);
   }
 
   /**

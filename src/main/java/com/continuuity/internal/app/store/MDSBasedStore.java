@@ -10,12 +10,17 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
+import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.filesystem.Location;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
@@ -24,17 +29,21 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -57,17 +66,49 @@ public class MDSBasedStore implements Store {
    */
   private final MetadataServiceHelper metadataServiceHelper;
 
+  private final LocationFactory locationFactory;
+
+  private final CConfiguration configuration;
+
   /**
    * We use metaDataStore directly to store user actions history
    */
   private MetaDataStore metaDataStore;
 
   @Inject
-  public MDSBasedStore(MetaDataStore metaDataStore,
-                       MetadataService.Iface metaDataService) {
+  public MDSBasedStore(CConfiguration configuration,
+                       MetaDataStore metaDataStore,
+                       MetadataService.Iface metaDataService,
+                       LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
     this.metaDataService = metaDataService;
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
+    this.locationFactory = locationFactory;
+    this.configuration = configuration;
+  }
+
+  /**
+   * Loads a given program
+   *
+   * @param id of the program
+   * @param type of program
+   * @return An instance of {@link Program} if found.
+   * @throws IOException
+   */
+  @Override
+  public Program loadProgram(Id.Program id, Type type ) throws IOException {
+    Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
+    Location newOutputDir = outputDir.append(id.getAccountId());
+    String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
+    Location programDir = newOutputDir.append(name);
+    if(! programDir.exists()) {
+      throw new RuntimeException("Unable to load Program");
+    }
+    Location program = programDir.append(String.format("%s.jar", id.getId()));
+    if(! program.exists()) {
+      throw new RuntimeException(type.toString() + " does not exist.");
+    }
+    return new Program(program);
   }
 
   /**
@@ -149,6 +190,34 @@ public class MDSBasedStore implements Store {
     }
     Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
     return runHistory;
+  }
+
+  @Override
+  public Table<Type, Id.Program, RunRecord> getAllRunHistory(Id.Account account) throws OperationException {
+    OperationContext context = new OperationContext(account.getId());
+    LOG.trace("Removing all applications of account with id: {}", account.getId());
+    List<MetaDataEntry> applications =
+      metaDataStore.list(context, account.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+
+    ImmutableTable.Builder<Type, Id.Program, RunRecord> builder = ImmutableTable.builder();
+    for (MetaDataEntry entry : applications) {
+      ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
+      for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+        Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), flowSpec.getName());
+        for (RunRecord runRecord : getRunHistory(programId)) {
+          builder.put(Type.FLOW, programId, runRecord);
+        }
+      }
+      for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+        Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), procedureSpec.getName());
+        for (RunRecord runRecord : getRunHistory(programId)) {
+          builder.put(Type.PROCEDURE, programId, runRecord);
+        }
+      }
+    }
+    return builder.build();
   }
 
   /**

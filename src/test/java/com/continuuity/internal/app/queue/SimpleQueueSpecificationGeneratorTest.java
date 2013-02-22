@@ -99,10 +99,10 @@ public class SimpleQueueSpecificationGeneratorTest {
     QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(Id.Account.DEFAULT());
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
-    Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSucker")
+    Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
                         .iterator().next().getQueueName().toString().equals("stream://demo/text"));
-    Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSucker", "Tokenizer")
-                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSucker/out"));
+    Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
+                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSource/out"));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 

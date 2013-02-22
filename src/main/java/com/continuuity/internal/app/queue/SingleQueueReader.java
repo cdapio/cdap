@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.internal.app.runtime.InputDatum;
+import com.google.common.base.Supplier;
 
 /**
  *
@@ -17,10 +18,10 @@ public final class SingleQueueReader implements QueueReader {
   private final OperationExecutor opex;
   private final OperationContext operationCtx;
   private final QueueName queueName;
-  private final QueueConsumer queueConsumer;
+  private final Supplier<QueueConsumer> queueConsumer;
 
   public SingleQueueReader(OperationExecutor opex, OperationContext operationCtx,
-                           QueueName queueName, QueueConsumer queueConsumer) {
+                           QueueName queueName, Supplier<QueueConsumer> queueConsumer) {
     this.opex = opex;
     this.operationCtx = operationCtx;
     this.queueName = queueName;
@@ -29,8 +30,9 @@ public final class SingleQueueReader implements QueueReader {
 
   @Override
   public InputDatum dequeue() throws OperationException {
+    QueueConsumer consumer = queueConsumer.get();
     byte[] queueNameBytes = queueName.toBytes();
-    QueueDequeue dequeue = new QueueDequeue(queueNameBytes, queueConsumer, queueConsumer.getQueueConfig());
-    return new InputDatum(queueConsumer, queueName, opex.execute(operationCtx, dequeue));
+    QueueDequeue dequeue = new QueueDequeue(queueNameBytes, consumer, consumer.getQueueConfig());
+    return new InputDatum(consumer, queueName, opex.execute(operationCtx, dequeue));
   }
 }

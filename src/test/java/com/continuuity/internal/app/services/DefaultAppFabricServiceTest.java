@@ -8,7 +8,13 @@ import com.continuuity.DumbProgrammerApp;
 import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.flow.Flow;
+import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Status;
@@ -16,6 +22,7 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
+import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowRunRecord;
 import com.continuuity.app.services.ResourceIdentifier;
@@ -30,6 +37,7 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -37,9 +45,12 @@ import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultAppFabricServiceTest {
   private static AppFabricService.Iface server;
@@ -67,38 +78,7 @@ public class DefaultAppFabricServiceTest {
 
   @Test
   public void testUploadToDeploymentServer() throws Exception {
-    // Create a local jar - simulate creation of application archive.
-    Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    // Call init to get a session identifier - yes, the name needs to be changed.
-    AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo("demo","",deployedJar.getName(), 123455, 45343));
-
-    // Upload the jar file to remote location.
-    BufferFileInputStream is =
-      new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
-    try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        server.chunk(token, id, ByteBuffer.wrap(toSubmit));
-        DeploymentStatus status = server.dstatus(token, id);
-        Assert.assertEquals(2, status.getOverall());
-      }
-    } finally {
-      is.close();
-    }
-
-    server.deploy(token, id);
-    int status = server.dstatus(token, id).getOverall();
-    while(status == 3) {
-      status = server.dstatus(token, id).getOverall();
-      Thread.sleep(100);
-    }
-    Assert.assertEquals(5, status); // Deployed successfully.
+    TestHelper.deployApplication(ToyApp.class);
   }
 
   @Test

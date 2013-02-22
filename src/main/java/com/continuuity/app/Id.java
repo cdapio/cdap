@@ -4,6 +4,9 @@
 
 package com.continuuity.app;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+
 /**
  *
  */
@@ -17,11 +20,29 @@ public final class Id  {
     private final String id;
 
     public Account(String id) {
+      Preconditions.checkNotNull(id, "Account cannot be null.");
       this.id = id;
     }
 
     public String getId() {
       return id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      return id.equals(((Account)o).id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(id);
     }
 
     public static Account DEFAULT() {
@@ -42,6 +63,8 @@ public final class Id  {
     private final String applicationId;
 
     public Application(final Account account, final String applicationId) {
+      Preconditions.checkNotNull(account, "Account cannot be null.");
+      Preconditions.checkNotNull(applicationId, "Application cannot be null.");
       this.account = account;
       this.applicationId = applicationId;
     }
@@ -56,6 +79,24 @@ public final class Id  {
 
     public String getId() {
       return applicationId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Application that = (Application) o;
+      return account.equals(that.account) && applicationId.equals(that.applicationId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(account, applicationId);
     }
 
     public static Application DEFAULT() {
@@ -76,6 +117,8 @@ public final class Id  {
     private final String id;
 
     public Program(Application application, final String id) {
+      Preconditions.checkNotNull(application, "Application cannot be null.");
+      Preconditions.checkNotNull(id, "Id cannot be null.");
       this.application = application;
       this.id = id;
     }
@@ -94,6 +137,26 @@ public final class Id  {
 
     public Application getApplication() {
       return application;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Program program = (Program) o;
+      return application.equals(program.application) && id.equals(program.id);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = application.hashCode();
+      result = 31 * result + id.hashCode();
+      return result;
     }
 
     public static Program from(Account id) {

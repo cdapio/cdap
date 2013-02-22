@@ -19,17 +19,19 @@ public final class RoundRobinQueueReader implements QueueReader {
   private final Iterator<QueueReader> readers;
 
   public RoundRobinQueueReader(QueueReader... readers) {
-    Preconditions.checkArgument(readers.length > 0, "No QueueReader given.");
     this.readers = Iterables.cycle(readers).iterator();
   }
 
   public RoundRobinQueueReader(Iterable<QueueReader> readers) {
     this.readers = Iterables.cycle(readers).iterator();
-    Preconditions.checkArgument(this.readers.hasNext(), "No QueueReader given.");
   }
 
   @Override
   public InputDatum dequeue() throws OperationException {
+    if (!readers.hasNext()) {
+      return null;
+    }
+
     // Read an input from the underlying QueueReader
     QueueReader begin = readers.next();
     InputDatum input = begin.dequeue();
