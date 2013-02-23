@@ -11,10 +11,10 @@ import java.io.PrintStream;
 public class Copyright {
 
   private static final String[] lines = {
-      StringUtils.repeat("=", 80),
+      StringUtils.repeat("=", 88),
       "Continuuity AppFabric (tm) - Copyright 2012-2013 Continuuity, " +
           "Inc. All Rights Reserved.",
-      ""
+      StringUtils.repeat("=", 88)
   };
 
   public static void print(PrintStream out) {
