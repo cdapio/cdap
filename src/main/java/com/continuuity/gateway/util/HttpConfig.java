@@ -275,6 +275,10 @@ public class HttpConfig {
             name, Constants.CONFIG_CHUNKING), defaults.isChunking());
     config.ssl = enableSSL (configuration.get(com.continuuity.common.conf.Constants.CFG_APPFABRIC_ENVIRONMENT,
                                               com.continuuity.common.conf.Constants.DEFAULT_APPFABRIC_ENVIRONMENT));
+    //Set port to bind to 443
+    if(config.ssl) {
+      config.port = 443;
+    }
     config.sslCryptAlgo = configuration.get(Constants.CFG_SSL_CRYPTOGRAPHIC_ALGORITHM_KEY,
                                             Constants.DEFAULT_SSL_CRYPTOGRAPHIC_ALGORITHM);
 
