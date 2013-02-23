@@ -72,7 +72,7 @@ public final class InMemoryProgramRuntimeService extends AbstractIdleService imp
       @Override
       public void stopped() {
         synchronized (this) {
-          runtimeInfos.get(info.getType(), info.getController().getRunId());
+          runtimeInfos.remove(info.getType(), info.getController().getRunId());
         }
       }
 
