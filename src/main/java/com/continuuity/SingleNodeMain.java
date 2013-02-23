@@ -90,13 +90,14 @@ public class SingleNodeMain {
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
 
     // Start all the services.
+    overlordCollection.start(args, configuration);
+
     Service.State state = appFabricServer.startAndWait();
     if(state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric.");
     }
 
     metaDataServer.start(args, configuration);
-    overlordCollection.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
     webCloudAppService.start(args, configuration);
