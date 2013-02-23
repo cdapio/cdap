@@ -27,7 +27,7 @@ public class Account {
 
   private final boolean confirmed;
 
-  private final long devSuiteDownloadTime;
+  private final long devsuiteDownloadTime;
 
   public static Account fromString(String jsonString) {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
@@ -51,7 +51,7 @@ public class Account {
     this.accountId = accountId;
     this.apiKey = apiKey;
     this.confirmed = confirmed;
-    this.devSuiteDownloadTime = devSuiteDownloadTime;
+    this.devsuiteDownloadTime = devSuiteDownloadTime;
   }
 
   public Account(String firstName, String lastName, String company, int accountId) {
