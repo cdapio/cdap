@@ -60,7 +60,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
     if (apiKey == null) {
       throw new RuntimeException("http request was not authenticated");
     }
-    return String.valueOf(this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey));
+    return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
   }
 
   @Override
@@ -70,7 +70,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
       String headerKey = headerEntry.getKey().toString();
       if (headerKey.equals(CONTINUUITY_API_KEY)) {
         String apiKey = headerEntry.getValue().toString();
-        return String.valueOf(this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey));
+        return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
       }
     }
     // Key not found in headers
