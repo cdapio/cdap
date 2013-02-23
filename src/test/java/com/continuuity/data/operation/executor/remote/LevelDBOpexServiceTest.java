@@ -13,7 +13,7 @@ public class LevelDBOpexServiceTest extends OperationExecutorServiceTest {
   @BeforeClass
   public static void startService() throws Exception {
     Injector injector = Guice.createInjector (
-        new DataFabricLevelDBModule("."));
+        new DataFabricLevelDBModule());
     OperationExecutorServiceTest.startService(
         CConfiguration.create(), injector.getInstance(OperationExecutor.class));
   }

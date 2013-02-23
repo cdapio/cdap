@@ -7,7 +7,7 @@ import com.google.inject.Injector;
 public class TestLevelDBOVCTable extends TestOVCTable {
 
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule("."));
+      new DataFabricLevelDBModule());
 
   @Override
   protected OVCTableHandle injectTableHandle() {

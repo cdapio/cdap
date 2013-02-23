@@ -12,7 +12,7 @@ import com.google.inject.Injector;
 public class BenchLevelDBTTqueue extends BenchTTQueue {
 
   private static final DataFabricLevelDBModule module =
-      new DataFabricLevelDBModule(".");
+      new DataFabricLevelDBModule();
 
   private static final Injector injector = Guice.createInjector(module);
 
