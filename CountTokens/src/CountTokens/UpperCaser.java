@@ -1,12 +1,15 @@
 package CountTokens;
 
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Map;
 
 public class UpperCaser extends AbstractFlowlet {
-  private OutputEmitter<String> output;
+
+  @Output("upperOut")
+  private OutputEmitter<String> upperOut;
 
   public UpperCaser() {
     super("upper");
@@ -23,6 +26,6 @@ public class UpperCaser extends AbstractFlowlet {
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Emitting word " + upper);
 
-    output.emit(upper);
+    upperOut.emit(upper);
   }
 }

@@ -1,5 +1,6 @@
 package CountTokens;
 
+import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -25,6 +26,7 @@ public class CountByField extends AbstractFlowlet {
       .build();
   }
 
+  @Process("splitOut")
   public void process(Map<String, String> tupleIn) throws OperationException {
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
@@ -42,5 +44,21 @@ public class CountByField extends AbstractFlowlet {
        System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
     }
       this.counters.increment(token.getBytes(), 1);
+  }
+
+  @Process("upperOut")
+  public void process(String word) throws OperationException {
+    if (Common.debug) {
+      System.out.println(this.getClass().getSimpleName() + ": Received word " + word);
+    }
+
+    if (word == null) {
+      return;
+    }
+
+    if (Common.debug) {
+      System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + word);
+    }
+    this.counters.increment(word.getBytes(), 1);
   }
 }
