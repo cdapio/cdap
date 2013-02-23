@@ -96,8 +96,8 @@ public class WordCountApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
-        .withFlowlets().add("StreamSource", new StreamSucker())
-                       .add(new Tokenizer())
+        .withFlowlets().add("StreamSource", new StreamSucker(), 3)
+                       .add(new Tokenizer(), 2)
                        .add(new CountByField())
         .connect().fromStream("text").to("StreamSource")
                   .from("StreamSource").to("Tokenizer")
@@ -154,7 +154,7 @@ public class WordCountApp implements Application {
     }
   }
 
-  //@Async
+  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
