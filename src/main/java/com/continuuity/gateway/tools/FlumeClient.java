@@ -46,7 +46,9 @@ public class FlumeClient {
   int port = -1;                 // the Flume port of the gateway
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the flume collector
-  String apikey = null;          // the api key for authentication
+  String apikey =                // the api key for authentication.
+    com.continuuity.gateway.tools.Constants.DEVELOPER_ACCOUNT_ID; // by default, assuming that connecting to
+                                                                  // the AppFabric running in local mode
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
