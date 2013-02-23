@@ -299,5 +299,4 @@ public class Constants {
   public final static String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
   public final static String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
-
 }
