@@ -1,11 +1,12 @@
 package CountRandom;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
 
-public class RandomSource extends AbstractFlowlet {
+public class RandomSource extends AbstractFlowlet  implements GeneratorFlowlet {
   Random random;
   long millis = 0;
   int direction = 1;
