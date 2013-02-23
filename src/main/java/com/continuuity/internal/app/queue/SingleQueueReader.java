@@ -1,14 +1,17 @@
 package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.app.program.Program;
+import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.app.queue.InputDatum;
 import com.google.common.base.Supplier;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 /**
  *
@@ -20,10 +23,13 @@ public final class SingleQueueReader implements QueueReader {
   private final QueueName queueName;
   private final Supplier<QueueConsumer> queueConsumer;
 
-  public SingleQueueReader(OperationExecutor opex, OperationContext operationCtx,
-                           QueueName queueName, Supplier<QueueConsumer> queueConsumer) {
+  @Inject
+  public SingleQueueReader(OperationExecutor opex,
+                           @Assisted Program program,
+                           @Assisted QueueName queueName,
+                           @Assisted Supplier<QueueConsumer> queueConsumer) {
     this.opex = opex;
-    this.operationCtx = operationCtx;
+    this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.queueName = queueName;
     this.queueConsumer = queueConsumer;
   }

@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.procedure;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -12,17 +13,13 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
-import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataSetContextFactory;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
+import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -40,12 +37,15 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private static final int MAX_WORKER_THREADS = 10;
 
-  private final OperationExecutor opex;
   private ServerBootstrap bootstrap;
+  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataSetContextFactory dataSetContextFactory;
 
   @Inject
-  public ProcedureProgramRunner(OperationExecutor opex) {
-    this.opex = opex;
+  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
+                                DataSetContextFactory dataSetContextFactory) {
+    this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.dataSetContextFactory = dataSetContextFactory;
   }
 
   @Override
@@ -70,17 +70,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       RunId runId = RunId.generate();
 
       // Creates opex related objects
-      OperationContext opCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
-      TransactionProxy transactionProxy = new TransactionProxy();
-      DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
-      // Only allows read only datasets
-      dataSetInstantiator.setReadOnly();
-      dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+      TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+      DataSetContext dataSetContext = dataSetContextFactory.create(program);
 
       BasicProcedureContext procedureContext =
         new BasicProcedureContext(program, instanceId, runId,
-                                  DataSets.createDataSets(dataSetInstantiator, procedureSpec.getDataSets()),
+                                  DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
                                   procedureSpec);
 
       bootstrap = createBootstrap(program);

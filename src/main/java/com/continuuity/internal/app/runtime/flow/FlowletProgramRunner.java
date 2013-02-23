@@ -10,6 +10,7 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
@@ -37,25 +38,20 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
-import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
-import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataSetContextFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.ReflectionOutputEmitter;
-import com.continuuity.internal.app.runtime.SmartTransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
+import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -83,13 +79,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
-  private final OperationExecutor opex;
+  private final DataSetContextFactory dataSetContextFactory;
   private final SchemaGenerator schemaGenerator;
+  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final QueueReaderFactory queueReaderFactory;
 
   @Inject
-  public FlowletProgramRunner(OperationExecutor opex, SchemaGenerator schemaGenerator, LogWriter logWriter) {
-    this.opex = opex;
+  public FlowletProgramRunner(DataSetContextFactory dataSetContextFactory, SchemaGenerator schemaGenerator,
+                              TransactionAgentSupplierFactory txAgentSupplierFactory,
+                              QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
+    this.dataSetContextFactory = dataSetContextFactory;
     this.schemaGenerator = schemaGenerator;
+    this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.queueReaderFactory = queueReaderFactory;
     CAppender.logWriter = logWriter;
   }
 
@@ -131,16 +133,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
       // Creates opex related objects
-      OperationContext opCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
-      TransactionProxy transactionProxy = new TransactionProxy();
-      TransactionAgentSupplier txAgentSupplier = new SmartTransactionAgentSupplier(opex, opCtx, transactionProxy);
-      DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
-      dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+      TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+      DataSetContext dataSetContext = dataSetContextFactory.create(program);
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
-                                                                   DataSets.createDataSets(dataSetInstantiator,
+                                                                   DataSets.createDataSets(dataSetContext,
                                                                                            flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
@@ -166,8 +164,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                         createSchemaCache(program),
                                                         txAgentSupplier,
                                                         outputSubmitter),
-                                   processSpecificationFactory(opex,
-                                                               opCtx,
+                                   processSpecificationFactory(program, queueReaderFactory,
                                                                flowletContext,
                                                                flowletName, queueSpecs),
                                    Lists.<ProcessSpecification>newLinkedList());
@@ -401,8 +398,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private ProcessSpecificationFactory processSpecificationFactory(final OperationExecutor opex,
-                                                                  final OperationContext operationCtx,
+  private ProcessSpecificationFactory processSpecificationFactory(final Program program,
+                                                                  final QueueReaderFactory queueReaderFactory,
                                                                   final BasicFlowletContext flowletContext,
                                                                   final String flowletName,
                                                                   final Table<QueueSpecificationGenerator.Node,
@@ -427,7 +424,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
               && (inputNames.contains(queueName.getSimpleName())
                   || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
-            queueReaders.add(new SingleQueueReader(opex, operationCtx, queueName, queueConsumer));
+            queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer));
           }
         }
 

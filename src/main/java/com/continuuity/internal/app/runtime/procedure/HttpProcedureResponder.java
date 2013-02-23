@@ -40,6 +40,11 @@ final class HttpProcedureResponder implements ProcedureResponder {
     }
 
     HttpResponse httpResponse = createHttpResponse(response);
+    if (!httpResponse.getStatus().equals(HttpResponseStatus.OK)) {
+      handleFailure(httpResponse);
+      return writer;
+    }
+
     httpResponse.setChunked(true);
     httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
     channel.write(httpResponse);
@@ -56,6 +61,10 @@ final class HttpProcedureResponder implements ProcedureResponder {
 
     try {
       HttpResponse httpResponse = createHttpResponse(response);
+      if (!httpResponse.getStatus().equals(HttpResponseStatus.OK)) {
+        handleFailure(httpResponse);
+        return;
+      }
 
       ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
@@ -73,6 +82,12 @@ final class HttpProcedureResponder implements ProcedureResponder {
     } finally {
       writer = ResponseWriters.CLOSED_WRITER;
     }
+  }
+
+  private void handleFailure(HttpResponse httpResponse) {
+    httpResponse.setContent(ChannelBuffers.EMPTY_BUFFER);
+    channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
+    writer = new ClosedResponseWriter();
   }
 
   private HttpResponse createHttpResponse(ProcedureResponse response) throws IOException {
