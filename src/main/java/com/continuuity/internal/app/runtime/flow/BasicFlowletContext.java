@@ -42,13 +42,13 @@ final class BasicFlowletContext implements FlowletContext {
   private final boolean asyncMode;
   private FlowletMetrics flowletMetrics;
 
-  BasicFlowletContext(Program program, String flowletId, int instanceId,
+  BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId,
                       Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
-    this.runId = RunId.generate();
+    this.runId = runId;
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
     this.flowletSpec = flowletSpec;
@@ -58,8 +58,8 @@ final class BasicFlowletContext implements FlowletContext {
     this.queueProducer = new QueueProducer(getMetricName());
     this.queueConsumer = createQueueConsumer();
 
-    this.flowletMetrics = new FlowletMetrics(accountId, applicationId, flowId, flowletId, runId.toString(), instanceId);
     this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
+    this.flowletMetrics = new FlowletMetrics(accountId, applicationId, flowId, flowletId, runId.toString(), instanceId);
   }
 
   @Override

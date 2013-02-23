@@ -29,7 +29,6 @@ dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
-  compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
   // Dependencies required by api.
@@ -44,6 +43,7 @@ dependencies {
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
   compile libraries.jsr_305
+  compile libraries.netty
 
 
   // Thrift related stuff.

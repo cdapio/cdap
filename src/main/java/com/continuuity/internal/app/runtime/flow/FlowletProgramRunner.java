@@ -35,6 +35,7 @@ import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
@@ -98,11 +99,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
   public ProgramController run(Program program, ProgramOptions options) {
     try {
       // Extract and verify parameters
-      final String flowletName = options.getName();
-      final int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
+      String flowletName = options.getName();
+
+      int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
-      int instanceCount = Integer.parseInt(options.getArguments().getOption("instances", "-1"));
+      int instanceCount = Integer.parseInt(options.getArguments().getOption("instances", "0"));
+      Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
+
+      String runIdOption = options.getArguments().getOption("runId");
+      Preconditions.checkNotNull(runIdOption, "Missing runId");
+      RunId runId = RunId.from(runIdOption);
 
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -134,13 +141,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
 
       // Creates flowlet context
-      final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
+      final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
                                                                    createDataSets(dataSetInstantiator, flowletDef),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
-      if (instanceCount > 0) {
-        flowletContext.setInstanceCount(instanceCount);
-      }
+      flowletContext.setInstanceCount(instanceCount);
 
       // Creates QueueSpecification
       Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs =

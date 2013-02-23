@@ -64,8 +64,9 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getProgramName());
 
     // Launch flowlet program runners
-    final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, flowSpec);
-    return new FlowProgramController(flowlets, program, flowSpec);
+    RunId runId = RunId.generate();
+    final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
+    return new FlowProgramController(flowlets, runId, program, flowSpec);
   }
 
   /**
@@ -75,20 +76,23 @@ public final class FlowProgramRunner implements ProgramRunner {
    * @return A {@link Table} with row as flowlet id, column as instance id, cell as the {@link ProgramController}
    *         for the flowlet.
    */
-  private Table<String, Integer, ProgramController> createFlowlets(Program program, FlowSpecification flowSpec) {
+  private Table<String, Integer, ProgramController> createFlowlets(Program program, RunId runId,
+                                                                   FlowSpecification flowSpec) {
     Table<String, Integer, ProgramController> flowlets = HashBasedTable.create();
 
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
-      for (int instanceId = 0; instanceId < entry.getValue().getInstances(); instanceId++) {
-        flowlets.put(entry.getKey(), instanceId, startFlowlet(program, entry.getKey(), instanceId, -1));
+      int instanceCount = entry.getValue().getInstances();
+      for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
+        flowlets.put(entry.getKey(), instanceId,
+                     startFlowlet(program, new FlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
       }
     }
     return flowlets;
   }
 
-  private ProgramController startFlowlet(Program program, String flowletName, int instanceId, int instances) {
+  private ProgramController startFlowlet(Program program, ProgramOptions options) {
     return programRunnerFactory.create(ProgramRunnerFactory.Type.FLOWLET)
-                               .run(program, new FlowletOptions(flowletName, instanceId, instances));
+                               .run(program, options);
   }
 
   private final static class FlowletOptions implements ProgramOptions {
@@ -97,11 +101,12 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final Arguments arguments;
     private final Arguments userArguments;
 
-    private FlowletOptions(String name, int instanceId, int instances) {
+    private FlowletOptions(String name, int instanceId, int instances, RunId runId) {
       this.name = name;
       this.arguments = new BasicArguments(
         ImmutableMap.of("instanceId", Integer.toString(instanceId),
-                        "instances", Integer.toString(instances)));
+                        "instances", Integer.toString(instances),
+                        "runId", runId.getId()));
       this.userArguments = new BasicArguments();
     }
 
@@ -128,9 +133,9 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final FlowSpecification flowSpec;
     private final Lock lock = new ReentrantLock();
 
-    FlowProgramController(Table<String, Integer, ProgramController> flowlets,
+    FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
                           Program program, FlowSpecification flowSpec) {
-      super(program.getProgramName(), RunId.generate());
+      super(program.getProgramName(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
@@ -242,7 +247,8 @@ public final class FlowProgramRunner implements ProgramRunner {
 
       // Create more instances
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
-        flowlets.put(flowletName, instanceId, startFlowlet(program, flowletName, instanceId, newInstanceCount));
+        flowlets.put(flowletName, instanceId,
+                     startFlowlet(program, new FlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
       }
     }
 
