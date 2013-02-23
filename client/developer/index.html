@@ -186,8 +186,8 @@
           </ul>
         </div>
       </div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//demo/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//developer/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//developer/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -214,7 +214,7 @@
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
             <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
-            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//demo/{id}.count"}}</td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//developer/{id}.count"}}</td>
           </tr>
           {{/each}}
           </table>
