@@ -443,7 +443,7 @@
     <!-- Level DB Settings -->
     <property>
         <name>data.local.leveldb</name>
-        <value>data/data-fabric</value>
+        <value>data</value>
     </property>
 
     <!-- Sets whether Devsuite is in Cloud or no -->
