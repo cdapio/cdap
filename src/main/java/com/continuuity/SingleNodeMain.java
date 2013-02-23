@@ -118,7 +118,7 @@ public class SingleNodeMain {
       overlordCollection.stop(true);
       metaDataServer.stop(true);
       appFabricServer.startAndWait();
-    } catch (ServerException e) {
+    } catch (Exception e) {
       LOG.error(StackTraceUtil.toStringStackTrace(e));
     }
   }
