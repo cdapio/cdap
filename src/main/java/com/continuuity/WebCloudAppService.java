@@ -24,14 +24,8 @@ import java.io.InputStreamReader;
  * All output is sent to our Logging service.
  */
 public class WebCloudAppService {
-
+  private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE="node";
-
-  /**
-   * This is our Logger instance
-   */
-  private static final Logger logger =
-    LoggerFactory.getLogger(WebCloudAppService.class);
 
   /**
    * This is the external process that will wrap the web app
