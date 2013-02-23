@@ -8,7 +8,7 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 
 /**
  * A {@link TransactionAgentSupplier} that will create a new {@link SmartTransactionAgent} every time
- * when the {@link #get} method is called. Also the newly created {@link TransactionAgent} would be set
+ * when the {@link #createAndUpdateProxy} method is called. Also the newly created {@link TransactionAgent} would be set
  * into the given {@link TransactionProxy} instance.
  */
 public final class SmartTransactionAgentSupplier implements TransactionAgentSupplier {
@@ -26,9 +26,14 @@ public final class SmartTransactionAgentSupplier implements TransactionAgentSupp
   }
 
   @Override
-  public TransactionAgent get() {
+  public TransactionAgent createAndUpdateProxy() {
     TransactionAgent agent = new SmartTransactionAgent(opex, operationCtx);
     transactionProxy.setTransactionAgent(agent);
     return agent;
+  }
+
+  @Override
+  public TransactionAgent create() {
+    return new SmartTransactionAgent(opex, operationCtx);
   }
 }
