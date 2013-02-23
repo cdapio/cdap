@@ -95,7 +95,7 @@ public class PassportClient {
    * @return Instance of {@Account}
    * @throws Exception RunTimeExceptions
    */
-  public Account getAccount(String hostname, int port, String apiKey) throws RuntimeException {
+  public Provider<Account> getAccount(String hostname, int port, String apiKey) throws RuntimeException {
     Preconditions.checkNotNull(hostname);
     String url = getEndPoint(hostname, port, "passport/v1/account/authenticate");
     Account account = null;
@@ -111,7 +111,7 @@ public class PassportClient {
       if(account != null) {
         accountCache.put(apiKey,account);
       }
-      return account;
+      return new Provider<Account>(account);
     }  catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
