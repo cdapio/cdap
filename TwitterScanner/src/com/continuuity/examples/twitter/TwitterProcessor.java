@@ -42,7 +42,7 @@ public class TwitterProcessor extends AbstractFlowlet {
       .build();
   }
 
-  public void process(OutputEmitter<Tweet> tweet) {
+  public void process(Tweet tweet) {
     String [] words = tweet.getText().split("\\s+");
 
     List<String> goodWords = new ArrayList<String>(words.length);
