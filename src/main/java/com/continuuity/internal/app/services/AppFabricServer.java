@@ -7,6 +7,7 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import org.apache.thrift.server.TThreadedSelectorServer;
@@ -14,6 +15,7 @@ import org.apache.thrift.transport.TNonblockingServerSocket;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AppFabric Server that implements {@link AbstractExecutionThreadService}.
@@ -21,6 +23,7 @@ import java.util.concurrent.Executors;
 public class AppFabricServer extends AbstractExecutionThreadService {
   private static final int THREAD_COUNT = 2;
 
+  private CConfiguration conf;
   private ExecutorService executor;
   private AppFabricService.Iface service;
   private TThreadedSelectorServer server;
@@ -36,6 +39,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Inject
   public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration) {
+    this.conf = configuration;
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
     this.service = service;
     port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
@@ -52,6 +56,9 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
     runnerThread = Thread.currentThread();
+
+    // Start the flow metrics reporter.
+    OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
   }
 
   /**

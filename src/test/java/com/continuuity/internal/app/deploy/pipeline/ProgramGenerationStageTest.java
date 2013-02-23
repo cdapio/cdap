@@ -6,6 +6,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.ToyApp;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.Id;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
@@ -34,7 +35,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
-    pgmStage.process(new ApplicationSpecLocation(Id.Application.DEFAULT(), newSpec, appArchive));
+    pgmStage.process(new ApplicationSpecLocation(DefaultId.APPLICATION, newSpec, appArchive));
     Assert.assertTrue(true);
   }
 

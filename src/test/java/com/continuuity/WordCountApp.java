@@ -62,7 +62,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .noProcedure()/*withProcedures().add(new WordFrequency())*/.build();
   }
 
   public static final class MyRecord {
@@ -154,7 +154,7 @@ public class WordCountApp implements Application {
     }
   }
 
-  @Async
+  //@Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;

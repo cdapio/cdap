@@ -12,10 +12,6 @@ import com.google.common.base.Preconditions;
  */
 public final class Id  {
 
-  private static String DEFAULT_ACCOUNT_ID = "demo";
-  private static String DEFAULT_APPLICATION_ID = "myapp";
-  private static String DEFAULT_PROGRAM_ID = "pgm";
-
   public static final class Account {
     private final String id;
 
@@ -43,10 +39,6 @@ public final class Id  {
     @Override
     public int hashCode() {
       return Objects.hashCode(id);
-    }
-
-    public static Account DEFAULT() {
-      return new Account(DEFAULT_ACCOUNT_ID);
     }
 
     public static Account from(String account) {
@@ -97,10 +89,6 @@ public final class Id  {
     @Override
     public int hashCode() {
       return Objects.hashCode(account, applicationId);
-    }
-
-    public static Application DEFAULT() {
-      return new Application(Account.DEFAULT(), DEFAULT_APPLICATION_ID);
     }
 
     public static Application from(Account id, String application) {
@@ -159,28 +147,12 @@ public final class Id  {
       return result;
     }
 
-    public static Program from(Account id) {
-      return new Program(new Application(id, DEFAULT_APPLICATION_ID), DEFAULT_PROGRAM_ID);
-    }
-
-    public static Program from(Account accountId, String appId) {
-      return new Program(new Application(accountId, appId), DEFAULT_PROGRAM_ID);
-    }
-
-    public static Program from(Application appId) {
-      return new Program(appId, DEFAULT_PROGRAM_ID);
-    }
-
     public static Program from(Application appId, String pgmId) {
       return new Program(appId, pgmId);
     }
 
     public static Program from(String accountId, String appId, String pgmId) {
       return new Program(new Application(new Account(accountId), appId), pgmId);
-    }
-
-    public static Program DEFAULT() {
-      return new Program(Application.DEFAULT(), DEFAULT_PROGRAM_ID);
     }
   }
 
