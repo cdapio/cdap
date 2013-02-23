@@ -146,6 +146,8 @@ public class RestHandler extends NettyRestHandler {
         return;
       }
 
+      String accountId = collector.getAuthenticator().getAccountId(request);
+
       int operation = UNKNOWN;
       if (method == HttpMethod.POST) {
         operation = ENQUEUE;
@@ -225,14 +227,14 @@ public class RestHandler extends NettyRestHandler {
       }
 
       // validate the existence of the stream
-      if (!this.collector.getStreamCache().validateStream(
-          OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+      if (!this.collector.getStreamCache().validateStream(accountId, destination)) {
         helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream " + destination);
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         return;
       }
 
+      OperationContext operationContext = new OperationContext(accountId);
       switch(operation) {
         case ENQUEUE: {
           // build a new event from the request, start with the headers
@@ -257,15 +259,14 @@ public class RestHandler extends NettyRestHandler {
           // let the consumer process the event.
           // in case of exception, respond with internal error
           try {
-            this.collector.getConsumer().consumeEvent(event);
+            this.collector.getConsumer().consumeEvent(event, accountId);
           } catch (Exception e) {
             LOG.error("Error consuming single event: " + e.getMessage());
             helper.finish(Error);
             respondError(message.getChannel(),
                 HttpResponseStatus.INTERNAL_SERVER_ERROR);
             // refresh cache for this stream - apparently it has disappeared
-            this.collector.getStreamCache().refreshStream(
-                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            this.collector.getStreamCache().refreshStream(accountId, destination);
             return;
           }
           // all good - respond success
@@ -276,14 +277,14 @@ public class RestHandler extends NettyRestHandler {
 
         case INFO: {
 
-          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
                                      .toString();
           GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
           OperationResult<QueueInfo> info = null;
           boolean notfound = false;
           try {
             info = this.collector.getExecutor().
-                execute(OperationContext.DEFAULT, getInfo);
+                execute(operationContext, getInfo);
             notfound = info.isEmpty()
                 || info.getValue().getJSONString() == null;
           } catch (Exception e) {
@@ -302,8 +303,7 @@ public class RestHandler extends NettyRestHandler {
           if (notfound) {
             respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
             helper.finish(NotFound);
-            this.collector.getStreamCache().refreshStream(
-                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            this.collector.getStreamCache().refreshStream(accountId, destination);
           } else {
             byte[] responseBody = info.getValue().getJSONString().getBytes();
             Map<String, String> headers = Maps.newHashMap();
@@ -320,19 +320,18 @@ public class RestHandler extends NettyRestHandler {
         // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
         //    an HTTP header
         case NEWID: {
-          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
                                      .toString();
           QueueAdmin.GetGroupID op =
               new QueueAdmin.GetGroupID(queueURI.getBytes());
           long id;
           try {
             id = this.collector.getExecutor().
-                execute(OperationContext.DEFAULT, op);
+                execute(operationContext, op);
           } catch (Exception e) {
             LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
             helper.finish(Error);
-            this.collector.getStreamCache().refreshStream(
-                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            this.collector.getStreamCache().refreshStream(accountId, destination);
             respondError(message.getChannel(),
                 HttpResponseStatus.INTERNAL_SERVER_ERROR);
             break;
@@ -368,7 +367,7 @@ public class RestHandler extends NettyRestHandler {
             return;
           }
           // valid consumer id, dequeue and return it
-          String queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+          String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
                                      .toString();
           // 0th instance of group 'id' of size 1
           QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
@@ -378,7 +377,7 @@ public class RestHandler extends NettyRestHandler {
           DequeueResult result;
           try {
             result = this.collector.getExecutor().
-                execute(OperationContext.DEFAULT, dequeue);
+                execute(operationContext, dequeue);
           } catch (OperationException e) {
             helper.finish(Error);
             LOG.error("Error dequeueing from stream " + queueURI +
@@ -386,8 +385,7 @@ public class RestHandler extends NettyRestHandler {
             respondError(message.getChannel(),
                 HttpResponseStatus.INTERNAL_SERVER_ERROR);
             // refresh the cache for this stream, it may have been deleted
-            this.collector.getStreamCache().refreshStream(
-                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            this.collector.getStreamCache().refreshStream(accountId, destination);
             return;
           }
           if (result.isEmpty() || result.getEntry().getData() == null) {
@@ -417,7 +415,7 @@ public class RestHandler extends NettyRestHandler {
               queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
           try {
             this.collector.getExecutor().
-              commit(OperationContext.DEFAULT, ack);
+              commit(operationContext, ack);
           } catch (Exception e) {
             LOG.error("Ack failed to for queue " + queueURI + ", consumer "
                 + queueConsumer + " and pointer " + result.getEntryPointer() +

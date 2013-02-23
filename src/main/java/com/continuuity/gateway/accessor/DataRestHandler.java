@@ -130,6 +130,9 @@ public class DataRestHandler extends NettyRestHandler {
         helper.finish(BadRequest);
         return;
       }
+
+      String accountId = accessor.getAuthenticator().getAccountId(request);
+
       if (method == HttpMethod.PUT) {
         operation = WRITE;
         helper.setMethod("write");
@@ -262,6 +265,7 @@ public class DataRestHandler extends NettyRestHandler {
         keyBinary = key.getBytes("ISO8859_1");
       }
 
+      OperationContext operationContext = new OperationContext(accountId);
       switch(operation) {
         case READ : {
           // Get the value from the data fabric
@@ -269,7 +273,7 @@ public class DataRestHandler extends NettyRestHandler {
           try {
             Read read = new Read(table, keyBinary, Operation.KV_COL);
             result = this.accessor.getExecutor().
-                execute(OperationContext.DEFAULT, read);
+                execute(operationContext, read);
           } catch (Exception e) {
             helper.finish(Error);
             LOG.error("Error during Read: " + e.getMessage(), e);
@@ -332,7 +336,7 @@ public class DataRestHandler extends NettyRestHandler {
           try {
             ReadAllKeys read = new ReadAllKeys(table, start, limit);
             result = this.accessor.getExecutor().
-                execute(OperationContext.DEFAULT, read);
+                execute(operationContext, read);
           } catch (Exception e) {
             helper.finish(Error);
             LOG.error("Error listing keys: " + e.getMessage() + ".", e);
@@ -361,7 +365,7 @@ public class DataRestHandler extends NettyRestHandler {
             Read read = new Read(table, keyBinary, Operation.KV_COL);
             OperationResult<Map<byte[],byte[]>> result =
                 this.accessor.getExecutor().
-                    execute(OperationContext.DEFAULT, read);
+                    execute(operationContext, read);
             if (result.isEmpty() || null == result.getValue().get(Operation.KV_COL)) {
               // key does not exist -> Not Found
               respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -381,7 +385,7 @@ public class DataRestHandler extends NettyRestHandler {
           try {
             Delete delete = new Delete(table, keyBinary, Operation.KV_COL);
             this.accessor.getExecutor().
-              commit(OperationContext.DEFAULT, delete);
+              commit(operationContext, delete);
             // deleted successfully
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
@@ -410,7 +414,7 @@ public class DataRestHandler extends NettyRestHandler {
           Write write = new Write(table, keyBinary, Operation.KV_COL, bytes);
           try {
             this.accessor.getExecutor().
-              commit(OperationContext.DEFAULT, write);
+              commit(operationContext, write);
             // written successfully
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
@@ -451,7 +455,7 @@ public class DataRestHandler extends NettyRestHandler {
           ClearFabric clearFabric = new ClearFabric(toClear);
           try {
             this.accessor.getExecutor().
-                execute(OperationContext.DEFAULT, clearFabric);
+                execute(operationContext, clearFabric);
           } catch (Exception e) {
             LOG.error("Exception clearing data fabric: ", e);
             helper.finish(Error);

@@ -88,8 +88,11 @@ class FlumeAdapter implements AvroSourceProtocol {
         helper.finish(Error);
         return Status.FAILED;
       }
+
+      String accountId = collector.getAuthenticator().getAccountId(event);
+
       this.collector.getConsumer().consumeEvent(
-          convertFlume2Event(event, helper));
+          convertFlume2Event(event, helper, accountId), accountId);
       helper.finish(MetricsHelper.Status.Success);
       return Status.OK;
     } catch (Exception e) {
@@ -111,8 +114,11 @@ class FlumeAdapter implements AvroSourceProtocol {
         helper.finish(Error);
         return Status.FAILED;
       }
+
+      String accountId = collector.getAuthenticator().getAccountId(events.get(0));
+
       this.collector.getConsumer().consumeEvents(
-          convertFlume2Events(events, helper));
+          convertFlume2Events(events, helper, accountId), accountId);
       helper.finish(Success);
       return Status.OK;
     } catch (Exception e) {
@@ -129,10 +135,11 @@ class FlumeAdapter implements AvroSourceProtocol {
    * @param flumeEvent the flume event to be converted
    * @param helper a metrics helper, if a destination is found,
    *               the scope of this helper is updated to include it.
+   * @param accountId id of account used to send events
    * @return the resulting event
    */
   protected StreamEvent convertFlume2Event(AvroFlumeEvent flumeEvent,
-                                           MetricsHelper helper)
+                                           MetricsHelper helper, String accountId)
       throws Exception {
 
     // first construct the map of headers, just copy from flume event, plus:
@@ -160,8 +167,7 @@ class FlumeAdapter implements AvroSourceProtocol {
 
     DefaultStreamEvent event = new DefaultStreamEvent(headers, flumeEvent.getBody());
     helper.setScope(destination);
-    if (!this.collector.getStreamCache().validateStream(
-        OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+    if (!this.collector.getStreamCache().validateStream(accountId, destination)) {
       helper.finish(NotFound);
       throw new Exception("Cannot enqueue event to non-existent stream '" +
           destination + "'.");
@@ -176,14 +182,15 @@ class FlumeAdapter implements AvroSourceProtocol {
    * @param flumeEvents the flume events to be converted
    * @param helper a metrics helper, if a destination is found,
    *               the scope of this helper is updated to include it.
+   * @param accountId id of account used to send events
    * @return the resulting events
    */
   protected List<StreamEvent> convertFlume2Events(List<AvroFlumeEvent> flumeEvents,
-                                                  MetricsHelper helper)
+                                                  MetricsHelper helper, String accountId)
   throws Exception {
     List<StreamEvent> events = new ArrayList<StreamEvent>(flumeEvents.size());
     for (AvroFlumeEvent flumeEvent : flumeEvents) {
-      events.add(convertFlume2Event(flumeEvent, helper));
+      events.add(convertFlume2Event(flumeEvent, helper, accountId));
     }
     return events;
   }

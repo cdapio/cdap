@@ -240,7 +240,7 @@ public class TestUtil {
                                      String stream)
       throws Exception {
     // get the queue info from opex
-    byte[] queueName = QueueName.fromStream(new Id.Account(Constants.defaultAccount), stream)
+    byte[] queueName = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
                                 .toString().getBytes();
     OperationResult<QueueInfo> info = executor.execute(
         OperationContext.DEFAULT, new QueueAdmin.GetQueueInfo(queueName));
@@ -279,7 +279,7 @@ public class TestUtil {
    */
   static class NoopConsumer extends Consumer {
     @Override
-    public void single(StreamEvent event) {
+    public void single(StreamEvent event, String accountId) {
     }
   }
 
@@ -303,7 +303,7 @@ public class TestUtil {
     }
 
     @Override
-    protected void single(StreamEvent event) throws Exception {
+    protected void single(StreamEvent event, String accountId) throws Exception {
       TestUtil.verifyEvent(event, this.collectorName,
           this.destination, this.expectedNumber);
     }
@@ -325,7 +325,7 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = QueueName.fromStream(new Id.Account(Constants.defaultAccount), destination)
+    byte[] queueURI = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), destination)
                                .toString().getBytes();
     // one deserializer to reuse
     StreamEventCodec deserializer = new StreamEventCodec();
