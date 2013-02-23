@@ -270,11 +270,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
   }
 
-  private int getAccountId(String hostname, int port, String apiKey) {
-    PassportClient ppc=new PassportClient();
-    return (ppc.getAccount(hostname, port, apiKey)).getAccountId();
-  }
-
   private AppFabricService.Client getAppFabricClient(String host, int port)
     throws ServerException {
 
