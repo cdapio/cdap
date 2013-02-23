@@ -110,7 +110,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         }
         Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
         Location loc = clone(o.getApplicationId(), bundler, output, procedure.getName(),
-                             procedure.getClassName(), Type.FLOW, appSpecFile);
+                             procedure.getClassName(), Type.PROCEDURE, appSpecFile);
         PROGRAMS.add(new Program(loc));
       }
 

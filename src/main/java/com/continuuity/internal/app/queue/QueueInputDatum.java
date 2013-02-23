@@ -2,12 +2,12 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.app.queue.InputDatum;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,5 +71,14 @@ public final class QueueInputDatum implements InputDatum {
         return retry.get();
       }
     };
+  }
+
+  @Override
+  public String toString() {
+    if (!dequeueResult.isEmpty()) {
+      return String.format("%s, %s, %d", queueName, dequeueResult.getEntryPointer().getEntryId(), retry);
+    } else {
+      return String.format("%s, empty, %d", queueName, retry);
+    }
   }
 }

@@ -218,7 +218,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                              new BasicArguments(),
                                                              new BasicArguments()));
       store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
-                     System.currentTimeMillis()/(1000*1000));
+                     System.currentTimeMillis()/1000);
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
     } catch (IOException e) {
@@ -250,14 +250,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // NOTE: This was a temporary hack done to map the status to something that is
     // UI friendly. Internal states of program controller are reasonable and hence
     // no point in changing them.
-    String status = runtimeInfo.getController().getState().toString();
-    ProgramController.State state = runtimeInfo.getController().getState();
-    if(state == ProgramController.State.ALIVE) {
-      status = "RUNNING";
-    } else if(state == ProgramController.State.ERROR) {
-      status = "FAILED";
-    }
+    String status = controllerStateToString(runtimeInfo.getController().getState());
     return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
+  }
+
+  private String controllerStateToString(ProgramController.State state) {
+    if(state == ProgramController.State.ALIVE) {
+      return "RUNNING";
+    } else if(state == ProgramController.State.ERROR) {
+      return "FAILED";
+    }
+    return state.toString();
   }
 
   /**
@@ -276,7 +279,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
-      store.setStop(runtimeInfo.getProgramId(), runId.getId(), System.currentTimeMillis()/(1000*1000),
+      store.setStop(runtimeInfo.getProgramId(), runId.getId(), System.currentTimeMillis() /1000,
                     runtimeInfo.getController().getState().toString());
       return new RunIdentifier(runId.getId());
     } catch (Exception e) {

@@ -52,11 +52,11 @@ final class BasicFlowletContext implements FlowletContext {
     this.instanceId = instanceId;
     this.datasets = ImmutableMap.copyOf(datasets);
     this.flowletSpec = flowletSpec;
+    this.asyncMode = asyncMode;
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
     this.queueProducer = new QueueProducer(getMetricName());
     this.queueConsumer = createQueueConsumer();
-    this.asyncMode = asyncMode;
 
     this.flowletMetrics = new FlowletMetrics(accountId, applicationId, flowId, flowletId, runId.toString(), instanceId);
     this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
