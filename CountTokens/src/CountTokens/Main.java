@@ -21,13 +21,4 @@ public class Main implements Application {
       .noProcedure()
       .build();
   }
-//  @Override
-//  public ApplicationSpecification configure() {
-//    return ApplicationSpecification.builder()
-//      .setApplicationName("CountTokensDemo")
-//      .addFlow(CountTokens.class)
-//      .addStream(new Stream("text"))
-//      .addDataSet(new KeyValueTable(Common.tableName))
-//      .create();
-//  }
 }

@@ -1,53 +1,45 @@
 package CountTokens;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-public class Tokenizer extends ComputeFlowlet {
+import java.util.HashMap;
+import java.util.Map;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("title", String.class).
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(in);
-
-    TupleSchema out = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
+public class Tokenizer extends AbstractFlowlet {
+  private OutputEmitter<Map<String,String>> output;
+  public Tokenizer() {
+    super("split");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Map<String, String> map) {
     final String[] fields = { "title", "text" };
 
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
-    for (String field : fields)
-      tokenize((String)tuple.get(field), field, outputCollector);
+    if (Common.debug) {
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + map);
+    }
+    for (String field : fields) {
+      tokenize(map.get(field), field);
+    }
   }
 
-  void tokenize(String str, String field, OutputCollector outputCollector) {
-    if (str == null) return;
+  void tokenize(String str, String field) {
+    if (str == null) {
+      return;
+    }
     final String delimiters = "[ .-]";
     String[] tokens = str.split(delimiters);
 
     for (String token : tokens) {
+      Map<String,String> tuple = new HashMap<String,String>();
+      tuple.put("field", field);
+      tuple.put("word", token);
 
-      Tuple output = new TupleBuilder().
-          set("field", field).
-          set("word", token).
-          create();
-
-      if (Common.debug)
+      if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
-      outputCollector.add(output);
+      }
+      output.emit(tuple);
     }
   }
-
 }
+

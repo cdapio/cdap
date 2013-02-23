@@ -5,49 +5,31 @@ package com.continuuity.examples.twitter;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class TwitterProcessor extends ComputeFlowlet {
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    specifier.getDefaultFlowletInput().setSchema(
-        TwitterFlow.TWEET_SCHEMA);
-    specifier.getDefaultFlowletOutput().setSchema(
-        TwitterFlow.POST_PROCESS_SCHEMA);
-  }
+public class TwitterProcessor extends AbstractFlowlet {
+  private OutputEmitter<Map<String, Object>> output;
 
   private SortedCounterTable topHashTags;
   private SortedCounterTable topUsers;
-
   private CounterTable wordCounts;
   private CounterTable hashTagWordAssocs;
 
-  @Override
-  public void initialize() {
-    this.topHashTags = getFlowletContext().getDataSet(TwitterFlow.topHashTags);
-    this.topUsers = getFlowletContext().getDataSet(TwitterFlow.topUsers);
-
-    this.wordCounts = getFlowletContext().getDataSet(TwitterFlow.wordCounts);
-    this.hashTagWordAssocs = getFlowletContext().getDataSet(TwitterFlow.hashTagWordAssocs);
+  public TwitterProcessor() {
+    super("Processors");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext context,
-      OutputCollector collector) {
-
-    Tweet tweet = tuple.get("tweet");
-    
+  public void process(OutputEmitter<Tweet> tweet) {
     String [] words = tweet.getText().split("\\s+");
-    
+
     List<String> goodWords = new ArrayList<String>(words.length);
     for (String word : words) {
       if (word.length() < 3) continue;
@@ -61,11 +43,10 @@ public class TwitterProcessor extends ComputeFlowlet {
         Long incrementedPrimaryCount = topHashTags.performPrimaryCounterIncrement(
           TwitterFlow.HASHTAG_SET, Bytes.toBytes(word), 1L);
         if (incrementedPrimaryCount != null) {
-          Tuple outTuple = new TupleBuilder()
-            .set("name", word)
-            .set("value", incrementedPrimaryCount)
-            .create();
-          collector.add(outTuple);
+          Map<String, Object> outTuple=new HashMap<String, Object>();
+          outTuple.put("name", word);
+          outTuple.put("value", incrementedPrimaryCount);
+          output.emit(outTuple);
         }
         // And for every hash tag, track word associations
         for (String corWord : goodWords) {
@@ -83,17 +64,14 @@ public class TwitterProcessor extends ComputeFlowlet {
         wordCounts.incrementCounterSet(TwitterFlow.WORD_SET, Bytes.toBytes(word), 1L);
       }
     }
-
     // Track top users
     Long incrementedPrimaryCount = topUsers.performPrimaryCounterIncrement(
       TwitterFlow.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
     if (incrementedPrimaryCount != null) {
-      Tuple outTuple = new TupleBuilder()
-        .set("name", tweet.getUser())
-        .set("value", incrementedPrimaryCount)
-        .create();
-      collector.add(outTuple);
+      Map<String, Object> outTuple=new HashMap<String, Object>();
+      outTuple.put("name", tweet.getUser());
+      outTuple.put("value", incrementedPrimaryCount);
+      output.emit(outTuple);
     }
   }
-
 }

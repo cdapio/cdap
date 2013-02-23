@@ -1,11 +1,10 @@
 package CountCounts;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
 
 public class StreamSource extends AbstractFlowlet {
   static String keyTotal = ":sourceTotal:";
@@ -14,11 +13,10 @@ public class StreamSource extends AbstractFlowlet {
   CounterTable counters;
 
   public StreamSource() {
-    super("StreamSource");
+    super("source");
   }
 
-  public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
-    this.counters = getContext().getDataSet(Common.tableName);
+  public void process(StreamEvent event) {
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
     }

@@ -15,9 +15,12 @@ public class Main implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("CountCountsDemo")
       .setDescription("Application for counting counts of words")
-      .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable(Common.tableName))
-      .withFlows().add(new CountCounts())
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(Common.tableName))
+      .withFlows()
+        .add(new CountCounts())
       .withProcedures().add(new CountQuery())
       .build();
   }

@@ -1,23 +1,27 @@
 package com.continuuity.examples.twitter;
 
-import com.continuuity.api.flow.Application;
-import com.continuuity.api.flow.ApplicationSpecification;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
 
 /**
  *
  */
 public class Main implements Application {
-
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
-      .setApplicationName("TwitterApp")
-      .addFlow(TwitterFlow.class)
-      .addQuery(TwitterQuery.class)
-      .addDataSet(new SortedCounterTable(TwitterFlow.topUsers, new SortedCounterTable.SortedCounterConfig()))
-      .addDataSet(new SortedCounterTable(TwitterFlow.topHashTags, new SortedCounterTable.SortedCounterConfig()))
-      .addDataSet(new CounterTable(TwitterFlow.wordCounts))
-      .addDataSet(new CounterTable(TwitterFlow.hashTagWordAssocs))
-      .create();
+    return ApplicationSpecification.Builder.with()
+      .setName("TwitterApp")
+      .setDescription("")
+      .noStream()
+      .withDataSets()
+        .add(new SortedCounterTable(TwitterFlow.topUsers, new SortedCounterTable.SortedCounterConfig()))
+        .add(new SortedCounterTable(TwitterFlow.topHashTags, new SortedCounterTable.SortedCounterConfig()))
+        .add(new CounterTable(TwitterFlow.wordCounts))
+        .add(new CounterTable(TwitterFlow.hashTagWordAssocs))
+      .withFlows()
+        .add(new TwitterFlow())
+      .withProcedures()
+        .add(new TwitterQuery())
+      .build();
   }
 }

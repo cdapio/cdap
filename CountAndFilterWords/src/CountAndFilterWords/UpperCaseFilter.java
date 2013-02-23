@@ -3,31 +3,21 @@ package CountAndFilterWords;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-import java.nio.charset.CharacterCodingException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class UpperCaseFilter extends AbstractFlowlet {
   private OutputEmitter<Map<String,String>> output;
+
   public UpperCaseFilter() {
-    super("UpperCaseFilter");
+    super("upper-filter");
   }
 
-//  @Override
-//  public void configure(FlowletSpecifier specifier) {
-//    TupleSchema schema = new TupleSchemaBuilder().
-//        add("field", String.class).
-//        add("word", String.class).
-//        create();
-//    specifier.getDefaultFlowletInput().setSchema(schema);
-//    specifier.getDefaultFlowletOutput().setSchema(schema);
-//  }
-
-  public void process(Map<String, String> map) throws CharacterCodingException {
+  public void process(Map<String, String> tupleIn) {
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received map " + map);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
     }
-    String word = map.get("word");
+    String word = tupleIn.get("word");
     if (word == null) {
       return;
     }
@@ -36,12 +26,12 @@ public class UpperCaseFilter extends AbstractFlowlet {
       return;
     }
 
-    Map<String,String> tuple = new HashMap<String,String>();
-    tuple.put("word", word);
+    Map<String,String> tupleOut = new HashMap<String,String>();
+    tupleOut.put("word", word);
 
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + tupleOut);
     }
-    output.emit(tuple);
+    output.emit(tupleOut);
   }
 }

@@ -4,38 +4,23 @@
 package com.continuuity.examples.twitter;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
-public class TwitterWordIndexer extends ComputeFlowlet {
+import java.util.Map;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    specifier.getDefaultFlowletInput().setSchema(
-        TwitterFlow.POST_PROCESS_SCHEMA);
-  }
-
+public class TwitterWordIndexer extends AbstractFlowlet {
   private SortedCounterTable topUsers;
 
-  @Override
-  public void initialize() {
-    this.topUsers = getFlowletContext().getDataSet(TwitterFlow.topUsers);
+  public TwitterWordIndexer() {
+    super("TwitterWordIndexer");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext context,
-      OutputCollector collector) {
-
-    String user = tuple.get("name");
-    Long postValue = tuple.get("value");
+  public void process(Map<String,Object> tuple) {
+    String user = (String) tuple.get("name");
+    Long postValue = (Long) tuple.get("value");
 
     // Perform post-increment for top users
     topUsers.performSecondaryCounterIncrements(
         TwitterFlow.USER_SET, Bytes.toBytes(user), 1L, postValue);
-    
   }
-
 }

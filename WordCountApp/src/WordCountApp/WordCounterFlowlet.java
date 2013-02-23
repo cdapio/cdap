@@ -10,6 +10,10 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 public class WordCounterFlowlet extends AbstractFlowlet {
 
+  public WordCounterFlowlet() {
+    super("wordCounter");
+  }
+
   @UseDataSet("wordStats")
   private Table wordStatsTable;
   
@@ -33,6 +37,5 @@ public class WordCounterFlowlet extends AbstractFlowlet {
 
     // Send the word to the unique counter flowlet to do the unique count
     wordOutput.emit(word);
-
   }
 }

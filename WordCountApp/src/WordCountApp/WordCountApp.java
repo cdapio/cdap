@@ -11,33 +11,17 @@ public class WordCountApp implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("WordCountApp")
       .setDescription("Example Word Count Application")
-      .withStreams().add(new Stream("wordStream"))
+      .withStreams()
+        .add(new Stream("wordStream"))
       .withDataSets()
         .add(new Table("wordStats"))
         .add(new Table("wordCounts"))
         .add(new UniqueCountTable("uniqueCount"))
         .add(new WordAssocTable("wordAssocs"))
-      .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordCountProcedure())
+      .withFlows()
+        .add(new WordCountFlow())
+      .withProcedures()
+        .add(new WordCountProcedure())
       .build();
   }
-//  @Override
-//  public ApplicationSpecification configure() {
-//    public ApplicationSpecification configure() {
-//      return ApplicationSpecification.Builder.with()
-//        .setName("WordCountApp")
-//        .setDescription("Example Word Count Application")
-//        .withStreams()
-//          .add(new Stream("wordStream"))
-//        .withDataSets()
-//          .add(new Table("wordStats"))
-//          .add(new Table("wordCounts"))
-//          .add(new UniqueCountTable("uniqueCount"))
-//          .add(new WordAssocTable("wordAssocs"))
-//        .withFlows()
-//          .add(new WordCountFlow())
-//        .withProcedures()
-//          .add(new WordCountProcedure())
-//        .build();
-//    }
 }

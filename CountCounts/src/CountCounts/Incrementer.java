@@ -1,9 +1,6 @@
 package CountCounts;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.InputContext;
-
-import java.nio.charset.CharacterCodingException;
 
 public class Incrementer extends AbstractFlowlet {
   static String keyTotal = ":sinkTotal:";
@@ -11,11 +8,10 @@ public class Incrementer extends AbstractFlowlet {
   CounterTable counters;
 
   public Incrementer() {
-    super("Incrementer");
+    super("tick");
   }
 
-  public void process(Integer count, InputContext context) throws CharacterCodingException {
-    this.counters = getContext().getDataSet(Common.tableName);
+  public void process(Integer count) {
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received event " + count);
     }

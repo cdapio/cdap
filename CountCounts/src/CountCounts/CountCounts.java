@@ -14,9 +14,10 @@ public class CountCounts implements Flow {
         .add("source", new StreamSource())
         .add("count", new WordCounter())
         .add("tick", new Incrementer())
-      .connect().fromStream("text").to("source")
-      .from("source").to("count")
-      .from("count").to("tick")
+      .connect()
+        .fromStream("text").to("source")
+        .from("source").to("count")
+        .from("count").to("tick")
       .build();
   }
 }

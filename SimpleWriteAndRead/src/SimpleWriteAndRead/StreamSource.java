@@ -1,41 +1,39 @@
 package SimpleWriteAndRead;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Map;
 
-public class StreamSource extends ComputeFlowlet {
+public class StreamSource extends AbstractFlowlet {
+  private OutputEmitter<Map<String,String>> output;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().
-        add("title", String.class).
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
+  public StreamSource() {
+    super("source");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(StreamEvent event) {
 
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
 
-    HashMap<String, String> headers = tuple.get("headers");
-    byte[] body = tuple.get("body");
-    String title = headers.get("title");
+    ByteBuffer buf = event.getBody();
+    byte[] body = buf.array();
     String text = body == null ? null :new String(body);
 
-    Tuple output = new TupleBuilder().
-        set("title", title).
-        set("text", text).
-        create();
+    Map<String, String> headers = event.getHeaders();
+    String title = headers.get("title");
+
+    Map<String,String> tuple = new HashMap<String,String>();
+    tuple.put("title", title);
+    tuple.put("text", text);
 
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + tuple);
 
-    outputCollector.add(output);
+    output.emit(tuple);
   }
 }

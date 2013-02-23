@@ -3,19 +3,17 @@ package CountCounts;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-import java.nio.charset.CharacterCodingException;
-
 public class WordCounter extends AbstractFlowlet {
   private OutputEmitter<Integer> output;
 
   public WordCounter() {
-    super("WordCounter");
+    super("count");
   }
 
-  public void process(String text) throws CharacterCodingException {
+  public void process(String text) {
 
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received event " + text);
+      System.out.println(this.getClass().getSimpleName() + ": Received text " + text);
     }
 
     final String delimiters = "[ .-]";
@@ -25,7 +23,7 @@ public class WordCounter extends AbstractFlowlet {
     }
 
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting count " + output);
     }
     output.emit(count);
   }

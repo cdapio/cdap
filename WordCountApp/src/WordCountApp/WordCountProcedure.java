@@ -1,7 +1,5 @@
 package WordCountApp;
 
-import java.io.IOException;
-
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
@@ -11,8 +9,13 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureResponse.Code;
 import com.continuuity.api.procedure.ProcedureSpecification;
 
+import java.io.IOException;
+
 public class WordCountProcedure extends AbstractProcedure {
 
+  public WordCountProcedure() {
+    super("WordCountProcedure");
+  }
   @Override
   public ProcedureSpecification configure() {
     return ProcedureSpecification.Builder.with()
@@ -33,9 +36,8 @@ public class WordCountProcedure extends AbstractProcedure {
   @UseDataSet("wordAssocs")
   private WordAssocTable wordAssocTable;
 
-  public void process(ProcedureRequest request, ProcedureResponder responder)
-      throws IOException {
-    responder.stream(new ProcedureResponse(Code.SUCCESS, "Success!"));
+  public void process(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    responder.stream(new ProcedureResponse(Code.SUCCESS));
   }
 //  @Override
 //  public QueryProviderResponse process(String method,
