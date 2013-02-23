@@ -10,10 +10,7 @@ import com.continuuity.passport.meta.VPC;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
@@ -64,5 +61,28 @@ public class VPCHandler  extends PassportHandler {
         .build();
     }
   }
+
+  @Path("valid/{vpcName}")
+  @GET
+  public Response isValidVPC(@PathParam("vpcName") String vpcName) {
+    try{
+      int count = dataManagementService.getVPCCount(vpcName);
+      if (count== 0) {
+        return Response.ok().entity(Utils.getJsonOK()).build();
+      }
+      else {
+        return Response.ok().entity(Utils.getJsonError("VPC already exists")).build();
+      }
+    }
+    catch (Exception e){
+      requestFailed();
+      return  Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("FAILED", e.getMessage()))
+        .build();
+    }
+
+  }
+
+
 
 }

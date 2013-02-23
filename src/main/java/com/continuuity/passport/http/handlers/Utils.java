@@ -47,17 +47,17 @@ public class Utils {
     return object.toString();
   }
 
-  public static String getNonceJson(int result) {
-    JsonObject object = new JsonObject();
-    object.add("error",null);
-    object.addProperty("result",result);
-    return object.toString();
-  }
-
   public static String getNonceJson(String error, int result) {
     JsonObject object = new JsonObject();
     object.addProperty("error",error);
     object.addProperty("result",result);
+    return object.toString();
+  }
+
+  public static String getIdJson(String error, String id) {
+    JsonObject object = new JsonObject();
+    object.addProperty("error",error);
+    object.addProperty("result",id);
     return object.toString();
   }
 

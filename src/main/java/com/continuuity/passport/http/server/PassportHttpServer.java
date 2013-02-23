@@ -50,13 +50,6 @@ public class PassportHttpServer {
       server.setStopAtShutdown(true);
       server.setGracefulShutdown(gracefulShutdownTime);
 
-//      System.out.println("Starting Server with params: ");
-//      System.out.println(String.format("Port: %d",port));
-//      System.out.println(String.format("MaxThreads: %d",maxThreads));
-//      System.out.println(String.format("GracefulShutdownTime: %s", gracefulShutdownTime));
-//      for(Map.Entry<String,String> entry : configuration.entrySet()){
-//        System.out.println(String.format( "%s: %s",entry.getKey(), entry.getValue()));
-//      }
       Context context = new Context(server, "/", Context.SESSIONS);
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
       context.addServlet(DefaultServlet.class, "/");
@@ -92,7 +85,6 @@ public class PassportHttpServer {
 
     String jdbcType = conf.get("passport.jdbc.type");
     String connectionString  = conf.get("passport.jdbc.connection.string");
-    System.out.println(jdbcType);
     int port = Integer.parseInt(conf.get("passport.http.server.port"));
     int gracefulShutdownTime = Integer.parseInt(conf.get("passport.http.graceful.shutdown.time"));
     int maxThreads = Integer.parseInt(conf.get("passport.http.max.threads"));

@@ -38,14 +38,18 @@ public class AuthenticatorServiceImpl implements AuthenticatorService {
   @Override
   public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
     UsernamePasswordApiKeyToken userCredentials = (UsernamePasswordApiKeyToken) credentials;
+    Subject currentUser=null;
     try {
-      Subject currentUser = SecurityUtils.getSubject();
+      currentUser = SecurityUtils.getSubject();
       currentUser.login(userCredentials);
       Account account = (Account) currentUser.getPrincipal();
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED, account.toString());
     } catch (Exception e) {
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
         "Authentication Failed. " + e.getMessage());
+    }
+    finally{
+      currentUser.logout();
     }
   }
 }

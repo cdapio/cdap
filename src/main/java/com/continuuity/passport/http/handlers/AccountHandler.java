@@ -429,7 +429,7 @@ public class AccountHandler extends  PassportHandler{
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         requestSuccess();
-        return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
+        return Response.ok(status.getMessage()).build();
       } else {
         requestFailed(); //Failed request
         return Response.status(Response.Status.UNAUTHORIZED).entity(
@@ -440,6 +440,32 @@ public class AccountHandler extends  PassportHandler{
       requestFailed(); //Failed request
       return Response.status(Response.Status.UNAUTHORIZED).entity(
         Utils.getAuthenticatedJson("Authentication Failed.", e.getMessage())).build();
+    }
+  }
+
+  @Path("{id}/regenerateApiKey")
+  @GET
+  @Produces("application/json")
+  public Response regenerateApiKey(@PathParam("id") int accountId) {
+    try{
+      dataManagementService.regenerateApiKey(accountId);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account accountFetched = dataManagementService.getAccount(accountId);
+      if (accountFetched != null) {
+        requestSuccess();
+        return Response.ok(accountFetched.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+          .build();
+      }
+    } catch (Exception e){
+      requestFailed(); // Request failed
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+        .build();
     }
   }
 

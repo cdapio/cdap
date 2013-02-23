@@ -255,4 +255,32 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     return vpcList;
   }
+
+  @Override
+  public int getVPCCount(String vpcName) {
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    int count = 0;
+    Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
+
+    try{
+      connection = this.poolManager.getConnection();
+      String SQL = String.format("SELECT COUNT(%s) FROM %s where %s = ? ",
+                                 DBUtils.VPC.NAME_COLUMN, DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
+
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1,vpcName);
+      rs = ps.executeQuery();
+
+      while(rs.next()){
+         count = rs.getInt(1);
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection, ps, rs);
+    }
+    return count;
+  }
 }

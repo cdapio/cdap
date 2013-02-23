@@ -273,8 +273,23 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   }
 
+  /**
+   * ResetPassword
+   */
   @Override
-  public int getActivationNonce(int id){
+  public Account resetPassword(int nonceId, String password) {
+    Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");
+    Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
+    Preconditions.checkNotNull(nonceDAO,"Nonce data access objects cannot be null");
+    try {
+      return accountDAO.resetPassword(nonceId, password);
+    }catch (Exception e){
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public int getActivationNonce(String id){
     Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");
     Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
     Preconditions.checkNotNull(nonceDAO,"Nonce data access objects cannot be null");
@@ -288,7 +303,7 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public int getSessionNonce(int id) {
+  public int getSessionNonce(String id) {
     Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
     Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
     Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
@@ -301,12 +316,30 @@ public class DataManagementServiceImpl implements DataManagementService {
     return nonce;
   }
 
+  /**
+   * VPC count for the vpc
+   *
+   * @param vpcName
+   * @return
+   */
   @Override
-  public int getActivationId(int nonce) {
+  public int getVPCCount(String vpcName) {
     Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
     Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
     Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
-    int id = -1;
+    try{
+      return vpcDao.getVPCCount(vpcName);
+    } catch (Exception e){
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public String getActivationId(int nonce) {
+    Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
+    Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
+    Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
+    String id = null;
     try {
       id = nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.ACTIVATION);
     } catch (Exception e) {
@@ -316,12 +349,12 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   @Override
-  public int getSessionId(int nonce) {
+  public String getSessionId(int nonce) {
     Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
     Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
     Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
 
-    int id = -1;
+    String id = null;
     try {
       id =  nonceDAO.getId(nonce, NonceDAO.NONCE_TYPE.SESSION);
     } catch (Exception e) {
@@ -329,6 +362,42 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
     return id;
   }
+
+  /**
+   * Generate Reset Nonce
+   * @param id
+   * @return random nonce
+   */
+  @Override
+  public int getResetNonce(String id) {
+    Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
+    Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
+    Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
+    int nonce = -1 ;
+    try {
+      nonce =  nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.RESET);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return nonce;
+  }
+
+  /**
+   * Regenerate API Key
+   * @param accountId
+   */
+  @Override
+  public void regenerateApiKey(int accountId) {
+    Preconditions.checkNotNull(accountDAO,"Account data access objects cannot be null");
+    Preconditions.checkNotNull(vpcDao,"VPC data access objects cannot be null");
+    Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
+    try {
+     accountDAO.regenerateApiKey(accountId);
+    }catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
 
   public VPC addVPC(int accountId, VPC vpc) {
     Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");

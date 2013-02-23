@@ -33,7 +33,8 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
   private Map<String, String> configurations;
   private DBConnectionPoolManager poolManager = null;
 
-  private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+  private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
+                                                                  "%s, %s FROM %s WHERE %s = ?",
     DBUtils.AccountTable.FIRST_NAME_COLUMN,
     DBUtils.AccountTable.LAST_NAME_COLUMN,
     DBUtils.AccountTable.COMPANY_COLUMN,
@@ -41,10 +42,12 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     DBUtils.AccountTable.PASSWORD_COLUMN,
     DBUtils.AccountTable.API_KEY_COLUMN,
     DBUtils.AccountTable.CONFIRMED_COLUMN,
+    DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
     DBUtils.AccountTable.TABLE_NAME,
     DBUtils.AccountTable.EMAIL_COLUMN);
 
-  private final String SQL_LOOKUP_BY_APIKEY = String.format("SELECT %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+  private final String SQL_LOOKUP_BY_APIKEY = String.format("SELECT %s, %s, %s, %s, %s, %s," +
+                                                                   "%s, %s FROM %s WHERE %s = ?",
     DBUtils.AccountTable.FIRST_NAME_COLUMN,
     DBUtils.AccountTable.LAST_NAME_COLUMN,
     DBUtils.AccountTable.COMPANY_COLUMN,
@@ -52,6 +55,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     DBUtils.AccountTable.PASSWORD_COLUMN,
     DBUtils.AccountTable.API_KEY_COLUMN,
     DBUtils.AccountTable.CONFIRMED_COLUMN,
+    DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
     DBUtils.AccountTable.TABLE_NAME,
     DBUtils.AccountTable.API_KEY_COLUMN);
 
@@ -198,6 +202,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       String lastName = null;
       String company = null;
       String apiToken = null;
+      long devsuiteDownloadedTime = -1;
       boolean confirmed = false;
       while (rs.next()) {
         firstName = rs.getString(1);
@@ -208,13 +213,15 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
         apiToken = rs.getString(6);
         confirmed = rs.getBoolean(7);
+        devsuiteDownloadedTime =  DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8));
         count++;
       }
 
-      Preconditions.checkArgument(count > 1, "Account not found in DB");
+      Preconditions.checkArgument(count == 1, "Account not found in DB");
       Preconditions.checkArgument(!password.isEmpty(),"Password not found for %s in the data store", emailId);
+      Account account = new Account(firstName, lastName, company, emailId, accountId,
+                                    apiToken, confirmed,devsuiteDownloadedTime);
 
-      Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
       //if we are authenticating with API Key then existence of apiKey with a password is authenticating.
       // So set the password to a dummy password
       if (upToken.isUseApiKey()) {

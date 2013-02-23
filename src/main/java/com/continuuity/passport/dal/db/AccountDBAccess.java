@@ -14,6 +14,7 @@ import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -164,16 +165,12 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
       ps.setInt(2, accountId);
-
       ps.executeUpdate();
-
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
-
-
   }
 
   /**
@@ -233,11 +230,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getConnection();
 
-      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
-        DBUtils.AccountTable.CONFIRMED_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
 
@@ -245,24 +242,21 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setInt(1, accountId);
       rs = ps.executeQuery();
 
-
-      int count = 0;
+     int count = 0;
       while (rs.next()) {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6), rs.getBoolean(7));
+                              rs.getString(4), rs.getInt(5), rs.getString(6),
+                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8))  );
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
       }
-
-    } catch (SQLException e) {
+   } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
-
-
     return account;
   }
 
@@ -286,11 +280,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getConnection();
 
-      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
-        DBUtils.AccountTable.CONFIRMED_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN,  DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN);
 
@@ -302,7 +296,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       while (rs.next()) {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6), rs.getBoolean(7));
+                              rs.getString(4), rs.getInt(5), rs.getString(6),
+                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -460,7 +455,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getConnection();
 
-      String SQL = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ? AND %s and %s = ?",
+      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s and %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.PASSWORD_COLUMN,
         DBUtils.AccountTable.API_KEY_COLUMN,
@@ -468,18 +463,107 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.PASSWORD_COLUMN);
 
       ps = connection.prepareStatement(SQL);
-      ps.setString(1, newPassword);
-      ps.setString(2, ApiKey.generateKey(String.valueOf(accountId)));
-      ps.setInt(3, accountId);
-      ps.setString(4, oldPassword);
+      ps.setString(1, PasswordUtils.generateHashedPassword(newPassword));
+      ps.setInt(2, accountId);
+      ps.setString(3, PasswordUtils.generateHashedPassword(oldPassword));
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchAlgorithmException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
   }
+
+  @Override
+  public Account resetPassword(int nonce, String newPassword) {
+
+    //NOTE: This code does two things
+    // 1) Update the Password getting the email id from nonce table
+    // 2) Fetch Account information joining with nonce table to email id.
+
+    Account account = null;
+    Connection connection = null;
+    PreparedStatement update = null;
+    PreparedStatement select = null;
+    ResultSet rs = null;
+    try {
+      connection = this.poolManager.getConnection();
+
+
+      //Update the account table. Joining email id from nonce table
+      String UPDATE_SQL = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
+                               DBUtils.AccountTable.TABLE_NAME,
+                               DBUtils.AccountTable.PASSWORD_COLUMN,DBUtils.AccountTable.EMAIL_COLUMN,
+                               DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
+                              );
+
+
+      update = connection.prepareStatement(UPDATE_SQL);
+      update.setString(1, PasswordUtils.generateHashedPassword(newPassword));
+      update.setInt(2, nonce);
+      update.executeUpdate();
+
+      //Update is successful. now return the account information
+      String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+                                        "(SELECT %s FROM %s where %s = ?)",
+                                        DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+                                        DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
+                                        DBUtils.AccountTable.CONFIRMED_COLUMN,
+                                        DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+                                        DBUtils.AccountTable.TABLE_NAME,
+                                        DBUtils.AccountTable.EMAIL_COLUMN,
+                                        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
+                                        DBUtils.Nonce.NONCE_ID_COLUMN
+                                        );
+
+      select = connection.prepareStatement(SELECT_SQL);
+
+      select.setInt(1, nonce);
+      rs = select.executeQuery();
+
+      while (rs.next()) {
+        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
+                              rs.getString(4), rs.getInt(5), rs.getString(6),
+                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+      }
+      return account;
+    } catch (SQLException e){
+    throw Throwables.propagate(e);
+    }
+    finally {
+      close(update);
+      close(connection,select,rs);
+    }
+  }
+
+  @Override
+  public void regenerateApiKey(int accountId) {
+    Connection connection = null;
+    PreparedStatement ps = null;
+    Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
+
+    try {
+      connection = this.poolManager.getConnection();
+      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
+        DBUtils.AccountTable.TABLE_NAME,
+        DBUtils.AccountTable.API_KEY_COLUMN,
+        DBUtils.AccountTable.ID_COLUMN);
+
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1, ApiKey.generateKey(String.valueOf(accountId)));
+      ps.setInt(2, accountId);
+
+      ps.executeUpdate();
+
+    } catch (SQLException e) {
+      throw new RuntimeException(e.getMessage(), e.getCause());
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e.getMessage(), e.getCause());
+    } finally {
+      close(connection, ps);
+    }
+  }
+
 }
