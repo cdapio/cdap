@@ -17,7 +17,6 @@ ext.gitRepos = []
 gitRepos << new GitRepo(name: "gateway", branch: branch);
 gitRepos << new GitRepo(name: "common", branch: branch);
 gitRepos << new GitRepo(name: "data-fabric", branch: branch);
-gitRepos << new GitRepo(name: "flow", branch: branch);
 gitRepos << new GitRepo(name: "overlord", branch: branch);
 gitRepos << new GitRepo(name: "web-cloud-app", branch: branch);
 gitRepos << new GitRepo(name: "examples", branch: branch);
