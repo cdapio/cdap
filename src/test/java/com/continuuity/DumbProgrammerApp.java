@@ -6,8 +6,6 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.stream.Stream;
 
 /**
  * This application has all sorts of

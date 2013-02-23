@@ -1,5 +1,6 @@
 package com.continuuity.runtime;
 
+import com.continuuity.TestCountRandomApp;
 import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -103,6 +104,51 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(5);
 
+    controller.stop().get();
+  }
+
+  @Test
+  public void testCountRandomApp() throws Exception {
+    final CConfiguration configuration = CConfiguration.create();
+    configuration.set("app.temp.dir", "/tmp/app/temp");
+    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+
+    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                             new BigMamaModule(configuration));
+
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(TestCountRandomApp.class, TestHelper.getManifestWithMainClass(TestCountRandomApp.class))
+    );
+    deployedJar.deleteOnExit();
+
+    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
+    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    ProgramController controller = null;
+    for (final Program program : app.getPrograms()) {
+      if (program.getProcessorType() == Type.FLOW) {
+        ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
+        controller = runner.run(program, new ProgramOptions() {
+          @Override
+          public String getName() {
+            return program.getProgramName();
+          }
+
+          @Override
+          public Arguments getArguments() {
+            return new BasicArguments();
+          }
+
+          @Override
+          public Arguments getUserArguments() {
+            return new BasicArguments();
+          }
+        });
+      }
+    }
+
+    TimeUnit.SECONDS.sleep(10);
     controller.stop().get();
   }
 }
