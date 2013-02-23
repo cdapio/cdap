@@ -3,13 +3,13 @@
  */
 package com.continuuity;
 
-import ch.qos.logback.classic.Logger;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -27,6 +27,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -40,6 +41,8 @@ import java.util.concurrent.TimeUnit;
  * NOTE: Use AbstractIdleService
  */
 public class SingleNodeMain {
+  private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
+
   private InMemoryZookeeper zookeeper;
   private final WebCloudAppService webCloudAppService;
   private Gateway gateway;
@@ -69,6 +72,7 @@ public class SingleNodeMain {
         try {
           webCloudAppService.stop(true);
         } catch (ServerException e) {
+          LOG.error(StackTraceUtil.toStringStackTrace(e));
           System.err.println("Failed to shutdown node web cloud app");
         }
       }
@@ -79,17 +83,16 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
-    // Create temporary directory where zookeeper data files will be stored.
-    File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
-    temporaryDir.mkdir();
+    File zkDir = new File(ZOOKEEPER_DATA_DIR);
+    zkDir.mkdir();
     int port = PortDetector.findFreePort();
-    zookeeper = new InMemoryZookeeper(port, temporaryDir);
+    zookeeper = new InMemoryZookeeper(port, zkDir);
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
 
     // Start all the services.
     Service.State state = appFabricServer.startAndWait();
     if(state != Service.State.RUNNING) {
-      throw new Exception("Unable to start Application Fabric.");
+      throw new Exception("Failed to start Application Fabric.");
     }
 
     metaDataServer.start(args, configuration);
@@ -116,7 +119,7 @@ public class SingleNodeMain {
       metaDataServer.stop(true);
       appFabricServer.startAndWait();
     } catch (ServerException e) {
-      // There is nothing we can do.
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
     }
   }
 
@@ -163,8 +166,10 @@ public class SingleNodeMain {
         return false;
       }
     } catch (IOException e) {
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
       throw new RuntimeException("Nodejs not in path. Please add it to PATH in the shell you are starting devsuite");
     } catch (InterruptedException e) {
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
       Thread.currentThread().interrupt();
     }
     return true;
