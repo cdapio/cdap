@@ -12,6 +12,8 @@ public class LevelDBOpexServiceTest extends OperationExecutorServiceTest {
 
   @BeforeClass
   public static void startService() throws Exception {
+    CConfiguration configuration = CConfiguration.create();
+    configuration.unset("data.local.leveldb");
     Injector injector = Guice.createInjector (
         new DataFabricLevelDBModule());
     OperationExecutorServiceTest.startService(
