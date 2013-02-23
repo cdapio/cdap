@@ -9,7 +9,7 @@ public class TestLevelDBOmidTransactionalOperationExecutor
 extends TestOmidTransactionalOperationExecutor {
 
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule("."));
+      new DataFabricLevelDBModule());
 
   private static final OmidTransactionalOperationExecutor executor =
       (OmidTransactionalOperationExecutor)injector.getInstance(

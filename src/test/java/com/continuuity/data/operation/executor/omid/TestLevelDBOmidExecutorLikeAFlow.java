@@ -9,7 +9,7 @@ import com.google.inject.Injector;
 public class TestLevelDBOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule("."));
+      new DataFabricLevelDBModule());
 
   private static final OmidTransactionalOperationExecutor executor =
       (OmidTransactionalOperationExecutor)injector.getInstance(

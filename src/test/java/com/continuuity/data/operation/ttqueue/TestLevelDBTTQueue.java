@@ -14,7 +14,7 @@ import com.google.inject.Injector;
 public class TestLevelDBTTQueue extends TestTTQueue {
 
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule("."));
+      new DataFabricLevelDBModule());
 
   private static final OVCTableHandle handle =
       injector.getInstance(OVCTableHandle.class);
