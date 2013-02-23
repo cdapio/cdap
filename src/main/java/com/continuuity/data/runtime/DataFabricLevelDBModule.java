@@ -28,12 +28,9 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
   private final String basePath;
 
-  public DataFabricLevelDBModule() {
-    this(CConfiguration.create());
-  }
 
-  public DataFabricLevelDBModule(CConfiguration conf) {
-    conf = CConfiguration.create();
+  public DataFabricLevelDBModule() {
+    CConfiguration conf = CConfiguration.create();
     String path = conf.get("data.local.leveldb");
     if (path == null || path.isEmpty()) {
       path =

@@ -14,7 +14,7 @@ public abstract class LevelDBMetaDataStoreTest extends MetaDataStoreTest {
   @BeforeClass
   public static void setupOpex() throws Exception {
     Injector injector = Guice.createInjector (
-        new DataFabricLevelDBModule());
+        new DataFabricLevelDBModule("."));
     opex = injector.getInstance(OperationExecutor.class);
     opex.execute(OperationContext.DEFAULT,
         new ClearFabric(ClearFabric.ToClear.ALL));
