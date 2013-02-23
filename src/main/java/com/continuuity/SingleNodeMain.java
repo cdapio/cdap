@@ -225,7 +225,7 @@ public class SingleNodeMain {
       new BigMamaModule(configuration),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
-      levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules()
     );
 
