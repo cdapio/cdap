@@ -1,6 +1,5 @@
 package com.continuuity.metadata;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -26,11 +25,11 @@ public class MetadataTool {
     OperationExecutor opex = new RemoteOperationExecutor(config);
     MetadataService service = new MetadataService(opex);
 
-    String app = args[1];
-    String flow = args[2];
+    String accountId = args[1];
+    String app = args[2];
+    String flow = args[3];
 
-    List<Dataset> datasets = service.getDatasetsByApplication(
-        OperationContext.DEFAULT_ACCOUNT_ID, app);
+    List<Dataset> datasets = service.getDatasetsByApplication(accountId, app);
     System.out.println("getDatasetsByApp(" + app + "):");
     for (Dataset dataset : datasets) {
       System.out.println("  " + dataset);
@@ -38,17 +37,16 @@ public class MetadataTool {
 
     System.out.println("getFlow(" + app + ", " + flow + "):");
     System.out.println("  " +
-        service.getFlow(OperationContext.DEFAULT_ACCOUNT_ID, app, flow));
+        service.getFlow(accountId, app, flow));
 
     System.out.println("getFlowsByApp(" + app + "):");
-    List<Flow> flows = service.getFlowsByApplication(
-        OperationContext.DEFAULT_ACCOUNT_ID, app);
+    List<Flow> flows = service.getFlowsByApplication(accountId, app);
     for (Flow fl : flows) {
       System.out.println("  " + fl);
     }
 
     System.out.println("getFlows():");
-    flows = service.getFlows(OperationContext.DEFAULT_ACCOUNT_ID);
+    flows = service.getFlows(accountId);
     for (Flow fl : flows) {
       System.out.println("  " + fl);
     }
