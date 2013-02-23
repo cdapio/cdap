@@ -3,187 +3,125 @@
  */
 package com.continuuity;
 
-import ch.qos.logback.classic.Logger;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.flow.manager.server.FARServer;
-import com.continuuity.flow.manager.server.FlowManagerServer;
-import com.continuuity.flow.runtime.FARModules;
-import com.continuuity.flow.runtime.FlowManagerModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
- * SingleNodeMain is the master main method for the Continuuity single node
- * platform. This is where we load all our external configuration and bootstrap
- * all the services that comprise the platform.
+ * Singlenode Main
+ * NOTE: Use AbstractIdleService
  */
 public class SingleNodeMain {
+  private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
 
-  /**
-   * This is our Logger instance
-   */
-  private static final Logger logger =
-      (Logger)LoggerFactory.getLogger(SingleNodeMain.class);
-
-  /**
-   * This is the Zookeeper service.
-   *
-   * TODO: Find somewhere to create this so we can inject it
-   */
   private InMemoryZookeeper zookeeper;
-
-  /**
-   * This is the Gateway service
-   */
-  @Inject
-  private Gateway theGateway;
-
-  /**
-   * This is the Metrics Collection service
-   */
-  @Inject
-  private MetricsCollectionServerInterface theOverlordCollectionServer;
-
-  /**
-   * This is the Metrics Frontend service.
-   */
-  @Inject
-  private MetricsFrontendServerInterface theOverlordFrontendServer;
-
-  /**
-   * This is the Metadata service.
-   */
-  @Inject
-  private MetadataServerInterface theMetadataServer;
-
-  /**
-   * This is the FAR server.
-   */
-  @Inject
-  private FARServer theFARServer;
-
-  /**
-   * This is the FlowManager server
-   */
-  @Inject
-  private FlowManagerServer theFlowManager;
-
-  /**
-   * This is the WebApp Service
-   */
-  private WebCloudAppService theWebApp;
-
-  /**
-   * This is our universal configurations object.
-   */
-  private CConfiguration myConfiguration;
-
-  /**
-   * Creates a zookeeper data directory for single node.
-   */
+  private final WebCloudAppService webCloudAppService;
+  private Gateway gateway;
+  private MetricsCollectionServerInterface overlordCollection;
+  private MetricsFrontendServerInterface overloadFrontend;
+  private MetadataServerInterface metaDataServer;
+  private AppFabricServer appFabricServer;
   private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
+  private final CConfiguration configuration;
+  private final ImmutableList<Module> modules;
 
-  /**
-   * Bootstrap is where we initialize all the services that make up the
-   * SingleNode version.
-   */
-  private void bootStrapServices() throws Exception {
+  public SingleNodeMain(ImmutableList<Module> modules, CConfiguration configuration) {
+    this.modules = modules;
+    this.configuration = configuration;
+    this.webCloudAppService = new WebCloudAppService();
 
-    // Check all our preconditions (which should have been injected)
-    Preconditions.checkNotNull(theOverlordCollectionServer);
-    Preconditions.checkNotNull(theOverlordFrontendServer);
-    Preconditions.checkNotNull(theGateway);
-    Preconditions.checkNotNull(theFARServer);
-    Preconditions.checkNotNull(theFlowManager);
+    Injector injector = Guice.createInjector(modules);
+    gateway = injector.getInstance(Gateway.class);
+    overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
+    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
+    metaDataServer = injector.getInstance(MetadataServerInterface.class);
+    appFabricServer = injector.getInstance(AppFabricServer.class);
 
-    System.out.println(" Starting Zookeeper Service");
-    startZookeeper();
-
-    System.out.println(" Starting Metadata Service");
-    theMetadataServer.start(null, myConfiguration);
-
-    System.out.println(" Starting Metrics Service");
-    theOverlordCollectionServer.start(null, myConfiguration);
-    theOverlordFrontendServer.start(null, myConfiguration);
-
-    System.out.println(" Starting Gateway Service");
-    theGateway.start(null, myConfiguration);
-
-    System.out.println(" Starting FlowArchive Service");
-    theFARServer.start(null, myConfiguration);
-
-    System.out.println(" Starting FlowManager Service");
-    theFlowManager.start(null, myConfiguration);
-
-    System.out.println(" Starting User Interface");
-    theWebApp = new WebCloudAppService();
-    theWebApp.start(null, myConfiguration);
-
-    String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println(" AppFabric started successfully. Connect to UI @ " +
-        "http://" + hostname + ":9999");
-
-  } // end of bootStrapServices
-
-  /**
-   * Start Zookeeper attempts to start our single node ZK instance. It requires
-   * two configuration values to be set somewhere in our config files:
-   *
-   * <ul>
-   *   <li>zookeeper.port</li>
-   *   <li>zookeeper.datadir</li>
-   * </ul>
-   *
-   * We also push the ZK ensemble setting back into myConfiguration for
-   * use by the other services.
-   *
-   * @throws InterruptedException
-   * @throws IOException
-   */
-  private void startZookeeper() throws InterruptedException, IOException {
-    // Create temporary directory where zookeeper data files will be stored.
-    File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
-    temporaryDir.mkdir();
-
-    int port = PortDetector.findFreePort();
-    zookeeper = new InMemoryZookeeper(port, temporaryDir);
-
-    // Set the connection string about where ZK server started on */
-    myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
-      zookeeper.getConnectionString());
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          webCloudAppService.stop(true);
+        } catch (ServerException e) {
+          LOG.error(StackTraceUtil.toStringStackTrace(e));
+          System.err.println("Failed to shutdown node web cloud app");
+        }
+      }
+    });
   }
 
+  /**
+   * Start the service.
+   */
+  protected void startUp(String[] args) throws Exception {
+    File zkDir = new File(ZOOKEEPER_DATA_DIR);
+    zkDir.mkdir();
+    int port = PortDetector.findFreePort();
+    zookeeper = new InMemoryZookeeper(port, zkDir);
+    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
+
+    // Start all the services.
+    Service.State state = appFabricServer.startAndWait();
+    if(state != Service.State.RUNNING) {
+      throw new Exception("Failed to start Application Fabric.");
+    }
+
+    metaDataServer.start(args, configuration);
+    overlordCollection.start(args, configuration);
+    overloadFrontend.start(args, configuration);
+    gateway.start(args, configuration);
+    webCloudAppService.start(args, configuration);
+
+    String hostname = InetAddress.getLocalHost().getHostName();
+    System.out.println("Continuuity Devsuite AppFabric started successfully. Connect to dashboard at "
+                       + "http://" + hostname + ":9999");
+  }
 
   /**
-   * Load Configuration looks for all of the config xml files in the resources
-   * directory, and loads all of the properties into those files.
+   * Shutdown the service.
    */
-  private void loadConfiguration() {
-    // Create our config object
-    myConfiguration = CConfiguration.create();
-  } // end of loadConfiguration
-
+  public void shutDown() {
+    try {
+      webCloudAppService.stop(true);
+      gateway.stop(true);
+      metaDataServer.stop(true);
+      overloadFrontend.stop(true);
+      overlordCollection.stop(true);
+      metaDataServer.stop(true);
+      appFabricServer.startAndWait();
+    } catch (ServerException e) {
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
+    }
+  }
 
   /**
    * Print the usage statement and return null.
@@ -195,9 +133,6 @@ public class SingleNodeMain {
 
     // Which output stream should we use?
     PrintStream out = (error ? System.err : System.out);
-
-    // Print our generic Copyright
-    Copyright.print(out);
 
     // And our requirements and usage
     out.println("Requirements: ");
@@ -218,6 +153,27 @@ public class SingleNodeMain {
     }
   }
 
+  /**
+   * Checks if node is in path or no.
+   * @return
+   */
+  public static boolean nodeExists() {
+    try {
+      Process proc = Runtime.getRuntime().exec("node -v");
+      TimeUnit.SECONDS.sleep(2);
+      int exitValue = proc.exitValue();
+      if(exitValue != 0) {
+        return false;
+      }
+    } catch (IOException e) {
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
+      throw new RuntimeException("Nodejs not in path. Please add it to PATH in the shell you are starting devsuite");
+    } catch (InterruptedException e) {
+      LOG.error(StackTraceUtil.toStringStackTrace(e));
+      Thread.currentThread().interrupt();
+    }
+    return true;
+  }
 
   /**
    * The root of all goodness!
@@ -225,6 +181,17 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
+    Copyright.print(System.out);
+
+    // Checks if node exists.
+    try {
+      if(! nodeExists()) {
+        System.err.println("Unable to find nodejs in path. Please add it to PATH.");
+      }
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    }
 
     boolean inMemory = false;
 
@@ -240,48 +207,45 @@ public class SingleNodeMain {
       }
     }
 
-    // Retrieve all of the modules from each of the components
-    FARModules farModules = new FARModules();
-    FlowManagerModules flowManagerModules = new FlowManagerModules();
-    MetricsModules metricsModules = new MetricsModules();
-    GatewayModules gatewayModules = new GatewayModules();
-    DataFabricModules dataFabricModules = new DataFabricModules();
-    MetadataModules metadataModules = new MetadataModules();
+    CConfiguration configuration = CConfiguration.create();
+    boolean inVPC = false;
+    String environment = configuration.get("appfabric.environment", "devsuite");
+    if(environment.equals("vpc")) {
+      System.err.println("AppFabric Environment : " + environment);
+      inVPC = true;
+    }
 
-    // Set up our Guice injections
-    Injector injector = inMemory?
-        Guice.createInjector(
-            farModules.getInMemoryModules(),
-            flowManagerModules.getInMemoryModules(),
-            metricsModules.getInMemoryModules(),
-            gatewayModules.getInMemoryModules(),
-            dataFabricModules.getInMemoryModules(),
-            metadataModules.getInMemoryModules())
-        : Guice.createInjector(
-            farModules.getSingleNodeModules(),
-            flowManagerModules.getSingleNodeModules(),
-            metricsModules.getSingleNodeModules(),
-            gatewayModules.getSingleNodeModules(),
-            dataFabricModules.getSingleNodeModules(),
-            metadataModules.getSingleNodeModules()
-        );
+    boolean levelDBCompatibleOS = false;
+    String OS = System.getProperty("os.name").toLowerCase();
+    if(OS.indexOf("mac") >= 0 || OS.indexOf("nix") >=0  || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0) {
+      levelDBCompatibleOS = true;
+    }
 
-    // Create our server instance
-    SingleNodeMain continuuity = injector.getInstance(SingleNodeMain.class);
+    ImmutableList<Module> inMemoryModules = ImmutableList.of(
+      new BigMamaModule(configuration),
+      new MetricsModules().getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
+      levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getInMemoryModules(),
+      new MetadataModules().getInMemoryModules()
+    );
 
-    // Load all our config files
-    continuuity.loadConfiguration();
+    ImmutableList<Module> singleNodeModules = ImmutableList.of(
+      new BigMamaModule(configuration),
+      new MetricsModules().getSingleNodeModules(),
+      new GatewayModules().getSingleNodeModules(),
+      inVPC && levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules()
+    );
 
-    // Now bootstrap all of the services
+    SingleNodeMain main = inMemory ? new SingleNodeMain(inMemoryModules, configuration)
+      : new SingleNodeMain(singleNodeModules, configuration);
     try {
-      Copyright.print();
-      continuuity.bootStrapServices();
-      System.out.println(StringUtils.repeat("=", 80));
+      main.startUp(args);
     } catch (Exception e) {
-      e.printStackTrace();
-      System.exit(-1);
+      main.shutDown();
+      System.err.println("Failed to start server. " + e.getMessage());
+      System.exit(-2);
     }
 
   }
-
-} // end of SingleNodeMain class
+}

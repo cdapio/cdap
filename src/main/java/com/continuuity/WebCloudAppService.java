@@ -6,6 +6,8 @@ package com.continuuity;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,22 +23,15 @@ import java.io.InputStreamReader;
  *
  * All output is sent to our Logging service.
  */
-public class WebCloudAppService implements Server {
-
+public class WebCloudAppService {
+  private static final Logger logger = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE="node";
-
-  /**
-   * This is our Logger instance
-   */
-  private static final Logger logger =
-    LoggerFactory.getLogger(WebCloudAppService.class);
 
   /**
    * This is the external process that will wrap the web app
    */
   Process webAppProcess;
 
-  @Override
   public void start(String[] args, CConfiguration conf) throws ServerException {
 
     // Create a new ProcessBuilder
@@ -66,7 +61,7 @@ public class WebCloudAppService implements Server {
       String line;
       while ((line = br.readLine()) != null) {
         logger.debug("[User Interface output] " + line);
-        if (line.startsWith("Listening on port ")) {
+        if (line.contains("Listening on port ")) {
           successful = true;
           break;
         }
@@ -75,12 +70,11 @@ public class WebCloudAppService implements Server {
         logger.info("User interface started successfully.");
       } else {
         String message = "User interface terminated unexpectedly.";
-        logger.error(message);
         throw new ServerException(message);
       }
 
       // start a thread to read and log the remaining output from UI
-      new Thread() {
+      Thread nodeThread = new Thread() {
         @Override
         public void run() {
           try {
@@ -92,7 +86,9 @@ public class WebCloudAppService implements Server {
             logger.error(ie.getMessage());
           }
         }
-      }.start();
+      };
+      nodeThread.setDaemon(true);
+      nodeThread.start();
     } catch (IOException e) {
       String message;
       if (StringUtils.contains(e.getCause().getMessage(),
@@ -116,9 +112,10 @@ public class WebCloudAppService implements Server {
    *
    * @throws ServerException
    */
-  @Override
   public void stop(boolean now) throws ServerException {
-    webAppProcess.destroy();
+    if(webAppProcess != null) {
+      webAppProcess.destroy();
+    }
   }
 
 } // end of WebCloudAppService class
