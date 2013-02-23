@@ -1,5 +1,6 @@
 package com.continuuity.runtime;
 
+import com.continuuity.CountAndFilterWord;
 import com.continuuity.TestCountRandomApp;
 import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
@@ -149,6 +150,69 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(10);
+    controller.stop().get();
+  }
+
+  @Test
+  public void testCountAndFilterWord() throws Exception {
+    final CConfiguration configuration = CConfiguration.create();
+    configuration.set("app.temp.dir", "/tmp/app/temp");
+    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+
+    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                             new BigMamaModule(configuration));
+
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(CountAndFilterWord.class, TestHelper.getManifestWithMainClass(CountAndFilterWord.class))
+    );
+    deployedJar.deleteOnExit();
+
+    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
+    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    ProgramController controller = null;
+    for (final Program program : app.getPrograms()) {
+      if (program.getProcessorType() == Type.FLOW) {
+        ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
+        controller = runner.run(program, new ProgramOptions() {
+          @Override
+          public String getName() {
+            return program.getProgramName();
+          }
+
+          @Override
+          public Arguments getArguments() {
+            return new BasicArguments();
+          }
+
+          @Override
+          public Arguments getUserArguments() {
+            return new BasicArguments();
+          }
+        });
+      }
+    }
+
+    TimeUnit.SECONDS.sleep(1);
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
+                                                  app.getAppSpecLoc().getSpecification().getName());
+
+    QueueProducer queueProducer = new QueueProducer("Testing");
+    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT, "text");
+    StreamEventCodec codec = new StreamEventCodec();
+    for (int i = 0; i < 1; i++) {
+      String msg = "Testing message " + i;
+      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of("title", "test"),
+                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
+      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
+                                              new QueueEntryImpl(codec.encodePayload(event)));
+      opex.commit(opCtx, enqueue);
+    }
+
+    TimeUnit.SECONDS.sleep(5);
+
     controller.stop().get();
   }
 }
