@@ -11,7 +11,8 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
@@ -59,6 +60,14 @@ public class DatumCodecTest {
       result = 31 * result + name.hashCode();
       return result;
     }
+
+    @Override
+    public String toString() {
+      return "Value{" +
+        "id=" + id +
+        ", name='" + name + '\'' +
+        '}';
+    }
   }
 
   public static class Record1 {
@@ -67,6 +76,7 @@ public class DatumCodecTest {
     private final int[] numbers;
     private final URL url;
     private final UUID uuid;
+    private final String nullStr;
 
     public Record1(int i, Map<Integer, Value> properties, URL url) {
       this.i = i;
@@ -74,6 +84,7 @@ public class DatumCodecTest {
       this.numbers = new int[] {1, 2};
       this.url = url;
       this.uuid = UUID.randomUUID();
+      this.nullStr = null;
     }
   }
 
@@ -84,6 +95,7 @@ public class DatumCodecTest {
     private final long[] numbers;
     private final URI url;
     private final UUID uuid;
+    private final String nullStr;
 
     public Record2(long i, Map<String, Value> properties, String name) {
       this.i = i;
@@ -92,14 +104,16 @@ public class DatumCodecTest {
       this.numbers = new long[0];
       this.url = null;
       this.uuid = null;
+      this.nullStr = null;
     }
   }
 
   @Test
   public void testTypeProject() throws IOException, UnsupportedTypeException {
-    Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap(), new URL("http://www.yahoo.com"));
+    final Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap(), new URL("http://www.yahoo.com"));
     r1.properties.put(1, new Value(1, "Name1"));
     r1.properties.put(2, new Value(2, "Name2"));
+    r1.properties.put(3, null);
 
     PipedOutputStream output = new PipedOutputStream();
     PipedInputStream input = new PipedInputStream(output);
@@ -112,7 +126,15 @@ public class DatumCodecTest {
                             .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertEquals(10L, r2.i.longValue());
-    Assert.assertEquals(ImmutableMap.of("1", new Value(1, "Name1"), "2", new Value(2, "Name2")), r2.properties);
+
+    Assert.assertTrue(Iterables.all(r2.properties.entrySet(), new Predicate<Map.Entry<String, Value>>() {
+      @Override
+      public boolean apply(Map.Entry<String, Value> input) {
+        Value value = r1.properties.get(Integer.valueOf(input.getKey()));
+        return (value == null && input.getValue() == null) || (value.equals(input.getValue()));
+      }
+    }));
+
     Assert.assertNull(r2.name);
 
     Assert.assertArrayEquals(new long[] {1L, 2L}, r2.numbers);
