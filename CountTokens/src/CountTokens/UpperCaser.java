@@ -1,36 +1,31 @@
 package CountTokens;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-public class UpperCaser extends ComputeFlowlet {
+import java.util.Map;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.getDefaultFlowletOutput().setSchema(schema);
+public class UpperCaser extends AbstractFlowlet {
+
+  @Output("upperOut")
+  private OutputEmitter<String> upperOut;
+
+  public UpperCaser() {
+    super("upper");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Map<String, String> tupleIn) {
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
 
-    String word = tuple.get("word");
+    String word = tupleIn.get("word");
     if (word == null) return;
     String upper = word.toUpperCase();
 
-    Tuple output = new TupleBuilder().
-        set("word", upper).
-        create();
-
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting word " + upper);
 
-    outputCollector.add(output);
+    upperOut.emit(upper);
   }
 }

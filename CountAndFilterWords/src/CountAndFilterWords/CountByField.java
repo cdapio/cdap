@@ -1,44 +1,29 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
-public class CountByField extends ComputeFlowlet
-{
-  @Override
-  public void configure(FlowletSpecifier configurator) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
+import java.util.Map;
 
-    configurator.getDefaultFlowletInput().setSchema(in);
-  }
+public class CountByField extends AbstractFlowlet {
 
+  @UseDataSet(Common.counterTableName)
   KeyValueTable counters;
 
-  @Override
-  public void initialize() {
-    super.initialize();
-    this.counters = getFlowletContext().getDataSet(Common.counterTableName);
+  public CountByField() {
+    super("countByField");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Map<String, String> tupleIn) {
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
     }
 
-    String token = tuple.get("word");
+    String token = tupleIn.get("word");
     if (token == null) return;
-    String field = tuple.get("field");
+    String field = tupleIn.get("field");
     if (field != null) token = field + ":" + token;
 
     if (Common.debug) {

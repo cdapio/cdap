@@ -1,28 +1,23 @@
 package CountAndFilterWords;
 
-import java.lang.Character;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import java.util.HashMap;
+import java.util.Map;
 
-public class UpperCaseFilter extends ComputeFlowlet {
+public class UpperCaseFilter extends AbstractFlowlet {
+  private OutputEmitter<Map<String,String>> output;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.getDefaultFlowletOutput().setSchema(schema);
+  public UpperCaseFilter() {
+    super("upper-filter");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Map<String, String> tupleIn) {
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
     }
-    String word = tuple.get("word");
+    String word = tupleIn.get("word");
     if (word == null) {
       return;
     }
@@ -31,13 +26,12 @@ public class UpperCaseFilter extends ComputeFlowlet {
       return;
     }
 
-    Tuple output = new TupleBuilder().
-        set("word", word).
-        create();
+    Map<String,String> tupleOut = new HashMap<String,String>();
+    tupleOut.put("word", word);
 
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + tupleOut);
     }
-    outputCollector.add(output);
+    output.emit(tupleOut);
   }
 }

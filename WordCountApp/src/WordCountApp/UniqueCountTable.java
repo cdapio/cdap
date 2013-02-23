@@ -1,7 +1,5 @@
 package WordCountApp;
 
-import java.util.Map;
-
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -10,6 +8,8 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
+
+import java.util.Map;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
@@ -68,7 +68,7 @@ public class UniqueCountTable extends DataSet {
    * <p>
    * Continuously add entries into the table using this method, pass the Tuple
    * to another downstream Flowlet, and in the second Flowlet pass the Tuple to
-   * the {@link #updateUniqueCount(Tuple)}.
+   * the {@link #updateUniqueCount(String)}.
    * @param entry entry to add
    * @return tuple that will be passed
    * @throws OperationException

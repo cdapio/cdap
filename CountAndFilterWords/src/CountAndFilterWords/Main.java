@@ -1,8 +1,8 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.Application;
-import com.continuuity.api.flow.ApplicationSpecification;
 import com.continuuity.api.data.stream.Stream;
 
 /**
@@ -12,11 +12,16 @@ import com.continuuity.api.data.stream.Stream;
 public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
-      .setApplicationName("CountAndFilterWordsDemo")
-      .addFlow(CountAndFilterWords.class)
-      .addStream(new Stream("text"))
-      .addDataSet(new KeyValueTable(Common.counterTableName))
-      .create();
+    return ApplicationSpecification.Builder.with()
+      .setName("CountAndFilterWordsDemo")
+      .setDescription("")
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(Common.counterTableName))
+      .withFlows()
+        .add(new CountAndFilterWords())
+      .noProcedure()
+      .build();
   }
 }

@@ -1,56 +1,49 @@
 package SimpleWriteAndRead;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-public class WriterFlowlet extends ComputeFlowlet {
+import java.util.Map;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("title", String.class).
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(in);
+public class WriterFlowlet extends AbstractFlowlet {
 
-    TupleSchema out = new TupleSchemaBuilder().
-        add("key", byte[].class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-  }
-
+  @UseDataSet(Common.tableName)
   KeyValueTable kvTable;
 
-  @Override
-  public void initialize() {
-    this.kvTable = getFlowletContext().getDataSet(Common.tableName);
+  private OutputEmitter<byte[]> output;
+
+  public WriterFlowlet() {
+    super("writer");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext,
-                      OutputCollector outputCollector) {
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet(Common.tableName)
+      .build();
+  }
+
+  public void process(Map<String, String> tupleIn) throws OperationException {
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() +
-          ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
 
     // text should be in the form: key=value
-    String text = tuple.get("text");
+    String text = tupleIn.get("text");
     String [] params = text.split("=");
     if (params.length != 2) return;
     byte [] key = params[0].getBytes();
     byte [] value = params[1].getBytes();
 
-    try {
-      this.kvTable.write(key, value);
-    } catch (OperationException e) {
-      throw new RuntimeException(e);
-    }
+    this.kvTable.write(key, value);
 
-    Tuple outputTuple = new TupleBuilder().
-          set("key", key).
-          create();
-    outputCollector.add(outputTuple);
+    if (Common.debug)
+      System.out.println(this.getClass().getSimpleName() + ": Emitting key " + key);
+
+    output.emit(key);
   }
 }

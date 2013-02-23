@@ -1,7 +1,7 @@
 package CountOddAndEven;
 
-import com.continuuity.api.flow.Application;
-import com.continuuity.api.flow.ApplicationSpecification;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
 
 /**
  * CountOddAndEvenDemo application contains a flow {@code CountOddAndEven} and is attached
@@ -10,9 +10,14 @@ import com.continuuity.api.flow.ApplicationSpecification;
 public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
-      .setApplicationName("CountOddAndEvenDemo")
-      .addFlow(CountOddAndEven.class)
-      .create();
+    return ApplicationSpecification.Builder.with()
+      .setName("CountOddAndEvenDemo")
+      .setDescription("")
+      .noStream()
+      .noDataSet()
+      .withFlows()
+        .add(new CountOddAndEven())
+      .noProcedure()
+      .build();
   }
 }

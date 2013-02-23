@@ -1,26 +1,20 @@
 package CountOddAndEven;
 
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.SinkFlowlet;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.annotation.Process;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**
  * Counts number of even tuples.
  */
-public class EvenCounter extends SinkFlowlet {
+public class EvenCounter extends AbstractFlowlet {
   private int count = 0;
 
-  @Override
-  public void consume(final Tuple tuple, final TupleContext context) {
-    count++;
+  public EvenCounter() {
+    super("EvenCounter");
   }
 
-  @Override
-  public void configure(final FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().add("number", Integer.class).create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
+  @Process("evenOut")
+  public void process(Integer number) {
+    count++;
   }
 }

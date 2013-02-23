@@ -1,56 +1,50 @@
 package CountCounts;
 
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 
-public class StreamSource extends ComputeFlowlet {
+import java.nio.ByteBuffer;
 
+public class StreamSource extends AbstractFlowlet {
   static String keyTotal = ":sourceTotal:";
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
-  }
+  private OutputEmitter<String> output;
 
+  @UseDataSet(Common.tableName)
   CounterTable counters;
 
-  @Override
-  public void initialize() {
-    super.initialize();
-    this.counters = getFlowletContext().getDataSet(Common.tableName);
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName("text")
+      .setDescription("")
+      .useDataSet(Common.tableName)
+      .build();
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public StreamSource() {
+    super("source");
+  }
 
+  public void process(StreamEvent event) {
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
     }
-    byte[] body = tuple.get("body");
+    ByteBuffer buf = event.getBody();
+    byte[] body = buf.array();
     String text = body == null ? null :new String(body);
 
-    Tuple output = new TupleBuilder().
-        set("text", text).
-        create();
-
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
+      System.out.println(this.getClass().getSimpleName() + ": Emitting " + text);
     }
-    outputCollector.add(output);
 
     if (Common.count) {
       // emit an increment for the total number of documents ingested
       this.counters.increment(keyTotal);
     }
+
+    output.emit(text);
   }
 }
