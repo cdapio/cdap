@@ -10,7 +10,6 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
@@ -50,6 +49,7 @@ import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
@@ -60,7 +60,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -75,7 +74,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -142,7 +140,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
-                                                                   createDataSets(dataSetInstantiator, flowletDef),
+                                                                   DataSets.createDataSets(dataSetInstantiator,
+                                                                                           flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
       flowletContext.setInstanceCount(instanceCount);
@@ -336,6 +335,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
       }
     }
+    Preconditions.checkArgument(!result.isEmpty(), "No process method found for " + flowletType);
     return result;
   }
 
@@ -355,14 +355,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
         return failurePolicy;
       }
     };
-  }
-
-  private Map<String, DataSet> createDataSets(DataSetContext dataSetContext, FlowletDefinition flowletDef) {
-    ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
-    for (String dataSetName : flowletDef.getDatasets()) {
-      builder.put(dataSetName, dataSetContext.getDataSet(dataSetName));
-    }
-    return builder.build();
   }
 
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,

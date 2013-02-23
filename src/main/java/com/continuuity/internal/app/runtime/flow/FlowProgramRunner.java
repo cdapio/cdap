@@ -19,6 +19,7 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -80,12 +81,28 @@ public final class FlowProgramRunner implements ProgramRunner {
                                                                    FlowSpecification flowSpec) {
     Table<String, Integer, ProgramController> flowlets = HashBasedTable.create();
 
-    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
-      int instanceCount = entry.getValue().getInstances();
-      for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
-        flowlets.put(entry.getKey(), instanceId,
-                     startFlowlet(program, new FlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
+    try {
+      for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
+        int instanceCount = entry.getValue().getInstances();
+        for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
+          flowlets.put(entry.getKey(), instanceId,
+                       startFlowlet(program, new FlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
+        }
       }
+    } catch (Throwable t) {
+      try {
+        // Need to stop all started flowlets
+        Futures.successfulAsList(Iterables.transform(flowlets.values(),
+          new Function<ProgramController, ListenableFuture<?>>() {
+            @Override
+            public ListenableFuture<?> apply(ProgramController controller) {
+              return controller.stop();
+            }
+        })).get();
+      } catch (Exception e) {
+        LOG.error("Fail to stop all flowlets on failure.");
+      }
+      throw Throwables.propagate(t);
     }
     return flowlets;
   }

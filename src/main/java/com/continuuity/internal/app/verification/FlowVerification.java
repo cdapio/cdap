@@ -3,14 +3,33 @@ package com.continuuity.internal.app.verification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
+import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.app.Id;
+import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.error.Err;
 import com.continuuity.internal.app.SchemaFinder;
+import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 
+import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +49,18 @@ import java.util.Set;
 * </p>
 */
 public class FlowVerification extends AbstractVerifier implements Verifier<FlowSpecification> {
+
+  private static final Schema STREAM_EVENT_SCHEMA;
+
+  static {
+    Schema schema;
+    try {
+      schema = new ReflectionSchemaGenerator().generate(StreamEvent.class);
+    } catch (UnsupportedTypeException e) {
+      schema = null;
+    }
+    STREAM_EVENT_SCHEMA = schema;
+  }
 
   /**
    * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}
@@ -75,83 +106,55 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       }
     }
 
-    // We through connection and make sure the input and output are compatible.
-    Map<String, FlowletDefinition> flowlets = input.getFlowlets();
-    for(FlowletConnection connection : input.getConnections()) {
-      String source = connection.getSourceName();
-      String target = connection.getTargetName();
+    // FIXME: We should unify the logic here and the queue spec generation, as they are doing the same thing.
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecTable
+            = new SimpleQueueSpecificationGenerator(Id.Account.from("dummy")).create(input);
 
-      // Let's start with a simple case, when the type of source is FLOWLET
-      if(connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
-        VerifyResult result = connectionVerification(flowlets.get(source), flowlets.get(target));
-        // If validation have failed, then we return the status of failure and not proceed further.
-        if(result.getStatus() != VerifyResult.Status.SUCCESS) {
-          return result;
+    // For all connections, there should be an entry in the table.
+    for (FlowletConnection connection : input.getConnections()) {
+      QueueSpecificationGenerator.Node node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
+                                                                                   connection.getSourceName());
+      if (!queueSpecTable.contains(node, connection.getTargetName())) {
+        return VerifyResult.FAILURE(Err.Flow.NO_INPUT_FOR_OUTPUT,
+                                    connection.getTargetName(), connection.getSourceType(), connection.getSourceName());
+      }
+    }
+
+    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell : queueSpecTable.cellSet()) {
+      System.out.println(cell.getRowKey().getName() + " , " + cell.getColumnKey() + " " + cell.getValue());
+    }
+
+    // For each output entity, check for any unconnected output
+    for (QueueSpecificationGenerator.Node node : queueSpecTable.rowKeySet()) {
+      // For stream output, no need to check
+      if (node.getType() == FlowletConnection.Type.STREAM) {
+        continue;
+      }
+
+      // For all outputs of a flowlet, remove all the matched connected schema, if there is anything left,
+      // then it's a incomplete flow connection (has output not connect to any input).
+      Multimap<String, Schema> outputs = toMultimap(input.getFlowlets().get(node.getName()).getOutputs());
+      for (Map.Entry<String, Set<QueueSpecification>> entry : queueSpecTable.row(node).entrySet()) {
+        for (QueueSpecification queueSpec : entry.getValue()) {
+          outputs.remove(queueSpec.getQueueName().getSimpleName(), queueSpec.getOutputSchema());
         }
-      } else if(connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        // We know that output type is a stream, but there should be a input that can handle this.
+      }
+
+      if (!outputs.isEmpty()) {
+        return VerifyResult.FAILURE(Err.Flow.MORE_OUTPUT_NOT_ALLOWED,
+                                    node.getType(), node.getName(), outputs);
       }
     }
 
     return VerifyResult.SUCCESS();
   }
 
-  /**
-   * This method verifies output schema of a flowlets is compatible with the input schema of downstream
-   * flowlet.Following is how this is done
-   * <p>
-   * Assume that we have a flowlet X and flowlet Y and X is connected to Y as per the definitions in
-   * connection. Following have to be true to say that flowlet X is safely connected to Y
-   * <ul>
-   * <li>For each output emitter type of X, there is atleast one input on Y that can accept and process data
-   * (including ANY)</li>
-   * <li>Schema's of the output emitter type of X that matches output type of Y have to be compatible</li>
-   * <li></li>
-   * </ul>
-   * </p>
-   *
-   * @param source flowlet definition
-   * @param target flowlet definition
-   * @return An instance of {@link VerifyResult}
-   */
-  private VerifyResult connectionVerification(FlowletDefinition source, FlowletDefinition target) {
-    Map<String, Set<Schema>> output = source.getOutputs();
-    Map<String, Set<Schema>> input = target.getInputs();
+  private <K, V> Multimap<K, V> toMultimap(Map<K, ? extends Collection<V>> map) {
+    Multimap<K, V> result = HashMultimap.create();
 
-    boolean found = false;
-    for(Map.Entry<String, Set<Schema>> entryOutput : output.entrySet()) {
-      String outputName = entryOutput.getKey();
-
-      // Check also caught in the configure during creation phase.
-      // We restrict number of schema's an output can have.
-      if(entryOutput.getValue().size() > 1) {
-        return VerifyResult.FAILURE(Err.Flow.MORE_OUTPUT_NOT_ALLOWED, entryOutput.getKey(),
-                                    source.getFlowletSpec().getName());
-      }
-
-      for(Map.Entry<String, Set<Schema>> entryInput : input.entrySet()) {
-        String inputName = entryInput.getKey();
-
-        // When the output name is same as input name - we check if their schema's
-        // are same (equal or compatible)
-        if(outputName.equals(inputName)) {
-          found = SchemaFinder.checkSchema(entryOutput.getValue(), entryInput.getValue());
-          ImmutablePair<Schema, Schema> c = SchemaFinder.findSchema(entryOutput.getValue(), entryInput.getValue());
-        }
-
-        // If not found there, we do a small optimization where we check directly if
-        // the output matches the schema of ANY_INPUT schema. If it doesn't then we
-        // have an issue else we are good.
-        if(! found && input.containsKey(FlowletDefinition.ANY_INPUT)) {
-          found = SchemaFinder.checkSchema(entryOutput.getValue(), input.get(FlowletDefinition.ANY_INPUT));
-        }
-        // If we found a schema that matches then we are good.
-        if(found){
-          return VerifyResult.SUCCESS();
-        }
-      }
+    for (Map.Entry<K, ? extends Collection<V>> entry : map.entrySet()) {
+      result.putAll(entry.getKey(), entry.getValue());
     }
-    return VerifyResult.FAILURE(
-      Err.Flow.NO_INPUT_FOR_OUTPUT, target.getFlowletSpec().getName(), source.getFlowletSpec().getName());
+    return result;
   }
 }

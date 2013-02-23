@@ -12,10 +12,20 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataSets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
@@ -30,26 +40,55 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private static final int MAX_WORKER_THREADS = 10;
 
+  private final OperationExecutor opex;
   private ServerBootstrap bootstrap;
+
+  @Inject
+  public ProcedureProgramRunner(OperationExecutor opex) {
+    this.opex = opex;
+  }
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
-    Preconditions.checkNotNull(appSpec, "Missing application specification.");
+    try {
+      // Extract and verify parameters
+      ApplicationSpecification appSpec = program.getSpecification();
+      Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getProcessorType();
-    Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == Type.PROCEDURE, "Only PROCEDURE process type is supported.");
+      Type processorType = program.getProcessorType();
+      Preconditions.checkNotNull(processorType, "Missing processor type.");
+      Preconditions.checkArgument(processorType == Type.PROCEDURE, "Only PROCEDURE process type is supported.");
 
-    ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
-    Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
+      ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
+      Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
 
-    RunId runId = RunId.generate();
+      int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
-    bootstrap = createBootstrap(program);
+      Class<? extends Procedure> procedureClass = (Class<? extends Procedure>) program.getMainClass();
+      ClassLoader classLoader = procedureClass.getClassLoader();
 
-    return null;
+      RunId runId = RunId.generate();
+
+      // Creates opex related objects
+      OperationContext opCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
+      TransactionProxy transactionProxy = new TransactionProxy();
+      DataFabric dataFabric = new DataFabricImpl(opex, opCtx);
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
+      // Only allows read only datasets
+      dataSetInstantiator.setReadOnly();
+      dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+
+      BasicProcedureContext procedureContext =
+        new BasicProcedureContext(program, instanceId, runId,
+                                  DataSets.createDataSets(dataSetInstantiator, procedureSpec.getDataSets()),
+                                  procedureSpec);
+
+      bootstrap = createBootstrap(program);
+
+      return null;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private ServerBootstrap createBootstrap(Program program) {
@@ -81,7 +120,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private void injectFields(Procedure procedure, TypeToken<? extends Procedure> procedureType,
                             BasicProcedureContext procedureContext) throws IllegalAccessException {
 
-    // Walk up the hierarchy of flowlet class.
+    // Walk up the hierarchy of procedure class.
     for (TypeToken<?> type : procedureType.getTypes().classes()) {
       if (type.getRawType().equals(Object.class)) {
         break;
