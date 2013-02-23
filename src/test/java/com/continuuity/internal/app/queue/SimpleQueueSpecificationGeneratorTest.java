@@ -8,7 +8,7 @@ import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowletConnection;
-import com.continuuity.app.Id;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -59,7 +59,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(Id.Account.DEFAULT());
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(DefaultId.ACCOUNT);
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
@@ -96,7 +96,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(Id.Account.DEFAULT());
+    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(DefaultId.ACCOUNT);
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")

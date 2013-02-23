@@ -3,7 +3,7 @@ package com.continuuity.runtime;
 import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.app.Id;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -59,7 +59,7 @@ public class FlowTest {
     );
     deployedJar.deleteOnExit();
 
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
+    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
     final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
@@ -86,11 +86,11 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(1);
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
-    OperationContext opCtx = new OperationContext(Id.Account.DEFAULT().getId(),
+    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
     QueueProducer queueProducer = new QueueProducer("Testing");
-    QueueName queueName = QueueName.fromStream(Id.Account.DEFAULT(), "text");
+    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT, "text");
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 10; i++) {
       String msg = "Testing message " + i;

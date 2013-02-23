@@ -7,7 +7,7 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.TestHelper;
 import com.continuuity.ToyApp;
 import com.continuuity.WebCrawlApp;
-import com.continuuity.app.Id;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
@@ -47,7 +47,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     deployedJar.deleteOnExit();
-    TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
+    TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
   }
 
   /**
@@ -59,7 +59,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
 
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(Id.Account.DEFAULT(), deployedJar);
+    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms)p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
