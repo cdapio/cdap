@@ -102,12 +102,12 @@ public final class InMemoryProgramRuntimeService extends AbstractIdleService imp
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected synchronized  void startUp() throws Exception {
     // No-op
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected synchronized void shutDown() throws Exception {
     // No-op
   }
 }
