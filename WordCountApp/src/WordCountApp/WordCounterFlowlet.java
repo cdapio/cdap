@@ -7,21 +7,31 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 public class WordCounterFlowlet extends AbstractFlowlet {
+
+  @UseDataSet("wordStats")
+  private Table wordStatsTable;
+
+  @UseDataSet("wordCounts")
+  private Table wordCountsTable;
+
+  private OutputEmitter<String> wordOutput;
 
   public WordCounterFlowlet() {
     super("wordCounter");
   }
 
-  @UseDataSet("wordStats")
-  private Table wordStatsTable;
-  
-  @UseDataSet("wordCounts")
-  private Table wordCountsTable;
-
-  private OutputEmitter<String> wordOutput;
+  @Override
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription("Example Word Count Procedure")
+      .useDataSet("wordStats","wordCounts")
+      .build();
+  }
 
   @Process("wordOut")
   public void process(String word) throws OperationException {

@@ -1,5 +1,6 @@
 package CountOddAndEven;
 
+import com.continuuity.api.annotation.Process;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**
@@ -12,6 +13,7 @@ public class OddCounter extends AbstractFlowlet {
     super("OddCounter");
   }
 
+  @Process("oddOut")
   public void process(Integer number) {
     count++;
   }

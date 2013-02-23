@@ -3,12 +3,12 @@
  */
 package com.continuuity.examples.twitter;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,13 +18,28 @@ import java.util.Map;
 public class TwitterProcessor extends AbstractFlowlet {
   private OutputEmitter<Map<String, Object>> output;
 
+  @UseDataSet(TwitterFlow.topHashTags)
   private SortedCounterTable topHashTags;
+
+  @UseDataSet(TwitterFlow.topUsers)
   private SortedCounterTable topUsers;
+
+  @UseDataSet(TwitterFlow.topUsers)
   private CounterTable wordCounts;
+
+  @UseDataSet(TwitterFlow.hashTagWordAssocs)
   private CounterTable hashTagWordAssocs;
 
   public TwitterProcessor() {
     super("Processors");
+  }
+
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet(TwitterFlow.topHashTags, TwitterFlow.topUsers, TwitterFlow.topUsers, TwitterFlow.hashTagWordAssocs)
+      .build();
   }
 
   public void process(OutputEmitter<Tweet> tweet) {

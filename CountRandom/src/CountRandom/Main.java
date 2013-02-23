@@ -14,17 +14,11 @@ public class Main implements Application {
       .setName("CountRandomDemo")
       .setDescription("")
       .noStream()
-      .withDataSets().add(new Table("counters"))
-      .withFlows().add(new CountRandom())
+      .withDataSets()
+        .add(new Table("counters"))
+      .withFlows()
+        .add(new CountRandom())
       .noProcedure()
       .build();
   }
-//  @Override
-//  public ApplicationSpecification configure() {
-//    return ApplicationSpecification.builder()
-//      .setApplicationName("CountRandomDemo")
-//      .addFlow(CountRandom.class)
-//      .addDataSet(new Table("counters"))
-//      .create();
-//  }
 }

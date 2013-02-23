@@ -1,17 +1,27 @@
 package SimpleWriteAndRead;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 
 public class ReaderFlowlet extends AbstractFlowlet {
+
+  @UseDataSet(Common.tableName)
+  KeyValueTable kvTable;
 
   public ReaderFlowlet() {
     super("reader");
   }
 
-  KeyValueTable kvTable;
-
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet(Common.tableName)
+      .build();
+  }
 
   public void process(byte[] key) throws OperationException {
     if (Common.debug)

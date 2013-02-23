@@ -16,7 +16,6 @@ public class StreamSource extends AbstractFlowlet {
   }
 
   public void process(StreamEvent event) {
-
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
 

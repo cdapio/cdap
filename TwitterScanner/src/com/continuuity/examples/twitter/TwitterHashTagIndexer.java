@@ -3,16 +3,29 @@
  */
 package com.continuuity.examples.twitter;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+
 import java.util.Map;
 
 public class TwitterHashTagIndexer extends AbstractFlowlet {
 
+  @UseDataSet(TwitterFlow.topHashTags)
+  private SortedCounterTable topHashTags;
+
   public TwitterHashTagIndexer() {
     super("HashTagIndexer");
   }
-  private SortedCounterTable topHashTags;
+
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet(TwitterFlow.topHashTags)
+      .build();
+  }
 
   public void process(Map<String,Object> tuple) {
 

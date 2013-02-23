@@ -19,28 +19,30 @@ import java.util.Map;
 
 public class WordCountProcedure extends AbstractProcedure {
 
-  public WordCountProcedure() {
-    super("WordCountProcedure");
-  }
-  @Override
-  public ProcedureSpecification configure() {
-    return ProcedureSpecification.Builder.with()
-        .setName("WordCountProcedure")
-        .setDescription("Example Word Count Procedure")
-        .build();
-  }
-
   @UseDataSet("wordStats")
   private Table wordStatsTable;
-  
+
   @UseDataSet("wordCounts")
   private Table wordCountsTable;
-  
+
   @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
 
   @UseDataSet("wordAssocs")
   private WordAssocTable wordAssocTable;
+
+  public WordCountProcedure() {
+    super("WordCountProcedure");
+  }
+
+  @Override
+  public ProcedureSpecification configure() {
+    return ProcedureSpecification.Builder.with()
+        .setName("WordCountProcedure")
+        .setDescription("Example Word Count Procedure")
+        .useDataSet("wordStats","wordCounts","uniqueCount","wordAssocs")
+        .build();
+  }
 
   public void process(ProcedureRequest request, ProcedureResponder responder) throws IOException, OperationException {
     final Map<String, String> arguments = request.getArguments();

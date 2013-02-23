@@ -1,8 +1,10 @@
 package CountTokens;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 
 import java.util.Map;
 
@@ -12,7 +14,16 @@ public class CountByField extends AbstractFlowlet {
     super("CountByField");
   }
 
+  @UseDataSet("counters")
   KeyValueTable counters;
+
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet("counters")
+      .build();
+  }
 
   public void process(Map<String, String> tupleIn) throws OperationException {
     if (Common.debug) {

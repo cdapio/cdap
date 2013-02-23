@@ -15,9 +15,12 @@ public class Main implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("CountAndFilterWordsDemo")
       .setDescription("")
-      .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable(Common.counterTableName))
-      .withFlows().add(new CountAndFilterWords())
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(Common.counterTableName))
+      .withFlows()
+        .add(new CountAndFilterWords())
       .noProcedure()
       .build();
   }

@@ -1,6 +1,8 @@
 package CountCounts;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 
@@ -10,7 +12,17 @@ public class StreamSource extends AbstractFlowlet {
   static String keyTotal = ":sourceTotal:";
 
   private OutputEmitter<String> output;
+
+  @UseDataSet(Common.tableName)
   CounterTable counters;
+
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName("text")
+      .setDescription("")
+      .useDataSet(Common.tableName)
+      .build();
+  }
 
   public StreamSource() {
     super("source");

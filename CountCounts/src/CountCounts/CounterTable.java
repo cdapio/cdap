@@ -48,5 +48,4 @@ public class CounterTable extends DataSet {
       throw new RuntimeException(e);
     }
   }
-
 }

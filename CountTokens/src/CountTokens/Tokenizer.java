@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class Tokenizer extends AbstractFlowlet {
   private OutputEmitter<Map<String,String>> output;
+
   public Tokenizer() {
     super("split");
   }

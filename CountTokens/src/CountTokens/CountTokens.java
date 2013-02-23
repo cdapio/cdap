@@ -16,10 +16,11 @@ public class CountTokens implements Flow {
         .add("count1", new CountByField())
         .add("count2", new CountByField())
       .connect()
+        .fromStream("text").to("source")
         .from("source").to("split")
         .from("split").to("count1")
-        .from("split").to("count1")
-      .from("OddOrEven").to("count2")
+        .from("split").to("upper")
+      .from("upper").to("count2")
       .build();
   }
 }

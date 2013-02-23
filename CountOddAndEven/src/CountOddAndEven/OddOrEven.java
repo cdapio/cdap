@@ -1,5 +1,6 @@
 package CountOddAndEven;
 
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
@@ -8,7 +9,11 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
  * different streams.
  */
 public class OddOrEven extends AbstractFlowlet {
+
+  @Output("evenOut")
   private OutputEmitter<Integer> evenOutput;
+
+  @Output("oddOut")
   private OutputEmitter<Integer> oddOutput;
 
   public OddOrEven() {
