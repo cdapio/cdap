@@ -1,12 +1,15 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+
 import java.util.Map;
 
 public class CountByField extends AbstractFlowlet {
 
+  @UseDataSet(Common.counterTableName)
   KeyValueTable counters;
 
   public CountByField() {

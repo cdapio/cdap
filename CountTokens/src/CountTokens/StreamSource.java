@@ -12,13 +12,11 @@ public class StreamSource extends AbstractFlowlet {
 
   private OutputEmitter<Map<String,String>> output;
 
-
   public StreamSource() {
     super("source");
   }
 
   public void process(StreamEvent event) {
-
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
 

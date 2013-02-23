@@ -14,8 +14,10 @@ public class Main implements Application {
       .setName("CountRandomApp")
       .setDescription("Count Random Application")
       .noStream()
-      .withDataSets().add(new Table("counters"))
-      .withFlows().add(new CountRandom())
+      .withDataSets()
+        .add(new Table("counters"))
+      .withFlows()
+        .add(new CountRandom())
       .noProcedure()
       .build();
   }

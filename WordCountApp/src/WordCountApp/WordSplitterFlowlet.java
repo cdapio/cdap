@@ -1,5 +1,6 @@
 package WordCountApp;
 
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -9,7 +10,10 @@ public class WordSplitterFlowlet extends AbstractFlowlet {
   public WordSplitterFlowlet() {
     super("wordSplitter");
   }
+  @Output("wordOut")
   private OutputEmitter<String> wordOutput;
+
+  @Output("wordArrayOut")
   private OutputEmitter<String[]> wordArrayOutput;
 
   public void process(StreamEvent event) {

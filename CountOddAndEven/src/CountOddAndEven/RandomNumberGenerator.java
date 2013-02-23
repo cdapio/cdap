@@ -16,7 +16,6 @@ public class RandomNumberGenerator extends AbstractFlowlet implements GeneratorF
 
   private OutputEmitter<Integer> randomOutput;
 
-
   public RandomNumberGenerator() {
     super("NumGenerator");
   }

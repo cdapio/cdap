@@ -15,19 +15,15 @@ public class RandomSource extends AbstractGeneratorFlowlet {
   int direction = 1;
 
   public RandomSource() {
-    super("RandomSource");
+    super("gen");
   }
 
-  public void generate() throws Exception {
+  public void generate() throws InterruptedException {
     Integer randomNumber = new Integer(this.random.nextInt(10000));
-    try {
-      Thread.sleep(millis);
-      millis += direction;
-      if(millis > 100 || millis < 1) {
-        direction = direction * -1;
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    Thread.sleep(millis);
+    millis += direction;
+    if(millis > 100 || millis < 1) {
+      direction = direction * -1;
     }
     randomOutput.emit(randomNumber);
   }

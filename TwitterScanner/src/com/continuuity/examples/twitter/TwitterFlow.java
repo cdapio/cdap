@@ -14,15 +14,6 @@ public class TwitterFlow implements Flow {
   public static final String wordCounts = "wordCounts";
   public static final String hashTagWordAssocs = "hashTagWordAssocs";
 
-//  public static final TupleSchema TWEET_SCHEMA =
-//      new TupleSchemaBuilder().add("tweet", Tweet.class).create();
-//
-//  public static final TupleSchema POST_PROCESS_SCHEMA =
-//      new TupleSchemaBuilder()
-//          .add("name", String.class)
-//          .add("value", Long.class)
-//          .create();
-
   public static final String [] USERNAMES = new String [] {
       "consumerintelli", "continuuity", "bigflowdev"
   };

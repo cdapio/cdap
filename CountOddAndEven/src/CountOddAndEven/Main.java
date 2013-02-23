@@ -15,16 +15,9 @@ public class Main implements Application {
       .setDescription("")
       .noStream()
       .noDataSet()
-      .withFlows().add(new CountOddAndEven())
+      .withFlows()
+        .add(new CountOddAndEven())
       .noProcedure()
       .build();
   }
-
-//  @Override
-//  public ApplicationSpecification configure() {
-//    return ApplicationSpecification.builder()
-//      .setApplicationName("CountOddAndEvenDemo")
-//      .addFlow(CountOddAndEven.class)
-//      .create();
-//  }
 }

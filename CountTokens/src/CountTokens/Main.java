@@ -15,9 +15,12 @@ public class Main implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("CountTokensDemo")
       .setDescription("")
-      .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable(Common.tableName))
-      .withFlows().add(new CountTokens())
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(Common.tableName))
+      .withFlows()
+        .add(new CountTokens())
       .noProcedure()
       .build();
   }

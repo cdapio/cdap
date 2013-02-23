@@ -1,6 +1,7 @@
 package CountCounts;
 
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 public class CountQuery extends AbstractProcedure {
 
+  @UseDataSet(Common.tableName)
   CounterTable counters;
 
   public CountQuery() {
@@ -28,6 +30,7 @@ public class CountQuery extends AbstractProcedure {
     return ProcedureSpecification.Builder.with()
       .setName("CountQuery")
       .setDescription("Example Count Query Procedure")
+      .useDataSet(Common.tableName)
       .build();
   }
 

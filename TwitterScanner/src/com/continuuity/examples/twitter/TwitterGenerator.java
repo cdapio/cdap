@@ -28,13 +28,6 @@ public class TwitterGenerator extends AbstractFlowlet implements GeneratorFlowle
   public TwitterGenerator() {
     super("StreamReader");
   }
-  /**
-   * Configures a flowlet's streams. Basically, we define what our output
-   * schema is going to be so that downstream flowlets can adhere to our
-   * contract.
-   *
-   * @param specifier Flowlet specifier.
-   */
 
   /**
    * This is the Twitter Client we will use to generate Tuples

@@ -2,7 +2,6 @@ package CountCounts;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 
 /**
@@ -18,7 +17,7 @@ public class Main implements Application {
       .withStreams()
         .add(new Stream("text"))
       .withDataSets()
-        .add(new KeyValueTable(Common.tableName))
+        .add(new CounterTable(Common.tableName))
       .withFlows()
         .add(new CountCounts())
       .withProcedures().add(new CountQuery())

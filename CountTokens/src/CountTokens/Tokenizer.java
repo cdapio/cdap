@@ -1,5 +1,6 @@
 package CountTokens;
 
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
@@ -7,7 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Tokenizer extends AbstractFlowlet {
+
+  @Output("splitOut")
   private OutputEmitter<Map<String,String>> output;
+
   public Tokenizer() {
     super("split");
   }
