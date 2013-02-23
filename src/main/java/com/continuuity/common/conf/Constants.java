@@ -4,12 +4,6 @@ package com.continuuity.common.conf;
  * Constants used by different systems are all defined here.
  */
 public class Constants {
-
-  /**
-   * The default account id to use
-   */
-  public static String DEFAULT_ACCOUNT_ID = "demo";
-
   /**
    * Service names.
    */
