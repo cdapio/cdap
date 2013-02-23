@@ -29,7 +29,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final String basePath;
 
   public DataFabricLevelDBModule() {
-    CConfiguration conf = CConfiguration.create();
+    this(CConfiguration.create());
+  }
+
+  public DataFabricLevelDBModule(CConfiguration conf) {
+    conf = CConfiguration.create();
     String path = conf.get("data.local.leveldb");
     if (path == null || path.isEmpty()) {
       path =
@@ -38,11 +42,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
         "ldb-test-" + Long.toString(System.currentTimeMillis());
       if (!new File(path).mkdirs()) {
         throw new RuntimeException("Unable to create directory for ldb");
-      }
-    } else {
-      File file = new File(path);
-      if(! file.exists()) {
-        file.mkdirs();
       }
     }
 
