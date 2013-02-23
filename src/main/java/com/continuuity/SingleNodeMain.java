@@ -233,7 +233,7 @@ public class SingleNodeMain {
       new BigMamaModule(configuration),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      inVPC && levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
+      inVPC || levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules()
     );
 
