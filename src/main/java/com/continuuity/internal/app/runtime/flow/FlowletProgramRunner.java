@@ -44,7 +44,6 @@ import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.internal.app.runtime.DataSetContextFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
@@ -79,16 +78,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
-  private final DataSetContextFactory dataSetContextFactory;
   private final SchemaGenerator schemaGenerator;
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
 
   @Inject
-  public FlowletProgramRunner(DataSetContextFactory dataSetContextFactory, SchemaGenerator schemaGenerator,
+  public FlowletProgramRunner(SchemaGenerator schemaGenerator,
                               TransactionAgentSupplierFactory txAgentSupplierFactory,
                               QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
-    this.dataSetContextFactory = dataSetContextFactory;
     this.schemaGenerator = schemaGenerator;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
@@ -134,7 +131,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates opex related objects
       TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
-      DataSetContext dataSetContext = dataSetContextFactory.create(program);
+      DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,

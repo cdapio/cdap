@@ -154,7 +154,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
             } catch (Throwable t) {
               LOGGER.error("Fail to commit transction: " + input, t);
               callback.onFailure(event, inputContext,
-                                 new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage()),
+                                 new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage(), t),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             }
           }
@@ -181,7 +181,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
               LOGGER.error("OperationException when aborting transaction.", t);
             } finally {
               callback.onFailure(event, inputContext,
-                                 new FailureReason(FailureReason.Type.USER, t.getMessage()),
+                                 new FailureReason(FailureReason.Type.USER, t.getMessage(), t),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
             }
           }

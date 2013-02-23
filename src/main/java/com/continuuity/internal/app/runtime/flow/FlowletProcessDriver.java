@@ -263,6 +263,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       public void onFailure(Object inputObject, InputContext inputContext, FailureReason reason,
                             PostProcess.InputAcknowledger inputAcknowledger) {
 
+        LOG.info("Process failure. " + reason.getMessage(), reason.getCause());
         FailurePolicy failurePolicy;
         inflight.decrementAndGet();
         try {

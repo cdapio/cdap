@@ -120,10 +120,6 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       }
     }
 
-    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell : queueSpecTable.cellSet()) {
-      System.out.println(cell.getRowKey().getName() + " , " + cell.getColumnKey() + " " + cell.getValue());
-    }
-
     // For each output entity, check for any unconnected output
     for (QueueSpecificationGenerator.Node node : queueSpecTable.rowKeySet()) {
       // For stream output, no need to check

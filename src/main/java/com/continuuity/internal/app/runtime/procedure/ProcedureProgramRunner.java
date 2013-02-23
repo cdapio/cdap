@@ -14,7 +14,6 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.internal.app.runtime.DataSetContextFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
@@ -39,13 +38,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private ServerBootstrap bootstrap;
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
-  private final DataSetContextFactory dataSetContextFactory;
 
   @Inject
-  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
-                                DataSetContextFactory dataSetContextFactory) {
+  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
-    this.dataSetContextFactory = dataSetContextFactory;
   }
 
   @Override
@@ -71,7 +67,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       // Creates opex related objects
       TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
-      DataSetContext dataSetContext = dataSetContextFactory.create(program);
+      DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
       BasicProcedureContext procedureContext =
         new BasicProcedureContext(program, instanceId, runId,
