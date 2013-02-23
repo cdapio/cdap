@@ -36,7 +36,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
         System.getProperty("java.io.tmpdir") +
         System.getProperty("file.separator") +
         "ldb-test-" + Long.toString(System.currentTimeMillis());
-      if (!new File(path).mkdir()) {
+      if (!new File(path).mkdirs()) {
         throw new RuntimeException("Unable to create directory for ldb");
       }
     }
