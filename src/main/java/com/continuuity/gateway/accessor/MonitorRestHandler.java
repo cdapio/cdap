@@ -201,6 +201,8 @@ public class MonitorRestHandler extends NettyRestHandler {
         return;
       }
 
+      String accountId = accessor.getAuthenticator().getAccountId(request);
+
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(path)) {
         helper.setMethod("ping");
@@ -225,7 +227,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         statusmetrics.put("STARTING", 0);
         statusmetrics.put("STOPPING", 0);
         AppFabricService.Client flowClient = this.getFlowClient();
-        List<ActiveFlow> activeFlows = flowClient.getFlows(Constants.defaultAccount);
+        List<ActiveFlow> activeFlows = flowClient.getFlows(accountId);
         //iterate through flows, build up response string
         for(ActiveFlow activeFlow : activeFlows) {
           // increment general status metric
@@ -237,7 +239,7 @@ public class MonitorRestHandler extends NettyRestHandler {
           // get flow metrics for this flow
           MetricsFrontendService.Client metricsClient = this.getMetricsClient();
           CounterRequest counterRequest = new CounterRequest(
-            new FlowArgument(Constants.defaultAccount, activeFlow.getApplicationId(),
+            new FlowArgument(accountId, activeFlow.getApplicationId(),
                     activeFlow.getFlowId()));
           List<String> counterNames = parameters.get("counter");
           if (counterNames != null) {
@@ -305,14 +307,14 @@ public class MonitorRestHandler extends NettyRestHandler {
       if ("status".equals(query)) {
         AppFabricService.Client flowClient = this.getFlowClient();
         FlowStatus status = flowClient.status(new AuthToken(),
-            new FlowIdentifier(Constants.defaultAccount, appid, flowid, -1));
+            new FlowIdentifier(accountId, appid, flowid, -1));
         String value = status.getStatus();
         respondSuccess(message.getChannel(), request, value.getBytes());
         helper.finish(Success);
       } else if ("metrics".equals(query)) {
         MetricsFrontendService.Client metricsClient = this.getMetricsClient();
         CounterRequest counterRequest = new CounterRequest(
-            new FlowArgument(Constants.defaultAccount, appid, flowid));
+            new FlowArgument(accountId, appid, flowid));
         List<String> counterNames = parameters.get("counter");
         if (counterNames != null) {
           counterRequest.setName(counterNames);
