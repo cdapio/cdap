@@ -32,7 +32,9 @@ import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.store.MDSBasedStore;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
@@ -81,6 +83,7 @@ public class MDSBasedStoreTest {
             bind(OperationExecutor.class).to(NoOperationExecutor.class);
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+            bind(LocationFactory.class).to(LocalLocationFactory.class);
           }
         }
       );
@@ -172,14 +175,18 @@ public class MDSBasedStoreTest {
       return ApplicationSpecification.Builder.with()
         .setName("FooApp")
         .setDescription("Foo App")
-        .withStreams().add(new com.continuuity.api.data.stream.Stream("stream1"))
-        .add(new com.continuuity.api.data.stream.Stream("stream2"))
-        .withDataSets().add(new Table("dataset1"))
-        .add(new KeyValueTable("dataset2"))
-        .withFlows().add(new FlowImpl("flow1"))
-        .add(new FlowImpl("flow2"))
-        .withProcedures().add(new ProcedureImpl("procedure1"))
-        .add(new ProcedureImpl("procedure2"))
+        .withStreams()
+          .add(new com.continuuity.api.data.stream.Stream("stream1"))
+          .add(new com.continuuity.api.data.stream.Stream("stream2"))
+        .withDataSets()
+          .add(new Table("dataset1"))
+          .add(new KeyValueTable("dataset2"))
+        .withFlows()
+          .add(new FlowImpl("flow1"))
+          .add(new FlowImpl("flow2"))
+        .withProcedures()
+          .add(new ProcedureImpl("procedure1"))
+          .add(new ProcedureImpl("procedure2"))
         .build();
     }
   }

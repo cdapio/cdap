@@ -4,6 +4,8 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.util.Map;
 
 /**
@@ -24,5 +26,6 @@ public interface OutputEmitter<T> {
    * @param partitions mapping from partition key to object, which the {@link Object#hashCode()}
    *                   of the object value would be triggered to compute the actual partition value.
    */
+  @Beta
   void emit(T data, Map<String, Object> partitions);
 }
