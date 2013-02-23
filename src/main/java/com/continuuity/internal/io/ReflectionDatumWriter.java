@@ -39,10 +39,12 @@ public final class ReflectionDatumWriter {
   }
 
   private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
-    if(seenRefs.contains(object)) {
-      throw new IOException("Circular reference not supported.");
+    if(object != null) {
+      if (seenRefs.contains(object)) {
+        throw new IOException("Circular reference not supported.");
+      }
+      seenRefs.add(object);
     }
-    seenRefs.add(object);
 
     switch(objSchema.getType()) {
       case NULL:
@@ -80,6 +82,17 @@ public final class ReflectionDatumWriter {
         break;
       case RECORD:
         writeRecord(object, encoder, objSchema, seenRefs);
+        break;
+      case UNION:
+        // Assumption in schema generation that index 0 is the object type, index 1 is null.
+        if (object == null) {
+          encoder.writeInt(1);
+        } else {
+          seenRefs.remove(object);
+          encoder.writeInt(0);
+          write(object, encoder, objSchema.getUnionSchema(0), seenRefs);
+        }
+        break;
     }
   }
 
@@ -165,16 +178,6 @@ public final class ReflectionDatumWriter {
         }
 
         Schema fieldSchema = field.getSchema();
-        if(fieldSchema.getType() == Schema.Type.UNION) {
-          // It's assumed that 0 is for the actual type, 1 is for null value.
-          if(value == null) {
-            encoder.writeInt(1);
-            fieldSchema = fieldSchema.getUnionSchemas().get(1);
-          } else {
-            encoder.writeInt(0);
-            fieldSchema = fieldSchema.getUnionSchemas().get(0);
-          }
-        }
         write(value, encoder, fieldSchema, seenRefs);
       }
     } catch(Exception e) {

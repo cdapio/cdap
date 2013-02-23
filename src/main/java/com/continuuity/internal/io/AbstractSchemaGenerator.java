@@ -91,7 +91,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
     // Java array, use ARRAY schema.
     if(rawType.isArray()) {
-      return Schema.arrayOf(doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords));
+      Schema componentSchema = doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords);
+      return Schema.arrayOf(Schema.unionOf(componentSchema, Schema.of(Schema.Type.NULL)));
     }
 
     if(!( type instanceof Class || type instanceof ParameterizedType )) {
@@ -107,7 +108,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
         throw new UnsupportedTypeException("Only supports parameterized Collection type.");
       }
       TypeToken<?> componentType = typeToken.resolveType(( (ParameterizedType) type ).getActualTypeArguments()[0]);
-      return Schema.arrayOf(doGenerate(componentType, knownRecords));
+      Schema componentSchema = doGenerate(componentType, knownRecords);
+      return Schema.arrayOf(Schema.unionOf(componentSchema, Schema.of(Schema.Type.NULL)));
     }
 
     // Java Map, use MAP schema.
@@ -119,7 +121,9 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
       TypeToken<?> keyType = typeToken.resolveType(typeArgs[0]);
       TypeToken<?> valueType = typeToken.resolveType(typeArgs[1]);
 
-      return Schema.mapOf(doGenerate(keyType, knownRecords), doGenerate(valueType, knownRecords));
+      Schema valueSchema = doGenerate(valueType, knownRecords);
+
+      return Schema.mapOf(doGenerate(keyType, knownRecords), Schema.unionOf(valueSchema, Schema.of(Schema.Type.NULL)));
     }
 
     // Any Java class, class name as the record name.
