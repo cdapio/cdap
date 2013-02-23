@@ -1,5 +1,6 @@
 package CountRandom;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
@@ -9,6 +10,7 @@ public class NumberCounter extends AbstractFlowlet {
 
   static final byte[] column = { 'c', 'o', 'u', 'n', 't' };
 
+  @UseDataSet("counters")
   Table counters;
 
   public NumberCounter() {
@@ -16,9 +18,6 @@ public class NumberCounter extends AbstractFlowlet {
   }
 
   public void process(Integer number) {
-
-    this.counters = this.getContext().getDataSet("counters");
-
     try {
       counters.write(new Increment(number.toString().getBytes(), column, 1L));
     } catch (OperationException e) {

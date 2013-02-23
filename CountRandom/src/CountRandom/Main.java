@@ -11,20 +11,12 @@ public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountRandomDemo")
-      .setDescription("")
+      .setName("CountRandomApp")
+      .setDescription("Count Random Application")
       .noStream()
       .withDataSets().add(new Table("counters"))
       .withFlows().add(new CountRandom())
       .noProcedure()
       .build();
   }
-//  @Override
-//  public ApplicationSpecification configure() {
-//    return ApplicationSpecification.builder()
-//      .setApplicationName("CountRandomDemo")
-//      .addFlow(CountRandom.class)
-//      .addDataSet(new Table("counters"))
-//      .create();
-//  }
 }
