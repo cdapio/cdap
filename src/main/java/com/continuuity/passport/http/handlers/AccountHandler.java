@@ -429,7 +429,7 @@ public class AccountHandler extends  PassportHandler{
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         requestSuccess();
-        return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
+        return Response.ok(status.getMessage()).build();
       } else {
         requestFailed(); //Failed request
         return Response.status(Response.Status.UNAUTHORIZED).entity(
