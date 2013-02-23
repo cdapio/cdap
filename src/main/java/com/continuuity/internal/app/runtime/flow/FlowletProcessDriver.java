@@ -252,6 +252,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       public void onSuccess(Object object, InputContext inputContext) {
         inflight.decrementAndGet();
         try {
+          flowletContext.getMetrics().count("processed", 1);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
@@ -265,6 +266,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         FailurePolicy failurePolicy;
         inflight.decrementAndGet();
         try {
+          flowletContext.getMetrics().count("flowlet.failure", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
           LOG.info("Exception on onFailure call: " + flowletContext, t);
@@ -287,6 +289,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
+            flowletContext.getMetrics().count("processed", 1);
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
