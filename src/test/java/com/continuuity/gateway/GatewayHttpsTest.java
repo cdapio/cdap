@@ -44,7 +44,7 @@ public class GatewayHttpsTest {
    *
    * @throws Exception If the Gateway can not be created.
    */
-  @Before @Ignore
+  @Before
   public void setupGateway() throws Exception {
 
     // Set up our Guice injections
@@ -95,7 +95,7 @@ public class GatewayHttpsTest {
    *
    * @throws Exception If any exceptions happen during the test
    */
-  @Test
+  @Test  @Ignore
   public void testReadFromHttpsGateway() throws Exception {
   // Send some REST events
       for (int i = 0; i < valuesToGet; i++) {
