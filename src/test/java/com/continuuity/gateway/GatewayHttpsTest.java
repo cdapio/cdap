@@ -1,7 +1,6 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DataRestAccessor;
@@ -53,7 +52,7 @@ public class GatewayHttpsTest {
     this.executor = injector.getInstance(OperationExecutor.class);
 
     // Look for a free port
-    port = PortDetector.findFreePort();
+    port = 443;
 
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();
@@ -75,11 +74,8 @@ public class GatewayHttpsTest {
     configuration.set(Constants.CFG_SSL_CERT_KEY_PASSWORD,"realtime");
 
 
-    File filePath = FileUtils.toFile(this.getClass().getResource("ssl.cert"));
+    File filePath = FileUtils.toFile(this.getClass().getResource("/ssl.cert"));
     configuration.set(Constants.CFG_SSL_CERT_KEY_PATH,filePath.getAbsolutePath());
-
-
-
 
     // Now create our Gateway
     theGateway = new Gateway();
@@ -95,9 +91,10 @@ public class GatewayHttpsTest {
    *
    * @throws Exception If any exceptions happen during the test
    */
-  @Test  @Ignore
+  @Test @Ignore
   public void testReadFromHttpsGateway() throws Exception {
-  // Send some REST events
+
+    // Send some REST events
       for (int i = 0; i < valuesToGet; i++) {
         TestUtil.writeAndGet(this.executor,
           "https://localhost:" + port + prefix + path,
