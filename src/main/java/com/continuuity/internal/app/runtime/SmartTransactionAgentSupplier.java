@@ -1,10 +1,13 @@
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.app.program.Program;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * A {@link TransactionAgentSupplier} that will create a new {@link SmartTransactionAgent} every time
@@ -14,26 +17,29 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 public final class SmartTransactionAgentSupplier implements TransactionAgentSupplier {
 
   private final OperationExecutor opex;
-  private final OperationContext operationCtx;
+  private final Program program;
   private final TransactionProxy transactionProxy;
 
+  @Inject
   public SmartTransactionAgentSupplier(OperationExecutor opex,
-                                       OperationContext operationCtx,
-                                       TransactionProxy transactionProxy) {
+                                       TransactionProxy transactionProxy,
+                                       @Assisted Program program) {
     this.opex = opex;
-    this.operationCtx = operationCtx;
+    this.program = program;
     this.transactionProxy = transactionProxy;
   }
 
   @Override
   public TransactionAgent createAndUpdateProxy() {
-    TransactionAgent agent = new SmartTransactionAgent(opex, operationCtx);
+    OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
+    TransactionAgent agent = new SmartTransactionAgent(opex, ctx);
     transactionProxy.setTransactionAgent(agent);
     return agent;
   }
 
   @Override
   public TransactionAgent create() {
-    return new SmartTransactionAgent(opex, operationCtx);
+    OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
+    return new SmartTransactionAgent(opex, ctx);
   }
 }

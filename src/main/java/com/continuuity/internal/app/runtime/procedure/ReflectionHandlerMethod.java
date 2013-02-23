@@ -4,12 +4,14 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
+import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 /**
@@ -39,12 +41,12 @@ final class ReflectionHandlerMethod implements HandlerMethod {
       try {
         method.invoke(procedure, request, new TransactionResponder(txAgent, responder));
       } catch (Throwable t) {
-        LOG.error("Fail to invoke procedure handler: " + method, t);
-//        try {
-//          responder.response(new ProcedureResponse(ProcedureResponse.Code.FAILURE)).close();
-//        } catch (IOException e) {
-//          LOG.error("Fail to close response on error.", t);
-//        }
+        LOG.error("Exception in calling procedure handler: " + method, t);
+        try {
+          responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE)).close();
+        } catch (IOException e) {
+          LOG.error("Fail to close response on error.", t);
+        }
       }
 
     } catch (OperationException e) {
