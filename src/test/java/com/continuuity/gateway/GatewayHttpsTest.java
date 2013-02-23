@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -48,11 +49,41 @@ public void testHttpsConfigs() throws Exception {
     configuration.set(Constants.CFG_SSL_CERT_KEY_PATH,filePath.getAbsolutePath());
 
     HttpConfig defaults = new HttpConfig(name);
-    HttpConfig config = HttpConfig.configure("https", configuration,defaults);
+    HttpConfig config = HttpConfig.configure(name, configuration,defaults);
 
     assertTrue(config.isSsl());  // Check if ssl is enabled
     assert(config.getPort()==443); //Check if port is set to 443
   }
+
+  @Test
+  public void testHttpConfig() throws Exception {
+
+    String name = "http-test";
+    // Look for a free port
+    port =  PortDetector.findFreePort();
+
+    // Create and populate a new config object
+    CConfiguration configuration = new CConfiguration();
+
+    //Enable SSL
+    configuration.set(com.continuuity.common.conf.Constants.CFG_APPFABRIC_ENVIRONMENT,
+      com.continuuity.common.conf.Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
+    // Update SSL passwords andpaths
+    configuration.set(Constants.CFG_SSL_CERT_KEY_PASSWORD,"realtime");
+
+
+    File filePath = FileUtils.toFile(this.getClass().getResource("/ssl.cert"));
+    configuration.set(Constants.CFG_SSL_CERT_KEY_PATH,filePath.getAbsolutePath());
+
+    HttpConfig defaults = new HttpConfig(name);
+    HttpConfig config = HttpConfig.configure(name, configuration,defaults);
+
+    assertFalse(config.isSsl());  // Check if ssl is DISABLED
+    assert(config.getPort()!=443); //Check if port is NOT set to 443
+    assert(config.getPort()== port); //Check if port is NOT set to 443
+
+  }
+
 
   /**
    * This test needs to be commented out since you need to start services as root to bind to 443
