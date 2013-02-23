@@ -167,7 +167,7 @@ task cloud_dist (type: Tar) {
 
   //
   into("bin") {
-    from project.rootProject.subprojects.collect { project ->
+    from project.rootProject.subprojects.findAll { project -> project.name != 'wallboard' }.collect { project ->
       project.file('bin')
     }
     exclude 'node'
