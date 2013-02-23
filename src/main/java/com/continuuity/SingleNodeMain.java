@@ -208,6 +208,8 @@ public class SingleNodeMain {
     }
 
     CConfiguration configuration = CConfiguration.create();
+    configuration.setIfUnset("data.local.leveldb", "data");
+
     boolean inVPC = false;
     String environment = configuration.get("appfabric.environment", "devsuite");
     if(environment.equals("vpc")) {
