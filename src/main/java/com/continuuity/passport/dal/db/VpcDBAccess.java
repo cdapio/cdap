@@ -46,7 +46,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
+  public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException {
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet result = null;
@@ -84,7 +84,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   @Override
   public void removeVPC(int accountId, int vpcId)
-    throws ConfigurationException, RuntimeException, VPCNotFoundException {
+    throws ConfigurationException, VPCNotFoundException {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -117,7 +117,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   @Override
   public boolean addRoles(int accountId, int vpcId, int userId, Role role, String overrides)
-    throws ConfigurationException, RuntimeException {
+    throws ConfigurationException {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -143,8 +143,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -153,7 +152,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
 
   @Override
-  public List<VPC> getVPC(int accountId) throws RuntimeException, ConfigurationException {
+  public List<VPC> getVPC(int accountId) throws ConfigurationException {
 
     List<VPC> vpcList = new ArrayList<VPC>();
     Connection connection = null;
@@ -179,8 +178,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -188,7 +186,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public VPC getVPC(int accountId, int vpcId) throws RuntimeException, ConfigurationException {
+  public VPC getVPC(int accountId, int vpcId) throws ConfigurationException {
     VPC vpc = null;
     Connection connection = null;
     PreparedStatement ps = null;
@@ -214,8 +212,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
       }
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -223,7 +220,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public List<VPC> getVPC(String apiKey) throws RuntimeException, ConfigurationException {
+  public List<VPC> getVPC(String apiKey) throws ConfigurationException {
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -252,8 +249,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
-      //TODO: Log
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }

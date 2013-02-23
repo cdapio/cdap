@@ -8,18 +8,19 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
+import com.continuuity.passport.core.utils.ApiKey;
+import com.continuuity.passport.core.utils.PasswordUtils;
+import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
-import com.continuuity.passport.core.utils.ApiKey;
-import com.continuuity.passport.dal.AccountDAO;
+import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
-import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.Map;
 public class AccountDBAccess extends DBAccess implements AccountDAO {
   private DBConnectionPoolManager poolManager = null;
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
-
+  private final HashFunction hashFunction = Hashing.sha1();
   /**
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
@@ -55,7 +56,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    */
   @Override
   public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException {
-    //TODO: Return boolean?
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet result = null;
@@ -120,7 +120,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.ID_COLUMN);
 
       ps = connection.prepareStatement(SQL);
-      ps.setString(1, generateSaltedHashedPassword(password));
+      ps.setString(1, PasswordUtils.generateHashedPassword(password));
       ps.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
       ps.setString(3, ApiKey.generateKey(String.valueOf(account.getAccountId())));
       ps.setString(4, account.getFirstName());
@@ -143,9 +143,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
   /**
    * @param accountId
-   * @throws com.continuuity.passport.core.exceptions.ConfigurationException
-   *
-   * @throws RuntimeException
+   * @throws ConfigurationException
    */
   @Override
   public void confirmDownload(int accountId) throws ConfigurationException {
@@ -170,7 +168,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -207,7 +205,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         throw new AccountNotFoundException("Account doesn't exists");
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -259,7 +257,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -311,7 +309,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       }
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
     }
@@ -353,7 +351,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -387,7 +385,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -448,7 +446,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
@@ -477,17 +475,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.executeUpdate();
 
     } catch (SQLException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e.getMessage(), e.getCause());
+      throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
     }
   }
-
-  //TODO: Implement this functionality
-  private String generateSaltedHashedPassword(String password) {
-    return password;
-  }
-
 }

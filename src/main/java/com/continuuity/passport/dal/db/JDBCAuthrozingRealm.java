@@ -5,16 +5,14 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
+import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -207,14 +205,15 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         company = rs.getString(3);
         accountId = rs.getInt(4);
         password = rs.getString(5);
+
         apiToken = rs.getString(6);
         confirmed = rs.getBoolean(7);
         count++;
-        Preconditions.checkArgument(count > 1, "Multiple accounts with same account ID");
       }
 
-      Preconditions.checkNotNull(password, "Password not found for %s in the data store", emailId);
-      Preconditions.checkArgument(password.isEmpty(),"Password not found for %s in the data store", emailId);
+      Preconditions.checkArgument(count > 1, "Account not found in DB");
+      Preconditions.checkArgument(!password.isEmpty(),"Password not found for %s in the data store", emailId);
+
       Account account = new Account(firstName, lastName, company, emailId, accountId, apiToken, confirmed);
       //if we are authenticating with API Key then existence of apiKey with a password is authenticating.
       // So set the password to a dummy password
@@ -222,7 +221,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         info = new SimpleAuthenticationInfo(account, UsernamePasswordApiKeyToken.DUMMY_PASSWORD, getName());
       } else {
         info = new SimpleAuthenticationInfo(account, password, getName());
-      }
+     }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     }

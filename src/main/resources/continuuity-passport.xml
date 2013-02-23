@@ -7,7 +7,7 @@
 
     <property>
         <name>passport.jdbc.connection.string</name>
-        <value>jdbc:mysql://localhost:3306/continuuity?user=root</value>
+        <value>jdbc:mysql://localhost:3306/passport?user=root</value>
         <description>Specifies the connection string where passport services are stored</description>
     </property>
 
