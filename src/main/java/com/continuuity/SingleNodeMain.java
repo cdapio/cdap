@@ -114,10 +114,10 @@ public class SingleNodeMain {
       webCloudAppService.stop(true);
       gateway.stop(true);
       metaDataServer.stop(true);
-      overloadFrontend.stop(true);
-      overlordCollection.stop(true);
       metaDataServer.stop(true);
       appFabricServer.startAndWait();
+      overloadFrontend.stop(true);
+      overlordCollection.stop(true);
     } catch (Exception e) {
       LOG.error(StackTraceUtil.toStringStackTrace(e));
     }
@@ -194,6 +194,7 @@ public class SingleNodeMain {
     }
 
     boolean inMemory = false;
+    boolean levelDBEnabled = true;
 
     // We only support 'help' command line options currently
     if (args.length > 0) {
@@ -202,6 +203,8 @@ public class SingleNodeMain {
         return;
       } else if ("--in-memory".equals(args[0])) {
         inMemory = true;
+      } else if ("--leveldb-disable".equals(args[0])) {
+        levelDBEnabled = false;
       } else {
         usage(true);
       }
@@ -235,7 +238,8 @@ public class SingleNodeMain {
       new BigMamaModule(configuration),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      inVPC || levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
+      ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
+        : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules()
     );
 
