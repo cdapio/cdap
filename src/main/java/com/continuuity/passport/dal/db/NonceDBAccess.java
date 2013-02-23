@@ -22,8 +22,8 @@ import java.util.Map;
 public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   private DBConnectionPoolManager poolManager = null;
-  private static final int SESSION_EXPIRATION_MILLS = 1000 * 60 * 10;
-  private static final int ACTIVATION_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24 * 3;
+  private static final int SHORT_EXPIRATION_MILLS = 1000 * 60 * 10;
+  private static final int LONG_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24 * 3;
 
 
   @Inject
@@ -39,7 +39,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   @Override
-  public int getNonce(int id, NONCE_TYPE type) {
+  public int getNonce(String id, NONCE_TYPE type) {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -53,13 +53,11 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       nonce = NonceUtils.getNonce();
       ps.setInt(1, nonce);
-      ps.setInt(2, id);
+      ps.setString(2, id);
       if (type.equals(NONCE_TYPE.SESSION)) {
-        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + SESSION_EXPIRATION_MILLS));
-      } else if (type.equals(NONCE_TYPE.ACTIVATION)) {
-        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + ACTIVATION_EXPIRATION_MILLIS));
-      } else {
-        throw new RuntimeException("Unknown nonce type");
+        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + SHORT_EXPIRATION_MILLS));
+      } else  {
+        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + LONG_EXPIRATION_MILLIS));
       }
       ps.executeUpdate();
 
@@ -74,11 +72,11 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   @Override
-  public int getId(int nonce, NONCE_TYPE type) throws StaleNonceException {
+  public String getId(int nonce, NONCE_TYPE type) throws StaleNonceException {
 
     Connection connection = null;
     PreparedStatement ps = null;
-    int id = -1;
+    String id = null;
 
     try {
       connection = this.poolManager.getConnection();
@@ -94,7 +92,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
       int count = 0;
       while (rs.next()) {
-        id = rs.getInt(1);
+        id = rs.getString(1);
         Timestamp t = rs.getTimestamp(2);
         if (t.getTime() < System.currentTimeMillis()) {
           throw new StaleNonceException("Older timestamp");

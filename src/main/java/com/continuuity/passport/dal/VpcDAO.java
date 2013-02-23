@@ -31,4 +31,6 @@ public interface VpcDAO {
 
   public List<VPC> getVPC(String apiKey) throws ConfigurationException;
 
+  public int getVPCCount(String vpcName);
+
 }

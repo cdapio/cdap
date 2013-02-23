@@ -33,23 +33,24 @@ public class SessionNonceHandler extends PassportHandler {
   @Path("getNonce/{id}")
   @GET
   @Produces("application/json")
-  public Response getSessionNonce(@PathParam("id") int id) {
+  public Response getSessionNonce(@PathParam("id") String id) {
     requestReceived();
+    int nonce = -1;
     try {
-      int nonce = dataManagementService.getSessionNonce(id);
+      nonce = dataManagementService.getSessionNonce(id);
       if (nonce != -1) {
         requestSuccess();
-        return Response.ok(Utils.getNonceJson(nonce)).build();
+        return Response.ok(Utils.getNonceJson(null,nonce)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-          .entity(Utils.getNonceJson("Couldn't generate nonce", id))
+          .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
           .build();
       }
     } catch (RuntimeException e) {
       requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("Couldn't generate nonce", id))
+        .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
         .build();
     }
   }
@@ -59,25 +60,24 @@ public class SessionNonceHandler extends PassportHandler {
   @Produces("application/json")
   public Response getSessionId(@PathParam("nonce") int nonce) {
     requestReceived();
+    String id = null;
     try {
-      int id = dataManagementService.getSessionId(nonce);
-      if (id != -1) {
+      id = dataManagementService.getSessionId(nonce);
+      if ( (id!=null) && (!id.isEmpty())) {
         requestSuccess();
-        return Response.ok(Utils.getNonceJson(id)).build();
+        return Response.ok(Utils.getIdJson(null,id)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-          .entity(Utils.getNonceJson("ID not found for nonce", nonce))
+          .entity(Utils.getIdJson("ID not found for nonce", null))
           .build();
       }
     } catch (StaleNonceException e) {
       requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
-        .entity(Utils.getNonceJson("ID not found for nonce", nonce))
+        .entity(Utils.getIdJson("ID not found for nonce", null))
         .build();
     }
   }
-
-
 }
 

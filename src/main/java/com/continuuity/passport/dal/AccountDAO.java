@@ -80,4 +80,9 @@ public interface AccountDAO {
     throws ConfigurationException;
 
   public void changePassword(int accountId, String oldPassword, String newPassword);
+
+  public Account resetPassword(int nonce, String newPassword);
+
+  public void regenerateApiKey(int accountId);
+
 }

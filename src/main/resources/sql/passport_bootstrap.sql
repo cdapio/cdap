@@ -168,7 +168,7 @@ DEFAULT CHARACTER SET = latin1;
 
 CREATE  TABLE IF NOT EXISTS `passport`.`nonce` (
   `nonce_id` INT(11) NOT NULL,
-  `id` INT(11) NOT NULL ,
+  `id` VARCHAR(100) NOT NULL ,
   `nonce_expires_at` DATETIME NOT NULL,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) ,
   UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )

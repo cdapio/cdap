@@ -443,6 +443,32 @@ public class AccountHandler extends  PassportHandler{
     }
   }
 
+  @Path("{id}/regenerateApiKey")
+  @GET
+  @Produces("application/json")
+  public Response regenerateApiKey(@PathParam("id") int accountId) {
+    try{
+      dataManagementService.regenerateApiKey(accountId);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account accountFetched = dataManagementService.getAccount(accountId);
+      if (accountFetched != null) {
+        requestSuccess();
+        return Response.ok(accountFetched.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+          .build();
+      }
+    } catch (Exception e){
+      requestFailed(); // Request failed
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+        .build();
+    }
+  }
+
   @Path("{id}")
   @DELETE
   @Produces("application/json")

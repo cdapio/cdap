@@ -80,6 +80,10 @@ public interface DataManagementService {
    */
   public void changePassword(int accountId, String oldPassword, String newPassword);
 
+  /**
+   * ResetPassword
+   */
+  public Account resetPassword(int nonceId, String password);
 
   /**
    * Add Meta-data for VPC, updates underlying data stores and generates a VPC ID.
@@ -126,11 +130,11 @@ public interface DataManagementService {
 
   /**
    * Generate a unique id to be used in activation email to enable secure (nonce based) registration process.
-   * @param id accountID to be nonce
+   * @param id Id to be nonced
    * @return random nonce
    * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
-  public int getActivationNonce(int id);
+  public int getActivationNonce(String id);
 
   /**
    * Get id for nonce
@@ -139,15 +143,22 @@ public interface DataManagementService {
    * @throws StaleNonceException on nonce that was generated expiring in the system
    * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
-  public int getActivationId(int nonce) throws StaleNonceException;
+  public String getActivationId(int nonce) throws StaleNonceException;
 
   /**
    * Generate a nonce that will be used for sessions.
-   * @param id  accountId to be nonced
+   * @param id  ID to be nonced
    * @return  random nonce
    * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
-  public int getSessionNonce(int id);
+  public int getSessionNonce(String id);
+
+  /**
+   * VPC count for the vpc
+   * @param vpcName
+   * @return
+   */
+  public int getVPCCount(String vpcName);
 
   /**
    * Get id for nonce
@@ -156,7 +167,21 @@ public interface DataManagementService {
    * @throws StaleNonceException on nonce that was generated expiring in the system
    * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
-  public int getSessionId(int nonce) throws StaleNonceException;
+  public String getSessionId(int nonce) throws StaleNonceException;
+
+  /**
+   * Generate Reset Nonce
+   * @param id
+   * @return random nonce
+   */
+  public int getResetNonce(String id);
+
+
+  /**
+   * Regenerate API Key
+   * @param accountId
+   */
+  public void regenerateApiKey(int accountId);
 
   /**
    * Register a component with the account- Example: register VPC, Register DataSet

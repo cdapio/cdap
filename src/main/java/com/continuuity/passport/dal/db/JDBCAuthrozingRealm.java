@@ -213,7 +213,6 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
         apiToken = rs.getString(6);
         confirmed = rs.getBoolean(7);
-        System.out.println(rs.getTimestamp(8));
         devsuiteDownloadedTime =  DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8));
         count++;
       }
