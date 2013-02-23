@@ -38,7 +38,7 @@ public class ToyApp implements Application {
       .setName("ToyApp")
       .setDescription("Toy Flow Application")
       .withStreams().add(new Stream("X")).add(new Stream("Y"))
-      .withDataSets().add(new KeyValueTable("crawled-pages"))
+      .withDataSets().add(new KeyValueTable("data1"))
       .withFlows().add(new ToyFlow())
       .noProcedure().build();
   }

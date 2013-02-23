@@ -77,11 +77,9 @@ public final class InMemoryProgramRuntimeService extends AbstractIdleService imp
       }
 
       @Override
-      public void error() {
-        // Should the error remove or keep the program, as the status till it's
-        // started again is error.
-      }
+      public void error() {}
     }, MoreExecutors.sameThreadExecutor());
+    runtimeInfos.put(info.getType(), info.getController().getRunId(), info);
     return info;
   }
 
