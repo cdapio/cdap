@@ -219,8 +219,8 @@ public class SingleNodeMain {
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
       new BigMamaModule(configuration),
       new MetricsModules().getInMemoryModules(),
-      levelDBCompatibleOS ? new DataFabricLevelDBModule() : new GatewayModules().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
+      levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules()
     );
 
