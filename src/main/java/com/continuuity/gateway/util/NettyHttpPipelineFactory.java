@@ -6,8 +6,12 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
+import java.io.File;
 
 /**
  * This class builds an http pipeline for Netty. Note that all of our Http
@@ -50,11 +54,6 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
       throws Exception {
     this.handlerFactory = handlerFactory;
     this.config = config;
-    if (this.config.isSsl()) {
-      LOG.error("Attempt to create an SSL server, " +
-          "which is not implemented yet.");
-      throw new UnsupportedOperationException("SSL is not yet supported");
-    }
   }
 
   @Override // to implement the Netty PipelineFactory
@@ -62,13 +61,15 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
     // create a default (empty) pipeline
     ChannelPipeline pipeline = Channels.pipeline();
 
-    // SSL is not yet implemented but this is where we would insert it
     if (this.config.isSsl()) {
-      // SSLEngine engine = ...
-      // engine.setUseClientMode(false);
-      // pipeline.addLast("ssl", new SslHandler(engine));
+      SecureSSLContextFactory secureContextFactory = new SecureSSLContextFactory(new File(this.config.getSslCertKeyPath()),
+                                                                  this.config.getSslCertKeyPassword(),
+                                                                  this.config.getSslCryptAlgo());
+      SSLEngine engine =  secureContextFactory.getServerContext().createSSLEngine();
+      engine.setUseClientMode(false);
+      pipeline.addLast("ssl", new SslHandler(engine));
+      LOG.info("Added SSL pipeline");
     }
-
     // use the default HTTP decoder from netty
     pipeline.addLast("decoder", new HttpRequestDecoder());
     // use netty's default de-chunker

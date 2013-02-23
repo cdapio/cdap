@@ -24,8 +24,8 @@ public class PrintlnConsumer extends Consumer {
    * @throws Exception
    */
   @Override
-  protected void single(StreamEvent event) throws Exception {
-    LOG.info("[ Headers: " + event.getHeaders() + " | "
+  protected void single(StreamEvent event, String accountId) throws Exception {
+    LOG.info("[ Account: " + accountId + " | Headers: " + event.getHeaders() + " | "
         + "Body: " + event.getBody());
   }
 

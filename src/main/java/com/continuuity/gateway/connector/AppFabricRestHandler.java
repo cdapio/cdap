@@ -10,14 +10,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.internal.app.BufferFileInputStream;
-import com.continuuity.passport.PassportConstants;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -33,11 +27,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -49,7 +43,6 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public class AppFabricRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
-  private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
   private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
 
 
@@ -122,7 +115,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       List<String> clearParams = null;
       int operation = UNKNOWN;
-      
+
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!connector.getAuthenticator().authenticateRequest(request)) {
@@ -131,6 +124,9 @@ public class AppFabricRestHandler extends NettyRestHandler {
         helper.finish(BadRequest);
         return;
       }
+
+      String accountId = connector.getAuthenticator().getAccountId(request);
+
       if (method == HttpMethod.PUT || method == HttpMethod.POST) {
         if (requestUri.endsWith("/deploy")) {
           operation = DEPLOY;
@@ -195,13 +191,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
           String jarFileName=request.getHeader(CONTINUUITY_JAR_FILE_NAME);
           byte[] jarFileBytes = new byte[length];
           content.readBytes(jarFileBytes);
-          String apiKey=request.getHeader(CONTINUUITY_API_KEY);
           int port=configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
-          int passportPort=configuration.getInt(PassportConstants.CFG_PASSPORT_SERVER_PORT_KEY, 7777);
-          String passportHost=configuration.get(PassportConstants.CFG_PASSPORT_SERVER_ADDRESS_KEY, "localhost");
           AppFabricService.Client client=getAppFabricClient("localhost", port);
           try {
-            int accountId=getAccountId(passportHost, passportPort, apiKey);
+            String apiKey=request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY);
             deploy(client, configuration, jarFileName, jarFileBytes, accountId, apiKey);
             respondSuccess(message.getChannel(), request);
             helper.finish(Success);
@@ -247,79 +240,34 @@ public class AppFabricRestHandler extends NettyRestHandler {
                      CConfiguration config,
                      String jarFileName,
                      byte[] jarFileBytes,
-                     int accountId,
+                     String accountId,
                      String apiKey)
     throws Exception {
 
     // Call init to get a session identifier - yes, the name needs to be changed.
     AuthToken token = new AuthToken(apiKey);
     ResourceInfo ri = new ResourceInfo();
-    ri.setAccountId(String.valueOf(accountId));
+    ri.setAccountId(accountId);
     ri.setApplicationId("");
     ri.setFilename(jarFileName);
     ri.setSize(jarFileBytes.length);
     ri.setModtime(System.currentTimeMillis());
     ResourceIdentifier id = client.init(token, ri);
-
-    BufferFileInputStream is =
-      new BufferFileInputStream(new ByteArrayInputStream(jarFileBytes), 100*1024);
-    try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        client.chunk(token, id, ByteBuffer.wrap(toSubmit));
-      }
-    } finally {
-      is.close();
-    }
-    client.deploy(token, id);
-
+    // Upload the jar file to remote location.
+    byte[] toSubmit=jarFileBytes;
+    client.chunk(token, id, ByteBuffer.wrap(toSubmit));
     DeploymentStatus status = client.dstatus(token, id);
+
+
+    client.deploy(token, id);
     int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
       dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
+
   }
 
-  private int getAccountId(String hostname, int port, String apiKey) {
-    return connector.getPassportClient().getAccount(hostname, port, apiKey).getAccountId();
-  }
-  private String httpGet(String url,String apiKey) throws Exception {
-    String payload  = null;
-    HttpGet get = new HttpGet(url);
-    get.addHeader(CONTINUUITY_API_KEY,apiKey);
-    get.addHeader("X-Continuuity-Signature","abcdef");
-    boolean debugEnabled=false;
-    if (debugEnabled) {
-      System.out.println(String.format ("Headers: %s ",get.getAllHeaders().toString()));
-      System.out.println(String.format ("URL: %s ",url));
-      System.out.println(String.format("Method: %s ", "GET"));
-    }
-
-    // prepare for HTTP
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response;
-
-    try {
-      response = client.execute(get);
-      payload = IOUtils.toString(response.getEntity().getContent());
-      client.getConnectionManager().shutdown();
-      if (debugEnabled) {
-        System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
-      }
-    } catch (IOException e) {
-      if (debugEnabled)  {
-        System.out.println(String.format("Caught exception while running http post call: Exception - %s",e.getMessage()));
-        e.printStackTrace();
-      }
-      throw new RuntimeException(e);
-    }
-    return payload;
-  }
-  private String getEndPoint(String hostname, String endpoint){
-    return String.format("http://%s:7777/%s",hostname,endpoint);
-  }
   private AppFabricService.Client getAppFabricClient(String host, int port)
     throws ServerException {
 

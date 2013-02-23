@@ -1,12 +1,15 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.operation.OperationContext;
-
 /**
  * Constants is a utility class that contains a set of universal constants
  * that are used throughout the Gateway project.
  */
 public class Constants {
+  /**
+   * Corresponds to account id used when running AppFabric in local mode.
+   * NOTE: value should be in sync with the one used by UI.
+   */
+  public static final String DEVELOPER_ACCOUNT_ID = "developer";
 
   /**
    * The prefix for all continuity classes
@@ -139,19 +142,22 @@ public class Constants {
     return header.startsWith(CONTINUUITY_PREFIX);
   }
 
+  //SSL Constants
+  public static final String CFG_SSL_CRYPTOGRAPHIC_ALGORITHM_KEY = "ssl.crypt.algo";
+
+  public static final String DEFAULT_SSL_CRYPTOGRAPHIC_ALGORITHM = "Sha1WithRSA";
+
+  public static final String CFG_SSL_CERT_KEY_PATH= "ssl.cert.key.path";
+
+  public static final String CFG_SSL_CERT_KEY_PASSWORD= "ssl.cert.key.password";
+
+
   // Defaults for various configurations
 
   /**
    * Default number of worker threads for a connector
    */
   public static final int DEFAULT_THREADS = 20;
-
-  /**
-   * this is a place holder for the account id of events until we have
-   * an actual way to associate an event with an account.
-   */
-  public static final String defaultAccount =
-      OperationContext.DEFAULT_ACCOUNT_ID;
 
   public static final String metricsServiceName =
       com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
