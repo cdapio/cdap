@@ -44,7 +44,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
-  private static final int PROCESS_MAX_RETRY = 10;
+  private static final int PROCESS_MAX_RETRY = 2;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -181,15 +181,16 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processQueue.drainTo(processList);
 
       for (ProcessEntry entry : processList) {
+        boolean invoked = false;
         try {
           if (!entry.shouldProcess()) {
             continue;
           }
-          ProcessMethod processMethod = entry.processSpec.getProcessMethod();
+          ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
           }
-          InputDatum input = entry.processSpec.getQueueReader().dequeue();
+          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           if (!input.needProcess()) {
             entry.backOff();
             continue;
@@ -201,18 +202,20 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           inflight.getAndIncrement();
 
           try {
+            invoked = true;
             // Call the process method and commit the transaction
             processMethod.invoke(input)
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
-            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.processSpec, flowletContext), t);
+            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
           }
         } catch (OperationException e) {
           LOG.error("Queue operation failure: " + flowletContext, e);
         } finally {
-          // If it is not a retry entry, always put it back to the queue, otherwise let the committer do the job.
-          if (!entry.isRetry()) {
+          // In async mode, always put it back as long as it is not a retry entry,
+          // otherwise let the committer do the job.
+          if (!invoked || (flowletContext.isAsyncMode() && !entry.isRetry())) {
             processQueue.offer(entry);
           }
         }
@@ -256,6 +259,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
+        } finally {
+          enqueueEntry();
         }
       }
 
@@ -270,21 +275,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           flowletContext.getMetrics().count("flowlet.failure", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
         } catch (Throwable t) {
-          LOG.info("Exception on onFailure call: " + flowletContext, t);
+          LOG.error("Exception on onFailure call: " + flowletContext, t);
           failurePolicy = FailurePolicy.RETRY;
         }
 
         if (input.getRetry() >= PROCESS_MAX_RETRY) {
+          LOG.info("Too many retries, ignoring the input: " + input);
           failurePolicy = FailurePolicy.IGNORE;
         }
 
         if (failurePolicy == FailurePolicy.RETRY) {
           ProcessEntry retryEntry = processEntry.isRetry() ?
             processEntry :
-            new ProcessEntry(
+            new ProcessEntry(processEntry.getProcessSpec(),
               new ProcessSpecification(new SingleItemQueueReader(input),
-                                       processEntry.processSpec.getProcessMethod()),
-              true);
+                                       processEntry.getProcessSpec().getProcessMethod()));
 
           processQueue.offer(retryEntry);
 
@@ -294,7 +299,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             inputAcknowledger.ack();
           } catch (OperationException e) {
             LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
+          } finally {
+            enqueueEntry();
           }
+        }
+      }
+
+      private void enqueueEntry() {
+        if (!flowletContext.isAsyncMode()) {
+          processQueue.offer(processEntry.resetRetry());
         }
       }
     };
@@ -302,21 +315,21 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final class ProcessEntry implements Comparable<ProcessEntry> {
     private final ProcessSpecification processSpec;
-    private final boolean retry;
+    private final ProcessSpecification retrySpec;
     private long nextDeque;
     private long currentBackOff = BACKOFF_MIN;
 
     private ProcessEntry(ProcessSpecification processSpec) {
-      this(processSpec, false);
+      this(processSpec, null);
     }
 
-    private ProcessEntry(ProcessSpecification processSpec, boolean retry) {
+    private ProcessEntry(ProcessSpecification processSpec, ProcessSpecification retrySpec) {
       this.processSpec = processSpec;
-      this.retry = retry;
+      this.retrySpec = retrySpec;
     }
 
     public boolean isRetry() {
-      return retry;
+      return retrySpec != null;
     }
 
     public void await() throws InterruptedException {
@@ -341,6 +354,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     public void backOff() {
       nextDeque = System.nanoTime() + currentBackOff;
       currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
+    }
+
+    public ProcessSpecification getProcessSpec() {
+      return retrySpec == null ? processSpec : retrySpec;
+    }
+
+    public ProcessEntry resetRetry() {
+      return retrySpec == null ? this : new ProcessEntry(processSpec);
     }
   }
 }
