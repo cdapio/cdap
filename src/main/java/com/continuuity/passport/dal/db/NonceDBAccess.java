@@ -38,37 +38,88 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
     }
   }
 
-  @Override
-  public int getNonce(String id, NONCE_TYPE type) {
+  /**
+   * Generate a random nonce and update in DB
+   * @param id
+   * @param expiration
+   * @return
+   */
+  private int updateRandomNonce(String id, int expiration) {
+    int nonce = NonceUtils.getNonce();
+    try {
+      updateNonce(id,expiration,nonce);
+    } catch (Exception e){
+      throw Throwables.propagate(e);
+    }
+    return nonce;
+  }
 
+  /**
+   * Generate a hashed nonce and update in DB
+   * @param id
+   * @param expiration
+   * @return
+   */
+  private int updateHashedNonce(String id, int expiration) {
+    int nonce = NonceUtils.getNonce(id);
+    System.out.println(nonce);
+
+    try {
+      updateNonce(id,expiration,nonce);
+    } catch (Exception e){
+      throw Throwables.propagate(e);
+    }
+    return nonce;
+  }
+
+  /**
+   * Update Nonce in DB
+   * @param id
+   * @param expiration
+   * @param nonce
+   */
+  private void updateNonce(String id, int expiration, int nonce){
     Connection connection = null;
     PreparedStatement ps = null;
-    int nonce= -1;
     try {
       connection = this.poolManager.getConnection();
-      String SQL = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
+      String SQL = String.format("REPLACE INTO %s (%s, %s, %s) VALUES (?,?,?)",
         DBUtils.Nonce.TABLE_NAME,
         DBUtils.Nonce.NONCE_ID_COLUMN, DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN);
-
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
-      nonce = NonceUtils.getNonce();
+      ps = connection.prepareStatement(SQL);
       ps.setInt(1, nonce);
       ps.setString(2, id);
-      if (type.equals(NONCE_TYPE.SESSION)) {
-        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + SHORT_EXPIRATION_MILLS));
-      } else  {
-        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + LONG_EXPIRATION_MILLIS));
-      }
+      ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + expiration));
       ps.executeUpdate();
-
-
-
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
-      return nonce;
     }
+  }
+
+  @Override
+  public int getNonce(String id, NONCE_TYPE nonceType) {
+
+    int nonce = -1;
+    try{
+      switch (nonceType){
+        case SESSION:
+          nonce =  updateRandomNonce(id,SHORT_EXPIRATION_MILLS);
+          break;
+        case ACTIVATION:
+          nonce=  updateHashedNonce(id,LONG_EXPIRATION_MILLIS);
+          break;
+        case RESET:
+          nonce =  updateHashedNonce(id,LONG_EXPIRATION_MILLIS);
+          break;
+        default:
+          throw new RuntimeException("Unknown nonce type");
+      }
+    }catch (Exception e){
+      throw Throwables.propagate(e);
+    }
+    return nonce;
   }
 
   @Override
