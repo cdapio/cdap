@@ -51,9 +51,10 @@ public class OperationContext {
     return account;
   }
 
+  // TODO: Move to test sources. Should not be used outside of unit-tests
   /** defaults to be used everywhere until we support true accounts */
   public static final String DEFAULT_ACCOUNT_ID =
-      "demo";
+      "developer";
   public static final OperationContext DEFAULT =
       new OperationContext(DEFAULT_ACCOUNT_ID);
 }
