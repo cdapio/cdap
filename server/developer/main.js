@@ -112,8 +112,7 @@ io.sockets.on('connection', function (newSocket) {
  * HTTP handlers.
  */
 app.post('/upload/:file', function (req, res) {
-
-	Api.upload(req, res, req.params.file, socket);
+	Api.upload("developer", req, res, req.params.file, socket);
 
 });
 app.on('error', function () {
