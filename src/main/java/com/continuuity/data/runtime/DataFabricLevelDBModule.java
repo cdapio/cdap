@@ -39,7 +39,13 @@ public class DataFabricLevelDBModule extends AbstractModule {
       if (!new File(path).mkdirs()) {
         throw new RuntimeException("Unable to create directory for ldb");
       }
+    } else {
+      File file = new File(path);
+      if(! file.exists()) {
+        file.mkdirs();
+      }
     }
+
     this.basePath = path;
   }
 
