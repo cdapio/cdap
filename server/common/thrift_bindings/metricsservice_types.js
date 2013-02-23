@@ -524,8 +524,7 @@ Points.prototype.read = function(input) {
             if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
               input.rstack.pop();
             }
-          }
-          */
+          }*/
           var key29 = null;
           var val30 = null;
           key29 = input.readString();
