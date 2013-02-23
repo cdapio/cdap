@@ -82,7 +82,6 @@ public final class InMemoryProgramRuntimeService extends AbstractIdleService imp
         // started again is error.
       }
     }, MoreExecutors.sameThreadExecutor());
-    runtimeInfos.remove(info.getType(), info.getController().getRunId());
     return info;
   }
 
