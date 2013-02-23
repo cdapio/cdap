@@ -440,12 +440,6 @@
         <description>Specifies location of the webapp's main.js file</description>
     </property>
 
-    <!-- Level DB Settings -->
-    <property>
-        <name>data.local.leveldb</name>
-        <value>data</value>
-    </property>
-
     <!-- Sets whether Devsuite is in Cloud or no -->
     <!-- AppFabric will become Reactor later -->
     <property>
