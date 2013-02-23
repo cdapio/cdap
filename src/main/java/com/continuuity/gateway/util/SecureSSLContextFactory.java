@@ -1,59 +1,44 @@
 package com.continuuity.gateway.util;
 
-import com.google.common.base.Throwables;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import java.security.KeyStore;
-import java.security.Security;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 /**
- *
+ * Class that is responsible for creating SSLContext
  */
 public class SecureSSLContextFactory {
+
+  private final SSLContext serverContext;
   private static final String PROTOCOL = "TLS";
-  private static final SSLContext SERVER_CONTEXT;
-  private static final SSLContext CLIENT_CONTEXT;
+  private static final String KEYSTORE_TYPE = "JKS";
+  private SSLContext SERVER_CONTEXT;
 
-  static {
-    String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
+  public SecureSSLContextFactory(File certKey, String certKeyPassword, String algorithm)
+    throws KeyStoreException, CertificateException, NoSuchAlgorithmException,
+    IOException, UnrecoverableKeyException, KeyManagementException {
 
-    if (algorithm == null) {
-      algorithm = "RSA";
-    }
-
-    SSLContext serverContext = null;
-    SSLContext clientContext = null;
+    FileInputStream fileInputStream = new FileInputStream(certKey);
     try {
-      KeyStore keyStore = KeyStore.getInstance("JKS");
-      keyStore.load(GatewayKeyStore.asInputStream(),GatewayKeyStore.getKeyStorePassword());
-
+      KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
+      keyStore.load(fileInputStream, certKeyPassword.toCharArray());
       // Set up key manager factory to use our key store
       KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
-      keyManagerFactory.init(keyStore, GatewayKeyStore.getKeyStorePassword());
-
+      keyManagerFactory.init(keyStore, certKeyPassword.toCharArray());
       // Initialize the SSLContext to work with our key managers.
       serverContext = SSLContext.getInstance(PROTOCOL);
       serverContext.init(keyManagerFactory.getKeyManagers(), null, null);
-    } catch (Exception e) {
-     throw Throwables.propagate(e);
     }
-    try {
-      clientContext = SSLContext.getInstance(PROTOCOL);
-      clientContext.init(null,SecureGatewayTrustManagerFactory.getTrustManagers(),null);
-    } catch (Exception e) {
-     throw Throwables.propagate(e);
+    finally{
+      fileInputStream.close();
     }
-    SERVER_CONTEXT = serverContext;
-    CLIENT_CONTEXT = clientContext;
   }
 
-  public static SSLContext getServerContext() {
+  public SSLContext getServerContext() {
     return SERVER_CONTEXT;
   }
-
-  public static SSLContext getClientContext() {
-    return CLIENT_CONTEXT;
-  }
-
 }
