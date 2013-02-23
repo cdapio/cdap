@@ -64,7 +64,7 @@ public abstract class AbstractProcedure implements Procedure {
    * @return Name of the {@link Procedure}
    */
   protected String getName() {
-    return getClass().getSimpleName();
+    return name;
   }
 
   /**
