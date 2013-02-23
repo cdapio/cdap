@@ -1,28 +1,33 @@
 package CountAndFilterWords;
 
-import java.lang.Character;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import java.nio.charset.CharacterCodingException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class UpperCaseFilter extends ComputeFlowlet {
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.getDefaultFlowletOutput().setSchema(schema);
+public class UpperCaseFilter extends AbstractFlowlet {
+  private OutputEmitter<Map<String,String>> output;
+  public UpperCaseFilter() {
+    super("UpperCaseFilter");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+//  @Override
+//  public void configure(FlowletSpecifier specifier) {
+//    TupleSchema schema = new TupleSchemaBuilder().
+//        add("field", String.class).
+//        add("word", String.class).
+//        create();
+//    specifier.getDefaultFlowletInput().setSchema(schema);
+//    specifier.getDefaultFlowletOutput().setSchema(schema);
+//  }
+
+  public void process(Map<String, String> map) throws CharacterCodingException {
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received map " + map);
     }
-    String word = tuple.get("word");
+    String word = map.get("word");
     if (word == null) {
       return;
     }
@@ -31,13 +36,12 @@ public class UpperCaseFilter extends ComputeFlowlet {
       return;
     }
 
-    Tuple output = new TupleBuilder().
-        set("word", word).
-        create();
+    Map<String,String> tuple = new HashMap<String,String>();
+    tuple.put("word", word);
 
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
     }
-    outputCollector.add(output);
+    output.emit(tuple);
   }
 }

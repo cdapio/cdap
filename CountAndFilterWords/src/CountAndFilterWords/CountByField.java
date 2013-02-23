@@ -2,43 +2,47 @@ package CountAndFilterWords;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
-public class CountByField extends ComputeFlowlet
-{
-  @Override
-  public void configure(FlowletSpecifier configurator) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
+import java.nio.charset.CharacterCodingException;
+import java.util.Map;
 
-    configurator.getDefaultFlowletInput().setSchema(in);
+public class CountByField extends AbstractFlowlet {
+
+  public CountByField() {
+    super("CountByField");
   }
 
   KeyValueTable counters;
 
-  @Override
-  public void initialize() {
-    super.initialize();
-    this.counters = getFlowletContext().getDataSet(Common.counterTableName);
-  }
+//  @Override
+//  public void configure(FlowletSpecifier configurator) {
+//    TupleSchema in = new TupleSchemaBuilder().
+//        add("field", String.class).
+//        add("word", String.class).
+//        create();
+//
+//    configurator.getDefaultFlowletInput().setSchema(in);
+//  }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+
+//  @Override
+//  public void initialize() {
+//    super.initialize();
+//    this.counters = getFlowletContext().getDataSet(Common.counterTableName);
+//  }
+
+  public void process(Map<String, String> map) throws CharacterCodingException {
+
+    this.counters = getContext().getDataSet(Common.counterTableName);
+
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + map);
     }
 
-    String token = tuple.get("word");
+    String token = map.get("word");
     if (token == null) return;
-    String field = tuple.get("field");
+    String field = map.get("field");
     if (field != null) token = field + ":" + token;
 
     if (Common.debug) {

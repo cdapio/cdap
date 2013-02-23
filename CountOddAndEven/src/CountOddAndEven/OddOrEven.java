@@ -1,34 +1,35 @@
 package CountOddAndEven;
 
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+
+import java.nio.charset.CharacterCodingException;
 
 /**
  * Based on the whether number is odd or even it puts the number on
  * different streams.
  */
-public class OddOrEven extends ComputeFlowlet {
+public class OddOrEven extends AbstractFlowlet {
+  private OutputEmitter<Integer> evenOutput;
+  private OutputEmitter<Integer> oddOutput;
 
-  @Override
-  public void configure(final FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().add("number", Integer.class).create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.getDefaultFlowletOutput().setSchema(schema);
-    specifier.addFlowletOutput("even").setSchema(schema);
+  public OddOrEven() {
+    super("OddOrEven");
   }
+//  @Override
+//  public void configure(final FlowletSpecifier specifier) {
+//    TupleSchema schema = new TupleSchemaBuilder().add("number", Integer.class).create();
+//    specifier.getDefaultFlowletInput().setSchema(schema);
+//    specifier.getDefaultFlowletOutput().setSchema(schema);
+//    specifier.addFlowletOutput("even").setSchema(schema);
+//  }
 
-  @Override
-  public void process(final Tuple tuple, final TupleContext context, final OutputCollector collector) {
-    Integer num = tuple.get("number");
-    if(num.intValue() % 2 == 0) {
-      collector.add("even", tuple);
+  public void process(Integer number, InputContext context) throws CharacterCodingException {
+    if(number.intValue() % 2 == 0) {
+      evenOutput.emit(number);
     } else {
-      collector.add(tuple);
+      oddOutput.emit(number);
     }
   }
 }

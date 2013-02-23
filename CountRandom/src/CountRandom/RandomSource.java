@@ -1,23 +1,32 @@
 package CountRandom;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
 
-public class RandomSource extends SourceFlowlet {
+public class RandomSource extends AbstractFlowlet {
 
   Random random;
   long millis = 0;
   int direction = 1;
+  private OutputEmitter<Integer> randomOutput;
 
-  @Override
-  public void generate(OutputCollector outputCollector) {
-    Tuple out = new TupleBuilder().set("number",
-                                       new Integer(
-                                         this.random.nextInt(10000)
-                                       )).create();
+  public RandomSource() {
+    super("RandomSource");
+  }
+
+//  @Override
+//  public void configure(FlowletSpecifier specifier) {
+//    TupleSchema out = new TupleSchemaBuilder().
+//        add("number", Integer.class).
+//        create();
+//    specifier.getDefaultFlowletOutput().setSchema(out);
+//    this.random = new Random(System.currentTimeMillis());
+//  }
+
+  public void generate() throws Exception {
+    Integer randomNumber = new Integer(this.random.nextInt(10000));
     try {
       Thread.sleep(millis);
       millis += direction;
@@ -27,15 +36,6 @@ public class RandomSource extends SourceFlowlet {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    outputCollector.add(out);
-  }
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().
-        add("number", Integer.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    this.random = new Random(System.currentTimeMillis());
+    randomOutput.emit(randomNumber);
   }
 }

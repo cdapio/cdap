@@ -35,7 +35,7 @@ public class WordCountProcedure extends AbstractProcedure {
 
   public void process(ProcedureRequest request, ProcedureResponder responder)
       throws IOException {
-    responder.response(new ProcedureResponse(Code.SUCCESS, "Success!"));
+    responder.stream(new ProcedureResponse(Code.SUCCESS, "Success!"));
   }
 //  @Override
 //  public QueryProviderResponse process(String method,

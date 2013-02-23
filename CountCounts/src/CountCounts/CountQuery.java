@@ -1,70 +1,73 @@
 package CountCounts;
 
-import com.continuuity.api.query.QueryProvider;
-import com.continuuity.api.query.QueryProviderContentType;
-import com.continuuity.api.query.QueryProviderResponse;
-import com.continuuity.api.query.QuerySpecifier;
+import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.api.procedure.ProcedureResponder;
+import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.procedure.ProcedureSpecification;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
  *
  */
-public class CountQuery extends QueryProvider {
+public class CountQuery extends AbstractProcedure {
 
   CounterTable counters;
 
-  @Override
-  public void configure(QuerySpecifier specifier) {
-    specifier.service("GetCount");
-    specifier.dataset(Common.tableName);
-    specifier.type(QueryProviderContentType.TEXT);
-    specifier.provider(this.getClass());
+  public CountQuery() {
+    super("CountQuery");
   }
 
-  @Override
-  public void initialize() {
-    super.initialize();
-    this.counters = getQueryProviderContext().getDataSet(Common.tableName);
+  public ProcedureSpecification configure() {
+    return ProcedureSpecification.Builder.with()
+      .setName("CountQuery")
+      .setDescription("Example Count Query Procedure")
+      .build();
   }
 
-  @Override
-  public QueryProviderResponse process(String method, Map<String, String> arguments) {
-    try {
-      long count = 0;
-      if ("total".equals(method)) {
-        String what = arguments.get("key");
-        if ("sink".equals(what)) {
-          count = this.counters.get(Incrementer.keyTotal);
-        }
-        else if ("source".equals(what)) {
-          count = this.counters.get(StreamSource.keyTotal);
-        }
-        else {
-          return new QueryProviderResponse(QueryProviderResponse.Status.FAILED, "Bad Arguments",
-                                           "Parameter 'key' must be either 'sink' or 'source'");
-        }
+  @Handle("countQuery")
+  public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    final Map<String, String> arguments = request.getArguments();
+    String method=request.getMethod();
+    long count = 0;
+    if ("total".equals(method)) {
+      String what = request.getArguments().get("key");
+      if ("sink".equals(what)) {
+        count = this.counters.get(Incrementer.keyTotal);
       }
-      else if ("count".equals(method)) {
-        String key = arguments.get("words");
-        if (key != null) {
-          try {
-            Integer.parseInt(key);
-          } catch (NumberFormatException e) {
-            key = null;
-          }
-        }
-        if (key == null) {
-          return new QueryProviderResponse(QueryProviderResponse.Status.FAILED, "Bad Arguments",
-                                           "Parameter 'words' must be a number.");
-        }
-        count = this.counters.get(key);
+      else if ("source".equals(what)) {
+        count = this.counters.get(StreamSource.keyTotal);
       }
-      return new QueryProviderResponse(Long.toString(count));
+      else {
+        responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
+        return;
+      }
     }
-    catch (Exception e) {
-      return new QueryProviderResponse(QueryProviderResponse.Status.FAILED,
-                                       "Caught Exception", e.getMessage());
+    else if ("count".equals(method)) {
+      String key = arguments.get("words");
+      if (key != null) {
+        try {
+          Integer.parseInt(key);
+        } catch (NumberFormatException e) {
+          key = null;
+        }
+      }
+      if (key == null) {
+        responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
+      }
+      count = this.counters.get(key);
+    }
+    ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+    try {
+      writer.write(ByteBuffer.wrap(Long.toString(count).getBytes(Charset.forName("UTF-8"))));
+    } finally {
+      writer.close();
     }
   }
 }

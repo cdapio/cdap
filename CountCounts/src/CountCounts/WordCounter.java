@@ -1,52 +1,33 @@
 package CountCounts;
 
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-import java.lang.String;
+import java.nio.charset.CharacterCodingException;
 
-public class WordCounter extends ComputeFlowlet {
+public class WordCounter extends AbstractFlowlet {
+  private OutputEmitter<Integer> output;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(in);
-
-    TupleSchema out = new TupleSchemaBuilder().
-        add("count", Integer.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
+  public WordCounter() {
+    super("WordCounter");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(String text) throws CharacterCodingException {
 
     if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-    }
-    final String delimiters = "[ .-]";
-    int count = 0;
-    String str = (String)tuple.get("text");
-    if (str != null) {
-      count = str.split(delimiters).length;
+      System.out.println(this.getClass().getSimpleName() + ": Received event " + text);
     }
 
-    Tuple output = new TupleBuilder().
-        set("count", count).
-        create();
+    final String delimiters = "[ .-]";
+    int count = 0;
+    if (text != null) {
+      count = text.split(delimiters).length;
+    }
 
     if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
     }
-    outputCollector.add(output);
+    output.emit(count);
   }
 
 }
