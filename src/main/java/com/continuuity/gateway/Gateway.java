@@ -61,6 +61,7 @@ public class Gateway implements Server {
    * This is the executor that all accessors will use for the data fabric.
    * Gateway can not function without a valid operation executor.
    */
+  @Inject
   private MetadataService mds;
 
   /**

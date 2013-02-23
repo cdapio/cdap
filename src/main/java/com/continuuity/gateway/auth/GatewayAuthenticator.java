@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import com.continuuity.passport.meta.Account;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -26,7 +27,7 @@ public interface GatewayAuthenticator {
 
   /**
    * Authenticates the specified HTTP request.
-   * @param request http request
+   * @param httpRequest http request
    * @return true if authentication succeeds, false if not
    */
   public boolean authenticateRequest(HttpRequest httpRequest);
@@ -38,4 +39,22 @@ public interface GatewayAuthenticator {
    */
   public boolean authenticateRequest(AvroFlumeEvent event);
 
+  // Note: we could actually have one of these instead of this API:
+  // * return Account. But we don't want it as account has id as int, and we need String
+  // * make authenticateRequest return accountId. But we don't want it as internally it would mean 2 requests to
+  //   passport service, and in some situations accountId may not be needed.
+
+  /**
+   * Gets account for authenticated httpRequest.
+   * @param httpRequest http request
+   * @return account
+   */
+  public String getAccountId(HttpRequest httpRequest);
+
+  /**
+   * Gets account for authenticated httpRequest.
+   * @param event stream event to authenticate
+   * @return account
+   */
+  public String getAccountId(AvroFlumeEvent event);
 }

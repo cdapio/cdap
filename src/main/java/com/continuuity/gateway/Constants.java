@@ -146,13 +146,6 @@ public class Constants {
    */
   public static final int DEFAULT_THREADS = 20;
 
-  /**
-   * this is a place holder for the account id of events until we have
-   * an actual way to associate an event with an account.
-   */
-  public static final String defaultAccount =
-      OperationContext.DEFAULT_ACCOUNT_ID;
-
   public static final String metricsServiceName =
       com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
   public static final String flowServiceName =

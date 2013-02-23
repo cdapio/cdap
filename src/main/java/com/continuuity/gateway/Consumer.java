@@ -130,20 +130,22 @@ public abstract class Consumer {
    * Consume a single event. This method is abstract and must be overridden
    *
    * @param event the event to be consumed
+   * @param accountId id of account used to send events
    * @throws Exception if anything goes wrong
    */
-  protected abstract void single(StreamEvent event) throws Exception;
+  protected abstract void single(StreamEvent event, String accountId) throws Exception;
 
   /**
    * Consume a batch of events. By default calls single() for every event in
    * the batch.
    *
    * @param events the batch of events to be consumed
+   * @param accountId id of account used to send events
    * @throws Exception if anything goes wrong
    */
-  protected void batch(List<StreamEvent> events) throws Exception {
+  protected void batch(List<StreamEvent> events, String accountId) throws Exception {
     for (StreamEvent event : events) {
-      this.single(event);
+      this.single(event, accountId);
     }
   }
 
@@ -185,13 +187,14 @@ public abstract class Consumer {
    * overridden by subclasses.
    *
    * @param event The event to be consumed
+   * @param accountId id of account used to send events
    * @throws Exception if anything goes wrong
    */
-  final public void consumeEvent(StreamEvent event) throws Exception {
+  final public void consumeEvent(StreamEvent event, String accountId) throws Exception {
     this.callsReceived.incrementAndGet();
     this.eventsReceived.incrementAndGet();
     try {
-      this.single(event);
+      this.single(event, accountId);
     } catch (Exception e) {
       this.callsFailed.incrementAndGet();
       this.eventsFailed.incrementAndGet();
@@ -207,13 +210,14 @@ public abstract class Consumer {
    * can be overridden by subclasses.
    *
    * @param events The events to be consumed
+   * @param accountId id of account used to send events
    * @throws Exception if anything goes wrong
    */
-  final public void consumeEvents(List<StreamEvent> events) throws Exception {
+  final public void consumeEvents(List<StreamEvent> events, String accountId) throws Exception {
     this.callsReceived.incrementAndGet();
     this.eventsReceived.addAndGet(events.size());
     try {
-      this.batch(events);
+      this.batch(events, accountId);
     } catch (Exception e) {
       this.callsFailed.incrementAndGet();
       this.eventsFailed.addAndGet(events.size());
