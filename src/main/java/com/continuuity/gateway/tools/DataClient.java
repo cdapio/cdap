@@ -56,7 +56,8 @@ public class DataClient {
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the rest accessor
-  String apikey = null;          // the api key for authentication
+  String apikey =                // the api key for authentication.
+    Constants.DEVELOPER_ACCOUNT_ID; // by default, assuming that connecting to the AppFabric running in local mode
   String key = null;             // the key to read/write/delete
   String value = null;           // the value to write
   String encoding = null;        // the encoding for --key and for display
