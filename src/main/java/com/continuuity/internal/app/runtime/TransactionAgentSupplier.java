@@ -6,5 +6,8 @@ import com.google.common.base.Supplier;
 /**
  *
  */
-public interface TransactionAgentSupplier extends Supplier<TransactionAgent> {
+public interface TransactionAgentSupplier {
+  TransactionAgent createAndUpdateProxy();
+
+  TransactionAgent create();
 }
