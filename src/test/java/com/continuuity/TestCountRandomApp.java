@@ -9,6 +9,7 @@ import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
@@ -80,7 +81,7 @@ public class TestCountRandomApp implements Application {
     }
   }
 
-  private static class RandomSource extends AbstractFlowlet {
+  private static class RandomSource extends AbstractGeneratorFlowlet {
     private OutputEmitter<Integer> randomOutput;
 
     private Random random;
