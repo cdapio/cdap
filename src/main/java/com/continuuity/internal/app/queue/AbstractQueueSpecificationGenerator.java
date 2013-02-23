@@ -75,7 +75,9 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
    * @return An instance of {@link QueueSpecification} containing the URI for the queue
    * and the matching {@link Schema}
    */
-  protected QueueSpecification createSpec(final QueueName queueName, final Schema inputSchema, final Schema outputSchema) {
+  protected QueueSpecification createSpec(final QueueName queueName,
+                                          final Schema outputSchema,
+                                          final Schema inputSchema) {
     return new QueueSpecification() {
       @Override
       public QueueName getQueueName() {
@@ -106,6 +108,11 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
         return Objects.equal(getQueueName(), other.getQueueName())
                 && Objects.equal(getInputSchema(), other.getInputSchema())
                 && Objects.equal(getOutputSchema(), other.getOutputSchema());
+      }
+
+      @Override
+      public String toString() {
+        return queueName.toString();
       }
     };
   }

@@ -30,11 +30,12 @@ public final class Err {
     /**
      * Preventing construction.
      */
-    private Schema() {}
+    private Schema() {
+    }
 
     public static final Errors NOT_SUPPORTED_TYPE = new Errors(
-                                                                "Type %s is not supported. " +
-                                                                  "Only Class or ParameterizedType are supported"
+      "Type %s is not supported. " +
+        "Only Class or ParameterizedType are supported"
     );
   }
 
@@ -45,11 +46,12 @@ public final class Err {
     /**
      * preventing construction
      */
-    private Application() {}
+    private Application() {
+    }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-                                                                   "Application %s has no Flow or Procedure defined. " +
-                                                                     "Should have atleast one of them defined."
+      "Application %s has no Flow or Procedure defined. " +
+        "Should have atleast one of them defined."
     );
   }
 
@@ -60,24 +62,24 @@ public final class Err {
     /**
      * Preventing construction.
      */
-    private Flow() {}
+    private Flow() {
+    }
 
     public static final Errors ATLEAST_ONE_FLOWLET = new Errors(
-                                                                 "Flow %s has not flowlets defined." +
-                                                                   " Should atleast have a flowlet."
+      "Flow %s has not flowlets defined." +
+        " Should atleast have a flowlet."
     );
     public static final Errors ATLEAST_ONE_CONNECTION = new Errors(
-                                                                    "Flow %s has no connections defined." +
-                                                                      " Should atleast have one connection."
+      "Flow %s has no connections defined." +
+        " Should atleast have one connection."
     );
 
     public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
-                                                                 "Input of flowlet '%s' does not define a compatible " +
-                                                                   "type method for processing output of flowlet '%s'."
+      "Input of flowlet '%s' does not define a compatible " +
+        "type method for processing output of '%s' '%s'."
     );
     public static final Errors MORE_OUTPUT_NOT_ALLOWED = new Errors(
-                                                                     "The output emitter '%s' in flowlet '%s' has multiple" +
-                                                                     "schemas defined"
+      "The '%s' '%s' has no consumer for outputs '%s'."
     );
     // Output being emitted
   }
@@ -89,7 +91,8 @@ public final class Err {
     /**
      * Preventing construction.
      */
-    private Procedure() {}
+    private Procedure() {
+    }
   }
 
   /**
@@ -99,7 +102,8 @@ public final class Err {
     /**
      * Preventing Construction.
      */
-    private DataSet() {}
+    private DataSet() {
+    }
   }
 
   /**
@@ -109,6 +113,7 @@ public final class Err {
     /**
      * Preventing Construction.
      */
-    private Stream() {}
+    private Stream() {
+    }
   }
 }

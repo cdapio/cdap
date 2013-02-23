@@ -37,7 +37,7 @@ public final class SchemaFinder {
    * </p>
    * @param output Set of output {@link Schema}.
    * @param input  Set of input {@link Schema}.
-   * @return An {@link ImmutablePair} with first as input schema and second as output schema.
+   * @return An {@link ImmutablePair} with first as output schema and second as input schema.
    */
   @Nullable
   public static ImmutablePair<Schema, Schema> findSchema(Set<Schema> output, Set<Schema> input) {
@@ -55,7 +55,7 @@ public final class SchemaFinder {
           if (compatibleSchema != null) {
             return null;
           }
-          compatibleSchema = new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
+          compatibleSchema = new ImmutablePair<Schema, Schema>(outputSchema, inputSchema);
         }
       }
     }

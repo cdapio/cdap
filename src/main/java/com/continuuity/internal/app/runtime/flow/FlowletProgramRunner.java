@@ -50,6 +50,7 @@ import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
@@ -142,7 +143,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
-                                                                   createDataSets(dataSetInstantiator, flowletDef),
+                                                                   DataSets.createDataSets(dataSetInstantiator,
+                                                                                           flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
       flowletContext.setInstanceCount(instanceCount);
@@ -355,14 +357,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
         return failurePolicy;
       }
     };
-  }
-
-  private Map<String, DataSet> createDataSets(DataSetContext dataSetContext, FlowletDefinition flowletDef) {
-    ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
-    for (String dataSetName : flowletDef.getDatasets()) {
-      builder.put(dataSetName, dataSetContext.getDataSet(dataSetName));
-    }
-    return builder.build();
   }
 
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,
