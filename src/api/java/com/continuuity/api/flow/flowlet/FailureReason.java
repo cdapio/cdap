@@ -28,20 +28,27 @@ public final class FailureReason {
   private final String message;
 
   /**
+   * Cause of the failure if it is from exception.
+   */
+  private final Throwable cause;
+
+  /**
    * Immutable object creation.
    * @param type of failure
    * @param message associated with failure.
+   * @param t cause of the failure.
    */
-  public FailureReason(Type type, String message) {
+  public FailureReason(Type type, String message, Throwable t) {
     this.type = type;
     this.message = message;
+    this.cause = t;
   }
 
   /**
    * Returns the type of failure
    * @return type of failure
    */
-  Type getType() {
+  public Type getType() {
     return this.type;
   }
 
@@ -49,8 +56,17 @@ public final class FailureReason {
    * Message associated with error.
    * @return string representation of error message.
    */
-  String getMessage() {
+  public String getMessage() {
     return message;
+  }
+
+  /**
+   * Cause of the error if it is caused by exceptions.
+   *
+   * @return The {@link Throwable} cause.
+   */
+  public Throwable getCause() {
+    return cause;
   }
 
   @Override
