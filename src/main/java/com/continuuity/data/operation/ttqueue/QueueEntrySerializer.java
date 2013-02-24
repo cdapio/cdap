@@ -50,12 +50,10 @@ public final class QueueEntrySerializer {
         }
       }
       byte[] data = entry.getData();
-      if (data==null || data.length==0)
-        encoder.writeInt(0);
-      else {
-        encoder.writeInt(data.length);
-        encoder.writeBytes(data);
+      if (data==null) {
+        data = new byte[0];
       }
+      encoder.writeBytes(data);
       return bos.toByteArray();
     } catch (IOException e) {
       LOG.error("Failed to serialize queue entry", e);
@@ -85,12 +83,7 @@ public final class QueueEntrySerializer {
           map.put(decoder.readString(),decoder.readInt());
         }
       }
-      int dataSize=decoder.readInt();
-      byte[] data=null;
-      if (dataSize>0) {
-        data=Bytes.toBytes(decoder.readBytes());
-
-      }
+      byte[] data=Bytes.toBytes(decoder.readBytes());
       QueueEntry queueEntry=new QueueEntryImpl(data);
       if (map!=null) {
         for(Map.Entry<String, Integer> e: map.entrySet()) {
