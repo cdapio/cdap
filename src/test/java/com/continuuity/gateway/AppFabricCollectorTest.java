@@ -196,4 +196,3 @@ public class AppFabricCollectorTest {
     Assert.assertTrue(state == Service.State.TERMINATED);
   }
 }
-

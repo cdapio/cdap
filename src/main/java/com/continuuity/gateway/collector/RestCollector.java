@@ -14,6 +14,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -86,8 +87,12 @@ public class RestCollector extends Collector
   public void start() throws Exception {
     LOG.info("Starting up " + this);
     // construct the internet address
-    InetSocketAddress address =
-        new InetSocketAddress(this.httpConfig.getPort());
+    InetSocketAddress address = null;
+    try {
+      address = new InetSocketAddress(this.httpConfig.getPort());
+    } catch (Exception e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(

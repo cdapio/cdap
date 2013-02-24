@@ -29,10 +29,8 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
    */
   private static final HttpConfig defaultHttpConfig =
       new HttpConfig("collector.rest")
-          //Todo: Find out which port should be used for AppFabric Http service, using 10007 for now
           .setPort(10007)
-          //Todo: Which path should be used?
-          .setPathMiddle("/rest-app/");
+          .setPathMiddle("/apps/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
