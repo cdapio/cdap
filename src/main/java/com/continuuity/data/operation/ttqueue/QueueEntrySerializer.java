@@ -77,7 +77,10 @@ public final class QueueEntrySerializer {
       Decoder decoder=new BinaryDecoder(bis);
 
       //reading version number but ignoring it for now
-      int version=decoder.readInt();
+      int versionFound=decoder.readInt();
+      if (versionFound!=version) {
+        throw new RuntimeException("Version of queue entry data incompatible!");
+      }
       int headerSize=decoder.readInt();
       Map<String,Integer> map=null;
       if (headerSize>0) {
