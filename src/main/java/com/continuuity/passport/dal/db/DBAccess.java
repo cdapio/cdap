@@ -62,10 +62,11 @@ public abstract class DBAccess {
 
   /**
    * Close DB related objects
-   * @param ps         Prepared Statement
+   *
+   * @param ps Prepared Statement
    * @throws RuntimeException
    */
-  public void close( PreparedStatement ps) {
+  public void close(PreparedStatement ps) {
     try {
       if (ps != null) {
         ps.close();

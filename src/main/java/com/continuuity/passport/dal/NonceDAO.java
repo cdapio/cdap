@@ -11,7 +11,7 @@ package com.continuuity.passport.dal;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 
 /**
- *  Manage Account activation and session nonce.
+ * Manage Account activation and session nonce.
  */
 public interface NonceDAO {
 
@@ -23,19 +23,21 @@ public interface NonceDAO {
 
   /**
    * Generates random nonce for id
-   * @param id  id to be nonced
+   *
+   * @param id   id to be nonced
    * @param type Nonce type that determines expiration
-   * @return  random nonce
+   * @return random nonce
    * @throws RuntimeException on errors from underlying DAO
    */
   public int getNonce(String id, NONCE_TYPE type);
 
   /**
    * Get Id for nonce
+   *
    * @param nonce nonce
    * @param type  Nonce type that validates expiration
    * @return id matchin nonce
-   * @throws RuntimeException on errors from underlying DAO
+   * @throws RuntimeException    on errors from underlying DAO
    * @throws StaleNonceException on time elapsed greater than expiration time set
    */
   public String getId(int nonce, NONCE_TYPE type) throws StaleNonceException;

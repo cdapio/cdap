@@ -40,7 +40,7 @@ public class SessionNonceHandler extends PassportHandler {
       nonce = dataManagementService.getSessionNonce(id);
       if (nonce != -1) {
         requestSuccess();
-        return Response.ok(Utils.getNonceJson(null,nonce)).build();
+        return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
@@ -63,9 +63,9 @@ public class SessionNonceHandler extends PassportHandler {
     String id = null;
     try {
       id = dataManagementService.getSessionId(nonce);
-      if ( (id!=null) && (!id.isEmpty())) {
+      if ((id != null) && (!id.isEmpty())) {
         requestSuccess();
-        return Response.ok(Utils.getIdJson(null,id)).build();
+        return Response.ok(Utils.getIdJson(null, id)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)

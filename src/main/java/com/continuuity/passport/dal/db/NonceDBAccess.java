@@ -40,6 +40,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   /**
    * Generate a random nonce and update in DB
+   *
    * @param id
    * @param expiration
    * @return
@@ -47,8 +48,8 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   private int updateRandomNonce(String id, int expiration) {
     int nonce = NonceUtils.getNonce();
     try {
-      updateNonce(id,expiration,nonce);
-    } catch (Exception e){
+      updateNonce(id, expiration, nonce);
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return nonce;
@@ -56,6 +57,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   /**
    * Generate a hashed nonce and update in DB
+   *
    * @param id
    * @param expiration
    * @return
@@ -65,8 +67,8 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
     System.out.println(nonce);
 
     try {
-      updateNonce(id,expiration,nonce);
-    } catch (Exception e){
+      updateNonce(id, expiration, nonce);
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return nonce;
@@ -74,11 +76,12 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
   /**
    * Update Nonce in DB
+   *
    * @param id
    * @param expiration
    * @param nonce
    */
-  private void updateNonce(String id, int expiration, int nonce){
+  private void updateNonce(String id, int expiration, int nonce) {
     Connection connection = null;
     PreparedStatement ps = null;
     try {
@@ -102,21 +105,21 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   public int getNonce(String id, NONCE_TYPE nonceType) {
 
     int nonce = -1;
-    try{
-      switch (nonceType){
+    try {
+      switch (nonceType) {
         case SESSION:
-          nonce =  updateRandomNonce(id,SHORT_EXPIRATION_MILLS);
+          nonce = updateRandomNonce(id, SHORT_EXPIRATION_MILLS);
           break;
         case ACTIVATION:
-          nonce=  updateHashedNonce(id,LONG_EXPIRATION_MILLIS);
+          nonce = updateHashedNonce(id, LONG_EXPIRATION_MILLIS);
           break;
         case RESET:
-          nonce =  updateHashedNonce(id,LONG_EXPIRATION_MILLIS);
+          nonce = updateHashedNonce(id, LONG_EXPIRATION_MILLIS);
           break;
         default:
           throw new RuntimeException("Unknown nonce type");
       }
-    }catch (Exception e){
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return nonce;
@@ -159,5 +162,5 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       close(connection, ps);
       return id;
     }
- }
+  }
 }

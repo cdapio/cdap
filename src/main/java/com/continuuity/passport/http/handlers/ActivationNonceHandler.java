@@ -41,7 +41,7 @@ public class ActivationNonceHandler extends PassportHandler {
       nonce = dataManagementService.getActivationNonce(id);
       if (nonce != -1) {
         requestSuccess();
-        return Response.ok(Utils.getNonceJson(null,nonce)).build();
+        return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
@@ -64,9 +64,9 @@ public class ActivationNonceHandler extends PassportHandler {
     String id = null;
     try {
       id = dataManagementService.getActivationId(nonce);
-      if (id !=null && !id.isEmpty()) {
+      if (id != null && !id.isEmpty()) {
         requestSuccess();
-        return Response.ok(Utils.getIdJson(null,id)).build();
+        return Response.ok(Utils.getIdJson(null, id)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
@@ -84,21 +84,21 @@ public class ActivationNonceHandler extends PassportHandler {
   @Path("generateResetKey/{email_id}")
   @GET
   @Produces("application/json")
-  public Response getRegenerateResetKey(@PathParam("email_id") String emailId){
+  public Response getRegenerateResetKey(@PathParam("email_id") String emailId) {
     requestReceived();
     int nonce = -1;
-    try{
+    try {
       nonce = dataManagementService.getResetNonce(emailId);
       if (nonce != -1) {
         requestSuccess();
-        return Response.ok(Utils.getNonceJson(null,nonce)).build();
+        return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate resetKey", nonce))
           .build();
       }
-    }catch (RuntimeException e) {
+    } catch (RuntimeException e) {
       requestFailed();
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError(String.format("Couldn't generate resetKey for %s", emailId)))
@@ -113,28 +113,26 @@ public class ActivationNonceHandler extends PassportHandler {
   public Response resetPassword(@PathParam("nonce") int nonce, String data) {
     requestReceived();
     Gson gson = new Gson();
-    JsonObject jObject = gson.fromJson(data,JsonElement.class).getAsJsonObject();
-    String password  = jObject.get("password") == null? null : jObject.get("password").getAsString();
+    JsonObject jObject = gson.fromJson(data, JsonElement.class).getAsJsonObject();
+    String password = jObject.get("password") == null ? null : jObject.get("password").getAsString();
 
-    if (password!=null){
-      try{
-       Account account = dataManagementService.resetPassword(nonce,password);
-       requestSuccess();
-       return Response.ok(account.toString()).build();
-      }
-      catch (Exception e){
+    if (password != null) {
+      try {
+        Account account = dataManagementService.resetPassword(nonce, password);
+        requestSuccess();
+        return Response.ok(account.toString()).build();
+      } catch (Exception e) {
         requestFailed(); // Request failed
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get reset the password"))
           .build();
       }
-    }
-    else {
+    } else {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Must pass in password"))
         .build();
-      }
+    }
   }
 
 }

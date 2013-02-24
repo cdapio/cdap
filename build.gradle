@@ -52,3 +52,4 @@ sourceSets{
         runtimeClasspath += api.output
     }
 }
+jar.exclude '*.xml'

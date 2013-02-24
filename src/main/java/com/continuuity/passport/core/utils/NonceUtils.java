@@ -24,9 +24,7 @@ public class NonceUtils {
   }
 
   public static int getNonce(String id) {
-
     return hashFunction.newHasher().putLong(System.currentTimeMillis()).putString(id).hashCode();
-
   }
 
 
