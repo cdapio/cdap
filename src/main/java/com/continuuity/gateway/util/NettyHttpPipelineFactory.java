@@ -54,6 +54,11 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
       throws Exception {
     this.handlerFactory = handlerFactory;
     this.config = config;
+    if (this.config.isSsl()) {
+      LOG.error("Attempt to create an SSL server, " +
+                  "which is not implemented yet.");
+      throw new UnsupportedOperationException("SSL is not yet supported");
+    }
   }
 
   @Override // to implement the Netty PipelineFactory
@@ -61,15 +66,13 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
     // create a default (empty) pipeline
     ChannelPipeline pipeline = Channels.pipeline();
 
+    // SSL is not yet implemented but this is where we would insert it
     if (this.config.isSsl()) {
-      SecureSSLContextFactory secureContextFactory = new SecureSSLContextFactory(new File(this.config.getSslCertKeyPath()),
-                                                                  this.config.getSslCertKeyPassword(),
-                                                                  this.config.getSslCryptAlgo());
-      SSLEngine engine =  secureContextFactory.getServerContext().createSSLEngine();
-      engine.setUseClientMode(false);
-      pipeline.addLast("ssl", new SslHandler(engine));
-      LOG.info("Added SSL pipeline");
+      // SSLEngine engine = ...
+      // engine.setUseClientMode(false);
+      // pipeline.addLast("ssl", new SslHandler(engine));
     }
+
     // use the default HTTP decoder from netty
     pipeline.addLast("decoder", new HttpRequestDecoder());
     // use netty's default de-chunker

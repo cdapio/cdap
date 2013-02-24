@@ -4,6 +4,8 @@ import com.continuuity.gateway.util.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.net.ssl.KeyManagerFactory;
+
 public class UtilTest {
 
   static final byte ff = (byte)0xff;
@@ -57,4 +59,5 @@ public class UtilTest {
         Long.MIN_VALUE,
         Util.bytesToLong(new byte[] { 0,0,0,x80,0,0,0,0,0,0,0 }));
   }
+
 }

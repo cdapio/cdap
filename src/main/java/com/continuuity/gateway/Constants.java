@@ -142,16 +142,6 @@ public class Constants {
     return header.startsWith(CONTINUUITY_PREFIX);
   }
 
-  //SSL Constants
-  public static final String CFG_SSL_CRYPTOGRAPHIC_ALGORITHM_KEY = "ssl.crypt.algo";
-
-  public static final String DEFAULT_SSL_CRYPTOGRAPHIC_ALGORITHM = "SHA1withRSA";
-
-  public static final String CFG_SSL_CERT_KEY_PATH= "ssl.cert.key.path";
-
-  public static final String CFG_SSL_CERT_KEY_PASSWORD= "ssl.cert.key.password";
-
-
   // Defaults for various configurations
 
   /**
