@@ -195,6 +195,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             entry.backOff();
             continue;
           }
+
+          flowletContext.getSystemMetrics().counter(input.getInputContext().getName() + ".stream.in", 1);
+
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
           }
