@@ -89,6 +89,20 @@ final class HttpProcedureResponder implements ProcedureResponder {
     }
   }
 
+  @Override
+  public synchronized void error(ProcedureResponse.Code errorCode, String errorMessage) throws IOException {
+    Preconditions.checkArgument(errorCode != ProcedureResponse.Code.SUCCESS, "Cannot send SUCCESS as error.");
+
+    if (writer != null) {
+      throw new IOException("A writer is already opened for streaming or the response was already sent.");
+    }
+
+    HttpResponse httpResponse = createHttpResponse(new ProcedureResponse(errorCode));
+    httpResponse.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage)));
+    channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
+    writer = new ClosedResponseWriter();
+  }
+
   private void handleFailure(HttpResponse httpResponse) {
     httpResponse.setContent(ChannelBuffers.EMPTY_BUFFER);
     channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
