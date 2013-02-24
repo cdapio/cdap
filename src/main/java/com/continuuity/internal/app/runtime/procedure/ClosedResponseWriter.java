@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 /**
  * A {@link ProcedureResponse.Writer} that is always closed. all write operations will throw {@link IOException}.
  */
-public final class ClosedResponseWriter implements ProcedureResponse.Writer {
+final class ClosedResponseWriter implements ProcedureResponse.Writer {
 
   @Override
   public ProcedureResponse.Writer write(ByteBuffer buffer) throws IOException {

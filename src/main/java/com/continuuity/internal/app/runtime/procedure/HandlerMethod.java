@@ -6,7 +6,7 @@ import com.continuuity.api.procedure.ProcedureResponder;
 /**
  *
  */
-public interface HandlerMethod {
+interface HandlerMethod {
 
   void handle(ProcedureRequest request, ProcedureResponder responder);
 }

@@ -14,12 +14,12 @@ import java.util.Map;
 /**
  *
  */
-public final class DefaultProcedureRequest implements ProcedureRequest {
+final class DefaultProcedureRequest implements ProcedureRequest {
 
   private final String method;
   private final Map<String, String> arguments;
 
-  public DefaultProcedureRequest(String method, Map<String, String> arguments) {
+  DefaultProcedureRequest(String method, Map<String, String> arguments) {
     this.method = method;
     this.arguments = ImmutableMap.copyOf(arguments);
   }
