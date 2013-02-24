@@ -1,5 +1,6 @@
 package com.continuuity.app.runtime;
 
+import com.continuuity.base.Cancellable;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.Executor;
@@ -89,7 +90,7 @@ public interface ProgramController {
 
   /**
    * Adds a listener to watch for state changes. Adding the same listener again don't have any effect
-   * and simply will get the same {@link Cancellable} back.
+   * and simply will get the same {@link com.continuuity.base.Cancellable} back.
    * @param listener
    * @param executor
    * @return

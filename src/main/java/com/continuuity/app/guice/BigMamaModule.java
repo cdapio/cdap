@@ -17,6 +17,8 @@ import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -32,6 +34,7 @@ import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.discovery.InMemoryDiscoveryService;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
@@ -72,6 +75,10 @@ public class BigMamaModule extends AbstractModule {
 
     // Bind LogWriter
     bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
+
+    // Bind Discovery service
+    bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
+    bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
