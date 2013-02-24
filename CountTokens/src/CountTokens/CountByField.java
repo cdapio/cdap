@@ -6,10 +6,13 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public class CountByField extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(CountByField.class);
 
   public CountByField() {
     super("CountByField");
@@ -28,9 +31,8 @@ public class CountByField extends AbstractFlowlet {
 
   @Process("splitOut")
   public void process(Map<String, String> tupleIn) throws OperationException {
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
-    }
+    LOG.debug(this.getContext().getName() + ": Received tuple " + tupleIn);
+
     String token = tupleIn.get("word");
     if (token == null) {
       return;
@@ -40,25 +42,22 @@ public class CountByField extends AbstractFlowlet {
       token = field + ":" + token;
     }
 
-    if (Common.debug) {
-       System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
-    }
-      this.counters.increment(token.getBytes(), 1);
+    LOG.debug(this.getContext().getName() + ": Emitting Increment for " + token);
+
+    this.counters.increment(token.getBytes(), 1);
   }
 
   @Process("upperOut")
   public void process(String word) throws OperationException {
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received word " + word);
-    }
+    LOG.debug(this.getContext().getName() + ": Received word " + word);
+
 
     if (word == null) {
       return;
     }
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + word);
-    }
+    LOG.debug(this.getContext().getName() + ": Emitting Increment for " + word);
+
     this.counters.increment(word.getBytes(), 1);
   }
 }

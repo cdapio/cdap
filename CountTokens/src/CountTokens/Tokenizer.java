@@ -3,11 +3,14 @@ package CountTokens;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Tokenizer extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(Tokenizer.class);
 
   @Output("splitOut")
   private OutputEmitter<Map<String,String>> output;
@@ -19,9 +22,8 @@ public class Tokenizer extends AbstractFlowlet {
   public void process(Map<String, String> map) {
     final String[] fields = { "title", "text" };
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + map);
-    }
+    LOG.debug(this.getContext().getName() + ": Received tuple " + map);
+
     for (String field : fields) {
       tokenize(map.get(field), field);
     }
@@ -39,9 +41,8 @@ public class Tokenizer extends AbstractFlowlet {
       tuple.put("field", field);
       tuple.put("word", token);
 
-      if (Common.debug) {
-        System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-      }
+      LOG.debug(this.getContext().getName() + ": Emitting tuple " + output);
+
       output.emit(tuple);
     }
   }
