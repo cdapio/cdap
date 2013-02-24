@@ -5,23 +5,27 @@
 package com.continuuity.passport.core.service;
 
 
-import com.continuuity.passport.core.exceptions.*;
+import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
+import com.continuuity.passport.core.exceptions.AccountNotFoundException;
+import com.continuuity.passport.core.exceptions.StaleNonceException;
+import com.continuuity.passport.core.exceptions.VPCNotFoundException;
+import com.continuuity.passport.core.security.Credentials;
+import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
 import com.continuuity.passport.meta.VPC;
-import com.continuuity.passport.core.security.Credentials;
-import com.continuuity.passport.core.status.Status;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- *  Service that orchestrates all account and vpc crud operations
+ * Service that orchestrates all account and vpc crud operations
  */
 public interface DataManagementService {
 
   /**
    * Register an {@code Account} in the system. Updates underlying data stores. Generates a unique account Id
+   *
    * @param account Account information
    * @return Instance of {@code Status}
    */
@@ -29,6 +33,7 @@ public interface DataManagementService {
 
   /**
    * Delete an {@code Account} in the system
+   *
    * @param accountId accountId to be deleted
    * @throws AccountNotFoundException on account to be deleted not found
    */
@@ -36,14 +41,16 @@ public interface DataManagementService {
 
   /**
    * Confirms the registration, generates API Key
-   * @param account   Instance of {@code Account}
-   * @param password  Password to be stored
+   *
+   * @param account  Instance of {@code Account}
+   * @param password Password to be stored
    */
   public void confirmRegistration(Account account, String password);
 
   /**
    * Register the fact that the user has downloaded the Dev suite
-   * @param accountId  accountId that downloaded dev suite
+   *
+   * @param accountId accountId that downloaded dev suite
    */
   public void confirmDownload(int accountId);
 
@@ -59,8 +66,9 @@ public interface DataManagementService {
 
   /**
    * Get Account object from the system
+   *
    * @param emailId look up by emailId
-   * @return  Instance of {@code Account}
+   * @return Instance of {@code Account}
    */
   public Account getAccount(String emailId);
 
@@ -74,7 +82,8 @@ public interface DataManagementService {
 
   /**
    * Change password for account
-   * @param accountId  accountId
+   *
+   * @param accountId   accountId
    * @param oldPassword old password in the system
    * @param newPassword new password in the system
    */
@@ -88,6 +97,7 @@ public interface DataManagementService {
   /**
    * Add Meta-data for VPC, updates underlying data stores and generates a VPC ID.
    * TODO: Checks for profanity keywords in vpc name and labels
+   *
    * @param accountId
    * @param vpc
    * @return Instance of {@code VPC}
@@ -96,6 +106,7 @@ public interface DataManagementService {
 
   /**
    * Get VPC - lookup by accountId and VPCID
+   *
    * @param accountId
    * @param vpcID
    * @return Instance of {@code VPC}
@@ -104,6 +115,7 @@ public interface DataManagementService {
 
   /**
    * Delete VPC
+   *
    * @param accountId
    * @param vpcId
    * @throws VPCNotFoundException when VPC is not present in underlying data stores
@@ -130,31 +142,35 @@ public interface DataManagementService {
 
   /**
    * Generate a unique id to be used in activation email to enable secure (nonce based) registration process.
+   *
    * @param id Id to be nonced
    * @return random nonce
-   * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   *         TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public int getActivationNonce(String id);
 
   /**
    * Get id for nonce
-   * @param nonce  nonce that was generated.
+   *
+   * @param nonce nonce that was generated.
    * @return id
    * @throws StaleNonceException on nonce that was generated expiring in the system
-   * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   *                             TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public String getActivationId(int nonce) throws StaleNonceException;
 
   /**
    * Generate a nonce that will be used for sessions.
-   * @param id  ID to be nonced
-   * @return  random nonce
-   * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   *
+   * @param id ID to be nonced
+   * @return random nonce
+   *         TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public int getSessionNonce(String id);
 
   /**
    * VPC count for the vpc
+   *
    * @param vpcName
    * @return
    */
@@ -162,15 +178,17 @@ public interface DataManagementService {
 
   /**
    * Get id for nonce
+   *
    * @param nonce
    * @return account id for nonce key
    * @throws StaleNonceException on nonce that was generated expiring in the system
-   * TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   *                             TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public String getSessionId(int nonce) throws StaleNonceException;
 
   /**
    * Generate Reset Nonce
+   *
    * @param id
    * @return random nonce
    */
@@ -179,6 +197,7 @@ public interface DataManagementService {
 
   /**
    * Regenerate API Key
+   *
    * @param accountId
    */
   public void regenerateApiKey(int accountId);
@@ -186,6 +205,7 @@ public interface DataManagementService {
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
    * TODO: Note: This is not implemented for initial free VPC use case
+   *
    * @param accountId
    * @param credentials
    * @param component
@@ -197,6 +217,7 @@ public interface DataManagementService {
   /**
    * Unregister a {@code Component} in the system
    * TODO: Note: This is not implemented for initial free VPC use case
+   *
    * @param accountId
    * @param credentials
    * @param component
@@ -208,6 +229,7 @@ public interface DataManagementService {
 
   /**
    * TODO: Note: This is not implemented for initial free VPC use case
+   *
    * @param accountId
    * @param credentials
    * @param component

@@ -20,7 +20,7 @@ import java.util.List;
 
 @Path("passport/v1/vpc")
 @Singleton
-public class VPCHandler  extends PassportHandler {
+public class VPCHandler extends PassportHandler {
 
   private final DataManagementService dataManagementService;
 
@@ -65,24 +65,21 @@ public class VPCHandler  extends PassportHandler {
   @Path("valid/{vpcName}")
   @GET
   public Response isValidVPC(@PathParam("vpcName") String vpcName) {
-    try{
+    try {
       int count = dataManagementService.getVPCCount(vpcName);
-      if (count== 0) {
+      if (count == 0) {
         return Response.ok().entity(Utils.getJsonOK()).build();
-      }
-      else {
+      } else {
         return Response.ok().entity(Utils.getJsonError("VPC already exists")).build();
       }
-    }
-    catch (Exception e){
+    } catch (Exception e) {
       requestFailed();
-      return  Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("FAILED", e.getMessage()))
         .build();
     }
 
   }
-
 
 
 }
