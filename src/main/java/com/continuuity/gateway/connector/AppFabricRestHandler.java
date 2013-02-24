@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -116,7 +115,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       List<String> clearParams = null;
       int operation = UNKNOWN;
-      
+
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!connector.getAuthenticator().authenticateRequest(request)) {
@@ -266,7 +265,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
       dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
-
   }
 
   private int getAccountId(String hostname, int port, String apiKey) {
