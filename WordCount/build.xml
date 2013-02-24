@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<project name="WordCount" default="jar">
+    <!-- Override the default main class defn -->
+    <property name="main.class" value="WordCount.WordCount"/>
+    <import file="../ant-common.xml"/>
+</project>
