@@ -4,12 +4,18 @@
 package com.continuuity.app.services;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.conf.Constants;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.commons.cli.*;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
 
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -23,7 +29,7 @@ import java.util.Set;
  * Usage:
  * AppFabricClient client = new AppFabricClient();
  * client.configure(CConfiguration.create(), args);
- * client.run();
+ * client.execute();
  */
 public class AppFabricNGClient {
 
@@ -48,102 +54,128 @@ public class AppFabricNGClient {
 
   private CConfiguration configuration;
 
-  public void run() {
+  /**
+   * Execute the configured operation
+   */
+  public void execute() throws TException, AppFabricServiceException {
     Preconditions.checkNotNull(command, "App client is not configured to run");
+    Preconditions.checkNotNull(configuration, "App client configuration is not set");
+
+    String address = "localhost";
+    int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+
+    TTransport transport = new TFramedTransport(new TSocket(address, port));
+    TProtocol protocol = new TBinaryProtocol(transport);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+
   }
 
   public AppFabricNGClient() {
 
   }
 
-  public String configure(CConfiguration configuration, String args[]) throws ParseException {
+  /**
+   * Configure the Client to execute commands
+   *
+   * @param configuration Instance of {@code CConfiguration}
+   * @param args          array of String arguments
+   * @return Command that will be executed
+   * @throws ParseException on errors in commnd line parsing
+   */
+  public String configure(CConfiguration configuration, String args[]) {
 
     this.configuration = configuration;
 
-    Preconditions.checkArgument(args.length > 1, "Not enough arguments");
-
+    Preconditions.checkArgument(args.length >= 1, "Not enough arguments");
     boolean knownCommand = availableCommands.contains(args[0]);
     Preconditions.checkArgument(knownCommand, "Unknown Command specified");
+
     command = args[0];
 
     CommandLineParser commandLineParser = new GnuParser();
+
     Options options = new Options();
     options.addOption(RESOURCE_ARG, true, "Jar that contains the application");
     options.addOption(APPLICATION_ARG, true, "TOADD APPROPRIATE DESCRIPTION"); //TODO:
     options.addOption(PROCESSOR_ARG, true, "TOADD APPROPRIATE DESCRIPTION"); //TODO:
     options.addOption(VPC_ARG, true, "VPC to push the application");
     options.addOption(AUTH_TOKEN_ARG, true, "Auth token of the account");
-    CommandLine commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
 
-    //Check if the appropriate args are passed in for each of the commands
-    if ("deploy".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "deploy command should have resource argument");
-      this.resource = commandLine.getOptionValue(RESOURCE_ARG);
-    }
-    if ("start".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "start command should have application argument");
-      Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "start command should have processor argument");
-      this.application = commandLine.getOptionValue(APPLICATION_ARG);
-      this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
-    }
-    if ("stop".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "stop command should have application argument");
-      Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "stop command should have processor argument");
-      this.application = commandLine.getOptionValue(APPLICATION_ARG);
-      this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+    CommandLine commandLine = null;
 
-    }
-    if ("status".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "status command should have " +
-        "application argument");
-      Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "status command should have processor argument");
-      this.application = commandLine.getOptionValue(APPLICATION_ARG);
-      this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+    try {
+      commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
 
-    }
-    if ("verify".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "verify command should have resource argument");
-      this.resource = commandLine.getOptionValue(RESOURCE_ARG);
+      //Check if the appropriate args are passed in for each of the commands
+      if ("deploy".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "deploy command should have resource argument");
+        this.resource = commandLine.getOptionValue(RESOURCE_ARG);
+      }
+      if ("start".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "start command should have application argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "start command should have processor argument");
 
-    }
-    if ("promote".equals(command)) {
-      Preconditions.checkArgument(commandLine.hasOption(VPC_ARG), "promote command should have vpc argument");
-      Preconditions.checkArgument(commandLine.hasOption(AUTH_TOKEN_ARG), "promote command should have auth token argument");
-      Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "promote command should have" +
-        " application argument");
-      this.vpc = commandLine.getOptionValue(VPC_ARG);
-      this.authToken = commandLine.getOptionValue(AUTH_TOKEN_ARG);
-      this.application = commandLine.getOptionValue(APPLICATION_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+      }
+      if ("stop".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "stop command should have application argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "stop command should have processor argument");
 
+        this.application = commandLine.getOptionValue(APPLICATION_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
 
+      }
+      if ("status".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "status command should have " +
+          "application argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "status command should have processor argument");
+
+        this.application = commandLine.getOptionValue(APPLICATION_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+
+      }
+      if ("verify".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "verify command should have resource argument");
+        this.resource = commandLine.getOptionValue(RESOURCE_ARG);
+
+      }
+      if ("promote".equals(command)) {
+        Preconditions.checkArgument(commandLine.hasOption(VPC_ARG), "promote command should have vpc argument");
+        Preconditions.checkArgument(commandLine.hasOption(AUTH_TOKEN_ARG), "promote command should have auth token argument");
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "promote command should have" +
+          " application argument");
+
+        this.vpc = commandLine.getOptionValue(VPC_ARG);
+        this.authToken = commandLine.getOptionValue(AUTH_TOKEN_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_ARG);
+
+      }
+
+    } catch (ParseException e) {
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp("AppFabricClient deploy|start|stop|status|verify|promote| [OPTIONS]", options);
+    } catch (Exception e) {
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp("AppFabricClient deploy|start|stop|status|verify|promote| [OPTIONS]", options);
+      throw Throwables.propagate(e);
     }
+
     return command;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws TException, AppFabricServiceException {
     String command = null;
     AppFabricNGClient client = null;
     try {
       client = new AppFabricNGClient();
       client.configure(CConfiguration.create(), args);
     } catch (Exception e) {
-      usage();
       return;
     }
-
-    client.run();
+    client.execute();
   }
 
-  private static void usage() {
-    PrintStream out = System.out;
-    String name = "app-fabric";
-    Copyright.print(out);
-    out.println("Usage: ");
-    out.println("  " + name + " deploy     --resource <jar>");
-    out.println("  " + name + " verify     --resource <jar>");
-    out.println("  " + name + " start      --application <app_id> --processor <?>"); //TODO:
-    out.println("  " + name + " stop       --application <app_id> --processor <?>"); //TODO:
-    out.println("  " + name + " status     --application <app_id> --processor <?>"); //TODO
-    out.println("  " + name + " promote    --vpc <vpc_name> --authtoken <auth_token> --application <app_id>");
-  }
+
 }
