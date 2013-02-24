@@ -45,8 +45,6 @@ public class SmartTransactionAgentTest {
   static final byte[] y = { 'y' };
   static final byte[] one = { '1' };
   static final byte[] two = { '2' };
-  static final byte[] six = { '6' };
-
 
   // test illegal states:
   // start, then start again
@@ -89,8 +87,15 @@ public class SmartTransactionAgentTest {
   public void testSubmitToAborted() throws OperationException {
     SmartTransactionAgent agent = newAgent();
     agent.start();
+
     newAgent().submit(new Write(a, x, one));
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
+
     agent.abort();
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(1, agent.getFailedCount());
+
     newAgent().submit(new Write(a, x, one));
   }
 
@@ -144,7 +149,11 @@ public class SmartTransactionAgentTest {
     agent.start();
     // read back the value inside the smart xaction
     OperationResult<Map<byte[], byte[]>> result = agent.execute(new Read(table, a, x));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     agent.finish();
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     // verify correct value was read
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(one, result.getValue().get(x));
@@ -160,18 +169,28 @@ public class SmartTransactionAgentTest {
     agent.start();
     // read back the value inside the smart xaction and verify
     OperationResult<Map<byte[], byte[]>> result = agent.execute(new Read(table, a, x));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     Assert.assertArrayEquals(one, result.getValue().get(x));
     // write a new value
     agent.submit(new Write(table, a, x, two));
+    // operation count should be the same
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see old value
     result = opex.execute(OperationContext.DEFAULT, new Read(table, a, x));
     Assert.assertArrayEquals(one, result.getValue().get(x));
     // read back within the smart transaction, must see new value
     result = agent.execute(new Read(table, a, x));
+    Assert.assertEquals(2, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     Assert.assertArrayEquals(two, result.getValue().get(x));
 
     // finish/commit
     agent.finish();
+    // succeeded count should go up by 1 (we did one write)
+    Assert.assertEquals(3, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see new value
     result = opex.execute(OperationContext.DEFAULT, new Read(table, a, x));
     Assert.assertArrayEquals(two, result.getValue().get(x));
@@ -187,6 +206,8 @@ public class SmartTransactionAgentTest {
     agent.submit(new Write(table, a, x, one));
     // write a batch
     agent.submit(batch(new Write(table, a, y, two), new Write(table, b, x, two)));
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // read row a outside the transaction, should return nothing
     OperationResult<Map<byte[], byte[]>> result =
@@ -195,6 +216,8 @@ public class SmartTransactionAgentTest {
 
     // read back row a inside the smart xaction and verify that it sees both x and y
     result = agent.execute(new ReadColumnRange(table, a, null, null));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     Assert.assertArrayEquals(one, result.getValue().get(x));
     Assert.assertArrayEquals(two, result.getValue().get(y));
 
@@ -204,6 +227,9 @@ public class SmartTransactionAgentTest {
 
     // finish/commit
     agent.finish();
+    // succeeded count up by 3 writes
+    Assert.assertEquals(4, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see new values
     result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertArrayEquals(one, result.getValue().get(x));
@@ -228,8 +254,13 @@ public class SmartTransactionAgentTest {
 
     // write another value in a different column
     agent.submit(new Write(table, a, y, two));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
+
     // and finish the smart xaction
     agent.finish();
+    Assert.assertEquals(3, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // read back in a new transaction, must see new values
     result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
@@ -246,6 +277,8 @@ public class SmartTransactionAgentTest {
 
     // write a new value
     agent.submit(new Write(table, a, x, one));
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // try to increment that, should fail
     try {
@@ -254,6 +287,8 @@ public class SmartTransactionAgentTest {
     } catch (OperationException e) {
       // expected
     }
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(2, agent.getFailedCount());
 
     // ensure the write was rolled back
     OperationResult<Map<byte[], byte[]>> result =
@@ -262,6 +297,8 @@ public class SmartTransactionAgentTest {
 
     // attempt to abort the agent, should be ok even though agent is already aborted
     agent.abort();
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(2, agent.getFailedCount());
   }
 
   // start, write, read, write, abort
@@ -273,16 +310,24 @@ public class SmartTransactionAgentTest {
 
     // write a new value
     agent.submit(new Write(table, a, x, one));
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // read this value back in-xaction, must see value
     OperationResult<Map<byte[], byte[]>> result = agent.execute(new Read(table, a, x));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
     Assert.assertArrayEquals(one, result.getValue().get(x));
 
     // write a new value to different column
     agent.submit(new Write(table, a, y, two));
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // abort the agent
     agent.abort();
+    Assert.assertEquals(1, agent.getSucceededCount());
+    Assert.assertEquals(2, agent.getFailedCount());
 
     // ensure both writes were rolled back
     // read back in a new transaction, must still see nothing

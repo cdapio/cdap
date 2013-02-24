@@ -18,6 +18,7 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
@@ -222,7 +223,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Create batch with increment and compareAndSwap
     // first try (CAS(1->3),Increment(3->4))
     // (will fail if operations are reordered)
-    this.executor.commit(context, batch(new CompareAndSwap(key, Bytes.toBytes(1L), Bytes.toBytes(3L)), new Increment(key, kvcol, 1L)));
+    this.executor.commit(context, batch(new CompareAndSwap(key, kvcol, Bytes.toBytes(1L), Bytes.toBytes(3L)),
+                                        new Increment(key, kvcol, 1L)));
 
     // verify value = 4
     // (value = 2 if no ReadOwnWrites)
@@ -232,7 +234,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Create another batch with increment and compareAndSwap, change order
     // second try (Increment(4->5),CAS(5->1))
     // (will fail if operations are reordered or if no ReadOwnWrites)
-    this.executor.commit(context, batch(new Increment(key, kvcol, 1L), new CompareAndSwap(key, Bytes.toBytes(5L), Bytes.toBytes(1L))));
+    this.executor.commit(context, batch(new Increment(key, kvcol, 1L),
+                                        new CompareAndSwap(key, kvcol, Bytes.toBytes(5L), Bytes.toBytes(1L))));
 
     // verify value = 1
     value = this.executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol);
@@ -332,14 +335,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add a push to dest queue one
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueOne, new QueueEntryImpl(destQueueOneVal)));
 
     // Add a compare-and-swap
     writes.add(new CompareAndSwap(
-        dataKey, Bytes.toBytes(1L), Bytes.toBytes(10L)));
+        dataKey, kvcol, Bytes.toBytes(1L), Bytes.toBytes(10L)));
 
     // Add a push to dest queue two
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueTwo, new QueueEntryImpl(destQueueTwoVal)));
 
     // Add another user increment operation
     writes.add(new Increment(dataKey, kvcol, 3));

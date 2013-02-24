@@ -60,19 +60,33 @@ public class SynchronousTransactionAgentTest {
     agent.submit(new Write(table, c, x, three));
     agent.submit(batch(new Write(table, a, x, one),
                        new Write(table, b, y, two)));
+    Assert.assertEquals(3, agent.getSucceededCount());
 
     // sync read all rows through agent and verify
     Assert.assertArrayEquals(three, agent.execute(new Read(table, c, x)).getValue().get(x));
     Assert.assertArrayEquals(two, agent.execute(new Read(table, b, y)).getValue().get(y));
     Assert.assertArrayEquals(one, agent.execute(new Read(table, a, x)).getValue().get(x));
+    Assert.assertEquals(6, agent.getSucceededCount());
 
     // sync read all rows without agent and verify
     Assert.assertArrayEquals(three, opex.execute(OperationContext.DEFAULT, new Read(table, c, x)).getValue().get(x));
     Assert.assertArrayEquals(two, opex.execute(OperationContext.DEFAULT, new Read(table, b, y)).getValue().get(y));
     Assert.assertArrayEquals(one, opex.execute(OperationContext.DEFAULT, new Read(table, a, x)).getValue().get(x));
 
+    // fail a compare-and-swap and make sure the failed count goes up
+    try {
+      agent.submit(new CompareAndSwap(table, c, x, x, x));
+      Assert.fail("compare-and-swap should have failed");
+    } catch (OperationException e) {
+      // expected
+    }
+    Assert.assertEquals(6, agent.getSucceededCount());
+    Assert.assertEquals(1, agent.getFailedCount());
+
     // abort the agent
     agent.abort();
+    Assert.assertEquals(6, agent.getSucceededCount());
+    Assert.assertEquals(1, agent.getFailedCount());
 
     // sync read all rows without agent and verify writes are still there
     // sync read all rows without agent and verify
