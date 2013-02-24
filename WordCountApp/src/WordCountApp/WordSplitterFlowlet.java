@@ -1,6 +1,7 @@
 package WordCountApp;
 
 import com.continuuity.api.annotation.Output;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -18,7 +19,7 @@ public class WordSplitterFlowlet extends AbstractFlowlet {
 
   public void process(StreamEvent event) {
     // Input is a String, need to split it by whitespace
-    byte [] rawInput = event.getBody().array();
+    byte [] rawInput = Bytes.toBytes(event.getBody());
     String inputString = new String(rawInput);
     String [] words = inputString.split("\\s+");
     

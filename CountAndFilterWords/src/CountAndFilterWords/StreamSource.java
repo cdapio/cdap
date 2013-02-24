@@ -1,5 +1,6 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -21,7 +22,7 @@ public class StreamSource extends AbstractFlowlet {
 
     Map<String, String> headers = event.getHeaders();
     String title = headers.get("title");
-    byte[] body = event.getBody().array();
+    byte[] body = Bytes.toBytes(event.getBody());
     String text = body == null ? null :new String(body);
 
     Map<String,String> tuple = new HashMap<String,String>();
