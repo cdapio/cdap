@@ -125,6 +125,25 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
     return nonce;
   }
 
+  private void deleteNonce(int nonce) {
+
+    Connection connection = null;
+    PreparedStatement ps = null;
+    String id = null;
+
+    try {
+      connection = this.poolManager.getConnection();
+      String SQL = String.format("DELETE FROM %s WHERE %s = ?",
+        DBUtils.Nonce.TABLE_NAME,
+        DBUtils.Nonce.NONCE_ID_COLUMN);
+      ps = connection.prepareStatement(SQL);
+      ps.setInt(1, nonce);
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   @Override
   public String getId(int nonce, NONCE_TYPE type) throws StaleNonceException {
 
@@ -160,6 +179,10 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
+      //Delete the nonce after it is used
+      if (id != null && !id.isEmpty()) {
+        deleteNonce(nonce);
+      }
       return id;
     }
   }
