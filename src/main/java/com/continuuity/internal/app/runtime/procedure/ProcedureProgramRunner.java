@@ -9,6 +9,9 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.base.Cancellable;
+import com.continuuity.discovery.Discoverable;
+import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
@@ -43,15 +46,19 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final int MAX_IO_THREADS = 5;
   private static final int MAX_HANDLER_THREADS = 20;
 
+  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DiscoveryService discoveryService;
+
   private ExecutionHandler executionHandler;
   private ServerBootstrap bootstrap;
   private Channel serverChannel;
   private ChannelGroup channelGroup;
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
 
   @Inject
-  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory) {
+  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
+                                DiscoveryService discoveryService) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.discoveryService = discoveryService;
   }
 
   @Override
@@ -70,8 +77,6 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
-      Class<? extends Procedure> procedureClass = (Class<? extends Procedure>) program.getMainClass();
-
       RunId runId = RunId.generate();
 
       channelGroup = new DefaultChannelGroup();
@@ -85,7 +90,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       LOG.info(String.format("Procedure server started for %s.%s listening on %s",
                              program.getApplicationId(), program.getProgramName(), serverChannel.getLocalAddress()));
 
-      return new ProcedureProgramController(program, runId);
+      return new ProcedureProgramController(program, runId,
+                                            discoveryService.register(createDiscoverable(program, serverChannel)));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -151,10 +157,33 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                                        threadFactory, new ThreadPoolExecutor.CallerRunsPolicy()));
   }
 
+  private Discoverable createDiscoverable(Program program, Channel serverChannel) {
+    final String name = String.format("procedure.%s.%s.%s",
+                                      program.getAccountId(),
+                                      program.getApplicationId(),
+                                      program.getProgramName());
+    final InetSocketAddress address = (InetSocketAddress)serverChannel.getLocalAddress();
+
+    return new Discoverable() {
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return address;
+      }
+    };
+  }
+
   private final class ProcedureProgramController extends AbstractProgramController {
 
-    ProcedureProgramController(Program program, RunId runId) {
+    private final Cancellable cancellable;
+
+    ProcedureProgramController(Program program, RunId runId, Cancellable cancellable) {
       super(program.getProgramName(), runId);
+      this.cancellable = cancellable;
     }
 
     @Override
@@ -169,6 +198,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
+      cancellable.cancel();
       try {
         channelGroup.close().await();
       } finally {
