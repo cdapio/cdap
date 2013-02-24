@@ -29,8 +29,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final String basePath;
 
   public DataFabricLevelDBModule() {
-    CConfiguration conf = CConfiguration.create();
-    String path = conf.get("data.local.leveldb");
+    this(CConfiguration.create());
+  }
+
+  public DataFabricLevelDBModule(CConfiguration configuration) {
+    String path = configuration.get("data.local.leveldb");
     if (path == null || path.isEmpty()) {
       path =
         System.getProperty("java.io.tmpdir") +
@@ -40,6 +43,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
         throw new RuntimeException("Unable to create directory for ldb");
       }
     }
+
     this.basePath = path;
   }
 

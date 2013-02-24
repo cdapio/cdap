@@ -81,7 +81,7 @@ public class TestLocalModeTTQueuePerf {
     long start = now();
     long last = start;
     for (int i=0; i<n; i++) {
-      queueTable.enqueue(queueName, new QueueEntryImpl(null, data), version);
+      queueTable.enqueue(queueName, new QueueEntryImpl(data), version);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -103,7 +103,7 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      streamTable.enqueue(queueName, new QueueEntryImpl(null, data), version);
+      streamTable.enqueue(queueName, new QueueEntryImpl(data), version);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
