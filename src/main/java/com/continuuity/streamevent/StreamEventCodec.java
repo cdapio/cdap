@@ -62,7 +62,9 @@ public final class StreamEventCodec {
       // Serialize the headers
       encoder.writeInt(headers.size());
       for (Map.Entry<String, String> entry : headers.entrySet()) {
+        String value = entry.getValue();
         encoder.writeString(entry.getKey())
+               .writeInt(value == null ? 1 : 0)
                .writeString(entry.getValue());
       }
       if (headers.size() > 0) {
