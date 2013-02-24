@@ -7,6 +7,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
  * Counts number of even tuples.
  */
 public class EvenCounter extends AbstractFlowlet {
+
   private int count = 0;
 
   public EvenCounter() {
@@ -14,7 +15,7 @@ public class EvenCounter extends AbstractFlowlet {
   }
 
   @Process("evenOut")
-  public void process(Integer number) {
+  public void process() {
     count++;
   }
 }

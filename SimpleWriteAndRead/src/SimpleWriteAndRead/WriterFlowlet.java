@@ -6,10 +6,13 @@ import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public class WriterFlowlet extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
 
   @UseDataSet(Common.tableName)
   KeyValueTable kvTable;
@@ -29,8 +32,7 @@ public class WriterFlowlet extends AbstractFlowlet {
   }
 
   public void process(Map<String, String> tupleIn) throws OperationException {
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
+    LOG.debug(this.getContext().getName() + ": Received tuple " + tupleIn);
 
     // text should be in the form: key=value
     String text = tupleIn.get("text");
@@ -41,8 +43,7 @@ public class WriterFlowlet extends AbstractFlowlet {
 
     this.kvTable.write(key, value);
 
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting key " + key);
+    LOG.debug(this.getContext().getName() + ": Emitting key " + key);
 
     output.emit(key);
   }

@@ -4,12 +4,16 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 public class StreamSource extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(StreamSource.class);
+
   private OutputEmitter<Map<String,String>> output;
 
   public StreamSource() {
@@ -17,8 +21,7 @@ public class StreamSource extends AbstractFlowlet {
   }
 
   public void process(StreamEvent event) {
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
+    LOG.debug(this.getContext().getName() + ": Received event " + event);
 
     byte[] body = Bytes.toBytes(event.getBody());
     String text = body == null ? null :new String(body);
@@ -30,8 +33,7 @@ public class StreamSource extends AbstractFlowlet {
     tuple.put("title", title);
     tuple.put("text", text);
 
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + tuple);
+    LOG.debug(this.getContext().getName() + ": Emitting tuple " + tuple);
 
     output.emit(tuple);
   }

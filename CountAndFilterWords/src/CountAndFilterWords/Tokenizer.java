@@ -2,44 +2,41 @@ package CountAndFilterWords;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Tokenizer extends AbstractFlowlet {
-  private OutputEmitter<Map<String,String>> output;
+  private static Logger LOG = LoggerFactory.getLogger(Tokenizer.class);
+
+  private OutputEmitter<Record> output;
 
   public Tokenizer() {
     super("split-words");
   }
 
-  public void process(Map<String, String> map) {
+  public void process(Record record) {
     final String[] fields = { "title", "text" };
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + map);
-    }
+    LOG.debug(this.getContext().getName() + ": Received record with word "
+                + record.getWord() + " and field " + record.getField());
+
     for (String field : fields) {
-      tokenize((String)map.get(field), field);
+      tokenize(record.getField(), field);
     }
   }
 
-  void tokenize(String str, String field) {
-    if (str == null) {
+  void tokenize(String text, String field) {
+    if (text == null) {
       return;
     }
     final String delimiters = "[ .-]";
-    String[] tokens = str.split(delimiters);
+    String[] tokens = text.split(delimiters);
 
     for (String token : tokens) {
-      Map<String,String> tuple = new HashMap<String,String>();
-      tuple.put("field", field);
-      tuple.put("word", token);
+      LOG.debug(this.getContext().getName() + ": Emitting record with word "
+                  + token + " and field " + field);
 
-      if (Common.debug) {
-        System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-      }
-      output.emit(tuple);
+      output.emit(new Record(token, field));
     }
   }
 }

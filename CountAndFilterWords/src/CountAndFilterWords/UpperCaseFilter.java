@@ -2,22 +2,23 @@ package CountAndFilterWords;
 
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UpperCaseFilter extends AbstractFlowlet {
-  private OutputEmitter<Map<String,String>> output;
+
+  private static Logger LOG = LoggerFactory.getLogger(UpperCaseFilter.class);
+
+  private OutputEmitter<Record> output;
 
   public UpperCaseFilter() {
     super("upper-filter");
   }
 
-  public void process(Map<String, String> tupleIn) {
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tupleIn);
-    }
-    String word = tupleIn.get("word");
+  public void process(Record recordIn) {
+    LOG.debug(this.getContext().getName() + ": Received word " + recordIn.getWord());
+
+    String word = recordIn.getWord();
     if (word == null) {
       return;
     }
@@ -26,12 +27,10 @@ public class UpperCaseFilter extends AbstractFlowlet {
       return;
     }
 
-    Map<String,String> tupleOut = new HashMap<String,String>();
-    tupleOut.put("word", word);
+    Record recordOut = new Record(word, null);
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + tupleOut);
-    }
-    output.emit(tupleOut);
+    LOG.debug(this.getContext().getName() + ": Emitting word " + recordOut.getWord());
+
+    output.emit(recordOut);
   }
 }

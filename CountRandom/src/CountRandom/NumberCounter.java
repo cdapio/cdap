@@ -17,12 +17,9 @@ public class NumberCounter extends AbstractFlowlet {
     super("count");
   }
 
-  public void process(Integer number) {
-    try {
-      counters.write(new Increment(number.toString().getBytes(), column, 1L));
-    } catch (OperationException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  public void process(Integer number) throws OperationException {
 
+    counters.write(new Increment(number.toString().getBytes(), column, 1L));
+
+  }
 }

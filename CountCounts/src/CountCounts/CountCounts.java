@@ -5,6 +5,7 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 
 public class CountCounts implements Flow {
+
   @Override
   public FlowSpecification configure() {
     return FlowSpecification.Builder.with()
