@@ -24,11 +24,20 @@ public interface ProcedureResponder {
   ProcedureResponse.Writer stream(ProcedureResponse response) throws IOException;
 
   /**
-   * Send a response with a json body.
+   * Sends a response with a json body.
    *
    * @param response A {@link ProcedureResponse} containing the response to be returned.
    * @param object An object to be serialized into json and send as response body.
    * @throws IOException When there is issue sending the response to the callee.
    */
   void sendJson(ProcedureResponse response, Object object) throws IOException;
+
+  /**
+   * Sends an error response to client with the given error message.
+   *
+   * @param errorCode The error code
+   * @param errorMessage The error message send back to client. If it is {@code null}, no error message would be sent.
+   * @throws IOException When there is issue sending the response to the callee.
+   */
+  void error(ProcedureResponse.Code errorCode, String errorMessage) throws IOException;
 }

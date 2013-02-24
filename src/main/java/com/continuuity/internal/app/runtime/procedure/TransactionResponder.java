@@ -53,6 +53,23 @@ final class TransactionResponder implements ProcedureResponder {
     }
   }
 
+  @Override
+  public synchronized void error(ProcedureResponse.Code errorCode, String errorMessage) throws IOException {
+    if (writer != null) {
+      throw new IOException("A writer is already opened for streaming or the response was already sent.");
+    }
+
+    // TODO: Should we abort?
+    // Abort the transaction and send out error.
+    try {
+      txAgent.abort();
+      responder.error(errorCode, errorMessage);
+    } catch (Throwable t) {
+      writer = ResponseWriters.CLOSED_WRITER;
+      throw propagate(t);
+    }
+  }
+
   private IOException propagate(Throwable t) throws IOException {
     if (t instanceof IOException) {
       throw (IOException)t;

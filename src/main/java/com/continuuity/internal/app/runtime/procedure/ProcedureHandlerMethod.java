@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  *
  */
-public final class ProcedureHandlerMethod implements HandlerMethod {
+final class ProcedureHandlerMethod implements HandlerMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandlerMethod.class);
 
@@ -42,7 +42,7 @@ public final class ProcedureHandlerMethod implements HandlerMethod {
   private final Procedure procedure;
   private final Map<String, HandlerMethod> handlers;
 
-  public ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
+  ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
                                 TransactionAgentSupplierFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
     TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);

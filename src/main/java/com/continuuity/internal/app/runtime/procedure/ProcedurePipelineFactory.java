@@ -16,15 +16,15 @@ import org.jboss.netty.handler.execution.ExecutionHandler;
 /**
  *
  */
-public final class ProcedurePipelineFactory implements ChannelPipelineFactory {
+final class ProcedurePipelineFactory implements ChannelPipelineFactory {
 
   private final ExecutionHandler executionHandler;
   private final ProcedureDispatcher dispatcher;
   private final ChannelUpstreamHandler connectionTracker;
 
-  public ProcedurePipelineFactory(ExecutionHandler executionHandler,
-                                  HandlerMethodFactory handlerMethodFactory,
-                                  final ChannelGroup channelGroup) {
+  ProcedurePipelineFactory(ExecutionHandler executionHandler,
+                           HandlerMethodFactory handlerMethodFactory,
+                           final ChannelGroup channelGroup) {
     this.executionHandler = executionHandler;
     this.dispatcher = new ProcedureDispatcher(handlerMethodFactory);
     this.connectionTracker = new SimpleChannelUpstreamHandler() {
