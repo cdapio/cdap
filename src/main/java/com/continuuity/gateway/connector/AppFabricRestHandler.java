@@ -12,7 +12,6 @@ import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.internal.app.BufferFileInputStream;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -28,11 +27,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
@@ -116,7 +115,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       List<String> clearParams = null;
       int operation = UNKNOWN;
-      
+
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!connector.getAuthenticator().authenticateRequest(request)) {
@@ -254,28 +253,19 @@ public class AppFabricRestHandler extends NettyRestHandler {
     ri.setSize(jarFileBytes.length);
     ri.setModtime(System.currentTimeMillis());
     ResourceIdentifier id = client.init(token, ri);
-
-    BufferFileInputStream is =
-      new BufferFileInputStream(new ByteArrayInputStream(jarFileBytes), 100*1024);
-    try {
-      while(true) {
-        byte[] toSubmit = is.read();
-        if(toSubmit.length==0) break;
-        client.chunk(token, id, ByteBuffer.wrap(toSubmit));
-      }
-    } finally {
-      is.close();
-    }
-    client.deploy(token, id);
-
+    // Upload the jar file to remote location.
+    byte[] toSubmit=jarFileBytes;
+    client.chunk(token, id, ByteBuffer.wrap(toSubmit));
     DeploymentStatus status = client.dstatus(token, id);
+
+
+    client.deploy(token, id);
     int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
       dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
   }
-
   private AppFabricService.Client getAppFabricClient(String host, int port)
     throws ServerException {
 
