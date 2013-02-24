@@ -1,6 +1,8 @@
 package CountCounts;
 
+
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -33,7 +35,7 @@ public class StreamSource extends AbstractFlowlet {
       System.out.println(this.getClass().getSimpleName() + ": Received event " + event);
     }
     ByteBuffer buf = event.getBody();
-    byte[] body = buf.array();
+    byte[] body = Bytes.toBytes(event.getBody());
     String text = body == null ? null :new String(body);
 
     if (Common.debug) {
