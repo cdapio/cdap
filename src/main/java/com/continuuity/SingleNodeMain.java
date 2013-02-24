@@ -90,13 +90,14 @@ public class SingleNodeMain {
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
 
     // Start all the services.
+    overlordCollection.start(args, configuration);
+
     Service.State state = appFabricServer.startAndWait();
     if(state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric.");
     }
 
     metaDataServer.start(args, configuration);
-    overlordCollection.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
     webCloudAppService.start(args, configuration);
@@ -114,11 +115,11 @@ public class SingleNodeMain {
       webCloudAppService.stop(true);
       gateway.stop(true);
       metaDataServer.stop(true);
-      overloadFrontend.stop(true);
-      overlordCollection.stop(true);
       metaDataServer.stop(true);
       appFabricServer.startAndWait();
-    } catch (ServerException e) {
+      overloadFrontend.stop(true);
+      overlordCollection.stop(true);
+    } catch (Exception e) {
       LOG.error(StackTraceUtil.toStringStackTrace(e));
     }
   }
@@ -194,6 +195,7 @@ public class SingleNodeMain {
     }
 
     boolean inMemory = false;
+    boolean levelDBEnabled = true;
 
     // We only support 'help' command line options currently
     if (args.length > 0) {
@@ -202,12 +204,16 @@ public class SingleNodeMain {
         return;
       } else if ("--in-memory".equals(args[0])) {
         inMemory = true;
+      } else if ("--leveldb-disable".equals(args[0])) {
+        levelDBEnabled = false;
       } else {
         usage(true);
       }
     }
 
     CConfiguration configuration = CConfiguration.create();
+    configuration.setIfUnset("data.local.leveldb", "data");
+
     boolean inVPC = false;
     String environment = configuration.get("appfabric.environment", "devsuite");
     if(environment.equals("vpc")) {
@@ -233,7 +239,8 @@ public class SingleNodeMain {
       new BigMamaModule(configuration),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      inVPC || levelDBCompatibleOS ? new DataFabricLevelDBModule() : new DataFabricModules().getSingleNodeModules(),
+      ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
+        : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules()
     );
 
