@@ -33,6 +33,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   private DBConnectionPoolManager poolManager = null;
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
   private final HashFunction hashFunction = Hashing.sha1();
+
   /**
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
@@ -242,17 +243,17 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setInt(1, accountId);
       rs = ps.executeQuery();
 
-     int count = 0;
+      int count = 0;
       while (rs.next()) {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-                              rs.getString(4), rs.getInt(5), rs.getString(6),
-                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8))  );
+          rs.getString(4), rs.getInt(5), rs.getString(6),
+          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
       }
-   } catch (SQLException e) {
+    } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps, rs);
@@ -284,7 +285,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
-        DBUtils.AccountTable.CONFIRMED_COLUMN,  DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+        DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN);
 
@@ -296,8 +297,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       while (rs.next()) {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-                              rs.getString(4), rs.getInt(5), rs.getString(6),
-                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getString(4), rs.getInt(5), rs.getString(6),
+          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -493,10 +494,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       //Update the account table. Joining email id from nonce table
       String UPDATE_SQL = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
-                               DBUtils.AccountTable.TABLE_NAME,
-                               DBUtils.AccountTable.PASSWORD_COLUMN,DBUtils.AccountTable.EMAIL_COLUMN,
-                               DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
-                              );
+        DBUtils.AccountTable.TABLE_NAME,
+        DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
+      );
 
 
       update = connection.prepareStatement(UPDATE_SQL);
@@ -506,17 +507,17 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       //Update is successful. now return the account information
       String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
-                                        "(SELECT %s FROM %s where %s = ?)",
-                                        DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-                                        DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
-                                        DBUtils.AccountTable.CONFIRMED_COLUMN,
-                                        DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
-                                        DBUtils.AccountTable.TABLE_NAME,
-                                        DBUtils.AccountTable.EMAIL_COLUMN,
-                                        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
-                                        DBUtils.Nonce.NONCE_ID_COLUMN
-                                        );
+        "(SELECT %s FROM %s where %s = ?)",
+        DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
+        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+        DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN,
+        DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+        DBUtils.AccountTable.TABLE_NAME,
+        DBUtils.AccountTable.EMAIL_COLUMN,
+        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
+        DBUtils.Nonce.NONCE_ID_COLUMN
+      );
 
       select = connection.prepareStatement(SELECT_SQL);
 
@@ -525,16 +526,15 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       while (rs.next()) {
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-                              rs.getString(4), rs.getInt(5), rs.getString(6),
-                              rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getString(4), rs.getInt(5), rs.getString(6),
+          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
       }
       return account;
-    } catch (SQLException e){
-    throw Throwables.propagate(e);
-    }
-    finally {
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
       close(update);
-      close(connection,select,rs);
+      close(connection, select, rs);
     }
   }
 
