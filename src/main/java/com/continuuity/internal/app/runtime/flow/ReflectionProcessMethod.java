@@ -131,7 +131,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
       }
     } catch (Exception e) {
       // If it reaches here, something very wrong.
-      LOGGER.error("Fail to process input.", e);
+      LOGGER.error("Fail to process input: " + method, e);
       throw Throwables.propagate(e);
     }
   }
