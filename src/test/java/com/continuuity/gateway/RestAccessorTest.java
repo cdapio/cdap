@@ -544,7 +544,7 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
 
-    String streamUri = QueueName.fromStream(new Id.Account(Constants.defaultAccount), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
                                 .toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
@@ -625,7 +625,7 @@ public class RestAccessorTest {
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = QueueName.fromStream(new Id.Account(Constants.defaultAccount), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
       .toString();
     verifyQueueGone(streamUri);
   }

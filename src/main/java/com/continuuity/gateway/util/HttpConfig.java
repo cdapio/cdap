@@ -95,6 +95,24 @@ public class HttpConfig {
    */
   private int threads = DefaultThreads;
 
+  private String sslCryptAlgo = Constants.DEFAULT_SSL_CRYPTOGRAPHIC_ALGORITHM;
+
+  private String sslCertKeyPath = "/tmp/cert";
+
+  public String getSslCertKeyPassword() {
+    return sslCertKeyPassword;
+  }
+
+  private String sslCertKeyPassword = "";
+
+  public String getSslCryptAlgo() {
+    return sslCryptAlgo;
+  }
+
+  public String getSslCertKeyPath() {
+    return sslCertKeyPath;
+  }
+
   /**
    * private because this would create a config without a name
    */
@@ -240,7 +258,7 @@ public class HttpConfig {
    * @return a new HTTPConfig
    * @throws Exception if anything goes wrong
    */
-  public static HttpConfig configure(String name,
+  public static HttpConfig  configure(String name,
                                      CConfiguration configuration,
                                      HttpConfig defaults) throws Exception {
     // if no defaults were given, create an empty config (it has defaults)
@@ -255,22 +273,38 @@ public class HttpConfig {
     config.chunk = configuration.getBoolean(
         Constants.buildConnectorPropertyName(
             name, Constants.CONFIG_CHUNKING), defaults.isChunking());
-    config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_SSL), defaults.isSsl());
+    config.ssl = enableSSL (configuration.get(com.continuuity.common.conf.Constants.CFG_APPFABRIC_ENVIRONMENT,
+                                              com.continuuity.common.conf.Constants.DEFAULT_APPFABRIC_ENVIRONMENT));
+    config.sslCryptAlgo = configuration.get(Constants.CFG_SSL_CRYPTOGRAPHIC_ALGORITHM_KEY,
+                                            Constants.DEFAULT_SSL_CRYPTOGRAPHIC_ALGORITHM);
+
+    config.sslCertKeyPath = configuration.get(Constants.CFG_SSL_CERT_KEY_PATH,
+                                              defaults.getSslCertKeyPath());
+    config.sslCertKeyPassword = configuration.get(Constants.CFG_SSL_CERT_KEY_PASSWORD,
+                                                  defaults.getSslCertKeyPassword());
     config.prefix = configuration.get(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
+      name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
     config.middle = configuration.get(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
     config.maxContentSize = configuration.getInt(
         Constants.buildConnectorPropertyName(
             name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
-
-    if (config.ssl) {
-      LOG.warn("SSL is not implemented yet. " +
-          "Ignoring configuration for connector '" + name + "'.");
-      config.ssl = false;
-    }
     return config;
+  }
+
+  /**
+   * Helper method to figure out if ssl needs to be enabled for gateway
+   * @param appFabricEnvironment
+   * @return false if the appFabricEnvironment is the same as default appFabric environment, false otherwise
+   */
+  private static boolean enableSSL (String appFabricEnvironment){
+    //if the appFabric environment is the same as default env then don't use ssl.
+    if ( com.continuuity.common.conf.Constants.DEFAULT_APPFABRIC_ENVIRONMENT.equals(appFabricEnvironment)) {
+      return false;
+    }
+    else {
+      return true;
+    }
   }
 
   /**
