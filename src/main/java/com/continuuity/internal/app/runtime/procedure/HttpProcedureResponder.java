@@ -45,9 +45,13 @@ final class HttpProcedureResponder implements ProcedureResponder {
       return writer;
     }
 
-    httpResponse.setChunked(true);
+    httpResponse.setHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
     httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
-    channel.write(httpResponse);
+    try {
+      channel.write(httpResponse).await();
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
     writer = new HttpResponseWriter(channel);
 
     return writer;
@@ -74,7 +78,8 @@ final class HttpProcedureResponder implements ProcedureResponder {
 
       httpResponse.setContent(channelBuffer);
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
-      ChannelFuture result = channel.write(channelBuffer);
+      httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, channelBuffer.readableBytes());
+      ChannelFuture result = channel.write(httpResponse);
       result.addListener(ChannelFutureListener.CLOSE);
       result.await();
     } catch (Throwable t) {

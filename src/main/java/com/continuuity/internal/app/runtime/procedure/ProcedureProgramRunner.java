@@ -1,10 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
@@ -14,29 +10,43 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  */
 public final class ProcedureProgramRunner implements ProgramRunner {
 
-  private static final int MAX_WORKER_THREADS = 10;
+  private static final Logger LOG = LoggerFactory.getLogger(ProcedureProgramRunner.class);
 
+  private static final int MAX_IO_THREADS = 5;
+  private static final int MAX_HANDLER_THREADS = 20;
+
+  private ExecutionHandler executionHandler;
   private ServerBootstrap bootstrap;
+  private Channel serverChannel;
+  private ChannelGroup channelGroup;
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
 
   @Inject
@@ -61,28 +71,28 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
       Class<? extends Procedure> procedureClass = (Class<? extends Procedure>) program.getMainClass();
-      ClassLoader classLoader = procedureClass.getClassLoader();
 
       RunId runId = RunId.generate();
 
-      // Creates opex related objects
-      TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
-      DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
+      channelGroup = new DefaultChannelGroup();
+      executionHandler = createExecutionHandler();
+      bootstrap = createBootstrap(program, executionHandler,
+                                  createHandlerMethodFactory(program, runId, instanceId), channelGroup);
+      serverChannel = bootstrap.bind(new InetSocketAddress(0));
 
-      BasicProcedureContext procedureContext =
-        new BasicProcedureContext(program, instanceId, runId,
-                                  DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
-                                  procedureSpec);
+      channelGroup.add(serverChannel);
 
-      bootstrap = createBootstrap(program);
+      LOG.info(String.format("Procedure server started for %s.%s listening on %s",
+                             program.getApplicationId(), program.getProgramName(), serverChannel.getLocalAddress()));
 
-      return null;
+      return new ProcedureProgramController(program, runId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  private ServerBootstrap createBootstrap(Program program) {
+  private ServerBootstrap createBootstrap(Program program, ExecutionHandler executionHandler,
+                                          HandlerMethodFactory handlerMethodFactory, ChannelGroup channelGroup) {
     // Single thread for boss thread
     Executor bossExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder()
@@ -99,46 +109,46 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     ServerBootstrap bootstrap = new ServerBootstrap(
                                     new NioServerSocketChannelFactory(bossExecutor,
-                                                                      workerExecutor,
-                                                                      MAX_WORKER_THREADS));
+                                                                      workerExecutor, MAX_IO_THREADS));
 
-    // Setup processing pipeline
+    bootstrap.setPipelineFactory(new ProcedurePipelineFactory(executionHandler, handlerMethodFactory, channelGroup));
 
     return bootstrap;
   }
 
 
-  private void injectFields(Procedure procedure, TypeToken<? extends Procedure> procedureType,
-                            BasicProcedureContext procedureContext) throws IllegalAccessException {
-
-    // Walk up the hierarchy of procedure class.
-    for (TypeToken<?> type : procedureType.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Inject DataSet and Metrics fields.
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject DataSet
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset != null && !dataset.value().isEmpty()) {
-            setField(procedure, field, procedureContext.getDataSet(dataset.value()));
-          }
-          continue;
-        }
-        if (Metrics.class.equals(field.getType())) {
-          setField(procedure, field, procedureContext.getMetrics());
+  private HandlerMethodFactory createHandlerMethodFactory(final Program program,
+                                                          final RunId runId,
+                                                          final int instanceId) {
+    return new HandlerMethodFactory() {
+      @Override
+      public HandlerMethod create() {
+        try {
+          return new ProcedureHandlerMethod(program, runId, instanceId, txAgentSupplierFactory);
+        } catch (ClassNotFoundException e) {
+          throw Throwables.propagate(e);
         }
       }
-    }
+    };
   }
 
-  private void setField(Procedure procedure, Field field, Object value) throws IllegalAccessException {
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
-    }
-    field.set(procedure, value);
+  private ExecutionHandler createExecutionHandler() {
+    ThreadFactory threadFactory = new ThreadFactory() {
+      private final ThreadGroup threadGroup = new ThreadGroup("procedure-thread");
+      private final AtomicLong count = new AtomicLong(0);
+
+      @Override
+      public Thread newThread(Runnable r) {
+        Thread t = new Thread(threadGroup, r, String.format("procedure-executor-%d", count.getAndIncrement()));
+        t.setDaemon(true);
+        return t;
+      }
+    };
+
+    return new ExecutionHandler(new ThreadPoolExecutor(0, MAX_HANDLER_THREADS,
+                                                       60L, TimeUnit.SECONDS,
+                                                       new SynchronousQueue<Runnable>(),
+                                                       threadFactory, new ThreadPoolExecutor.CallerRunsPolicy()));
   }
 
   private final class ProcedureProgramController extends AbstractProgramController {
@@ -149,22 +159,27 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doSuspend() throws Exception {
-      //To change body of implemented methods use File | Settings | File Templates.
+      // No-op
     }
 
     @Override
     protected void doResume() throws Exception {
-      //To change body of implemented methods use File | Settings | File Templates.
+      // No-op
     }
 
     @Override
     protected void doStop() throws Exception {
-      //To change body of implemented methods use File | Settings | File Templates.
+      try {
+        channelGroup.close().await();
+      } finally {
+        bootstrap.releaseExternalResources();
+        executionHandler.releaseExternalResources();
+      }
     }
 
     @Override
     protected void doCommand(String name, Object value) throws Exception {
-      //To change body of implemented methods use File | Settings | File Templates.
+      // No-op
     }
   }
 }

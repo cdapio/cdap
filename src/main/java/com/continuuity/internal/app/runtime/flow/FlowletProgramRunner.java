@@ -230,7 +230,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private OutputSubmitter injectFields(Flowlet flowlet,
                                        TypeToken<? extends Flowlet> flowletType,
                                        BasicFlowletContext flowletContext,
-                                       OutputEmitterFactory outputEmitterFactory) throws IllegalAccessException {
+                                       OutputEmitterFactory outputEmitterFactory) {
 
     ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
 
@@ -430,11 +430,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private void setField(Flowlet flowlet, Field field, Object value) throws IllegalAccessException {
+  private void setField(Flowlet flowlet, Field field, Object value) {
     if (!field.isAccessible()) {
       field.setAccessible(true);
     }
-    field.set(flowlet, value);
+    try {
+      field.set(flowlet, value);
+    } catch (IllegalAccessException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private SchemaCache createSchemaCache(Program program) throws ClassNotFoundException {
