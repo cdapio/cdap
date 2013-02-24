@@ -48,7 +48,6 @@ import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
-import com.continuuity.internal.app.runtime.ReflectionOutputEmitter;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
@@ -151,7 +150,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Inject DataSet, OutputEmitter, Metric fields
       OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext,
-                                                     outputEmitterFactory(flowletName,
+                                                     outputEmitterFactory(flowletName, flowletContext,
                                                                           flowletContext.getQueueProducer(),
                                                                           queueSpecs));
 
@@ -352,6 +351,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,
+                                                    final BasicFlowletContext flowletContext,
                                                     final QueueProducer queueProducer,
                                                     final Table<QueueSpecificationGenerator.Node,
                                                                 String,
@@ -366,7 +366,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema);
+              return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema, flowletContext);
             }
           }
 
