@@ -188,21 +188,6 @@ public class AppFabricCollectorTest {
       bos.close();
     }
 
-//    byte [] bytes;
-//     try {
-//    byte[] chunk;
-//    while (true) {
-//      chunk = is.read();
-//      if(chunk.length==0) break;
-//      bos.write(chunk);
-//    }
-//    bos.flush();
-//    bytes=bos.toByteArray();
-//    } finally {
-//    is.close();
-//    bos.close();
-//    }
-
     Assert.assertEquals(200, TestUtil.sendPostRequest(deployUrl, bos.toByteArray(), headers));
   }
   @After

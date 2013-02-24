@@ -265,9 +265,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       dstatus = client.dstatus(token, id).getOverall();
       Thread.sleep(100);
     }
-
   }
-
   private AppFabricService.Client getAppFabricClient(String host, int port)
     throws ServerException {
 
