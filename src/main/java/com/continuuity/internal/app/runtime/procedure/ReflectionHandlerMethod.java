@@ -47,6 +47,7 @@ final class ReflectionHandlerMethod implements HandlerMethod {
         } catch (IOException e) {
           LOG.error("Fail to close response on error.", t);
         }
+        throw Throwables.propagate(t);
       }
 
     } catch (OperationException e) {
