@@ -1,11 +1,19 @@
 package com.continuuity.gateway.util;
 
+import com.google.common.base.Charsets;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +90,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param content the content of the response to send
    */
   protected void respondSuccess(Channel channel, HttpRequest request,
-                                byte[] content) {
+                                ChannelBuffer content) {
     respond(channel, request, null, null, content);
   }
 
@@ -113,7 +121,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    */
   protected void respond(Channel channel, HttpRequest request,
                          HttpResponseStatus status,
-                         Map<String, String> headers, byte[] content) {
+                         Map<String, String> headers, ChannelBuffer content) {
     HttpResponse response = new DefaultHttpResponse(
         HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
     boolean keepAlive = HttpHeaders.isKeepAlive(request);
@@ -121,11 +129,9 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       for (Map.Entry<String, String> entry : headers.entrySet())
         response.addHeader(entry.getKey(), entry.getValue());
     }
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH,
-        content == null ? 0 : content.length);
-    if (content != null) {
-      response.setContent(ChannelBuffers.wrappedBuffer(content));
-    }
+    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    response.setContent(content);
+
     ChannelFuture future = channel.write(response);
     if (!keepAlive) {
       future.addListener(ChannelFutureListener.CLOSE);
@@ -133,6 +139,6 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   }
 
   protected void respondToPing(Channel channel, HttpRequest request) {
-    respondSuccess(channel, request, "OK.\n".getBytes());
+    respondSuccess(channel, request, ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode("OK.\n")));
   }
 }
