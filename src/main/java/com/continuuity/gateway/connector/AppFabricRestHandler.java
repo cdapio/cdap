@@ -13,6 +13,11 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.passport.http.client.PassportClient;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -31,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -43,17 +49,13 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * only accepts GET requests to retrieve a value for a key from a named table.
  */
 public class AppFabricRestHandler extends NettyRestHandler {
-
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
   private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
-
 
   /**
    * The allowed methods for this handler
    */
   HttpMethod[] allowedMethods = {
-      HttpMethod.GET,
-      HttpMethod.PUT,
       HttpMethod.POST
   };
 
@@ -66,11 +68,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
   /**
    * The metrics object of the rest connector
    */
-  private CMetrics metrics;
+  private final CMetrics metrics;
 
-  private String pathPrefix;
+  private final String pathPrefix;
 
-  CConfiguration configuration=CConfiguration.create();
 
   /**
    * Constructor requires the connector that created this
@@ -92,8 +93,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
-                              MessageEvent message)
-    throws Exception {
+                              MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
     CConfiguration configuration = this.connector.getConfiguration();
 
@@ -105,11 +105,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
     try {
       // check whether the request's HTTP method is supported
-      if (method != HttpMethod.GET && method != HttpMethod.PUT && method != HttpMethod.POST) {
-        LOG.trace("Received a " + method + " request, which is not supported");
+      if(method != HttpMethod.POST) {
+        LOG.trace("Received Unsupported http request method " + method.getName());
         respondNotAllowed(message.getChannel(), allowedMethods);
         helper.finish(BadRequest);
-        return;
       }
 
       // based on the request URL, determine what to do
@@ -268,6 +267,47 @@ public class AppFabricRestHandler extends NettyRestHandler {
       Thread.sleep(100);
     }
 
+  }
+
+  private int getAccountId(String hostname, int port, String apiKey) {
+    PassportClient ppc=new PassportClient();
+    return (ppc.getAccount(hostname, port, apiKey)).get().getAccountId();
+  }
+
+  private String httpGet(String url,String apiKey) throws Exception {
+    String payload  = null;
+    HttpGet get = new HttpGet(url);
+    get.addHeader("X",apiKey);
+    get.addHeader("X-Continuuity-Signature","abcdef");
+    boolean debugEnabled=false;
+    if (debugEnabled) {
+      System.out.println(String.format ("Headers: %s ",get.getAllHeaders().toString()));
+      System.out.println(String.format ("URL: %s ",url));
+      System.out.println(String.format("Method: %s ", "GET"));
+    }
+
+    // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response;
+
+    try {
+      response = client.execute(get);
+      payload = IOUtils.toString(response.getEntity().getContent());
+      client.getConnectionManager().shutdown();
+      if (debugEnabled) {
+        System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
+      }
+    } catch (IOException e) {
+      if (debugEnabled)  {
+        System.out.println(String.format("Caught exception while running http post call: Exception - %s",e.getMessage()));
+        e.printStackTrace();
+      }
+      throw new RuntimeException(e);
+    }
+    return payload;
+  }
+  private String getEndPoint(String hostname, String endpoint){
+    return String.format("http://%s:7777/%s",hostname,endpoint);
   }
 
   private AppFabricService.Client getAppFabricClient(String host, int port)

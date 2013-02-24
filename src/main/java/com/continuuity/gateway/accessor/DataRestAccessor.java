@@ -70,8 +70,12 @@ public class DataRestAccessor
   public void start() throws Exception {
     LOG.info("Starting up " + this);
     // construct the internet address
-    InetSocketAddress address =
-        new InetSocketAddress(this.httpConfig.getPort());
+    InetSocketAddress address = null;
+    try {
+      address = new InetSocketAddress(this.httpConfig.getPort());
+    } catch (Exception e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(

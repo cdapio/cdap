@@ -1,13 +1,23 @@
 package com.continuuity.gateway;
 
-public class AppFabricCollectorTest {
+//import com.continuuity.app.store.StoreFactory;
+//import com.continuuity.common.conf.CConfiguration;
+//import com.continuuity.data.operation.OperationContext;
+//import com.continuuity.data.operation.executor.OperationExecutor;
+//import com.continuuity.filesystem.LocationFactory;
+//import com.continuuity.gateway.collector.RestCollector;
+//import com.continuuity.gateway.connector.AppFabricRestConnector;
+//import com.continuuity.internal.app.services.AppFabricServer;
+//import com.continuuity.passport.PassportConstants;
+//import com.google.inject.Injector;
+//import org.junit.Before;
 
-  //TODO: MARIO IS WORKING ON FIXING THIS TEST.
+public class AppFabricCollectorTest {
+//
 //
 //  private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
 //  private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
 //
-//  static final OperationContext context = OperationContext.DEFAULT;
 //
 //  /**
 //   * this is the executor for all access to the data fabric

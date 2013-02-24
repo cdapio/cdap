@@ -17,9 +17,7 @@ import org.slf4j.LoggerFactory;
  * <code>/stream/</code>.
  */
 public class HttpConfig {
-
-  private static final Logger LOG = LoggerFactory
-      .getLogger(HttpConfig.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HttpConfig.class);
 
   /**
    * default name is the name of the protocol
@@ -240,7 +238,7 @@ public class HttpConfig {
    * @return a new HTTPConfig
    * @throws Exception if anything goes wrong
    */
-  public static HttpConfig configure(String name,
+  public static HttpConfig  configure(String name,
                                      CConfiguration configuration,
                                      HttpConfig defaults) throws Exception {
     // if no defaults were given, create an empty config (it has defaults)
@@ -255,21 +253,23 @@ public class HttpConfig {
     config.chunk = configuration.getBoolean(
         Constants.buildConnectorPropertyName(
             name, Constants.CONFIG_CHUNKING), defaults.isChunking());
-    config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_SSL), defaults.isSsl());
+    config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(name,
+                                                                               Constants.CONFIG_SSL), defaults.isSsl());
+
+    //Set port to bind to 443
+    if(config.ssl) {
+      LOG.warn("SSL is not implemented yet. " +
+               "Ignoring configuration for connector '" + name + "'.");
+      config.ssl = false;
+    }
+
     config.prefix = configuration.get(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
+      name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
     config.middle = configuration.get(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
     config.maxContentSize = configuration.getInt(
         Constants.buildConnectorPropertyName(
             name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
-
-    if (config.ssl) {
-      LOG.warn("SSL is not implemented yet. " +
-          "Ignoring configuration for connector '" + name + "'.");
-      config.ssl = false;
-    }
     return config;
   }
 
