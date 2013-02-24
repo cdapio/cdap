@@ -19,6 +19,10 @@ public abstract class AbstractProcedure implements Procedure {
   private final String name;
   private ProcedureContext procedureContext;
 
+  protected AbstractProcedure() {
+    this.name = getClass().getSimpleName();
+  }
+
   protected AbstractProcedure(String name) {
     this.name = name;
   }
