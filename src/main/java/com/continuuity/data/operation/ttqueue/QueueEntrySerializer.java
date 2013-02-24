@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
@@ -87,7 +88,8 @@ public final class QueueEntrySerializer {
       int dataSize=decoder.readInt();
       byte[] data=null;
       if (dataSize>0) {
-        data=decoder.readBytes().array();
+        data=Bytes.toBytes(decoder.readBytes());
+
       }
       QueueEntry queueEntry=new QueueEntryImpl(data);
       if (map!=null) {
