@@ -19,6 +19,10 @@ public abstract class AbstractFlowlet implements Flowlet {
   private final String name;
   private FlowletContext flowletContext;
 
+  protected AbstractFlowlet() {
+    this.name = getClass().getSimpleName();
+  }
+
   protected AbstractFlowlet(String name) {
     this.name = name;
   }
