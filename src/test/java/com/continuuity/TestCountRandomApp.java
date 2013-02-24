@@ -90,6 +90,7 @@ public class TestCountRandomApp implements Application {
 
     public RandomSource() {
       super("RandomSource");
+      random = new Random();
     }
 
     public void generate() throws Exception {

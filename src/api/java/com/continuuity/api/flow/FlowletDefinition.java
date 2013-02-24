@@ -16,8 +16,8 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.internal.api.Preconditions;
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -30,6 +30,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,18 +140,17 @@ public final class FlowletDefinition {
   public void generateSchema(SchemaGenerator generator) throws UnsupportedTypeException {
     if (inputs == null && outputs == null && inputTypes != null && outputTypes != null) {
       // Generate both inputs and outputs before making this visible
-      Map<String, Set<Schema>> inputs = generateSchema(generator, inputTypes, ImmutableMap.<String, Set<Schema>>builder());
-      Map<String, Set<Schema>> outputs = generateSchema(generator, outputTypes, ImmutableMap.<String, Set<Schema>>builder());
+      Map<String, Set<Schema>> inputs = generateSchema(generator, inputTypes);
+      Map<String, Set<Schema>> outputs = generateSchema(generator, outputTypes);
 
       this.inputs = inputs;
       this.outputs = outputs;
     }
   }
 
-  private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator,
-                                                  Map<String, Set<Type>> types,
-                                                  ImmutableMap.Builder<String, Set<Schema>> result)
+  private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator, Map<String, Set<Type>> types)
                                                   throws UnsupportedTypeException {
+    Map<String, Set<Schema>> result = new HashMap<String, Set<Schema>>();
     for (Map.Entry<String, Set<Type>> entry : types.entrySet()) {
       ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
       for (Type type : entry.getValue()) {
@@ -158,7 +158,7 @@ public final class FlowletDefinition {
       }
       result.put(entry.getKey(), schemas.build());
     }
-    return result.build();
+    return result;
   }
 
   /**
@@ -258,10 +258,10 @@ public final class FlowletDefinition {
   }
 
   private <K,V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
-    ImmutableMap.Builder<K, Set<V>> builder = ImmutableMap.builder();
+    Map<K, Set<V>> result = new HashMap<K, Set<V>>();
     for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
-      builder.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
+      result.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
     }
-    return builder.build();
+    return result;
   }
 }

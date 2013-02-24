@@ -5,6 +5,7 @@
 package com.continuuity;
 
 import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
@@ -21,10 +22,13 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationSpecLocation;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.pipeline.AbstractStage;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,6 +44,13 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
+  private static CConfiguration configuration;
+
+  static {
+    configuration = CConfiguration.create();
+    configuration.set("app.output.dir", "/tmp/app");
+    configuration.set("app.tmp.dir", "/tmp/temp");
+  }
 
   /**
    * Given a class generates a manifest file with main-class as class.
@@ -74,10 +85,7 @@ public class TestHelper {
    *
    */
   public static void deployApplication(Class<? extends Application> application) throws Exception {
-    CConfiguration configuration = CConfiguration.create();
     AppFabricService.Iface server;
-    configuration.set("app.output.dir", "/tmp/app");
-    configuration.set("app.tmp.dir", "/tmp/temp");
 
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                                    new BigMamaModule(configuration));
@@ -120,6 +128,4 @@ public class TestHelper {
     }
     Assert.assertEquals(5, status); // Deployed successfully.
   }
-
-
 }

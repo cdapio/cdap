@@ -13,11 +13,11 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.api.DefaultApplicationSpecification;
+import com.continuuity.internal.api.Preconditions;
 import com.continuuity.internal.api.flow.DefaultFlowSpecification;
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -79,22 +79,22 @@ public interface ApplicationSpecification {
     /**
      * Map from stream name to {@link StreamSpecification} for all streams defined to this application.
      */
-    private final ImmutableMap.Builder<String, StreamSpecification> streams = ImmutableMap.builder();
+    private final Map<String, StreamSpecification> streams = new HashMap<String, StreamSpecification>();
 
     /**
      * Map from dataset name to {@link DataSetSpecification} for all datasets defined in this application.
      */
-    private final ImmutableMap.Builder<String, DataSetSpecification> dataSets = ImmutableMap.builder();
+    private final Map<String, DataSetSpecification> dataSets = new HashMap<String, DataSetSpecification>();
 
     /**
      * Map from flow name to {@link FlowSpecification} for all flows defined in this application.
      */
-    private final ImmutableMap.Builder<String, FlowSpecification> flows = ImmutableMap.builder();
+    private final Map<String, FlowSpecification> flows = new HashMap<String, FlowSpecification>();
 
     /**
      * Map from procedure name to {@link ProcedureSpecification} for all procedures defined in this application.
      */
-    private final ImmutableMap.Builder<String, ProcedureSpecification> procedures = ImmutableMap.builder();
+    private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -422,9 +422,7 @@ public interface ApplicationSpecification {
        */
       @Override
       public ApplicationSpecification build() {
-        return new DefaultApplicationSpecification(name, description,
-                                                   streams.build(), dataSets.build(),
-                                                   flows.build(), procedures.build());
+        return new DefaultApplicationSpecification(name, description, streams, dataSets, flows, procedures);
       }
     }
 
