@@ -6,8 +6,10 @@ package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,6 +57,11 @@ public interface FlowletSpecification {
   Set<String> getDataSets();
 
   /**
+   * @return An immutable map of arguments that was passed in when constructing the {@link FlowletSpecification}.
+   */
+  Map<String, String> getArguments();
+
+  /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.
@@ -65,6 +72,7 @@ public interface FlowletSpecification {
     private String description;
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
+    private Map<String, String> arguments;
 
     /**
      * Creates a {@link Builder} for building instance of this class.
@@ -133,11 +141,22 @@ public interface FlowletSpecification {
       }
 
       /**
+       * Adds a map of arguments that would be available to the flowlet through the {@link FlowletContext} at runtime.
+       *
+       * @param args The map of arguments.
+       * @return An instance of {@link AfterDescription}.
+       */
+      public AfterDescription withArguments(Map<String, String> args) {
+        arguments = ImmutableMap.copyOf(args);
+        return this;
+      }
+
+      /**
        * Creates an instance of {@link FlowletSpecification}
        * @return An instance of {@link FlowletSpecification}
        */
       public FlowletSpecification build() {
-        return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets.build());
+        return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets.build(), arguments);
       }
     }
 

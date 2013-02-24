@@ -18,7 +18,6 @@ import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.internal.api.Preconditions;
 import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -73,7 +72,7 @@ public final class FlowletDefinition {
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
-                                                       datasets);
+                                                       datasets, flowletSpec.getArguments());
   }
 
   /**
