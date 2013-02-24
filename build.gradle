@@ -1,83 +1,96 @@
 apply plugin: 'java'
-apply plugin: 'application'
 
 /**
- * Building of API jar
+ * Building of API archive
  */
 smartyFacts {
-    api {
-        enableJavadoc()
-        enableSourceJar()
+  api {
+    enableJavadoc()
+    enableSourceJar()
+  }
+  thrift
+}
+
+/**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
     }
 }
 
 /**
- * Specify all the dependencies
+ * Specify all the dependencies for smartyFacts & main.
  */
 dependencies {
+  // Dependencies for smartyFacts & main
+  apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
-    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-    compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
-    compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
-    compile elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+  // Dependencies required by api.
+  apiCompile libraries.jsr_305
 
-    // Clover dependency
-    clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    clover elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
+  // Dependencies required by main.
+  compile libraries.slf4j_api
+  compile libraries.apache_commons_cli
+  compile libraries.google_gson
+  compile libraries.google_guice
+  compile libraries.google_guice_assistedinject
+  compile libraries.google_guice_multibindings
+  compile libraries.google_guava
+  compile libraries.jsr_305
+  compile libraries.netty
 
-    /// External dependencies.
-    compile libraries.thrift
-    compile libraries.akka_actor
-    compile libraries.kryo
-    compile libraries.google_gson
-    compile libraries.google_guice
-    compile libraries.google_guava
-    compile libraries.mysql
-    compile libraries.hsql
-    compile libraries.http_client
-    compile libraries.avro
-    compile libraries.avro_ipc
-    compile libraries.flume_ng_sdk
-    compile libraries.flume_ng_core
-    compile libraries.apache_commons_cli
-    compile libraries.apache_commons_logging
-    compile libraries.apache_commons_math
-    compile libraries.apache_commons_io
 
-    // We need to remove dependency on these.
-    compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
-    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
-    compile group: 'junit', name: 'junit', version: '4.10'
+  // Thrift related stuff.
+  thriftCompile libraries.thrift
+  thriftCompile libraries.slf4j_api
+
+  // Test dependencies
+  testCompile libraries.junit
 }
 
-// Includes API output to main and test source sets.
+/**
+ * Includes API output to main and test source sets.
+ */
 sourceSets {
-    main {
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
-    test {
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
+  main {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    runtimeClasspath += api.output 
+    runtimeClasspath += thrift.output
+  }
+  test {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    runtimeClasspath += api.output
+    runtimeClasspath += thrift.output
+  }
 }
 
+/**
+ * Generates API javadoc.
+ */
 javadoc {
-    classpath += sourceSets.api.output
+  classpath += (sourceSets.api.output + sourceSets.thrift.output)
 }
 
+/**
+ * Excludes stubs from clover.
+ */
 clover {
-    excludes << '**/manager/stubs/*'
+  excludes << '**/manager/stubs/*'
 }
 
+/**
+ * Excludes stubs from sonar report exclusion.
+ */
 sonar {
-    project {
-        sourceExclusions = '**/manager/stubs/*'
-    }
+  project {
+    sourceExclusions = '**/manager/stubs/*'
+  }
 }
-
-jar.exclude '*.xml'
