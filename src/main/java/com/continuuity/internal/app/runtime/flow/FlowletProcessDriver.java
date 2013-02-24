@@ -253,7 +253,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     return new PostProcess.Callback() {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
-        inflight.decrementAndGet();
         try {
           flowletContext.getMetrics().count("processed", 1);
           txCallback.onSuccess(object, inputContext);
@@ -261,6 +260,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           LOG.info("Exception on onSuccess call: " + flowletContext, t);
         } finally {
           enqueueEntry();
+          inflight.decrementAndGet();
         }
       }
 
@@ -270,38 +270,41 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         LOG.info("Process failure. " + reason.getMessage(), reason.getCause());
         FailurePolicy failurePolicy;
-        inflight.decrementAndGet();
         try {
-          flowletContext.getMetrics().count("flowlet.failure", 1);
-          failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
-        } catch (Throwable t) {
-          LOG.error("Exception on onFailure call: " + flowletContext, t);
-          failurePolicy = FailurePolicy.RETRY;
-        }
-
-        if (input.getRetry() >= PROCESS_MAX_RETRY) {
-          LOG.info("Too many retries, ignoring the input: " + input);
-          failurePolicy = FailurePolicy.IGNORE;
-        }
-
-        if (failurePolicy == FailurePolicy.RETRY) {
-          ProcessEntry retryEntry = processEntry.isRetry() ?
-            processEntry :
-            new ProcessEntry(processEntry.getProcessSpec(),
-              new ProcessSpecification(new SingleItemQueueReader(input),
-                                       processEntry.getProcessSpec().getProcessMethod()));
-
-          processQueue.offer(retryEntry);
-
-        } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getMetrics().count("processed", 1);
-            inputAcknowledger.ack();
-          } catch (OperationException e) {
-            LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
-          } finally {
-            enqueueEntry();
+            flowletContext.getMetrics().count("flowlet.failure", 1);
+            failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
+          } catch (Throwable t) {
+            LOG.error("Exception on onFailure call: " + flowletContext, t);
+            failurePolicy = FailurePolicy.RETRY;
           }
+
+          if (input.getRetry() >= PROCESS_MAX_RETRY) {
+            LOG.info("Too many retries, ignoring the input: " + input);
+            failurePolicy = FailurePolicy.IGNORE;
+          }
+
+          if (failurePolicy == FailurePolicy.RETRY) {
+            ProcessEntry retryEntry = processEntry.isRetry() ?
+              processEntry :
+              new ProcessEntry(processEntry.getProcessSpec(),
+                new ProcessSpecification(new SingleItemQueueReader(input),
+                                         processEntry.getProcessSpec().getProcessMethod()));
+
+            processQueue.offer(retryEntry);
+
+          } else if (failurePolicy == FailurePolicy.IGNORE) {
+            try {
+              flowletContext.getMetrics().count("processed", 1);
+              inputAcknowledger.ack();
+            } catch (OperationException e) {
+              LOG.error("Fatal problem, fail to ack an input: " + flowletContext, e);
+            } finally {
+              enqueueEntry();
+            }
+          }
+        } finally {
+          inflight.decrementAndGet();
         }
       }
 
