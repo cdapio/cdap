@@ -77,8 +77,6 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       int instanceId = Integer.parseInt(options.getArguments().getOption("instanceId", "0"));
 
-      Class<? extends Procedure> procedureClass = (Class<? extends Procedure>) program.getMainClass();
-
       RunId runId = RunId.generate();
 
       channelGroup = new DefaultChannelGroup();
