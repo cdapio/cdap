@@ -4,6 +4,8 @@
 
 package com.continuuity.passport.dal.db;
 
+import java.sql.Timestamp;
+
 /**
  * Stores all DB tables and columns in a central place so that can be used everywhere.
  */
@@ -43,6 +45,7 @@ public class DBUtils {
     public static final String CREDIT_CARD_EXPIRY_COLUMN = "credit_card_expiration";
 
   }
+
   /**
    * Defines RoleType for account
    * TODO: This is not being used now
@@ -96,6 +99,14 @@ public class DBUtils {
   public static class Profanity {
     public static final String TABLE_NAME = "profane_list";
     public static final String PROFANE_WORDS = "name";
+  }
+
+
+  public static long getDevsuiteDownloadedTime(Timestamp time) {
+    if (time == null) {
+      return -1;
+    }
+    return time.getTime();
   }
 
 }

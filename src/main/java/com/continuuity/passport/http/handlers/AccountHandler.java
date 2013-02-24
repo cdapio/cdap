@@ -7,13 +7,13 @@ package com.continuuity.passport.http.handlers;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
-import com.continuuity.passport.core.utils.PasswordUtils;
-import com.continuuity.passport.meta.Account;
-import com.continuuity.passport.meta.VPC;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
+import com.continuuity.passport.core.utils.PasswordUtils;
+import com.continuuity.passport.meta.Account;
+import com.continuuity.passport.meta.VPC;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -36,7 +36,7 @@ import java.util.Map;
 
 @Path("/passport/v1/account/")
 @Singleton
-public class AccountHandler extends  PassportHandler{
+public class AccountHandler extends PassportHandler {
 
   private final DataManagementService dataManagementService;
   private final AuthenticatorService authenticatorService;
@@ -275,7 +275,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson( "FAILED", String.format("Account Confirmation Failed. %s", e)))
+        .entity(Utils.getJson("FAILED", String.format("Account Confirmation Failed. %s", e)))
         .build();
     }
   }
@@ -370,7 +370,7 @@ public class AccountHandler extends  PassportHandler{
     } catch (Exception e) {
       requestFailed(); // Request failed
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJsonError( String.format("VPC get Failed. %s", e.getMessage())))
+        .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e.getMessage())))
         .build();
     }
   }
@@ -392,35 +392,34 @@ public class AccountHandler extends  PassportHandler{
     String password = UsernamePasswordApiKeyToken.DUMMY_PASSWORD;
     boolean useApiKey = true;
 
-    if (data != null && ! data.isEmpty() ){
+    if (data != null && !data.isEmpty()) {
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
       password = jsonObject.get("password") == null ? null
-                                                    : jsonObject.get("password").getAsString();
+        : jsonObject.get("password").getAsString();
       emailId = jsonObject.get("email_id") == null ? null
-                                                   : jsonObject.get("email_id").getAsString();
+        : jsonObject.get("email_id").getAsString();
       useApiKey = false;
     }
 
-    if ( emailId == null || emailId.isEmpty() || password == null || password.isEmpty()) {
+    if (emailId == null || emailId.isEmpty() || password == null || password.isEmpty()) {
       requestFailed();
       return Response.status(Response.Status.BAD_REQUEST).entity(
         Utils.getAuthenticatedJson("Bad Request.", "Username and password can't be null"))
         .build();
     }
 
-    UsernamePasswordApiKeyToken token  = null;
-    if ( useApiKey) {
+    UsernamePasswordApiKeyToken token = null;
+    if (useApiKey) {
       token = new UsernamePasswordApiKeyToken(UsernamePasswordApiKeyToken.DUMMY_USER,
-                                              UsernamePasswordApiKeyToken.DUMMY_PASSWORD,
-                                              apiKey, true);
-    }
-    else {
+        UsernamePasswordApiKeyToken.DUMMY_PASSWORD,
+        apiKey, true);
+    } else {
       String hashed = PasswordUtils.generateHashedPassword(password);
       token = new UsernamePasswordApiKeyToken(emailId,
-                                              hashed,apiKey,false);
+        hashed, apiKey, false);
     }
 
     try {
@@ -429,7 +428,7 @@ public class AccountHandler extends  PassportHandler{
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         requestSuccess();
-        return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
+        return Response.ok(status.getMessage()).build();
       } else {
         requestFailed(); //Failed request
         return Response.status(Response.Status.UNAUTHORIZED).entity(
@@ -440,6 +439,32 @@ public class AccountHandler extends  PassportHandler{
       requestFailed(); //Failed request
       return Response.status(Response.Status.UNAUTHORIZED).entity(
         Utils.getAuthenticatedJson("Authentication Failed.", e.getMessage())).build();
+    }
+  }
+
+  @Path("{id}/regenerateApiKey")
+  @GET
+  @Produces("application/json")
+  public Response regenerateApiKey(@PathParam("id") int accountId) {
+    try {
+      dataManagementService.regenerateApiKey(accountId);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account accountFetched = dataManagementService.getAccount(accountId);
+      if (accountFetched != null) {
+        requestSuccess();
+        return Response.ok(accountFetched.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+          .build();
+      }
+    } catch (Exception e) {
+      requestFailed(); // Request failed
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+        .build();
     }
   }
 

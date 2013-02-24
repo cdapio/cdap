@@ -41,3 +41,15 @@ dependencies {
     testCompile libraries.hsql
 }
 
+sourceSets{
+    main{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+
+    test{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+}
+jar.exclude '*.xml'

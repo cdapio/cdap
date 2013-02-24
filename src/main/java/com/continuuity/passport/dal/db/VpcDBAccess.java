@@ -8,13 +8,13 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
+import com.continuuity.passport.meta.Role;
+import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.continuuity.passport.meta.VPC;
-import com.continuuity.passport.meta.Role;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -254,5 +254,33 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       close(connection, ps, rs);
     }
     return vpcList;
+  }
+
+  @Override
+  public int getVPCCount(String vpcName) {
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    int count = 0;
+    Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
+
+    try {
+      connection = this.poolManager.getConnection();
+      String SQL = String.format("SELECT COUNT(%s) FROM %s where %s = ? ",
+        DBUtils.VPC.NAME_COLUMN, DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
+
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1, vpcName);
+      rs = ps.executeQuery();
+
+      while (rs.next()) {
+        count = rs.getInt(1);
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection, ps, rs);
+    }
+    return count;
   }
 }

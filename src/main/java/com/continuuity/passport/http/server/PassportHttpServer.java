@@ -12,7 +12,9 @@ import com.google.inject.servlet.GuiceFilter;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
@@ -46,22 +48,20 @@ public class PassportHttpServer {
 
     try {
 
-      Server server = new Server(port);
+      Server server = new Server();
       server.setStopAtShutdown(true);
       server.setGracefulShutdown(gracefulShutdownTime);
 
-//      System.out.println("Starting Server with params: ");
-//      System.out.println(String.format("Port: %d",port));
-//      System.out.println(String.format("MaxThreads: %d",maxThreads));
-//      System.out.println(String.format("GracefulShutdownTime: %s", gracefulShutdownTime));
-//      for(Map.Entry<String,String> entry : configuration.entrySet()){
-//        System.out.println(String.format( "%s: %s",entry.getKey(), entry.getValue()));
-//      }
       Context context = new Context(server, "/", Context.SESSIONS);
       context.addEventListener(new PassportGuiceServletContextListener(configuration));
       context.addServlet(DefaultServlet.class, "/");
       context.addFilter(GuiceFilter.class, "/*", 0);
 
+      // Use the connector to bind Jetty to local host
+      Connector connector = new SelectChannelConnector();
+      connector.setHost("localhost");
+      connector.setPort(port);
+      server.addConnector(connector);
 
       QueuedThreadPool threadPool = new QueuedThreadPool();
       threadPool.setMaxThreads(maxThreads);
@@ -90,12 +90,13 @@ public class PassportHttpServer {
     //TODO: Remove this.
     conf.addResource("continuuity-passport.xml");
 
-    String jdbcType = conf.get("passport.jdbc.type");
-    String connectionString  = conf.get("passport.jdbc.connection.string");
-    System.out.println(jdbcType);
-    int port = Integer.parseInt(conf.get("passport.http.server.port"));
-    int gracefulShutdownTime = Integer.parseInt(conf.get("passport.http.graceful.shutdown.time"));
-    int maxThreads = Integer.parseInt(conf.get("passport.http.max.threads"));
+    String jdbcType = conf.get("passport.jdbc.type","mysql");
+    String connectionString  = conf.get("passport.jdbc.connection.string",
+                                        "jdbc:mysql://localhost:3306/passport?user=root");
+
+    int port = conf.getInt("passport.http.server.port", 7777);
+    int gracefulShutdownTime = conf.getInt("passport.http.graceful.shutdown.time",10000);
+    int maxThreads = conf.getInt("passport.http.max.threads",100);
 
     config.put("jdbcType", jdbcType);
     config.put("connectionString",connectionString);
