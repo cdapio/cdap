@@ -1,12 +1,15 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.operation.OperationContext;
-
 /**
  * Constants is a utility class that contains a set of universal constants
  * that are used throughout the Gateway project.
  */
 public class Constants {
+  /**
+   * Corresponds to account id used when running AppFabric in local mode.
+   * NOTE: value should be in sync with the one used by UI.
+   */
+  public static final String DEVELOPER_ACCOUNT_ID = "developer";
 
   /**
    * The prefix for all continuity classes
@@ -155,13 +158,6 @@ public class Constants {
    * Default number of worker threads for a connector
    */
   public static final int DEFAULT_THREADS = 20;
-
-  /**
-   * this is a place holder for the account id of events until we have
-   * an actual way to associate an event with an account.
-   */
-  public static final String defaultAccount =
-      OperationContext.DEFAULT_ACCOUNT_ID;
 
   public static final String metricsServiceName =
       com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;

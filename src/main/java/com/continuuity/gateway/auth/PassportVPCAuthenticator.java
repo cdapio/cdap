@@ -54,6 +54,29 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
     return false;
   }
 
+  @Override
+  public String getAccountId(HttpRequest httpRequest) {
+    String apiKey = httpRequest.getHeader(CONTINUUITY_API_KEY);
+    if (apiKey == null) {
+      throw new RuntimeException("http request was not authenticated");
+    }
+    return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
+  }
+
+  @Override
+  public String getAccountId(AvroFlumeEvent event) {
+    for (Map.Entry<CharSequence,CharSequence> headerEntry :
+      event.getHeaders().entrySet()) {
+      String headerKey = headerEntry.getKey().toString();
+      if (headerKey.equals(CONTINUUITY_API_KEY)) {
+        String apiKey = headerEntry.getValue().toString();
+        return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
+      }
+    }
+    // Key not found in headers
+    throw new RuntimeException("event was not authenticated");
+  }
+
   /**
    * Authenticates that the specified apiKey can access this cluster.
    * @param apiKey
