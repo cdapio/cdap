@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.app.runtime.Cancellable;
+import com.continuuity.base.Cancellable;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.RunId;
 import com.google.common.base.Objects;
