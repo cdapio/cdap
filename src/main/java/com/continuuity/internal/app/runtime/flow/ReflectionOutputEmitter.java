@@ -1,6 +1,7 @@
-package com.continuuity.internal.app.runtime;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.app.queue.QueueName;
@@ -32,18 +33,21 @@ public final class ReflectionOutputEmitter implements OutputEmitter<Object>, Out
 
   private static final Function<EmittedDatum, WriteOperation> DATUM_TO_WRITE_OP = EmittedDatum.datumToWriteOp();
 
+  private final BasicFlowletContext flowletContext;
   private final QueueProducer queueProducer;
   private final QueueName queueName;
   private final byte[] schemaHash;
   private final ReflectionDatumWriter writer;
   private final BlockingQueue<EmittedDatum> dataQueue;
 
-  public ReflectionOutputEmitter(QueueProducer queueProducer, QueueName queueName, Schema schema) {
+  public ReflectionOutputEmitter(QueueProducer queueProducer, QueueName queueName,
+                                 Schema schema, BasicFlowletContext flowletContext) {
     this.queueProducer = queueProducer;
     this.queueName = queueName;
     this.schemaHash = schema.getSchemaHash().toByteArray();
     this.writer = new ReflectionDatumWriter(schema);
     this.dataQueue = new LinkedBlockingQueue<EmittedDatum>();
+    this.flowletContext = flowletContext;
   }
 
   @Override
@@ -68,6 +72,9 @@ public final class ReflectionOutputEmitter implements OutputEmitter<Object>, Out
   public void submit(TransactionAgent agent) throws OperationException {
     List<EmittedDatum> outputs = Lists.newArrayListWithExpectedSize(dataQueue.size());
     dataQueue.drainTo(outputs);
+
+    flowletContext.getSystemMetrics().counter(queueName.getSimpleName() + ".stream.out", outputs.size());
+
     agent.submit(ImmutableList.copyOf(Iterables.transform(outputs, DATUM_TO_WRITE_OP)));
   }
 }

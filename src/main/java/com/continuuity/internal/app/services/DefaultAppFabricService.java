@@ -58,6 +58,7 @@ import com.continuuity.internal.app.services.legacy.FlowletStreamDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowletType;
 import com.continuuity.internal.app.services.legacy.MetaDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
+import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
@@ -414,12 +415,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Preconditions.checkArgument(appSpec != null, "Not application specification found.");
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
     FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
-    fillFlowletsAndDataSets(flowSpec, flowDef);
-    fillConnectionsAndStreams(id, flowSpec, flowDef);
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
     metaDefinition.setApp(id.getApplicationId());
     metaDefinition.setName(flowSpec.getName());
     flowDef.setMeta(metaDefinition);
+    fillFlowletsAndDataSets(flowSpec, flowDef);
+    fillConnectionsAndStreams(id, flowSpec, flowDef);
     return flowDef;
   }
 
@@ -451,6 +452,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
     def.setConnections(connections);
     def.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
+
+    new StreamNamerImpl().name(id.getAccountId(), def);
   }
 
   private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {
