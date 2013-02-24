@@ -62,10 +62,18 @@
         </filter>
     </appender>
 
+    <appender name="CLOG" class="com.continuuity.common.logging.logback.CAppender">              
+        <layout>                      
+            <!-- Note: we don't insert new line in the pattern as this is done on higher level (in old back-end) -->
+            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m</pattern>       
+        </layout>
+    </appender>
+
     <root level="DEBUG">
         <appender-ref ref="Rolling"/>
         <appender-ref ref="Debug"/>
         <appender-ref ref="Error"/>
+        <appender-ref ref="CLOG"/>
     </root>
 
 </configuration>
