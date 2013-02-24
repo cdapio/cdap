@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
@@ -63,6 +64,9 @@ public class Gateway implements Server {
    */
   @Inject
   private MetadataService mds;
+
+  @Inject
+  private DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * This will be shared by all connectors for zk service discovery
@@ -143,6 +147,8 @@ public class Gateway implements Server {
    */
   public void start(String[] args, CConfiguration conf) throws
       ServerException {
+
+    discoveryServiceClient.startAndWait();
 
     // Configure ourselves first
     configure(conf);
@@ -354,6 +360,8 @@ public class Gateway implements Server {
           continue;
         }
 
+        newConnector.setDiscoverServiceClient(discoveryServiceClient);
+        
         // set the connector's discovery client
         newConnector.setServiceDiscovery(this.serviceDiscovery);
 
