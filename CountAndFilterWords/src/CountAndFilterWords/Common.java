@@ -3,7 +3,6 @@ package CountAndFilterWords;
 public class Common {
 
   static boolean verbose = false;
-  static boolean debug = false;
 
-  static String counterTableName = "fieldcount";
+  final static String counterTableName = "fieldcount";
 }

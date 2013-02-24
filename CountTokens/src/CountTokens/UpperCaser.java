@@ -1,36 +1,32 @@
 package CountTokens;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class UpperCaser extends ComputeFlowlet {
+import java.util.Map;
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema schema = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.getDefaultFlowletOutput().setSchema(schema);
+public class UpperCaser extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(UpperCaser.class);
+
+  @Output("upperOut")
+  private OutputEmitter<String> upperOut;
+
+  public UpperCaser() {
+    super("upper");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+  public void process(Map<String, String> tupleIn) {
+    LOG.debug(this.getContext().getName() + ": Received tuple " + tupleIn);
 
-    String word = tuple.get("word");
+    String word = tupleIn.get("word");
     if (word == null) return;
     String upper = word.toUpperCase();
 
-    Tuple output = new TupleBuilder().
-        set("word", upper).
-        create();
+    LOG.debug(this.getContext().getName() + ": Emitting word " + upper);
 
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
-    outputCollector.add(output);
+    upperOut.emit(upper);
   }
 }

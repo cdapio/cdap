@@ -1,54 +1,43 @@
 package SimpleWriteAndRead;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.management.OperationsException;
+public class ReaderFlowlet extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(ReaderFlowlet.class);
 
-public class ReaderFlowlet extends ComputeFlowlet {
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("key", byte[].class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(in);
-  }
-
+  @UseDataSet(Common.tableName)
   KeyValueTable kvTable;
 
-  @Override
-  public void initialize() {
-    this.kvTable = getFlowletContext().getDataSet(Common.tableName);
+  public ReaderFlowlet() {
+    super("reader");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext,
-                      OutputCollector outputCollector) {
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() +
-          ": Received tuple " + tuple);
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription(getDescription())
+      .useDataSet(Common.tableName)
+      .build();
+  }
+
+  public void process(byte[] key) throws OperationException {
+    LOG.debug(this.getContext().getName() + ": Received key " + key);
 
     // perform inline read of key
-    byte [] key = tuple.get("key");
-    try {
-      byte [] value = this.kvTable.read(key);
 
-      if (Common.debug) {
-        if (value == null) {
-          System.out.println(this.getClass().getSimpleName() +
-              ": No value read for key (" + new String(key) + ")");
-        } else {
-          System.out.println(this.getClass().getSimpleName() +
-              ": Read value (" + new String(value) +
-              ") for key (" + new String(key) + ")");
-        }
-      }
-    } catch (OperationException e) {
-      System.err.println(this.getClass().getSimpleName() + ":  Error " +
-          "reading value for key (" + new String(key) + "): " + e.getMessage());
+    byte [] value = this.kvTable.read(key);
+
+    if (value == null) {
+      LOG.debug(this.getContext().getName() + ": No value read for key (" + new String(key) + ")");
+    } else {
+      LOG.debug(this.getContext().getName() + ": Read value (" + new String(value) +
+            ") for key (" + new String(key) + ")");
     }
   }
 }

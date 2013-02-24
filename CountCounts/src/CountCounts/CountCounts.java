@@ -1,20 +1,24 @@
 package CountCounts;
 
+
 import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecifier;
+import com.continuuity.api.flow.FlowSpecification;
 
 public class CountCounts implements Flow {
-  public void configure(FlowSpecifier specifier) {
-    specifier.name("CountCounts");
-    specifier.email("andreas@continuuity.com");
-    specifier.stream("text");
-    specifier.dataset(Common.tableName);
-    specifier.application("Examples");
-    specifier.flowlet("source", StreamSource.class, 1);
-    specifier.flowlet("count", WordCounter.class, 1);
-    specifier.flowlet("tick", Incrementer.class, 1);
-    specifier.input("text", "source");
-    specifier.connection("source", "count");
-    specifier.connection("count", "tick");
+
+  @Override
+  public FlowSpecification configure() {
+    return FlowSpecification.Builder.with()
+      .setName("CountCounts")
+      .setDescription("Flow for counting words")
+      .withFlowlets()
+        .add("source", new StreamSource())
+        .add("count", new WordCounter())
+        .add("tick", new Incrementer())
+      .connect()
+        .fromStream("text").to("source")
+        .from("source").to("count")
+        .from("count").to("tick")
+      .build();
   }
 }

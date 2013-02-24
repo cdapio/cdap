@@ -1,30 +1,25 @@
 package WordCountApp;
 
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 
-public class WordSplitterFlowlet extends ComputeFlowlet {
+public class WordSplitterFlowlet extends AbstractFlowlet {
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    specifier.getDefaultFlowletInput().setSchema(
-        TupleSchema.EVENT_SCHEMA);
-    specifier.addFlowletOutput("wordArrays").setSchema(
-        WordCountFlow.SPLITTER_ASSOCIATER_SCHEMA);
-    specifier.addFlowletOutput("words").setSchema(
-        WordCountFlow.SPLITTER_COUNTER_SCHEMA);
+  public WordSplitterFlowlet() {
+    super("wordSplitter");
   }
+  @Output("wordOut")
+  private OutputEmitter<String> wordOutput;
 
-  @Override
-  public void process(Tuple tuple, TupleContext context,
-      OutputCollector collector) {
+  @Output("wordArrayOut")
+  private OutputEmitter<String[]> wordArrayOutput;
+
+  public void process(StreamEvent event) {
     // Input is a String, need to split it by whitespace
-    byte [] rawInput = tuple.get("body");
+    byte [] rawInput = Bytes.toBytes(event.getBody());
     String inputString = new String(rawInput);
     String [] words = inputString.split("\\s+");
     
@@ -34,13 +29,11 @@ public class WordSplitterFlowlet extends ComputeFlowlet {
     }
 
     // Send the array of words to the associater
-    collector.add("wordArrays",
-        new TupleBuilder().set("wordArray", words).create());
+    wordArrayOutput.emit(words);
     
     // Then emit each word to the counter
     for (String word : words) {
-      collector.add("words",
-          new TupleBuilder().set("word", word).create());
+      wordOutput.emit(word);
     }
   }
 }

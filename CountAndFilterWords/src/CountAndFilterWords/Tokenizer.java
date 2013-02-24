@@ -1,56 +1,42 @@
 package CountAndFilterWords;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class Tokenizer extends ComputeFlowlet {
+public class Tokenizer extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(Tokenizer.class);
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("title", String.class).
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletInput().setSchema(in);
+  private OutputEmitter<Record> output;
 
-    TupleSchema out = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
+  public Tokenizer() {
+    super("split-words");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Record record) {
     final String[] fields = { "title", "text" };
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-    }
+    LOG.debug(this.getContext().getName() + ": Received record with word "
+                + record.getWord() + " and field " + record.getField());
+
     for (String field : fields) {
-      tokenize((String)tuple.get(field), field, outputCollector);
+      tokenize(record.getField(), field);
     }
   }
 
-  void tokenize(String str, String field, OutputCollector outputCollector) {
-    if (str == null) {
+  void tokenize(String text, String field) {
+    if (text == null) {
       return;
     }
     final String delimiters = "[ .-]";
-    String[] tokens = str.split(delimiters);
+    String[] tokens = text.split(delimiters);
 
     for (String token : tokens) {
+      LOG.debug(this.getContext().getName() + ": Emitting record with word "
+                  + token + " and field " + field);
 
-      Tuple output = new TupleBuilder().
-          set("field", field).
-          set("word", token).
-          create();
-
-      if (Common.debug) {
-        System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-      }
-      outputCollector.add(output);
+      output.emit(new Record(token, field));
     }
   }
-
 }

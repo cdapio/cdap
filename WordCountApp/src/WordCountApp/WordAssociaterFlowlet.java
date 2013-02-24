@@ -1,49 +1,37 @@
 package WordCountApp;
 
+import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
+public class WordAssociaterFlowlet extends AbstractFlowlet {
 
-public class WordAssociaterFlowlet extends ComputeFlowlet {
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    specifier.getDefaultFlowletInput().setSchema(
-        WordCountFlow.SPLITTER_ASSOCIATER_SCHEMA);
-  }
-
+  @UseDataSet("wordAssocs")
   private WordAssocTable wordAssocTable;
 
-  @Override
-  public void initialize() {
-    try {
-      this.wordAssocTable = getFlowletContext().getDataSet("wordAssocs");
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public WordAssociaterFlowlet() {
+    super("wordAssociater");
   }
 
   @Override
-  public void process(Tuple tuple, TupleContext context,
-      OutputCollector collector) {
-    String [] words = tuple.get("wordArray");
-    
-    try {
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(getName())
+      .setDescription("Example Word Count Procedure")
+      .useDataSet("wordAssocs")
+      .build();
+  }
 
-      // Store word associations
-      Set<String> wordSet = new TreeSet<String>(Arrays.asList(words));
-      this.wordAssocTable.writeWordAssocs(wordSet);
-
-    } catch (OperationException e) {
-      // Fail the process() call if we get an exception
-      throw new RuntimeException(e);
-    }
+  @Process("wordArrayOut")
+  public void process(String [] words) throws OperationException {
+    // Store word associations
+    Set<String> wordSet = new TreeSet<String>(Arrays.asList(words));
+    this.wordAssocTable.writeWordAssocs(wordSet);
   }
 }

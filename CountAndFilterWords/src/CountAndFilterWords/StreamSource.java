@@ -1,41 +1,35 @@
 package CountAndFilterWords;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.Map;
 
-public class StreamSource extends ComputeFlowlet {
+public class StreamSource extends AbstractFlowlet {
+  private static Logger LOG = LoggerFactory.getLogger(StreamSource.class);
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().
-        add("title", String.class).
-        add("text", String.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
+  private OutputEmitter<Record> output;
+
+  public StreamSource() {
+    super("source");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(StreamEvent event) {
+    LOG.debug(this.getContext().getName() + ": Received event " + event);
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-    }
-    HashMap<String, String> headers = tuple.get("headers");
-    byte[] body = tuple.get("body");
+    Map<String, String> headers = event.getHeaders();
     String title = headers.get("title");
+    byte[] body = Bytes.toBytes(event.getBody());
     String text = body == null ? null :new String(body);
 
-    Tuple output = new TupleBuilder().
-        set("title", title).
-        set("text", text).
-        create();
+    Record record = new Record(title, text);
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-    }
-    outputCollector.add(output);
+    LOG.debug(this.getContext().getName() + ": Emitting tuple " + output);
+
+    output.emit(record);
   }
 }

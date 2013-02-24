@@ -1,41 +1,30 @@
 package CountRandom;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
 
-public class RandomSource extends SourceFlowlet {
+public class RandomSource extends AbstractGeneratorFlowlet {
+  private OutputEmitter<Integer> randomOutput;
 
-  Random random;
-  long millis = 0;
-  int direction = 1;
+  private final Random random = new Random();
+  private long millis = 0;
+  private int direction = 1;
 
-  @Override
-  public void generate(OutputCollector outputCollector) {
-    Tuple out = new TupleBuilder().set("number",
-                                       new Integer(
-                                         this.random.nextInt(10000)
-                                       )).create();
-    try {
-      Thread.sleep(millis);
-      millis += direction;
-      if(millis > 100 || millis < 1) {
-        direction = direction * -1;
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    outputCollector.add(out);
+  public RandomSource() {
+    super("gen");
   }
 
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().
-        add("number", Integer.class).
-        create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    this.random = new Random(System.currentTimeMillis());
+  public void generate() throws InterruptedException {
+    Integer randomNumber = new Integer(this.random.nextInt(10000));
+    Thread.sleep(millis);
+    millis *= direction;
+    if(millis > 100 || millis < 1) {
+      direction = direction * -1;
+    }
+    randomOutput.emit(randomNumber);
   }
 }

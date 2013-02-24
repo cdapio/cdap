@@ -1,26 +1,28 @@
 package CountOddAndEven;
 
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.SourceFlowlet;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
 
 /**
  * Random number generator.
  */
-public class RandomNumberGenerator extends SourceFlowlet {
+public class RandomNumberGenerator extends AbstractFlowlet implements GeneratorFlowlet{
   Random random;
   long millis = 0;
   int direction = 1;
 
+  private OutputEmitter<Integer> randomOutput;
+
+  public RandomNumberGenerator() {
+    super("NumGenerator");
+  }
+
   @Override
-  public void generate(OutputCollector outputCollector) {
-    Tuple out = new TupleBuilder().set("number", new Integer(this.random.nextInt(10000))).create();
+  public void generate() throws Exception {
+    Integer randomNumber = new Integer(this.random.nextInt(10000));
     try {
       Thread.sleep(millis);
       millis += direction;
@@ -30,13 +32,6 @@ public class RandomNumberGenerator extends SourceFlowlet {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    outputCollector.add(out);
-  }
-
-  @Override
-  public void configure(FlowletSpecifier specifier) {
-    TupleSchema out = new TupleSchemaBuilder().add("number", Integer.class).create();
-    specifier.getDefaultFlowletOutput().setSchema(out);
-    this.random = new Random(System.currentTimeMillis());
+    randomOutput.emit(randomNumber);
   }
 }

@@ -1,53 +1,35 @@
 package CountAndFilterWords;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CountByField extends ComputeFlowlet
-{
-  @Override
-  public void configure(FlowletSpecifier configurator) {
-    TupleSchema in = new TupleSchemaBuilder().
-        add("field", String.class).
-        add("word", String.class).
-        create();
+public class CountByField extends AbstractFlowlet {
 
-    configurator.getDefaultFlowletInput().setSchema(in);
-  }
+  private static Logger LOG = LoggerFactory.getLogger(CountByField.class);
 
+  @UseDataSet(Common.counterTableName)
   KeyValueTable counters;
 
-  @Override
-  public void initialize() {
-    super.initialize();
-    this.counters = getFlowletContext().getDataSet(Common.counterTableName);
+  public CountByField() {
+    super("countByField");
   }
 
-  @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-    }
+  public void process(Record record) throws OperationException {
+    LOG.debug(this.getContext().getName() + ": Received record with word "
+                + record.getWord() + " and field " + record.getField());
 
-    String token = tuple.get("word");
+    String token = record.getWord();
     if (token == null) return;
-    String field = tuple.get("field");
+
+    String field = record.getField();
     if (field != null) token = field + ":" + token;
 
-    if (Common.debug) {
-      System.out.println(this.getClass().getSimpleName() + ": Incrementing for " + token);
-    }
-    try {
-      this.counters.increment(token.getBytes(), 1L);
-    } catch (OperationException e) {
-      throw new RuntimeException(e);
-    }
+    LOG.debug(this.getContext().getName() + ": Incrementing for token " + token);
+
+    this.counters.increment(token.getBytes(), 1L);
   }
 }
