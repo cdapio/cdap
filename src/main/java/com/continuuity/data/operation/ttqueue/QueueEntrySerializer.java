@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public final class QueueEntrySerializer {
   private static final Logger LOG = LoggerFactory.getLogger(QueueEntrySerializer.class);
-
+  private static final int version = 0;
   /**
    * Creates a new serializer. This serializer can be reused.
    */
@@ -40,6 +40,9 @@ public final class QueueEntrySerializer {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
       Map<String, Integer> map = entry.getPartitioningMap();
+
+      //writing version number which might be needed in the future if we change the schema
+      encoder.writeInt(version);
       if (map==null || map.size()==0)
         encoder.writeInt(0);
       else {
@@ -50,9 +53,7 @@ public final class QueueEntrySerializer {
         }
       }
       byte[] data = entry.getData();
-      if (data==null) {
-        data = new byte[0];
-      }
+      //data is never null, guaranteed by QueueEntryImpl
       encoder.writeBytes(data);
       return bos.toByteArray();
     } catch (IOException e) {
@@ -74,8 +75,10 @@ public final class QueueEntrySerializer {
     try {
       ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
       Decoder decoder=new BinaryDecoder(bis);
-      int headerSize;
-      headerSize=decoder.readInt();
+
+      //reading version number but ignoring it for now
+      int version=decoder.readInt();
+      int headerSize=decoder.readInt();
       Map<String,Integer> map=null;
       if (headerSize>0) {
         map=Maps.newHashMap();

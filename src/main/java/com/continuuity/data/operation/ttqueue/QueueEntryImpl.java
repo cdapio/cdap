@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -10,21 +11,26 @@ public class QueueEntryImpl implements QueueEntry {
   private byte[] data;
 
   public QueueEntryImpl(Map<String, Integer> header, byte[] data) {
-    this.header=header;
+    Preconditions.checkNotNull(data);
+    Preconditions.checkNotNull(header);
     this.data=data;
+    this.header=header;
   }
 
   public QueueEntryImpl(byte[] data) {
-    this.header=Maps.newHashMap();
+    Preconditions.checkNotNull(data);
+    this.header= Maps.newHashMap();
     this.data=data;
   }
 
+  @Override
   public byte[] getData() {
     return this.data;
   }
 
   @Override
   public void setData(byte[] data) {
+    Preconditions.checkNotNull(data);
     this.data=data;
   }
 
@@ -44,6 +50,9 @@ public class QueueEntryImpl implements QueueEntry {
 
   @Override
   public Integer getHash(String key) {
+    if (header==null) {
+      return null;
+    }
     return this.header.get(key);
   }
 
