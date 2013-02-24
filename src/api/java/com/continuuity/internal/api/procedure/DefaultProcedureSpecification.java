@@ -4,10 +4,12 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,9 +21,11 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   private final String name;
   private final String description;
   private final Set<String> dataSets;
+  private final Map<String, String> arguments;
 
-  public DefaultProcedureSpecification(String name, String description, Set<String> dataSets) {
-    this(null, name, description, dataSets);
+  public DefaultProcedureSpecification(String name, String description,
+                                       Set<String> dataSets, Map<String, String> arguments) {
+    this(null, name, description, dataSets, arguments);
   }
 
   public DefaultProcedureSpecification(Procedure procedure) {
@@ -31,13 +35,16 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
     this.dataSets = inspectDataSets(procedure, ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.arguments = configureSpec.getArguments();
   }
 
-  public DefaultProcedureSpecification(String className, String name, String description, Set<String> dataSets) {
+  public DefaultProcedureSpecification(String className, String name, String description,
+                                       Set<String> dataSets, Map<String, String> arguments) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.dataSets = ImmutableSet.copyOf(dataSets);
+    this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
   }
 
   @Override
@@ -58,6 +65,11 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   @Override
   public Set<String> getDataSets() {
     return dataSets;
+  }
+
+  @Override
+  public Map<String, String> getArguments() {
+    return arguments;
   }
 
   private Set<String> inspectDataSets(Procedure procedure, ImmutableSet.Builder<String> datasets) {

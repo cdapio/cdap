@@ -6,8 +6,10 @@ package com.continuuity.api.procedure;
 
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,11 +42,17 @@ public interface ProcedureSpecification {
   Set<String> getDataSets();
 
   /**
+   * @return An immutable map of arguments that was passed in when constructing the {@link ProcedureSpecification}.
+   */
+  Map<String, String> getArguments();
+
+  /**
    * Builder for building {@link ProcedureSpecification}
    */
   static final class Builder {
     private String name;
     private String description;
+    private Map<String, String> arguments;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     public static NameSetter with() {
@@ -102,10 +110,22 @@ public interface ProcedureSpecification {
       }
 
       /**
+       * Adds a map of arguments that would be available to the procedure
+       * through the {@link ProcedureContext} at runtime.
+       *
+       * @param args The map of arguments.
+       * @return An instance of {@link AfterDescription}.
+       */
+      public AfterDescription withArguments(Map<String, String> args) {
+        arguments = ImmutableMap.copyOf(args);
+        return this;
+      }
+
+      /**
        * @return build a {@link ProcedureSpecification}
        */
       public ProcedureSpecification build() {
-        return new DefaultProcedureSpecification(name, description, dataSets.build());
+        return new DefaultProcedureSpecification(name, description, dataSets.build(), arguments);
       }
     }
 

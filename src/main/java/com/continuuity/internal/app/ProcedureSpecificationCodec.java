@@ -17,6 +17,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,6 +34,7 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("datasets", context.serialize(src.getDataSets(), new TypeToken<Set<String>>(){}.getType()));
+    jsonObj.add("arguments", context.serialize(src.getArguments(), new TypeToken<Map<String, String>>(){}.getType()));
 
     return jsonObj;
   }
@@ -46,7 +48,9 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Set<String> dataSets = context.deserialize(jsonObj.get("datasets"), new TypeToken<Set<String>>(){}.getType());
+    Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
+                                                        new TypeToken<Map<String, String>>(){}.getType());
 
-    return new DefaultProcedureSpecification(className, name, description, dataSets);
+    return new DefaultProcedureSpecification(className, name, description, dataSets, arguments);
   }
 }
