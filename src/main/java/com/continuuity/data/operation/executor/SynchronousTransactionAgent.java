@@ -8,8 +8,6 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -24,15 +22,7 @@ import java.util.Map;
  * rely on that, because transaction agents in general are not thread-safe
  * - any synchronization is up to the caller.
  */
-public class SynchronousTransactionAgent implements TransactionAgent {
-
-  private static final Logger Log =
-    LoggerFactory.getLogger(SynchronousTransactionAgent.class);
-
-  // the actual operation executor
-  private OperationExecutor opex;
-  // the operation context for all operations
-  private OperationContext context;
+public class SynchronousTransactionAgent extends AbstractTransactionAgent {
 
   /**
    * Constructor must pass the operation executor and context.
@@ -40,58 +30,106 @@ public class SynchronousTransactionAgent implements TransactionAgent {
    * @param context the operation context for all operations
    */
   public SynchronousTransactionAgent(OperationExecutor opex, OperationContext context) {
-    this.opex = opex;
-    this.context = context;
-  }
-
-  @Override
-  public void start() throws OperationException {
-    // nothing to do
-  }
-
-  @Override
-  public void abort() throws OperationException {
-    // nothing to do
-  }
-
-  @Override
-  public void finish() throws OperationException {
-    // nothing to do
+    super(opex, context);
   }
 
   @Override
   public void submit(WriteOperation operation) throws OperationException {
-    // execute synchronously
-    this.opex.commit(this.context, operation);
+    boolean success = false;
+    try {
+      // execute synchronously
+      this.opex.commit(this.context, operation);
+      success = true;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
   }
 
   @Override
   public void submit(List<WriteOperation> operations) throws OperationException {
-    // execute synchronously
-    this.opex.commit(this.context, operations);
+    boolean success = false;
+    try {
+      // execute synchronously
+      this.opex.commit(this.context, operations);
+      success = true;
+    } finally {
+      if (success) {
+        succeededSome(operations.size());
+      } else {
+        failedSome(operations.size());
+      }
+    }
   }
 
   @Override
   public Map<byte[], Long> execute(Increment increment) throws OperationException {
-    // execute synchronously - beware since this is also a write, it can't be rolled back
-    return this.opex.increment(this.context, increment);
+    boolean success = false;
+    try {
+      // execute synchronously - beware since this is also a write, it can't be rolled back
+      Map<byte[], Long> result = this.opex.increment(this.context, increment);
+      success = true;
+      return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>> execute(Read read) throws OperationException {
-    // execute synchronously
-    return this.opex.execute(this.context, read);
+    boolean success = false;
+    try {
+      // execute synchronously
+      OperationResult<Map<byte[], byte[]>> result = this.opex.execute(this.context, read);
+      success = true;
+      return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>> execute(ReadColumnRange read) throws OperationException {
-    // execute synchronously
-    return this.opex.execute(this.context, read);
+    boolean success = false;
+    try {
+      // execute synchronously
+      OperationResult<Map<byte[], byte[]>> result = this.opex.execute(this.context, read);
+      success = true;
+      return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
   }
 
   @Override
   public OperationResult<List<byte[]>> execute(ReadAllKeys read) throws OperationException {
-    // execute synchronously
-    return this.opex.execute(this.context, read);
+    boolean success = false;
+    try {
+      // execute synchronously
+      OperationResult<List<byte[]>> result = this.opex.execute(this.context, read);
+      success = true;
+      return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
   }
 }
