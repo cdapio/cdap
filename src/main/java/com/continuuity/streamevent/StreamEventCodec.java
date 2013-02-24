@@ -101,7 +101,9 @@ public final class StreamEventCodec {
       int len = decoder.readInt();
       while (len != 0) {
         for (int i = 0; i < len; i++) {
-          headers.put(decoder.readString(), decoder.readString());
+          String key = decoder.readString();
+          String value = decoder.readInt() == 0 ? decoder.readString() : (String) decoder.readNull();
+          headers.put(key, value);
         }
         len = decoder.readInt();
       }
