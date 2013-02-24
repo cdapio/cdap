@@ -10,17 +10,30 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.collect.Maps;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +41,11 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -46,7 +62,7 @@ public class RestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = { HttpMethod.POST, HttpMethod.GET };
+  HttpMethod[] allowedMethods = { HttpMethod.PUT, HttpMethod.POST, HttpMethod.GET };
 
   /**
    * The collector that created this handler. It has collector name and consumer
@@ -110,6 +126,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int DEQUEUE = 3;
   private static final int INFO = 4;
   private static final int PING = 5;
+  private static final int CREATE = 6; // or CREATE_STREAM ???
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -126,7 +143,7 @@ public class RestHandler extends NettyRestHandler {
     try {
 
       // we only support POST and GET
-      if (method != HttpMethod.POST && method != HttpMethod.GET ) {
+      if (method != HttpMethod.PUT && method != HttpMethod.POST && method != HttpMethod.GET ) {
         LOG.trace("Received a " + method + " request, which is not supported");
         helper.finish(BadRequest);
         respondNotAllowed(message.getChannel(), allowedMethods);
@@ -147,9 +164,18 @@ public class RestHandler extends NettyRestHandler {
       }
 
       String accountId = collector.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        helper.finish(NotFound);
+        return;
+      }
 
       int operation = UNKNOWN;
-      if (method == HttpMethod.POST) {
+      if (method == HttpMethod.PUT) {
+        operation=CREATE;
+        helper.setMethod("create");
+      } else if (method == HttpMethod.POST) {
         operation = ENQUEUE;
         helper.setMethod("enqueue");
       } else if (method == HttpMethod.GET) {
@@ -209,6 +235,9 @@ public class RestHandler extends NettyRestHandler {
       String path = decoder.getPath();
       if (path.startsWith(this.pathPrefix)) {
         String resourceName = path.substring(this.pathPrefix.length());
+        if (resourceName.startsWith("/")) {
+          resourceName = resourceName.substring(1);
+        }
         if (resourceName.length() > 0) {
           int pos = resourceName.indexOf('/');
           if (pos < 0) { // streamname
@@ -226,8 +255,8 @@ public class RestHandler extends NettyRestHandler {
         helper.setScope(destination);
       }
 
-      // validate the existence of the stream
-      if (!this.collector.getStreamCache().validateStream(accountId, destination)) {
+      // validate the existence of the stream except for create stream operation
+      if (operation!=CREATE && !this.collector.getStreamCache().validateStream(accountId, destination)) {
         helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream " + destination);
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -435,6 +464,24 @@ public class RestHandler extends NettyRestHandler {
           // now the headers and body are ready to be sent back
           respond(message.getChannel(), request,
               HttpResponseStatus.OK, prefixedHeaders, body);
+          helper.finish(Success);
+          break;
+        }
+        case CREATE: {
+          // Instance of metadata service
+          MetadataService mds = collector.getMetadataService();
+
+          Account account = new Account(accountId);
+          Stream stream = new Stream(destination);
+          stream.setName(destination); //
+
+          //Check if a stream with the same id exists
+          Stream existingStream = mds.getStream(account, stream);
+          if (!existingStream.isExists()) {
+            mds.createStream(account, stream);
+          }
+
+          respondSuccess(message.getChannel(), request);
           helper.finish(Success);
           break;
         }

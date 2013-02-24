@@ -14,6 +14,7 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.streamevent.DefaultStreamEvent;
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -90,6 +91,8 @@ public class StreamClient {
     if (System.getProperty("script") != null) name = System.getProperty("script").replaceAll("[./]", "");
     Copyright.print(out);
     out.println("Usage: ");
+    out.println("  " + name +
+                  " create --stream <name>");
     out.println("  " + name +
         " send --stream <name> --body <value> [ <option> ... ]");
     out.println("  " + name + " id --stream <name> [ <option> ... ]");
@@ -691,5 +694,13 @@ public class StreamClient {
     String value = instance.execute(args, config);
     // exit with error in case fails
     if (value == null) System.exit(1);
+  }
+
+  private boolean isId(final String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 }
