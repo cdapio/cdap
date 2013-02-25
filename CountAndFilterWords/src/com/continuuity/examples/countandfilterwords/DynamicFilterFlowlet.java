@@ -21,6 +21,7 @@ public class DynamicFilterFlowlet extends AbstractFlowlet {
   private String filterRegex;
 
   public DynamicFilterFlowlet(String filterName, String filterRegex) {
+    super("FilterFlowlet-" + filterName);
     this.filterName = filterName;
     this.filterRegex = filterRegex;
   }
