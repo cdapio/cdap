@@ -11,7 +11,7 @@ public class EvenCounter extends AbstractFlowlet {
   int count = 0;
 
   @ProcessInput("evenNumbers")
-  public void process() {
+  public void process(Integer number) {
     count++;
   }
 }
