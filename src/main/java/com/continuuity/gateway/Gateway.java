@@ -1,9 +1,17 @@
 package com.continuuity.gateway;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
@@ -13,12 +21,6 @@ import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * The Gateway is the front door to the Continuuity platform. It provides a
@@ -63,6 +65,9 @@ public class Gateway implements Server {
    */
   @Inject
   private MetadataService mds;
+
+  @Inject
+  private DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * This will be shared by all connectors for zk service discovery
@@ -143,6 +148,8 @@ public class Gateway implements Server {
    */
   public void start(String[] args, CConfiguration conf) throws
       ServerException {
+
+    discoveryServiceClient.startAndWait();
 
     // Configure ourselves first
     configure(conf);
@@ -260,6 +267,11 @@ public class Gateway implements Server {
     this.mds = new MetadataService(executor);
   }
 
+  public void setDiscoveryServiceClient(
+      DiscoveryServiceClient discoveryServiceClient) {
+    this.discoveryServiceClient = discoveryServiceClient;
+  }
+
   /**
    * Set the gateway's Configuration, then create and configure the connectors
    *
@@ -354,6 +366,8 @@ public class Gateway implements Server {
           continue;
         }
 
+        newConnector.setDiscoverServiceClient(discoveryServiceClient);
+        
         // set the connector's discovery client
         newConnector.setServiceDiscovery(this.serviceDiscovery);
 

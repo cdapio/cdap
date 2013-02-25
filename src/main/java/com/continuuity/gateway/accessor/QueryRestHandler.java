@@ -1,21 +1,24 @@
 package com.continuuity.gateway.accessor;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.discovery.Discoverable;
+import com.continuuity.gateway.util.NettyRestHandler;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -26,21 +29,35 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.gateway.util.NettyRestHandler;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the query rest accessor.
  * <p>
- * At this time it only accepts GET requests, which it forwards to a
- * query provider registered in the service discovery.
+ * At this time it only accepts POST requests, which it forwards to a
+ * procedure registered in the service discovery.
  * <p>
- * example: GET http://g.c.c/rest-query/feedreader/getfeed?userid=100
+ * example:
+ * <pre>
+ * POST http://g.c.c/rest-query/myapp/feedreader/getfeed HTTP/1.1
+ * Host: g.c.c
+ *
+ * {"userid":100}
+ * </pre>
  */
-public class QueryRestHandler extends NettyRestHandler {
+public final class QueryRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(QueryRestHandler.class);
@@ -48,28 +65,34 @@ public class QueryRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {
-      HttpMethod.GET
-  };
+  private static final HttpMethod[] allowedMethods = {HttpMethod.POST};
 
   /**
    * All the paths have to be of the form
-   * http://host:port&lt;pathPrefix>&lt;service>/&lt;method>?&ltparams>
+   * http://host:port&lt;pathPrefix>&lt;application>/&lt;service>/&lt;method>
    * example:
-   * <PRE>GET http://g.c.c/rest-query/feedreader/getfeed?userid=100</PRE>
+   * <pre>
+   * POST http://g.c.c/rest-query/myapp/feedreader/getfeed HTTP/1.1
+   * Host: g.c.c
+   *
+   * {"userid":100}
+   * </pre>
+   *
    */
-  private String pathPrefix;
+//  private String pathPrefix;
+
+  private final Pattern pathPattern;
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
    * the data fabric executor.
    */
-  private QueryRestAccessor accessor;
+  private final QueryRestAccessor accessor;
 
   /**
    * The metrics object of the rest accessor
    */
-  private CMetrics metrics;
+  private final CMetrics metrics;
 
   /**
    * Constructor requires the accessor that created this
@@ -79,9 +102,9 @@ public class QueryRestHandler extends NettyRestHandler {
   QueryRestHandler(QueryRestAccessor accessor) {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
-    this.pathPrefix =
-        accessor.getHttpConfig().getPathPrefix() +
-            accessor.getHttpConfig().getPathMiddle();
+    this.pathPattern = Pattern.compile(String.format("%s%s(.+)/(.+)/(.+)",
+                                                     accessor.getHttpConfig().getPathPrefix(),
+                                                     accessor.getHttpConfig().getPathMiddle()));
   }
 
   @Override
@@ -97,8 +120,8 @@ public class QueryRestHandler extends NettyRestHandler {
         this.accessor.getMetricsQualifier());
 
     try {
-      // only GET is supported for now
-      if (method != HttpMethod.GET) {
+      // only POST is supported for now
+      if (!method.equals(HttpMethod.POST)) {
         helper.finish(BadRequest);
         LOG.trace("Received a " + method + " request, which is not supported");
         respondNotAllowed(message.getChannel(), allowedMethods);
@@ -113,6 +136,8 @@ public class QueryRestHandler extends NettyRestHandler {
         return;
       }
 
+      String accountId = accessor.getAuthenticator().getAccountId(request);
+
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(uri)) {
         helper.setMethod("ping");
@@ -121,75 +146,69 @@ public class QueryRestHandler extends NettyRestHandler {
         return;
       }
 
-      // parse and verify the url path
-      String provider = null, remainder = null;
-      // valid paths are <prefix>/service/method?param=value&...
-      if (uri.startsWith(this.pathPrefix)) {
-        int pos1 = uri.indexOf("/", this.pathPrefix.length());
-        int pos2 = uri.indexOf("?", this.pathPrefix.length());
-        int pos = (pos1 < 0 ||  pos2 < 0)
-            ? Math.max(pos1, pos2) : Math.min(pos1, pos2);
-        if (pos > this.pathPrefix.length()) { // at least one char in provider
-          provider = uri.substring(this.pathPrefix.length(), pos);
-          remainder = uri.substring(pos);
-        }
-      }
-      if (provider == null) {
+      Matcher pathMatcher = pathPattern.matcher(URI.create(uri).getPath());
+      if (!pathMatcher.matches()) {
         helper.finish(BadRequest);
         LOG.trace("Received a request with unsupported path " + uri);
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         return;
       }
-      helper.setMethod(provider);
+      String applicationId = pathMatcher.group(1);
+      String procedureName = pathMatcher.group(2);
+      String methodName = pathMatcher.group(3);
+
+      helper.setMethod(procedureName);
 
       // determine the service provider for the given path
-      String serviceName = "query." + provider;
-      ImmutablePair<String, Integer> pair = this.accessor.
-          getServiceDiscovery().getServiceAddress(serviceName);
-      if (pair == null) {
+      String serviceName = String.format("procedure.%s.%s.%s", accountId, applicationId, procedureName);
+      List<Discoverable> endpoints = Lists.newArrayList(accessor.getDiscoveryServiceClient().discover(serviceName));
+
+      if (endpoints.isEmpty()) {
         helper.finish(NotFound);
-        LOG.trace("Received a request for query provider " + provider + " " +
-            "which is not registered. ");
+        LOG.trace("Received a request for procedure " + procedureName +
+                    " in application " + applicationId + " which is not registered. ");
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         return;
       }
 
-      // make HTTP call to provider with method?param=...
-      String relayUri = "http://" + pair.getFirst() + ":" + pair.getSecond()
-          + "/v1/query/" + provider + remainder;
+      // make HTTP call to provider
+      Collections.shuffle(endpoints);
+      InetSocketAddress endpoint = endpoints.get(0).getSocketAddress();
+      String relayUri = Joiner.on('/').appendTo(
+        new StringBuilder("http://").append(endpoint.getHostName()).append(":").append(endpoint.getPort()).append("/"),
+        "apps", applicationId, "procedures", procedureName, methodName).toString();
+
       LOG.trace("Relaying request to " + relayUri);
 
       HttpClient client = new DefaultHttpClient();
       int status;
-      byte[] content = null;
+      ChannelBuffer content = ChannelBuffers.EMPTY_BUFFER;
       String contentType = null;
       try {
         // TODO use more efficient Http client
-        HttpGet get = new HttpGet(relayUri);
-        HttpResponse response = client.execute(get);
+        ChannelBuffer requestContent = request.getContent();
+        HttpPost post = new HttpPost(relayUri);
+        post.setEntity(
+          new InputStreamEntity(new ChannelBufferInputStream(requestContent), requestContent.readableBytes()));
+
+        HttpResponse response = client.execute(post);
 
         // decompose the response
         status = response.getStatusLine().getStatusCode();
         HttpEntity entity = response.getEntity();
         if (entity != null) {
-          if (entity.getContentType() != null)
+          if (entity.getContentType() != null) {
             contentType = entity.getContentType().getValue();
+          }
           int contentLength = (int)entity.getContentLength();
           if (contentLength > 0) {
-            InputStream contentStream = entity.getContent();
-            byte[] bytes = new byte[contentLength];
-            int bytesRead;
-            for (bytesRead = 0; bytesRead < contentLength; ) {
-              int numBytes = contentStream.read(bytes, bytesRead,
-                  contentLength - bytesRead);
-              if (numBytes < 0) break;
-              bytesRead += numBytes;
+            content = ChannelBuffers.dynamicBuffer(contentLength);
+            InputStream input = entity.getContent();
+            try {
+              ByteStreams.copy(input, new ChannelBufferOutputStream(content));
+            } finally {
+              input.close();
             }
-            contentStream.close();
-            if (bytesRead == contentLength)
-              content = bytes;
-            else
-              content = Arrays.copyOf(bytes, bytesRead);
           }
         }
       } catch (Exception e) {
