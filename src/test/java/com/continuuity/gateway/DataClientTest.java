@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.data.*;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Increment;
@@ -10,6 +11,8 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.tools.DataClient;
 import com.google.inject.Guice;
@@ -31,6 +34,7 @@ public class DataClientTest {
       .getLogger(DataClientTest.class);
 
   private OperationExecutor executor = null;
+  private static DiscoveryService discoveryService;
 
   Gateway gateway = null;
 
@@ -47,11 +51,14 @@ public class DataClientTest {
   @Before
   public void setupDataFabricAndGateway() throws Exception {
     DataClient.debug = true;
+    configuration = new CConfiguration();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+        new DataFabricModules().getInMemoryModules(),
+        new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
@@ -69,7 +76,6 @@ public class DataClientTest {
 
     // configure a gateway
     port = PortDetector.findFreePort();
-    configuration = new CConfiguration();
     configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
@@ -83,9 +89,12 @@ public class DataClientTest {
 
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
+    discoveryService.startAndWait();
     gateway = new Gateway();
     gateway.setExecutor(this.executor);
     gateway.setConsumer(new TestUtil.NoopConsumer());
+    gateway.setDiscoveryServiceClient(
+        injector.getInstance(DiscoveryServiceClient.class));
     gateway.start(null, configuration);
   }
 

@@ -12,10 +12,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -46,6 +49,7 @@ public class GatewayRestAccessorAuthTest {
   private Gateway theGateway = null;
 
   private OperationExecutor executor;
+  private static DiscoveryService discoveryService;
 
   /**
    * Create a new Gateway instance to use in these set of tests. This method
@@ -56,16 +60,19 @@ public class GatewayRestAccessorAuthTest {
   @Before
   public void setupGateway() throws Exception {
 
+    CConfiguration configuration = new CConfiguration();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+        new DataFabricModules().getInMemoryModules(),
+        new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
 
     // Create and populate a new config object
-    CConfiguration configuration = new CConfiguration();
 
     configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
@@ -86,10 +93,13 @@ public class GatewayRestAccessorAuthTest {
     keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
 
     // Now create our Gateway
+    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
     theGateway.setConsumer(new TestUtil.NoopConsumer());
     theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
+    theGateway.setDiscoveryServiceClient(
+        injector.getInstance(DiscoveryServiceClient.class));
     theGateway.start(null, configuration);
 
   } // end of setupGateway
