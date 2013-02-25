@@ -20,7 +20,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
@@ -118,8 +117,6 @@ public class RestHandler extends NettyRestHandler {
   private String isPreservedHeader(String destinationPrefix, String name) {
     if (name.startsWith(destinationPrefix))
       return name.substring(destinationPrefix.length());
-    if (name.equals(GatewayAuthenticator.CONTINUUITY_API_KEY))
-      return name;
     return null;
   }
 
