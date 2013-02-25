@@ -10,6 +10,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
+import com.continuuity.filesystem.Location;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.collect.Table;
 

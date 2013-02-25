@@ -94,6 +94,10 @@ public final class Id  {
     public static Application from(Account id, String application) {
       return new Application(id, application);
     }
+
+    public static Application from(String accountId, String applicationId) {
+      return new Application(Id.Account.from(accountId), applicationId);
+    }
   }
 
   /**
