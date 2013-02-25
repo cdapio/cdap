@@ -39,7 +39,11 @@ function(Models, Views, Controllers){
       ].join('');
     };
 
-    window.ENV = {};
+    window.ENV = {
+    	account: {
+    		account_id: 'developer'
+    	}
+    };
 
 	var C = window.C = Ember.Application.create({
 		debug: function (message) {
@@ -49,7 +53,7 @@ function(Models, Views, Controllers){
 		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
-				name: "Developer"
+				name: ""
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				names: {
@@ -143,7 +147,7 @@ function(Models, Views, Controllers){
 			reset: function () {
 				C.Vw.Modal.show(
 					"Reset AppFabric",
-					"You are about to DELETE ALL CONTINUUITY DATA on your cluster. Are you SURE you would like to do this?",
+					"You are about to DELETE CONTINUUITY ALL DATA on your cluster. Are you sure you would like to do this?",
 					function () {
 
 						C.interstitial.loading('Clearing...');
@@ -377,12 +381,26 @@ function(Models, Views, Controllers){
 
 		if (!C.initialized) {
 
-			window.ENV.isCloud = (env.name !== 'development');
+			window.ENV.isCloud = (env.location && env.location !== 'development') || false;
 			window.ENV.version = env.version;
+
+			if (env.account) {
+
+				window.ENV.account = env.account;
+				C.router.applicationController.set('user', env.account);
+
+			} else {
+
+				window.ENV.credential = env.credential;
+				C.router.applicationController.set('user', {
+					name: "Developer"
+				});
+			}
+
 			C.debug('Environment set to "' + env.name + '", version ' + env.version);
 
-			if (env.version !== 'UNKNOWN') {
-				$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
+			if (env.version && env.version !== 'UNKNOWN') {
+				$('#build-number').html(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
 			}
 
 			C.debug('Application connected.');
@@ -428,7 +446,9 @@ function(Models, Views, Controllers){
 		
 	}
 
-	var socket = io.connect(document.location.hostname);
+	var socket = io.connect(document.location.hostname, {
+		secure: document.location.protocol === 'https:'
+	});
 	var pending = {};
 	var current_id = 0;
 

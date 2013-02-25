@@ -10,7 +10,6 @@
 
   <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="../assets/css/main.css">
-
   <link rel="stylesheet" href="./patch/assets/main.css">
 
   <script type="text/javascript" src="/core/lib/jquery.min.js"></script>
@@ -28,19 +27,20 @@
  <div id="nav">
     <a href="#" id="logo"></a>
     <ul>
-      <li><a class="nav-link nav-dash" href="#">Dashboard</a></li>
-      <li><a class="nav-link nav-apps" href="#/apps">Applications</a></li>
-      <li><a class="nav-link nav-streams" href="#/streams">Streams</a></li>
-      <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
-      <li><a class="nav-link nav-datasets" href="#/data">Datasets</a></li>
-      <li><a class="nav-link nav-queries" href="#/queries">Queries</a></li>
+      <li class="overview"><a class="nav-link nav-dash" href="#">Dashboard</a></li>
+      <li><a class="nav-link nav-streams" href="#/streams">Collect</a></li>
+      <li><a class="nav-link nav-flows" href="#/flows">Process</a></li>
+      <li><a class="nav-link nav-datasets" href="#/data">Store</a></li>
+      <li><a class="nav-link nav-queries" href="#/queries">Query</a></li>
     </ul>
   </div>
 
   <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a class="global-link global-user" href="#">{{user.name}}</a>
+        <a href="/sso/logout">Logout</a>
+        <a href="http://support.continuuity.com/" target="_blank">Support</a>
+        {{user.name}}
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -53,9 +53,9 @@
     <div id="content-body">
       {{outlet}}
     </div>
-    <div id="footer" style="clear: both;">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
+    <div id="footer" style="clear: both;">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
     <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
-    Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset AppFabric</a></div>
+    Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset AppFabric</a><span id="build-number"></span></div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="dashboard">
@@ -65,19 +65,15 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Account Summary</div></div>
+        <div class="panel-head"><div class="panel-title">Overview</div></div>
         <table class="dash-app-resources">
           <tbody>
             <tr>
-              <td class="dash-app-resource dash-app-resource-health"></td>
               <td class="dash-app-resource">
-                <a href="#/apps" class="dash-app-resource-app">{{controller.counts.Application}}</a>
+                <a href="#/streams" class="dash-app-resource-stream">{{controller.counts.Stream}}</a>
               </td>
               <td class="dash-app-resource">
                 <a href="#/flows" class="dash-app-resource-flow">{{controller.counts.Flow}}</a>
-              </td>
-              <td class="dash-app-resource">
-                <a href="#/streams" class="dash-app-resource-stream">{{controller.counts.Stream}}</a>
               </td>
               <td class="dash-app-resource">
                 <a href="#/data" class="dash-app-resource-dataset">{{controller.counts.Dataset}}</a>
@@ -117,19 +113,16 @@
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div id="action-buttons" class="btn-group pull-right">
             <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
+              <span class="caret"></span>
+            </button>
           <ul class="dropdown-menu">
             <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
-            <li class="divider"></li>
-            <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
           </ul>
         </div>
       </div>
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Vw.DropZone}}
+        {{view C.Vw.DropZone uploadType="Update"}}
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
@@ -140,7 +133,7 @@
 
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Streams</div></div>
+        <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{view C.Vw.StreamList}}
       </div>
       <div class="panel">
@@ -153,13 +146,13 @@
               <button {{action stopAllFlows on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
-          <div class="panel-title">Flows</div>
+          <div class="panel-title">Process</div>
         </div>
         {{view C.Vw.FlowList}}
 
       </div>
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Datasets</div></div>
+        <div class="panel-head"><div class="panel-title">Store</div></div>
         {{view C.Vw.DatasetList}}
       </div>
       <div class="panel">
@@ -171,7 +164,7 @@
               <button {{action stopAllQueries on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
-          <div class="panel-title">Queries</div>
+          <div class="panel-title">Query</div>
         </div>
         {{view C.Vw.QueryList}}
       </div>
@@ -194,9 +187,8 @@
           </ul>
         </div>
       </div>
-      <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Events per Second" metrics="stream.enqueue.stream//developer/{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="q.ack.stream//developer/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//{account_id}/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//{account_id}/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -213,20 +205,17 @@
         {{#if controller.current.types.StreamFlow.content.length}}
           <table class="table">
           <thead>
-            <th colspan="2">&nbsp;</th>
+            <th>&nbsp;</th>
             <th style="width: 100px;text-align:center;">Unconsumed</th>
-            <th style="width: 448px;">Reads per Second</th>
+            <th style="width: 448px;">Read Rate</th>
           </thead>
           {{#each controller.current.types.StreamFlow.content tagName="tbody"}}
           <tr>
-            <td class="list-health-cell">
-              <div class="list-health-box"></div>
-            </td>
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
             <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
-            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//developer/{id}.count"}}</td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//{account_id}/{id}.count"}}</td>
           </tr>
           {{/each}}
           </table>
@@ -268,16 +257,9 @@
             </li>
             <li class="divider"></li>
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
-            {{#unless ENV.isCloud}}
-              <li class="divider"></li>
-              <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
-            {{/unless}}
+            
           </ul>
 
-          {{#unless ENV.isCloud}}
-          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Push</button>
-          {{/unless}}
-          
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
           <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
@@ -285,7 +267,6 @@
         </div>
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
     </div>
@@ -367,34 +348,36 @@
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
+        <div id="object-list">
+          {{#if content.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 215px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            {{#each content tagName="tbody"}}
+              <tr class="run-list" {{action "loadRun" on="click"}} {{bindAttr id="runId"}}>
+                <td>{{started}}</td>
+                <td>{{ended}}</td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+              This Flow has not completed a run yet.
+            </div>
+          {{/if}}
+        </div>
+      </div>
+      <div class="panel">
         <div id="flowviz-container" class="flowviz-fade">
           {{view C.Vw.Visualizer viewName="visualizer"}}
         </div>
       </div>
-      <div class="panel">
-      <div id="object-list">
-        {{#if content.length}}
-          <table class="table table-condensed">
-          <thead>
-            <tr><th style="width: 215px;">Started</th>
-            <th>Ended</th>
-            <th style="width:250px;">Result</th>
-            </tr>
-          </thead>
-          {{#each content tagName="tbody"}}
-            <tr class="run-list" {{action "loadRun" on="click"}} {{bindAttr id="runId"}}>
-              <td>{{started}}</td>
-              <td>{{ended}}</td>
-              <td>{{detail}}</td>
-            </tr>
-          {{/each}}
-          </table>
-        {{else}}
-          <div class="object-list-empty">
-            This flow has not completed a run yet.
-          </div>
-        {{/if}}
-        </div></div></div>
+    </div>
     </div>
     <div id="flowlet-container">
       <div id="flowlet-popup">
@@ -419,9 +402,8 @@
           </ul>
         </div>
       </div>
-      <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes per Second" metrics="dataset.write.{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.read.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Write Rate" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="dataset.read.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -435,15 +417,12 @@
         {{#if controller.types.DatasetFlow.content.length}}
           <table class="table">
           <thead>
-            <th colspan="2">&nbsp;</th>
-            <th style="width: 262px;">Writes per Second</th>
-            <th style="width: 262px;">Reads per Second</th>
+            <th>&nbsp;</th>
+            <th style="width: 262px;">Write Rate</th>
+            <th style="width: 262px;">Read Rate</th>
           </thead>
           {{#each controller.types.DatasetFlow.content tagName="tbody"}}
           <tr>
-            <td class="list-health-cell">
-              <div class="list-health-box"></div>
-            </td>
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
             </td>
@@ -482,7 +461,7 @@
         <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
 
           {{#unless ENV.isCloud}}
-          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} flow-action="Drain"><span class="btn-drain" />Push</button>
+            <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} flow-action="Drain"><span class="btn-drain" />Push</button>
           {{/unless}}
 
         <button class="btn dropdown-toggle" data-toggle="dropdown">
@@ -490,16 +469,17 @@
         </button>
         <ul class="dropdown-menu">
           <li><a {{action "delete" on="click"}} {{bindAttr state="current.currentState"}} {{bindAttr flowId="current.id"}} {{bindAttr applicationId="current.application"}}>Delete This Query</a></li>
+          
           {{#unless ENV.isCloud}}
             <li class="divider"></li>
             <li><a href="#" {{action "promote" on="click"}} {{bindAttr flowId="current.id"}} {{bindAttr applicationId="current.application"}}>Push to Cloud</a></li>
           {{/unless}}
+
         </ul>
         </div>
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
 
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Successful Requests" metrics="query.success.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Failed Requests" metrics="query.failure.count"}}</div>
     </div>

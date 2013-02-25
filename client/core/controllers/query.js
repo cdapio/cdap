@@ -32,11 +32,11 @@ define([], function () {
 				self.set('current', C.Mdl.Query.create(response.params));
 
 				//
-				// Request Flow Status
+				// Request Query Status
 				//
 				C.get('manager', {
 					method: 'status',
-					params: [app, id, -1]
+					params: [app, id, -1, null, 'QUERY']
 				}, function (error, response) {
 
 					if (response.params) {

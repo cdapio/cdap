@@ -14,7 +14,7 @@
 </td>
 <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
 <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
-<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" mode="singular" metrics="stream.enqueue.stream//developer/{id}.count"}}</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" mode="singular" metrics="stream.enqueue.stream//{account_id}/{id}.count"}}</td>
 </tr>
 {{/each}}
 </table>
@@ -23,9 +23,9 @@
 <div class="object-list-empty-content">
 No Streams.
 {{#if C.onStreams}}
-<br /><span>Please click the button above to create one.</span>
+<br /><br /><span>Please specify one in your Application or on the commandline.</span>
 {{else}}
-<br /><span>Please navigate to the <a href="#/streams">Streams page</a> to create one.</span>
+<br /><br /><span>Please specify one in your Application or on the commandline.</span>
 {{/if}}
 </div>
 </div>

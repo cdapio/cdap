@@ -5,20 +5,23 @@ var express = require('express'),
 	fs = require('fs'),
 	xml2js = require('xml2js'),
 	log4js = require('log4js'),
-	Api = require('../common/api');
+	http = require('http'),
+	https = require('https');
+
+var Api = require('../common/api');
 
 process.env.NODE_ENV = 'development';
 
 /**
-* Configure logger.
-*/
-const LOG_LEVEL = 'TRACE';
+ * Configure logger.
+ */
+var LOG_LEVEL = 'ALL';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
 	]
 });
-var logger = process.logger = log4js.getLogger('Reactor UI');
+var logger = process.logger = log4js.getLogger('Developer UI');
 logger.setLevel(LOG_LEVEL);
 
 /**
@@ -26,11 +29,12 @@ logger.setLevel(LOG_LEVEL);
  */
 app = express.createServer();
 app.use(express.bodyParser());
-app.use(express['static'](__dirname + '/../../client/'));
+app.use(express.static(__dirname + '/../../client/'));
 
 io = io.listen(app);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
+	io.set('log level', 1);
 });
 
 var config = {};
@@ -42,7 +46,7 @@ var socket = null;
 io.sockets.on('connection', function (newSocket) {
 
 	socket = newSocket;
-	socket.emit('env', {"name": "local", "version": "developer"});
+	socket.emit('env', {"name": "local", "version": "developer", "credential": Api.credential });
 
 	function socketResponse (request, error, response) {
 		socket.emit('exec', error, {
@@ -109,30 +113,123 @@ io.sockets.on('connection', function (newSocket) {
 });
 
 /**
- * HTTP handlers.
+ * Upload an Application archive.
  */
 app.post('/upload/:file', function (req, res) {
-	Api.upload("developer", req, res, req.params.file, socket);
+
+	Api.upload(req, res, req.params.file, socket);				
+	
+});
+
+/**
+ * Check for new version.
+ * http://www.continuuity.com/version
+ */
+app.get('/version', function (req, res) {
+
+	var options = {
+		host: 'www.continuuity.com',
+		path: '/version',
+		port: '80'
+	};
+
+	http.request(options, function(response) {
+		var data = '';
+		response.on('data', function (chunk) {
+			data += chunk;
+		});
+
+		response.on('end', function () {
+			
+			// TODO: Got version. Compare and respond.
+
+			res.send('false');
+			res.end();
+
+		});
+	}).end();
 
 });
+
+/**
+ * Get a list of push destinations.
+ */
+app.get('/destinations', function  (req, res) {
+
+	fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
+
+		if (error) {
+
+			res.write('false');
+			res.end();
+
+		} else {
+
+			var options = {
+				host: config['accounts-host'],
+				path: '/api/vpc/list/' + result,
+				port: config['accounts-port']
+			};
+
+			https.request(options, function(response) {
+				var data = '';
+				response.on('data', function (chunk) {
+					data += chunk;
+				});
+
+				response.on('end', function () {
+					
+					res.write(data);
+					res.end();
+
+				});
+			}).end();
+
+		}
+
+	});
+
+});
+
+/**
+ * Save a credential / API Key.
+ */
+app.post('/credential', function (req, res) {
+
+	var apiKey = req.body.apiKey;
+
+	// Write down credentials.
+	fs.writeFile(__dirname + '/.credential', apiKey,
+		function (error, result) {
+
+		if (error) {
+
+			res.write('Error: Could not write credentials file.');
+			res.end();
+
+		} else {
+
+			res.write('true');
+			res.end();
+
+		}
+
+	});
+
+});
+
+/**
+ * Catch port binding errors.
+ */
 app.on('error', function () {
 	logger.warn('Port ' + config['node-port'] + ' is in use.');
 	process.exit(1);
 });
 
 /**
- * Authenticator
- */
-function authenticator () {
-	this.getAccountID = function () {
-		return 'developer';
-	}
-}
-
-/**
  * Read configuration and start the server.
  */
-fs.readFile(__dirname + '/continuuity-site.xml',
+fs.readFile(__dirname + '/continuuity-local.xml',
 	function (error, result) {
 
 	var parser = new xml2js.Parser();
@@ -145,12 +242,19 @@ fs.readFile(__dirname + '/continuuity-site.xml',
 			config[item.name] = item.value;
 		}
 
-		logger.trace('Configuring with', config);
-		Api.configure(config, new authenticator());
-	
-		logger.trace('Listening on port',
-			config['node-port']);	
-		app.listen(config['node-port']);
+		/**
+		 * Pull in stored credentials.
+		 */
+		fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
+
+			logger.trace('Configuring with', config);
+			Api.configure(config, apiKey || null);
+
+			logger.trace('Listening on port',
+				config['node-port']);	
+			app.listen(config['node-port']);
+
+		});
 
 	});
 

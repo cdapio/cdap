@@ -35,6 +35,42 @@ define([
 
 			});
 		},
+		promote: function () {
+
+			var viz = C.router.applicationController.view.get('push-detail');
+			viz.show(this.current);
+
+			/*
+
+			var flow = this.current;
+
+			C.Vw.Modal.show(
+				"Push to Cloud",
+				"Are you sure you would like to push this flow to the cloud?",
+				$.proxy(function () {
+
+					var flow = this;
+
+					C.interstitial.loading('Pushing to Cloud...', 'abc');
+					window.scrollTo(0,0);
+					
+					C.get('far', {
+						method: 'promote',
+						params: [flow.applicationId, flow.id, flow.version]
+					}, function (error, response) {
+						
+						C.interstitial.hide('abc');
+
+					});
+
+
+				}, flow));
+
+
+			*/
+
+
+		},
 		startAllFlows: function (event) {
 
 			var container = $(event.target).parent();

@@ -1,0 +1,50 @@
+
+<div class="popup-container" style="min-height: 246px;width: 350px;">
+	{{#unless view.pushing}}
+	<div class="popup-close" {{action hide on="click"}}>×</div>
+	{{/unless}}
+
+<div class="popup-icon-cloud" />
+<h1 class="popup-title"><a {{bindAttr href="controller.current.href"}}>Push to Cloud</a></h1>
+
+<div class="modal-loading"></div>
+<div class="modal-push">
+
+{{#if view.pushing}}
+
+<div style="text-align: center; padding: 48px;">
+	<div class="sparkline-box-title" style="padding-bottom:8px;color: #40AFD0;">Pushing...</div>
+	<img src="/assets/img/chart-loading.gif" />
+</div>
+
+{{else}}
+	<div class="sparkline-box-title">API Key</div>
+	<div>{{view C.Vw.TextField valueBinding="view.apiKey" }}</div>
+	{{#if view.apiKey}}
+		<div class="sparkline-box-title" style="margin-top:8px;">Destination</div>
+		{{#if view.destinations.length}}
+			<div>{{view Ember.Select valueBinding="view.destination" contentBinding="view.destinations" optionLabelPath="content.name" optionValuePath="content.id"}}</div>
+		{{else}}
+			{{#if view.loading}}
+				<div style="text-align: center; padding: 4px;">
+					<img src="/assets/img/chart-loading.gif" />
+				</div>
+			{{else}}
+				<div style="padding: 16px 0px;">There are no destinations available. Make sure your API Key is correct.<br /><br />If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home</a> page.</div>
+			{{/if}}
+		{{/if}}
+	{{else}}
+		<div style="padding: 16px 0px;">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
+	{{/if}}
+
+	<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
+{{/if}}
+</div>
+{{#unless view.pushing}}
+	<div class="modal-footer">
+	<button {{action "hide" on="click"}} class="btn">Cancel</button>
+		{{#if view.destinations.length}}
+			<button {{action "submit" on="click"}} class="btn">Push</button>
+		{{/if}}
+	</div>
+{{/unless}}

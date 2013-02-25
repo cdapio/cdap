@@ -116,7 +116,7 @@ define([], function () {
 			var streams = this.get('types.Stream').content;
 			var datasets = this.get('types.Dataset').content;
 
-			var accountId = 'developer';
+			var accountId = window.ENV.account.account_id;
 			var metrics = [];
 			var start = C.__timeRange * -1;
 
