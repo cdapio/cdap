@@ -667,4 +667,45 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();
   }
+
+  /**
+   * Send a POST request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   */
+  public static int sendPutRequest(String url, byte[] content, Map<String,String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        put.setHeader(header.getKey(), header.getValue());
+      }
+    }
+    put.setEntity(new ByteArrayEntity(content));
+    HttpResponse response = client.execute(put);
+    client.getConnectionManager().shutdown();
+    return response.getStatusLine().getStatusCode();
+  }
+
+  public static int sendPutRequest(String url, String content) throws Exception {
+    return sendPutRequest(url, content, null);
+  }
+  /**
+   * Send a POST request to the given URL and return the HTTP status
+   *
+   * @param url the URL to post to
+   */
+  public static int sendPutRequest(String url, String content, Map<String,String> headers) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut(url);
+    if (headers!=null) {
+      for(Map.Entry<String,String> header: headers.entrySet()) {
+        put.setHeader(header.getKey(), header.getValue());
+      }
+    }
+    put.setEntity(new ByteArrayEntity(Bytes.toBytes(content)));
+    HttpResponse response = client.execute(put);
+    client.getConnectionManager().shutdown();
+    return response.getStatusLine().getStatusCode();
+  }
 }

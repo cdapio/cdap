@@ -14,7 +14,6 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -50,7 +49,7 @@ public class RestCollector extends Collector
   private static final HttpConfig defaultConfig =
       new HttpConfig("collector.rest")
           .setPort(10000)
-          .setPathMiddle("/rest-stream/");
+          .setPathMiddle("/streams/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
