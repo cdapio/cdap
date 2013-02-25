@@ -48,7 +48,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(id, archive);
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     //TODO: Check with Terence on how to handle this stuff.
-    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     ApplicationSpecification specification = adapter.fromJson(response.get());
     Id.Application appId = Id.Application.from(id, specification.getName());
     emit(new ApplicationSpecLocation(appId, specification, archive));
