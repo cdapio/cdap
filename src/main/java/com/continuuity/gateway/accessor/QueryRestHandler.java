@@ -51,7 +51,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * <p>
  * example:
  * <pre>
- * POST http://g.c.c/rest-query/myapp/feedreader/getfeed HTTP/1.1
+ * POST http://g.c.c/query/myapp/feedreader/getfeed HTTP/1.1
  * Host: g.c.c
  *
  * {"userid":100}
@@ -72,7 +72,7 @@ public final class QueryRestHandler extends NettyRestHandler {
    * http://host:port&lt;pathPrefix>&lt;application>/&lt;service>/&lt;method>
    * example:
    * <pre>
-   * POST http://g.c.c/rest-query/myapp/feedreader/getfeed HTTP/1.1
+   * POST http://g.c.c/query/myapp/feedreader/getfeed HTTP/1.1
    * Host: g.c.c
    *
    * {"userid":100}

@@ -248,8 +248,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
     client.chunk(token, id, ByteBuffer.wrap(toSubmit));
     DeploymentStatus status = client.dstatus(token, id);
 
-
     client.deploy(token, id);
+
     int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
       dstatus = client.dstatus(token, id).getOverall();
