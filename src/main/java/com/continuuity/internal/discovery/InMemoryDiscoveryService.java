@@ -11,6 +11,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
 
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,14 +40,14 @@ public class InMemoryDiscoveryService extends AbstractIdleService implements Dis
     Preconditions.checkState(isRunning(), "Service is not running");
     lock.lock();
     try {
-      final String name = discoverable.getName();
-      services.put(name, discoverable);
+      final Discoverable wrapper = new DiscoverableWrapper(discoverable);
+      services.put(wrapper.getName(), discoverable);
       return new Cancellable() {
         @Override
         public void cancel() {
           lock.lock();
           try {
-            services.remove(name, discoverable);
+            services.remove(wrapper.getName(), wrapper);
           } finally {
             lock.unlock();
           }
@@ -72,5 +73,26 @@ public class InMemoryDiscoveryService extends AbstractIdleService implements Dis
         }
       }
     };
+  }
+
+  private static final class DiscoverableWrapper implements Discoverable {
+
+    private final String name;
+    private final InetSocketAddress address;
+
+    private DiscoverableWrapper(Discoverable discoverable) {
+      this.name = discoverable.getName();
+      this.address = discoverable.getSocketAddress();
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public InetSocketAddress getSocketAddress() {
+      return address;
+    }
   }
 }
