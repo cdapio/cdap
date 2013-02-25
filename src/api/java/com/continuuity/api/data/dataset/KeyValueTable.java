@@ -77,7 +77,7 @@ public class KeyValueTable extends DataSet {
    */
   public long incrementAndGet(byte[] key, long value) throws OperationException {
     Map<byte[], Long> result =
-      this.table.increment(new Increment(key, KEY_COLUMN, value));
+      this.table.incrementAndGet(new Increment(key, KEY_COLUMN, value));
     Long newValue = result.get(KEY_COLUMN);
     if (newValue == null) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Incremented value not part of operation result.");

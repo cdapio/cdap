@@ -100,11 +100,11 @@ public class Table extends DataSet {
    *
    * TODO this method will go away with the new flow system
    */
-  public Map<byte[], Long> increment(Increment increment) throws OperationException {
+  public Map<byte[], Long> incrementAndGet(Increment increment) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    return this.delegate.increment(increment);
+    return this.delegate.incrementAndGet(increment);
   }
 
 }
