@@ -47,7 +47,7 @@ import java.util.Set;
 public class AppFabricClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-                                                                 "promote", "verify", "status");
+    "promote", "verify", "status");
   private final String RESOURCE_ARG = "resource";
   private final String APPLICATION_ARG = "application";
   private final String PROCESSOR_ARG = "processor";
@@ -78,72 +78,78 @@ public class AppFabricClient {
 
     String address = "localhost";
     int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+    TTransport transport = null;
+    TProtocol protocol = null;
+    try {
+      transport = new TFramedTransport(new TSocket(address, port));
+      protocol = new TBinaryProtocol(transport);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
 
-    TTransport transport = new TFramedTransport(new TSocket(address, port));
-    TProtocol protocol = new TBinaryProtocol(transport);
-    AppFabricService.Client client = new AppFabricService.Client(protocol);
-
-    if( "help".equals(command)) {
-      return;
-    }
-    if ("deploy".equals(command)){
-      AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-      ResourceIdentifier resourceIdentifier = new ResourceIdentifier("Account","Application",this.resource,0);
-      client.deploy(dummyAuthToken, resourceIdentifier);
-      LOG.info("Deployed: "+resource);
-      return;
-    }
-
-    if ("start".equals(command)){
-      AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-      FlowIdentifier identifier = new FlowIdentifier("Account",application,processor,0);
-      RunIdentifier runIdentifier = client.start(dummyAuthToken,
-                                                 new FlowDescriptor(identifier, new ArrayList <String>()));
-
-      Preconditions.checkNotNull(runIdentifier,"Problem starting the application");
-      LOG.info("Started application with id: "+runIdentifier.getId());
-      return;
-    }
-
-
-    if ("stop".equals(command)){
-      AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-      FlowIdentifier identifier = new FlowIdentifier("Account",application,processor,0);
-
-      RunIdentifier runIdentifier = client.stop(dummyAuthToken, identifier);
-      Preconditions.checkNotNull(runIdentifier,"Problem stopping the application");
-      LOG.info("Stopped application running with id: "+runIdentifier.getId());
-    }
-
-
-    if ("status".equals(command)){
-      AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-      FlowIdentifier identifier = new FlowIdentifier("Account",application,processor,0);
-
-      FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
-      Preconditions.checkNotNull(flowStatus,"Problem getting the status the application");
-      LOG.info(flowStatus.toString());
-    }
-
-    if ("verify".equals(command)) {
-
-      Location location =  new LocalLocationFactory().create(this.resource);
-
-      final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
-                                                     new DataFabricModules().getInMemoryModules());
-
-      ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-      Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>)factory.create();
-      try {
-        manager.deploy(new Id.Account("Account"),location);
-      } catch (Exception e) {
-        LOG.info("Caught Exception while verifying application");
-        throw Throwables.propagate(e);
+      if ("help".equals(command)) {
+        return;
       }
-      LOG.info("Verification succeeded");
-    }
+      if ("deploy".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        ResourceIdentifier resourceIdentifier = new ResourceIdentifier("Account", "Application", this.resource, 0);
+        client.deploy(dummyAuthToken, resourceIdentifier);
+        LOG.info("Deployed: " + resource);
+        return;
+      }
 
-    if("deploy".equals(command)){
+      if ("start".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
+        RunIdentifier runIdentifier = client.start(dummyAuthToken,
+          new FlowDescriptor(identifier, new ArrayList<String>()));
+
+        Preconditions.checkNotNull(runIdentifier, "Problem starting the application");
+        LOG.info("Started application with id: " + runIdentifier.getId());
+        return;
+      }
+
+
+      if ("stop".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
+
+        RunIdentifier runIdentifier = client.stop(dummyAuthToken, identifier);
+        Preconditions.checkNotNull(runIdentifier, "Problem stopping the application");
+        LOG.info("Stopped application running with id: " + runIdentifier.getId());
+      }
+
+
+      if ("status".equals(command)) {
+        AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
+        FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
+
+        FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
+        Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
+        LOG.info(flowStatus.toString());
+      }
+
+      if ("verify".equals(command)) {
+
+        Location location = new LocalLocationFactory().create(this.resource);
+
+        final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
+          new DataFabricModules().getInMemoryModules());
+
+        ManagerFactory factory = injector.getInstance(ManagerFactory.class);
+        Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>) factory.create();
+
+        manager.deploy(new Id.Account("Account"), location);
+      }
+
+    } catch (Exception e) {
+      LOG.info("Caught Exception while verifying application");
+      throw Throwables.propagate(e);
+    } finally {
+      transport.close();
+    }
+    LOG.info("Verification succeeded");
+
+
+    if ("deploy".equals(command)) {
       //TODO: Deploy
     }
 
@@ -182,7 +188,7 @@ public class AppFabricClient {
     try {
       commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
 
-      if( "help".equals(command)) {
+      if ("help".equals(command)) {
         printHelp(options);
       }
       //Check if the appropriate args are passed in for each of the commands
@@ -239,7 +245,7 @@ public class AppFabricClient {
     return command;
   }
 
-  private void printHelp(Options options){
+  private void printHelp(Options options) {
     HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp("AppFabricClient help|deploy|start|stop|status|verify|promote| [OPTIONS]", options);
   }
