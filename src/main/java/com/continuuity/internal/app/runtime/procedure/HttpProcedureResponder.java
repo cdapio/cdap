@@ -98,8 +98,11 @@ final class HttpProcedureResponder implements ProcedureResponder {
     }
 
     try {
+      ChannelBuffer errorContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage));
       HttpResponse httpResponse = createHttpResponse(new ProcedureResponse(errorCode));
-      httpResponse.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage)));
+      httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain");
+      httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, errorContent.readableBytes());
+      httpResponse.setContent(errorContent);
       channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
     } finally {
       writer = ResponseWriters.CLOSED_WRITER;
