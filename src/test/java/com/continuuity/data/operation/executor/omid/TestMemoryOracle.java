@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -285,5 +286,21 @@ public class TestMemoryOracle {
     Assert.assertTrue(oracle.commitTransaction(tx1).isSuccess());
     Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
     Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
+  }
+
+  @Test
+  public void testInitReadPointer() throws OmidTransactionException {
+    TransactionOracle oracle1 = newOracle();
+    Transaction transaction = oracle1.startTransaction();
+    oracle1.commitTransaction(transaction.getTransactionId());
+    ReadPointer readPointer1 = oracle1.getReadPointer();
+
+    // checking that whenever we start app again after the previous run we get read pointer which is
+    // logically *not before* the last known read pointer from the previous oracle. I.e. so that with
+    // new oracle we can see all writes happened with previous oracle.
+    TransactionOracle oracle2 = newOracle();
+    ReadPointer readPointer2 = oracle2.getReadPointer();
+    Assert.assertTrue(readPointer1.getMaximum() <= readPointer2.getMaximum());
+    readPointer1.isVisible(transaction.getTransactionId());
   }
 }
