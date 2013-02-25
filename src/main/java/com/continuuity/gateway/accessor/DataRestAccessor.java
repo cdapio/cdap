@@ -1,8 +1,10 @@
 package com.continuuity.gateway.accessor;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.util.HttpConfig;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
+import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -10,11 +12,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Accessor;
-import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.NettyHttpPipelineFactory;
-import com.continuuity.gateway.util.NettyRequestHandlerFactory;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
 /**
  * This is the Rest accessor for the data fabric. For now it only support GETs
@@ -33,7 +32,7 @@ public class DataRestAccessor
   private static final HttpConfig defaultHttpConfig =
       new HttpConfig("accessor.rest")
           .setPort(10002)
-          .setPathMiddle("/rest-data/");
+          .setPathMiddle("/data/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default

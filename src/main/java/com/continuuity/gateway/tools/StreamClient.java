@@ -21,6 +21,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
@@ -58,6 +59,7 @@ public class StreamClient {
    */
   public static boolean debug = false;
 
+
   String command = null;         // the command to run
   boolean verbose = false;       // for debug output
   boolean help = false;          // whether --help was there
@@ -71,7 +73,7 @@ public class StreamClient {
                                                                   // the AppFabric running in local mode
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
-  String destination = null;     // the destination stream
+  String destination = null;     // the destination stream (stream id)
   String consumer = null;        // consumer group id to fetch from the stream
   boolean all = false;           // whether to view all events in the stream
   Integer last = null;           // to view the N last events in the stream
@@ -92,14 +94,14 @@ public class StreamClient {
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
-                  " create --stream <name>");
+                  " create --stream <id>");
     out.println("  " + name +
-        " send --stream <name> --body <value> [ <option> ... ]");
-    out.println("  " + name + " id --stream <name> [ <option> ... ]");
+        " send --stream <id> --body <value> [ <option> ... ]");
+    out.println("  " + name + " id --stream <id> [ <option> ... ]");
     out.println("  " + name +
-        " fetch --stream <name> --consumer <id> [ <option> ... ]");
-    out.println("  " + name + " view --stream <name> [ <option> ... ]");
-    out.println("  " + name + " info --stream <name> [ <option> ... ]");
+        " fetch --stream <id> --consumer <id> [ <option> ... ]");
+    out.println("  " + name + " view --stream <id> [ <option> ... ]");
+    out.println("  " + name + " info --stream <id> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -107,7 +109,7 @@ public class StreamClient {
         "To specify the name of the rest collector");
     out.println("  --apikey <apikey>       " +
         "To specify an API key for authentication");
-    out.println("  --stream <name>         " +
+    out.println("  --stream <id>           " +
         "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
     out.println("  --header <name> <value> " +
@@ -228,7 +230,7 @@ public class StreamClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("send", "id", "fetch", "view", "info");
+      Arrays.asList("create", "send", "id", "fetch", "view", "info");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -262,6 +264,11 @@ public class StreamClient {
         usage("Only one of --all, --first or --last may be specified");
       if (first != null && first < 1) usage("--first must be at least 1");
       if (last != null && last < 1) usage("--last must be at least 1");
+    }
+    if ("create".equals(command)) {
+      if (!isId(destination)) {
+        usage("id is not a printable ascii character string");
+      }
     }
   }
 
@@ -459,6 +466,34 @@ public class StreamClient {
         System.err.println(e.getMessage());
         return null;
       }
+
+    } else if ("create".equals(command)) {
+
+      // create an HttpPut
+      HttpPut put = new HttpPut(requestUrl);
+      for (String header : headers.keySet()) {
+        put.setHeader(destination + "." + header, headers.get(header));
+
+      }
+      if (apikey != null) {
+        put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      }
+      // put is now fully constructed, ready to send
+
+      // prepare for HTTP
+      HttpClient client = new DefaultHttpClient();
+      HttpResponse response;
+
+      try {
+        response = client.execute(put);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) return null;
+      return "OK.";
+
     }
     return null;
   }
@@ -695,7 +730,7 @@ public class StreamClient {
     // exit with error in case fails
     if (value == null) System.exit(1);
   }
-
+  //Todo: Id must not start with digit
   private boolean isId(final String name) {
     return CharMatcher.inRange('A', 'Z')
       .or(CharMatcher.inRange('a', 'z'))

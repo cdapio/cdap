@@ -25,6 +25,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.Maps;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -149,6 +150,7 @@ public class RestHandler extends NettyRestHandler {
         respondNotAllowed(message.getChannel(), allowedMethods);
         return;
       }
+
 
       // we do not support a query or parameters in the URL
       QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
@@ -468,12 +470,23 @@ public class RestHandler extends NettyRestHandler {
           break;
         }
         case CREATE: {
-          // Instance of metadata service
+          //our user interfaces do not support stream name
+          //we are using id for stream name until it is supported in UI's
+          String streamId = destination;
+          String streamName = streamId;
+
+          if (!isId(streamId)) {
+            LOG.info("Stream id is not a printable ascii character string");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            helper.finish(BadRequest);
+            return;
+          }
+
           MetadataService mds = collector.getMetadataService();
 
           Account account = new Account(accountId);
           Stream stream = new Stream(destination);
-          stream.setName(destination); //
+          stream.setName(streamName); //
 
           //Check if a stream with the same id exists
           Stream existingStream = mds.getStream(account, stream);
@@ -512,5 +525,14 @@ public class RestHandler extends NettyRestHandler {
     LOG.error("Exception caught for collector '" +
         this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();
+  }
+
+  //Todo: Id must not start with digit
+  private boolean isId(final String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 }

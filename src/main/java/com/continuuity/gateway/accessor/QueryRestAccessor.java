@@ -27,7 +27,7 @@ extends Accessor implements NettyRequestHandlerFactory {
   private static final HttpConfig defaultHttpConfig =
       new HttpConfig("accessor.query")
           .setPort(10010)
-          .setPathMiddle("/rest-query/");
+          .setPathMiddle("/query/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
