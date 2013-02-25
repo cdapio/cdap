@@ -177,8 +177,8 @@ public class AppFabricClient {
 
     Options options = new Options();
     options.addOption(RESOURCE_ARG, true, "Jar that contains the application");
-    options.addOption(APPLICATION_ARG, true, "TOADD APPROPRIATE DESCRIPTION"); //TODO:
-    options.addOption(PROCESSOR_ARG, true, "TOADD APPROPRIATE DESCRIPTION"); //TODO:
+    options.addOption(APPLICATION_ARG, true, "Application Id");
+    options.addOption(PROCESSOR_ARG, true, "Processor Id");
     options.addOption(VPC_ARG, true, "VPC to push the application");
     options.addOption(AUTH_TOKEN_ARG, true, "Auth token of the account");
 
