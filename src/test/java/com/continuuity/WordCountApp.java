@@ -61,7 +61,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .noProcedure()/*withProcedures().add(new WordFrequency())*/.build();
+      .withProcedures().add(new WordFrequency()).build();
   }
 
   public static final class MyRecord {
@@ -187,7 +187,7 @@ public class WordCountApp implements Application {
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
-                                                 Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
+        Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
   }
