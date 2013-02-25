@@ -27,7 +27,7 @@ extends Accessor implements NettyRequestHandlerFactory {
   private static final HttpConfig defaultHttpConfig =
       new HttpConfig("accessor.metrics")
           .setPort(10005)
-          .setPathMiddle("/rest-metrics/");
+          .setPathMiddle("/metrics/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default

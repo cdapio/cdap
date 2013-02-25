@@ -49,7 +49,7 @@ public class RestCollector extends Collector
   private static final HttpConfig defaultConfig =
       new HttpConfig("collector.rest")
           .setPort(10000)
-          .setPathMiddle("/streams/");
+          .setPathMiddle("/stream/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default

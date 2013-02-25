@@ -3,9 +3,11 @@ package com.continuuity.gateway.collector;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
+import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.OperationContext;
@@ -19,12 +21,12 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.Maps;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -124,7 +126,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int DEQUEUE = 3;
   private static final int INFO = 4;
   private static final int PING = 5;
-  private static final int CREATE = 6; // or CREATE_STREAM ???
+  private static final int CREATE = 6;
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -473,7 +475,7 @@ public class RestHandler extends NettyRestHandler {
           String streamName = streamId;
 
           if (!isId(streamId)) {
-            LOG.info("Stream id is not a printable ascii character string");
+            LOG.info("Stream id '{}' is not a printable ascii character string", streamId);
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             helper.finish(BadRequest);
             return;
@@ -524,12 +526,10 @@ public class RestHandler extends NettyRestHandler {
     e.getChannel().close();
   }
 
-  //Todo: Id must not start with digit
-  private boolean isId(final String name) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
+  private boolean isId(String id) {
+    StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
+    StreamVerification verifier = new StreamVerification();
+    VerifyResult result = verifier.verify(spec);
+    return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 }

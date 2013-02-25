@@ -167,7 +167,7 @@ public class AppFabricCollectorTest {
   @Test @Ignore
   public void testDeploy() throws Exception {
     // setup connector
-    String baseUrl = setupConnector("connector.rest", "/continuuity", "/rest-app/");
+    String baseUrl = setupConnector("connector.rest", "/continuuity", "/app/");
     String deployUrl = this.connector.getHttpConfig().getBaseUrl() + "deploy";
     // setup collector
     int port = this.connector.getHttpConfig().getPort();
