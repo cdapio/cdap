@@ -117,23 +117,8 @@ io.sockets.on('connection', function (newSocket) {
  */
 app.post('/upload/:file', function (req, res) {
 
-	// Pull in stored credentials.
-	fs.readFile(__dirname + '/.credential',
-		function (error, apiKey) {
-
-			if (error) {
-
-				res.write('Error: Need Credentials');
-				res.end();
-
-			} else {
-
-				Api.upload(apiKey, req, res, req.params.file, socket);				
-				
-			}
-
-		});
-
+	Api.upload(req, res, req.params.file, socket);				
+	
 });
 
 /**
