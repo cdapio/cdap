@@ -21,14 +21,14 @@ public class TestAppFabricClientConfigParse {
     assertTrue("deploy".equals(client.getCommand()));
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testUnknownCommands() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = client.configure(CConfiguration.create(), new String[]{"Foobaz", "-jar", "jar"});
     assertTrue(command == null);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidDeployArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
@@ -36,7 +36,7 @@ public class TestAppFabricClientConfigParse {
     assertTrue(command == null);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidVerifyArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
@@ -45,14 +45,18 @@ public class TestAppFabricClientConfigParse {
     assertTrue(command == null);
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
+    command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "args"});
+    assertTrue(command == null);
+
+    command = client.configure(CConfiguration.create(), new String[]{"start", "--processor", "args"});
+    assertTrue(command == null);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStopArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
@@ -65,7 +69,7 @@ public class TestAppFabricClientConfigParse {
   }
 
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStatusArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
@@ -77,7 +81,7 @@ public class TestAppFabricClientConfigParse {
     assertTrue(command == null);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidPromoteArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
