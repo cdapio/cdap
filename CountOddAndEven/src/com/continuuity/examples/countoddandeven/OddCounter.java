@@ -1,6 +1,6 @@
 package com.continuuity.examples.countoddandeven;
 
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**
@@ -10,7 +10,7 @@ public class OddCounter extends AbstractFlowlet {
 
   int count = 0;
 
-  @Process("oddNumbers")
+  @ProcessInput("oddNumbers")
   public void process() {
     count++;
   }
