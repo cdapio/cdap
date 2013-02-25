@@ -20,7 +20,7 @@
 
 	<property>
 		<name>resource.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -30,7 +30,7 @@
 
 	<property>
 		<name>metadata.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -40,7 +40,7 @@
 
 	<property>
 		<name>flow.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -50,7 +50,7 @@
 
 	<property>
 		<name>flow.monitor.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -60,7 +60,7 @@
 
 	<property>
 		<name>gateway.hostname</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>

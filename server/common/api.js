@@ -37,7 +37,7 @@ log4js.configure({
 		{ type : 'console' }
 	]
 });
-var logger = process.logger = log4js.getLogger('Reactor UI API');
+var logger = process.logger = log4js.getLogger('UI API');
 logger.setLevel(LOG_LEVEL);
 
 /**
@@ -64,7 +64,7 @@ logger.setLevel(LOG_LEVEL);
 			protocol: tprotocol.TBinaryProtocol
 		});
 		conn.on('error', function (error) {
-			done('Could not connect to MetadataService.');
+			done({'fatal': 'Could not connect to MetadataService.'});
 		});
 
 		var MetaData = thrift.createClient(MetadataService, conn);
@@ -87,6 +87,7 @@ logger.setLevel(LOG_LEVEL);
 			try {
 				MetaData[method].apply(MetaData, params.concat(done));
 			} catch (e) {
+				logger.warn(done);
 				done(e);
 			}
 		} else {
@@ -110,7 +111,8 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			done('Could not connect to FlowMonitor.');
+			logger.warn(error);
+			done({'fatal': 'Could not connect to FlowMonitor.'});
 		});
 		
 		var Manager = thrift.createClient(AppFabricService, conn);
@@ -129,7 +131,7 @@ logger.setLevel(LOG_LEVEL);
 						applicationId: params[1],
 						flowId: params[2],
 						version: parseInt(params[3], 10),
-						accountId: accountID,
+						accountId: params[0],
 						type: appfabricservice_types.EntityType[params[4] || 'FLOW']
 					}),
 					"arguments": []
@@ -169,6 +171,7 @@ logger.setLevel(LOG_LEVEL);
 					try {
 						Manager[method].apply(Manager, params.concat(done));
 					} catch (e) {
+						logger.warn(e);
 						done(e);
 					}
 				} else {
@@ -249,6 +252,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
+
 			done('Could not connect to FlowMonitor.');
 		});
 		
@@ -352,25 +356,23 @@ logger.setLevel(LOG_LEVEL);
 
 				// rest-query/ applicationId/ procedureId/ method
 
+				logger.trace(params);
+
 				post_options = {
 					host: this.config['gateway.hostname'],
 					port: 10003
 				};
 				post_options.method = 'POST';
-				post_options.path = '/rest-query/' + params.service +
-					'/' + params.method;
-			break;
-			case 'promote':
-				post_options = {
-					host: this.config['gateway.hostname'],
-					port: this.config['gateway.port']
-				};
-				post_options.method = 'POST';
-				post_options.path = '/apps/';
+				post_options.path = '/rest-query/' + params.app + '/' + 
+					params.service + '/' + params.method;
 				post_options.headers = {
+					'Content-Type': 'application/json',
 					'X-Continuuity-ApiKey': apiKey,
 					'Content-Length': post_data.length
 				};
+
+				post_data = params.query || "";
+
 		}
 
 		var post_req = http.request(post_options, function(res) {
@@ -382,6 +384,9 @@ logger.setLevel(LOG_LEVEL);
 			});
 			res.on('end', function () {
 				data = data.join('');
+
+				logger.trace('Gateway Done', apiKey, post_data, res.statusCode, data);
+
 				done(res.statusCode !== 200 ? {
 					statusCode: res.statusCode,
 					response: data
@@ -429,11 +434,8 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-				socket.emit('upload', {'error': 'Could not connect to AppFabricService'});
+				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
-
-
-			/** HELLO. accountID needs to be apiKey. Check it out. **/
 
 			var accountID = 'developer';
 
@@ -481,6 +483,9 @@ logger.setLevel(LOG_LEVEL);
 												result.overall === 5 || // Success
 												result.overall === 6 || // Undeployed
 												result.overall === 7) {
+
+												logger.trace('Uploaded completed with', result);
+
 												clearInterval(status_interval);
 											} // 1 (Registered), 2 (Uploading), 3 (Verifying)
 										}

@@ -30,7 +30,9 @@
 					<img src="/assets/img/chart-loading.gif" />
 				</div>
 			{{else}}
-				<div style="padding: 16px 0px;">There are no destinations available. Make sure your API Key is correct.<br /><br />If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home</a> page.</div>
+				<div style="padding: 16px 0px;">
+					{{message}}
+				</div>
 			{{/if}}
 		{{/if}}
 	{{else}}

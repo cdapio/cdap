@@ -474,8 +474,16 @@ function(Models, Views, Controllers){
 	var averageOver = 30;
 	var maxResponseTime = 5000;
 
-	socket.on('exec', function (error, response) {
+	socket.on('exec', function (err, response) {
 		
+		if (err && err.fatal) {
+
+			error(err.fatal);
+			delete pending[response.id];
+			return;
+
+		}
+
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
@@ -509,7 +517,7 @@ function(Models, Views, Controllers){
 				}
 			}
 
-			pending[response.id][0](error, response, pending[response.id][1]);
+			pending[response.id][0](err, response, pending[response.id][1]);
 			delete pending[response.id];
 		}
 
