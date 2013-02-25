@@ -27,25 +27,6 @@ import java.util.TreeSet;
  * <p>
  * Configuration of various parameters of this sorted counter algorithm is done
  * through {@link SortedCounterConfig}.
- * <p>
- * In order to efficiently perform this top-n style query, increment value
- * pass-thrus are used as follows:
- * <p>
- * <ul>
- *  <li>
- *   Perform initial increment using
- *   {@link #performPrimaryCounterIncrement(byte[], byte[], long)}
- *  </li>
- *  <li>
- *   Output Increment within a field of a tuple going to the next flowlet:
- *   <p>
- *   <pre>TupleBuilder.set("top-counter", primaryIncrementResult)</pre>
- *  </li>
- *  <li>
- *   In the next flowlet, perform any necessary secondary counter increments
- *   using {@link #performSecondaryCounterIncrements(byte[], byte[], long, long)}.
- *  </li>
- * </ul>
  */
 public class SortedCounterTable extends DataSet {
 
@@ -74,50 +55,28 @@ public class SortedCounterTable extends DataSet {
   }
 
   /**
-   * Generates the primary increment of the specified amount for the specified
-   * counter in the specified counter set.  This row will contain the raw counts
-   * for all counters in this counter set.
+   * Performs the necessary increment operations to enable top-n queries on the
+   * specified counter set.
    * <p>
-   * This increment operation should be output as a field in a tuple.  The
-   * receiving flowlet should then perform
-   * {@link #performSecondaryCounterIncrements(byte[], byte[], long, long)}
-   * with the incremented value.
    * @param counterSet counter set name
    * @param counter counter name
    * @param amount counter increment amount
-   * @return generated increment operation
    */
-  public Long performPrimaryCounterIncrement(byte [] counterSet, byte[] counter, long amount) {
-    try {
-      byte [] row = makeRow(counterSet, 0);
-      Map<byte[], Long> result = this.counters.increment(new Increment(row, counter, amount));
-      return result.get(counter);
-    } catch (OperationException e) {
-      return null;
-    }
-  }
-
-  /**
-   * Performs an asynchronous update of secondary counter increments for the
-   * specified counter in the specified counter set, which was incremented
-   * by the specified amount and is now equal to the specified value.
-   * @param counterSet counter set name
-   * @param counter counter name
-   * @param amount original increment amount
-   * @param value value of counter after increment
-   */
-  public void performSecondaryCounterIncrements(
-    byte [] counterSet, byte [] counter, long amount, long value) {
+  public void increment(byte [] counterSet, byte[] counter, long amount)
+  throws OperationException {
+    // Determine total count
+    byte [] row = makeRow(counterSet, 0);
+    Map<byte[], Long> result = this.counters.increment(
+        new Increment(row, counter, amount));
+    long value = result.get(counter);
+    
+    // Perform any necessary bucket updates
     for (long bucket : this.config.buckets) {
       if (value >= bucket) {
         long localAmount = amount;
         if (value - bucket < amount) localAmount = value - bucket;
-        byte [] row = makeRow(counterSet, bucket);
-        try {
-          this.counters.write(new Increment(row, counter, localAmount));
-        } catch (OperationException e) {
-          throw new RuntimeException(e);
-        }
+        byte [] bucketRow = makeRow(counterSet, bucket);
+        this.counters.write(new Increment(bucketRow, counter, localAmount));
       } else break;
     }
   }

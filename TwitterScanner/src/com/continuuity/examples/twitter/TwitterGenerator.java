@@ -3,12 +3,8 @@
  */
 package com.continuuity.examples.twitter;
 
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
@@ -16,18 +12,18 @@ import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
+import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+
 /**
  * TwitterGenerator is a simple SourceFlowlet that pulls tweets from the Twitter
  * public timeline, wraps them in a Tuple and sends them to the next Flowlet
  * in our Flow.
  */
-public class TwitterGenerator extends AbstractFlowlet implements GeneratorFlowlet {
+public class TwitterGenerator extends AbstractGeneratorFlowlet {
 
   private OutputEmitter<Tweet> output;
-
-  public TwitterGenerator() {
-    super("StreamReader");
-  }
 
   /**
    * This is the Twitter Client we will use to generate Tuples
@@ -47,26 +43,25 @@ public class TwitterGenerator extends AbstractFlowlet implements GeneratorFlowle
     @Override public void onTrackLimitationNotice(int arg0) {}    
   };
 
-//  @Override
-//  public void initialize() {
-//
-//    tweetQueue = new LinkedBlockingQueue<Tweet>(1000);
-//    ConfigurationBuilder cb = new ConfigurationBuilder();
-//    cb.setUser(TwitterFlow.USERNAMES[0]).setPassword(TwitterFlow.PASSWORD);
-//    cb.setJSONStoreEnabled(true);
-//    cb.setDebugEnabled(false);
-//    twitter4j.conf.Configuration conf = cb.build();
-//    TwitterStreamFactory fact = new TwitterStreamFactory(conf);
-//    twitterStream = fact.getInstance();
-//    twitterStream.addListener(statusListener);
-//    twitterStream.sample();
-//  }
-
+  @Override
+  public void initialize(FlowletContext context) {
+    tweetQueue = new LinkedBlockingQueue<Tweet>(1000);
+    ConfigurationBuilder cb = new ConfigurationBuilder();
+    cb.setUser(TwitterScanner.USERNAMES[0]);
+    cb.setPassword(TwitterScanner.PASSWORD);
+    cb.setJSONStoreEnabled(true);
+    cb.setDebugEnabled(false);
+    twitter4j.conf.Configuration conf = cb.build();
+    TwitterStreamFactory fact = new TwitterStreamFactory(conf);
+    twitterStream = fact.getInstance();
+    twitterStream.addListener(statusListener);
+    twitterStream.sample();
+  }
 
   /**
-   * This is the meat of this Flowlet. This is where we pull Tweets from
-   * the Twitter public timeline, wrap them in Tuples and send them to
-   * the next Flowlet(s) in our Flow.
+   * This is the main method of the flowlet.  It pulls from the internal queue
+   * of tweets (filled using twitter4j callback setup in initialize()) and emits
+   * them to the next flowlet.
    */
   @Override
   public void generate() throws InterruptedException {
