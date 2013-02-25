@@ -148,6 +148,12 @@ public class TableTest extends DataSetTestBase {
     // read the range from col2 on -> col2, col3
     result = table.read(new Read(key1, col2, null));
     verifyColumns(result, col23, val23);
+    // read all columns
+    result = table.read(new Read(key1));
+    verifyColumns(result, col123, val123);
+    // read the first 2 columns
+    result = table.read(new Read(key1, 2));
+    verifyColumns(result, col12, val12);
 
     // delete one column, verify that it is gone
     table.write(new Delete(key1, col1));

@@ -91,7 +91,25 @@ public class Read {
   }
 
   /**
-   * Read a consecutive range of columns
+   * Read all columns of a row
+   * @param row the row key
+   */
+  public Read(byte[] row) {
+    this(row, -1);
+  }
+
+  /**
+   * Read all columns of a row to a limited number
+   * @param row the row key
+   * @param limit a limit for the number of columns to return. A value -1
+   *              signifies unlimited.
+   */
+  public Read(byte[] row, int limit) {
+    this(row, null, null, limit);
+  }
+
+  /**
+   * Read a consecutive range of columns up to a limited number
    * @param row the row key
    * @param start the column to read. If null, reading will start with the
    *              first column of the row.
