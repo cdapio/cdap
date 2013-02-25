@@ -43,7 +43,7 @@ final class ReflectionHandlerMethod implements HandlerMethod {
       } catch (Throwable t) {
         LOG.error("Exception in calling procedure handler: " + method, t);
         try {
-          responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE)).close();
+          txResponder.error(ProcedureResponse.Code.FAILURE, "Exception in procedure: " + t.getMessage());
         } catch (IOException e) {
           LOG.error("Fail to close response on error.", t);
         }
