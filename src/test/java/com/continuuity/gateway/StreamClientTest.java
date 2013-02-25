@@ -147,6 +147,9 @@ public class StreamClientTest {
     // write a value
     Assert.assertEquals("OK.", command("firststream", new String[] {
       "create"}));
+    Assert.assertEquals("OK.", command("firststream", new String[] {
+      "info"}));
+
   }
 
   private String command(String streamId, String[] args) {
