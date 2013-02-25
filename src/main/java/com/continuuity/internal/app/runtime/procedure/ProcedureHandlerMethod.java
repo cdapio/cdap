@@ -65,9 +65,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getSystemMetrics().meter("query.failed", 1);
+      context.getSystemMetrics().counter("query.failed", 1);
       try {
-        responder.stream(new ProcedureResponse(ProcedureResponse.Code.CLIENT_ERROR));
+        responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -76,9 +76,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     try {
       handlerMethod.handle(request, responder);
-      context.getSystemMetrics().meter("query.success", 1);
+      context.getSystemMetrics().counter("query.success", 1);
     } catch (Throwable t) {
-      context.getSystemMetrics().meter("query.failed", 1);
+      context.getSystemMetrics().counter("query.failed", 1);
       throw Throwables.propagate(t);
     }
   }

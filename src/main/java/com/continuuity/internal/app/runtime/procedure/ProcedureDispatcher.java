@@ -83,7 +83,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
    * @param channel
    */
   private void errorResponse(HttpResponseStatus status, Channel channel, String content) {
-    metrics.meter("query.failed", 1);
+    metrics.counter("query.failed", 1);
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
     response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
     response.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(content)));
