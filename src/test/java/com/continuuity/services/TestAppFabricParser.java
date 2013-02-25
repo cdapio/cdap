@@ -1,6 +1,6 @@
 package com.continuuity.services;
 
-import com.continuuity.app.services.AppFabricNGClient;
+import com.continuuity.app.services.AppFabricClient;
 import com.continuuity.common.conf.CConfiguration;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
@@ -15,7 +15,7 @@ public class TestAppFabricParser {
   @Test
   public void testOptionsParsing() throws ParseException {
     String[] args = {"deploy", "-jar", "jar"};
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     client.configure(CConfiguration.create(), args);
     assert (client != null);
     assertTrue("deploy".equals(client.getCommand()));
@@ -24,14 +24,14 @@ public class TestAppFabricParser {
 
   @Test
   public void testUnknownCommands() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = client.configure(CConfiguration.create(), new String[]{"Foobaz", "-jar", "jar"});
     assertTrue(command == null);
   }
 
   @Test
   public void testValidInvalidDeployArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"deploy"});
     assertTrue(command == null);
@@ -39,7 +39,7 @@ public class TestAppFabricParser {
 
   @Test
   public void testValidInvalidVerifyArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
 
     command = client.configure(CConfiguration.create(), new String[]{"verify", "--application", "args"});
@@ -48,7 +48,7 @@ public class TestAppFabricParser {
 
   @Test
   public void testValidInvalidStartArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "args"});
     assertTrue(command == null);
@@ -59,7 +59,7 @@ public class TestAppFabricParser {
 
   @Test
   public void testValidInvalidStopArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
 
     command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
@@ -72,7 +72,7 @@ public class TestAppFabricParser {
 
   @Test
   public void testValidInvalidStatusArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
 
     command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
@@ -84,7 +84,7 @@ public class TestAppFabricParser {
 
   @Test
   public void testValidInvalidPromoteArgs() throws ParseException {
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
       "--application", "application"});
@@ -104,7 +104,7 @@ public class TestAppFabricParser {
   @Test
   public void testValidArguments() throws ParseException {
 
-    AppFabricNGClient client = new AppFabricNGClient();
+    AppFabricClient client = new AppFabricClient();
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"deploy", "--resource", "jar"});
     assertTrue("deploy".equals(command));
