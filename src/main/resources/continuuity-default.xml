@@ -147,7 +147,7 @@
 
     <property>
         <name>accessor.rest.middle</name>
-        <value>/rest-data/</value>
+        <value>/data/</value>
     </property>
 
     <property>
@@ -168,7 +168,7 @@
 
     <property>
         <name>query.rest.middle</name>
-        <value>/rest-query/</value>
+        <value>/query/</value>
     </property>
 
     <property>
@@ -190,7 +190,12 @@
 
     <property>
         <name>monitor.rest.middle</name>
-        <value>/rest-monitor/</value>
+        <value>/monitor/</value>
+    </property>
+
+    <property>
+        <name>application.rest.middle</name>
+        <value>/app/</value>
     </property>
 
     <property>
@@ -211,7 +216,7 @@
 
     <property>
         <name>collector.rest.middle</name>
-        <value>/rest-stream/</value>
+        <value>/stream/</value>
     </property>
 
     <property>
