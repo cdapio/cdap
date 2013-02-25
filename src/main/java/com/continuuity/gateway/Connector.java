@@ -116,7 +116,7 @@ public abstract class Connector {
     return this.metricsQualifier;
   }
 
-  void setDiscoverServiceClient(DiscoveryServiceClient client) {
+  void setDiscoveryServiceClient(DiscoveryServiceClient client) {
     discoveryServiceClient = client;
   }
 
