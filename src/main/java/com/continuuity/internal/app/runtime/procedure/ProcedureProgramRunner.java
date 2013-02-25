@@ -10,6 +10,8 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.base.Cancellable;
+import com.continuuity.common.logging.common.LogWriter;
+import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.discovery.DiscoveryService;
@@ -52,16 +54,21 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
   private final DiscoveryService discoveryService;
 
+  private ProcedureHandlerMethodFactory handlerMethodFactory;
+
   private ExecutionHandler executionHandler;
   private ServerBootstrap bootstrap;
   private Channel serverChannel;
   private ChannelGroup channelGroup;
+  private BasicProcedureContext procedureContext;
 
   @Inject
   public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
-                                DiscoveryService discoveryService) {
+                                DiscoveryService discoveryService,
+                                LogWriter logWriter) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.discoveryService = discoveryService;
+    CAppender.logWriter = logWriter;
   }
 
   @Override
@@ -82,15 +89,18 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       RunId runId = RunId.generate();
 
-      // FIXME: A dummy context for getting the cmetrics
-      BasicProcedureContext context = new BasicProcedureContext(program, instanceId, runId,
-                                                                ImmutableMap.<String, DataSet>of(), procedureSpec);
+      // FIXME: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
+      // HandlerMethodFactory.
+      procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
+                                                   procedureSpec);
+
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, txAgentSupplierFactory);
+      handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
-      bootstrap = createBootstrap(program, executionHandler,
-                                  createHandlerMethodFactory(program, runId, instanceId),
-                                  context.getSystemMetrics(), channelGroup);
+      bootstrap = createBootstrap(program, executionHandler, handlerMethodFactory,
+                                  procedureContext.getSystemMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
       serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost().getCanonicalHostName(), 0));
@@ -135,22 +145,6 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     return bootstrap;
   }
 
-
-  private HandlerMethodFactory createHandlerMethodFactory(final Program program,
-                                                          final RunId runId,
-                                                          final int instanceId) {
-    return new HandlerMethodFactory() {
-      @Override
-      public HandlerMethod create() {
-        try {
-          return new ProcedureHandlerMethod(program, runId, instanceId, txAgentSupplierFactory);
-        } catch (ClassNotFoundException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
-  }
-
   private ExecutionHandler createExecutionHandler() {
     ThreadFactory threadFactory = new ThreadFactory() {
       private final ThreadGroup threadGroup = new ThreadGroup("procedure-thread");
@@ -164,10 +158,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       }
     };
 
+    // Thread pool of max size = MAX_HANDLER_THREADS and will reject new tasks by throwing exceptions
+    // The pipeline should have handler to catch the exception and response with status 503.
     return new ExecutionHandler(new ThreadPoolExecutor(0, MAX_HANDLER_THREADS,
                                                        60L, TimeUnit.SECONDS,
                                                        new SynchronousQueue<Runnable>(),
-                                                       threadFactory, new ThreadPoolExecutor.CallerRunsPolicy()));
+                                                       threadFactory, new ThreadPoolExecutor.AbortPolicy()));
   }
 
   private Discoverable createDiscoverable(Program program, Channel serverChannel) {
@@ -211,6 +207,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
+      LOG.info("Stopping procedure: " + procedureContext);
       cancellable.cancel();
       try {
         channelGroup.close().await();
@@ -218,6 +215,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
         bootstrap.releaseExternalResources();
         executionHandler.releaseExternalResources();
       }
+      handlerMethodFactory.stopAndWait();
+
+      LOG.info("Procedure stopped: " + procedureContext);
     }
 
     @Override

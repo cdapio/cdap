@@ -168,9 +168,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()));
 
-      LOG.info("Starting flowlet: " + flowletName);
+      LOG.info("Starting flowlet: " + flowletContext);
       driver.start();
-      LOG.info("Flowlet started: " + flowletName);
+      LOG.info("Flowlet started: " + flowletContext);
 
       return programController(program.getProgramName(), flowletName, flowletContext, driver);
 
@@ -186,23 +186,23 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new AbstractProgramController(programName + ":" + flowletName, flowletContext.getRunId()) {
       @Override
       protected void doSuspend() throws Exception {
-        LOG.info("Suspending flowlet: " + flowletName);
+        LOG.info("Suspending flowlet: " + flowletContext);
         driver.suspend();
-        LOG.info("Flowlet suspended: " + flowletName);
+        LOG.info("Flowlet suspended: " + flowletContext);
       }
 
       @Override
       protected void doResume() throws Exception {
-        LOG.info("Resuming flowlet: " + flowletName);
+        LOG.info("Resuming flowlet: " + flowletContext);
         driver.resume();
-        LOG.info("Flowlet resumed: " + flowletName);
+        LOG.info("Flowlet resumed: " + flowletContext);
       }
 
       @Override
       protected void doStop() throws Exception {
-        LOG.info("Stopping flowlet: " + flowletName);
+        LOG.info("Stopping flowlet: " + flowletContext);
         driver.stopAndWait();
-        LOG.info("Flowlet stopped: " + flowletName);
+        LOG.info("Flowlet stopped: " + flowletContext);
       }
 
       @Override
@@ -211,11 +211,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
           return;
         }
         int instances = (Integer)value;
-        LOG.info("Change flowlet instance count: " + flowletName + ", new count is " + instances);
+        LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
         driver.suspend();
         flowletContext.setInstanceCount(instances);
         driver.resume();
-        LOG.info("Flowlet instance count changed: " + flowletName + ", new count is " + instances);
+        LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
       }
     };
   }

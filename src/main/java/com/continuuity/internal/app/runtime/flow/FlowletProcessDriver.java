@@ -246,7 +246,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       LOG.info("Flowlet destroyed: " + flowletContext);
     } catch (Throwable t) {
       LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, t);
-      throw Throwables.propagate(t);
     }
   }
 
