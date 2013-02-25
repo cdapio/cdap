@@ -1,6 +1,6 @@
 package WordCount;
 
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -28,7 +28,7 @@ public class WordCounterFlowlet extends AbstractFlowlet {
 
   private OutputEmitter<String> wordOutput;
 
-  @Process("wordOut")
+  @ProcessInput("wordOut")
   public void process(String word) throws OperationException {
     // Count number of times we have seen this word
     this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
