@@ -4,12 +4,12 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.continuuity.example</groupId>
-    <artifactId>word-count</artifactId>
+    <artifactId>count-counts</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>WordCountApp</name>
+    <name>CountCounts</name>
     <properties>
-        <main>com.continuuity.examples.wordcount.WordCount</main>
+        <main>com.continuuity.examples.countcounts.CountCounts</main>
         <continuuityVersion>1.3.0</continuuityVersion>
     </properties>
     <repositories>
@@ -47,6 +47,11 @@
             <version>1.3.0-SNAPSHOT</version>
             <scope>provided</scope>
             <classifier>api</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.7.1</version>
         </dependency>
     </dependencies>
     <!-- Set the main class and tell maven to include dependencies in the jar -->
