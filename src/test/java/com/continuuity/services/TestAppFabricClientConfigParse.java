@@ -25,79 +25,88 @@ public class TestAppFabricClientConfigParse {
   public void testUnknownCommands() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = client.configure(CConfiguration.create(), new String[]{"Foobaz", "-jar", "jar"});
-    assertTrue(command == null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidDeployArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
-    String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"deploy"});
-    assertTrue(command == null);
+    String command = client.configure(CConfiguration.create(), new String[]{"deploy"});
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidVerifyArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
-    String command = null;
+    String command = client.configure(CConfiguration.create(), new String[]{"verify", "--application", "args"});
 
-    command = client.configure(CConfiguration.create(), new String[]{"verify", "--application", "args"});
-    assertTrue(command == null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
-    String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "args"});
-    assertTrue(command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"start", "--processor", "args"});
-    assertTrue(command == null);
+    String command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testValidInvalidStopArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-
-    command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
-    assertTrue(command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"stop", "--processor", "args"});
-    assertTrue(command == null);
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
+    } catch (Exception e) {
+      assert (command == null);
+    }
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"stop", "--processor", "args"});
+    } catch (Exception e) {
+      assert (command == null);
+    }
   }
 
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testValidInvalidStatusArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-
-    command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
-    assertTrue(command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"status", "--processor", "args"});
-    assertTrue(command == null);
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
+      assertTrue(false); //This should not happen
+    } catch (Exception e) {
+      assert (command == null);
+    }
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"status", "--processor", "args"});
+      assertTrue(false); //This should not happen
+    } catch (Exception e) {
+      assert (command == null);
+    }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testValidInvalidPromoteArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
-      "--application", "application"});
-    assert (command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
-      "--application", "application"});
-    assert (command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"promote",
-      "--authtoken", "Auth token",
-      "--application", "application"});
-    assert (command == null);
-
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
+        "--application", "application"});
+      assertTrue(false); //This should not happen
+    } catch (Exception e) {
+      assert (command == null);
+    }
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
+        "--application", "application"});
+      assertTrue(false); //This should not happen
+    } catch (Exception e) {
+      assert (command == null);
+    }
+    try {
+      command = client.configure(CConfiguration.create(), new String[]{"promote",
+        "--authtoken", "Auth token",
+        "--application", "application"});
+      assertTrue(false); //This should not happen
+    } catch (Exception e) {
+      assert (command == null);
+    }
   }
 
   @Test
