@@ -48,7 +48,7 @@ fi
 
 ARG_COUNT=$#
 if [[ "X${ARG_COUNT}" != "X0" ]]; then
- $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.AppFabricClient "$@" --type flow 2>/dev/null
+ $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.AppFabricClient "$@" 2>/dev/null
 else
  $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.AppFabricClient help 2>/dev/null
 fi
