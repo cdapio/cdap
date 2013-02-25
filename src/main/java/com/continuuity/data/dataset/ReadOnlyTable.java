@@ -93,7 +93,7 @@ public class ReadOnlyTable extends RuntimeTable {
 
   // no support for write operations, including the increment
   @Override
-  public Map<byte[], Long> increment(Increment increment) throws OperationException {
+  public Map<byte[], Long> incrementAndGet(Increment increment) throws OperationException {
     throw new UnsupportedOperationException("Increment is not supported by read only table.");
   }
 
