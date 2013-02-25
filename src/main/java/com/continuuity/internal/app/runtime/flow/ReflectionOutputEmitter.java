@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.app.queue.QueueName;
@@ -72,7 +73,8 @@ public final class ReflectionOutputEmitter implements OutputEmitter<Object>, Out
     List<EmittedDatum> outputs = Lists.newArrayListWithExpectedSize(dataQueue.size());
     dataQueue.drainTo(outputs);
 
-    flowletContext.getSystemMetrics().counter(queueName.getSimpleName() + ".stream.out", outputs.size());
+    flowletContext.getSystemMetrics().counter(queueName.getSimpleName() + FlowletDefinition.OUTPUT_ENDPOINT_POSTFIX +
+                                                ".stream.out", outputs.size());
 
     agent.submit(ImmutableList.copyOf(Iterables.transform(outputs, DATUM_TO_WRITE_OP)));
   }
