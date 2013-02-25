@@ -11,7 +11,7 @@ import java.util.TreeSet;
 public class WordAssociatorFlowlet extends AbstractFlowlet {
 
   public WordAssociatorFlowlet() {
-    super("wordAssociater");
+    super("wordAssociator");
   }
 
   @UseDataSet("wordAssocs")

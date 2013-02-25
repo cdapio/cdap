@@ -76,7 +76,7 @@ public class UniqueCountTable extends DataSet {
   public void updateUniqueCount(String entry)
       throws OperationException {
     Long newCount = this.entryCountTable.
-      increment(new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L)).
+      incrementAndGet(new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L)).
       get(ENTRY_COUNT);
     if (newCount == 1L) {
       this.uniqueCountTable.write(

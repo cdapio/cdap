@@ -25,11 +25,11 @@ import com.continuuity.api.flow.FlowSpecification;
  * The last Flowlet is the UniqueCounter which will calculate and update the
  * unique number of words seen.
  */
-public class WordCountFlow implements Flow {
+public class WordCounter implements Flow {
   @Override
   public FlowSpecification configure() {
     return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
+        .setName("WordCounter")
         .setDescription("Example Word Count Flow")
         .withFlowlets()
             .add("wordSplitter", new WordSplitterFlowlet())

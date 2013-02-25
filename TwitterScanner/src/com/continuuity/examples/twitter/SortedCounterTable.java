@@ -66,7 +66,7 @@ public class SortedCounterTable extends DataSet {
   throws OperationException {
     // Determine total count
     byte [] row = makeRow(counterSet, 0);
-    Map<byte[], Long> result = this.counters.increment(
+    Map<byte[], Long> result = this.counters.incrementAndGet(
         new Increment(row, counter, amount));
     long value = result.get(counter);
     

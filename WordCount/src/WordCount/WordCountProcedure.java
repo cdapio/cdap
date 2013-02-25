@@ -25,7 +25,7 @@ public class WordCountProcedure extends AbstractProcedure {
   @Override
   public ProcedureSpecification configure() {
     return ProcedureSpecification.Builder.with()
-        .setName("WordCountProcedure")
+        .setName("RetrieveCount")
         .setDescription("Example Word Count Procedure")
         .build();
   }
