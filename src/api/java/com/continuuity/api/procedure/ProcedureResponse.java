@@ -66,7 +66,8 @@ public final class ProcedureResponse {
   public enum Code {
     SUCCESS,
     FAILURE,
-    CLIENT_ERROR
+    CLIENT_ERROR,
+    NOT_FOUND
   }
 
   private final Code code;
