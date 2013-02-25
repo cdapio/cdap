@@ -8,7 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -61,7 +61,7 @@ public class WordCountApp implements Application {
       .withStreams().add(new Stream("text"))
       .withDataSets().add(new KeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .noProcedure()/*withProcedures().add(new WordFrequency())*/.build();
   }
 
   public static final class MyRecord {
@@ -128,7 +128,7 @@ public class WordCountApp implements Application {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
 
-    @Process
+    @ProcessInput
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
       tokenize(data.getText(), "text");
@@ -150,7 +150,7 @@ public class WordCountApp implements Application {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
 
-    @Process("field")
+    @ProcessInput("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
       LOG.info("process count by field: " + fieldToken);
 

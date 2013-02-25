@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;

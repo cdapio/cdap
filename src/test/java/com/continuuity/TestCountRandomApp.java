@@ -89,7 +89,6 @@ public class TestCountRandomApp implements Application {
     int direction = 1;
 
     public RandomSource() {
-      super("RandomSource");
       random = new Random();
     }
 

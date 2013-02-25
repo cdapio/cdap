@@ -5,7 +5,7 @@
 package com.continuuity.api.flow;
 
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.Flowlet;
@@ -215,8 +215,8 @@ public final class FlowletDefinition {
         if (GeneratorFlowlet.class.isAssignableFrom(type.getRawType())) {
           continue;
         }
-        Process processAnnotation = method.getAnnotation(Process.class);
-        if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processAnnotation == null) {
+        ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
+        if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processInputAnnotation == null) {
           continue;
         }
 
@@ -236,10 +236,10 @@ public final class FlowletDefinition {
         Type inputType = type.resolveType(methodParams[0]).getType();
 
         List<String> inputNames = Lists.newLinkedList();
-        if (processAnnotation == null || processAnnotation.value().length == 0) {
+        if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
           inputNames.add(ANY_INPUT);
         } else {
-          Collections.addAll(inputNames, processAnnotation.value());
+          Collections.addAll(inputNames, processInputAnnotation.value());
         }
 
         for (String inputName : inputNames) {

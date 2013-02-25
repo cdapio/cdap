@@ -11,7 +11,5 @@ package com.continuuity.api.flow.flowlet;
  * </p>
  */
 public abstract class AbstractGeneratorFlowlet extends AbstractFlowlet implements GeneratorFlowlet {
-  protected AbstractGeneratorFlowlet(String name) {
-    super(name);
-  }
+
 }

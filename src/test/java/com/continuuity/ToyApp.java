@@ -7,7 +7,7 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
@@ -136,7 +136,7 @@ public class ToyApp implements Application {
       super("E");
     }
 
-    @Process("out1")
+    @ProcessInput("out1")
     void process(Float f) {
       out.emit(1.2);
     }
@@ -154,7 +154,7 @@ public class ToyApp implements Application {
       super("D");
     }
 
-    @Process("c1")
+    @ProcessInput("c1")
     void process(Long l) {
       List<String> p = Lists.newArrayList();
       out.emit(p);
@@ -169,7 +169,7 @@ public class ToyApp implements Application {
       super("F");
     }
 
-    @Process("c2")
+    @ProcessInput("c2")
     void process(Integer i) {
       f1.emit(URI.create("http://www.google.com"));
     }
@@ -180,12 +180,12 @@ public class ToyApp implements Application {
       super("G");
     }
 
-    @Process("d1")
+    @ProcessInput("d1")
     public void process(List<String> s) {
 
     }
 
-    @Process("f1")
+    @ProcessInput("f1")
     public void process(URI uri) {
 
     }
