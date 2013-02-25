@@ -107,7 +107,6 @@ public class AppFabricClient {
         return;
       }
 
-
       if ("stop".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
@@ -117,7 +116,16 @@ public class AppFabricClient {
         LOG.info("Stopped application running with id: " + runIdentifier.getId());
       }
 
-
+      if ("promote".equals(command)) {
+        ResourceIdentifier identifier = new ResourceIdentifier("Account", this.application, this.resource, 0);
+        boolean status = client.promote(new AuthToken(this.authToken),identifier);
+        if (status) {
+          LOG.info("Promoted to cloud");
+        }
+        else {
+          LOG.info("Promote to cloud failed");
+        }
+      }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
@@ -128,16 +136,15 @@ public class AppFabricClient {
       }
 
       if ("verify".equals(command)) {
-
         Location location = new LocalLocationFactory().create(this.resource);
-
         final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
           new DataFabricModules().getInMemoryModules());
 
         ManagerFactory factory = injector.getInstance(ManagerFactory.class);
         Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>) factory.create();
-
         manager.deploy(new Id.Account("Account"), location);
+        LOG.info("Verification succeeded");
+
       }
 
     } catch (Exception e) {
@@ -146,13 +153,6 @@ public class AppFabricClient {
     } finally {
       transport.close();
     }
-    LOG.info("Verification succeeded");
-
-
-    if ("deploy".equals(command)) {
-      //TODO: Deploy
-    }
-
   }
 
   /**

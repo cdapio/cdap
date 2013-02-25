@@ -62,7 +62,6 @@ public class TestAppFabricClientConfigParse {
     }
   }
 
-
   @Test
   public void testValidInvalidStatusArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
