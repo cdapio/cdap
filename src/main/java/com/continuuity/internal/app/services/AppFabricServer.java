@@ -4,15 +4,20 @@
 
 package com.continuuity.internal.app.services;
 
+import com.continuuity.app.program.Program;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.discovery.Discoverable;
+import com.continuuity.discovery.DiscoveryService;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.jboss.netty.channel.Channel;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +35,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private Thread runnerThread;
   private TThreadedSelectorServer.Args options;
   private int port;
+  private final DiscoveryService discoveryService;
 
   /**
    * Construct the AppFabricServer with service factory and configuration coming from factory.
@@ -38,11 +44,30 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * @param configuration
    */
   @Inject
-  public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration) {
+  public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration,
+                         DiscoveryService discoveryService) {
     this.conf = configuration;
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
     this.service = service;
+    this.discoveryService = discoveryService;
     port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
+  }
+
+  /**
+   * @return Discoverable Object
+   */
+  private Discoverable createDiscoverable() {
+    return new Discoverable() {
+      @Override
+      public String getName() {
+        return "app-fabric-service";
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return new InetSocketAddress(port);
+      }
+    };
   }
 
   /**
@@ -50,6 +75,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
+    discoveryService.register(createDiscoverable());
     options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(port))
       .executorService(executor)
       .processor(new AppFabricService.Processor(service))
