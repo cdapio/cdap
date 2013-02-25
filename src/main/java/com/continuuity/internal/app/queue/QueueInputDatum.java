@@ -62,7 +62,7 @@ public final class QueueInputDatum implements InputDatum {
 
     return new InputContext() {
       @Override
-      public String getName() {
+      public String getOrigin() {
         return name;
       }
 
