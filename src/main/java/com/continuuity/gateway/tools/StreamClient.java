@@ -558,7 +558,7 @@ public class StreamClient {
   StreamEvent fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(uri);
+    HttpGet get = new HttpGet(uri + "?q=dequeue");
     get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer);
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
