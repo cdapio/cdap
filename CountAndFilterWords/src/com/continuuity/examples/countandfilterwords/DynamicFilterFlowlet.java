@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
@@ -49,7 +49,7 @@ public class DynamicFilterFlowlet extends AbstractFlowlet {
   @Output("counts")
   private OutputEmitter<String> countOutput;
 
-  @Process("tokens")
+  @ProcessInput("tokens")
   public void process(String token) {
     LOG.debug("Processing token '" + token + "' against filter with name " +
         filterName + " and regex " + filterRegex);
