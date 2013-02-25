@@ -87,6 +87,7 @@ define([], function () {
 
 				while (i--) {
 					metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
+					metrics[i] = metrics[i].replace(/\{account_id\}/g, window.ENV.account.account_id);
 				}
 
 				// Hax for flowlet Queue

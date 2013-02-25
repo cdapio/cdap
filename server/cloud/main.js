@@ -1,177 +1,312 @@
 
 var express = require('express'),
+	http = require('http'),
+	https = require('https'),
 	io = require('socket.io'),
 	Int64 = require('node-int64').Int64;
 	fs = require('fs'),
 	xml2js = require('xml2js'),
 	log4js = require('log4js'),
-	Api = require('../common/api'),
+	utils = require('connect').utils,
+	cookie = require('cookie'),
+	crypto = require('crypto');
+
+var Api = require('../common/api'),
 	Env = require('./env');
 
+/**
+ * Setting the environment to Cloud.
+ */
 process.env.NODE_ENV = 'production';
+
+var LOG_LEVEL = 'ERROR';
+var COOKIE_SECRET = 'f&83#fjaSF@1lOZIs9';
 
 /**
 * Configure logger.
 */
-const LOG_LEVEL = 'TRACE';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
 	]
 });
-var logger = process.logger = log4js.getLogger('Reactor UI');
+var logger = process.logger = log4js.getLogger('Cloud UI');
 logger.setLevel(LOG_LEVEL);
 
 /**
- * Configure Express.
+ * Configure Express Web server.
  */
-app = express.createServer();
-app.use(express.bodyParser());
-app.use(express['static'](__dirname + '/../../client/'));
+var app = express();
 
-io = io.listen(app);
-io.configure('production', function(){
-	io.set('transports', ['websocket', 'xhr-polling']);
+/**
+ * Express cookie sessions.
+ */
+app.use(express.cookieParser());
+app.use(express.cookieSession({
+	key: 'continuuity-sso',
+	secret: COOKIE_SECRET,
+	cookie: {
+		maxAge: 60 * 60 * 1000
+	}
+}));
+
+/**
+ * Session check.
+ */
+function checkSSO (req, res, next) {
+
+	if (req.session.account_id) {
+
+		logger.trace('SSO exists', req.session.account_id);
+		next();
+
+	} else {
+
+		logger.trace('SSO retrieving');
+
+		/**
+
+
+
+
+
+
+		!! TODO: GET VPC HOSTNAME
+
+
+
+
+
+
+
+		 **/
+		var ret = 'dons-vpc';
+
+		var host = config['accounts-host'];
+		if (config['accounts-port'] !== '443') {
+			host += ':' + config['accounts-port'];
+		}
+
+		res.redirect('https://' + host +
+			'/sso?return=' + encodeURIComponent(ret));
+
+	}
+
+}
+// Root in production.
+app.get('/', checkSSO);
+
+// Root in development.
+app.get('/cloud/', checkSSO);
+
+// Redirected from central with a fresh nonce.
+// Todo: encrypt an SSO token with the user info.
+app.get('/sso/:nonce', function (req, res) {
+
+	var nonce = req.params.nonce;
+
+	var options = {
+		hostname: config['accounts-host'],
+		port: config['accounts-port'],
+		path: '/getSSOUser/' + nonce,
+		method: 'GET'
+	};
+
+	https.request(options, function(result) {
+
+		result.setEncoding('utf8');
+		var data = '';
+
+		result.on('data', function(chunk) {
+			data += chunk;
+		});
+
+		result.on('end', function () {
+
+			var account = JSON.parse(data);
+
+			logger.trace('SSO signin', account);
+
+			// Create a unique ID for this session.
+			var current_date = (new Date()).valueOf().toString();
+			var random = Math.random().toString();
+			req.session.session_id = crypto.createHash('sha1')
+				.update(current_date + random).digest('hex');
+
+			req.session.account_id = account.account_id;
+			req.session.name = account.first_name + ' ' + account.last_name;
+
+			res.redirect('/');
+
+		});
+	}).on('error', function(e) {
+		console.error(e);
+	}).end();
+
 });
+app.get('/sso/logout', function (req, res) {
+
+	req.session = null;
+	res.redirect('https://accounts.continuuity.com/logout');
+
+});
+
+/**
+ * Express static directory.
+ */
+app.use(express.static(__dirname + '/../../client/'));
 
 var config = {};
 var sockets = {};
 
 /**
- * SocketIO authentication
- * 
- * THIS IS INCOMPLETE.
- * 
- *
-var Session = require('connect').middleware.session.Session;
-io.set('authorization', function (data, accept) {
-
-	if (data.headers.cookie) {
-		data.cookie = parseCookie(data.headers.cookie);
-		data.sessionID = data.cookie['express.sid'];
-		// save the session store to the data object 
-		// (as required by the Session constructor)
-		data.sessionStore = sessionStore;
-		sessionStore.get(data.sessionID, function (err, session) {
-			if (err || !session) {
-				accept('Error', false);
-			} else {
-				// create a session object, passing data as request and our
-				// just acquired session data
-				data.session = new Session(data, session);
-				accept(null, true);
-			}
-		});
-	} else {
-		return accept('No cookie transmitted.', false);
-	}
-});
- */
-
-/**
  * SocketIO handlers
  */
-io.sockets.on('connection', function (socket) {
-
-	// For reference by its sessionID elsewhere.
-	socket.join(socket.handshake.sessionID);
-
-	// Emits environment information to the client.
-	socket.emit('env', {"name": "remote", "version": Env.version, "ip": Env.ip});
-
-	function socketResponse (request, error, response) {
-		socket.emit('exec', error, {
-			method: request.method,
-			params: typeof response === "string" ? JSON.parse(response) : response,
-			id: request.id
-		});
-	}
-
-	/**
-	 * Metadata request. Requires an accountID.
-	 */
-	socket.on('metadata', function (request) {
-
-		var accountID = 'abc123';
-
-		Api.metadata(accountID, request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
+function socketResponse (socket, request, error, response) {
+	socket.emit('exec', error, {
+		method: request.method,
+		params: typeof response === "string" ? JSON.parse(response) : response,
+		id: request.id
 	});
+}
+function setSocketHandlers () {
 
 	/**
-	 * FAR request. Requires an  accountID.
+	 * SocketIO cookie sessions
 	 */
-	socket.on('far', function (request) {
+	io.set('authorization', function (data, accept) {
 
-		var accountID = 'abc123';
-
-		Api.far(accountID, request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
-	});
-
-	/**
-	 * Flow Monitor request. Requires an accountID.
-	 */
-	socket.on('monitor', function (request) {
-
-		var accountID = 'abc123';
-
-		Api.monitor(accountID, request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
-	});
-
-	/**
-	 * Flow Manager request. Requires an accountID.
-	 */
-	socket.on('manager', function (request) {
-
-		var accountID = 'abc123';
-
-		Api.manager(accountID, request.method, request.params, function (error, response) {
+		if (data.headers.cookie) {
 			
-			if (response && response.length) {
-				var int64values = {
-					"lastStarted": 1,
-					"lastStopped": 1,
-					"startTime": 1,
-					"endTime": 1
-				};
+			var cookies = cookie.parse(data.headers.cookie);
+			var signedCookies = utils.parseSignedCookies(cookies, COOKIE_SECRET);
+			var obj = utils.parseJSONCookies(signedCookies);
 
-				// Hax. Int64 is not being jsonized nicely.
-				for (var i = 0; i < response.length; i ++) {
-					for (var j in response[i]) {
-						if (j in int64values) {
-							response[i][j] = parseInt(response[i][j].toString(), 10);
+			data.account_id = obj['continuuity-sso'].account_id;
+			data.name = obj['continuuity-sso'].name;
+
+			if (data.account_id) {
+
+				/**
+				 * Used to make Sockets available to HTTP requests.
+				 */
+				data.session_id = obj['continuuity-sso'].account_id;
+
+				return accept(null, true);
+
+			} else {
+				return accept('No session detected.', false);
+			}
+
+		} else {
+
+			return accept('No cookie transmitted.', false);
+
+		}
+	});
+
+	/**
+	 * SocketIO per-socket handlers
+	 */
+	io.sockets.on('connection', function (socket) {
+
+		/**
+		 * For reference by request.session.account_id elsewhere.
+		 */
+		socket.join(socket.handshake.session_id);
+
+		/**
+		 * Emits environment information to the client.
+		 */
+		socket.emit('env', {
+			"location": "remote",
+			"version": Env.version,
+			"ip": Env.ip,
+			"account": {
+				"account_id": socket.handshake.account_id,
+				"name": socket.handshake.name
+			}
+		});
+
+		/**
+		 * Metadata request. Requires an accountID.
+		 */
+		socket.on('metadata', function (request) {
+
+			Api.metadata(socket.handshake.account_id,
+				request.method, request.params, function (error, response) {
+				socketResponse(socket, request, error, response);
+			});
+
+		});
+
+		/**
+		 * FAR request. Requires an  accountID.
+		 */
+		socket.on('far', function (request) {
+
+			Api.far(socket.handshake.account_id,
+				request.method, request.params, function (error, response) {
+				socketResponse(socket, request, error, response);
+			});
+		});
+
+		/**
+		 * Flow Monitor request. Requires an accountID.
+		 */
+		socket.on('monitor', function (request) {
+
+			Api.monitor(socket.handshake.account_id,
+				request.method, request.params, function (error, response) {
+				socketResponse(socket, request, error, response);
+			});
+		});
+
+		/**
+		 * Flow Manager request. Requires an accountID.
+		 */
+		socket.on('manager', function (request) {
+
+			Api.manager(socket.handshake.account_id,
+				request.method, request.params, function (error, response) {
+				
+				if (response && response.length) {
+					var int64values = {
+						"lastStarted": 1,
+						"lastStopped": 1,
+						"startTime": 1,
+						"endTime": 1
+					};
+
+					// Hax. Int64 is not being jsonized nicely.
+					for (var i = 0; i < response.length; i ++) {
+						for (var j in response[i]) {
+							if (j in int64values) {
+								response[i][j] = parseInt(response[i][j].toString(), 10);
+							}
 						}
 					}
 				}
-			}
 
-			socket.emit('exec', error, {
-				method: request.method,
-				params: typeof response === "string" ? JSON.parse(response) : response,
-				id: request.id
+				socketResponse(socket, request, error, response);
+
 			});
-			
+		});
+
+		/**
+		 * Gateway request. Requires an API Key.
+		 */
+		socket.on('gateway', function (request) {
+
+			var apiKey = 'abc123';
+
+			Api.gateway(apiKey, request.method, request.params, function (error, response) {
+				socketResponse(request, error, response);
+			});
 		});
 	});
 
-	/**
-	 * Gateway request. Requires an API Key.
-	 */
-	socket.on('gateway', function (request) {
-
-		var apiKey = 'abc123';
-
-		Api.gateway(apiKey, request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
-	});
-
-});
+}
 
 /**
  * HTTP handlers.
@@ -187,56 +322,83 @@ app.on('error', function () {
 });
 
 /**
- * Authenticator
- */
-function authenticator () {
-	this.getAccountID = function (sessionID) {
-		return 'developer';
-	}
-}
-
-/**
  * Read configuration and start the server.
  */
+var configPath = __dirname + '/continuuity-local.xml';
+if (fs.existsSync(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml')) {
+	configPath = process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml';
+}
 
-//fs.readFile(__dirname + '/../developer/continuuity-site.xml',
-fs.readFile(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml',
-	function (error, result) {
+fs.readFile(configPath, function (error, result) {
 
-		if (error) {
+	var parser = new xml2js.Parser();
+	parser.parseString(result, function (err, result) {
 
-			logger.warn('Could not find configuration file.');
-			process.exit(1);
+		result = result.property;
 
-		} else {
+		for (var item in result) {
+			item = result[item];
+			config[item.name] = item.value;
+		}
 
-			var parser = new xml2js.Parser();
-			parser.parseString(result, function (err, result) {
+		Env.getVersion(function (version) {
+			Env.getAddress(function (error, address) {
 
-				result = result.property;
+				logger.trace('Version', version);
+				logger.trace('IP Address', address);
 
-				for (var item in result) {
-					item = result[item];
-					config[item.name] = item.value;
-				}
+				logger.trace('Configuring with', config);
+				Api.configure(config);
 
-				Env.getVersion(function (version) {
-					Env.getAddress(function (error, address) {
+				/**
+				 * Create an HTTP server that redirects to HTTPS.
+				 */
+				http.createServer(function (request, response) {
 
-						logger.trace('Version', version);
-						logger.trace('IP Address', address);
+					var host = request.headers.host.split(':')[0];
 
-						logger.trace('Configuring with', config);
-						Api.configure(config);
-					
-						logger.trace('Listening on port',
-							config['node-port']);	
-						app.listen(config['node-port']);
+					var path = 'https://' + host + ':' +
+						config['cloud-ui-ssl-port'] + request.url;
 
-					});
+					response.writeHead(302, {'Location': path});
+					response.end();
+
+				}).listen(config['cloud-ui-port']);
+				logger.trace('HTTP listening on port', config['cloud-ui-port']);
+
+				/**
+				 * HTTPS credentials
+				 */
+				var keys = {
+					ca: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.ca-bundle'),
+					key: fs.readFileSync(__dirname + '/keys/continuuity-com-key.key'),
+					cert: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.crt')
+				};
+
+				/**
+				 * Create the HTTPS server
+				 */
+				var server = https.createServer(keys, app).listen(config['cloud-ui-ssl-port']);
+				logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+
+				/**
+				 * Configure Socket IO
+				 */
+				io = io.listen(server, keys);
+				io.configure('production', function(){
+					io.set('transports', ['websocket', 'xhr-polling']);
+					io.enable('browser client minification');
+					io.enable('browser client gzip');
+					io.set('log level', 1);
+					io.set('resource', '/socket.io');
 				});
+				
+				/**
+				 * Set the handlers after io has been configured.
+				 */
+				setSocketHandlers();
 
 			});
-
-		}
+		});
+	});
 });

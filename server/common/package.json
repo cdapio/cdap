@@ -1,8 +1,0 @@
-{
-	"name": "reactor-ui-server-common",
-	"version": "0.0.1",
-	"main": "./api.js",
-	"dependencies": {
-		"log4js": "0.5.6"
-	}
-}

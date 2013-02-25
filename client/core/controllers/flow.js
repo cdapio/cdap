@@ -253,7 +253,7 @@ define([], function () {
 			var queuedFor = {}; // For use by 'enqueued'
 
 			var allMetrics = {};
-			var accountId = 'developer';
+			var accountId = window.ENV.account.account_id;
 			var metricType = 'processed';
 
 			if (this.__currentFlowletLabel === 'arrival.count') {

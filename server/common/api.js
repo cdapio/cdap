@@ -31,7 +31,7 @@ try {
 /**
 * Configure logger.
 */
-const LOG_LEVEL = 'TRACE';
+var LOG_LEVEL = 'TRACE';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
@@ -48,8 +48,9 @@ logger.setLevel(LOG_LEVEL);
 	this.auth = null;
 	this.config = null;
 
-	this.configure = function (config) {
+	this.configure = function (config, credential) {
 		this.config = config;
+		this.credential = credential;
 	};
 
 	this.metadata = function (accountID, method, params, done) {
@@ -152,7 +153,7 @@ logger.setLevel(LOG_LEVEL);
 				var flowlet_id = params[4];
 				var instances = params[5];
 
-				var identifier = new appfabricservice_types.FlowIdentifier({
+				identifier = new appfabricservice_types.FlowIdentifier({
 					accountId: params[0],
 					applicationId: params[1],
 					flowId: params[2],
@@ -253,6 +254,7 @@ logger.setLevel(LOG_LEVEL);
 		
 		conn.on('connect', function (response) {
 			var Monitor = thrift.createClient(MetricsFrontendService, conn);
+			var flow, request;
 
 			switch (method) {
 				case 'getLog':
@@ -263,7 +265,7 @@ logger.setLevel(LOG_LEVEL);
 				break;
 
 				case 'getCounters':
-					var flow = new metricsservice_types.FlowArgument({
+					flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : accountID),
 						applicationId: params[0],
 						flowId: params[1],
@@ -271,7 +273,7 @@ logger.setLevel(LOG_LEVEL);
 					});
 
 					var names = params[3] || [];
-					var request = new metricsservice_types.CounterRequest({
+					request = new metricsservice_types.CounterRequest({
 						argument: flow,
 						name: names
 					});
@@ -281,13 +283,13 @@ logger.setLevel(LOG_LEVEL);
 
 					var level = params[5] || 'FLOW_LEVEL';
 
-					var flow = new metricsservice_types.FlowArgument({
+					flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : accountID),
 						applicationId: params[0],
 						flowId: params[1],
 						flowletId: params[6] || null
 					});
-					var request = new metricsservice_types.TimeseriesRequest({
+					request = new metricsservice_types.TimeseriesRequest({
 						argument: flow,
 						metrics: params[2],
 						level: metricsservice_types.MetricTimeseriesLevel[level],
@@ -347,14 +349,28 @@ logger.setLevel(LOG_LEVEL);
 				};
 			break;
 			case 'query':
+
+				// rest-query/ applicationId/ procedureId/ method
+
 				post_options = {
 					host: this.config['gateway.hostname'],
 					port: 10003
 				};
-				post_options.method = 'GET';
+				post_options.method = 'POST';
 				post_options.path = '/rest-query/' + params.service +
-					'/' + params.method + (params.query ? '?' + params.query : '');
+					'/' + params.method;
 			break;
+			case 'promote':
+				post_options = {
+					host: this.config['gateway.hostname'],
+					port: this.config['gateway.port']
+				};
+				post_options.method = 'POST';
+				post_options.path = '/apps/';
+				post_options.headers = {
+					'X-Continuuity-ApiKey': apiKey,
+					'Content-Length': post_data.length
+				};
 		}
 
 		var post_req = http.request(post_options, function(res) {
@@ -380,7 +396,7 @@ logger.setLevel(LOG_LEVEL);
 			done(e, null);
 		});
 
-		if (method === 'inject') {
+		if (post_options.method === 'POST') {
 			post_req.write(post_data);
 		}
 
@@ -388,7 +404,7 @@ logger.setLevel(LOG_LEVEL);
 
 	};
 
-	this.upload = function (accountID, req, res, file, socket) {
+	this.upload = function (apiKey, req, res, file, socket) {
 		var self = this;
 		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 		var length = req.header('Content-length');
@@ -402,7 +418,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		req.on('end', function() {
-                        console.log("Upload ended");
+
 			res.redirect('back');
 			res.end();
 
@@ -415,6 +431,10 @@ logger.setLevel(LOG_LEVEL);
 			conn.on('error', function (error) {
 				socket.emit('upload', {'error': 'Could not connect to AppFabricService'});
 			});
+
+
+			/** HELLO. accountID needs to be apiKey. Check it out. **/
+
 
 			var FAR = thrift.createClient(AppFabricService, conn);
 			FAR.init(auth_token, new appfabricservice_types.ResourceInfo({

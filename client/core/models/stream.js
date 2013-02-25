@@ -43,7 +43,7 @@ define([], function () {
 
 			}
 
-			var accountId = 'developer';
+			var accountId = window.ENV.account.account_id;
 
 			var start = C.__timeRange * -1;
 			var self = this;
@@ -185,7 +185,7 @@ define([], function () {
 			var app = '-';
 			var id = '-';
 
-			var accountId = 'developer';
+			var accountId = window.ENV.account.account_id;
 
 			var start = C.__timeRange * -1;
 			var self = this;
