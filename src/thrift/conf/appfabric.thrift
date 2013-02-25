@@ -212,7 +212,7 @@ service AppFabricService {
    * NOTE: On this call we use overload flowid to hostname (totally wrong - but we didn't wanted to changed)
    * Javascript binding that has patching to be done. Hate Thrift.!!!!!
    */
-  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier)
+  bool promote(1:AuthToken token, 2:ResourceIdentifier identifier, 3:string hostname)
     throws (1: AppFabricServiceException e),
 
   /**
