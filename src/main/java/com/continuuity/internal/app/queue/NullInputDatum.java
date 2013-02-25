@@ -42,7 +42,7 @@ public final class NullInputDatum implements InputDatum {
   public InputContext getInputContext() {
     return new InputContext() {
       @Override
-      public String getName() {
+      public String getOrigin() {
         return "";
       }
 

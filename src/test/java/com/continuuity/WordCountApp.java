@@ -110,7 +110,7 @@ public class WordCountApp implements Application {
     private Metrics metrics;
 
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
-      if (!"text".equals(context.getName())) {
+      if (!"text".equals(context.getOrigin())) {
         return;
       }
 

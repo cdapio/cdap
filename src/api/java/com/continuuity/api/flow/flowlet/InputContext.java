@@ -12,7 +12,7 @@ public interface InputContext {
   /**
    * @return Name of the output the event was read from.
    */
-  String getName();
+  String getOrigin();
 
   /**
    * @return Number of attempts made to process the event, if {@link FailurePolicy} is set to RETRY else zero.
