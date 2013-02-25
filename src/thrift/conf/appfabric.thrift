@@ -198,7 +198,7 @@ service AppFabricService {
   /**
    * Finalizes uploading of FAR
    */
-  void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
+  void deploy(1:AuthToken token, 2:ResourceIdentifier resource, 3:string hostname)
     throws (1: AppFabricServiceException e),
 
   /**
