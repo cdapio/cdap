@@ -223,6 +223,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
     } catch (IOException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
   }
@@ -284,6 +285,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                     runtimeInfo.getController().getState().toString());
       return new RunIdentifier(runId.getId());
     } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
   }
@@ -305,6 +307,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
     } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
   }
@@ -336,6 +339,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return result;
 
     } catch (OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw new AppFabricServiceException("Exception when getting all run histories: " + e.getMessage());
     }
   }
@@ -389,6 +393,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
     } catch(OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
                                            identifier.toString() + ", reason: " + e.getMessage());
     }
@@ -408,6 +413,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
     } catch(OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw  new AppFabricServiceException("Could not retrieve application spec for " + id.toString() + "." +
                                              e.getMessage());
     }
@@ -567,6 +573,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       sessions.put(info.getAccountId(), sessionInfo);
       return identifier;
     } catch (IOException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
   }
@@ -598,6 +605,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         throw new AppFabricServiceException("Invalid chunk received.");
       }
     } catch (IOException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException("Failed to write archive chunk");
     }
@@ -633,6 +641,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
           @Override
           public void onFailure(Throwable t) {
+            LOG.warn(StackTraceUtil.toStringStackTrace(t));
             save(sessions.get(resource.getAccountId()).setStatus(DeployStatus.FAILED));
             sessions.remove(resource.getAccountId());
           }
@@ -641,6 +650,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         stream.close();
       }
     } catch (Throwable e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       save(sessions.get(resource.getAccountId()).setStatus(DeployStatus.FAILED));
       sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException(e.getMessage());
@@ -710,7 +720,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       String message = String.format("Error deleting all meta data for " +
                                        "account '%s': %s. At %s", account, e.getMessage(),
                                      StackTraceUtil.toStringStackTrace(e));
-      LOG.error(message);
+      LOG.error(message, e);
       throw new AppFabricServiceException(message);
     }
 
@@ -726,7 +736,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       String message = String.format("Error deleting the data for " +
                                        "account '%s': %s. At %s", account, e.getMessage(),
                                      StackTraceUtil.toStringStackTrace(e));
-      LOG.error(message);
+      LOG.error(message, e);
       throw new AppFabricServiceException(message);
     }
   }
@@ -749,7 +759,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       String message = String.format("Error clearing the metrics for " +
                                        "account '%s': %s. At %s", account, e.getMessage(),
                                      StackTraceUtil.toStringStackTrace(e));
-      LOG.error(message);
+      LOG.error(message, e);
       throw new AppFabricServiceException(message);
     }
   }
@@ -783,7 +793,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         Closeables.closeQuietly(w);
       }
     } catch (IOException e) {
-      LOG.warn("Failed to write session.");
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
       return false;
     }
     return true;
