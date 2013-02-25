@@ -13,6 +13,7 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -26,7 +27,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +46,7 @@ public class SingleNodeMain {
   private InMemoryZookeeper zookeeper;
   private final WebCloudAppService webCloudAppService;
   private Gateway gateway;
+  private DiscoveryService discoveryService;
   private MetricsCollectionServerInterface overlordCollection;
   private MetricsFrontendServerInterface overloadFrontend;
   private MetadataServerInterface metaDataServer;
@@ -61,6 +62,7 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     gateway = injector.getInstance(Gateway.class);
+    discoveryService = injector.getInstance(DiscoveryService.class);
     overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
@@ -86,6 +88,7 @@ public class SingleNodeMain {
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
     int port = PortDetector.findFreePort();
+    discoveryService.startAndWait();
     zookeeper = new InMemoryZookeeper(port, zkDir);
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
 
