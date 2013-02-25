@@ -88,6 +88,7 @@ public class SingleNodeMain {
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
     int port = PortDetector.findFreePort();
+    discoveryService.startAndWait();
     zookeeper = new InMemoryZookeeper(port, zkDir);
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
 
@@ -99,7 +100,6 @@ public class SingleNodeMain {
       throw new Exception("Failed to start Application Fabric.");
     }
 
-    discoveryService.startAndWait();
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
