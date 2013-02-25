@@ -48,6 +48,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -60,6 +62,8 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class FlowTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
 
   @Test
   public void testFlow() throws Exception {
@@ -143,6 +147,7 @@ public class FlowTest {
       new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8),
       new TypeToken<Map<String, Long>>(){}.getType());
 
+    LOG.info("Procedure response: " + responseContent);
     Assert.assertEquals(ImmutableMap.of("text:Testing", 10L), responseContent);
 
     client.getConnectionManager().shutdown();

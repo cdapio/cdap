@@ -58,6 +58,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private ServerBootstrap bootstrap;
   private Channel serverChannel;
   private ChannelGroup channelGroup;
+  private BasicProcedureContext procedureContext;
 
   @Inject
   public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
@@ -84,9 +85,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       RunId runId = RunId.generate();
 
-      // FIXME: A dummy context for getting the cmetrics
-      BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId,
-                                                                ImmutableMap.<String, DataSet>of(), procedureSpec);
+      // FIXME: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
+      // HandlerMethodFactory.
+      procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
+                                                   procedureSpec);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, txAgentSupplierFactory);
       handlerMethodFactory.startAndWait();
@@ -94,7 +96,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
       bootstrap = createBootstrap(program, executionHandler, handlerMethodFactory,
-                                  context.getSystemMetrics(), channelGroup);
+                                  procedureContext.getSystemMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
       serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost().getCanonicalHostName(), 0));
@@ -201,6 +203,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
+      LOG.info("Stopping procedure: " + procedureContext);
       cancellable.cancel();
       try {
         channelGroup.close().await();
@@ -209,6 +212,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
         executionHandler.releaseExternalResources();
       }
       handlerMethodFactory.stopAndWait();
+
+      LOG.info("Procedure stopped: " + procedureContext);
     }
 
     @Override
