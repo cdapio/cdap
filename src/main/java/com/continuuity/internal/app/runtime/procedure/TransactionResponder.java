@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A {@link ProcedureResponse} that handle transaction finish/abort and forward output requests
@@ -95,10 +96,12 @@ final class TransactionResponder implements ProcedureResponder {
 
     private final ProcedureResponse.Writer delegate;
     private final TransactionAgent txAgent;
+    private final AtomicBoolean closed;
 
     private TransactionWriter(ProcedureResponse.Writer delegate, TransactionAgent txAgent) {
       this.delegate = delegate;
       this.txAgent = txAgent;
+      this.closed = new AtomicBoolean(false);
     }
 
     @Override
@@ -167,6 +170,9 @@ final class TransactionResponder implements ProcedureResponder {
 
     @Override
     public void close() throws IOException {
+      if (!closed.compareAndSet(false, true)) {
+        return;
+      }
       try {
         delegate.close();
         txAgent.finish();
