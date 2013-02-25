@@ -278,7 +278,7 @@ public class IndexedTable extends DataSet {
     }
 
     // index column is affected. Perform the increment synchronously
-    Long newIndexValue = this.table.increment(increment).get(this.column);
+    Long newIndexValue = this.table.incrementAndGet(increment).get(this.column);
     if (newIndexValue == null) {
       // should never happen (we checked that it was in the increment columns)
       // but if it does, we are done;
