@@ -235,7 +235,15 @@ public final class FlowProgramRunner implements ProgramRunner {
       }
     }
 
-    private void changeInstances(String flowletName, final int newInstanceCount)
+    /**
+     * Change the number of instances of the running flowlet. Notice that this method needs to be
+     * synchronized as change of instances involves multiple steps that need to be completed all at once.
+     * @param flowletName Name of the flowlet
+     * @param newInstanceCount New instance count
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    private synchronized void changeInstances(String flowletName, final int newInstanceCount)
                                                       throws ExecutionException, InterruptedException {
       Map<Integer, ProgramController> liveFlowlets = flowlets.row(flowletName);
       int liveCount = liveFlowlets.size();
@@ -250,9 +258,20 @@ public final class FlowProgramRunner implements ProgramRunner {
       decreaseInstances(flowletName, newInstanceCount, liveFlowlets, liveCount);
     }
 
-    private void increaseInstances(String flowletName, final int newInstanceCount, Map<Integer, ProgramController>
-      liveFlowlets, int liveCount) throws InterruptedException, ExecutionException {
-      // Wait for all running flowlets completed changing number of instances.
+    private synchronized void increaseInstances(String flowletName, final int newInstanceCount,
+                                                Map<Integer, ProgramController> liveFlowlets, int liveCount)
+                                                            throws InterruptedException, ExecutionException {
+      // First pause all flowlets
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.suspend();
+          }
+        })).get();
+
+      // Then change instance count of current flowlets
       Futures.successfulAsList(Iterables.transform(
         liveFlowlets.values(),
         new Function<ProgramController, ListenableFuture<?>>() {
@@ -262,7 +281,17 @@ public final class FlowProgramRunner implements ProgramRunner {
           }
         })).get();
 
-      // Create more instances
+      // Next resume all current flowlets
+      Futures.successfulAsList(Iterables.transform(
+        liveFlowlets.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.resume();
+          }
+        })).get();
+
+      // Last create more instances
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
                      startFlowlet(program, new FlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
@@ -270,8 +299,9 @@ public final class FlowProgramRunner implements ProgramRunner {
     }
 
 
-    private void decreaseInstances(String flowletName, final int newInstanceCount, Map<Integer, ProgramController>
-      liveFlowlets, int liveCount) throws InterruptedException, ExecutionException {
+    private synchronized void decreaseInstances(String flowletName, final int newInstanceCount,
+                                                Map<Integer, ProgramController> liveFlowlets, int liveCount)
+                                                            throws InterruptedException, ExecutionException {
       // Shrink number of flowlets
       // First stop the extra flowlets
       List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
@@ -300,7 +330,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           }
         })).get();
 
-      // Last resume all instances
+      // Last resume all remaing flowlets
       Futures.successfulAsList(Iterables.transform(
         liveFlowlets.values(),
         new Function<ProgramController, ListenableFuture<?>>() {

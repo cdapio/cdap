@@ -207,15 +207,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       @Override
       protected void doCommand(String name, Object value) throws Exception {
+        Preconditions.checkState(getState() == State.SUSPENDED,
+                                 "Cannot change instance count when flowlet is running.");
         if (!"instances".equals(name) || !(value instanceof Integer)) {
           return;
         }
         int instances = (Integer)value;
-        LOG.info("Change flowlet instance count: " + flowletName + ", new count is " + instances);
-        driver.suspend();
+        LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
         flowletContext.setInstanceCount(instances);
-        driver.resume();
-        LOG.info("Flowlet instance count changed: " + flowletName + ", new count is " + instances);
+        LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
       }
     };
   }
