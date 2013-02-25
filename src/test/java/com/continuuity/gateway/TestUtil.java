@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
@@ -238,7 +239,7 @@ public class TestUtil {
   public static void verifyQueueInfo(OperationExecutor executor,
                                      int port, String prefix, String path,
                                      String stream)
-      throws Exception {
+    throws OperationException, IOException {
     // get the queue info from opex
     byte[] queueName = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
                                 .toString().getBytes();
