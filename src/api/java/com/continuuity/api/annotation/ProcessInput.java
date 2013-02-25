@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface Process {
+public @interface ProcessInput {
 
   /**
    * Optionally tag the name of inputs to the process method.

@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.flowlet.InputContext;
-import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.app.queue.InputDatum;
+import com.continuuity.data.operation.executor.TransactionAgent;
 
 import java.nio.ByteBuffer;
 

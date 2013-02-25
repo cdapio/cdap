@@ -7,7 +7,7 @@ package com.continuuity.internal.app.runtime.flow;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
@@ -305,16 +305,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
       // Extracts all process methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
-        Process processAnnotation = method.getAnnotation(Process.class);
-        if (!method.getName().startsWith(FlowletDefinition.PROCESS_METHOD_PREFIX) && processAnnotation == null) {
+        ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
+        if (!method.getName().startsWith(FlowletDefinition.PROCESS_METHOD_PREFIX) && processInputAnnotation == null) {
           continue;
         }
 
         Set<String> inputNames;
-        if (processAnnotation == null || processAnnotation.value().length == 0) {
+        if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
           inputNames = ImmutableSet.of(FlowletDefinition.ANY_INPUT);
         } else {
-          inputNames = ImmutableSet.copyOf(processAnnotation.value());
+          inputNames = ImmutableSet.copyOf(processInputAnnotation.value());
         }
 
         try {

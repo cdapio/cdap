@@ -10,6 +10,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -238,7 +239,7 @@ public class MDSBasedStoreTest {
       super(name);
     }
 
-    @com.continuuity.api.annotation.Process("process")
+    @ProcessInput("process")
     public void bar(String str) {
       output.emit(str);
     }
