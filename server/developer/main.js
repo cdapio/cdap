@@ -171,7 +171,7 @@ app.get('/destinations', function  (req, res) {
 				port: config['accounts-port']
 			};
 
-			https.request(options, function(response) {
+			var request = https.request(options, function(response) {
 				var data = '';
 				response.on('data', function (chunk) {
 					data += chunk;
@@ -183,7 +183,27 @@ app.get('/destinations', function  (req, res) {
 					res.end();
 
 				});
-			}).end();
+			});
+
+			request.on('error', function () {
+
+				res.write('network');
+				res.end();
+
+			});
+
+			request.on('socket', function (socket) {
+				socket.setTimeout(10000);  
+				socket.on('timeout', function() {
+
+					request.abort();
+					res.write('network');
+					res.end();
+
+				});
+			});
+
+			request.end();
 
 		}
 
@@ -226,6 +246,29 @@ app.on('error', function () {
 	process.exit(1);
 });
 
+function getLocalHost () {
+
+	var os = require('os');
+	var ifaces = os.networkInterfaces();
+	var localhost = '';
+
+	for (var dev in ifaces) {
+		var alias=0;
+		ifaces[dev].forEach(function(details){
+			if (details.family=='IPv4') {
+				++alias;
+				console.log(dev, details);
+				if (dev === 'lo0') {
+					localhost = details.address;
+				}
+			}
+		});
+	}
+
+	return localhost;
+	
+}
+
 /**
  * Read configuration and start the server.
  */
@@ -236,9 +279,15 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 	parser.parseString(result, function (err, result) {
 
 		result = result.property;
+		var localhost = getLocalHost();
+
+		console.log(localhost);
 
 		for (var item in result) {
 			item = result[item];
+			if (item.value === 'localhost') {
+				item.value = localhost;
+			}
 			config[item.name] = item.value;
 		}
 

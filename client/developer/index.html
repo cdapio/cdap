@@ -325,7 +325,7 @@
         <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
         <li class="active"><a href="#">Logs</a></li>
       </ul>
-      <h1>{{current.name}} <span>Query</span></h1>
+      <h1>{{current.name}} <span>Procedure</span></h1>
     </div>
 
     <div id="panels">
@@ -452,33 +452,23 @@
         <li class="active"><a href="#">Status</a></li>
         <li><a href="#" {{action "goToLog" on="click"}}>Logs</a></li>
       </ul>
-      <h1>{{current.name}} <span>Query</span></h1>
+      <h1>{{current.name}} <span>Procedure</span></h1>
     </div>
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
-      <div id="action-buttons" class="btn-group" style="float: right;">
+        <div id="action-buttons" class="btn-group pull-right">
 
+          <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "delete" on="click"}} {{bindAttr state="current.currentState"}} {{bindAttr flowId="current.id"}} {{bindAttr applicationId="current.application"}}>Delete This Procedure</a></li>
+          </ul>
 
-
-        <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
-
-          {{#unless ENV.isCloud}}
-            <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} flow-action="Drain"><span class="btn-drain" />Push</button>
-          {{/unless}}
-
-        <button class="btn dropdown-toggle" data-toggle="dropdown">
-          <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-          <li><a {{action "delete" on="click"}} {{bindAttr state="current.currentState"}} {{bindAttr flowId="current.id"}} {{bindAttr applicationId="current.application"}}>Delete This Query</a></li>
-          
-          {{#unless ENV.isCloud}}
-            <li class="divider"></li>
-            <li><a href="#" {{action "promote" on="click"}} {{bindAttr flowId="current.id"}} {{bindAttr applicationId="current.application"}}>Push to Cloud</a></li>
-          {{/unless}}
-
-        </ul>
+          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+        
         </div>
+
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
 
       </div>

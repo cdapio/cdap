@@ -36,7 +36,7 @@ define([], function () {
 				//
 				C.get('manager', {
 					method: 'status',
-					params: [app, id, -1, null, 'QUERY']
+					params: [app, id, -1, 'QUERY']
 				}, function (error, response) {
 
 					if (response.params) {
@@ -132,7 +132,7 @@ define([], function () {
 
 			C.get('manager', {
 				method: 'status',
-				params: [app, id, -1]
+				params: [app, id, -1, 'QUERY']
 			}, function (error, response) {
 
 				if (response.params && self.get('current')) {
