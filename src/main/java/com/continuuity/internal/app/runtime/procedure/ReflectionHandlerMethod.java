@@ -43,7 +43,9 @@ final class ReflectionHandlerMethod implements HandlerMethod {
       } catch (Throwable t) {
         LOG.error("Exception in calling procedure handler: " + method, t);
         try {
-          txResponder.error(ProcedureResponse.Code.FAILURE, "Exception in procedure: " + t.getMessage());
+          Throwable cause = t.getCause();
+          txResponder.error(ProcedureResponse.Code.FAILURE,
+                            cause + " at " + getFirstStackTrace(cause));
         } catch (IOException e) {
           LOG.error("Fail to close response on error.", t);
         }
@@ -56,5 +58,19 @@ final class ReflectionHandlerMethod implements HandlerMethod {
       LOG.error("Handle method failure.", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  private String getFirstStackTrace(Throwable cause) {
+    if (cause == null) {
+      return "";
+    }
+    StackTraceElement[] stackTrace = cause.getStackTrace();
+    if (stackTrace.length <= 0) {
+      return "";
+    }
+    StackTraceElement element = stackTrace[0];
+    return String.format("%s.%s(%s:%d)",
+                         element.getClassName(), element.getMethodName(),
+                         element.getFileName(), element.getLineNumber());
   }
 }
