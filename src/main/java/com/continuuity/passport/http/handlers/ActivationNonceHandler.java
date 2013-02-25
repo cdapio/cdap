@@ -31,6 +31,12 @@ public class ActivationNonceHandler extends PassportHandler {
     this.dataManagementService = dataManagementService;
   }
 
+  @GET
+  @Produces("text/plain")
+  public Response status(){
+    return Response.ok("OK").build();
+  }
+
   @Path("generateActivationKey/{id}")
   @GET
   @Produces("application/json")
