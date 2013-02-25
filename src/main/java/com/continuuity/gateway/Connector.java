@@ -3,6 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 
@@ -45,6 +46,11 @@ public abstract class Connector {
    * This will be used to collect connector metrics
    */
   private CMetrics metrics = new CMetrics(MetricType.System);
+
+  /**
+   * This is for discovery service.
+   */
+  private DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * This will be used for zookeeper client discovery by all connectors
@@ -110,10 +116,19 @@ public abstract class Connector {
     return this.metricsQualifier;
   }
 
+  void setDiscoverServiceClient(DiscoveryServiceClient client) {
+    discoveryServiceClient = client;
+  }
+
+  public DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
+  }
+
   /**
    * Set the service discovery client, should only be called by Gateway main
    * @param discovery the discovery client to use
    */
+  @Deprecated
   void setServiceDiscovery(ServiceDiscovery discovery) {
     this.serviceDiscovery = discovery;
   }
@@ -122,6 +137,7 @@ public abstract class Connector {
    * Get the service discovery client of this connector, to be called by
    * implementing subclasses.
    */
+  @Deprecated
   public ServiceDiscovery getServiceDiscovery() {
     return serviceDiscovery;
   }
