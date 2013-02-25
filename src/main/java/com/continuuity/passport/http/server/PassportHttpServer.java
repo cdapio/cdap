@@ -80,7 +80,8 @@ public class PassportHttpServer {
       LOG.info(String.format("Port: %d",port));
       LOG.info(String.format("Threads: %d",maxThreads));
       for(Map.Entry<String,String> e: configuration.entrySet()){
-        LOG.info("Config %s: %s", e.getKey(),e.getValue());
+        LOG.info(String.format("Config %s : %s", e.getKey(),e.getValue()));
+        System.out.println(e.getKey()+" "+e.getValue());
       }
 
       server.start();
@@ -101,7 +102,8 @@ public class PassportHttpServer {
 
     String jdbcType = conf.get("passport.jdbc.type","mysql");
     String connectionString  = conf.get("passport.jdbc.connection.string",
-                                        "jdbc:mysql://localhost:3306/passport?user=root");
+                                        "jdbc:mysql://localhost:3306/passport?user=root&" +
+                                        "zeroDateTimeBehavior=convertToNull");
 
     int port = conf.getInt("passport.http.server.port", 7777);
     int gracefulShutdownTime = conf.getInt("passport.http.graceful.shutdown.time",10000);
