@@ -10,9 +10,9 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
-public class WordCounterFlowlet extends AbstractFlowlet {
+public class Counter extends AbstractFlowlet {
 
-  public WordCounterFlowlet() {
+  public Counter() {
     super("wordCounter");
   }
 

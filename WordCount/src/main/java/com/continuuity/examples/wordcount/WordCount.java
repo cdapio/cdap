@@ -18,11 +18,11 @@ public class WordCount implements Application {
         .add(new Table("wordStats"))
         .add(new KeyValueTable("wordCounts"))
         .add(new UniqueCountTable("uniqueCount"))
-        .add(new WordAssocTable("wordAssocs"))
+        .add(new AssociationTable("wordAssocs"))
       .withFlows()
         .add(new WordCounter())
       .withProcedures()
-        .add(new WordCountProcedure())
+        .add(new RetrieveCounts())
       .build();
   }
 }
