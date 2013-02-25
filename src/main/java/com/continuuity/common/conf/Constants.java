@@ -55,6 +55,7 @@ public class Constants {
   /**
    * App Fabric Server
    */
+  public static final String CFG_APP_FABRIC_SERVER_ADDRESS = "app.server.address";
   public static final String CFG_APP_FABRIC_SERVER_PORT = "app.server.port";
   public static final String CFG_APP_FABRIC_OUTPUT_DIR  = "app.output.dir";
   public static final String CFG_APP_FABRIC_TEMP_DIR    = "app.temp.dir";
@@ -63,6 +64,7 @@ public class Constants {
    * Default.
    */
   public static final int DEFAULT_APP_FABRIC_SERVER_PORT = 45000;
+  public static final String DEFAULT_APP_FABRIC_SERVER_ADDRESS = "localhost";
 
   /**
    * Configuration key names used by resource manager.
