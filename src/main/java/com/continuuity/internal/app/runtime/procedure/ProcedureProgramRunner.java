@@ -52,6 +52,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
   private final DiscoveryService discoveryService;
 
+  private ProcedureHandlerMethodFactory handlerMethodFactory;
+
   private ExecutionHandler executionHandler;
   private ServerBootstrap bootstrap;
   private Channel serverChannel;
@@ -83,13 +85,15 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       RunId runId = RunId.generate();
 
       // FIXME: A dummy context for getting the cmetrics
-      BasicProcedureContext context = new BasicProcedureContext(program, instanceId, runId,
+      BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId,
                                                                 ImmutableMap.<String, DataSet>of(), procedureSpec);
+
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, txAgentSupplierFactory);
+      handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
-      bootstrap = createBootstrap(program, executionHandler,
-                                  createHandlerMethodFactory(program, runId, instanceId),
+      bootstrap = createBootstrap(program, executionHandler, handlerMethodFactory,
                                   context.getSystemMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
@@ -135,22 +139,6 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     return bootstrap;
   }
 
-
-  private HandlerMethodFactory createHandlerMethodFactory(final Program program,
-                                                          final RunId runId,
-                                                          final int instanceId) {
-    return new HandlerMethodFactory() {
-      @Override
-      public HandlerMethod create() {
-        try {
-          return new ProcedureHandlerMethod(program, runId, instanceId, txAgentSupplierFactory);
-        } catch (ClassNotFoundException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
-  }
-
   private ExecutionHandler createExecutionHandler() {
     ThreadFactory threadFactory = new ThreadFactory() {
       private final ThreadGroup threadGroup = new ThreadGroup("procedure-thread");
@@ -164,10 +152,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       }
     };
 
+    // Thread pool of max size = MAX_HANDLER_THREADS and will reject new tasks by throwing exceptions
+    // The pipeline should have handler to catch the exception and response with status 503.
     return new ExecutionHandler(new ThreadPoolExecutor(0, MAX_HANDLER_THREADS,
                                                        60L, TimeUnit.SECONDS,
                                                        new SynchronousQueue<Runnable>(),
-                                                       threadFactory, new ThreadPoolExecutor.CallerRunsPolicy()));
+                                                       threadFactory, new ThreadPoolExecutor.AbortPolicy()));
   }
 
   private Discoverable createDiscoverable(Program program, Channel serverChannel) {
@@ -218,6 +208,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
         bootstrap.releaseExternalResources();
         executionHandler.releaseExternalResources();
       }
+      handlerMethodFactory.stopAndWait();
     }
 
     @Override

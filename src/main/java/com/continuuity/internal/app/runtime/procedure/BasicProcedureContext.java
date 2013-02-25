@@ -30,8 +30,8 @@ final class BasicProcedureContext implements ProcedureContext {
   private final CMetrics systemMetrics;
   private final ProcedureMetrics procedureMetrics;
 
-  BasicProcedureContext(Program program, int instanceId, RunId runId,
-                        Map<String, DataSet> datasets, ProcedureSpecification procedureSpec) {
+  BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
+                        ProcedureSpecification procedureSpec) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
     this.procedureId = program.getProgramName();
@@ -42,6 +42,11 @@ final class BasicProcedureContext implements ProcedureContext {
     this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
     this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
                                                  getProcedureId(), getRunId().toString(), getInstanceId());
+  }
+
+  @Override
+  public String toString() {
+    return String.format("procedure=%s, instance=%d, runid=%s", getProcedureId(), getInstanceId(), getRunId());
   }
 
   @Override

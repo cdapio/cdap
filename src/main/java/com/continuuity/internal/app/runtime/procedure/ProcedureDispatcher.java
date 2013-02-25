@@ -109,8 +109,15 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
       return;
     }
 
-    // Lookup the request handler
-    handlerMethod.get().handle(request, new HttpProcedureResponder(channel));
+    // Lookup the request handler and handle
+    HandlerMethod handler;
+    try {
+      handler = handlerMethod.get();
+    } catch (Throwable t) {
+      errorResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR, channel, "Fail to get procedure.");
+      return;
+    }
+    handler.handle(request, new HttpProcedureResponder(channel));
   }
 
   private ProcedureRequest createProcedureRequest(HttpRequest request, Channel channel, String requestMethod) {

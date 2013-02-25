@@ -6,6 +6,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
+import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
@@ -50,7 +51,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
-    context = new BasicProcedureContext(program, instanceId, runId,
+    context = new BasicProcedureContext(program, runId, instanceId,
                                         DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
                                         procedureSpec);
 
@@ -58,6 +59,25 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     procedure = new InstantiatorFactory().get(procedureType).create();
     injectFields(procedure, procedureType, context);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+  }
+
+  public Procedure getProcedure() {
+    return procedure;
+  }
+
+  public ProcedureContext getContext() {
+    return context;
+  }
+
+  public void init() {
+    try {
+      LOG.info("Initializing procedure: " + context);
+      procedure.initialize(context);
+      LOG.info("Procedure initialized: " + context);
+    } catch (Throwable t) {
+      LOG.error("Procedure throws exception during init.", t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
