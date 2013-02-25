@@ -10,6 +10,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -18,6 +19,8 @@ import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -31,6 +34,7 @@ import java.io.StringWriter;
  * @see SandboxConfigurator
  */
 public final class InMemoryConfigurator implements Configurator {
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
   /**
    * JAR file path.
    */
@@ -132,7 +136,8 @@ public final class InMemoryConfigurator implements Configurator {
         try {
           writer.close();
         } catch(IOException e) {
-          Futures.immediateFailedFuture(e);
+          LOG.debug(StackTraceUtil.toStringStackTrace(e));
+          return Futures.immediateFailedFuture(e);
         }
       }
     }
