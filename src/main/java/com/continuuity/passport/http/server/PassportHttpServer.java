@@ -19,6 +19,8 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
 import org.mortbay.thread.QueuedThreadPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
@@ -35,6 +37,7 @@ public class PassportHttpServer {
   private final int maxThreads;
 
   private final Map<String, String> configuration;
+  private static final Logger LOG = LoggerFactory.getLogger(PassportHttpServer.class);
 
   public PassportHttpServer(int port, Map<String, String> configuration,
                             int maxThreads, int gracefulShutdownTime) {
@@ -73,11 +76,20 @@ public class PassportHttpServer {
       server.getContainer().addEventListener(mBeanContainer);
       mBeanContainer.start();
 
+      LOG.info("Starting the server with the following parameters");
+      LOG.info(String.format("Port: %d",port));
+      LOG.info(String.format("Threads: %d",maxThreads));
+      for(Map.Entry<String,String> e: configuration.entrySet()){
+        LOG.info("Config %s: %s", e.getKey(),e.getValue());
+      }
+
       server.start();
       server.join();
+      LOG.info("Server started Successfully");
 
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Error while starting server");
+      LOG.error(e.getMessage());
     }
   }
 
@@ -86,9 +98,6 @@ public class PassportHttpServer {
     Map<String, String> config = new HashMap<String, String>();
 
     CConfiguration conf = CConfiguration.create();
-
-    //TODO: Remove this.
-    conf.addResource("continuuity-passport.xml");
 
     String jdbcType = conf.get("passport.jdbc.type","mysql");
     String connectionString  = conf.get("passport.jdbc.connection.string",
