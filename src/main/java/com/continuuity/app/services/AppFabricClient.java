@@ -247,7 +247,7 @@ public class AppFabricClient {
 
   private void printHelp(Options options) {
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp("AppFabricClient help|deploy|start|stop|status|verify|promote| [OPTIONS]", options);
+    formatter.printHelp("AppFabricClient help|deploy|start|stop|status|verify|promote [OPTIONS]", options);
   }
 
   public static void main(String[] args) throws TException, AppFabricServiceException {
