@@ -56,7 +56,7 @@ public class VPCHandler extends PassportHandler {
       }
     } catch (Exception e) {
       requestFailed();
-      return Response.status(Response.Status.BAD_REQUEST)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e)))
         .build();
     }
