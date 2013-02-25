@@ -203,12 +203,15 @@ public final class QueryRestHandler extends NettyRestHandler {
           int contentLength = (int)entity.getContentLength();
           if (contentLength > 0) {
             content = ChannelBuffers.dynamicBuffer(contentLength);
-            InputStream input = entity.getContent();
-            try {
-              ByteStreams.copy(input, new ChannelBufferOutputStream(content));
-            } finally {
-              input.close();
-            }
+          } else {
+            // the transfer encoding is usually chunked, so no content length is provided. Just trying to read anything
+            content = ChannelBuffers.dynamicBuffer();
+          }
+          InputStream input = entity.getContent();
+          try {
+            ByteStreams.copy(input, new ChannelBufferOutputStream(content));
+          } finally {
+            input.close();
           }
         }
       } catch (Exception e) {
