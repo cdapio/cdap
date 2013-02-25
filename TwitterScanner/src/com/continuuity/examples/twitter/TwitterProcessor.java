@@ -3,46 +3,29 @@
  */
 package com.continuuity.examples.twitter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class TwitterProcessor extends AbstractFlowlet {
-  private OutputEmitter<Map<String, Object>> output;
 
-  @UseDataSet(TwitterFlow.topHashTags)
+  @UseDataSet(TwitterScanner.topHashTags)
   private SortedCounterTable topHashTags;
 
-  @UseDataSet(TwitterFlow.topUsers)
+  @UseDataSet(TwitterScanner.topUsers)
   private SortedCounterTable topUsers;
 
-  @UseDataSet(TwitterFlow.topUsers)
+  @UseDataSet(TwitterScanner.topUsers)
   private CounterTable wordCounts;
 
-  @UseDataSet(TwitterFlow.hashTagWordAssocs)
+  @UseDataSet(TwitterScanner.hashTagWordAssocs)
   private CounterTable hashTagWordAssocs;
 
-  public TwitterProcessor() {
-    super("Processors");
-  }
-
-  public FlowletSpecification configure() {
-    return FlowletSpecification.Builder.with()
-      .setName(getName())
-      .setDescription(getDescription())
-      .useDataSet(TwitterFlow.topHashTags, TwitterFlow.topUsers, TwitterFlow.topUsers, TwitterFlow.hashTagWordAssocs)
-      .build();
-  }
-
-  public void process(Tweet tweet) {
+  public void process(Tweet tweet) throws OperationException {
     String [] words = tweet.getText().split("\\s+");
 
     List<String> goodWords = new ArrayList<String>(words.length);
@@ -55,38 +38,22 @@ public class TwitterProcessor extends AbstractFlowlet {
     for (String word : goodWords) {
       if (word.startsWith("#")) {
         // Track top hash tags
-        Long incrementedPrimaryCount = topHashTags.performPrimaryCounterIncrement(
-          TwitterFlow.HASHTAG_SET, Bytes.toBytes(word), 1L);
-        if (incrementedPrimaryCount != null) {
-          Map<String, Object> outTuple=new HashMap<String, Object>();
-          outTuple.put("name", word);
-          outTuple.put("value", incrementedPrimaryCount);
-          output.emit(outTuple);
-        }
-        // And for every hash tag, track word associations
+        topHashTags.increment(
+            TwitterScanner.HASHTAG_SET, Bytes.toBytes(word), 1L);
+        // For every hash tag, track word associations
         for (String corWord : goodWords) {
           if (corWord.startsWith("#")) continue;
-//          System.out.println("Correlating (" + word + ") with (" + corWord + ")");
-          try {
-            hashTagWordAssocs.incrementCounterSet(word, corWord, 1L);
-          } catch (OperationException e) {
-            // This doesn't seem to work any way I try :(
-            e.printStackTrace();
-          }
+          hashTagWordAssocs.incrementCounterSet(word, corWord, 1L);
         }
       } else {
         // Track word counts
-        wordCounts.incrementCounterSet(TwitterFlow.WORD_SET, Bytes.toBytes(word), 1L);
+        wordCounts.incrementCounterSet(
+            TwitterScanner.WORD_SET, Bytes.toBytes(word), 1L);
       }
     }
+
     // Track top users
-    Long incrementedPrimaryCount = topUsers.performPrimaryCounterIncrement(
-      TwitterFlow.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
-    if (incrementedPrimaryCount != null) {
-      Map<String, Object> outTuple=new HashMap<String, Object>();
-      outTuple.put("name", tweet.getUser());
-      outTuple.put("value", incrementedPrimaryCount);
-      output.emit(outTuple);
-    }
+    topUsers.increment(
+      TwitterScanner.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
   }
 }
