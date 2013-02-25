@@ -1,7 +1,9 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.collect.AllCollector;
 import com.continuuity.common.collect.Collector;
 import com.continuuity.common.collect.FirstNCollector;
@@ -13,8 +15,8 @@ import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
+import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.streamevent.DefaultStreamEvent;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -730,12 +732,11 @@ public class StreamClient {
     // exit with error in case fails
     if (value == null) System.exit(1);
   }
-  //Todo: Id must not start with digit
-  private boolean isId(final String name) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
+
+  private boolean isId(String id) {
+    StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
+    StreamVerification verifier = new StreamVerification();
+    VerifyResult result = verifier.verify(spec);
+    return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 }

@@ -78,7 +78,7 @@ public class FlumeClient {
         "To specify an API key for authentication");
     out.println("  --stream <id>         " +
         "To specify the destination event stream of the");
-    out.println("                          form <flow> or <flow>/<stream>.");
+    out.println("                          <stream>.");
     out.println("  --header <name> <value> " +
         "To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
