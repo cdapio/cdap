@@ -1,50 +1,30 @@
 package com.continuuity.examples.simplewriteandread;
 
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.examples.simplewriteandread.SimpleWriteAndReadFlow.KeyAndValue;
 
 public class WriterFlowlet extends AbstractFlowlet {
   private static Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
 
-  @UseDataSet(Common.tableName)
+  @UseDataSet(SimpleWriteAndRead.tableName)
   KeyValueTable kvTable;
 
   private OutputEmitter<byte[]> output;
 
-  public WriterFlowlet() {
-    super("writer");
-  }
+  public void process(KeyAndValue kv) throws OperationException {
+    LOG.debug(this.getContext().getName() + ": Received KeyValue " + kv);
 
-  public FlowletSpecification configure() {
-    return FlowletSpecification.Builder.with()
-      .setName(getName())
-      .setDescription(getDescription())
-      .useDataSet(Common.tableName)
-      .build();
-  }
+    this.kvTable.write(
+        Bytes.toBytes(kv.getKey()), Bytes.toBytes(kv.getValue()));
 
-  public void process(Map<String, String> tupleIn) throws OperationException {
-    LOG.debug(this.getContext().getName() + ": Received tuple " + tupleIn);
-
-    // text should be in the form: key=value
-    String text = tupleIn.get("text");
-    String [] params = text.split("=");
-    if (params.length != 2) return;
-    byte [] key = params[0].getBytes();
-    byte [] value = params[1].getBytes();
-
-    this.kvTable.write(key, value);
-
-    LOG.debug(this.getContext().getName() + ": Emitting key " + key);
-
-    output.emit(key);
+    output.emit(Bytes.toBytes(kv.getKey()));
   }
 }

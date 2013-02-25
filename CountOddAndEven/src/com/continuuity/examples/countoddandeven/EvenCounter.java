@@ -8,13 +8,9 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
  */
 public class EvenCounter extends AbstractFlowlet {
 
-  private int count = 0;
+  int count = 0;
 
-  public EvenCounter() {
-    super("EvenCounter");
-  }
-
-  @Process("evenOut")
+  @Process("evenNumbers")
   public void process() {
     count++;
   }

@@ -1,26 +1,30 @@
 package com.continuuity.examples.counttokens;
 
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.stream.Stream;
 
-public class CountTokens implements Flow {
+/**
+ * CountTokens application contains a flow {@code CountTokens} and is attached
+ * to a stream named "text".  It utilizes a KeyValueTable to persist data.
+ */
+public class CountTokens implements Application {
+
+  public static final String tableName = "tokenTable";
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName("CountTokens")
-      .setDescription("")
-      .withFlowlets()
-        .add("source", new StreamSource())
-        .add("split", new Tokenizer())
-        .add("upper", new UpperCaser())
-        .add("count1", new CountByField())
-        .add("count2", new CountByField())
-      .connect()
-        .fromStream("text").to("source")
-        .from("source").to("split")
-        .from("split").to("count1")
-        .from("split").to("upper")
-      .from("upper").to("count2")
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
+      .setName("CountTokensDemo")
+      .setDescription("Example applicaiton that counts tokens")
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(tableName))
+      .withFlows()
+        .add(new CountTokensFlow())
+      .noProcedure()
       .build();
   }
 }

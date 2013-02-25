@@ -1,47 +1,44 @@
 package com.continuuity.examples.twitter;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.examples.twitter.SortedCounterTable.Counter;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
+public class TwitterProcedure extends AbstractProcedure {
+  private static Logger LOG = LoggerFactory.getLogger(TwitterProcedure.class);
 
-import static com.continuuity.examples.twitter.SortedCounterTable.Counter;
-
-public class TwitterQuery extends AbstractProcedure {
-
+  @UseDataSet(TwitterScanner.topHashTags)
   private SortedCounterTable topHashTags;
+  
+  @UseDataSet(TwitterScanner.wordCounts)
   private CounterTable wordCounts;
+  
+  @UseDataSet(TwitterScanner.hashTagWordAssocs)
   private CounterTable hashTagWordAssocs;
 
-  public TwitterQuery() {
-    super("TwitterQuery");
-  }
-
-  public ProcedureSpecification configure() {
-    return ProcedureSpecification.Builder.with()
-      .setName("CountQuery")
-      .setDescription("Example Count Query Procedure")
-      .useDataSet(TwitterFlow.topHashTags, TwitterFlow.wordCounts, TwitterFlow.hashTagWordAssocs)
-      .build();
-  }
-
-  @Handle("handle")
-  public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+  @Handle("twitter")
+  public void handle(ProcedureRequest request, ProcedureResponder responder)
+      throws IOException {
 
     final Map<String, String> args = request.getArguments();
-    String method=request.getMethod();
+    String method = request.getMethod();
 
     if (!method.equals("getTopTags")) {
       String msg = "Invalid method: " + method;
+      LOG.error(msg);
       responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
       return;
     }
@@ -54,7 +51,8 @@ public class TwitterQuery extends AbstractProcedure {
     StringBuilder sb = new StringBuilder();
     sb.append("{tags:[");
     try {
-      List<Counter> topTags = this.topHashTags.readTopCounters(TwitterFlow.HASHTAG_SET, limit);
+      List<Counter> topTags = this.topHashTags.readTopCounters(
+          TwitterScanner.HASHTAG_SET, limit);
       boolean first = true;
       for (Counter topTag : topTags) {
         String tag = new String(topTag.getName());
@@ -76,22 +74,22 @@ public class TwitterQuery extends AbstractProcedure {
           sb.append(Long.toString(assoc.getValue()));
           sb.append(",\"total_count\":");
           sb.append(Long.valueOf(
-              this.wordCounts.readCounterSet(TwitterFlow.WORD_SET,
+              this.wordCounts.readCounterSet(TwitterScanner.WORD_SET,
                   assoc.getKey().getBytes())));
           sb.append("}");
         }
         sb.append("]}");
       }
     } catch (OperationException e) {
-      e.printStackTrace();
       String msg = "Read operation failed: " + e.getMessage();
+      LOG.error(msg, e);
       responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE));
       return;
     }
     sb.append("]}");
     ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
     try {
-      writer.write(ByteBuffer.wrap(sb.toString().getBytes(Charset.forName("UTF-8"))));
+      writer.write(Bytes.toBytes(sb.toString()));
     } finally {
       writer.close();
     }

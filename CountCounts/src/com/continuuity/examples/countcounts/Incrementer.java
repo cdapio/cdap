@@ -1,48 +1,28 @@
 package com.continuuity.examples.countcounts;
 
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 public class Incrementer extends AbstractFlowlet {
   private static Logger LOG = LoggerFactory.getLogger(Incrementer.class);
 
-  static String keyTotal = ":sinkTotal:";
+  @UseDataSet(CountCounts.tableName)
+  CountCounterTable counters;
 
-  @UseDataSet(Common.tableName)
-  CounterTable counters;
+  public void process(Counts counts) throws OperationException {
+    LOG.debug(this.getContext().getName() + ": Received counts " + counts);
 
-  public Incrementer() {
-    super("tick");
-  }
+    // increment the word count (and count counts)
+    this.counters.incrementWordCount(counts.getWordCount());
 
-  public FlowletSpecification configure() {
-    return FlowletSpecification.Builder.with()
-      .setName("text")
-      .setDescription("")
-      .useDataSet(Common.tableName)
-      .build();
-  }
-
-
-  public void process(Integer count) {
-    LOG.debug(this.getContext().getName() + ": Received event " + count);
-
-    if (count == null) {
-      return;
-    }
-    String key = Integer.toString(count);
-
-    LOG.debug(this.getContext().getName()  + ": Emitting Increment for " + key);
-
-    // emit an increment for the number of words in this document
-    this.counters.increment(key);
-
-    if (Common.count) {
-      // emit an increment for the total number of documents counted
-      this.counters.increment(keyTotal);
-    }
+    // increment the line count
+    this.counters.incrementLineCount();
+    
+    // increment the line length
+    this.counters.incrementLineLength(counts.getLineLength());
   }
 }

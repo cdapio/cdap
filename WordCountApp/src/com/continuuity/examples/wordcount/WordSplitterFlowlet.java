@@ -8,9 +8,6 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 
 public class WordSplitterFlowlet extends AbstractFlowlet {
 
-  public WordSplitterFlowlet() {
-    super("wordSplitter");
-  }
   @Output("wordOut")
   private OutputEmitter<String> wordOutput;
 

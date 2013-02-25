@@ -1,26 +1,30 @@
 package com.continuuity.examples.countandfilterwords;
 
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.stream.Stream;
 
-public class CountAndFilterWords implements Flow {
+/**
+ * CountAndFilterWordsDemo application contains a flow {@code CountAndFilterWords} and is attached
+ * to a stream named "text"
+ */
+public class CountAndFilterWords implements Application {
+
+  public static final String tableName = "filterTable";
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
       .setName("CountAndFilterWords")
-      .setDescription("Flow for counting words")
-      .withFlowlets()
-        .add("source", new StreamSource(), 1)
-        .add("split-words", new Tokenizer(), 1)
-        .add("upper-filter", new UpperCaseFilter(), 1)
-        .add("count-all", new CountByField(), 1)
-        .add("count-upper", new CountByField(), 1)
-      .connect()
-        .fromStream("text").to("source")
-        .from("source").to("split-words")
-        .from("split-words").to("count-all")
-        .from("split-words").to("upper-filter")
-        .from("upper-filter").to("count-upper")
+      .setDescription("Example word filter and count application")
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(tableName))
+      .withFlows()
+        .add(new CountAndFilterWordsFlow())
+      .noProcedure()
       .build();
   }
 }

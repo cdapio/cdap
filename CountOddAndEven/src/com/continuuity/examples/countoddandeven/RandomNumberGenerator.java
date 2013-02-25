@@ -1,24 +1,20 @@
 package com.continuuity.examples.countoddandeven;
 
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-
 import java.util.Random;
+
+import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 /**
  * Random number generator.
  */
-public class RandomNumberGenerator extends AbstractFlowlet implements GeneratorFlowlet{
+public class RandomNumberGenerator extends AbstractGeneratorFlowlet {
+
   Random random;
-  long millis = 0;
+  long millis = 1;
   int direction = 1;
 
   private OutputEmitter<Integer> randomOutput;
-
-  public RandomNumberGenerator() {
-    super("NumGenerator");
-  }
 
   @Override
   public void generate() throws Exception {

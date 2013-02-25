@@ -1,24 +1,30 @@
 package com.continuuity.examples.countcounts;
 
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.stream.Stream;
 
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
+/**
+ * CountCountsDemo application contains a flow {@code CountCounts} and is attached
+ * to a stream named "text"
+ */
+public class CountCounts implements Application {
 
-public class CountCounts implements Flow {
+  public static final String tableName = "tokenTable";
 
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
       .setName("CountCounts")
-      .setDescription("Flow for counting words")
-      .withFlowlets()
-        .add("source", new StreamSource())
-        .add("count", new WordCounter())
-        .add("tick", new Incrementer())
-      .connect()
-        .fromStream("text").to("source")
-        .from("source").to("count")
-        .from("count").to("tick")
+      .setDescription("Application for counting counts of words")
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new CountCounterTable(tableName))
+      .withFlows()
+        .add(new CountCountsFlow())
+      .withProcedures()
+        .add(new CountCountsProcedure())
       .build();
   }
 }

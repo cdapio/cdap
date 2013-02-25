@@ -1,42 +1,23 @@
 package com.continuuity.examples.countandfilterwords;
 
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Tokenizer extends AbstractFlowlet {
-  private static Logger LOG = LoggerFactory.getLogger(Tokenizer.class);
 
-  private OutputEmitter<Record> output;
+  @Output("tokens")
+  private OutputEmitter<String> tokenOutput;
 
-  public Tokenizer() {
-    super("split-words");
-  }
+  @Output("counts")
+  private OutputEmitter<String> countOutput;
 
-  public void process(Record record) {
-    final String[] fields = { "title", "text" };
-
-    LOG.debug(this.getContext().getName() + ": Received record with word "
-                + record.getWord() + " and field " + record.getField());
-
-    for (String field : fields) {
-      tokenize(record.getField(), field);
+  public void process(String line) {
+    // Tokenize and emit each token to the filters
+    for (String token : line.split("[ .-]")) {
+      tokenOutput.emit(token);
     }
-  }
-
-  void tokenize(String text, String field) {
-    if (text == null) {
-      return;
-    }
-    final String delimiters = "[ .-]";
-    String[] tokens = text.split(delimiters);
-
-    for (String token : tokens) {
-      LOG.debug(this.getContext().getName() + ": Emitting record with word "
-                  + token + " and field " + field);
-
-      output.emit(new Record(token, field));
-    }
+    // Also emit once to the 'all' counter
+    countOutput.emit("all");
   }
 }

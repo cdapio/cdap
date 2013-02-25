@@ -10,15 +10,11 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
  */
 public class OddOrEven extends AbstractFlowlet {
 
-  @Output("evenOut")
+  @Output("evenNumbers")
   private OutputEmitter<Integer> evenOutput;
 
-  @Output("oddOut")
+  @Output("oddNumbers")
   private OutputEmitter<Integer> oddOutput;
-
-  public OddOrEven() {
-    super("OddOrEven");
-  }
 
   public void process(Integer number) {
     if(number.intValue() % 2 == 0) {

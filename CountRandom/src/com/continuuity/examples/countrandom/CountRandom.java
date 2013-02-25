@@ -1,22 +1,27 @@
 package com.continuuity.examples.countrandom;
 
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
+/**
+ * CountRandomDemo application contains a flow {@code CountRandom}.
+ */
+public class CountRandom implements Application {
 
-public class CountRandom implements Flow {
+  public static final String tableName = "randomTable";
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
       .setName("CountRandom")
-      .setDescription("CountRandom Flow")
-      .withFlowlets()
-        .add("source", new RandomSource())
-        .add("splitter", new NumberSplitter())
-        .add("counter", new NumberCounter())
-      .connect()
-        .from("source").to("splitter")
-        .from("splitter").to("counter")
+      .setDescription("Example random count application")
+      .noStream()
+      .withDataSets()
+        .add(new KeyValueTable(tableName))
+      .withFlows()
+        .add(new CountRandomFlow())
+      .noProcedure()
       .build();
   }
 }
