@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -38,8 +37,9 @@ final class ReflectionHandlerMethod implements HandlerMethod {
     try {
       txAgent.start();
 
+      TransactionResponder txResponder = new TransactionResponder(txAgent, responder);
       try {
-        method.invoke(procedure, request, new TransactionResponder(txAgent, responder));
+        method.invoke(procedure, request, txResponder);
       } catch (Throwable t) {
         LOG.error("Exception in calling procedure handler: " + method, t);
         try {
@@ -48,12 +48,13 @@ final class ReflectionHandlerMethod implements HandlerMethod {
           LOG.error("Fail to close response on error.", t);
         }
         throw Throwables.propagate(t);
+      } finally {
+        txResponder.close();
       }
 
-    } catch (OperationException e) {
-      LOG.error("Transaction operation failure.", e);
+    } catch (Exception e) {
+      LOG.error("Handle method failure.", e);
       throw Throwables.propagate(e);
     }
   }
-
 }
