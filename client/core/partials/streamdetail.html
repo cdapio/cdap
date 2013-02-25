@@ -26,7 +26,7 @@
 <td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
 <td class="app-list-count">{{controller.current.unconsumed}}<br /><span>Events</span></td>
 <td>
-{{view C.Vw.Chart entity-type="Stream" width="306" mode="singular" metrics="stream.enqueue.stream//developer/{id}.count"}}
+{{view C.Vw.Chart entity-type="Stream" width="306" mode="singular" metrics="stream.enqueue.stream//{account_id}/{id}.count"}}
 </td>
 </tr>
 </tbody>

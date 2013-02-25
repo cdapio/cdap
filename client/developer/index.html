@@ -10,7 +10,6 @@
 
   <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="../assets/css/main.css">
-
   <link rel="stylesheet" href="./patch/assets/main.css">
 
   <script type="text/javascript" src="/core/lib/jquery.min.js"></script>
@@ -39,7 +38,8 @@
   <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a class="global-link global-user" href="#">{{user.name}}</a>
+        <a href="https://support.continuuity.com/" target="_blank">Support</a>
+        {{user.name}}
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -52,7 +52,7 @@
     <div id="content-body">
       {{outlet}}
     </div>
-    <div id="footer" style="clear: both;">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
+    <div id="footer" style="clear: both;">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
     <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
     Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset AppFabric</a></div>
   </script>
@@ -112,8 +112,9 @@
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div id="action-buttons" class="btn-group pull-right">
             <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
+              <span class="caret"></span>
+            </button>
+              <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Push</button>
           <ul class="dropdown-menu">
             <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
           </ul>
@@ -168,6 +169,9 @@
         {{view C.Vw.QueryList}}
       </div>
     </div>
+
+    {{view C.Vw.PushDetail viewName="push-detail"}}
+
   </script>
 
   <script type="text/x-handlebars" data-template-name="stream">
@@ -186,8 +190,8 @@
           </ul>
         </div>
       </div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//developer/{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//developer/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//{account_id}/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//{account_id}/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -214,7 +218,7 @@
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
             <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
-            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//developer/{id}.count"}}</td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//{account_id}/{id}.count"}}</td>
           </tr>
           {{/each}}
           </table>
@@ -256,15 +260,7 @@
             </li>
             <li class="divider"></li>
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
-            {{#unless ENV.isCloud}}
-              <li class="divider"></li>
-              <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
-            {{/unless}}
           </ul>
-
-          {{#unless ENV.isCloud}}
-            <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Push</button>
-          {{/unless}}
 
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           

@@ -24,13 +24,6 @@ body {
   src: local('HelveticaNeue-Condensed'), url(../fonts/HelveticaNeueLTStd-Cn.otf) format('opentype');
 }
 
-@font-face {
-  font-family: 'Condensed-Light';
-  font-style: normal;
-  font-weight: 400;
-  src: local('HelveticaNeue-LightCondensed'), url(../fonts/HelveticaNeueLTStd-LtCn.otf) format('opentype');
-}
-
 .table th, .table td {
 	padding: 14px;
 	border-color: #eaeaea;
@@ -210,6 +203,22 @@ a, a:visited {
 #global {
 	float: right;
 	padding: 3px;
+	color: #fff;
+	padding: 0px 20px 0px 32px;
+	background-image: url(/assets/img/global-icons.png);
+	background-position: left middle;
+	background-repeat: no-repeat;
+	line-height: 36px;
+	font-size: 14px;
+	height: 32px;
+}
+#global a {
+	color: #fff;
+	margin-left: 12px;
+	float: right;
+	height: 36px;
+	padding-left: 12px;
+	text-decoration: none;
 }
 .global-link {
 	display: block;
@@ -470,7 +479,7 @@ h1 span {
 .sparkline-flowlet-container {
 	background-image: url(../img/flowlet-sparkline-bg.png);
 	margin-right: 66px;
-	height: 76px;
+	height: 75px;
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
@@ -844,6 +853,19 @@ a.brand {
 .modal-footer .btn {
 	margin :0;
 }
+.modal-push a {
+	color: #005580 !important;
+}
+.modal-push {
+	padding: 0px 15px 15px;
+	min-height: 114px;
+}
+.modal-push input[type=text] {
+	width: 308px;
+}
+.modal-push select {
+	width: 322px;
+}
 .table {
 	margin: 0;
 }
@@ -1133,6 +1155,7 @@ a strong {
 	float: right;
 	cursor: pointer;
 	font-size: 22px;
+	line-height: 18px;
 	width: 22px;
 	height: 22px;
 	text-align: center;
@@ -1142,7 +1165,7 @@ a strong {
 	color: white;
 	box-shadow: 1px 1px 4px rgba(0, 0, 0, .35);
 }
-.popup-icon, .popup-icon-stream {
+.popup-icon, .popup-icon-stream, .popup-icon-cloud {
 	float: left;
 	width: 32px;
 	height: 32px;
@@ -1153,8 +1176,11 @@ a strong {
 	border-top: 1px solid #eaeaea;
 }
 .popup-icon-stream {
-	background-position: 0px 32px;
+	background-position: 0px -32px;
 }
+ .popup-icon-cloud {
+ 		background-position: 0px -64px;
+ }
 .popup-title {
 	line-height: 36px;
 	padding: 12px 0px 12px 52px;
@@ -1233,7 +1259,7 @@ a strong {
 
 .flowlet-popup-empty {
 	background-color: rgba(255, 255, 255, 0.9);
-	line-height: 215px;
+	line-height: 214px;
 	text-align: center;
 
 }
@@ -1501,6 +1527,16 @@ ol {
 .window-3 {
 	margin-top: 216px;
 }
+.window-4 {
+	margin-top: 278px;
+}
+.window-5 {
+	margin-top: 340px;
+}
+.window-6 {
+	margin-top: 402px;
+}
+
 .window-input {
 	height: 54px;
 	position: absolute;
