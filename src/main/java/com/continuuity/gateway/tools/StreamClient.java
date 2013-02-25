@@ -450,7 +450,7 @@ public class StreamClient {
                       new FirstNCollector<StreamEvent>(10, StreamEvent.class);
       try {
         StreamEvent[] events =
-            fetchAll(requestUrl + "?q=dequeue", consumer, collector);
+            fetchAll(requestUrl, consumer, collector);
         return printEvents(events);
       } catch (Exception e) {
         System.err.println(e.getMessage());
