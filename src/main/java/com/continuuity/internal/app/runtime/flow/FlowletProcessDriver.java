@@ -46,6 +46,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
   private static final int PROCESS_MAX_RETRY = 2;
+  private static final String INPUT_METRIC_POSTFIX = FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in";
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -197,10 +198,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
 
-          flowletContext.getSystemMetrics().counter(input.getInputContext().getName() +
-                                                      FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in", 1);
-
           if (processMethod.needsInput()) {
+            flowletContext.getSystemMetrics().counter(input.getInputContext().getName() + INPUT_METRIC_POSTFIX, 1);
             flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
           }
           entry.nextDeque = 0;
