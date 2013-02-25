@@ -31,7 +31,11 @@
 				</div>
 			{{else}}
 				<div style="padding: 16px 0px;">
-					{{message}}
+				{{#if view.network}}
+					There was a problem connecting to Continuuity. Please check your internet connection.
+				{{else}}
+					There are no destinations available. Make sure your API Key is correct.<br /><br />If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home</a> page.</div>
+				{{/if}}
 				</div>
 			{{/if}}
 		{{/if}}

@@ -257,7 +257,6 @@ function getLocalHost () {
 		ifaces[dev].forEach(function(details){
 			if (details.family=='IPv4') {
 				++alias;
-				console.log(dev, details);
 				if (dev === 'lo0') {
 					localhost = details.address;
 				}
@@ -280,8 +279,6 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 
 		result = result.property;
 		var localhost = getLocalHost();
-
-		console.log(localhost);
 
 		for (var item in result) {
 			item = result[item];

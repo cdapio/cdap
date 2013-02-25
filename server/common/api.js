@@ -224,7 +224,7 @@ logger.setLevel(LOG_LEVEL);
 					version: params[2],
 					accountId: accountID
 				});
-				FAR.promote(auth_token, identifier, done);
+				FAR.promote(auth_token, identifier, params[1], done);
 
 				break;
 
