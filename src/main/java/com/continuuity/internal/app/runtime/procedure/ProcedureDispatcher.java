@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.common.metrics.CMetrics;
 import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -40,6 +41,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/(.+)$");
 
+  private final CMetrics metrics;
   private final ThreadLocal<HandlerMethod> handlerMethod;
   private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
     @Override
@@ -48,7 +50,8 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
     }
   };
 
-  ProcedureDispatcher(final HandlerMethodFactory handlerMethodFactory) {
+  ProcedureDispatcher(final HandlerMethodFactory handlerMethodFactory, CMetrics metrics) {
+    this.metrics = metrics;
     handlerMethod = new ThreadLocal<HandlerMethod>() {
       @Override
       protected HandlerMethod initialValue() {
@@ -80,6 +83,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
    * @param channel
    */
   private void errorResponse(HttpResponseStatus status, Channel channel, String content) {
+    metrics.meter("query.failed", 1);
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
     response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
     response.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(content)));

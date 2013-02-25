@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.procedure.Procedure;
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -10,12 +10,14 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.base.Cancellable;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -80,10 +82,15 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       RunId runId = RunId.generate();
 
+      // FIXME: A dummy context for getting the cmetrics
+      BasicProcedureContext context = new BasicProcedureContext(program, instanceId, runId,
+                                                                ImmutableMap.<String, DataSet>of(), procedureSpec);
+
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
       bootstrap = createBootstrap(program, executionHandler,
-                                  createHandlerMethodFactory(program, runId, instanceId), channelGroup);
+                                  createHandlerMethodFactory(program, runId, instanceId),
+                                  context.getSystemMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
       serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost().getCanonicalHostName(), 0));
@@ -101,7 +108,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   }
 
   private ServerBootstrap createBootstrap(Program program, ExecutionHandler executionHandler,
-                                          HandlerMethodFactory handlerMethodFactory, ChannelGroup channelGroup) {
+                                          HandlerMethodFactory handlerMethodFactory,
+                                          CMetrics metrics,
+                                          ChannelGroup channelGroup) {
     // Single thread for boss thread
     Executor bossExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder()
@@ -120,7 +129,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                     new NioServerSocketChannelFactory(bossExecutor,
                                                                       workerExecutor, MAX_IO_THREADS));
 
-    bootstrap.setPipelineFactory(new ProcedurePipelineFactory(executionHandler, handlerMethodFactory, channelGroup));
+    bootstrap.setPipelineFactory(new ProcedurePipelineFactory(executionHandler, handlerMethodFactory,
+                                                              metrics, channelGroup));
 
     return bootstrap;
   }
