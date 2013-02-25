@@ -3,11 +3,21 @@
 */
 package com.continuuity.app.services;
 
+import com.continuuity.app.Id;
+import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.filesystem.Location;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.commons.cli.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -57,8 +67,8 @@ public class AppFabricClient {
   }
 
   private CConfiguration configuration;
-  private static final Logger LOG = LoggerFactory
-    .getLogger(AppFabricClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricClient.class);
+
   /**
    * Execute the configured operation
    */
@@ -73,6 +83,9 @@ public class AppFabricClient {
     TProtocol protocol = new TBinaryProtocol(transport);
     AppFabricService.Client client = new AppFabricService.Client(protocol);
 
+    if( "help".equals(command)) {
+      return;
+    }
     if ("deploy".equals(command)){
       AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
       ResourceIdentifier resourceIdentifier = new ResourceIdentifier("Account","Application",this.resource,0);
@@ -84,8 +97,8 @@ public class AppFabricClient {
     if ("start".equals(command)){
       AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
       FlowIdentifier identifier = new FlowIdentifier("Account",application,processor,0);
-      RunIdentifier runIdentifier = client.start(dummyAuthToken, new FlowDescriptor(identifier,
-                                                                                    new ArrayList <String>()));
+      RunIdentifier runIdentifier = client.start(dummyAuthToken,
+                                                 new FlowDescriptor(identifier, new ArrayList <String>()));
 
       Preconditions.checkNotNull(runIdentifier,"Problem starting the application");
       LOG.info("Started application with id: "+runIdentifier.getId());
@@ -113,7 +126,21 @@ public class AppFabricClient {
     }
 
     if ("verify".equals(command)) {
-      //TODO:verify
+
+      Location location =  new LocalLocationFactory().create(this.resource);
+
+      final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
+                                                     new DataFabricModules().getInMemoryModules());
+
+      ManagerFactory factory = injector.getInstance(ManagerFactory.class);
+      Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>)factory.create();
+      try {
+        manager.deploy(new Id.Account("Account"),location);
+      } catch (Exception e) {
+        LOG.info("Caught Exception while verifying application");
+        throw Throwables.propagate(e);
+      }
+      LOG.info("Verification succeeded");
     }
 
     if("deploy".equals(command)){
@@ -155,10 +182,11 @@ public class AppFabricClient {
     try {
       commandLine = commandLineParser.parse(options, Arrays.copyOfRange(args, 1, args.length));
 
-      //Check if the appropriate args are passed in for each of the commands
       if( "help".equals(command)) {
         printHelp(options);
       }
+      //Check if the appropriate args are passed in for each of the commands
+
       if ("deploy".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "deploy command should have resource argument");
         this.resource = commandLine.getOptionValue(RESOURCE_ARG);

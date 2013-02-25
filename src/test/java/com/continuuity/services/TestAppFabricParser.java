@@ -21,7 +21,6 @@ public class TestAppFabricParser {
     assertTrue("deploy".equals(client.getCommand()));
   }
 
-
   @Test
   public void testUnknownCommands() throws ParseException {
     AppFabricClient client = new AppFabricClient();
