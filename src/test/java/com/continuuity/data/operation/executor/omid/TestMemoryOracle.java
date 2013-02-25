@@ -301,6 +301,6 @@ public class TestMemoryOracle {
     TransactionOracle oracle2 = newOracle();
     ReadPointer readPointer2 = oracle2.getReadPointer();
     Assert.assertTrue(readPointer1.getMaximum() <= readPointer2.getMaximum());
-    readPointer1.isVisible(transaction.getTransactionId());
+    readPointer2.isVisible(transaction.getTransactionId());
   }
 }
