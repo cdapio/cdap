@@ -39,7 +39,7 @@ public class WordCountFlow implements Flow {
         .connect()
             .fromStream("wordStream").to("wordSplitter")
             .from("wordSplitter").to("wordCounter")
-            .from("wordSplitter").to("wordAssociater")
+            .from("wordSplitter").to("wordAssociator")
             .from("wordCounter").to("uniqueCounter")
         .build();
   }
