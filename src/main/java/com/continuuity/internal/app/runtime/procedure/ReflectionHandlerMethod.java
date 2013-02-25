@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -38,22 +37,40 @@ final class ReflectionHandlerMethod implements HandlerMethod {
     try {
       txAgent.start();
 
+      TransactionResponder txResponder = new TransactionResponder(txAgent, responder);
       try {
-        method.invoke(procedure, request, new TransactionResponder(txAgent, responder));
+        method.invoke(procedure, request, txResponder);
       } catch (Throwable t) {
         LOG.error("Exception in calling procedure handler: " + method, t);
         try {
-          responder.stream(new ProcedureResponse(ProcedureResponse.Code.FAILURE)).close();
+          Throwable cause = t.getCause();
+          txResponder.error(ProcedureResponse.Code.FAILURE,
+                            cause + " at " + getFirstStackTrace(cause));
         } catch (IOException e) {
           LOG.error("Fail to close response on error.", t);
         }
         throw Throwables.propagate(t);
+      } finally {
+        txResponder.close();
       }
 
-    } catch (OperationException e) {
-      LOG.error("Transaction operation failure.", e);
+    } catch (Exception e) {
+      LOG.error("Handle method failure.", e);
       throw Throwables.propagate(e);
     }
   }
 
+  private String getFirstStackTrace(Throwable cause) {
+    if (cause == null) {
+      return "";
+    }
+    StackTraceElement[] stackTrace = cause.getStackTrace();
+    if (stackTrace.length <= 0) {
+      return "";
+    }
+    StackTraceElement element = stackTrace[0];
+    return String.format("%s.%s(%s:%d)",
+                         element.getClassName(), element.getMethodName(),
+                         element.getFileName(), element.getLineNumber());
+  }
 }
