@@ -145,7 +145,7 @@ final class BasicFlowletContext implements FlowletContext {
   }
 
   private QueueConsumer createQueueConsumer() {
-    int groupId = 100000 + Objects.hashCode(getFlowletId(), getFlowletId());
+    int groupId = 100000 + Objects.hashCode(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
     // TODO: Consumer partitioning
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
     return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
