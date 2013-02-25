@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <name>WordCountApp</name>
     <properties>
-        <main>WordCount.WordCount</main>
+        <main>com.continuuity.examples.wordcount.WordCount</main>
         <continuuityVersion>1.3.0</continuuityVersion>
     </properties>
     <repositories>

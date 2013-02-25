@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package com.continuuity.examples.wordcountapp;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;

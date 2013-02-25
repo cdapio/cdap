@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
@@ -11,7 +11,7 @@ import java.util.TreeSet;
 public class WordAssociatorFlowlet extends AbstractFlowlet {
 
   public WordAssociatorFlowlet() {
-    super("wordAssociater");
+    super("wordAssociator");
   }
 
   @UseDataSet("wordAssocs")

@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -20,7 +20,7 @@ public class WordCount implements Application {
         .add(new UniqueCountTable("uniqueCount"))
         .add(new WordAssocTable("wordAssocs"))
       .withFlows()
-        .add(new WordCountFlow())
+        .add(new WordCounter())
       .withProcedures()
         .add(new WordCountProcedure())
       .build();

@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
@@ -25,7 +25,7 @@ public class WordCountProcedure extends AbstractProcedure {
   @Override
   public ProcedureSpecification configure() {
     return ProcedureSpecification.Builder.with()
-        .setName("WordCountProcedure")
+        .setName("RetrieveCount")
         .setDescription("Example Word Count Procedure")
         .build();
   }

@@ -1,8 +1,5 @@
 package com.continuuity.examples.countcounts;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -11,6 +8,9 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
@@ -99,7 +99,7 @@ public class CountCounterTable extends DataSet {
 
   private void increment(byte [] key, byte [] column, long count)
       throws OperationException {
-    this.table.increment(new Increment(key, column, count));
+    this.table.write(new Increment(key, column, count));
   }
 
   private long get(byte [] key) throws OperationException {

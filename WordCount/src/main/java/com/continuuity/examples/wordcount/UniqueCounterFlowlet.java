@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
