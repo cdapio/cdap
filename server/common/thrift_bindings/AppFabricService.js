@@ -1362,16 +1362,12 @@ AppFabricService_chunk_result.prototype.write = function(output) {
 var AppFabricService_deploy_args = function(args) {
   this.token = null;
   this.resource = null;
-  this.hostname = null;
   if (args) {
     if (args.token !== undefined) {
       this.token = args.token;
     }
     if (args.resource !== undefined) {
       this.resource = args.resource;
-    }
-    if (args.hostname !== undefined) {
-      this.hostname = args.hostname;
     }
   }
 };
@@ -1405,13 +1401,6 @@ AppFabricService_deploy_args.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
-      case 3:
-      if (ftype == Thrift.Type.STRING) {
-        this.hostname = input.readString();
-      } else {
-        input.skip(ftype);
-      }
-      break;
       default:
         input.skip(ftype);
     }
@@ -1431,11 +1420,6 @@ AppFabricService_deploy_args.prototype.write = function(output) {
   if (this.resource) {
     output.writeFieldBegin('resource', Thrift.Type.STRUCT, 2);
     this.resource.write(output);
-    output.writeFieldEnd();
-  }
-  if (this.hostname) {
-    output.writeFieldBegin('hostname', Thrift.Type.STRING, 3);
-    output.writeString(this.hostname);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -1636,12 +1620,16 @@ AppFabricService_dstatus_result.prototype.write = function(output) {
 var AppFabricService_promote_args = function(args) {
   this.token = null;
   this.identifier = null;
+  this.hostname = null;
   if (args) {
     if (args.token !== undefined) {
       this.token = args.token;
     }
     if (args.identifier !== undefined) {
       this.identifier = args.identifier;
+    }
+    if (args.hostname !== undefined) {
+      this.hostname = args.hostname;
     }
   }
 };
@@ -1675,6 +1663,13 @@ AppFabricService_promote_args.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.hostname = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -1694,6 +1689,11 @@ AppFabricService_promote_args.prototype.write = function(output) {
   if (this.identifier) {
     output.writeFieldBegin('identifier', Thrift.Type.STRUCT, 2);
     this.identifier.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.hostname) {
+    output.writeFieldBegin('hostname', Thrift.Type.STRING, 3);
+    output.writeString(this.hostname);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -2509,19 +2509,18 @@ AppFabricServiceClient.prototype.recv_chunk = function(input,mtype,rseqid) {
   }
   callback(null)
 };
-AppFabricServiceClient.prototype.deploy = function(token, resource, hostname, callback) {
+AppFabricServiceClient.prototype.deploy = function(token, resource, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
-  this.send_deploy(token, resource, hostname);
+  this.send_deploy(token, resource);
 };
 
-AppFabricServiceClient.prototype.send_deploy = function(token, resource, hostname) {
+AppFabricServiceClient.prototype.send_deploy = function(token, resource) {
   var output = new this.pClass(this.output);
   output.writeMessageBegin('deploy', Thrift.MessageType.CALL, this.seqid);
   var args = new AppFabricService_deploy_args();
   args.token = token;
   args.resource = resource;
-  args.hostname = hostname;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -2583,18 +2582,19 @@ AppFabricServiceClient.prototype.recv_dstatus = function(input,mtype,rseqid) {
   }
   return callback('dstatus failed: unknown result');
 };
-AppFabricServiceClient.prototype.promote = function(token, identifier, callback) {
+AppFabricServiceClient.prototype.promote = function(token, identifier, hostname, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
-  this.send_promote(token, identifier);
+  this.send_promote(token, identifier, hostname);
 };
 
-AppFabricServiceClient.prototype.send_promote = function(token, identifier) {
+AppFabricServiceClient.prototype.send_promote = function(token, identifier, hostname) {
   var output = new this.pClass(this.output);
   output.writeMessageBegin('promote', Thrift.MessageType.CALL, this.seqid);
   var args = new AppFabricService_promote_args();
   args.token = token;
   args.identifier = identifier;
+  args.hostname = hostname;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -2889,7 +2889,7 @@ AppFabricServiceProcessor.prototype.process_deploy = function(seqid, input, outp
   args.read(input);
   input.readMessageEnd();
   var result = new AppFabricService_deploy_result();
-  this._handler.deploy(args.token, args.resource, args.hostname, function (success) {
+  this._handler.deploy(args.token, args.resource, function (success) {
     result.success = success;
     output.writeMessageBegin("deploy", Thrift.MessageType.REPLY, seqid);
     result.write(output);
@@ -2917,7 +2917,7 @@ AppFabricServiceProcessor.prototype.process_promote = function(seqid, input, out
   args.read(input);
   input.readMessageEnd();
   var result = new AppFabricService_promote_result();
-  this._handler.promote(args.token, args.identifier, function (success) {
+  this._handler.promote(args.token, args.identifier, args.hostname, function (success) {
     result.success = success;
     output.writeMessageBegin("promote", Thrift.MessageType.REPLY, seqid);
     result.write(output);
