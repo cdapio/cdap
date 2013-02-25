@@ -57,7 +57,7 @@ public abstract class MultiClassLoader extends ClassLoader {
     // Note loadClassBytes() is an abstract method
     byte[] classBytes = loadClassBytes(className);
     if(classBytes == null) {
-      throw new ClassNotFoundException();
+      throw new ClassNotFoundException(className);
     }
 
     //Define it (parse the class file)
