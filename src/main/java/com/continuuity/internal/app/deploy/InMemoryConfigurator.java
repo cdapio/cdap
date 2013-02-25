@@ -128,8 +128,10 @@ public final class InMemoryConfigurator implements Configurator {
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch(Exception e) {
+      LOG.debug(StackTraceUtil.toStringStackTrace(e));
       return Futures.immediateFailedFuture(e);
     } catch(Throwable throwable) {
+      LOG.debug(StackTraceUtil.toStringStackTrace(throwable));
       return Futures.immediateFailedFuture(throwable);
     } finally {
       if(writer != null) {
