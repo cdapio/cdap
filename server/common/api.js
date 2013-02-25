@@ -339,6 +339,8 @@ logger.setLevel(LOG_LEVEL);
 
 		var post_options = {};
 
+		logger.trace(params);
+
 		switch (method) {
 			case 'inject':
 				post_options = {
@@ -346,11 +348,15 @@ logger.setLevel(LOG_LEVEL);
 					port: this.config['gateway.port']
 				};
 				post_options.method = 'POST';
-				post_options.path = '/rest-stream' + (params.stream ? '/' + params.stream : '');
+				post_options.path = '/stream/' + params.stream;
 				post_options.headers = {
+					'Content-Type': 'application/json',
 					'X-Continuuity-ApiKey': apiKey,
 					'Content-Length': post_data.length
 				};
+
+				logger.trace(post_options);
+
 			break;
 			case 'query':
 

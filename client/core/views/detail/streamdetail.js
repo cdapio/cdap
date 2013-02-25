@@ -75,7 +75,7 @@ define([
 					"The gateway responded with: " + error.statusCode + ': ' +
 						error.response, function () {
 						window.location.reload();
-					});
+					}, true);
 				}
 
 			});
