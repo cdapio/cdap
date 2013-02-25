@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
@@ -196,7 +197,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
 
-          flowletContext.getSystemMetrics().counter(input.getInputContext().getName() + ".stream.in", 1);
+          flowletContext.getSystemMetrics().counter(input.getInputContext().getName() +
+                                                      FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in", 1);
 
           if (processMethod.needsInput()) {
             flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);

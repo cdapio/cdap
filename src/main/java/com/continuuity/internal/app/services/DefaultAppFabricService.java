@@ -449,10 +449,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           from =  new FlowletStreamDefinitionImpl(srcName);
           flowStreams.put(srcName, new FlowStreamDefinitionImpl(srcName, null));
         } else {
-          from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName());
+          from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName() +
+                                                  FlowletDefinition.OUTPUT_ENDPOINT_POSTFIX);
         }
         FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
-                                                                         queueSpec.getQueueName().getSimpleName());
+                                                                         queueSpec.getQueueName().getSimpleName() +
+                                                                         FlowletDefinition.INPUT_ENDPOINT_POSTFIX);
         connections.add(new ConnectionDefinitionImpl(from, to));
       }
     }
