@@ -11,7 +11,7 @@
     <echo message="Expecting AppFabric API libraries in ${appfabric.lib}"/>
 
     <property name="example.name" value="${ant.project.name}"/>
-    <property name="main.class" value="${ant.project.name}"/>
+    <property name="main.class" value="${example.package}.${example.name}"/>
     <property name="jar.name" value="${example.name}.jar" />
     <property name="build.dir" value="classes"/>
     <property name="source.dir" value="src"/>

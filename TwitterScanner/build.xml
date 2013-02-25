@@ -1,9 +1,7 @@
 <?xml version="1.0" ?> 
 <project name="TwitterScanner" default="jar">
-
-    <!-- Override the default main class defn -->
-    <property name="main.class" value="com.continuuity.examples.twitter.Main"/>
-
+    <property name="example.package" value="com.continuuity.examples.twitter"/>
+    
     <!-- Now import the common build file -->
     <import file="../ant-common.xml"/>
 
