@@ -158,17 +158,17 @@
     </property>
 
     <property>
-        <name>connector.rest.port</name>
+        <name>connector.appfabric.port</name>
         <value>10007</value>
     </property>
 
     <property>
-        <name>connector.rest.threads</name>
+        <name>connector.appfabric.threads</name>
         <value>5</value>
     </property>
 
     <property>
-        <name>connector.rest.middle</name>
+        <name>connector.appfabric.middle</name>
         <value>/app/</value>
     </property>
 
