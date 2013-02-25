@@ -1,11 +1,14 @@
 package com.continuuity.gateway;
 
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
@@ -49,6 +52,7 @@ public class GatewayFlumeCollectorAuthTest {
 
   // This is the data fabric operations executor
   private OperationExecutor executor;
+  private static DiscoveryService discoveryService;
 
   // This is the configuration object we will use in these tests
   private CConfiguration myConfiguration;
@@ -61,17 +65,19 @@ public class GatewayFlumeCollectorAuthTest {
    */
   @Before
   public void setupGateway() throws Exception {
+    myConfiguration = new CConfiguration();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+        new DataFabricModules().getInMemoryModules(),
+        new BigMamaModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
 
     // Create and populate a new config object
-    myConfiguration = new CConfiguration();
 
     myConfiguration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
@@ -89,8 +95,11 @@ public class GatewayFlumeCollectorAuthTest {
     keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
 
     // Now create our Gateway
+    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
+    theGateway.setDiscoveryServiceClient(
+        injector.getInstance(DiscoveryServiceClient.class));
 
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
