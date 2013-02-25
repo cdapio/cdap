@@ -41,7 +41,7 @@ public class InMemoryDiscoveryService extends AbstractIdleService implements Dis
     lock.lock();
     try {
       final Discoverable wrapper = new DiscoverableWrapper(discoverable);
-      services.put(wrapper.getName(), discoverable);
+      services.put(wrapper.getName(), wrapper);
       return new Cancellable() {
         @Override
         public void cancel() {

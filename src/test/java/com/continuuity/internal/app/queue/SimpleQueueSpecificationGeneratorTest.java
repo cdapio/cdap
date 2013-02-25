@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.Set;
 
 /**
@@ -65,9 +64,9 @@ public class SimpleQueueSpecificationGeneratorTest {
     dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream://demo/X"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream://default/X"));
 
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream://demo/Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream://default/Y"));
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
@@ -100,7 +99,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                        .iterator().next().getQueueName().toString().equals("stream://demo/text"));
+                        .iterator().next().getQueueName().toString().equals("stream://default/text"));
     Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSource/out"));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());

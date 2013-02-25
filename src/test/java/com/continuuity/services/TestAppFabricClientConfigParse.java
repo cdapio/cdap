@@ -45,15 +45,11 @@ public class TestAppFabricClientConfigParse {
     assertTrue(command == null);
   }
 
-  @Test
+  @Test(expected = RuntimeException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "args"});
-    assertTrue(command == null);
-
-    command = client.configure(CConfiguration.create(), new String[]{"start", "--processor", "args"});
-    assertTrue(command == null);
+    command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
   }
 
   @Test
