@@ -7,6 +7,7 @@ define([
 		currentBinding: 'controller.current',
 		requestMethod: null,
 		requestParams: null,
+		/*
 		setDefaults: function () {
 
 			if (this.get('current') && this.get("current").serviceName === 'feedreader') {
@@ -27,6 +28,7 @@ define([
 			this.addObserver('current', this, this.setDefaults);
 
 		},
+		*/
 		responseBody: null,
 		responseCode: null,
 		submit: function (event) {
@@ -36,6 +38,7 @@ define([
 				method: 'query',
 				params: {
 					service: this.current.serviceName,
+					app: this.current.applicationId,
 					method: this.get('requestMethod'),
 					query: this.get('requestParams')
 				}
@@ -81,6 +84,7 @@ define([
 			});
 
 		},
+		/*
 		promote: function (event) {
 
 			var id = $(event.target).attr('flow-id');
@@ -112,6 +116,7 @@ define([
 				}));
 
 		},
+		*/
 		"delete": function (event) {
 
 			var id = $(event.target).attr('flowId');
