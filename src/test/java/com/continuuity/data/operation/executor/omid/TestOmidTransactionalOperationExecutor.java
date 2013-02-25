@@ -862,7 +862,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, tx2, batch(new Increment(table, c, x, 5L)));
     // fail the first transaction with a c-a-s
     try {
-      executor.execute(context, tx1, batch(new CompareAndSwap(table, x, me, me)));
+      executor.execute(context, tx1, batch(new CompareAndSwap(table, x, col, me, me)));
       fail("Compare-andswap should fail");
     } catch (OperationException e) {
       // expected

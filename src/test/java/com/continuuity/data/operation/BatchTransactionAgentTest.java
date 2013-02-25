@@ -63,11 +63,13 @@ public class BatchTransactionAgentTest {
 
     // sync read one row
     OperationResult<Map<byte[],byte[]>> result = agent.execute(new Read(table, a, x));
+    Assert.assertEquals(1, agent.getSucceededCount());
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(one, result.getValue().get(x));
 
     // sync increment the other row
     Map<byte[],Long> incr = agent.execute(new Increment(table, b, y, 1L));
+    Assert.assertEquals(2, agent.getSucceededCount());
     Assert.assertFalse(incr.isEmpty());
     Assert.assertEquals((Long)3L, incr.get(y));
 
@@ -75,14 +77,17 @@ public class BatchTransactionAgentTest {
     agent.submit(new Write(table, c, x, y));
     // batch write the two rows with the xaction agent
     agent.submit(batch(new Write(table, a, x, x), new Increment(table, b, y, 1L)));
+    Assert.assertEquals(2, agent.getSucceededCount());
 
     // read and verify old values
     Assert.assertTrue(agent.execute(new ReadColumnRange(table, c, null, null)).isEmpty());
     Assert.assertArrayEquals(three, agent.execute(new Read(table, b, y)).getValue().get(y));
     Assert.assertArrayEquals(one, agent.execute(new Read(table, a, x)).getValue().get(x));
+    Assert.assertEquals(5, agent.getSucceededCount());
 
     // finish xaction
     agent.finish();
+    Assert.assertEquals(8, agent.getSucceededCount());
 
     // read and verify new values
     Assert.assertArrayEquals(y, opex.execute(OperationContext.DEFAULT, new Read(table, c, x)).getValue().get(x));
@@ -105,9 +110,12 @@ public class BatchTransactionAgentTest {
     agent.submit(new Write(table, x, y, two));
     // batch submit delete for first row and add swap for second row
     agent.submit(batch(new Delete(table, a, x), new CompareAndSwap(table, x, y, two, three)));
+    Assert.assertEquals(0, agent.getSucceededCount());
 
     // abort xaction
     agent.abort();
+    Assert.assertEquals(0, agent.getSucceededCount());
+    Assert.assertEquals(0, agent.getFailedCount());
 
     // verify no rows changed
     Assert.assertTrue(opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, x, null, null)).isEmpty());

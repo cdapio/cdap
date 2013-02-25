@@ -97,4 +97,15 @@ public interface TransactionAgent {
    */
   public OperationResult<List<byte[]>> execute(ReadAllKeys read) throws OperationException;
 
+  /**
+   * return the number of operations performed successfully in this transaction
+   * @return the number of operations
+   */
+  public int getSucceededCount();
+
+  /**
+   * return the number of operations that failed in this transaction
+   * @return the number of operations
+   */
+  public int getFailedCount();
 }

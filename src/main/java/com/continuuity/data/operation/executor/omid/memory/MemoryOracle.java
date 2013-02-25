@@ -7,7 +7,6 @@ import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.QueueUndo;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
@@ -40,7 +39,7 @@ public class MemoryOracle implements TransactionOracle {
    * committed transaction. There may be in-progress or invalid transactions
    * with a smaller id, but they are excluded from reads.
    */
-  long readPoint = 0;
+  long readPoint = -1;
 
   /**
    * Move the read point after a transaction was committed. This is maintained as
@@ -133,6 +132,10 @@ public class MemoryOracle implements TransactionOracle {
 
   @Override
   public synchronized ReadPointer getReadPointer() {
+    if (readPoint < 0) {
+      readPoint = this.timeOracle.getTimestamp();
+    }
+
     return new MemoryReadPointer(this.readPoint, this.getExcludes());
   }
 

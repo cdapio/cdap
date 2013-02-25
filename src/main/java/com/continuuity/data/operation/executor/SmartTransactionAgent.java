@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This transaction agent defers all operations as long as possible while
@@ -35,21 +36,21 @@ import java.util.Map;
  *
  * This class is not thread-safe - any synchronization is up to the caller.
  */
-public class SmartTransactionAgent implements TransactionAgent {
+public class SmartTransactionAgent extends AbstractTransactionAgent {
 
   private static final Logger Log =
     LoggerFactory.getLogger(SmartTransactionAgent.class);
 
-  // the actual operation executor
-  private final OperationExecutor opex;
-  // the operation context for all operations
-  private final OperationContext context;
   // the list of currently deferred operations
   private final List<WriteOperation> deferred = Lists.newLinkedList();
   // the current transaction
   private Transaction xaction;
   // keep track of current state
   private State state = State.New;
+
+  // keep track of successful operations: we can't increase succeeded count every time we
+  // execute a deferred batch, we will only know whether they succeed at commit().
+  private AtomicInteger executed = new AtomicInteger(0);
 
   // helper enum
   private enum State { New, Running, Aborted, Finished }
@@ -60,8 +61,7 @@ public class SmartTransactionAgent implements TransactionAgent {
    * @param context the operation context for all operations
    */
   public SmartTransactionAgent(OperationExecutor opex, OperationContext context) {
-    this.opex = opex;
-    this.context = context;
+    super(opex, context);
   }
 
   @Override
@@ -71,6 +71,8 @@ public class SmartTransactionAgent implements TransactionAgent {
       // and we must abort or commit it, otherwise data fabric may be inconsistent.
       throw new IllegalStateException("Transaction has already started.");
     }
+    super.start();
+    this.executed.set(0);
     this.xaction = null;
     this.deferred.clear();
     this.state = State.Running;
@@ -83,8 +85,16 @@ public class SmartTransactionAgent implements TransactionAgent {
       return;
     }
 
+    // everything executed so far is now considered as failed.
+    // also, set the executed count back to 0 to avoid double counting in case abort() is called again
+    this.failedSome(this.executed.getAndSet(0));
+
     // drop the deferred ops
-    this.deferred.clear();
+    if (!this.deferred.isEmpty()) {
+      // deferred operations now count as failed
+      this.failedSome(this.deferred.size());
+      this.deferred.clear();
+    }
 
     try {
       if (this.xaction != null) {
@@ -99,6 +109,7 @@ public class SmartTransactionAgent implements TransactionAgent {
     } finally {
       this.xaction = null;
       this.state = State.Aborted;
+      super.abort();
     }
   }
 
@@ -110,6 +121,9 @@ public class SmartTransactionAgent implements TransactionAgent {
       Log.warn("Attempt to finish a smart transaction that is " + this.state.name());
       return;
     }
+    // add the current deferred batch to the number of executed ops
+    // it will be counted either as succeeded or failed a few lines down
+    this.executed.addAndGet(this.deferred.size());
     try {
       if (this.xaction == null) {
         if (this.deferred.isEmpty()) {
@@ -125,14 +139,22 @@ public class SmartTransactionAgent implements TransactionAgent {
         // we have deferred operations and a transaction
         this.opex.commit(this.context, this.xaction, this.deferred);
       }
+      // everything executed so far is now considered as succeeded.
+      // also, set the executed count back to 0 to avoid double counting in case abort is called later-on
+      this.succeededSome(this.executed.getAndSet(0));
+      this.state = State.Finished;
+
     } catch (OperationException e) {
+      // everything executed so far is now considered as failed.
+      // also, set the executed count back to 0 to avoid double counting in case abort is called later-on
+      this.failedSome(this.executed.getAndSet(0));
       this.state = State.Aborted;
       throw e;
     } finally {
       this.xaction = null;
       this.deferred.clear();
+      super.finish();
     }
-    this.state = State.Finished;
   }
 
   @Override
@@ -167,10 +189,15 @@ public class SmartTransactionAgent implements TransactionAgent {
     }
     if (!this.deferred.isEmpty()) {
       try {
+        // these operations will now count as executed (but not as successful yet)
+        this.executed.addAndGet(this.deferred.size());
         // this will start, use and return a new transaction if xaction is null
         this.xaction = this.opex.execute(this.context, this.xaction, this.deferred);
         this.deferred.clear();
       } catch (OperationException e) {
+        // everything executed so far is now considered as failed.
+        // also, set the executed count back to 0 to avoid double counting in case abort is called later-on
+        this.failedSome(this.executed.getAndSet(0));
         // opex aborts the transaction if the execute fails
         this.xaction = null;
         this.deferred.clear();
@@ -189,8 +216,10 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-      return this.opex.increment(this.context, this.xaction, increment);
+      return this.succeededOne(
+        this.opex.increment(this.context, this.xaction, increment));
     } catch (OperationException e) {
+      this.failedOne();
       this.abort();
       throw e;
     }
@@ -202,8 +231,10 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-      return this.opex.execute(this.context, this.xaction, read);
+      return this.succeededOne(
+        this.opex.execute(this.context, this.xaction, read));
     } catch (OperationException e) {
+      this.failedOne();
       this.abort();
       throw e;
     }
@@ -215,8 +246,10 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-      return this.opex.execute(this.context, this.xaction, read);
+      return this.succeededOne(
+        this.opex.execute(this.context, this.xaction, read));
     } catch (OperationException e) {
+      this.failedOne();
       this.abort();
       throw e;
     }
@@ -228,10 +261,18 @@ public class SmartTransactionAgent implements TransactionAgent {
     executeDeferred();
     // now execute the operation and make sure abort in case of failure
     try {
-      return this.opex.execute(this.context, this.xaction, read);
+      return this.succeededOne(
+        this.opex.execute(this.context, this.xaction, read));
     } catch (OperationException e) {
+      this.failedOne();
       this.abort();
       throw e;
     }
+  }
+
+  // commodity method
+  private <T> T succeededOne(T result) {
+    this.succeededOne();
+    return result;
   }
 }
