@@ -122,6 +122,9 @@ final class HttpProcedureResponder implements ProcedureResponder {
       case CLIENT_ERROR:
         status = HttpResponseStatus.BAD_REQUEST;
         break;
+      case NOT_FOUND:
+        status = HttpResponseStatus.NOT_FOUND;
+        break;
       default:
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
     }

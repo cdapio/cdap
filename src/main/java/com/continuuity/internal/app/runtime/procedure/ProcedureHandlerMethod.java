@@ -41,6 +41,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   private final Procedure procedure;
   private final Map<String, HandlerMethod> handlers;
+  private final BasicProcedureContext context;
 
   ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
                                 TransactionAgentSupplierFactory txAgentSupplierFactory) throws ClassNotFoundException {
@@ -49,10 +50,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
-    BasicProcedureContext context =
-      new BasicProcedureContext(program, instanceId, runId,
-                                DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
-                                procedureSpec);
+    context = new BasicProcedureContext(program, instanceId, runId,
+                                        DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
+                                        procedureSpec);
 
     TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
     procedure = new InstantiatorFactory().get(procedureType).create();
@@ -65,14 +65,22 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
+      context.getSystemMetrics().counter("query.failed", 1);
       try {
-        responder.stream(new ProcedureResponse(ProcedureResponse.Code.CLIENT_ERROR));
+        responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
+      return;
     }
 
-    handlerMethod.handle(request, responder);
+    try {
+      handlerMethod.handle(request, responder);
+      context.getSystemMetrics().counter("query.success", 1);
+    } catch (Throwable t) {
+      context.getSystemMetrics().counter("query.failed", 1);
+      throw Throwables.propagate(t);
+    }
   }
 
   private void injectFields(Procedure procedure, TypeToken<? extends Procedure> procedureType,
