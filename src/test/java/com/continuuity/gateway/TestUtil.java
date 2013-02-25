@@ -636,20 +636,20 @@ public class TestUtil {
   }
 
   /**
-   * Send a POST request to the given URL and return the HTTP status
+   * Send a PUT request to the given URL and return the HTTP status
    *
    * @param url the URL to post to
    * @param content binary content
    * @param headers map with header data
    */
-  public static int sendPostRequest(String url, byte[] content, Map<String,String> headers) throws Exception {
+  public static int sendPutRequest(String url, byte[] content, Map<String,String> headers) throws Exception {
     HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(url);
+    HttpPut put = new HttpPut(url);
     for(Map.Entry<String,String> header: headers.entrySet()) {
-      post.setHeader(header.getKey(), header.getValue());
+      put.setHeader(header.getKey(), header.getValue());
     }
-    post.setEntity(new ByteArrayEntity(content));
-    HttpResponse response = client.execute(post);
+    put.setEntity(new ByteArrayEntity(content));
+    HttpResponse response = client.execute(put);
     client.getConnectionManager().shutdown();
     return response.getStatusLine().getStatusCode();
   }

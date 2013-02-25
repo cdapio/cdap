@@ -360,7 +360,7 @@ public class Gateway implements Server {
           continue;
         }
 
-        newConnector.setDiscoverServiceClient(discoveryServiceClient);
+        newConnector.setDiscoveryServiceClient(discoveryServiceClient);
         
         // set the connector's discovery client
         newConnector.setServiceDiscovery(this.serviceDiscovery);

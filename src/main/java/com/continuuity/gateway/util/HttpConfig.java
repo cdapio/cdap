@@ -294,6 +294,6 @@ public class HttpConfig {
    * @return the base URL
    */
   public String getBaseUrl() {
-    return this.getBaseUrl(null);
+    return this.getBaseUrl(getHost());
   }
 }

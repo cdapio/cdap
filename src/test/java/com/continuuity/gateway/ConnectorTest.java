@@ -16,6 +16,7 @@ public class ConnectorTest {
     Connector connector = new Connector() {
       @Override
       public void start() throws Exception {
+
       }
 
       @Override
@@ -33,4 +34,6 @@ public class ConnectorTest {
     // test that configuration is saved
     Assert.assertSame(connector.getConfiguration(), config);
   }
+
+
 }
