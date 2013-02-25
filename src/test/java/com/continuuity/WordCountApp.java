@@ -6,7 +6,6 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
@@ -30,7 +29,7 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +95,8 @@ public class WordCountApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
-        .withFlowlets().add("StreamSource", new StreamSucker(), 3)
-                       .add(new Tokenizer(), 2)
+        .withFlowlets().add("StreamSource", new StreamSucker())
+                       .add(new Tokenizer())
                        .add(new CountByField())
         .connect().fromStream("text").to("StreamSource")
                   .from("StreamSource").to("Tokenizer")
@@ -109,10 +108,6 @@ public class WordCountApp implements Application {
   public static class StreamSucker extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
-
-    public StreamSucker() {
-      super("StreamSucker");
-    }
 
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
       if (!"text".equals(context.getName())) {
@@ -133,10 +128,6 @@ public class WordCountApp implements Application {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
 
-    public Tokenizer() {
-      super("Tokenizer");
-    }
-
     @Process
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
@@ -154,14 +145,10 @@ public class WordCountApp implements Application {
     }
   }
 
-  @Async
+//  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
-
-    public CountByField() {
-      super("CountByField");
-    }
 
     @Process("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
@@ -176,12 +163,14 @@ public class WordCountApp implements Application {
         token = field + ":" + token;
       }
 
-      this.counters.increment(token.getBytes(Charsets.UTF_8), 1);
+      this.counters.increment(token.getBytes(Charsets.UTF_8), 1L);
+
+      byte[] bytes = this.counters.read(token.getBytes(Charsets.UTF_8));
+      LOG.info(token + " " + Longs.fromByteArray(bytes));
     }
 
     @Override
     public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
-      LOG.info("Success: " + input);
     }
 
     @Override
@@ -194,20 +183,12 @@ public class WordCountApp implements Application {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
 
-    public WordFrequency() {
-      super("WordFrequency");
-    }
-
     @Handle("wordfreq")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       String word = request.getArgument("word");
-      int count = Ints.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8)));
-      ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
-      try {
-        writer.write(Integer.toString(count));
-      } finally {
-        writer.close();
-      }
+      Map<String, Long> result = ImmutableMap.of(word,
+                                                 Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
   }
 }

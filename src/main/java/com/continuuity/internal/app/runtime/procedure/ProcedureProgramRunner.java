@@ -27,6 +27,7 @@ import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -83,7 +84,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       executionHandler = createExecutionHandler();
       bootstrap = createBootstrap(program, executionHandler,
                                   createHandlerMethodFactory(program, runId, instanceId), channelGroup);
-      serverChannel = bootstrap.bind(new InetSocketAddress(0));
+
+      // TODO: Might need better way to get the host name
+      serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost().getCanonicalHostName(), 0));
 
       channelGroup.add(serverChannel);
 
