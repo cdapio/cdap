@@ -355,7 +355,6 @@ logger.setLevel(LOG_LEVEL);
 					'Content-Length': post_data.length
 				};
 
-				logger.trace(post_options);
 
 			break;
 			case 'query':
@@ -369,7 +368,7 @@ logger.setLevel(LOG_LEVEL);
 					port: 10003
 				};
 				post_options.method = 'POST';
-				post_options.path = '/rest-query/' + params.app + '/' + 
+				post_options.path = '/query/' + params.app + '/' + 
 					params.service + '/' + params.method;
 				post_options.headers = {
 					'Content-Type': 'application/json',
@@ -395,7 +394,12 @@ logger.setLevel(LOG_LEVEL);
 
 				done(res.statusCode !== 200 ? {
 					statusCode: res.statusCode,
-					response: data
+					response: {
+						host: post_options.host,
+						port: post_options.port,
+						path: post_options.path,
+						data: post_data
+					}
 				} : false, {
 					statusCode: res.statusCode,
 					response: data

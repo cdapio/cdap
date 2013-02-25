@@ -12,10 +12,17 @@ var Api = require('../common/api');
 
 process.env.NODE_ENV = 'development';
 
+var VERSION;
+try {
+	VERSION = fs.readFileSync(__dirname + '../../../VERSION', 'utf8');
+} catch (e) {
+	VERSION = 'UNKNOWN';
+}
+
 /**
  * Configure logger.
  */
-var LOG_LEVEL = 'ALL';
+var LOG_LEVEL = 'WARN';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
@@ -141,9 +148,12 @@ app.get('/version', function (req, res) {
 
 		response.on('end', function () {
 			
-			// TODO: Got version. Compare and respond.
+			data = data.replace(/\n/g, '');
 
-			res.send('false');
+			res.send(JSON.stringify({
+				current: VERSION,
+				newest: data
+			}));
 			res.end();
 
 		});
