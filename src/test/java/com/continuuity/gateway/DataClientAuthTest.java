@@ -1,6 +1,20 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.continuuity.api.data.OperationException;
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Increment;
@@ -10,22 +24,12 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.tools.DataClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class DataClientAuthTest {
 
@@ -33,6 +37,7 @@ public class DataClientAuthTest {
       .getLogger(DataClientAuthTest.class);
 
   private OperationExecutor executor = null;
+  private static DiscoveryService discoveryService;
 
   Gateway gateway = null;
 
@@ -53,10 +58,14 @@ public class DataClientAuthTest {
   public void setupDataFabricAndGateway() throws Exception {
     DataClient.debug = true;
 
+    configuration = new CConfiguration();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+        new DataFabricModules().getInMemoryModules(),
+        new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
+    discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
@@ -74,7 +83,6 @@ public class DataClientAuthTest {
 
     // configure a gateway
     port = PortDetector.findFreePort();
-    configuration = new CConfiguration();
     configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
@@ -95,10 +103,13 @@ public class DataClientAuthTest {
 
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
+    discoveryService.startAndWait();
     gateway = new Gateway();
     gateway.setExecutor(this.executor);
     gateway.setConsumer(new TestUtil.NoopConsumer());
     gateway.setPassportClient(new MockedPassportClient(keysAndClusters));
+    gateway.setDiscoveryServiceClient(
+        injector.getInstance(DiscoveryServiceClient.class));
     gateway.start(null, configuration);
   }
 
