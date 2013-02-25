@@ -153,7 +153,7 @@
     <!-- AppFabric Connector -->
     <property>
         <name>connector.appfabric.class</name>
-        <value>com.continuuity.gateway.accessor.DataRestAccessor</value>
+        <value>com.continuuity.gateway.connector.AppFabricRestConnector</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
