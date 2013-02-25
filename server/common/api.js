@@ -404,7 +404,7 @@ logger.setLevel(LOG_LEVEL);
 
 	};
 
-	this.upload = function (apiKey, req, res, file, socket) {
+	this.upload = function (req, res, file, socket) {
 		var self = this;
 		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 		var length = req.header('Content-length');
@@ -435,6 +435,7 @@ logger.setLevel(LOG_LEVEL);
 
 			/** HELLO. accountID needs to be apiKey. Check it out. **/
 
+			var accountID = 'developer';
 
 			var FAR = thrift.createClient(AppFabricService, conn);
 			FAR.init(auth_token, new appfabricservice_types.ResourceInfo({
@@ -446,6 +447,7 @@ logger.setLevel(LOG_LEVEL);
 			}), function (error, resource_identifier) {
 				if (error) {
 					logger.warn('AppFabric Init', error);
+					socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 				} else {
 
 					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
@@ -457,6 +459,7 @@ logger.setLevel(LOG_LEVEL);
 						FAR.deploy(auth_token, resource_identifier, function (error, result) {
 							if (error) {
 								logger.warn('FARManager deploy', error);
+								socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 							} else {
 								socket.emit('upload', {step: 0, 'status': 'Verifying...', result: arguments});
 
@@ -466,6 +469,7 @@ logger.setLevel(LOG_LEVEL);
 									FAR.dstatus(auth_token, resource_identifier, function (error, result) {
 										if (error) {
 											logger.warn('FARManager verify', error);
+											socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 										} else {
 
 											if (current_status !== result.overall) {

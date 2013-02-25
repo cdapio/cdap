@@ -10,12 +10,12 @@
 
 	<property>
 		<name>accounts-host</name>
-		<value>127.0.0.1</value>
+		<value>accounts.continuuity.com</value>
 	</property>
 
 	<property>
 		<name>accounts-port</name>
-		<value>7773</value>
+		<value>443</value>
 	</property>
 
 	<property>
