@@ -6,8 +6,6 @@ package com.continuuity.app.queue;
 
 import com.continuuity.api.io.Schema;
 
-import java.net.URI;
-
 /**
  * This interface defines the specification for associated with either
  * input or output binds to it's respective {@link QueueName} and {@link Schema}

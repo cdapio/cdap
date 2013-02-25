@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
