@@ -10,6 +10,8 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.base.Cancellable;
+import com.continuuity.common.logging.common.LogWriter;
+import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.discovery.DiscoveryService;
@@ -62,9 +64,11 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   @Inject
   public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
-                                DiscoveryService discoveryService) {
+                                DiscoveryService discoveryService,
+                                LogWriter logWriter) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.discoveryService = discoveryService;
+    CAppender.logWriter = logWriter;
   }
 
   @Override

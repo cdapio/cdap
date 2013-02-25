@@ -13,6 +13,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
@@ -59,6 +60,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     procedure = new InstantiatorFactory().get(procedureType).create();
     injectFields(procedure, procedureType, context);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+
+    // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
+    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
   }
 
   public Procedure getProcedure() {
