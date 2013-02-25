@@ -14,16 +14,16 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class WordAssocTable extends DataSet {
+public class AssociationTable extends DataSet {
 
   private Table table;
 
-  public WordAssocTable(String name) {
+  public AssociationTable(String name) {
     super(name);
     this.table = new Table("word_assoc_" + name);
   }
 
-  public WordAssocTable(DataSetSpecification spec) {
+  public AssociationTable(DataSetSpecification spec) {
     super(spec);
     this.table = new Table(
       spec.getSpecificationFor("word_assoc_" + this.getName()));
@@ -80,6 +80,18 @@ public class WordAssocTable extends DataSet {
     return collector.getTopK();
   }
 
+  public long getAssoc(String word1, String word2) throws OperationException {
+    OperationResult<Map<byte[], byte[]>> result =
+      this.table.read(new Read(Bytes.toBytes(word1), Bytes.toBytes(word2)));
+    if (result.isEmpty()) {
+      return 0;
+    }
+    byte[] count = result.getValue().get(Bytes.toBytes(word2));
+    if (count == null || count.length != Bytes.SIZEOF_LONG) {
+      return 0;
+    }
+    return Bytes.toLong(count);
+  }
 }
 
 class TopKCollector {

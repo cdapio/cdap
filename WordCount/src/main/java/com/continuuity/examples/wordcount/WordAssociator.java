@@ -8,18 +8,18 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class WordAssociatorFlowlet extends AbstractFlowlet {
+public class WordAssociator extends AbstractFlowlet {
 
-  public WordAssociatorFlowlet() {
+  public WordAssociator() {
     super("wordAssociator");
   }
 
   @UseDataSet("wordAssocs")
-  private WordAssocTable wordAssocTable;
+  private AssociationTable associationTable;
 
   public void process(String [] words) throws OperationException {
     // Store word associations
     Set<String> wordSet = new TreeSet<String>(Arrays.asList(words));
-    this.wordAssocTable.writeWordAssocs(wordSet);
+    this.associationTable.writeWordAssocs(wordSet);
   }
 }

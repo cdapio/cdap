@@ -17,10 +17,10 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class WordCountProcedure extends AbstractProcedure {
+public class RetrieveCounts extends AbstractProcedure {
 
-  public WordCountProcedure() {
-    super("WordCountProcedure");
+  public RetrieveCounts() {
+    super("RetrieveCounts");
   }
   @Override
   public ProcedureSpecification configure() {
@@ -44,7 +44,7 @@ public class WordCountProcedure extends AbstractProcedure {
   private UniqueCountTable uniqueCountTable;
 
   @UseDataSet("wordAssocs")
-  private WordAssocTable wordAssocTable;
+  private AssociationTable associationTable;
 
   @Handle("getStats")
   public void getStats(ProcedureRequest request, ProcedureResponder responder) throws Exception {
@@ -97,13 +97,35 @@ public class WordCountProcedure extends AbstractProcedure {
     Long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
 
     // Read the top associated words
-    Map<String,Long> wordsAssocs = this.wordAssocTable.readWordAssocs(word, limit);
+    Map<String,Long> wordsAssocs = this.associationTable.readWordAssocs(word, limit);
 
     // return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
     results.put("word", word);
     results.put("count", wordCount);
     results.put("assocs", wordsAssocs);
+    responder.sendJson(new ProcedureResponse(Code.SUCCESS), results);
+  }
+
+  @Handle("getAssoc")
+  public void getAssoc(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    // third method is 'getAssoc' with argument of word1, word2
+    // returns number of times the two words co-occurred
+    String word1 = request.getArgument("word1");
+    String word2 = request.getArgument("word2");
+    if (word1 == null || word2 == null) {
+      responder.error(Code.CLIENT_ERROR, "Method 'getCount' requires arguments 'word1' and 'word2'");
+      return;
+    }
+
+    // Read the top associated words
+    long count = this.associationTable.getAssoc(word1, word2);
+
+    // return a map as JSON
+    Map<String, Object> results = new TreeMap<String, Object>();
+    results.put("word1", word1);
+    results.put("word2", word2);
+    results.put("count", count);
     responder.sendJson(new ProcedureResponse(Code.SUCCESS), results);
   }
 }

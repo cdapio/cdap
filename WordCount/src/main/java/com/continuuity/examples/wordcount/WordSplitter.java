@@ -9,9 +9,9 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WordSplitterFlowlet extends AbstractFlowlet {
+public class WordSplitter extends AbstractFlowlet {
 
-  public WordSplitterFlowlet() {
+  public WordSplitter() {
     super("wordSplitter");
   }
 

@@ -32,15 +32,15 @@ public class WordCounter implements Flow {
         .setName("WordCounter")
         .setDescription("Example Word Count Flow")
         .withFlowlets()
-            .add("wordSplitter", new WordSplitterFlowlet())
-            .add("wordCounter", new WordCounterFlowlet())
-            .add("wordAssociator", new WordAssociatorFlowlet())
-            .add("uniqueCounter", new UniqueCounterFlowlet())
+            .add("splitter", new WordSplitter())
+            .add("counter", new Counter())
+            .add("associator", new WordAssociator())
+            .add("unique", new UniqueCounter())
         .connect()
-            .fromStream("wordStream").to("wordSplitter")
-            .from("wordSplitter").to("wordCounter")
-            .from("wordSplitter").to("wordAssociater")
-            .from("wordCounter").to("uniqueCounter")
+            .fromStream("wordStream").to("splitter")
+            .from("splitter").to("counter")
+            .from("splitter").to("associator")
+            .from("counter").to("unique")
         .build();
   }
 }

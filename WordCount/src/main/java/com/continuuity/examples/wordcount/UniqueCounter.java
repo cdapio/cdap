@@ -4,9 +4,9 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
-public class UniqueCounterFlowlet extends AbstractFlowlet {
+public class UniqueCounter extends AbstractFlowlet {
 
-  public UniqueCounterFlowlet() {
+  public UniqueCounter() {
     super("uniqueCounter");
   }
 
