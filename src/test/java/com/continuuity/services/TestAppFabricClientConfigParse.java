@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test app-fabric command parsing
  */
-public class TestAppFabricParser {
+public class TestAppFabricClientConfigParse {
 
   @Test
   public void testOptionsParsing() throws ParseException {
