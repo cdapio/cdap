@@ -77,7 +77,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    *                the connection alive)
    */
   protected void respondSuccess(Channel channel, HttpRequest request) {
-    respond(channel, request, null, null, null);
+    respond(channel, request, null, null, (ChannelBuffer)null);
   }
 
   /**
@@ -94,6 +94,11 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
     respond(channel, request, null, null, content);
   }
 
+  protected void respondSuccess(Channel channel, HttpRequest request,
+                                byte[] content) {
+    respond(channel, request, null, null, ChannelBuffers.wrappedBuffer(content));
+  }
+
   /**
    * Respond to the client with success. This keeps the connection alive
    * unless specified otherwise in the original request.
@@ -105,7 +110,13 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    */
   protected void respondSuccess(Channel channel, HttpRequest request,
                                 HttpResponseStatus status) {
-    respond(channel, request, status, null, null);
+    respond(channel, request, status, null, (ChannelBuffer)null);
+  }
+
+  protected void respond(Channel channel, HttpRequest request,
+                         HttpResponseStatus status,
+                         Map<String, String> headers, byte[] content) {
+    respond(channel, request, status, headers, ChannelBuffers.wrappedBuffer(content));
   }
 
   /**
@@ -129,7 +140,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       for (Map.Entry<String, String> entry : headers.entrySet())
         response.addHeader(entry.getKey(), entry.getValue());
     }
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content == null ? 0 : content.readableBytes());
     response.setContent(content);
 
     ChannelFuture future = channel.write(response);
