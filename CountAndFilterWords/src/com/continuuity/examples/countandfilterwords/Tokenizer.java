@@ -16,8 +16,8 @@ public class Tokenizer extends AbstractFlowlet {
     // Tokenize and emit each token to the filters
     for (String token : line.split("[ .-]")) {
       tokenOutput.emit(token);
+      // Also emit to the 'all' counter for each token
+      countOutput.emit("all");
     }
-    // Also emit once to the 'all' counter
-    countOutput.emit("all");
   }
 }
