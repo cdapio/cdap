@@ -4,9 +4,11 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.logging.ProcedureLoggingContext;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.google.common.base.Preconditions;
@@ -29,9 +31,10 @@ final class BasicProcedureContext implements ProcedureContext {
   private final Map<String, DataSet> datasets;
   private final CMetrics systemMetrics;
   private final ProcedureMetrics procedureMetrics;
+  private final ProcedureLoggingContext procedureLoggingContext;
 
-  BasicProcedureContext(Program program, int instanceId, RunId runId,
-                        Map<String, DataSet> datasets, ProcedureSpecification procedureSpec) {
+  BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
+                        ProcedureSpecification procedureSpec) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
     this.procedureId = program.getProgramName();
@@ -42,6 +45,12 @@ final class BasicProcedureContext implements ProcedureContext {
     this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
     this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
                                                  getProcedureId(), getRunId().toString(), getInstanceId());
+    this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
+  }
+
+  @Override
+  public String toString() {
+    return String.format("procedure=%s, instance=%d, runid=%s", getProcedureId(), getInstanceId(), getRunId());
   }
 
   @Override
@@ -83,6 +92,10 @@ final class BasicProcedureContext implements ProcedureContext {
 
   public int getInstanceId() {
     return instanceId;
+  }
+
+  public LoggingContext getLoggingContext() {
+    return procedureLoggingContext;
   }
 
   private String getMetricName() {
