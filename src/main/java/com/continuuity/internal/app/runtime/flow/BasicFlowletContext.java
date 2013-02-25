@@ -133,7 +133,6 @@ final class BasicFlowletContext implements FlowletContext {
 
   public LoggingContext getLoggingContext() {
     return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
-
   }
 
   public Metrics getMetrics() {

@@ -6,12 +6,14 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
+import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
@@ -50,7 +52,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
-    context = new BasicProcedureContext(program, instanceId, runId,
+    context = new BasicProcedureContext(program, runId, instanceId,
                                         DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
                                         procedureSpec);
 
@@ -58,6 +60,28 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     procedure = new InstantiatorFactory().get(procedureType).create();
     injectFields(procedure, procedureType, context);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+
+    // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
+    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+  }
+
+  public Procedure getProcedure() {
+    return procedure;
+  }
+
+  public ProcedureContext getContext() {
+    return context;
+  }
+
+  public void init() {
+    try {
+      LOG.info("Initializing procedure: " + context);
+      procedure.initialize(context);
+      LOG.info("Procedure initialized: " + context);
+    } catch (Throwable t) {
+      LOG.error("Procedure throws exception during init.", t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
