@@ -97,16 +97,18 @@ final class HttpProcedureResponder implements ProcedureResponder {
       throw new IOException("A writer is already opened for streaming or the response was already sent.");
     }
 
-    HttpResponse httpResponse = createHttpResponse(new ProcedureResponse(errorCode));
-    httpResponse.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage)));
-    channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
-    writer = new ClosedResponseWriter();
+    try {
+      HttpResponse httpResponse = createHttpResponse(new ProcedureResponse(errorCode));
+      httpResponse.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage)));
+      channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
+    } finally {
+      writer = ResponseWriters.CLOSED_WRITER;
+    }
   }
 
   private void handleFailure(HttpResponse httpResponse) {
     httpResponse.setContent(ChannelBuffers.EMPTY_BUFFER);
     channel.write(httpResponse).addListener(ChannelFutureListener.CLOSE);
-    writer = new ClosedResponseWriter();
   }
 
   private HttpResponse createHttpResponse(ProcedureResponse response) throws IOException {
