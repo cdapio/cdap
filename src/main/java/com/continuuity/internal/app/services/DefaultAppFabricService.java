@@ -709,7 +709,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Promotes a FAR from single node to cloud.
    *
-   * @param identifier of the flow.
+   * @param id of the flow.
    * @return true if successful; false otherwise.
    * @throws AppFabricServiceException
    */
@@ -726,14 +726,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
-      InputSupplier<InputStream> appArchiveSupplier = new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return applicationDir.getInputStream();
-        }
-      };
-
-      InputStream reader = appArchiveSupplier.getInput();
+      InputStream reader = applicationDir.getInputStream();
       String schema = "https";
       if("localhost".equals(hostname)) {
         schema = "http";
