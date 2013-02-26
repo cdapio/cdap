@@ -3,22 +3,12 @@
 */
 package com.continuuity.app.services;
 
-import com.continuuity.app.Id;
-import com.continuuity.app.deploy.Manager;
-import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.BufferFileInputStream;
-import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.commons.cli.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -33,15 +23,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
 /**
  * Client for interacting with local app-fabric service to perform the following operations:
  * a) Deploy locally
- * b) Verify jar
- * c) Start/Stop/Status of local service
- * d) promote to cloud
+ * b) Start/Stop/Status of local service
+ * c) promote to cloud
  * <p/>
  * Usage:
  * AppFabricClient client = new AppFabricClient();
@@ -51,7 +39,7 @@ import java.util.jar.JarFile;
 public class AppFabricClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "verify", "status");
+    "promote", "status");
   private final String RESOURCE_LONG_OPT_ARG = "resource";
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCESSOR_LONG_OPT_ARG = "processor";
@@ -126,7 +114,7 @@ public class AppFabricClient {
       }
 
       if ("promote".equals(command)) {
-        ResourceIdentifier identifier = new ResourceIdentifier("Developer", this.application, this.resource, 1);
+        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, this.resource, 1);
         boolean status = client.promote(new AuthToken(this.authToken), identifier, this.vpc);
         if (status) {
           System.out.println("Promoted to cloud");
@@ -136,26 +124,12 @@ public class AppFabricClient {
       }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-        FlowIdentifier identifier = new FlowIdentifier("Developer", application, processor, 0);
+        FlowIdentifier identifier = new FlowIdentifier("developer", application, processor, 0);
 
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
         Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
         System.out.println(String.format("%s", flowStatus.toString()));
       }
-
-      if ("verify".equals(command)) {
-        Location location = new LocalLocationFactory().create(this.resource);
-        final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
-          new DataFabricModules().getInMemoryModules());
-
-        ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-        Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>)
-                                                              factory.create();
-        manager.deploy(new Id.Account("Developer"), location);
-        System.out.println("Verification succeeded");
-
-      }
-
     } catch (Exception e) {
       System.out.println(String.format("Caught Exception while running %s ", command));
       System.out.println(String.format("Error: %s", e.getMessage()));
@@ -243,11 +217,6 @@ public class AppFabricClient {
         this.processor = commandLine.getOptionValue(PROCESSOR_LONG_OPT_ARG);
 
       }
-      if ("verify".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_LONG_OPT_ARG), "verify command should have" +
-          " resource argument");
-        this.resource = commandLine.getOptionValue(RESOURCE_LONG_OPT_ARG);
-      }
       if ("promote".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(VPC_LONG_OPT_ARG), "promote command should have" +
           "vpc argument");
@@ -271,7 +240,7 @@ public class AppFabricClient {
   }
 
   private void printHelp(Options options) {
-    String command = "AppFabricClient help|deploy|start|stop|status|verify|promote [OPTIONS]";
+    String command = "AppFabricClient help|deploy|start|stop|status|promote [OPTIONS]";
     HelpFormatter formatter = new HelpFormatter();
     formatter.setWidth(120);
     formatter.printHelp(command, options);
@@ -284,6 +253,7 @@ public class AppFabricClient {
       client = new AppFabricClient();
       client.configure(CConfiguration.create(), args);
     } catch (Exception e) {
+      System.out.println(e.getMessage());
       return;
     }
     client.execute();
@@ -294,30 +264,18 @@ public class AppFabricClient {
     File file = new File(this.resource);
     JarFile jarFile = new JarFile(file);
 
-    String applicationName = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-    Preconditions.checkNotNull(applicationName, "Could not find the main class name in the jar");
     AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-
-    ResourceInfo info = new ResourceInfo();
-    info.setAccountId("developer");
-    info.setApplicationId(applicationName);
-    info.setFilename(file.getName());
-    info.setModtime(file.lastModified());
-    info.setSize((int) file.getTotalSpace());
-
     System.out.println(String.format("Deploying... :%s", this.resource));
-    ResourceIdentifier identifier = client.init(dummyAuthToken, info);
 
+    ResourceIdentifier identifier = client.init(dummyAuthToken, new ResourceInfo("developer","", file.getName(),                                                                    (int)file.getTotalSpace(), file.lastModified()));
     Preconditions.checkNotNull(identifier, "Resource identifier is null");
 
     BufferFileInputStream is =
       new BufferFileInputStream(file.getAbsolutePath(), 100 * 1024);
 
-    int count = 0;
     try {
       while (true) {
         byte[] toSubmit = is.read();
-        count += toSubmit.length;
         if (toSubmit.length == 0) break;
         client.chunk(dummyAuthToken, identifier, ByteBuffer.wrap(toSubmit));
       }
@@ -325,8 +283,6 @@ public class AppFabricClient {
       is.close();
     }
     client.deploy(dummyAuthToken, identifier);
-
-    System.out.println(String.format("Chunked %d: bytes", count));
 
     Thread.sleep(5000);
     DeploymentStatus status = client.dstatus(dummyAuthToken, identifier);
