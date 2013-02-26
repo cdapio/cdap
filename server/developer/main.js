@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
+
 var express = require('express'),
 	io = require('socket.io'),
 	Int64 = require('node-int64').Int64;
@@ -10,6 +14,9 @@ var express = require('express'),
 
 var Api = require('../common/api');
 
+/**
+ * Setting the environment to Cloud.
+ */
 process.env.NODE_ENV = 'development';
 
 var VERSION;

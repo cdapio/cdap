@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
+
 var express = require('express'),
 	http = require('http'),
 	https = require('https'),
@@ -20,7 +24,6 @@ var Api = require('../common/api'),
 process.env.NODE_ENV = 'production';
 
 var LOG_LEVEL = 'ERROR';
-var COOKIE_SECRET = 'f&83#fjaSF@1lOZIs9';
 
 /**
 * Configure logger.
@@ -38,18 +41,6 @@ logger.setLevel(LOG_LEVEL);
  */
 var app = express();
 app.use(express.bodyParser());
-
-/**
- * Express cookie sessions.
- */
-app.use(express.cookieParser());
-app.use(express.cookieSession({
-	key: 'continuuity-sso',
-	secret: COOKIE_SECRET,
-	cookie: {
-		maxAge: 60 * 60 * 1000
-	}
-}));
 
 /**
  * Session check.
@@ -167,7 +158,7 @@ function setSocketHandlers () {
 		if (data.headers.cookie) {
 			
 			var cookies = cookie.parse(data.headers.cookie);
-			var signedCookies = utils.parseSignedCookies(cookies, COOKIE_SECRET);
+			var signedCookies = utils.parseSignedCookies(cookies, config['cookie-secret']);
 			var obj = utils.parseJSONCookies(signedCookies);
 
 			data.account_id = obj['continuuity-sso'].account_id;
@@ -339,6 +330,20 @@ fs.readFile(configPath, function (error, result) {
 				Api.configure(config);
 
 				/**
+				 * Express cookie sessions.
+				 */
+				app.use(express.cookieParser());
+				app.use(express.cookieSession({
+					key: 'continuuity-sso',
+					secret: config['cookie-secret'],
+					cookie: {
+						path: '/',
+						domain: '.continuuity.net',
+						maxAge: 24 * 60 * 60 * 1000
+					}
+				}));
+
+				/**
 				 * Create an HTTP server that redirects to HTTPS.
 				 */
 				http.createServer(function (request, response) {
@@ -357,22 +362,22 @@ fs.readFile(configPath, function (error, result) {
 				/**
 				 * HTTPS credentials
 				 */
-				var keys = {
-					ca: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.ca-bundle'),
-					key: fs.readFileSync(__dirname + '/keys/continuuity-com-key.key'),
-					cert: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.crt')
+				var certs = {
+					ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
+					key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
+					cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
 				};
 
 				/**
 				 * Create the HTTPS server
 				 */
-				var server = https.createServer(keys, app).listen(config['cloud-ui-ssl-port']);
+				var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
 				logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
 
 				/**
 				 * Configure Socket IO
 				 */
-				io = io.listen(server, keys);
+				io = io.listen(server, certs);
 				io.configure('production', function(){
 					io.set('transports', ['websocket', 'xhr-polling']);
 					io.enable('browser client minification');
