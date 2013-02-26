@@ -81,7 +81,6 @@ public class PassportHttpServer {
       LOG.info(String.format("Threads: %d",maxThreads));
       for(Map.Entry<String,String> e: configuration.entrySet()){
         LOG.info(String.format("Config %s : %s", e.getKey(),e.getValue()));
-        System.out.println(e.getKey()+" "+e.getValue());
       }
 
       server.start();
