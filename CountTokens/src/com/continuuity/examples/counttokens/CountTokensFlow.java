@@ -12,13 +12,11 @@ public class CountTokensFlow implements Flow {
       .withFlowlets()
         .add("source", new StreamSource())
         .add("split", new Tokenizer())
-        .add("count2", new TokenCounter())
+        .add("count", new TokenCounter())
       .connect()
         .fromStream("text").to("source")
         .from("source").to("split")
-        .from("split").to("count1")
-        .from("split").to("upper")
-        .from("upper").to("count2")
+        .from("split").to("count")
       .build();
   }
 }
