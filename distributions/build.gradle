@@ -118,12 +118,28 @@ task singlenode_dist (type: Zip) {
   }
 
   //webapp
-  into ("web-app/client"){
+  into ("web-app/developer/client"){
     from project(':web-cloud-app').file('build/developer/client')
   }
 
-  into("web-app/server"){
+  into("web-app/developer/server"){
     from project(':web-cloud-app').file('build/developer/server')
+  }
+
+  into("web-app/developer/common"){
+    from project(':web-cloud-app').file('build/developer/common')
+  }
+
+  into ("web-app/cloud/client"){
+    from project(':web-cloud-app').file('build/cloud/client')
+  }
+
+  into("web-app/cloud/server"){
+    from project(':web-cloud-app').file('build/cloud/server')
+  }
+
+  into("web-app/cloud/common"){
+    from project(':web-cloud-app').file('build/cloud/common')
   }
 
   // VERSION
@@ -184,12 +200,29 @@ task cloud_dist (type: Tar) {
     include "*-env.sh"
   }
 
-  into("cloud/web-app/client") {
+  //webapp
+  into ("web-app/developer/client"){
+    from project(':web-cloud-app').file('build/developer/client')
+  }
+
+  into("web-app/developer/server"){
+    from project(':web-cloud-app').file('build/developer/server')
+  }
+
+  into("web-app/developer/common"){
+    from project(':web-cloud-app').file('build/developer/common')
+  }
+
+  into ("web-app/cloud/client"){
     from project(':web-cloud-app').file('build/cloud/client')
   }
 
-  into("cloud/web-app/server") {
+  into("web-app/cloud/server"){
     from project(':web-cloud-app').file('build/cloud/server')
+  }
+
+  into("web-app/cloud/common"){
+    from project(':web-cloud-app').file('build/cloud/common')
   }
 
   // VERSION
