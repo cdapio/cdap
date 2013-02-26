@@ -2,17 +2,38 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.runtime.MetadataModules;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.http.client.methods.HttpPost;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class RestCollectorTest {
 
-  static RestCollector newCollector(String name) {
+  static Collector newCollector(String name) {
     RestCollector collector = new RestCollector();
     collector.setMetadataService(new DummyMDS());
+    collector.setName(name);
+    return collector;
+  }
+
+  static Collector newCollectorWithRealOpexAndMDS(String name) {
+    Injector injector = Guice.createInjector(new MetadataModules() .getInMemoryModules(),
+                                             new DataFabricModules().getInMemoryModules());
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    Collector collector = new RestCollector();
+    collector.setMetadataService(new MetadataService(opex));
     collector.setName(name);
     return collector;
   }
@@ -171,6 +192,127 @@ public class RestCollectorTest {
         baseUrl + "x?query=none"));
 
     // and shutdown
+    collector.stop();
+  }
+  /**
+   * verify that a new stream gets created
+   */
+  @Test
+  public void testCreateStream() throws Exception {
+    String name = "other";
+    String prefix = "/stream/";
+    String middle_path = "";
+    String streamId = "firststream";
+
+    int port = PortDetector.findFreePort();
+
+    //url = "http://localhost:" + port + prefix + "/" + destination + "/"
+    //i.e. "http://localhost:10000/stream/firststream/
+    String url = "http://localhost:" + port + prefix + streamId + "/";
+
+    Collector collector = newCollectorWithRealOpexAndMDS(name);
+
+    CConfiguration configuration = new CConfiguration();
+    configuration.setInt(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle_path);
+
+    collector.configure(configuration);
+    collector.setConsumer(new TestUtil.VerifyConsumer(15, name, streamId));
+    collector.setAuthenticator(new NoAuthenticator());
+
+    Account account =
+      new Account(collector.getAuthenticator()
+                    .getAccountId(new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+                                                         HttpMethod.GET,
+                                                         url)));
+
+    MetadataService mds = collector.getMetadataService();
+
+    // clean up streams/queries in mds if there are leftovers from other tests
+    for (Stream stream : mds.getStreams(account)) {
+      Assert.assertTrue(mds.deleteStream(account, stream));
+    }
+
+    collector.start();
+
+    //send Http request with REST command to create stream
+    Assert.assertEquals(200, TestUtil.sendPutRequest(url));
+
+    Stream stream = new Stream(streamId);
+    stream.setName(streamId);
+
+    //check through MDS if stream got created
+    Stream existingStream = mds.getStream(account, stream);
+    Assert.assertTrue(existingStream.isExists());
+
+    //delete new stream through MDS
+    Assert.assertTrue(mds.deleteStream(account, stream));
+
+    //check if new stream got deleted
+    existingStream = mds.getStream(account, stream);
+    Assert.assertFalse(existingStream.isExists());
+
+    collector.stop();
+  }
+  /**
+   * verify that a new stream gets created
+   */
+  @Test
+  public void testBadCreateStreamRequest() throws Exception {
+    String name = "other";
+    String prefix = "/stream/";
+    String middle_path = "";
+    String badStreamId = "my&stream";
+
+    int port = PortDetector.findFreePort();
+
+    //url = "http://localhost:" + port + prefix + "/" + destination + "/"
+    //i.e. "http://localhost:10000/stream/firststream/
+    String url = "http://localhost:" + port + prefix + badStreamId + "/";
+
+    Collector collector = newCollectorWithRealOpexAndMDS(name);
+
+    CConfiguration configuration = new CConfiguration();
+    configuration.setInt(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.
+      buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle_path);
+
+    collector.configure(configuration);
+    collector.setConsumer(new TestUtil.VerifyConsumer(15, name, badStreamId));
+    collector.setAuthenticator(new NoAuthenticator());
+
+    Account account =
+      new Account(collector.getAuthenticator()
+                    .getAccountId(new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+                                                         HttpMethod.GET,
+                                                         url)));
+
+    MetadataService mds = collector.getMetadataService();
+
+    // clean up streams/queries in mds if there are leftovers from other tests
+    for (Stream stream : mds.getStreams(account)) {
+      Assert.assertTrue(mds.deleteStream(account, stream));
+    }
+
+    collector.start();
+
+    //send Http request with REST command to try to create stream with bad name
+    Assert.assertEquals(400, TestUtil.sendPutRequest(url));
+
+    Stream stream = new Stream(badStreamId);
+    stream.setName(badStreamId);
+
+    //check through MDS that stream did not get created
+    Stream existingStream = mds.getStream(account, stream);
+    Assert.assertFalse(existingStream.isExists());
+
     collector.stop();
   }
 }

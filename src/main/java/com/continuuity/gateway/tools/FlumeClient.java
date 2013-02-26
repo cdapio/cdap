@@ -68,7 +68,7 @@ public class FlumeClient {
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
-        " --stream <name> --body <value> [ <option> ... ]");
+        " --stream <id> --body <value> [ <option> ... ]");
     out.println("Options:");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -76,7 +76,7 @@ public class FlumeClient {
         "To specify the name of the flume collector");
     out.println("  --apikey <apikey>       " +
         "To specify an API key for authentication");
-    out.println("  --stream <name>         " +
+    out.println("  --stream <id>         " +
         "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
     out.println("  --header <name> <value> " +

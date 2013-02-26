@@ -6,19 +6,24 @@ import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.common.utils.StackTraceUtil;
+import com.continuuity.discovery.Discoverable;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.passport.http.client.PassportClient;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
@@ -27,15 +32,18 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -49,13 +57,13 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  */
 public class AppFabricRestHandler extends NettyRestHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
-  private final static String CONTINUUITY_JAR_FILE_NAME = "X-Continuuity-JarFileName";
+  private final static String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   /**
    * The allowed methods for this handler
    */
   HttpMethod[] allowedMethods = {
-      HttpMethod.POST
+      HttpMethod.PUT
   };
 
   /**
@@ -70,7 +78,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
   private final CMetrics metrics;
 
   private final String pathPrefix;
-
 
   /**
    * Constructor requires the connector that created this
@@ -90,130 +97,106 @@ public class AppFabricRestHandler extends NettyRestHandler {
   private static final int PING = 6;
   private static final int DEPLOY = 7;
 
+
   @Override
   public void messageReceived(ChannelHandlerContext context,
                               MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
     CConfiguration configuration = this.connector.getConfiguration();
+    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics, this.connector.getMetricsQualifier());
+
+    // We first authenticate user.
+    if(! connector.getAuthenticator().authenticateRequest(request)) {
+      respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+      helper.finish(BadRequest);
+      return;
+    }
+
+    // Get the account ID
+    String accountId = connector.getAuthenticator().getAccountId(request);
+    if(accountId == null || accountId.isEmpty()) {
+      respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+      helper.finish(BadRequest);
+      return;
+    }
 
     HttpMethod method = request.getMethod();
     String requestUri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + requestUri);
-    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics, this.connector.getMetricsQualifier());
 
     try {
       // check whether the request's HTTP method is supported
-      if(method != HttpMethod.POST) {
+      if(method != HttpMethod.PUT) {
         LOG.trace("Received Unsupported http request method " + method.getName());
         respondNotAllowed(message.getChannel(), allowedMethods);
         helper.finish(BadRequest);
-      }
-
-      // based on the request URL, determine what to do
-      QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
-      Map<String, List<String>> parameters = decoder.getParameters();
-      List<String> clearParams = null;
-      int operation = UNKNOWN;
-
-      // if authentication is enabled, verify an authentication token has been
-      // passed and then verify the token is valid
-      if (!connector.getAuthenticator().authenticateRequest(request)) {
-        LOG.info("Received an unauthorized request");
-        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
-        helper.finish(BadRequest);
         return;
       }
 
-      String accountId = connector.getAuthenticator().getAccountId(request);
+      List<Discoverable> endpoints
+        = Lists.newArrayList(connector.getDiscoveryServiceClient().discover("app.fabric.service"));
+      if(endpoints.isEmpty()) {
+        LOG.trace("Received a request for deploy, but AppFabric service was not available.");
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        helper.finish(BadRequest);
+        return;
+      }
+      Collections.shuffle(endpoints);
 
-      if (method == HttpMethod.PUT || method == HttpMethod.POST) {
-        if (requestUri.endsWith("/deploy")) {
-          operation = DEPLOY;
-          helper.setMethod("deploy");
+      InetSocketAddress endpoint = endpoints.get(0).getSocketAddress();
+      TTransport transport = new TFramedTransport(new TSocket(endpoint.getHostName(), endpoint.getPort()));
+      transport.open();
+      TProtocol protocol = new TBinaryProtocol(transport);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+
+      try {
+        if(requestUri.contains("/apps/status")) {
+          ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
+          DeploymentStatus status = client.dstatus(token, rIdentifier);
+          Map<String, String> headers = Maps.newHashMap();
+          headers.put(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+          respond(message.getChannel(), request, HttpResponseStatus.OK, headers, getJsonStatus(status.getOverall(),
+                                                                                               status.getMessage())
+            .toString().getBytes(Charset.forName("UTF-8")));
+          helper.finish(Success);
         } else {
-          operation = BAD;
-        }
-      } else if (method == HttpMethod.GET) {
-        if ("/ping".equals(requestUri)) {
-          operation = PING;
-          helper.setMethod("ping");
-        } else {
-          operation = BAD;
-        }
-      }
-
-      // respond with error for bad requests
-      if (operation == BAD) {
-        helper.finish(BadRequest);
-        LOG.trace("Received an incomplete request '" + request.getUri() + "'.");
-        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-        return;
-      }
-      // respond with error for unknown requests
-      if (operation == UNKNOWN) {
-        helper.finish(BadRequest);
-        LOG.trace("Received an unsupported " + method + " request '"
-            + request.getUri() + "'.");
-        respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
-        return;
-      }
-
-      // is this a ping? (http://gw:port/ping) if so respond OK and done
-      if (PING == operation) {
-        respondToPing(message.getChannel(), request);
-        helper.finish(Success);
-        return;
-      }
-
-      String destination = null, key = null;
-      String path = decoder.getPath();
-
-      // operation DEPLOY must not have a key
-      if ((operation == DEPLOY) &&  (key != null && key.length() > 0)) {
-        helper.finish(BadRequest);
-        LOG.trace("Received a request with invalid path " + path + "(no key may be given)");
-        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-        return;
-      }
-
-      switch(operation) {
-        case DEPLOY: {
-          // read the content of the jar file from the body of the request
-          ChannelBuffer content = request.getContent();
-          if (content == null) {
-            // PUT or POST without content -> 400 Bad Request
-            helper.finish(BadRequest);
+          // Extract the file name from the header.
+          String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
+          if(archiveName == null || archiveName.isEmpty()) {
+            LOG.trace("Archive name was not available in the header");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            helper.finish(BadRequest);
             return;
           }
-          int length = content.readableBytes();
-          String jarFileName=request.getHeader(CONTINUUITY_JAR_FILE_NAME);
-          byte[] jarFileBytes = new byte[length];
-          content.readBytes(jarFileBytes);
-          int port=configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
-          AppFabricService.Client client=getAppFabricClient("localhost", port);
-          try {
-            String apiKey=request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY);
-            deploy(client, configuration, jarFileName, jarFileBytes, accountId, apiKey);
-            respondSuccess(message.getChannel(), request);
-            helper.finish(Success);
-          } catch (Exception e) {
-            // something went wrong, internal error
-            helper.finish(Error);
-            LOG.error("Error during Deploy: " + e.getMessage(), e);
-            respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+
+          ChannelBuffer content = request.getContent();
+          if(content == null) {
+            LOG.trace("No body passed from client");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            helper.finish(BadRequest);
+            return;
           }
-          break;
+
+          ResourceInfo rInfo = new ResourceInfo(accountId, "GWApp", archiveName,1, System.currentTimeMillis()/1000);
+          ResourceIdentifier rIdentifier = client.init(token, rInfo);
+
+          while(content.readableBytes() > 0) {
+            int bytesToRead = Math.min(1024 * 100, content.readableBytes());
+            client.chunk(token, rIdentifier, content.readSlice(bytesToRead).toByteBuffer());
+          }
+
+          client.deploy(token, rIdentifier);
+          respondSuccess(message.getChannel(), request);
         }
-        default: {
-          // this should not happen because we checked above -> internal error
-          helper.finish(Error);
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } finally {
+        if(transport.isOpen()) {
+          transport.close();
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.debug(StackTraceUtil.toStringStackTrace(e));
       LOG.error("Exception caught for connector '" + this.connector.getName() + "'. ", e.getCause());
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
@@ -221,6 +204,13 @@ public class AppFabricRestHandler extends NettyRestHandler {
         message.getChannel().close();
       }
     }
+  }
+
+  private JsonObject getJsonStatus(int status, String message) {
+    JsonObject object = new JsonObject();
+    object.addProperty("status", status);
+    object.addProperty("message", message);
+    return object;
   }
 
   @Override
@@ -258,8 +248,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
     client.chunk(token, id, ByteBuffer.wrap(toSubmit));
     DeploymentStatus status = client.dstatus(token, id);
 
-
     client.deploy(token, id);
+
     int dstatus = client.dstatus(token, id).getOverall();
     while(dstatus == 3) {
       dstatus = client.dstatus(token, id).getOverall();

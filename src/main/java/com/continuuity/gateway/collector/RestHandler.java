@@ -19,8 +19,12 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.Maps;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -58,7 +62,7 @@ public class RestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = { HttpMethod.POST, HttpMethod.GET };
+  HttpMethod[] allowedMethods = { HttpMethod.PUT, HttpMethod.POST, HttpMethod.GET };
 
   /**
    * The collector that created this handler. It has collector name and consumer
@@ -120,6 +124,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int DEQUEUE = 3;
   private static final int INFO = 4;
   private static final int PING = 5;
+  private static final int CREATE = 6; // or CREATE_STREAM ???
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -136,12 +141,13 @@ public class RestHandler extends NettyRestHandler {
     try {
 
       // we only support POST and GET
-      if (method != HttpMethod.POST && method != HttpMethod.GET ) {
+      if (method != HttpMethod.PUT && method != HttpMethod.POST && method != HttpMethod.GET ) {
         LOG.trace("Received a " + method + " request, which is not supported");
         helper.finish(BadRequest);
         respondNotAllowed(message.getChannel(), allowedMethods);
         return;
       }
+
 
       // we do not support a query or parameters in the URL
       QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
@@ -157,9 +163,18 @@ public class RestHandler extends NettyRestHandler {
       }
 
       String accountId = collector.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        helper.finish(NotFound);
+        return;
+      }
 
       int operation = UNKNOWN;
-      if (method == HttpMethod.POST) {
+      if (method == HttpMethod.PUT) {
+        operation=CREATE;
+        helper.setMethod("create");
+      } else if (method == HttpMethod.POST) {
         operation = ENQUEUE;
         helper.setMethod("enqueue");
       } else if (method == HttpMethod.GET) {
@@ -219,6 +234,9 @@ public class RestHandler extends NettyRestHandler {
       String path = decoder.getPath();
       if (path.startsWith(this.pathPrefix)) {
         String resourceName = path.substring(this.pathPrefix.length());
+        if (resourceName.startsWith("/")) {
+          resourceName = resourceName.substring(1);
+        }
         if (resourceName.length() > 0) {
           int pos = resourceName.indexOf('/');
           if (pos < 0) { // streamname
@@ -236,8 +254,8 @@ public class RestHandler extends NettyRestHandler {
         helper.setScope(destination);
       }
 
-      // validate the existence of the stream
-      if (!this.collector.getStreamCache().validateStream(accountId, destination)) {
+      // validate the existence of the stream except for create stream operation
+      if (operation!=CREATE && !this.collector.getStreamCache().validateStream(accountId, destination)) {
         helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream " + destination);
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -448,6 +466,35 @@ public class RestHandler extends NettyRestHandler {
           helper.finish(Success);
           break;
         }
+        case CREATE: {
+          //our user interfaces do not support stream name
+          //we are using id for stream name until it is supported in UI's
+          String streamId = destination;
+          String streamName = streamId;
+
+          if (!isId(streamId)) {
+            LOG.info("Stream id is not a printable ascii character string");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            helper.finish(BadRequest);
+            return;
+          }
+
+          MetadataService mds = collector.getMetadataService();
+
+          Account account = new Account(accountId);
+          Stream stream = new Stream(destination);
+          stream.setName(streamName); //
+
+          //Check if a stream with the same id exists
+          Stream existingStream = mds.getStream(account, stream);
+          if (!existingStream.isExists()) {
+            mds.createStream(account, stream);
+          }
+
+          respondSuccess(message.getChannel(), request);
+          helper.finish(Success);
+          break;
+        }
         default: {
           // this should not happen because we checked above -> internal error
           helper.finish(Error);
@@ -475,5 +522,14 @@ public class RestHandler extends NettyRestHandler {
     LOG.error("Exception caught for collector '" +
         this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();
+  }
+
+  //Todo: Id must not start with digit
+  private boolean isId(final String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 }

@@ -1,6 +1,7 @@
 package com.continuuity.gateway.connector;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.Connector;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
@@ -23,21 +24,18 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestConnector.class);
 
-
   /**
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("collector.rest")
+      new HttpConfig("connector.appfabric")
           .setPort(10007)
-          .setPathMiddle("/apps/");
+          .setPathMiddle("/app/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
    */
   private HttpConfig httpConfig = defaultHttpConfig;
-
-  private PassportClient passportClient;
 
   /**
    * return the HTTP configuration for this accessor
@@ -48,13 +46,6 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
     return this.httpConfig;
   }
 
-  public void setPassportClient(PassportClient passportClient) {
-    this.passportClient=passportClient;
-  }
-
-  PassportClient getPassportClient() {
-    return this.passportClient;
-  }
   /**
    * this is the active Netty server channel
    */
