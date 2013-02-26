@@ -1,9 +1,6 @@
 package com.continuuity.data.operation;
 
-public class ReadModifyWrite implements ConditionalWriteOperation {
-
-  /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+public class ReadModifyWrite extends ConditionalWriteOperation {
 
   private final byte [] key;
   private final Modifier<byte[]> modifier;
@@ -25,11 +22,6 @@ public class ReadModifyWrite implements ConditionalWriteOperation {
   @Override
   public int getPriority() {
     return 1;
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

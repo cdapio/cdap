@@ -10,10 +10,7 @@ import com.google.common.base.Objects;
  *
  * Supports key-value and columnar operations.
  */
-public class Increment implements WriteOperation, ReadOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class Increment extends WriteOperation {
 
   /** the name of the table */
   private final String table;
@@ -97,7 +94,6 @@ public class Increment implements WriteOperation, ReadOperation {
     this.key = row;
     this.columns = columns;
     this.amounts = amounts;
-    this.id = OperationBase.getId();
   }
 
   /**
@@ -117,8 +113,8 @@ public class Increment implements WriteOperation, ReadOperation {
                    final byte [] row,
                    final byte [][] columns,
                    final long [] amounts) {
+    super(id);
     checkColumnArgs(columns, amounts);
-    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;
@@ -183,11 +179,6 @@ public class Increment implements WriteOperation, ReadOperation {
   @Override
   public int hashCode() {
     return Objects.hashCode(key, columns, amounts);
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

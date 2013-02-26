@@ -9,59 +9,66 @@ struct TOperationContext {
 
 struct TRead {
   1: optional string table,
-  2: binary key,
-  3: list<binary> columns,
-  4: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: i64 id,
 }
 
 struct TReadAllKeys {
   1: optional string table,
-  2: i32 offset,
-  3: i32 limit,
-  4: i64 id,
+  2: optional string metric,
+  3: i32 offset,
+  4: i32 limit,
+  5: i64 id,
 }
 
 struct TReadColumnRange {
   1: optional string table,
-  2: binary key,
-  3: binary startColumn,
-  4: binary stopColumn,
-  5: i32 limit,
-  6: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: binary startColumn,
+  5: binary stopColumn,
+  6: i32 limit,
+  7: i64 id,
 }
 
 // write operations
 
 struct TWrite {
   1: optional string table,
-  2: binary key,
-  3: list<binary> columns,
-  4: list<binary> values,
-  5: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: list<binary> values,
+  6: i64 id,
 }
 
 struct TDelete {
   1: optional string table,
-  2: binary key,
-  3: list<binary> columns,
-  4: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: i64 id,
 }
 
 struct TIncrement {
   1: optional string table,
-  2: binary key,
-  3: list<binary> columns,
-  4: list<i64> amounts,
-  5: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: list<i64> amounts,
+  6: i64 id,
 }
 
 struct TCompareAndSwap {
   1: optional string table,
-  2: binary key,
-  3: binary column,
-  4: binary expectedValue,
-  5: binary newValue,
-  6: i64 id,
+  2: optional string metric,
+  3: binary key,
+  4: binary column,
+  5: binary expectedValue,
+  6: binary newValue,
+  7: i64 id,
 }
 
 // queue stuff
@@ -80,6 +87,7 @@ struct TQueueEnqueue {
   2: TQueueEntry entry,
   3: i64 id,
   4: optional TQueueProducer producer,
+  5: optional string metric,
 }
 
 enum TQueuePartitioner {
@@ -115,6 +123,7 @@ struct TQueueAck {
   3: TQueueConsumer consumer,
   4: i32 numGroups,
   5: i64 id,
+  6: optional string metric,
 }
 
 struct TQueueDequeue {
@@ -122,6 +131,7 @@ struct TQueueDequeue {
   2: TQueueConsumer consumer,
   3: TQueueConfig config,
   4: i64 id,
+  5: optional string metric,
 }
 
 enum TDequeueStatus {
@@ -138,11 +148,13 @@ struct TDequeueResult {
 
 struct TGetGroupId {
   1: binary queueName,
+  2: optional string metric,
 }
 
 struct TGetQueueInfo {
   1: binary queueName,
   2: i64 id,
+  3: optional string metric,
 }
 
 // we add a virtual field "nulled" to indicate a null object
@@ -172,11 +184,13 @@ struct TClearFabric {
   4: bool clearQueues,
   5: bool clearStreams,
   6: i64 id,
+  7: optional string metric,
 }
 
 struct TOpenTable {
   1: string table,
   2: i64 id,
+  3: optional string metric,
 }
 
 struct TOptionalBinary {

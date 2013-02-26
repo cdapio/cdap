@@ -31,9 +31,10 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TReadAllKeys");
 
   private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("offset", org.apache.thrift.protocol.TType.I32, (short)2);
-  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)3);
-  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("offset", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -42,6 +43,7 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   }
 
   public String table; // optional
+  public String metric; // optional
   public int offset; // required
   public int limit; // required
   public long id; // required
@@ -49,9 +51,10 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TABLE((short)1, "table"),
-    OFFSET((short)2, "offset"),
-    LIMIT((short)3, "limit"),
-    ID((short)4, "id");
+    METRIC((short)2, "metric"),
+    OFFSET((short)3, "offset"),
+    LIMIT((short)4, "limit"),
+    ID((short)5, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -68,11 +71,13 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
       switch(fieldId) {
         case 1: // TABLE
           return TABLE;
-        case 2: // OFFSET
+        case 2: // METRIC
+          return METRIC;
+        case 3: // OFFSET
           return OFFSET;
-        case 3: // LIMIT
+        case 4: // LIMIT
           return LIMIT;
-        case 4: // ID
+        case 5: // ID
           return ID;
         default:
           return null;
@@ -118,11 +123,13 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   private static final int __LIMIT_ISSET_ID = 1;
   private static final int __ID_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
-  private _Fields optionals[] = {_Fields.TABLE};
+  private _Fields optionals[] = {_Fields.TABLE,_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.OFFSET, new org.apache.thrift.meta_data.FieldMetaData("offset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
@@ -160,6 +167,9 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     if (other.isSetTable()) {
       this.table = other.table;
     }
+    if (other.isSetMetric()) {
+      this.metric = other.metric;
+    }
     this.offset = other.offset;
     this.limit = other.limit;
     this.id = other.id;
@@ -172,6 +182,7 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   @Override
   public void clear() {
     this.table = null;
+    this.metric = null;
     setOffsetIsSet(false);
     this.offset = 0;
     setLimitIsSet(false);
@@ -201,6 +212,30 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   public void setTableIsSet(boolean value) {
     if (!value) {
       this.table = null;
+    }
+  }
+
+  public String getMetric() {
+    return this.metric;
+  }
+
+  public TReadAllKeys setMetric(String metric) {
+    this.metric = metric;
+    return this;
+  }
+
+  public void unsetMetric() {
+    this.metric = null;
+  }
+
+  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetric() {
+    return this.metric != null;
+  }
+
+  public void setMetricIsSet(boolean value) {
+    if (!value) {
+      this.metric = null;
     }
   }
 
@@ -283,6 +318,14 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
       }
       break;
 
+    case METRIC:
+      if (value == null) {
+        unsetMetric();
+      } else {
+        setMetric((String)value);
+      }
+      break;
+
     case OFFSET:
       if (value == null) {
         unsetOffset();
@@ -315,6 +358,9 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     case TABLE:
       return getTable();
 
+    case METRIC:
+      return getMetric();
+
     case OFFSET:
       return Integer.valueOf(getOffset());
 
@@ -337,6 +383,8 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     switch (field) {
     case TABLE:
       return isSetTable();
+    case METRIC:
+      return isSetMetric();
     case OFFSET:
       return isSetOffset();
     case LIMIT:
@@ -366,6 +414,15 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
       if (!(this_present_table && that_present_table))
         return false;
       if (!this.table.equals(that.table))
+        return false;
+    }
+
+    boolean this_present_metric = true && this.isSetMetric();
+    boolean that_present_metric = true && that.isSetMetric();
+    if (this_present_metric || that_present_metric) {
+      if (!(this_present_metric && that_present_metric))
+        return false;
+      if (!this.metric.equals(that.metric))
         return false;
     }
 
@@ -418,6 +475,16 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     }
     if (isSetTable()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMetric()).compareTo(typedOther.isSetMetric());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetric()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metric, typedOther.metric);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -478,6 +545,16 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
         sb.append("null");
       } else {
         sb.append(this.table);
+      }
+      first = false;
+    }
+    if (isSetMetric()) {
+      if (!first) sb.append(", ");
+      sb.append("metric:");
+      if (this.metric == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metric);
       }
       first = false;
     }
@@ -545,7 +622,15 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // OFFSET
+          case 2: // METRIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metric = iprot.readString();
+              struct.setMetricIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // OFFSET
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.offset = iprot.readI32();
               struct.setOffsetIsSet(true);
@@ -553,7 +638,7 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // LIMIT
+          case 4: // LIMIT
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.limit = iprot.readI32();
               struct.setLimitIsSet(true);
@@ -561,7 +646,7 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // ID
+          case 5: // ID
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
               struct.id = iprot.readI64();
               struct.setIdIsSet(true);
@@ -588,6 +673,13 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
         if (struct.isSetTable()) {
           oprot.writeFieldBegin(TABLE_FIELD_DESC);
           oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.metric != null) {
+        if (struct.isSetMetric()) {
+          oprot.writeFieldBegin(METRIC_FIELD_DESC);
+          oprot.writeString(struct.metric);
           oprot.writeFieldEnd();
         }
       }
@@ -621,18 +713,24 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
       if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetOffset()) {
+      if (struct.isSetMetric()) {
         optionals.set(1);
       }
-      if (struct.isSetLimit()) {
+      if (struct.isSetOffset()) {
         optionals.set(2);
       }
-      if (struct.isSetId()) {
+      if (struct.isSetLimit()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetId()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetTable()) {
         oprot.writeString(struct.table);
+      }
+      if (struct.isSetMetric()) {
+        oprot.writeString(struct.metric);
       }
       if (struct.isSetOffset()) {
         oprot.writeI32(struct.offset);
@@ -648,20 +746,24 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TReadAllKeys struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.table = iprot.readString();
         struct.setTableIsSet(true);
       }
       if (incoming.get(1)) {
+        struct.metric = iprot.readString();
+        struct.setMetricIsSet(true);
+      }
+      if (incoming.get(2)) {
         struct.offset = iprot.readI32();
         struct.setOffsetIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(3)) {
         struct.limit = iprot.readI32();
         struct.setLimitIsSet(true);
       }
-      if (incoming.get(3)) {
+      if (incoming.get(4)) {
         struct.id = iprot.readI64();
         struct.setIdIsSet(true);
       }

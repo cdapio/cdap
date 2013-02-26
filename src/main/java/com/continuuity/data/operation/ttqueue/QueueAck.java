@@ -1,19 +1,14 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.OperationBase;
 import com.continuuity.data.operation.ConditionalWriteOperation;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Acknowledges a previously dequeue'd entry. Ack must come from the same
  * consumer that dequeue'd.
  */
-public class QueueAck implements ConditionalWriteOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class QueueAck extends ConditionalWriteOperation {
 
   private final byte [] queueName;
   private final QueueEntryPointer entryPointer;
@@ -45,7 +40,10 @@ public class QueueAck implements ConditionalWriteOperation {
    */
   public QueueAck(final byte [] queueName, final QueueEntryPointer entryPointer,
                   final QueueConsumer consumer, int numGroups) {
-    this(OperationBase.getId(), queueName, entryPointer, consumer, numGroups);
+    this.queueName = queueName;
+    this.entryPointer = entryPointer;
+    this.consumer = consumer;
+    this.numGroups = numGroups;
   }
 
   /**
@@ -65,7 +63,7 @@ public class QueueAck implements ConditionalWriteOperation {
                   final QueueEntryPointer entryPointer,
                   final QueueConsumer consumer,
                   int numGroups) {
-    this.id = id;
+    super(id);
     this.queueName = queueName;
     this.entryPointer = entryPointer;
     this.consumer = consumer;
@@ -109,11 +107,6 @@ public class QueueAck implements ConditionalWriteOperation {
   @Override
   public int getPriority() {
     return 3;
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

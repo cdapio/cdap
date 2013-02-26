@@ -7,10 +7,7 @@ import com.google.common.base.Objects;
  *
  * Supports only columnar operations.
  */
-public class ReadColumnRange implements ReadOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class ReadColumnRange extends ReadOperation {
 
   /** the name of the table */
   private final String table;
@@ -130,7 +127,11 @@ public class ReadColumnRange implements ReadOperation {
                          final byte [] startColumn,
                          final byte [] stopColumn,
                          int limit) {
-    this(OperationBase.getId(), table, row, startColumn, stopColumn, limit);
+    this.table = table;
+    this.key = row;
+    this.startColumn = startColumn;
+    this.stopColumn = stopColumn;
+    this.limit = limit;
   }
 
   /**
@@ -155,7 +156,7 @@ public class ReadColumnRange implements ReadOperation {
                          final byte [] startColumn,
                          final byte [] stopColumn,
                          int limit) {
-    this.id = id;
+    super(id);
     this.table = table;
     this.key = row;
     this.startColumn = startColumn;
@@ -192,10 +193,5 @@ public class ReadColumnRange implements ReadOperation {
             ? "null" : new String(this.stopColumn)).
         add("limit", Integer.toString(this.limit)).
         toString();
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 }

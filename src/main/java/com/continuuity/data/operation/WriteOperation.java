@@ -3,13 +3,21 @@ package com.continuuity.data.operation;
 /**
  * An {@link Operation} that writes data, is atomic, and is retryable.
  */
-public interface WriteOperation extends Operation {
+public abstract class WriteOperation extends Operation {
+
+  public WriteOperation() {
+    // nothing to do
+  }
+
+  public WriteOperation(long id) {
+    super(id);
+  }
 
   /**
    * Returns the key that this write operation acts upon.
    * @return the key this write operation acts upon
    */
-  public byte [] getKey();
+  public abstract byte [] getKey();
 
   /**
    * Returns the priority of this write operation, where the priority determines
@@ -18,7 +26,7 @@ public interface WriteOperation extends Operation {
    * priority=1, enqueue=2, ack=3.
    * @return the priority of this write operation
    */
-  public int getPriority();
+  public abstract int getPriority();
 
   /**
    * Returns the size of this write operation in terms of the amount of storage
@@ -26,5 +34,5 @@ public interface WriteOperation extends Operation {
    * storage metrics of datasets.
    * @return size in bytes
    */
-  public int getSize();
+  public abstract int getSize();
 }

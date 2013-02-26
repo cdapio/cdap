@@ -5,10 +5,7 @@ package com.continuuity.data.operation;
  * 
  * Supports both key-value and columnar operations.
  */
-public class Write implements WriteOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class Write extends WriteOperation {
 
   /** the name of the table */
   private final String table;
@@ -85,7 +82,11 @@ public class Write implements WriteOperation {
                final byte [] row,
                final byte [][] columns,
                final byte [][] values) {
-    this(OperationBase.getId(), table, row, columns, values);
+    checkColumnArgs(columns, values);
+    this.table = table;
+    this.key = row;
+    this.columns = columns;
+    this.values = values;
   }
 
   /**
@@ -104,8 +105,8 @@ public class Write implements WriteOperation {
                final byte [] row,
                final byte [][] columns,
                final byte [][] values) {
+    super(id);
     checkColumnArgs(columns, values);
-    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;
@@ -169,11 +170,6 @@ public class Write implements WriteOperation {
       throw new IllegalArgumentException("Number of columns (" +
           columns.length + ") does not match number of values (" +
           values.length + ")");
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

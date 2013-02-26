@@ -24,11 +24,14 @@ public class ReadOnlyTable extends RuntimeTable {
    *
    * @param table the original table
    * @param fabric the data fabric
+   * @param metricName the name to use for emitting metrics
    * @param proxy transaction proxy for all operations
    * @return the new ReadOnlyTable
    */
-  public static ReadOnlyTable setReadOnlyTable(Table table, DataFabric fabric, TransactionProxy proxy) {
+  public static ReadOnlyTable setReadOnlyTable(Table table, DataFabric fabric,
+                                               String metricName, TransactionProxy proxy) {
     ReadOnlyTable readOnlyTable = new ReadOnlyTable(table, fabric, proxy);
+    readOnlyTable.setMetricName(metricName);
     table.setDelegate(readOnlyTable);
     return readOnlyTable;
   }
@@ -61,6 +64,7 @@ public class ReadOnlyTable extends RuntimeTable {
       // this is a multi-column read
       com.continuuity.data.operation.Read op =
         new com.continuuity.data.operation.Read(this.tableName(), read.getRow(), read.getColumns());
+      op.setMetricName(getMetricName());
       if (this.proxy != null) {
         // new-style: use transaction agent
         return this.getTransactionAgent().execute(op);
@@ -73,6 +77,7 @@ public class ReadOnlyTable extends RuntimeTable {
       // this is a column-range red
       ReadColumnRange op = new ReadColumnRange(
         this.tableName(), read.getRow(), read.getStartCol(), read.getStopCol(), read.getLimit());
+      op.setMetricName(getMetricName());
       if (this.proxy != null) {
         // new-style: use transaction agent
         return this.getTransactionAgent().execute(op);

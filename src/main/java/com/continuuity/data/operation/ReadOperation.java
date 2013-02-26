@@ -3,6 +3,15 @@ package com.continuuity.data.operation;
 /**
  * An {@link Operation} that reads and returns data.
  */
-public interface ReadOperation extends Operation {
+public abstract class ReadOperation extends Operation {
 
+  protected ReadOperation() {
+    // do nothing
+  }
+
+  protected ReadOperation(long id) {
+    super(id);
+  }
 }
+
+
