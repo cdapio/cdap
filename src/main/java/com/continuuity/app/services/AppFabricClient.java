@@ -114,7 +114,7 @@ public class AppFabricClient {
       }
 
       if ("promote".equals(command)) {
-        ResourceIdentifier identifier = new ResourceIdentifier("Developer", this.application, this.resource, 1);
+        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, this.resource, 1);
         boolean status = client.promote(new AuthToken(this.authToken), identifier, this.vpc);
         if (status) {
           System.out.println("Promoted to cloud");
@@ -124,7 +124,7 @@ public class AppFabricClient {
       }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
-        FlowIdentifier identifier = new FlowIdentifier("Developer", application, processor, 0);
+        FlowIdentifier identifier = new FlowIdentifier("developer", application, processor, 0);
 
         FlowStatus flowStatus = client.status(dummyAuthToken, identifier);
         Preconditions.checkNotNull(flowStatus, "Problem getting the status the application");
@@ -253,6 +253,7 @@ public class AppFabricClient {
       client = new AppFabricClient();
       client.configure(CConfiguration.create(), args);
     } catch (Exception e) {
+      System.out.println(e.getMessage());
       return;
     }
     client.execute();
