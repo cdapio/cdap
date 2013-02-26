@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.api.io;
+package com.continuuity.internal.api.io;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;

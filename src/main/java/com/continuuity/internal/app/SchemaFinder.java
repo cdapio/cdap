@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.io.Schema;
+import com.continuuity.internal.api.io.Schema;
 import com.continuuity.common.utils.ImmutablePair;
 
 import javax.annotation.Nullable;

@@ -182,4 +182,4 @@
  * </table>
  *
  */
-package com.continuuity.api.io;
+package com.continuuity.internal.api.io;

@@ -1,7 +1,7 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.io.Schema;
+import com.continuuity.internal.api.io.Schema;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.internal.app.runtime.Instantiator;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;

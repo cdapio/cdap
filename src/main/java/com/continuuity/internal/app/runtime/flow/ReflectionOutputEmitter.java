@@ -3,7 +3,7 @@ package com.continuuity.internal.app.runtime.flow;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.io.Schema;
+import com.continuuity.internal.api.io.Schema;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.WriteOperation;
