@@ -93,7 +93,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     Set<String> roleNames = null;
     SimpleAuthorizationInfo info = null;
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         //SELECT COLS
         DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
@@ -174,7 +174,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     ResultSet rs = null;
     SimpleAuthenticationInfo info = null;
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       String SQL = null;
       ps = null;

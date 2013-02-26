@@ -65,7 +65,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (?,?,?,?,?,?)",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
@@ -113,7 +113,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
@@ -155,7 +155,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s is NULL",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
@@ -191,7 +191,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("DELETE FROM %s WHERE %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
@@ -229,7 +229,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
@@ -279,7 +279,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
@@ -325,7 +325,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
 
       String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
@@ -366,7 +366,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
         DBUtils.AccountRoleType.TABLE_NAME,
         DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
@@ -398,7 +398,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     }
     try {
 
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       //Set basic update command
       StringBuilder sb = new StringBuilder();
@@ -454,7 +454,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     Connection connection = null;
     PreparedStatement ps = null;
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s and %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
@@ -489,7 +489,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     PreparedStatement select = null;
     ResultSet rs = null;
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
 
       //Update the account table. Joining email id from nonce table
@@ -545,7 +545,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
 
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.API_KEY_COLUMN,

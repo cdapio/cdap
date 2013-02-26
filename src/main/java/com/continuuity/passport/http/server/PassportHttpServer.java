@@ -19,6 +19,8 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.management.MBeanContainer;
 import org.mortbay.thread.QueuedThreadPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
@@ -35,6 +37,7 @@ public class PassportHttpServer {
   private final int maxThreads;
 
   private final Map<String, String> configuration;
+  private static final Logger LOG = LoggerFactory.getLogger(PassportHttpServer.class);
 
   public PassportHttpServer(int port, Map<String, String> configuration,
                             int maxThreads, int gracefulShutdownTime) {
@@ -73,11 +76,21 @@ public class PassportHttpServer {
       server.getContainer().addEventListener(mBeanContainer);
       mBeanContainer.start();
 
+      LOG.info("Starting the server with the following parameters");
+      LOG.info(String.format("Port: %d",port));
+      LOG.info(String.format("Threads: %d",maxThreads));
+      for(Map.Entry<String,String> e: configuration.entrySet()){
+        LOG.info(String.format("Config %s : %s", e.getKey(),e.getValue()));
+        System.out.println(e.getKey()+" "+e.getValue());
+      }
+
       server.start();
       server.join();
+      LOG.info("Server started Successfully");
 
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Error while starting server");
+      LOG.error(e.getMessage());
     }
   }
 
@@ -87,12 +100,10 @@ public class PassportHttpServer {
 
     CConfiguration conf = CConfiguration.create();
 
-    //TODO: Remove this.
-    conf.addResource("continuuity-passport.xml");
-
     String jdbcType = conf.get("passport.jdbc.type","mysql");
     String connectionString  = conf.get("passport.jdbc.connection.string",
-                                        "jdbc:mysql://localhost:3306/passport?user=root");
+                                        "jdbc:mysql://localhost:3306/passport?user=root&" +
+                                        "zeroDateTimeBehavior=convertToNull");
 
     int port = conf.getInt("passport.http.server.port", 7777);
     int gracefulShutdownTime = conf.getInt("passport.http.graceful.shutdown.time",10000);

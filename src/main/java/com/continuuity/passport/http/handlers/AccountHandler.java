@@ -16,6 +16,7 @@ import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -149,7 +150,7 @@ public class AccountHandler extends PassportHandler {
   public Response updateAccount(@PathParam("id") int id, String data) {
     requestReceived();
 
-    try {
+   try {
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
@@ -186,12 +187,17 @@ public class AccountHandler extends PassportHandler {
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
       }
+    } catch (JsonParseException e) {
+      requestFailed();
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
+        .build();
     } catch (Exception e) {
       requestFailed(); // Request failed
-      return Response.status(Response.Status.BAD_REQUEST)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Account Update Failed. %s", e.getMessage())))
         .build();
-    }
+      }
   }
 
   @POST
@@ -223,9 +229,14 @@ public class AccountHandler extends PassportHandler {
       return Response.status(Response.Status.CONFLICT)
         .entity(Utils.getJsonError("FAILED", account.toString()))
         .build();
-    } catch (Exception e) {
-      requestFailed(); // Request failed
+    } catch (JsonParseException e) {
+      requestFailed();
       return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
+        .build();
+    }catch (Exception e) {
+      requestFailed(); // Request failed
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Account Creation Failed. %s", e)))
         .build();
     }
@@ -272,9 +283,14 @@ public class AccountHandler extends PassportHandler {
             .build();
         }
       }
+    } catch (JsonParseException e) {
+      requestFailed();
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
+        .build();
     } catch (Exception e) {
       requestFailed(); // Request failed
-      return Response.status(Response.Status.BAD_REQUEST)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Account Confirmation Failed. %s", e)))
         .build();
     }
@@ -306,9 +322,14 @@ public class AccountHandler extends PassportHandler {
           .entity(Utils.getJson("FAILED", "VPC creation failed. vpc_name is missing"))
           .build();
       }
+    } catch (JsonParseException e) {
+      requestFailed();
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
+        .build();
     } catch (Exception e) {
       requestFailed(); // Request failed
-      return Response.status(Response.Status.BAD_REQUEST)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("VPC Creation Failed. %s", e)))
         .build();
 
@@ -343,8 +364,7 @@ public class AccountHandler extends PassportHandler {
       }
     } catch (Exception e) {
       requestFailed(); // Request failed
-
-      return Response.status(Response.Status.BAD_REQUEST)
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e.getMessage())))
         .build();
     }
@@ -456,8 +476,8 @@ public class AccountHandler extends PassportHandler {
         return Response.ok(accountFetched.toString()).build();
       } else {
         requestFailed(); // Request failed
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-          .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
+        return Response.status(Response.Status.NOT_FOUND)
+          .entity(Utils.getJson("FAILED", "Failed to get regenerate key. Account not found"))
           .build();
       }
     } catch (Exception e) {
@@ -475,7 +495,6 @@ public class AccountHandler extends PassportHandler {
     requestReceived();
 
     try {
-
       dataManagementService.deleteAccount(id);
       requestSuccess();
       return Response.ok().entity(Utils.getJsonOK()).build();

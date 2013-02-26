@@ -53,7 +53,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
 
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?,?,?,?)",
         DBUtils.VPC.TABLE_NAME,
         DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
@@ -92,7 +92,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
       String SQL = String.format("DELETE FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.TABLE_NAME,
@@ -125,7 +125,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
 
 
       String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)",
@@ -162,7 +162,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("SELECT %s, %s, %s FROM %s WHERE %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN, //COLUMNS
@@ -195,7 +195,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("SELECT %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN, //COLUMNS
@@ -229,7 +229,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("SELECT %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN, //COLUMNS
@@ -265,7 +265,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
 
     try {
-      connection = this.poolManager.getConnection();
+      connection = this.poolManager.getValidConnection();
       String SQL = String.format("SELECT COUNT(%s) FROM %s where %s = ? ",
         DBUtils.VPC.NAME_COLUMN, DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
 
