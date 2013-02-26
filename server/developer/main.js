@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
+
 var express = require('express'),
 	io = require('socket.io'),
 	Int64 = require('node-int64').Int64;
@@ -10,12 +14,22 @@ var express = require('express'),
 
 var Api = require('../common/api');
 
+/**
+ * Setting the environment to Cloud.
+ */
 process.env.NODE_ENV = 'development';
+
+var VERSION;
+try {
+	VERSION = fs.readFileSync(__dirname + '../../../VERSION', 'utf8');
+} catch (e) {
+	VERSION = 'UNKNOWN';
+}
 
 /**
  * Configure logger.
  */
-var LOG_LEVEL = 'ALL';
+var LOG_LEVEL = 'INFO';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
@@ -27,11 +41,17 @@ logger.setLevel(LOG_LEVEL);
 /**
  * Configure Express.
  */
-app = express.createServer();
+var app = express();
 app.use(express.bodyParser());
-app.use(express.static(__dirname + '/../../client/'));
+if (fs.existsSync(__dirname + '/../client/')) {
+	app.use(express.static(__dirname + '/../client/'));
+} else {
+	app.use(express.static(__dirname + '/../../client/'));
+}
 
-io = io.listen(app);
+var server = http.createServer(app);
+
+io = require('socket.io').listen(server);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
 	io.set('log level', 1);
@@ -69,7 +89,7 @@ io.sockets.on('connection', function (newSocket) {
 	});
 
 	socket.on('gateway', function (request) {
-		Api.gateway('developer', request.method, request.params, function (error, response) {
+		Api.gateway('apikey', request.method, request.params, function (error, response) {
 			socketResponse(request, error, response);
 		});
 	});
@@ -141,9 +161,12 @@ app.get('/version', function (req, res) {
 
 		response.on('end', function () {
 			
-			// TODO: Got version. Compare and respond.
+			data = data.replace(/\n/g, '');
 
-			res.send('false');
+			res.send(JSON.stringify({
+				current: VERSION,
+				newest: data
+			}));
 			res.end();
 
 		});
@@ -257,7 +280,6 @@ function getLocalHost () {
 		ifaces[dev].forEach(function(details){
 			if (details.family=='IPv4') {
 				++alias;
-				console.log(dev, details);
 				if (dev === 'lo0') {
 					localhost = details.address;
 				}
@@ -281,8 +303,6 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 		result = result.property;
 		var localhost = getLocalHost();
 
-		console.log(localhost);
-
 		for (var item in result) {
 			item = result[item];
 			if (item.value === 'localhost') {
@@ -299,9 +319,11 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 			logger.trace('Configuring with', config);
 			Api.configure(config, apiKey || null);
 
-			logger.trace('Listening on port',
+			logger.info('Listening on port',
 				config['node-port']);	
-			app.listen(config['node-port']);
+			server.listen(config['node-port']);
+
+			logger.info(config);
 
 		});
 

@@ -12,18 +12,15 @@ define([
 		destination: null,
 		destinations: [],
 		message: null,
+		network: false,
 		reload: function () {
 
-//			this.set('loading', true);
+			this.set('loading', true);
 
 			var self = this;
 			self.set('destinations', []);
 			self.set('message', null);
-
-			self.set('message', 'There was a problem connecting to Continuuity. Please check your internet connection.');
-
-			return;
-
+			self.set('network', false);
 
 			$.post('/credential', 'apiKey=' + this.get('apiKey'),
 				function (result, status) {
@@ -32,11 +29,9 @@ define([
 
 					if (result === 'network') {
 
-						self.set('message', 'There was a problem connecting to Continuuity. Please check your internet connection.');
+						self.set('network', true);
 
 					} else {
-
-						self.set('message', 'There are no destinations available. Make sure your API Key is correct.<br /><br />If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home</a> page.</div>');
 
 						var destinations = [];
 
@@ -63,8 +58,42 @@ define([
 		submit: function () {
 
 			this.set("pushing", true);
+			var current = C.Ctl.Application.current;
+			var self = this;
 
-			// TODO: Complete
+			var destination = self.get('destination');
+			if (!destination) {
+				return;
+			}
+
+			destination += '.continuuity.net';
+
+			C.get('far', {
+				method: 'promote',
+				params: [current.id, destination, self.get('apiKey')]
+			}, function (error, response) {
+
+				if (error) {
+					C.Vw.Modal.show(
+						"Deployment Error",
+						response.message, function () {
+							self.set('current', null);
+							$(self.get('element')).hide();
+
+						}, true);
+				} else {
+					C.Vw.Modal.show(
+						"Success",
+						"Successfully pushed to " + destination + ".",
+						function () {
+							self.set('current', null);
+							$(self.get('element')).hide();
+						}, true);
+				}
+
+				self.set("pushing", false);
+
+			});
 
 		},
 		show: function (current) {
@@ -76,6 +105,7 @@ define([
 			}
 
 			$(this.get('element')).show();
+			this.reload();
 
 		},
 		hide: function () {

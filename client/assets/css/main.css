@@ -1,3 +1,23 @@
+
+
+
+@import url("http://fast.fonts.com/t/1.css?apiType=css&projectid=90566de1-c9c9-44de-b73e-60c6f16500bf");
+@font-face{
+	font-family:"HelveticaNeueW01-Thin";
+	src:url("../fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix");
+	src:url("../fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix") format("eot"),url("../fonts/50d35bbc-dfd4-48f1-af16-cf058f69421d.woff") format("woff"),url("../fonts/278bef59-6be1-4800-b5ac-1f769ab47430.ttf") format("truetype"),url("../fonts/2e309b1b-08b8-477f-bc9e-7067cf0af0b3.svg#2e309b1b-08b8-477f-bc9e-7067cf0af0b3") format("svg");
+}
+@font-face{
+	font-family:"HelveticaNeueW01-55Roma";
+	src:url("../fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix");
+	src:url("../fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix") format("eot"),url("../fonts/bcf54343-d033-41ee-bbd7-2b77df3fe7ba.woff") format("woff"),url("../fonts/b0ffdcf0-26da-47fd-8485-20e4a40d4b7d.ttf") format("truetype"),url("../fonts/da09f1f1-062a-45af-86e1-2bbdb3dd94f9.svg#da09f1f1-062a-45af-86e1-2bbdb3dd94f9") format("svg");
+}
+@font-face{
+	font-family:"HelveticaNeueW01-57Cn";
+	src:url("../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix");
+	src:url("../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix") format("eot"),url("../fonts/842088d0-1ae2-40d0-8561-3c95761ba7a6.woff") format("woff"),url("../fonts/c74505d5-13e8-47ed-94a8-630aab4da3e6.ttf") format("truetype"),url("../fonts/6cd480d1-47d0-48b4-86bd-283db2cb9235.svg#6cd480d1-47d0-48b4-86bd-283db2cb9235") format("svg");
+}
+
 html {
 	height: 100%;
 }
@@ -6,22 +26,8 @@ body {
 	margin: 0;
 	background-color: #fff;
 	height: 100%;
-	font-family: "Helvetica Neue";
+	font-family:'HelveticaNeueW01-55Roma';
 	cursor: default;
-}
-
-@font-face {
-  font-family: 'Orbitron';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Orbitron-Light'), local('Orbitron-Regular'), url(http://themes.googleusercontent.com/static/fonts/orbitron/v3/94ug0rEgQO_WuI_xKJMFc3YhjbSpvc47ee6xR_80Hnw.woff) format('woff');
-}
-
-@font-face {
-  font-family: 'Condensed';
-  font-style: normal;
-  font-weight: 400;
-  src: local('HelveticaNeue-Condensed'), url(../fonts/HelveticaNeueLTStd-Cn.otf) format('opentype');
 }
 
 .table th, .table td {
@@ -295,10 +301,9 @@ h1 {
 	padding-bottom: 4px;
 }
 h1 span {
-	color: #333;
-	font-weight: 100;
-	letter-spacing: 0.08em;
+	color: #aaa;
 	margin-left: 4px;
+	font-family: "HelveticaNeueW01-Thin";
 }
 .page-tabs {
 	float: right;
@@ -334,11 +339,13 @@ h1 span {
 	font-weight: 100;
 	letter-spacing: 0.08em;
 	line-height: normal;
+	font-family: "HelveticaNeueW01-Thin";
 }
 .panel-head {
 	padding: 15px 14px 15px;
 	border: 1px solid #eee;
 	border-top: 0;
+	font-family: "HelveticaNeueW01-Thin";
 }
 .panel-control {
 	float: right;
@@ -367,7 +374,7 @@ h1 span {
 	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
 	 {
 	border-top: 0;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #9EAEB2;
 	text-transform: uppercase;
@@ -426,7 +433,7 @@ h1 span {
 }
 .sparkline-list-container-empty {
 	text-align: center;
-	font-family: condensed;
+	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	line-height: 40px;
 	color: #c5d1d4;
@@ -483,7 +490,7 @@ h1 span {
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	color: #FFF;
 	text-transform: uppercase;
 	padding: 4px;
@@ -497,7 +504,7 @@ h1 span {
 	float: right;
 	border-left: 1px solid #83cce1;
 
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 23px;
 	padding-top: 38px;
 	padding-left: 5px;
@@ -654,6 +661,7 @@ input[type="text"] {
 	background-repeat: no-repeat;
 	color: #555;
 	font-weight: 300;
+	font-family: "HelveticaNeueW01-Thin";
 }
 .dash-app-resource a:hover {
 	text-decoration: none;
@@ -691,7 +699,7 @@ input[type="text"] {
 }
 
 .dash-app-resource-usage {
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	color: #505050;
 	font-size: 32px;
 	text-align: center;
@@ -716,7 +724,7 @@ input[type="text"] {
 }
 
 .dash-app-sub-title {
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #5c696c;
 	text-transform: uppercase;
@@ -747,7 +755,7 @@ input[type="text"] {
 	line-height: 64px;
 	font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	
 }
 .dash-app-sub-health-value span {
@@ -761,7 +769,7 @@ input[type="text"] {
 	line-height: 64px;
 		font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	color: #505050;
 }
 
@@ -806,7 +814,7 @@ input[type="text"] {
 	color: #b8c0cc;
 }
 .nav-pills > li > a {
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -831,6 +839,7 @@ input[type="text"] {
 .nav-pills > li > a {
 	padding: 7px 12px;
 	margin: 2px 4px;
+	line-height: 10px;
 }
 
 li a {
@@ -898,12 +907,12 @@ a strong {
 }
 
 .btn {
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
-	line-height: 22px;
+	line-height: 21px;
 	height: 28px;
 	font-size: 12px !important;
 	border-radius: 2px;
@@ -932,7 +941,7 @@ a strong {
 #action-buttons .btn {
 	margin-right:0;
 	height: 56px;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	padding-top: 8px;
 }
@@ -1037,10 +1046,6 @@ a strong {
 	width: 200px;
 	color: #9baeca;
 
-	text-transform: uppercase;
-	font-family: 'Orbitron', sans-serif;
-	font-weight: 100;
-
 	margin: 13px 12px 0px 0px;
 	background-position: top right;
 
@@ -1095,7 +1100,7 @@ a strong {
 
 .flow-state {
 	float: right;
-	padding-top: 32px;
+	padding-top: 27px;
 	padding-right: 16px;
 	width: 120px;
 	text-align: right;
@@ -1104,7 +1109,7 @@ a strong {
 	color: #40AFD0;
 	font-size: 30px;
 	font-weight: 500;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	line-height: normal;
 	text-shadow: 0px 1px 0px white;
 }
@@ -1191,7 +1196,7 @@ a strong {
 }
 .popup-white-label {
 	border-top: 0;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -1300,7 +1305,7 @@ a strong {
 .flowlet-popup-input-contrib {
 	background-image: url(../img/contrib-background.png);
 	background-position: center left;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #505050;
 	padding: 0px 16px;
@@ -1543,12 +1548,12 @@ ol {
 	background-image: url(../img/flowlet-input.png);
 	top: 26px;
 	left: -64px;
-	line-height: 62px;
+	line-height: 55px;
 	text-align: center;
 	padding-right: 10px;
 	width: 72px;
 	font-size: 20px;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 }
 .window-icon {
 	height: 32px;
@@ -1560,7 +1565,7 @@ ol {
 .window-title {
 	vertical-align: center;
 	margin: 0px 12px;
-	font-family: "Condensed";
+	font-family: "HelveticaNeueW01-57Cn";
 	max-height: 32px;
 	overflow: hidden;
 	line-height: 12px;

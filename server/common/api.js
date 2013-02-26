@@ -187,8 +187,7 @@ logger.setLevel(LOG_LEVEL);
 	this.far = function (accountID, method, params, done) {
 
 		var identifier, conn, FAR,
-			accountId = accountID,
-			auth_token = new appfabricservice_types.AuthToken({ token: null });
+			auth_token = new appfabricservice_types.AuthToken({ token: params[2] });
 
 		conn = thrift.createConnection(
 			this.config['resource.manager.server.address'],
@@ -209,8 +208,8 @@ logger.setLevel(LOG_LEVEL);
 
 				identifier = new appfabricservice_types.FlowIdentifier({
 					applicationId: params[0],
-					flowId: params[1],
-					version: params[2],
+					flowId: '',
+					version: 1,
 					accountId: accountID
 				});
 				FAR.remove(auth_token, identifier, done);
@@ -218,13 +217,14 @@ logger.setLevel(LOG_LEVEL);
 
 			case 'promote':
 
-				identifier = new appfabricservice_types.FlowIdentifier({
+				identifier = new appfabricservice_types.ResourceIdentifier({
 					applicationId: params[0],
-					flowId: params[1],
-					version: params[2],
-					accountId: accountID
+					version: 1,
+					accountId: accountID,
+					resource: 'name'
 				});
-				FAR.promote(auth_token, identifier, done);
+
+				FAR.promote(auth_token, identifier, params[1], done);
 
 				break;
 
@@ -337,45 +337,35 @@ logger.setLevel(LOG_LEVEL);
 
 		var post_data = params.payload || "";
 
-		var post_options = {};
+		var post_options = post_options = {
+			host: this.config['gateway.hostname'],
+			port: this.config['gateway.port'],
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-Continuuity-ApiKey': apiKey
+			}
+		};
 
 		switch (method) {
 			case 'inject':
-				post_options = {
-					host: this.config['gateway.hostname'],
-					port: this.config['gateway.port']
-				};
-				post_options.method = 'POST';
-				post_options.path = '/rest-stream' + (params.stream ? '/' + params.stream : '');
-				post_options.headers = {
-					'X-Continuuity-ApiKey': apiKey,
-					'Content-Length': post_data.length
-				};
+				
+				post_options.path = '/stream/' + params.stream;
+				
 			break;
 			case 'query':
 
-				// rest-query/ applicationId/ procedureId/ method
-
-				logger.trace(params);
-
-				post_options = {
-					host: this.config['gateway.hostname'],
-					port: 10003
-				};
-				post_options.method = 'POST';
-				post_options.path = '/rest-query/' + params.app + '/' + 
+				post_options.port = 10003;
+				post_options.path = '/procedure/' + params.app + '/' + 
 					params.service + '/' + params.method;
-				post_options.headers = {
-					'Content-Type': 'application/json',
-					'X-Continuuity-ApiKey': apiKey,
-					'Content-Length': post_data.length
-				};
 
-				post_data = params.query || "";
+				post_data = post_data || '{}';
 
 		}
 
-		var post_req = http.request(post_options, function(res) {
+		post_options.headers['Content-Length'] = post_data.length;
+
+		var request = http.request(post_options, function(res) {
 			res.setEncoding('utf8');
 			var data = [];
 
@@ -389,24 +379,35 @@ logger.setLevel(LOG_LEVEL);
 
 				done(res.statusCode !== 200 ? {
 					statusCode: res.statusCode,
-					response: data
+					response: {
+						req: {
+							statusCode: res.statusCode,
+							data: data
+						},
+						res: {
+							host: post_options.host,
+							port: post_options.port,
+							path: post_options.path,
+							data: post_data
+						}
+					}
 				} : false, {
 					statusCode: res.statusCode,
 					response: data
 				});
 			});
+
 		});
 
-		post_req.on('error', function (e) {
+		request.on('error', function (e) {
+
 			done(e, null);
+
 		});
 
-		if (post_options.method === 'POST') {
-			post_req.write(post_data);
-		}
-
-		post_req.end();
-
+		request.write(post_data)
+		request.end();
+		
 	};
 
 	this.upload = function (req, res, file, socket) {

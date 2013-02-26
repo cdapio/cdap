@@ -8,9 +8,11 @@ define([
 			template: Em.Handlebars.compile(Template),
 			classNames: ['modal', 'hide', 'fade'],
 			elementId: 'modal-from-dom',
-			show: function (title, body, callback) {
+			show: function (title, body, callback, nocancel) {
 				this.set('title', title);
 				this.set('body', body);
+
+				this.set('nocancel', nocancel );
 
 				this.set('confirmed', function () {
 					C.Vw.Modal.hide();
