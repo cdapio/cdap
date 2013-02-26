@@ -86,14 +86,13 @@ public interface Store {
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
 
   /**
-   * Increases number of instances of specific flowlet by delta
+   * Sets number of instances of specific flowlet
    * @param id flow id
    * @param flowletId flowlet id
-   * @param delta delta to increase by
-   * @return number of instances of flowlet after increase
+   * @param count new number of instances
    * @throws OperationException
    */
-  int incFlowletInstances(Id.Program id, String flowletId, int delta) throws OperationException;
+  void setFlowletInstances(Id.Program id, String flowletId, int count) throws OperationException;
 
   /**
    * Removes program data

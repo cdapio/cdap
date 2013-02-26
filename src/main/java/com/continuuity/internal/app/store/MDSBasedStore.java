@@ -274,29 +274,22 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public int incFlowletInstances(final Id.Program id, final String flowletId, int delta)
+  public void setFlowletInstances(final Id.Program id, final String flowletId, int count)
     throws OperationException {
+    Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
 
-    LOG.trace("Increasing flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances to add: {}",
-              id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, delta);
+    LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
 
-    int instances = flowletDef.getInstances() + delta;
-    if (instances < 0) {
-      throw new IllegalArgumentException("cannot change number of flowlet instances to " + instances +
-                                 ", current number: " + flowletDef.getInstances() + ", attempted to inc by: " + delta);
-    }
-
-    final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, instances);
+    final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
     addApplication(id.getApplication(), newAppSpec);
 
-    LOG.trace("Increased flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, instances);
-
-    return instances;
+    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
   }
 
   private FlowletDefinition getFlowletDefinitionSafely(FlowSpecification flowSpec, String flowletId, Id.Program id) {

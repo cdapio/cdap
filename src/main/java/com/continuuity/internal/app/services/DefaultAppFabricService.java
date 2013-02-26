@@ -325,6 +325,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
+
+    // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
+    // can at least set instances count for this session
+    try {
+      store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), flowletId, instances);
+    } catch (OperationException e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
