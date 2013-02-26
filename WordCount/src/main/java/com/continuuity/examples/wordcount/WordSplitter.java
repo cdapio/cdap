@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WordSplitter extends AbstractFlowlet {
+
   @Output("wordOut")
   private OutputEmitter<String> wordOutput;
 
