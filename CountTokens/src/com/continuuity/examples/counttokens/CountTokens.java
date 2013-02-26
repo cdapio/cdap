@@ -11,7 +11,7 @@ import com.continuuity.api.data.stream.Stream;
  */
 public class CountTokens implements Application {
 
-  public static final String tableName = "tokenTable";
+  public static final String tableName = "tokenCountTable";
 
   @Override
   public ApplicationSpecification configure() {
