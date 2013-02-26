@@ -123,7 +123,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>collector.rest,collector.flume,accessor.rest,query.rest,monitor.rest</value>
+        <value>collector.rest,collector.flume,accessor.rest,query.rest,monitor.rest,connector.appfabric</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -150,6 +150,29 @@
         <value>/data/</value>
     </property>
 
+    <!-- AppFabric Connector -->
+    <property>
+        <name>connector.appfabric.class</name>
+        <value>com.continuuity.gateway.connector.AppFabricRestConnector</value>
+        <description>Specifies the class for the REST accessor</description>
+    </property>
+
+    <property>
+        <name>connector.appfabric.port</name>
+        <value>10007</value>
+    </property>
+
+    <property>
+        <name>connector.appfabric.threads</name>
+        <value>5</value>
+    </property>
+
+    <property>
+        <name>connector.appfabric.middle</name>
+        <value>/app/</value>
+    </property>
+
+    <!-- Procedure Handler -->
     <property>
         <name>query.rest.class</name>
         <value>com.continuuity.gateway.accessor.QueryRestAccessor</value>
