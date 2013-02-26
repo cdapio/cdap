@@ -186,7 +186,7 @@ start() {
     while kill -0 $! ; do
       if grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
         echo ""
-        grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log
+        grep -A 1 'AppFabric started successfully' $APP_HOME/logs/appfabric.log
         break
       else
         echo -n "."
