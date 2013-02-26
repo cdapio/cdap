@@ -12,8 +12,11 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,7 +27,9 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -141,6 +146,30 @@ public class DatumCodecTest {
     Assert.assertEquals(URI.create("http://www.yahoo.com"), r2.url);
 
     Assert.assertEquals(r1.uuid, r2.uuid);
+  }
+
+  @Test
+  public void testCollection() throws UnsupportedTypeException, IOException {
+    List<String> list = Lists.newArrayList("1", "2", "3");
+    Schema sourceSchema = new ReflectionSchemaGenerator().generate(new TypeToken<List<String>>() {}.getType());
+    Schema targetSchema = new ReflectionSchemaGenerator().generate(new TypeToken<Set<String>>() {}.getType());
+
+    PipedOutputStream output = new PipedOutputStream();
+    PipedInputStream input = new PipedInputStream(output);
+
+    new ReflectionDatumWriter(sourceSchema).write(list, new BinaryEncoder(output));
+    Set<String> set = new ReflectionDatumReader<Set<String>>(targetSchema, new TypeToken<Set<String>>() {})
+                        .read(new BinaryDecoder(input), sourceSchema);
+
+    Assert.assertEquals(Sets.newHashSet("1", "2", "3"), set);
+
+
+    targetSchema = new ReflectionSchemaGenerator().generate(String[].class);
+    new ReflectionDatumWriter(sourceSchema).write(list, new BinaryEncoder(output));
+    String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() {})
+                        .read(new BinaryDecoder(input), sourceSchema);
+
+    Assert.assertArrayEquals(new String[] {"1", "2", "3"}, array);
   }
 
   public static final class Node {
