@@ -230,7 +230,7 @@ logger.setLevel(LOG_LEVEL);
 
 			case 'reset':
 
-				FAR.reset(auth_token, accountId, done);
+				FAR.reset(auth_token, accountID, done);
 
 				break;
 
