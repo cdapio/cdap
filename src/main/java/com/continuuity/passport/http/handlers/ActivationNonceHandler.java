@@ -65,7 +65,7 @@ public class ActivationNonceHandler extends PassportHandler {
   @Path("getActivationId/{nonce}")
   @GET
   @Produces("application/json")
-  public Response getActivationId(@PathParam("id") int nonce) {
+  public Response getActivationId(@PathParam("nonce") int nonce) {
     requestReceived();
     String id = null;
     try {
