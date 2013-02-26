@@ -37,6 +37,7 @@ logger.setLevel(LOG_LEVEL);
  * Configure Express Web server.
  */
 var app = express();
+app.use(express.bodyParser());
 
 /**
  * Express cookie sessions.
@@ -137,7 +138,11 @@ app.get('/sso/logout', function (req, res) {
 /**
  * Express static directory.
  */
-app.use(express.static(__dirname + '/../../client/'));
+if (fs.existsSync(__dirname + '/../client/')) {
+	app.use(express.static(__dirname + '/../client/'));
+} else {
+	app.use(express.static(__dirname + '/../../client/'));
+}
 
 var config = {};
 var sockets = {};

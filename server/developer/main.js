@@ -34,7 +34,7 @@ logger.setLevel(LOG_LEVEL);
 /**
  * Configure Express.
  */
-app = express.createServer();
+var app = express();
 app.use(express.bodyParser());
 if (fs.existsSync(__dirname + '/../client/')) {
 	app.use(express.static(__dirname + '/../client/'));
