@@ -80,6 +80,13 @@ public class AssociationTable extends DataSet {
     return collector.getTopK();
   }
 
+  /**
+   * Retruns how many timnes two words occur together
+   * @param word1 the first word
+   * @param word2 the other word
+   * @return how many times word1 and word2 occurred together
+   * @throws OperationException 
+   */
   public long getAssoc(String word1, String word2) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result =
       this.table.read(new Read(Bytes.toBytes(word1), Bytes.toBytes(word2)));

@@ -10,7 +10,7 @@
     <name>WordCountApp</name>
     <properties>
         <main>com.continuuity.examples.wordcount.WordCount</main>
-        <continuuityVersion>1.3.0-SNAPSHOT</continuuityVersion>
+        <continuuityVersion>1.4.0</continuuityVersion>
     </properties>
     <repositories>
         <repository>
@@ -20,10 +20,6 @@
         <repository>
             <id>releases</id>
             <url>https://repository.continuuity.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>continuuity-snapshots</id>
-            <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
         </repository>
     </repositories>
     <dependencies>
