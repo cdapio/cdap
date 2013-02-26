@@ -13,7 +13,7 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
 
   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
-  compile elastic([group: 'com.continuuity', name: 'app-fabric',  version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'thrift', version: "${version}", changing: true], "app-fabric")
 
   clover elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
