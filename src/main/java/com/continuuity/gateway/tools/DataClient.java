@@ -106,7 +106,7 @@ public class DataClient {
     out.println("  " + name + " clear ( --all | --queues | --streams | --tables | --meta)");
     out.println("Additional options:");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --port <number>          To specify the port to use");
+    out.println("  --port <number>         To specify the port to use");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --all                   To clear all data");
     out.println("  --data                  To clear all table data");
