@@ -22,7 +22,7 @@ try {
 /**
  * Configure logger.
  */
-var LOG_LEVEL = 'WARN';
+var LOG_LEVEL = 'INFO';
 log4js.configure({
 	appenders: [
 		{ type : 'console' }
@@ -306,7 +306,7 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 			logger.trace('Configuring with', config);
 			Api.configure(config, apiKey || null);
 
-			logger.trace('Listening on port',
+			logger.info('Listening on port',
 				config['node-port']);	
 			app.listen(config['node-port']);
 
