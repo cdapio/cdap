@@ -1,7 +1,6 @@
 package com.continuuity.gateway;
 
 import com.continuuity.app.guice.BigMamaModule;
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
@@ -11,32 +10,24 @@ import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.gateway.auth.NoAuthenticator;
-import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.connector.AppFabricRestConnector;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.passport.PassportConstants;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.conn.HttpHostConnectException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class AppFabricConnectorTest {
@@ -69,7 +60,8 @@ public class AppFabricConnectorTest {
   @Before
   public void setup() throws Exception {
     configuration = CConfiguration.create();
-    configuration.setInt(com.continuuity.common.conf.Constants.CFG_APP_FABRIC_SERVER_PORT, 45000);
+    configuration.setInt(com.continuuity.common.conf.Constants.CFG_APP_FABRIC_SERVER_PORT,
+                         PortDetector.findFreePort());
     configuration.set("app.output.dir", "/tmp/app");
     configuration.set("app.tmp.dir", "/tmp/temp");
     Injector injector = Guice.createInjector(
