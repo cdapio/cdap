@@ -64,24 +64,7 @@ function checkSSO (req, res, next) {
 
 		logger.trace('SSO retrieving');
 
-		/**
-
-
-
-
-
-
-		!! TODO: GET VPC HOSTNAME
-
-
-
-
-
-
-
-		 **/
-		var ret = 'dons-vpc';
-
+		var ret = config['cluster-name'];
 		var host = config['accounts-host'];
 		if (config['accounts-port'] !== '443') {
 			host += ':' + config['accounts-port'];

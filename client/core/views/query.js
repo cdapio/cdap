@@ -40,13 +40,13 @@ define([
 					service: this.current.serviceName,
 					app: this.current.applicationId,
 					method: this.get('requestMethod'),
-					query: this.get('requestParams')
+					payload: this.get('requestParams')
 				}
 			}, function (error, response) {
 
 				if (error) {
 					self.set('responseCode', error.statusCode);
-					self.set('responseBody', error.response || '[ No Content ]');
+					self.set('responseBody', JSON.stringify(error.response) || '[ No Content ]');
 				} else {
 					self.set('responseCode', response.statusCode);
 					var pretty;
