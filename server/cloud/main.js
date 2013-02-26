@@ -386,7 +386,8 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		app.post('/upload/:file', function (req, res) {
 
-			Api.upload(req, res, req.params.file, socket);
+			var session_id = req.session.session_id;
+			Api.upload(req.session.account_id, req, res, req.params.file, io.sockets.in(session_id));
 
 		});
 		app.on('error', function () {
