@@ -106,7 +106,7 @@ public class SingleNodeMain {
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println("Continuuity Devsuite AppFabric started successfully. Connect to dashboard at "
+    LOG.info("Continuuity Devsuite AppFabric started successfully. Connect to dashboard at "
                        + "http://" + hostname + ":9999");
   }
 
@@ -253,7 +253,7 @@ public class SingleNodeMain {
       main.startUp(args);
     } catch (Exception e) {
       main.shutDown();
-      System.err.println("Failed to start server. " + e.getMessage());
+      LOG.error("Failed to start server. " + e.getMessage());
       System.exit(-2);
     }
 
