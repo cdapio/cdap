@@ -100,7 +100,7 @@ task singlenode_dist (type: Zip) {
 
   //docs
   into("docs/api"){
-    from javadoc.outputs
+    from project(':singlenode').tasks.getByName('javadoc').outputs
   }
 
   //examples
@@ -146,9 +146,9 @@ task singlenode_dist (type: Zip) {
   from("VERSION"){
     def versiontxt
     if( project.hasProperty('teamcityBuildNumber')) {
-      versiontxt = releaseVersion + "-" + teamcityBuildNumber
+      versiontxt = version + "-" + teamcityBuildNumber
     } else {
-      versiontxt = releaseVersion
+      versiontxt = version
     }
     filter(ReplaceTokens, tokens: [cversion: versiontxt ])
   }
