@@ -33,19 +33,19 @@ public class CountCountsProcedure extends AbstractProcedure {
 
     // Primary method is countCounts that returns a string representation of
     // the counts of each per-line word count
-      Map<Long,Long> counts = this.counters.getWordCountCounts();
+    Map<Long,Long> counts = this.counters.getWordCountCounts();
 
-      ObjectMapper mapper = new ObjectMapper();
-      byte[] returnBytes = mapper.writeValueAsBytes(counts);
+    ObjectMapper mapper = new ObjectMapper();
+    byte[] returnBytes = mapper.writeValueAsBytes(counts);
 
-      // Write the returnBytes out to the response
-      ProcedureResponse.Writer writer = responder.stream(
-          new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
-      try {
-        writer.write(returnBytes);
-      } finally {
-        writer.close();
-      }
+    // Write the returnBytes out to the response
+    ProcedureResponse.Writer writer = responder.stream(
+        new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+    try {
+      writer.write(returnBytes);
+    } finally {
+      writer.close();
+    }
   }
 
   @Handle("wordCount")
