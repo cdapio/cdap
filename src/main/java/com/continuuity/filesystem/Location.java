@@ -89,4 +89,9 @@ public interface Location {
    * @return true if and only if the renaming succeeded; false otherwise
    */
   boolean mkdirs() throws IOException;
+
+  /**
+   * @return Length of file.
+   */
+  long length() throws IOException;
 }
