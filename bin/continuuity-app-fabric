@@ -80,7 +80,7 @@ PID_DIR=$APP_HOME/data
 BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
-# checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
+# checks if there exists a PID that is already running. Alert user but still return success
 check_before_start() {
   if [ ! -d "$PID_DIR" ]; then
     mkdir -p "$PID_DIR"
@@ -88,7 +88,7 @@ check_before_start() {
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
       echo "$0 running as process `cat $pid`. Stop it first."
-      exit 1
+      exit 0
     fi
   fi
 }
@@ -231,11 +231,14 @@ status() {
       # kill -0 == see if the PID exists
       if kill -0 $pidToCheck > /dev/null 2>&1; then
         echo "$0 running as process $pidToCheck"
+        exit 0
       else
         echo "pidfile exists, but process does not appear to be running"
+        exit 3
       fi
     else 
       echo "$0 is not running"
+      exit 3
     fi
 }
     
