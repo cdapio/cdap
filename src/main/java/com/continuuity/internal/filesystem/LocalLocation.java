@@ -146,4 +146,12 @@ public final class LocalLocation implements Location {
   public boolean mkdirs() throws IOException {
     return file.mkdirs();
   }
+
+  /**
+   * @return Length of file.
+   */
+  @Override
+  public long length() throws IOException {
+    return file.length();
+  }
 }
