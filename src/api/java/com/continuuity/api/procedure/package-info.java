@@ -4,7 +4,7 @@
 
 /**
  * <p>
- *   This package contains API for Procedure implementations.
+ *   This package provides API for procedure implementations.
  * </p>
  * <p>
  *   Every procedure should implement {@link Procedure} interface. For convenience the package comes with
