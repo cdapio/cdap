@@ -172,16 +172,18 @@ public class QueueAdmin {
       outer.put("global", this.globalHeadPointer);
       outer.put("current", this.currentWritePointer);
       JSONArray groupArray = new JSONArray();
-      for (GroupState group : this.groups) {
-        JSONObject inner = new JSONObject();
-        inner.put("groupsize", group.getGroupSize());
-        inner.put("execmode", group.getMode().name());
-        JSONObject innner = new JSONObject();
-        EntryPointer head = group.getHead();
-        innner.put("entryid", head.getEntryId());
-        innner.put("shardid", head.getShardId());
-        inner.put("head", innner);
-        groupArray.put(inner);
+      if (this.groups != null && this.groups.length !=0 ) {
+        for (GroupState group : this.groups) {
+          JSONObject inner = new JSONObject();
+          inner.put("groupsize", group.getGroupSize());
+          inner.put("execmode", group.getMode().name());
+          JSONObject innner = new JSONObject();
+          EntryPointer head = group.getHead();
+          innner.put("entryid", head.getEntryId());
+          innner.put("shardid", head.getShardId());
+          inner.put("head", innner);
+          groupArray.put(inner);
+        }
       }
       outer.put("groups", groupArray);
       return outer;
