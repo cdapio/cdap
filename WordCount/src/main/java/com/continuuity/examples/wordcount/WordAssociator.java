@@ -9,11 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class WordAssociator extends AbstractFlowlet {
-
-  public WordAssociator() {
-    super("wordAssociator");
-  }
-
   @UseDataSet("wordAssocs")
   private AssociationTable associationTable;
 

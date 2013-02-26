@@ -3,14 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.continuuity.example</groupId>
-    <artifactId>word-count</artifactId>
+    <groupId>com.continuuity.examples</groupId>
+    <artifactId>wordcount</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>WordCountApp</name>
     <properties>
         <main>com.continuuity.examples.wordcount.WordCount</main>
-        <continuuityVersion>1.3.0</continuuityVersion>
+        <continuuityVersion>1.3.0-SNAPSHOT</continuuityVersion>
     </properties>
     <repositories>
         <repository>
@@ -30,21 +30,21 @@
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>app-fabric</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>${continuuityVersion}</version>
             <scope>provided</scope>
             <classifier>api</classifier>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>common</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>${continuuityVersion}</version>
             <scope>provided</scope>
             <classifier>api</classifier>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>data-fabric</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>${continuuityVersion}</version>
             <scope>provided</scope>
             <classifier>api</classifier>
         </dependency>

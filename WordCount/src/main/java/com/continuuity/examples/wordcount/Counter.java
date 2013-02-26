@@ -11,11 +11,6 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 public class Counter extends AbstractFlowlet {
-
-  public Counter() {
-    super("wordCounter");
-  }
-
   @UseDataSet("wordStats")
   private Table wordStatsTable;
   
