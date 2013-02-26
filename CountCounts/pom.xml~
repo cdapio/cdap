@@ -9,7 +9,7 @@
     <version>1.0</version>
     <name>CountCounts</name>
     <properties>
-        <main>com.continuuity.examples.countcounts.CountCounts</main>
+        <main>com.continuuity.examples.wordcount.WordCount</main>
         <continuuityVersion>1.4.0</continuuityVersion>
     </properties>
     <repositories>
