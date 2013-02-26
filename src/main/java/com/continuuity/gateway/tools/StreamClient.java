@@ -406,7 +406,7 @@ public class StreamClient {
         return null;
       }
 
-      if (event==null) {
+      if (event == null) {
         System.out.println("no event");
         return "";
       }
