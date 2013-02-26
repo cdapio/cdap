@@ -127,19 +127,22 @@ public final class ReflectionDatumReader<T> {
   private Object readArray(Decoder decoder, Schema sourceSchema,
                            Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
-    if(!targetTypeToken.isArray() && Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
-      throw new IOException("Only array or collection type is support for array value.");
+    TypeToken<?> componentType = null;
+    if (targetTypeToken.isArray()) {
+      componentType = targetTypeToken.getComponentType();
+    } else if (Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
+      Type type = targetTypeToken.getType();
+      check(type instanceof ParameterizedType, "Only parameterized type is supported for collection.");
+      componentType = TypeToken.of(((ParameterizedType)type).getActualTypeArguments()[0]);
     }
+    check(componentType != null, "Only array or collection type is support for array value.");
 
     int len = decoder.readInt();
     Collection<Object> collection = (Collection<Object>) create(targetTypeToken);
     while(len != 0) {
       for(int i = 0; i < len; i++) {
-        collection.add(
-                        read(
-                              decoder, sourceSchema.getComponentSchema(),
-                              targetSchema.getComponentSchema(), targetTypeToken.getComponentType()
-                        )
+        collection.add(read(decoder, sourceSchema.getComponentSchema(),
+                            targetSchema.getComponentSchema(), componentType)
         );
       }
       len = decoder.readInt();
