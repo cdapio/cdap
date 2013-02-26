@@ -60,7 +60,7 @@ define([
 			this.set("pushing", true);
 			var current = C.Ctl.Application.current;
 			var self = this;
-debugger;
+
 			var destination = self.get('destination');
 			if (!destination) {
 				return;
@@ -70,7 +70,7 @@ debugger;
 
 			C.get('far', {
 				method: 'promote',
-				params: [current.id, destination]
+				params: [current.id, destination, self.get('apiKey')]
 			}, function (error, response) {
 
 				if (error) {

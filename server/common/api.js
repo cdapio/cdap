@@ -187,8 +187,7 @@ logger.setLevel(LOG_LEVEL);
 	this.far = function (accountID, method, params, done) {
 
 		var identifier, conn, FAR,
-			accountId = accountID,
-			auth_token = new appfabricservice_types.AuthToken({ token: null });
+			auth_token = new appfabricservice_types.AuthToken({ token: params[2] });
 
 		conn = thrift.createConnection(
 			this.config['resource.manager.server.address'],
@@ -209,8 +208,8 @@ logger.setLevel(LOG_LEVEL);
 
 				identifier = new appfabricservice_types.FlowIdentifier({
 					applicationId: params[0],
-					flowId: params[1],
-					version: params[2],
+					flowId: '',
+					version: 1,
 					accountId: accountID
 				});
 				FAR.remove(auth_token, identifier, done);
@@ -218,12 +217,13 @@ logger.setLevel(LOG_LEVEL);
 
 			case 'promote':
 
-				identifier = new appfabricservice_types.FlowIdentifier({
+				identifier = new appfabricservice_types.ResourceIdentifier({
 					applicationId: params[0],
-					flowId: params[1],
-					version: params[2],
-					accountId: accountID
+					version: 1,
+					accountId: accountID,
+					resource: 'name'
 				});
+
 				FAR.promote(auth_token, identifier, params[1], done);
 
 				break;
