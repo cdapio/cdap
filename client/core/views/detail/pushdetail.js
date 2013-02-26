@@ -60,11 +60,13 @@ define([
 			this.set("pushing", true);
 			var current = C.Ctl.Application.current;
 			var self = this;
-
+debugger;
 			var destination = self.get('destination');
 			if (!destination) {
 				return;
 			}
+
+			destination += '.continuuity.net';
 
 			C.get('far', {
 				method: 'promote',

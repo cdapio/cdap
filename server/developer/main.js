@@ -310,6 +310,8 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 				config['node-port']);	
 			app.listen(config['node-port']);
 
+			logger.info(config);
+
 		});
 
 	});
