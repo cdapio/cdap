@@ -10,7 +10,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
  */
 public class RandomNumberGenerator extends AbstractGeneratorFlowlet {
 
-  Random random;
+  Random random = new Random();
   long millis = 1;
   int direction = 1;
 
