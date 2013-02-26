@@ -70,10 +70,10 @@ public class SimpleQueueSpecificationGeneratorTest {
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue://ToyFlow/A/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue://ToyFlow/A/queue"));
 
     // Node B
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue://ToyFlow/B/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue://ToyFlow/B/queue"));
 
     // Node C
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"), "queue://ToyFlow/C/c1"));
@@ -83,7 +83,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"), "queue://ToyFlow/D/d1"));
 
     // Node E
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue://ToyFlow/E/out"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue://ToyFlow/E/queue"));
 
     // Node F
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"), "queue://ToyFlow/F/f1"));
@@ -101,7 +101,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
                         .iterator().next().getQueueName().toString().equals("stream://default/text"));
     Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
-                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSource/out"));
+                        .iterator().next().getQueueName().toString().equals("queue://WordCountFlow/StreamSource/queue"));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 
