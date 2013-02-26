@@ -37,6 +37,8 @@ dependencies {
     compile libraries.jetty
     compile libraries.jetty_management
 
+    compile libraries.slf4j_api
+
     testCompile libraries.junit
     testCompile libraries.hsql
 }
