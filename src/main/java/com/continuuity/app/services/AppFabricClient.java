@@ -47,7 +47,7 @@ import java.util.Set;
 public class AppFabricClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "verify", "status");
+                                                                 "promote", "verify", "status");
   private final String RESOURCE_LONG_OPT_ARG = "resource";
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCESSOR_LONG_OPT_ARG = "processor";
