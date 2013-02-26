@@ -410,7 +410,7 @@ logger.setLevel(LOG_LEVEL);
 		
 	};
 
-	this.upload = function (req, res, file, socket) {
+	this.upload = function (accountID, req, res, file, socket) {
 		var self = this;
 		var auth_token = new appfabricservice_types.AuthToken({ token: null });
 		var length = req.header('Content-length');
@@ -437,8 +437,6 @@ logger.setLevel(LOG_LEVEL);
 			conn.on('error', function (error) {
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
-
-			var accountID = 'developer';
 
 			var FAR = thrift.createClient(AppFabricService, conn);
 			FAR.init(auth_token, new appfabricservice_types.ResourceInfo({
