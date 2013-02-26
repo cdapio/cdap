@@ -33,7 +33,7 @@ public class GatewayQueryAccessorTest {
   // A set of constants we'll use in these tests
   static String name = "access.query";
   static final String prefix = "/";
-  static final String path = "query/";
+  static final String path = "procedure/";
   static int port = 10005;
 
   // This is the Gateway object we'll use for these tests
