@@ -329,7 +329,7 @@ public class StreamClient {
 
     // determine the base url for the GET request
     if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestCollector.class, connector, hostname);
+        Util.findBaseUrl(config, RestCollector.class, connector, hostname, apikey);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
           "Please use --base or --connector to specify.");

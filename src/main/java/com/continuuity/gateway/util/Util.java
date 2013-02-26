@@ -113,7 +113,8 @@ public class Util {
    * @return The base url if found, or null otherwise.
    */
   public static String findBaseUrl(CConfiguration config, Class connectorClass,
-                                   String connectorName, String hostname) {
+                                   String connectorName, String hostname,
+                                   String apiKey) {
 
     if (connectorName == null) {
       // find the name of the connector
@@ -133,6 +134,9 @@ public class Util {
       LOG.error("Exception reading Http configuration for connector '"
           + connectorName + "': " + e.getMessage());
       return null;
+    }
+    if (apiKey != null) {
+      httpConfig.setSsl(true);
     }
     return httpConfig.getBaseUrl(hostname);
   }

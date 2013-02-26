@@ -172,6 +172,9 @@ public class HttpConfig {
     return this.ssl;
   }
 
+  public void setSsl(boolean ssl) {
+    this.ssl = ssl;
+  }
   /**
    * Return the maximal size of content supported
    *
