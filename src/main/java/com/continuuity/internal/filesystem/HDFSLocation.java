@@ -141,4 +141,12 @@ public final class HDFSLocation implements Location {
   public boolean mkdirs() throws IOException {
     return fs.mkdirs(path);
   }
+
+  /**
+   * @return Length of file.
+   */
+  @Override
+  public long length() throws IOException {
+    return fs.getFileStatus(path).getLen();
+  }
 }

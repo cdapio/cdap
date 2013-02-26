@@ -325,16 +325,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw Throwables.propagate(e);
     }
-
-    // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
-    // can at least set instances count for this session
-    try {
-      store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
-                                                identifier.getFlowId()), flowletId, instances);
-    } catch (OperationException e) {
-      LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
-    }
   }
 
   /**
@@ -734,14 +724,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       int port = configuration.getInt("connector.appfabric.port", 10007);
       String url = String.format("%s://%s:%d/app", schema, hostname, port);
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
+        .setHeader("X-Archive-Name", applicationDir.getName())
+        .setHeader("X-Continuuity-ApiKey", authToken.getToken())
+        .setHeader("Content-Type", "multipart/form-data")
+        .setHeader("Content-Length", String.valueOf(applicationDir.length()))
+        .build();
+
       try {
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-          .setUrl(url)
-          .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
-          .setHeader("X-Archive-Name", applicationDir.getName())
-          .setHeader("X-Continuuity-ApiKey", authToken.getToken())
-          .setHeader("Content-Type", "multipart/form-data")
-          .build();
         Future<Response> future = client.put(new InputStreamBodyGenerator(reader));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if(response.getStatusCode() != 200) {
@@ -749,6 +741,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
         return true;
       } finally {
+        client.close();
         reader.close();
       }
     } catch (Exception e) {
