@@ -67,7 +67,7 @@ y_server_dev.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'main.js')
 }
 y_server_cloud.configure {
-	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'env.js')
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'env.js', 'main.js')
 }
 
 
