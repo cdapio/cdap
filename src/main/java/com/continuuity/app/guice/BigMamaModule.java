@@ -4,7 +4,7 @@
 
 package com.continuuity.app.guice;
 
-import com.continuuity.api.io.SchemaGenerator;
+import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.queue.QueueReader;

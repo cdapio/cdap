@@ -1,4 +1,4 @@
-package com.continuuity.api.io;
+package com.continuuity.internal.api.io;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;

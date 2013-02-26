@@ -4,7 +4,7 @@
 
 package com.continuuity.app.queue;
 
-import com.continuuity.api.io.Schema;
+import com.continuuity.internal.api.io.Schema;
 
 /**
  * This interface defines the specification for associated with either

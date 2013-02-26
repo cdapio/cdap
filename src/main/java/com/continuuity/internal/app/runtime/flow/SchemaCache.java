@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaHash;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.SchemaHash;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
