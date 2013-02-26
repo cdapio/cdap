@@ -36,6 +36,7 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   private static final org.apache.thrift.protocol.TField CLEAR_QUEUES_FIELD_DESC = new org.apache.thrift.protocol.TField("clearQueues", org.apache.thrift.protocol.TType.BOOL, (short)4);
   private static final org.apache.thrift.protocol.TField CLEAR_STREAMS_FIELD_DESC = new org.apache.thrift.protocol.TField("clearStreams", org.apache.thrift.protocol.TType.BOOL, (short)5);
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)6);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)7);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -49,6 +50,7 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   public boolean clearQueues; // required
   public boolean clearStreams; // required
   public long id; // required
+  public String metric; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -57,7 +59,8 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     CLEAR_TABLES((short)3, "clearTables"),
     CLEAR_QUEUES((short)4, "clearQueues"),
     CLEAR_STREAMS((short)5, "clearStreams"),
-    ID((short)6, "id");
+    ID((short)6, "id"),
+    METRIC((short)7, "metric");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -84,6 +87,8 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
           return CLEAR_STREAMS;
         case 6: // ID
           return ID;
+        case 7: // METRIC
+          return METRIC;
         default:
           return null;
       }
@@ -131,6 +136,7 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   private static final int __CLEARSTREAMS_ISSET_ID = 4;
   private static final int __ID_ISSET_ID = 5;
   private BitSet __isset_bit_vector = new BitSet(6);
+  private _Fields optionals[] = {_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -146,6 +152,8 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TClearFabric.class, metaDataMap);
   }
@@ -188,6 +196,9 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     this.clearQueues = other.clearQueues;
     this.clearStreams = other.clearStreams;
     this.id = other.id;
+    if (other.isSetMetric()) {
+      this.metric = other.metric;
+    }
   }
 
   public TClearFabric deepCopy() {
@@ -208,6 +219,7 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     this.clearStreams = false;
     setIdIsSet(false);
     this.id = 0;
+    this.metric = null;
   }
 
   public boolean isClearData() {
@@ -348,6 +360,30 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     __isset_bit_vector.set(__ID_ISSET_ID, value);
   }
 
+  public String getMetric() {
+    return this.metric;
+  }
+
+  public TClearFabric setMetric(String metric) {
+    this.metric = metric;
+    return this;
+  }
+
+  public void unsetMetric() {
+    this.metric = null;
+  }
+
+  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetric() {
+    return this.metric != null;
+  }
+
+  public void setMetricIsSet(boolean value) {
+    if (!value) {
+      this.metric = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case CLEAR_DATA:
@@ -398,6 +434,14 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       }
       break;
 
+    case METRIC:
+      if (value == null) {
+        unsetMetric();
+      } else {
+        setMetric((String)value);
+      }
+      break;
+
     }
   }
 
@@ -420,6 +464,9 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
 
     case ID:
       return Long.valueOf(getId());
+
+    case METRIC:
+      return getMetric();
 
     }
     throw new IllegalStateException();
@@ -444,6 +491,8 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       return isSetClearStreams();
     case ID:
       return isSetId();
+    case METRIC:
+      return isSetMetric();
     }
     throw new IllegalStateException();
   }
@@ -512,6 +561,15 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (!(this_present_id && that_present_id))
         return false;
       if (this.id != that.id)
+        return false;
+    }
+
+    boolean this_present_metric = true && this.isSetMetric();
+    boolean that_present_metric = true && that.isSetMetric();
+    if (this_present_metric || that_present_metric) {
+      if (!(this_present_metric && that_present_metric))
+        return false;
+      if (!this.metric.equals(that.metric))
         return false;
     }
 
@@ -591,6 +649,16 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetMetric()).compareTo(typedOther.isSetMetric());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetric()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metric, typedOther.metric);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -634,6 +702,16 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     sb.append("id:");
     sb.append(this.id);
     first = false;
+    if (isSetMetric()) {
+      if (!first) sb.append(", ");
+      sb.append("metric:");
+      if (this.metric == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metric);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -726,6 +804,14 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 7: // METRIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metric = iprot.readString();
+              struct.setMetricIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -759,6 +845,13 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       oprot.writeFieldBegin(ID_FIELD_DESC);
       oprot.writeI64(struct.id);
       oprot.writeFieldEnd();
+      if (struct.metric != null) {
+        if (struct.isSetMetric()) {
+          oprot.writeFieldBegin(METRIC_FIELD_DESC);
+          oprot.writeString(struct.metric);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -795,7 +888,10 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (struct.isSetId()) {
         optionals.set(5);
       }
-      oprot.writeBitSet(optionals, 6);
+      if (struct.isSetMetric()) {
+        optionals.set(6);
+      }
+      oprot.writeBitSet(optionals, 7);
       if (struct.isSetClearData()) {
         oprot.writeBool(struct.clearData);
       }
@@ -814,12 +910,15 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (struct.isSetId()) {
         oprot.writeI64(struct.id);
       }
+      if (struct.isSetMetric()) {
+        oprot.writeString(struct.metric);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TClearFabric struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(6);
+      BitSet incoming = iprot.readBitSet(7);
       if (incoming.get(0)) {
         struct.clearData = iprot.readBool();
         struct.setClearDataIsSet(true);
@@ -843,6 +942,10 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (incoming.get(5)) {
         struct.id = iprot.readI64();
         struct.setIdIsSet(true);
+      }
+      if (incoming.get(6)) {
+        struct.metric = iprot.readString();
+        struct.setMetricIsSet(true);
       }
     }
   }

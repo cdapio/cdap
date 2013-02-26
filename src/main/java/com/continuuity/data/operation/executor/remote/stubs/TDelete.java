@@ -31,9 +31,10 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TDelete");
 
   private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)3);
-  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)4);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -42,6 +43,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   }
 
   public String table; // optional
+  public String metric; // optional
   public ByteBuffer key; // required
   public List<ByteBuffer> columns; // required
   public long id; // required
@@ -49,9 +51,10 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TABLE((short)1, "table"),
-    KEY((short)2, "key"),
-    COLUMNS((short)3, "columns"),
-    ID((short)4, "id");
+    METRIC((short)2, "metric"),
+    KEY((short)3, "key"),
+    COLUMNS((short)4, "columns"),
+    ID((short)5, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -68,11 +71,13 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
       switch(fieldId) {
         case 1: // TABLE
           return TABLE;
-        case 2: // KEY
+        case 2: // METRIC
+          return METRIC;
+        case 3: // KEY
           return KEY;
-        case 3: // COLUMNS
+        case 4: // COLUMNS
           return COLUMNS;
-        case 4: // ID
+        case 5: // ID
           return ID;
         default:
           return null;
@@ -116,11 +121,13 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   // isset id assignments
   private static final int __ID_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
-  private _Fields optionals[] = {_Fields.TABLE};
+  private _Fields optionals[] = {_Fields.TABLE,_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
@@ -157,6 +164,9 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
     if (other.isSetTable()) {
       this.table = other.table;
     }
+    if (other.isSetMetric()) {
+      this.metric = other.metric;
+    }
     if (other.isSetKey()) {
       this.key = org.apache.thrift.TBaseHelper.copyBinary(other.key);
 ;
@@ -180,6 +190,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   @Override
   public void clear() {
     this.table = null;
+    this.metric = null;
     this.key = null;
     this.columns = null;
     setIdIsSet(false);
@@ -207,6 +218,30 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
   public void setTableIsSet(boolean value) {
     if (!value) {
       this.table = null;
+    }
+  }
+
+  public String getMetric() {
+    return this.metric;
+  }
+
+  public TDelete setMetric(String metric) {
+    this.metric = metric;
+    return this;
+  }
+
+  public void unsetMetric() {
+    this.metric = null;
+  }
+
+  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetric() {
+    return this.metric != null;
+  }
+
+  public void setMetricIsSet(boolean value) {
+    if (!value) {
+      this.metric = null;
     }
   }
 
@@ -316,6 +351,14 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
       }
       break;
 
+    case METRIC:
+      if (value == null) {
+        unsetMetric();
+      } else {
+        setMetric((String)value);
+      }
+      break;
+
     case KEY:
       if (value == null) {
         unsetKey();
@@ -348,6 +391,9 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
     case TABLE:
       return getTable();
 
+    case METRIC:
+      return getMetric();
+
     case KEY:
       return getKey();
 
@@ -370,6 +416,8 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
     switch (field) {
     case TABLE:
       return isSetTable();
+    case METRIC:
+      return isSetMetric();
     case KEY:
       return isSetKey();
     case COLUMNS:
@@ -399,6 +447,15 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
       if (!(this_present_table && that_present_table))
         return false;
       if (!this.table.equals(that.table))
+        return false;
+    }
+
+    boolean this_present_metric = true && this.isSetMetric();
+    boolean that_present_metric = true && that.isSetMetric();
+    if (this_present_metric || that_present_metric) {
+      if (!(this_present_metric && that_present_metric))
+        return false;
+      if (!this.metric.equals(that.metric))
         return false;
     }
 
@@ -451,6 +508,16 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
     }
     if (isSetTable()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMetric()).compareTo(typedOther.isSetMetric());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetric()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metric, typedOther.metric);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -511,6 +578,16 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
         sb.append("null");
       } else {
         sb.append(this.table);
+      }
+      first = false;
+    }
+    if (isSetMetric()) {
+      if (!first) sb.append(", ");
+      sb.append("metric:");
+      if (this.metric == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metric);
       }
       first = false;
     }
@@ -586,7 +663,15 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // KEY
+          case 2: // METRIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metric = iprot.readString();
+              struct.setMetricIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // KEY
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.key = iprot.readBinary();
               struct.setKeyIsSet(true);
@@ -594,7 +679,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // COLUMNS
+          case 4: // COLUMNS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
@@ -612,7 +697,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // ID
+          case 5: // ID
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
               struct.id = iprot.readI64();
               struct.setIdIsSet(true);
@@ -639,6 +724,13 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
         if (struct.isSetTable()) {
           oprot.writeFieldBegin(TABLE_FIELD_DESC);
           oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.metric != null) {
+        if (struct.isSetMetric()) {
+          oprot.writeFieldBegin(METRIC_FIELD_DESC);
+          oprot.writeString(struct.metric);
           oprot.writeFieldEnd();
         }
       }
@@ -683,18 +775,24 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
       if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetKey()) {
+      if (struct.isSetMetric()) {
         optionals.set(1);
       }
-      if (struct.isSetColumns()) {
+      if (struct.isSetKey()) {
         optionals.set(2);
       }
-      if (struct.isSetId()) {
+      if (struct.isSetColumns()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetId()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetTable()) {
         oprot.writeString(struct.table);
+      }
+      if (struct.isSetMetric()) {
+        oprot.writeString(struct.metric);
       }
       if (struct.isSetKey()) {
         oprot.writeBinary(struct.key);
@@ -716,16 +814,20 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TDelete struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.table = iprot.readString();
         struct.setTableIsSet(true);
       }
       if (incoming.get(1)) {
+        struct.metric = iprot.readString();
+        struct.setMetricIsSet(true);
+      }
+      if (incoming.get(2)) {
         struct.key = iprot.readBinary();
         struct.setKeyIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(3)) {
         {
           org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
           struct.columns = new ArrayList<ByteBuffer>(_list29.size);
@@ -738,7 +840,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
         }
         struct.setColumnsIsSet(true);
       }
-      if (incoming.get(3)) {
+      if (incoming.get(4)) {
         struct.id = iprot.readI64();
         struct.setIdIsSet(true);
       }

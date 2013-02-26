@@ -31,6 +31,7 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TGetGroupId");
 
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -39,10 +40,12 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
   }
 
   public ByteBuffer queueName; // required
+  public String metric; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    QUEUE_NAME((short)1, "queueName");
+    QUEUE_NAME((short)1, "queueName"),
+    METRIC((short)2, "metric");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -59,6 +62,8 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
       switch(fieldId) {
         case 1: // QUEUE_NAME
           return QUEUE_NAME;
+        case 2: // METRIC
+          return METRIC;
         default:
           return null;
       }
@@ -99,11 +104,14 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.QUEUE_NAME, new org.apache.thrift.meta_data.FieldMetaData("queueName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TGetGroupId.class, metaDataMap);
   }
@@ -126,6 +134,9 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
       this.queueName = org.apache.thrift.TBaseHelper.copyBinary(other.queueName);
 ;
     }
+    if (other.isSetMetric()) {
+      this.metric = other.metric;
+    }
   }
 
   public TGetGroupId deepCopy() {
@@ -135,6 +146,7 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
   @Override
   public void clear() {
     this.queueName = null;
+    this.metric = null;
   }
 
   public byte[] getQueueName() {
@@ -171,6 +183,30 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
     }
   }
 
+  public String getMetric() {
+    return this.metric;
+  }
+
+  public TGetGroupId setMetric(String metric) {
+    this.metric = metric;
+    return this;
+  }
+
+  public void unsetMetric() {
+    this.metric = null;
+  }
+
+  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetric() {
+    return this.metric != null;
+  }
+
+  public void setMetricIsSet(boolean value) {
+    if (!value) {
+      this.metric = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -181,6 +217,14 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
       }
       break;
 
+    case METRIC:
+      if (value == null) {
+        unsetMetric();
+      } else {
+        setMetric((String)value);
+      }
+      break;
+
     }
   }
 
@@ -188,6 +232,9 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
     switch (field) {
     case QUEUE_NAME:
       return getQueueName();
+
+    case METRIC:
+      return getMetric();
 
     }
     throw new IllegalStateException();
@@ -202,6 +249,8 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
     switch (field) {
     case QUEUE_NAME:
       return isSetQueueName();
+    case METRIC:
+      return isSetMetric();
     }
     throw new IllegalStateException();
   }
@@ -228,6 +277,15 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
         return false;
     }
 
+    boolean this_present_metric = true && this.isSetMetric();
+    boolean that_present_metric = true && that.isSetMetric();
+    if (this_present_metric || that_present_metric) {
+      if (!(this_present_metric && that_present_metric))
+        return false;
+      if (!this.metric.equals(that.metric))
+        return false;
+    }
+
     return true;
   }
 
@@ -250,6 +308,16 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
     }
     if (isSetQueueName()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queueName, typedOther.queueName);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMetric()).compareTo(typedOther.isSetMetric());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetric()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metric, typedOther.metric);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -281,6 +349,16 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
       org.apache.thrift.TBaseHelper.toString(this.queueName, sb);
     }
     first = false;
+    if (isSetMetric()) {
+      if (!first) sb.append(", ");
+      sb.append("metric:");
+      if (this.metric == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metric);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -331,6 +409,14 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 2: // METRIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metric = iprot.readString();
+              struct.setMetricIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -350,6 +436,13 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
         oprot.writeFieldBegin(QUEUE_NAME_FIELD_DESC);
         oprot.writeBinary(struct.queueName);
         oprot.writeFieldEnd();
+      }
+      if (struct.metric != null) {
+        if (struct.isSetMetric()) {
+          oprot.writeFieldBegin(METRIC_FIELD_DESC);
+          oprot.writeString(struct.metric);
+          oprot.writeFieldEnd();
+        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -372,19 +465,29 @@ public class TGetGroupId implements org.apache.thrift.TBase<TGetGroupId, TGetGro
       if (struct.isSetQueueName()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetMetric()) {
+        optionals.set(1);
+      }
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
+      }
+      if (struct.isSetMetric()) {
+        oprot.writeString(struct.metric);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TGetGroupId struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.metric = iprot.readString();
+        struct.setMetricIsSet(true);
       }
     }
   }

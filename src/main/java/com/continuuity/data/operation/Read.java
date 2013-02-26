@@ -7,10 +7,7 @@ import com.google.common.base.Objects;
  *
  * Supports both key-value and columnar operations.
  */
-public class Read implements ReadOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class Read extends ReadOperation {
 
   /** the name of the table */
   private final String table;
@@ -68,7 +65,9 @@ public class Read implements ReadOperation {
   public Read(final String table,
               final byte [] row,
               final byte [][] columns) {
-    this(OperationBase.getId(), table, row, columns);
+    this.table = table;
+    this.key = row;
+    this.columns = columns;
   }
 
   /**
@@ -84,7 +83,7 @@ public class Read implements ReadOperation {
               final String table,
               final byte [] row,
               final byte [][] columns) {
-    this.id = id;
+    super(id);
     this.table = table;
     this.key = row;
     this.columns = columns;
@@ -116,10 +115,5 @@ public class Read implements ReadOperation {
         .add("key", new String(this.key))
         .add("columns", columnsStr)
         .toString();
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 }

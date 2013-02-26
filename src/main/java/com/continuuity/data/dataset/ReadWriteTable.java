@@ -28,45 +28,16 @@ public class ReadWriteTable extends ReadOnlyTable {
    *
    * @param table the original table
    * @param fabric the data fabric
-   * @param client the batch collection client
-   * @return the new ReadWriteTable
-   *
-   * TODO this method will go away with the new flow system
-   */
-  // @Deprecated
-  public static ReadWriteTable setReadWriteTable(Table table, DataFabric fabric, BatchCollectionClient client) {
-    ReadWriteTable readWriteTable = new ReadWriteTable(table, fabric, client);
-    table.setDelegate(readWriteTable);
-    return readWriteTable;
-  }
-
-  /**
-   * Given a Table, create a new ReadWriteTable and make it the delegate for that
-   * table.
-   *
-   * @param table the original table
-   * @param fabric the data fabric
+   * @param metricName the name to use for emitting metrics
    * @param proxy transaction proxy for all operations
    * @return the new ReadWriteTable
    */
-  public static ReadWriteTable setReadWriteTable(Table table, DataFabric fabric, TransactionProxy proxy) {
+  public static ReadWriteTable setReadWriteTable(Table table, DataFabric fabric,
+                                                 String metricName, TransactionProxy proxy) {
     ReadWriteTable readWriteTable = new ReadWriteTable(table, fabric, proxy);
+    readWriteTable.setMetricName(metricName);
     table.setDelegate(readWriteTable);
     return readWriteTable;
-  }
-
-  /**
-   * private constructor, only to be called from @see #setReadWriteTable().
-   * @param table the original table
-   * @param fabric the data fabric
-   * @param client the batch collection client
-   *
-   * TODO this method will go away with the new flow system
-   */
-  // @Deprecated
-  private ReadWriteTable(Table table, DataFabric fabric, BatchCollectionClient client) {
-    super(table, fabric, null);
-    this.collectionClient = client;
   }
 
   /**
@@ -124,6 +95,7 @@ public class ReadWriteTable extends ReadOnlyTable {
     else { // can't happen but...
       throw new IllegalArgumentException("Received an operation of unknown type " + op.getClass().getName());
     }
+    operation.setMetricName(getMetricName());
     return operation;
   }
 
@@ -133,11 +105,12 @@ public class ReadWriteTable extends ReadOnlyTable {
    * @return a corresponding data fabric increment operation
    */
   private com.continuuity.data.operation.Increment toOperation(Increment increment) {
-    return new com.continuuity.data.operation.Increment(
+    com.continuuity.data.operation.Increment operation = new com.continuuity.data.operation.Increment(
       this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
+    operation.setMetricName(getMetricName());
+    return operation;
   }
 
-  // perform an asynchronous write operation (see toOperation())
   @Override
   public void write(WriteOperation op) throws OperationException {
     // new style

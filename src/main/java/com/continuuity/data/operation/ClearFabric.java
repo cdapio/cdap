@@ -9,14 +9,11 @@ import java.util.List;
  * Administrative operation for clearing the data fabric with options for only
  * clearing user data, queues, and/or streams.
  */
-public class ClearFabric implements Operation {
+public class ClearFabric extends Operation {
 
   public enum ToClear {
     DATA, META, TABLES, QUEUES, STREAMS, ALL
   }
-
-  /** Unique id for the operation */
-  private final long id;
 
   private boolean clearData;
   private boolean clearMeta;
@@ -47,7 +44,7 @@ public class ClearFabric implements Operation {
    * @param whatToClear list of scopes to clear
    */
   public ClearFabric(List<ToClear> whatToClear) {
-    this(OperationBase.getId(), whatToClear);
+    setToClear(whatToClear);
   }
 
   /**
@@ -58,13 +55,15 @@ public class ClearFabric implements Operation {
    *
    */
   public ClearFabric(long id, List<ToClear> whatToClear) {
-    this.id = id;
-    clearData = clearMeta = clearTables = clearQueues =
-        clearStreams = false;
+    super(id);
+    setToClear(whatToClear);
+  }
+
+  private void setToClear(List<ToClear> whatToClear) {
+    clearData = clearMeta = clearTables = clearQueues = clearStreams = false;
     for (ToClear toClear : whatToClear) {
       switch (toClear) {
-        case ALL: clearData = clearMeta = clearTables = clearQueues =
-            clearStreams = true;
+        case ALL: clearData = clearMeta = clearTables = clearQueues = clearStreams = true;
           break;
         case DATA: clearData = true; break;
         case META: clearMeta = true; break;
@@ -122,11 +121,6 @@ public class ClearFabric implements Operation {
         .add("clearQueues", Boolean.toString(clearQueues))
         .add("clearStreams", Boolean.toString(clearStreams))
         .toString();
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 }
 

@@ -3,10 +3,7 @@ package com.continuuity.data.operation;
 /**
  * Delete a key or columns.
  */
-public class Delete implements WriteOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class Delete extends WriteOperation {
 
   /** the name of the table */
   private final String table;
@@ -70,7 +67,9 @@ public class Delete implements WriteOperation {
   public Delete(final String table,
                 final byte [] row,
                 final byte [][] columns) {
-    this(OperationBase.getId(), table, row, columns);
+    this.table = table;
+    this.key = row;
+    this.columns = columns;
   }
 
   /**
@@ -87,7 +86,7 @@ public class Delete implements WriteOperation {
                 final String table,
                 final byte [] row,
                 final byte [][] columns) {
-    this.id = id;
+    super(id);
     this.table = table;
     this.key = row;
     this.columns = columns;
@@ -109,11 +108,6 @@ public class Delete implements WriteOperation {
   @Override
   public int getPriority() {
     return 1;
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override
