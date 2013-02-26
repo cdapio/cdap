@@ -253,7 +253,7 @@ public class SingleNodeMain {
       main.startUp(args);
     } catch (Exception e) {
       main.shutDown();
-      LOG.error("Failed to start server. " + e.getMessage());
+      System.err.println("Failed to start server. " + e.getMessage());
       System.exit(-2);
     }
 
