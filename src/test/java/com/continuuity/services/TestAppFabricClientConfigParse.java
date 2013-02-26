@@ -14,7 +14,7 @@ public class TestAppFabricClientConfigParse {
 
   @Test
   public void testOptionsParsing() throws ParseException {
-    String[] args = {"deploy", "-jar", "jar"};
+    String[] args = {"deploy", "-archive", "jar"};
     AppFabricClient client = new AppFabricClient();
     client.configure(CConfiguration.create(), args);
     assert (client != null);
@@ -27,10 +27,11 @@ public class TestAppFabricClientConfigParse {
     String command = client.configure(CConfiguration.create(), new String[]{"Foobaz", "-jar", "jar"});
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test (expected = IllegalArgumentException.class)
   public void testValidInvalidDeployArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = client.configure(CConfiguration.create(), new String[]{"deploy"});
+    assert (command == null);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -39,66 +40,26 @@ public class TestAppFabricClientConfigParse {
     String command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStopArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
-    } catch (Exception e) {
-      assert (command == null);
-    }
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"stop", "--processor", "args"});
-    } catch (Exception e) {
-      assert (command == null);
-    }
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStatusArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
-      assertTrue(false); //This should not happen
-    } catch (Exception e) {
-      assert (command == null);
-    }
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"status", "--processor", "args"});
-      assertTrue(false); //This should not happen
-    } catch (Exception e) {
-      assert (command == null);
-    }
-  }
+    command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "args"});
+ }
 
   @Test
   public void testValidInvalidPromoteArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
-        "--application", "application"});
-      assertTrue(false); //This should not happen
-    } catch (Exception e) {
-      assert (command == null);
-    }
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
-        "--application", "application"});
-      assertTrue(false); //This should not happen
-    } catch (Exception e) {
-      assert (command == null);
-    }
-    try {
-      command = client.configure(CConfiguration.create(), new String[]{"promote",
-        "--authtoken", "Auth token",
-        "--application", "application"});
-      assertTrue(false); //This should not happen
-    } catch (Exception e) {
-      assert (command == null);
-    }
+    command = client.configure(CConfiguration.create(), new String[]{"promote", "--host", "hostname",
+      "--application", "application"});
+    assert (command == null);
   }
 
   @Test
@@ -106,23 +67,37 @@ public class TestAppFabricClientConfigParse {
 
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"deploy", "--resource", "jar"});
+    command = client.configure(CConfiguration.create(), new String[]{"deploy", "--archive", "jar"});
     assertTrue("deploy".equals(command));
 
     command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "appId",
-      "--processor", "processor"});
+      "--procedure", "processor"});
     assertTrue("start".equals(command));
 
+
+    command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "appId",
+      "--flow", "processor"});
+    assertTrue("start".equals(command));
+
+
     command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "appId",
-      "--processor", "processor"});
+      "--procedure", "processor"});
     assertTrue("stop".equals(command));
 
+    command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "appId",
+      "--flow", "processor"});
+    assertTrue("stop".equals(command));
+
+
     command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "appId",
-      "--processor", "processor"});
+      "--procedure", "processor"});
+    assertTrue("status".equals(command));
+    command = client.configure(CConfiguration.create(), new String[]{"status", "--application", "appId",
+      "--flow", "processor"});
     assertTrue("status".equals(command));
 
-    command = client.configure(CConfiguration.create(), new String[]{"promote", "--vpc", "vpc_name",
-      "--authtoken", "Auth token",
+    command = client.configure(CConfiguration.create(), new String[]{"promote", "--hostname", "vpc_name",
+      "--apikey", "Auth token",
       "--application", "application"});
     assertTrue("promote".equals(command));
 
