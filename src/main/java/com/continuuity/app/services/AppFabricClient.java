@@ -90,6 +90,7 @@ public class AppFabricClient {
     try {
       transport = new TFramedTransport(new TSocket(address, port));
       protocol = new TBinaryProtocol(transport);
+      transport.open();
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       if ("help".equals(command)) {
