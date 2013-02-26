@@ -473,10 +473,7 @@ public class StreamClient {
 
       // create an HttpPut
       HttpPut put = new HttpPut(requestUrl);
-      for (String header : headers.keySet()) {
-        put.setHeader(destination + "." + header, headers.get(header));
 
-      }
       if (apikey != null) {
         put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
       }
