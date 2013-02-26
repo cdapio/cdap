@@ -5,12 +5,15 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.discovery.Discoverable;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
+import com.google.common.collect.Lists;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -27,6 +30,8 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,8 +113,21 @@ public class MonitorRestHandler extends NettyRestHandler {
   private TProtocol getThriftProtocol(String serviceName)
       throws ServerException{
 
-    ImmutablePair<String, Integer> addr =
-        this.accessor.getServiceDiscovery().getServiceAddress(serviceName);
+    ImmutablePair<String, Integer> addr;
+    if(Constants.flowServiceName.equals(serviceName)) {
+      List<Discoverable> endpoints
+        = Lists.newArrayList(accessor.getDiscoveryServiceClient().discover("app.fabric.service"));
+      if(endpoints.isEmpty()) {
+        throw new ServerException("Unable to retrieve endpoint for app fabric service");
+      }
+      Collections.shuffle(endpoints);
+      InetSocketAddress endpoint = endpoints.get(0).getSocketAddress();
+      addr = new ImmutablePair<String, Integer>(endpoint.getHostName(), endpoint.getPort());
+    } else {
+      // Remove this once the metrics registers with the new DiscoveryServiceClient.
+      addr = this.accessor.getServiceDiscovery().getServiceAddress(serviceName);
+    }
+
     // may return null
     if (addr == null) {
       String message = String.format("Service '%s' is not registered in " +
@@ -340,7 +358,7 @@ public class MonitorRestHandler extends NettyRestHandler {
       }
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e.getCause());
+          this.accessor.getName() + "'. ", e);
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
