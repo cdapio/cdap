@@ -25,7 +25,7 @@ extends Accessor implements NettyRequestHandlerFactory {
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("accessor.query")
+      new HttpConfig("procedure.rest")
           .setPort(10010)
           .setPathMiddle("/procedure/");
 

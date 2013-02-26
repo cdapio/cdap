@@ -47,7 +47,7 @@ public class RestCollector extends Collector
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultConfig =
-      new HttpConfig("collector.rest")
+      new HttpConfig("stream.rest")
           .setPort(10000)
           .setPathMiddle("/stream/");
 

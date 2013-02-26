@@ -1,15 +1,11 @@
 package com.continuuity.gateway.tools;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
-
-import com.continuuity.gateway.Constants;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.UsageException;
+import com.continuuity.gateway.accessor.DataRestAccessor;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.util.Util;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -20,12 +16,14 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
-import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.DataRestAccessor;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.util.Util;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This is a command line tool to interact with the key/vaue store of
@@ -56,9 +54,9 @@ public class DataClient {
   String command = null;         // the command to run
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
+  int port = -1;                 // the port of the gateway
   String connector = null;       // the name of the rest accessor
-  String apikey =                // the api key for authentication.
-    Constants.DEVELOPER_ACCOUNT_ID; // by default, assuming that connecting to the AppFabric running in local mode
+  String apikey = null;          // the api key for authentication.
   String key = null;             // the key to read/write/delete
   String value = null;           // the value to write
   String encoding = null;        // the encoding for --key and for display
@@ -85,6 +83,12 @@ public class DataClient {
   boolean valueNeeded;           // does the command require a value?
   boolean outputNeeded;          // does the command require to write an
                                  // output value?
+  boolean forceNoSSL=false;
+
+  public DataClient disallowSSL() {
+    this.forceNoSSL=true;
+    return this;
+  }
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -99,52 +103,22 @@ public class DataClient {
     if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name + " read --key <string> [ <options> ]");
-    out.println("  " + name +
-        " write --key <string> --value value [ <options> ]");
-    out.println("  " + name + " delete --key <string> [ <options> ]");
-    out.println("  " + name + " list [ <options> ]");
-    out.println("  " + name +
-        " clear ( --all | --data | --queues | --streams | --tables | --meta)");
+    out.println("  " + name + " clear ( --all | --queues | --streams | --tables | --meta)");
     out.println("Additional options:");
-    out.println("  --base <url>            " +
-        "To specify the base url to send to");
-    out.println("  --host <name>           " +
-        "To specify the hostname to send to");
-    out.println("  --connector <name>      " +
-        "To specify the name of the rest connector");
-    out.println("  --apikey <apikey>       " +
-        "To specify an API key for authentication");
-    out.println("  --table <string>        To specify a table to operate on");
-    out.println("  --key <string>          To specify the key");
-    out.println("  --key-file <path>       To read the binary key from a file");
-    out.println("  --value <string>        To specify the value");
-    out.println("  --value-file <path>     " +
-        "To read/write the binary value from/to a file");
-    out.println("  --hex                   " +
-        "To use hexadecimal encoding for key and value");
-    out.println("  --ascii                 " +
-        "To use ASCII encoding for key and value");
-    out.println("  --url                   " +
-        "To use URL encoding for key and value");
-    out.println("  --counter               " +
-        "To interpret value as a long counter");
-    out.println("  --start <n>             " +
-        "To start at the nth element - only for list");
-    out.println("  --limit <k>             " +
-        "To list at most k elements - only for list");
+    out.println("  --host <name>           To specify the hostname to send to");
+    out.println("  --port <number>          To specify the port to use");
+    out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --all                   To clear all data");
     out.println("  --data                  To clear all table data");
     out.println("  --streams               To clear all event streams");
     out.println("  --queues                To clear all intra-flow queues");
-    out.println("  --encoding <name>       " +
-        "To use this encoding for key and value");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
       throw new UsageException();
     }
   }
+
 
   /**
    * Print an error message followed by the usage statement
@@ -176,56 +150,18 @@ public class DataClient {
       } else if ("--host".equals(arg)) {
         if (++pos >= args.length) usage(true);
         hostname = args[pos];
-      } else if ("--connector".equals(arg)) {
+      } else if ("--port".equals(arg)) {
         if (++pos >= args.length) usage(true);
-        connector = args[pos];
+        try {
+          port = Integer.valueOf(args[pos]);
+        } catch (NumberFormatException e) {
+          usage(true);
+        }
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) usage(true);
         apikey = args[pos];
-      } else if ("--key".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        key = args[pos];
-      } else if ("--value".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        value = args[pos];
-      } else if ("--key-file".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        keyFile = args[pos];
-      } else if ("--value-file".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        valueFile = args[pos];
-      } else if ("--table".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        table = args[pos];
-      } else if ("--start".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        try {
-          start = Integer.valueOf(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--limit".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        try {
-          limit = Integer.valueOf(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--encoding".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        encoding = args[pos];
-      } else if ("--ascii".equals(arg)) {
-        encoding = "ASCII";
-      } else if ("--url".equals(arg)) {
-        urlEncoded = true;
-      } else if ("--hex".equals(arg)) {
-        hexEncoded = true;
-      } else if ("--counter".equals(arg)) {
-        counter = true;
       } else if ("--all".equals(arg)) {
         clearAll = true;
-      } else if ("--data".equals(arg)) {
-        clearData = true;
       } else if ("--queues".equals(arg)) {
         clearQueues = true;
       } else if ("--streams".equals(arg)) {
@@ -247,7 +183,7 @@ public class DataClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("read", "write", "delete", "list", "clear");
+      Arrays.asList("clear");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -282,6 +218,9 @@ public class DataClient {
     // verify that only one hint is given for the URL
     if (hostname != null && baseUrl != null)
       usage("Only one of --host or --base may be specified.");
+    if (port > 0 && hostname == null) {
+      usage("A hostname must be provided when a port is specified.");
+    }
     if (connector != null && baseUrl != null)
       usage("Only one of --connector or --base may be specified.");
     // verify that a key is provided iff the command supports one
@@ -464,8 +403,10 @@ public class DataClient {
     if (help) return "";
 
     // determine the base url for the GET request
-    if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, DataRestAccessor.class, connector, hostname);
+    if (baseUrl == null) {
+      boolean useSsl = !forceNoSSL && (apikey != null);
+      baseUrl = Util.findBaseUrl(config, DataRestAccessor.class, connector, hostname, port, useSsl);
+    }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
           "Please use --base or --connector to specify.");

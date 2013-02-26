@@ -69,10 +69,9 @@ public class StreamClient {
   boolean urlenc = false;        // whether body is in url encoding
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
+  int port = -1;               // the port of the gateway
   String connector = null;       // the name of the rest collector
-  String apikey =                // the api key for authentication.
-    Constants.DEVELOPER_ACCOUNT_ID; // by default, assuming that connecting to
-                                                                  // the AppFabric running in local mode
+  String apikey = null;          // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream (stream id)
@@ -104,6 +103,7 @@ public class StreamClient {
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
+    out.println("  --port <number>         To specify the port to use");
     out.println("  --connector <name>      To specify the name of the rest collector");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --stream <id>           To specify the destination event stream of the");
@@ -158,6 +158,13 @@ public class StreamClient {
       } else if ("--host".equals(arg)) {
         if (++pos >= args.length) usage(true);
         hostname = args[pos];
+      } else if ("--port".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        try {
+          port = Integer.valueOf(args[pos]);
+        } catch (NumberFormatException e) {
+          usage(true);
+        }
       } else if ("--connector".equals(arg)) {
         if (++pos >= args.length) usage(true);
         connector = args[pos];
@@ -235,6 +242,9 @@ public class StreamClient {
     // verify that only one hint is given for the URL
     if (hostname != null && baseUrl != null)
       usage("Only one of --host or --base may be specified.");
+    if (port > 0 && hostname == null) {
+      usage("A hostname must be provided when a port is specified.");
+    }
     if (connector != null && baseUrl != null)
       usage("Only one of --connector or --base may be specified.");
     // verify that only one encoding is given for the body
@@ -328,8 +338,9 @@ public class StreamClient {
     if (help) return "";
 
     // determine the base url for the GET request
-    if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestCollector.class, connector, hostname);
+    if (baseUrl == null) {
+      baseUrl = Util.findBaseUrl(config, RestCollector.class, connector, hostname, port, apikey != null);
+    }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
           "Please use --base or --connector to specify.");
