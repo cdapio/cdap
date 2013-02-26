@@ -191,7 +191,7 @@
 
     <property>
         <name>query.rest.middle</name>
-        <value>/query/</value>
+        <value>/procedure/</value>
     </property>
 
     <property>
