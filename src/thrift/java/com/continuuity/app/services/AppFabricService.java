@@ -132,11 +132,14 @@ public class AppFabricService {
 
     /**
      * Promote an application an it's resource to cloud.
+     * NOTE: On this call we use overload flowid to hostname (totally wrong - but we didn't wanted to changed)
+     * Javascript binding that has patching to be done. Hate Thrift.!!!!!
      * 
      * @param token
      * @param identifier
+     * @param hostname
      */
-    public boolean promote(AuthToken token, ResourceIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException;
+    public boolean promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Disables a Flow
@@ -190,7 +193,7 @@ public class AppFabricService {
 
     public void dstatus(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.dstatus_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void promote(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
+    public void promote(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
 
     public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -531,17 +534,18 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "dstatus failed: unknown result");
     }
 
-    public boolean promote(AuthToken token, ResourceIdentifier identifier) throws AppFabricServiceException, org.apache.thrift.TException
+    public boolean promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_promote(token, identifier);
+      send_promote(token, identifier, hostname);
       return recv_promote();
     }
 
-    public void send_promote(AuthToken token, ResourceIdentifier identifier) throws org.apache.thrift.TException
+    public void send_promote(AuthToken token, ResourceIdentifier identifier, String hostname) throws org.apache.thrift.TException
     {
       promote_args args = new promote_args();
       args.setToken(token);
       args.setIdentifier(identifier);
+      args.setHostname(hostname);
       sendBase("promote", args);
     }
 
@@ -1065,9 +1069,9 @@ public class AppFabricService {
       }
     }
 
-    public void promote(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
+    public void promote(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      promote_call method_call = new promote_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
+      promote_call method_call = new promote_call(token, identifier, hostname, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -1075,10 +1079,12 @@ public class AppFabricService {
     public static class promote_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
       private ResourceIdentifier identifier;
-      public promote_call(AuthToken token, ResourceIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private String hostname;
+      public promote_call(AuthToken token, ResourceIdentifier identifier, String hostname, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
+        this.hostname = hostname;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -1086,6 +1092,7 @@ public class AppFabricService {
         promote_args args = new promote_args();
         args.setToken(token);
         args.setIdentifier(identifier);
+        args.setHostname(hostname);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -1489,7 +1496,7 @@ public class AppFabricService {
       protected promote_result getResult(I iface, promote_args args) throws org.apache.thrift.TException {
         promote_result result = new promote_result();
         try {
-          result.success = iface.promote(args.token, args.identifier);
+          result.success = iface.promote(args.token, args.identifier, args.hostname);
           result.setSuccessIsSet(true);
         } catch (AppFabricServiceException e) {
           result.e = e;
@@ -12296,6 +12303,7 @@ public class AppFabricService {
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField HOSTNAME_FIELD_DESC = new org.apache.thrift.protocol.TField("hostname", org.apache.thrift.protocol.TType.STRING, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -12305,11 +12313,13 @@ public class AppFabricService {
 
     private AuthToken token; // required
     private ResourceIdentifier identifier; // required
+    private String hostname; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       TOKEN((short)1, "token"),
-      IDENTIFIER((short)2, "identifier");
+      IDENTIFIER((short)2, "identifier"),
+      HOSTNAME((short)3, "hostname");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -12328,6 +12338,8 @@ public class AppFabricService {
             return TOKEN;
           case 2: // IDENTIFIER
             return IDENTIFIER;
+          case 3: // HOSTNAME
+            return HOSTNAME;
           default:
             return null;
         }
@@ -12375,6 +12387,8 @@ public class AppFabricService {
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+      tmpMap.put(_Fields.HOSTNAME, new org.apache.thrift.meta_data.FieldMetaData("hostname", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(promote_args.class, metaDataMap);
     }
@@ -12384,11 +12398,13 @@ public class AppFabricService {
 
     public promote_args(
       AuthToken token,
-      ResourceIdentifier identifier)
+      ResourceIdentifier identifier,
+      String hostname)
     {
       this();
       this.token = token;
       this.identifier = identifier;
+      this.hostname = hostname;
     }
 
     /**
@@ -12401,6 +12417,9 @@ public class AppFabricService {
       if (other.isSetIdentifier()) {
         this.identifier = new ResourceIdentifier(other.identifier);
       }
+      if (other.isSetHostname()) {
+        this.hostname = other.hostname;
+      }
     }
 
     public promote_args deepCopy() {
@@ -12411,6 +12430,7 @@ public class AppFabricService {
     public void clear() {
       this.token = null;
       this.identifier = null;
+      this.hostname = null;
     }
 
     public AuthToken getToken() {
@@ -12459,6 +12479,29 @@ public class AppFabricService {
       }
     }
 
+    public String getHostname() {
+      return this.hostname;
+    }
+
+    public void setHostname(String hostname) {
+      this.hostname = hostname;
+    }
+
+    public void unsetHostname() {
+      this.hostname = null;
+    }
+
+    /** Returns true if field hostname is set (has been assigned a value) and false otherwise */
+    public boolean isSetHostname() {
+      return this.hostname != null;
+    }
+
+    public void setHostnameIsSet(boolean value) {
+      if (!value) {
+        this.hostname = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case TOKEN:
@@ -12477,6 +12520,14 @@ public class AppFabricService {
         }
         break;
 
+      case HOSTNAME:
+        if (value == null) {
+          unsetHostname();
+        } else {
+          setHostname((String)value);
+        }
+        break;
+
       }
     }
 
@@ -12487,6 +12538,9 @@ public class AppFabricService {
 
       case IDENTIFIER:
         return getIdentifier();
+
+      case HOSTNAME:
+        return getHostname();
 
       }
       throw new IllegalStateException();
@@ -12503,6 +12557,8 @@ public class AppFabricService {
         return isSetToken();
       case IDENTIFIER:
         return isSetIdentifier();
+      case HOSTNAME:
+        return isSetHostname();
       }
       throw new IllegalStateException();
     }
@@ -12538,6 +12594,15 @@ public class AppFabricService {
           return false;
       }
 
+      boolean this_present_hostname = true && this.isSetHostname();
+      boolean that_present_hostname = true && that.isSetHostname();
+      if (this_present_hostname || that_present_hostname) {
+        if (!(this_present_hostname && that_present_hostname))
+          return false;
+        if (!this.hostname.equals(that.hostname))
+          return false;
+      }
+
       return true;
     }
 
@@ -12554,6 +12619,11 @@ public class AppFabricService {
       builder.append(present_identifier);
       if (present_identifier)
         builder.append(identifier);
+
+      boolean present_hostname = true && (isSetHostname());
+      builder.append(present_hostname);
+      if (present_hostname)
+        builder.append(hostname);
 
       return builder.toHashCode();
     }
@@ -12582,6 +12652,16 @@ public class AppFabricService {
       }
       if (isSetIdentifier()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.identifier, typedOther.identifier);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetHostname()).compareTo(typedOther.isSetHostname());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetHostname()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hostname, typedOther.hostname);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12619,6 +12699,14 @@ public class AppFabricService {
         sb.append("null");
       } else {
         sb.append(this.identifier);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("hostname:");
+      if (this.hostname == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.hostname);
       }
       first = false;
       sb.append(")");
@@ -12681,6 +12769,14 @@ public class AppFabricService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // HOSTNAME
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.hostname = iprot.readString();
+                struct.setHostnameIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -12702,6 +12798,11 @@ public class AppFabricService {
         if (struct.identifier != null) {
           oprot.writeFieldBegin(IDENTIFIER_FIELD_DESC);
           struct.identifier.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.hostname != null) {
+          oprot.writeFieldBegin(HOSTNAME_FIELD_DESC);
+          oprot.writeString(struct.hostname);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -12728,19 +12829,25 @@ public class AppFabricService {
         if (struct.isSetIdentifier()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetHostname()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetToken()) {
           struct.token.write(oprot);
         }
         if (struct.isSetIdentifier()) {
           struct.identifier.write(oprot);
         }
+        if (struct.isSetHostname()) {
+          oprot.writeString(struct.hostname);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, promote_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.token = new AuthToken();
           struct.token.read(iprot);
@@ -12750,6 +12857,10 @@ public class AppFabricService {
           struct.identifier = new ResourceIdentifier();
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.hostname = iprot.readString();
+          struct.setHostnameIsSet(true);
         }
       }
     }

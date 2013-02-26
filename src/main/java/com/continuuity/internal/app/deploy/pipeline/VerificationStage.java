@@ -18,6 +18,8 @@ import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link com.continuuity.pipeline.Stage} is responsible for verifying
@@ -26,7 +28,7 @@ import com.google.common.reflect.TypeToken;
  * concrete implementations.
  */
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
-
+  private static Logger LOG = LoggerFactory.getLogger(VerificationStage.class);
   public VerificationStage() {
     super(TypeToken.of(ApplicationSpecLocation.class));
   }

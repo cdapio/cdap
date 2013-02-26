@@ -80,11 +80,14 @@ public class TestHelper {
     return (Manager<Location, ApplicationWithPrograms>)factory.create();
   }
 
+  public static void deployApplication(Class<? extends Application> application) throws Exception {
+    deployApplication(application, "app-" + System.currentTimeMillis()/1000 + ".jar");
+  }
 
   /**
    *
    */
-  public static void deployApplication(Class<? extends Application> application) throws Exception {
+  public static void deployApplication(Class<? extends Application> application, String fileName) throws Exception {
     AppFabricService.Iface server;
 
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
@@ -103,7 +106,7 @@ public class TestHelper {
 
     // Call init to get a session identifier - yes, the name needs to be changed.
     AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo("demo","",deployedJar.getName(), 123455, 45343));
+    ResourceIdentifier id = server.init(token, new ResourceInfo("developer","", fileName, 123455, 45343));
 
     // Upload the jar file to remote location.
     BufferFileInputStream is =

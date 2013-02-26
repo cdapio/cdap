@@ -80,10 +80,6 @@ public class DeployRunStopTest {
       private OutputEmitter<String> output;
       private int i;
 
-      public GenFlowlet() {
-        super("GenFlowlet");
-      }
-
       @Override
       public void generate() throws Exception {
         if (i < 10000) {
@@ -95,10 +91,6 @@ public class DeployRunStopTest {
     public static final class SinkFlowlet extends AbstractFlowlet {
 
       private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);
-
-      public SinkFlowlet() {
-        super("SinkFlowlet");
-      }
 
       @Override
       public void initialize(FlowletContext context) throws FlowletException {
@@ -120,7 +112,7 @@ public class DeployRunStopTest {
     TestHelper.deployApplication(GenSinkApp.class);
 
     AuthToken token = new AuthToken("12345");
-    FlowIdentifier flowIdentifier = new FlowIdentifier("demo", "GenSinkApp", "GenSinkFlow", 1);
+    FlowIdentifier flowIdentifier = new FlowIdentifier("developer", "GenSinkApp", "GenSinkFlow", 1);
     server.start(token, new FlowDescriptor(flowIdentifier, Lists.<String>newArrayList()));
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);

@@ -62,6 +62,7 @@ import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -78,12 +79,23 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.FilePart;
+import com.ning.http.client.Response;
+import com.ning.http.client.SimpleAsyncHttpClient;
+import com.ning.http.client.StringPart;
+import com.ning.http.client.ThrowableHandler;
+import com.ning.http.client.generators.FileBodyGenerator;
+import com.ning.http.client.generators.InputStreamBodyGenerator;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -97,6 +109,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -149,6 +163,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
+  private static final int UPLOAD_TIMEOUT = 10*60*1000; // 10 min
 
   /**
    * Construct this object with curator client for managing the zookeeper.
@@ -684,15 +699,52 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Promotes a FAR from single node to cloud.
    *
-   * @param identifier of the flow.
+   * @param id of the flow.
    * @return true if successful; false otherwise.
    * @throws AppFabricServiceException
    */
   @Override
-  public boolean promote(AuthToken authToken, ResourceIdentifier identifier) throws AppFabricServiceException {
-    return false;
-  }
+  public boolean promote(AuthToken authToken, ResourceIdentifier id, String hostname)
+    throws AppFabricServiceException {
+    Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
+    Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
+    final Location applicationDir = locationFactory.create(archiveDir + "/" + id.getAccountId()
+                                                             + "/" + id.getApplicationId() + ".jar");
+    try {
+      if(! applicationDir.exists()) {
+        throw new AppFabricServiceException("Unable to locate the application.");
+      }
+
+      InputStream reader = applicationDir.getInputStream();
+      String schema = "https";
+      if("localhost".equals(hostname)) {
+        schema = "http";
+      }
+
+      int port = configuration.getInt("connector.appfabric.port", 10007);
+      String url = String.format("%s://%s:%d/app", schema, hostname, port);
+      try {
+        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+          .setUrl(url)
+          .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
+          .setHeader("X-Archive-Name", applicationDir.getName())
+          .setHeader("X-Continuuity-ApiKey", authToken.getToken())
+          .setHeader("Content-Type", "multipart/form-data")
+          .build();
+        Future<Response> future = client.put(new InputStreamBodyGenerator(reader));
+        Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
+        if(response.getStatusCode() != 200) {
+          throw new RuntimeException(response.getResponseBody());
+        }
+        return true;
+      } finally {
+        reader.close();
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
   /**
    * Deletes a flow specified by {@code FlowIdentifier}.

@@ -36,7 +36,14 @@ import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.AbstractHandler;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -166,5 +173,54 @@ public class DefaultAppFabricServiceTest {
     Assert.assertEquals(20, record.getStartTime());
     Assert.assertEquals(29, record.getEndTime());
     Assert.assertEquals("FAILED", record.getEndStatus());
+  }
+
+  @Test
+  public void testDeployAApp() throws Exception {
+    // Deploy and application.
+    TestHelper.deployApplication(ToyApp.class, "ToyApp.jar");
+
+    // Start a simple Jetty Server to simulate remote http server.
+    Server jServer = new Server(10007);
+    try {
+      jServer.setHandler(new AbstractHandler() {
+        @Override
+        public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch)
+          throws IOException, ServletException {
+          try {
+            String archiveName = request.getHeader("X-Archive-Name");
+            Assert.assertNotNull(archiveName);
+            Assert.assertTrue(!archiveName.isEmpty());
+            String token = request.getHeader("X-Continuuity-ApiKey");
+            Assert.assertNotNull(token);
+            Assert.assertTrue(!token.isEmpty());
+            Assert.assertEquals("PUT", request.getMethod());
+            Assert.assertTrue(request.getContentLength() != 0);
+          } catch (Exception e) {
+            response.setContentType("text/plain");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().close();
+            return;
+          }
+          response.setContentType("text/plain");
+          response.setStatus(HttpServletResponse.SC_OK);
+          response.getWriter().close();
+          return;
+        }
+      });
+      jServer.start();
+
+      ResourceIdentifier id = new ResourceIdentifier("demo", "ToyApp", "whatever", 1);
+      // Now send in deploy request.
+      try {
+        server.promote(new AuthToken("1234"), id, "localhost");
+      } catch (AppFabricServiceException e) {
+        Assert.assertTrue(false);
+      } catch (TException e) {
+        Assert.assertTrue(false);
+      }
+    } finally {
+      jServer.stop();
+    }
   }
 }
