@@ -42,7 +42,8 @@ final class BasicProcedureContext implements ProcedureContext {
     this.instanceId = instanceId;
     this.procedureSpec = procedureSpec;
     this.datasets = ImmutableMap.copyOf(datasets);
-    this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
+    // FIXME
+    this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
     this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
                                                  getProcedureId(), getRunId().toString(), getInstanceId());
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
@@ -99,7 +100,8 @@ final class BasicProcedureContext implements ProcedureContext {
   }
 
   private String getMetricName() {
-    return String.format("%s.%s.%s.%s.%d",
+    // FIXME
+    return String.format("%s.%s.%s.%s.foo.%d",
                          getAccountId(),
                          getApplicationId(),
                          getProcedureId(),
