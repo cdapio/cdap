@@ -8,6 +8,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -21,6 +22,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DataSetTest extends DataSetTestBase {
 
@@ -76,23 +79,44 @@ public class DataSetTest extends DataSetTestBase {
     ThrowingDataSet ds = instantiator.getDataSet("badguy");
   }
 
+  // a dummy executor that verifies the metrics name of operations
   class DummyOpex extends NoOperationExecutor {
+
     @Override
     public void commit(OperationContext context, WriteOperation op) throws OperationException {
       Assert.assertEquals("testtest", op.getMetricName());
     }
+    @Override
+    public Map<byte[], Long> increment(OperationContext context, Increment increment) throws OperationException {
+      Assert.assertEquals("testtest", increment.getMetricName());
+      Map<byte[], Long> result = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
+      for (byte[] column : increment.getColumns()) {
+        result.put(column, 42L);
+      }
+      return result;
+    }
   }
 
+  // tests that nested tables inside datasets use the name of the top-level dataset as the metric name
   @Test
   public void testDataSetInstantiationWithMetricName() throws OperationException {
+    // setup a dummy opex, transaction proxy and instantiator
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationContext.DEFAULT), proxy, null);
+    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationContext.DEFAULT), proxy, this.getClass().getClassLoader());
+
+    // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)
     DataSetSpecification spec = new KeyValueTable("testtest").configure();
     inst.setDataSets(Collections.singletonList(spec));
     KeyValueTable kvTable = inst.getDataSet("testtest");
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationContext.DEFAULT));
     kvTable.write("a".getBytes(), "b".getBytes());
-  }
 
+    // test with a double nested table - a dataset that embeds a table and a kv table that in turn embeds another table
+    spec = new DoubleNestedTable("testtest").configure();
+    inst.setDataSets(Collections.singletonList(spec));
+    DoubleNestedTable dn = inst.getDataSet("testtest");
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationContext.DEFAULT));
+    dn.writeAndInc("a", 17);
+  }
 }
