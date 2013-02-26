@@ -68,6 +68,7 @@ task singlenode_dist (type: Zip) {
     exclude 'flow-config.sh'
     exclude 'service'
     exclude 'dfbench'
+    exclude 'benchmark'
     exclude 'event-gen'
     exclude 'flume-client'
     exclude 'common*'
