@@ -78,4 +78,9 @@
         <value>not-a-cluster</value>
     </property>
 
+	<property>
+		<name>cookie-secret</name>
+		<value>f83#fjaSF@1lOZIs9</value>
+	</property>
+
 </configuration>

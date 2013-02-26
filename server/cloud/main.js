@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
+
 var express = require('express'),
 	http = require('http'),
 	https = require('https'),
@@ -20,7 +24,6 @@ var Api = require('../common/api'),
 process.env.NODE_ENV = 'production';
 
 var LOG_LEVEL = 'ERROR';
-var COOKIE_SECRET = 'f&83#fjaSF@1lOZIs9';
 
 /**
 * Configure logger.
@@ -40,30 +43,20 @@ var app = express();
 app.use(express.bodyParser());
 
 /**
- * Express cookie sessions.
- */
-app.use(express.cookieParser());
-app.use(express.cookieSession({
-	key: 'continuuity-sso',
-	secret: COOKIE_SECRET,
-	cookie: {
-		maxAge: 60 * 60 * 1000
-	}
-}));
-
-/**
  * Session check.
  */
 function checkSSO (req, res, next) {
 
 	if (req.session.account_id) {
 
-		logger.trace('SSO exists', req.session.account_id);
-		next();
+		if (req.session.account_id !== config['user']) {
+			res.write('Denied', config['user'], req.session.account_id);
+			res.end();
+		} else {
+			next();
+		}
 
 	} else {
-
-		logger.trace('SSO retrieving');
 
 		var ret = config['cluster-name'];
 		var host = config['accounts-host'];
@@ -108,19 +101,20 @@ app.get('/sso/:nonce', function (req, res) {
 		result.on('end', function () {
 
 			var account = JSON.parse(data);
-
-			logger.trace('SSO signin', account);
-
 			// Create a unique ID for this session.
 			var current_date = (new Date()).valueOf().toString();
 			var random = Math.random().toString();
 			req.session.session_id = crypto.createHash('sha1')
 				.update(current_date + random).digest('hex');
 
-			req.session.account_id = account.account_id;
-			req.session.name = account.first_name + ' ' + account.last_name;
-
-			res.redirect('/');
+			if (account.account_id !== config['user']) {
+				res.write('Denied', config['user'], account.account_id);
+				res.end();
+			} else {
+				req.session.account_id = account.account_id;
+				req.session.name = account.first_name + ' ' + account.last_name;
+				res.redirect('/');
+			}
 
 		});
 	}).on('error', function(e) {
@@ -167,7 +161,7 @@ function setSocketHandlers () {
 		if (data.headers.cookie) {
 			
 			var cookies = cookie.parse(data.headers.cookie);
-			var signedCookies = utils.parseSignedCookies(cookies, COOKIE_SECRET);
+			var signedCookies = utils.parseSignedCookies(cookies, config['cookie-secret']);
 			var obj = utils.parseJSONCookies(signedCookies);
 
 			data.account_id = obj['continuuity-sso'].account_id;
@@ -317,6 +311,32 @@ if (fs.existsSync(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml')) 
 	configPath = process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml';
 }
 
+/**
+ * Get user.
+ */
+function getUser (name, done) {
+
+	var options = {
+		hostname: config['accounts-host'],
+		port: config['accounts-port'],
+		path: '/api/vpc/getUser/' + name,
+		method: 'GET'
+	};
+	https.request(options, function(result) {
+		result.setEncoding('utf8');
+		var data = '';
+		result.on('data', function(chunk) {
+			data += chunk;
+		});
+		result.on('end', function () {
+			var account = JSON.parse(data);
+			done(account.result);
+		});
+	}).on('error', function(e) {
+		console.error(e);
+	}).end();
+}
+
 fs.readFile(configPath, function (error, result) {
 
 	var parser = new xml2js.Parser();
@@ -329,63 +349,81 @@ fs.readFile(configPath, function (error, result) {
 			config[item.name] = item.value;
 		}
 
-		Env.getVersion(function (version) {
-			Env.getAddress(function (error, address) {
+		getUser(config['cluster-name'], function (user) {
+			config['user'] = user;
+			Env.getVersion(function (version) {
+				Env.getAddress(function (error, address) {
 
-				logger.trace('Version', version);
-				logger.trace('IP Address', address);
+					logger.trace('Version', version);
+					logger.trace('IP Address', address);
+					logger.trace('User', user);
 
-				logger.trace('Configuring with', config);
-				Api.configure(config);
+					logger.trace('Configuring with', config);
+					Api.configure(config);
 
-				/**
-				 * Create an HTTP server that redirects to HTTPS.
-				 */
-				http.createServer(function (request, response) {
+					/**
+					 * Express cookie sessions.
+					 */
+					app.use(express.cookieParser());
+					app.use(express.cookieSession({
+						key: 'continuuity-sso',
+						secret: config['cookie-secret'],
+						cookie: {
+							path: '/',
+							domain: '.continuuity.net',
+							maxAge: 24 * 60 * 60 * 1000
+						}
+					}));
 
-					var host = request.headers.host.split(':')[0];
+					/**
+					 * Create an HTTP server that redirects to HTTPS.
+					 */
+					http.createServer(function (request, response) {
 
-					var path = 'https://' + host + ':' +
-						config['cloud-ui-ssl-port'] + request.url;
+						var host = request.headers.host.split(':')[0];
 
-					response.writeHead(302, {'Location': path});
-					response.end();
+						var path = 'https://' + host + ':' +
+							config['cloud-ui-ssl-port'] + request.url;
 
-				}).listen(config['cloud-ui-port']);
-				logger.trace('HTTP listening on port', config['cloud-ui-port']);
+						response.writeHead(302, {'Location': path});
+						response.end();
 
-				/**
-				 * HTTPS credentials
-				 */
-				var keys = {
-					ca: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.ca-bundle'),
-					key: fs.readFileSync(__dirname + '/keys/continuuity-com-key.key'),
-					cert: fs.readFileSync(__dirname + '/keys/STAR_continuuity_net.crt')
-				};
+					}).listen(config['cloud-ui-port']);
+					logger.trace('HTTP listening on port', config['cloud-ui-port']);
 
-				/**
-				 * Create the HTTPS server
-				 */
-				var server = https.createServer(keys, app).listen(config['cloud-ui-ssl-port']);
-				logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+					/**
+					 * HTTPS credentials
+					 */
+					var certs = {
+						ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
+						key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
+						cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
+					};
 
-				/**
-				 * Configure Socket IO
-				 */
-				io = io.listen(server, keys);
-				io.configure('production', function(){
-					io.set('transports', ['websocket', 'xhr-polling']);
-					io.enable('browser client minification');
-					io.enable('browser client gzip');
-					io.set('log level', 1);
-					io.set('resource', '/socket.io');
+					/**
+					 * Create the HTTPS server
+					 */
+					var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
+					logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+
+					/**
+					 * Configure Socket IO
+					 */
+					io = io.listen(server, certs);
+					io.configure('production', function(){
+						io.set('transports', ['websocket', 'xhr-polling']);
+						io.enable('browser client minification');
+						io.enable('browser client gzip');
+						io.set('log level', 1);
+						io.set('resource', '/socket.io');
+					});
+					
+					/**
+					 * Set the handlers after io has been configured.
+					 */
+					setSocketHandlers();
+
 				});
-				
-				/**
-				 * Set the handlers after io has been configured.
-				 */
-				setSocketHandlers();
-
 			});
 		});
 	});
