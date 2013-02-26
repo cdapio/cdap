@@ -126,7 +126,6 @@ applicationDistribution.from(copyExamples) {
 task createApiJar(type: Jar) {
     baseName "continuuity-api"
     appendix ""
-    version project(':distributions').releaseVersion 
     classifier ""
     from project(':app-fabric').sourceSets.api.output
     from project(':data-fabric').sourceSets.api.output
@@ -135,9 +134,8 @@ task createApiJar(type: Jar) {
 
 task createApiSourceJar(type: Jar) {
     baseName "continuuity-api"
-    appendix "source"
-    version project(':distributions').releaseVersion 
-    classifier ""
+    appendix ""
+    classifier "source"
     from project(':app-fabric').sourceSets.api.allSource
     from project(':data-fabric').sourceSets.api.allSource
     from project(':common').sourceSets.api.allSource
@@ -145,9 +143,8 @@ task createApiSourceJar(type: Jar) {
 
 task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
     baseName "continuuity-api"
-    appendix "javadoc"
-    version project(':distributions').releaseVersion 
-    classifier ""
+    appendix ""
+    classifier "javadoc"
     from javadoc.destinationDir
 }
 
