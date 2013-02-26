@@ -203,6 +203,7 @@ fs.readFile(configPath, function (error, result) {
 						*/
 							req.session.account_id = account.account_id;
 							req.session.name = account.first_name + ' ' + account.last_name;
+							req.session.api_key = account.api_key;
 							res.redirect('/');
 						/*
 						}
@@ -370,11 +371,9 @@ fs.readFile(configPath, function (error, result) {
 				 * Gateway request. Requires an API Key.
 				 */
 				socket.on('gateway', function (request) {
-
-					var apiKey = 'abc123';
-
-					Api.gateway(apiKey, request.method, request.params, function (error, response) {
-						socketResponse(request, error, response);
+					Api.gateway(request.session.api_key, request.method,
+						request.params, function (error, response) {
+						socketResponse(socket, request, error, response);
 					});
 				});
 			});
