@@ -47,12 +47,19 @@ import java.util.Set;
 public class AppFabricClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "verify", "status");
-  private final String RESOURCE_ARG = "resource";
-  private final String APPLICATION_ARG = "application";
-  private final String PROCESSOR_ARG = "processor";
-  private final String VPC_ARG = "vpc";
-  private final String AUTH_TOKEN_ARG = "authtoken";
+                                                                 "promote", "verify", "status");
+  private final String RESOURCE_LONG_OPT_ARG = "resource";
+  private final String APPLICATION_LONG_OPT_ARG = "application";
+  private final String PROCESSOR_LONG_OPT_ARG = "processor";
+  private final String VPC_LONG_OPT_ARG = "vpc";
+  private final String AUTH_TOKEN_LONG_OPT_ARG = "authtoken";
+
+
+  private final String RESOURCE_SHORT_OPT_ARG = "r";
+  private final String APPLICATION_SHORT_OPT_ARG = "a";
+  private final String PROCESSOR_SHORT_OPT_ARG = "p";
+  private final String VPC_SHORT_OPT_ARG = "v";
+  private final String AUTH_TOKEN_SHORT_OPT_ARG = "t";
 
   private String resource = null;
   private String application = null;
@@ -100,13 +107,12 @@ public class AppFabricClient {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
         RunIdentifier runIdentifier = client.start(dummyAuthToken,
-          new FlowDescriptor(identifier, new ArrayList<String>()));
+                                                   new FlowDescriptor(identifier, new ArrayList<String>()));
 
         Preconditions.checkNotNull(runIdentifier, "Problem starting the application");
         LOG.info("Started application with id: " + runIdentifier.getId());
         return;
       }
-
 
       if ("stop".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
@@ -117,7 +123,16 @@ public class AppFabricClient {
         LOG.info("Stopped application running with id: " + runIdentifier.getId());
       }
 
-
+      if ("promote".equals(command)) {
+        ResourceIdentifier identifier = new ResourceIdentifier("Account", this.application, this.resource, 0);
+        boolean status = client.promote(new AuthToken(this.authToken),identifier, this.vpc);
+        if (status) {
+          LOG.info("Promoted to cloud");
+        }
+        else {
+          LOG.info("Promote to cloud failed");
+        }
+      }
       if ("status".equals(command)) {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
@@ -128,16 +143,15 @@ public class AppFabricClient {
       }
 
       if ("verify".equals(command)) {
-
         Location location = new LocalLocationFactory().create(this.resource);
-
         final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
-          new DataFabricModules().getInMemoryModules());
+                                                       new DataFabricModules().getInMemoryModules());
 
         ManagerFactory factory = injector.getInstance(ManagerFactory.class);
         Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>) factory.create();
-
         manager.deploy(new Id.Account("Account"), location);
+        LOG.info("Verification succeeded");
+
       }
 
     } catch (Exception e) {
@@ -146,13 +160,6 @@ public class AppFabricClient {
     } finally {
       transport.close();
     }
-    LOG.info("Verification succeeded");
-
-
-    if ("deploy".equals(command)) {
-      //TODO: Deploy
-    }
-
   }
 
   /**
@@ -176,11 +183,11 @@ public class AppFabricClient {
     CommandLineParser commandLineParser = new GnuParser();
 
     Options options = new Options();
-    options.addOption(RESOURCE_ARG, true, "Jar that contains the application");
-    options.addOption(APPLICATION_ARG, true, "Application Id");
-    options.addOption(PROCESSOR_ARG, true, "Processor Id");
-    options.addOption(VPC_ARG, true, "VPC to push the application");
-    options.addOption(AUTH_TOKEN_ARG, true, "Auth token of the account");
+    options.addOption(RESOURCE_SHORT_OPT_ARG,RESOURCE_LONG_OPT_ARG, true, "Jar that contains the application.");
+    options.addOption(APPLICATION_SHORT_OPT_ARG,APPLICATION_LONG_OPT_ARG, true, "Application Id.");
+    options.addOption(PROCESSOR_SHORT_OPT_ARG,PROCESSOR_LONG_OPT_ARG, true, "Processor Id.");
+    options.addOption(VPC_SHORT_OPT_ARG,VPC_LONG_OPT_ARG, true, "Fully qualified VPC name to push the application to.");
+    options.addOption(AUTH_TOKEN_SHORT_OPT_ARG,AUTH_TOKEN_LONG_OPT_ARG, true, "Auth token of the account.");
 
 
     CommandLine commandLine = null;
@@ -194,46 +201,47 @@ public class AppFabricClient {
       //Check if the appropriate args are passed in for each of the commands
 
       if ("deploy".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "deploy command should have resource argument");
-        this.resource = commandLine.getOptionValue(RESOURCE_ARG);
+        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_LONG_OPT_ARG),
+                                    "deploy command should have resource argument");
+        this.resource = commandLine.getOptionValue(RESOURCE_LONG_OPT_ARG);
       }
       if ("start".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "start command should have application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "start command should have processor argument");
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "start command should have application argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_LONG_OPT_ARG), "start command should have processor argument");
 
-        this.application = commandLine.getOptionValue(APPLICATION_ARG);
-        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_LONG_OPT_ARG);
       }
       if ("stop".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "stop command should have application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "stop command should have processor argument");
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "stop command should have application argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_LONG_OPT_ARG), "stop command should have processor argument");
 
-        this.application = commandLine.getOptionValue(APPLICATION_ARG);
-        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_LONG_OPT_ARG);
 
       }
       if ("status".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "status command should have " +
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_ARG), "status command should have processor argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCESSOR_LONG_OPT_ARG), "status command should have processor argument");
 
-        this.application = commandLine.getOptionValue(APPLICATION_ARG);
-        this.processor = commandLine.getOptionValue(PROCESSOR_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
+        this.processor = commandLine.getOptionValue(PROCESSOR_LONG_OPT_ARG);
 
       }
       if ("verify".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_ARG), "verify command should have resource argument");
-        this.resource = commandLine.getOptionValue(RESOURCE_ARG);
+        Preconditions.checkArgument(commandLine.hasOption(RESOURCE_LONG_OPT_ARG), "verify command should have resource argument");
+        this.resource = commandLine.getOptionValue(RESOURCE_LONG_OPT_ARG);
       }
       if ("promote".equals(command)) {
-        Preconditions.checkArgument(commandLine.hasOption(VPC_ARG), "promote command should have vpc argument");
-        Preconditions.checkArgument(commandLine.hasOption(AUTH_TOKEN_ARG), "promote command should have auth token argument");
-        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_ARG), "promote command should have" +
+        Preconditions.checkArgument(commandLine.hasOption(VPC_LONG_OPT_ARG), "promote command should have vpc argument");
+        Preconditions.checkArgument(commandLine.hasOption(AUTH_TOKEN_LONG_OPT_ARG), "promote command should have auth token argument");
+        Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "promote command should have" +
           " application argument");
 
-        this.vpc = commandLine.getOptionValue(VPC_ARG);
-        this.authToken = commandLine.getOptionValue(AUTH_TOKEN_ARG);
-        this.application = commandLine.getOptionValue(APPLICATION_ARG);
+        this.vpc = commandLine.getOptionValue(VPC_LONG_OPT_ARG);
+        this.authToken = commandLine.getOptionValue(AUTH_TOKEN_LONG_OPT_ARG);
+        this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
       }
     } catch (ParseException e) {
       printHelp(options);
@@ -247,7 +255,7 @@ public class AppFabricClient {
 
   private void printHelp(Options options) {
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp("AppFabricClient help|deploy|start|stop|status|verify|promote| [OPTIONS]", options);
+    formatter.printHelp("AppFabricClient help|deploy|start|stop|status|verify|promote [OPTIONS]", options);
   }
 
   public static void main(String[] args) throws TException, AppFabricServiceException {

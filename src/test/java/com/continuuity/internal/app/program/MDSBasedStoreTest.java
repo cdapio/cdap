@@ -363,7 +363,7 @@ public class MDSBasedStoreTest {
   public void testIncFlowletInstances() throws OperationException {
     ApplicationSpecification spec = new WordCountApp().configure();
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
-    Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
+    Id.Application id = new Id.Application(new Id.Account("account1"), spec.getName());
     store.addApplication(id, spec);
 
     int adjustedInstances = store.incFlowletInstances(new Id.Program(id, "WordCountFlow"), "StreamSource", 5);
