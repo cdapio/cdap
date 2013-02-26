@@ -405,6 +405,12 @@ public class StreamClient {
         System.err.println(e.getMessage());
         return null;
       }
+
+      if (event==null) {
+        System.out.println("no event");
+        return "";
+      }
+
       // print all the headers
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
