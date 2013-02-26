@@ -343,8 +343,7 @@ logger.setLevel(LOG_LEVEL);
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-Continuuity-ApiKey': apiKey,
-				'Content-Length': post_data.length
+				'X-Continuuity-ApiKey': apiKey
 			}
 		};
 
@@ -363,6 +362,8 @@ logger.setLevel(LOG_LEVEL);
 				post_data = post_data || '{}';
 
 		}
+
+		post_options.headers['Content-Length'] = post_data.length;
 
 		var request = http.request(post_options, function(res) {
 			res.setEncoding('utf8');
