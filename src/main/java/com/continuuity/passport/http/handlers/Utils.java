@@ -66,6 +66,13 @@ public class Utils {
     return object.toString();
   }
 
+  public static String getIdJson(String error, int id) {
+    JsonObject object = new JsonObject();
+    object.addProperty("error", error);
+    object.addProperty("result", id);
+    return object.toString();
+  }
+
   public static String getJsonOK() {
     JsonObject object = new JsonObject();
     object.add("error", null);
