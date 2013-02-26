@@ -43,7 +43,8 @@ public class TestAppFabricClientConfigParse {
   @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStopArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
-    String command = null;
+    String command = client.configure(CConfiguration.create(), new String[]{"stop", "--application", "args"});
+
   }
 
   @Test(expected = IllegalArgumentException.class)
