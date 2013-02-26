@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.OperationBase;
 import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
@@ -20,10 +19,7 @@ public class QueueAdmin {
   /**
    * Generates and returns a unique group id for the speicified queue.
    */
-  public static class GetGroupID implements ReadOperation {
-
-    /** Unique id for the operation */
-    private final long id = OperationBase.getId();
+  public static class GetGroupID extends ReadOperation {
 
     private final byte [] queueName;
 
@@ -41,26 +37,20 @@ public class QueueAdmin {
           .add("queuename", Bytes.toString(this.queueName))
           .toString();
     }
-
-    @Override
-    public long getId() {
-      return id;
-    }
   }
 
-  public static class GetQueueInfo implements ReadOperation {
+  public static class GetQueueInfo extends ReadOperation {
 
     /** Unique id for the operation */
-    private final long id;
     private final byte [] queueName;
 
     public GetQueueInfo(byte[] queueName) {
-      this(OperationBase.getId(), queueName);
+      this.queueName = queueName;
     }
 
     public GetQueueInfo(final long id,
                         byte[] queueName) {
-      this.id = id;
+      super(id);
       this.queueName = queueName;
     }
 
@@ -73,11 +63,6 @@ public class QueueAdmin {
       return Objects.toStringHelper(this)
           .add("queuename", Bytes.toString(this.queueName))
           .toString();
-    }
-
-    @Override
-    public long getId() {
-      return id;
     }
   }
 

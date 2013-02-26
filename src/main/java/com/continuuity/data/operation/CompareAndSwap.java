@@ -19,10 +19,7 @@ import java.util.Arrays;
  *
  * Supports key-value and columnar operations.
  */
-public class CompareAndSwap implements ConditionalWriteOperation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class CompareAndSwap extends ConditionalWriteOperation {
 
   /** the name of the table */
   private final String table;
@@ -73,7 +70,11 @@ public class CompareAndSwap implements ConditionalWriteOperation {
                         final byte [] column,
                         final byte [] expectedValue,
                         final byte [] newValue) {
-    this(OperationBase.getId(), table, row, column, expectedValue, newValue);
+    this.table = table;
+    this.key = row;
+    this.column = column;
+    this.expectedValue = expectedValue;
+    this.newValue = newValue;
   }
 
   /**
@@ -94,7 +95,7 @@ public class CompareAndSwap implements ConditionalWriteOperation {
                         final byte [] column,
                         final byte [] expectedValue,
                         final byte [] newValue) {
-    this.id = id;
+    super(id);
     this.table = table;
     this.key = row;
     this.column = column;
@@ -136,11 +137,6 @@ public class CompareAndSwap implements ConditionalWriteOperation {
         .add("expected", Arrays.toString(this.expectedValue))
         .add("newValue", Arrays.toString(this.newValue))
         .toString();
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

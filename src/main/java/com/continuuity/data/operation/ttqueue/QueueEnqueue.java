@@ -1,7 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.OperationBase;
-import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.WriteOperation;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -10,31 +8,31 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Inserts an entry to the tail of a queue.
  */
-public class QueueEnqueue implements WriteOperation, ReadOperation {
+public class QueueEnqueue extends WriteOperation {
 
   /** info about the producer */
   private final QueueProducer producer;
 
-  /** Unique id for the operation */
-  private final long id;
   private final byte [] queueName;
   private final QueueEntry entry;
 
   public QueueEnqueue(final byte [] queueName, final QueueEntry entry) {
-    this(OperationBase.getId(), queueName, entry);
-  }
-
-  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final QueueEntry entry) {
-    this(OperationBase.getId(), producer, queueName, entry);
+    this(null, queueName, entry);
   }
 
   public QueueEnqueue(final long id, final byte[] queueName, final QueueEntry entry) {
     this(id, null, queueName, entry);
   }
 
+  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final QueueEntry entry) {
+    this.producer = producer;
+    this.queueName = queueName;
+    this.entry = entry;
+  }
+
   public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final QueueEntry entry) {
-     Preconditions.checkArgument(entry!=null);
-    this.id = id;
+    super(id);
+    Preconditions.checkArgument(entry!=null);
     this.producer = producer;
     this.queueName = queueName;
     this.entry = entry;
@@ -44,7 +42,7 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
    * @deprecated
    */
   public QueueEnqueue(final byte [] queueName, byte[] data) {
-    this(OperationBase.getId(), queueName, new QueueEntryImpl(data));
+    this(queueName, new QueueEntryImpl(data));
   }
 
   public QueueEntry getEntry() {
@@ -53,16 +51,9 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
 
   /**
    * @deprecated
-  */
+   */
   public byte[] getData() {
     return this.entry == null ? null : this.entry.getData();
-  }
-
-  /**
-   * @deprecated
-   */
-  public void setData(byte[] data) {
-    this.entry.setData(data);
   }
 
   public QueueProducer getProducer() {
@@ -85,11 +76,6 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   @Override
   public int getPriority() {
     return 2;
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

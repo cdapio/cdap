@@ -1,9 +1,6 @@
 package com.continuuity.data.operation;
 
-public class OrderedWrite implements WriteOperation {
-  /** Unique id for the operation */
-  private final long id = OperationBase.getId();
-
+public class OrderedWrite extends WriteOperation {
   private byte [] key;
   private byte [] value;
  
@@ -24,11 +21,6 @@ public class OrderedWrite implements WriteOperation {
   @Override
   public int getPriority() {
     return 1;
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 
   @Override

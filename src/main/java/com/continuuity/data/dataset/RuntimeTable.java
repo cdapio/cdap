@@ -20,6 +20,12 @@ public abstract class RuntimeTable extends Table {
     this.dataFabric = fabric;
   }
 
+  /** the data fabric to use for executing synchronous operations */
+  private DataFabric dataFabric;
+
+  /** the name to use for metrics collection, typically the name of the enclosing dataset */
+  private String metricName;
+
   /**
    * @return the data fabric
    */
@@ -27,8 +33,20 @@ public abstract class RuntimeTable extends Table {
     return dataFabric;
   }
 
-  /** the data fabric to use for executing synchronous operations */
-  private DataFabric dataFabric;
+  /**
+   * @return the name to use for metrics
+   */
+  protected String getMetricName() {
+    return metricName;
+  }
+
+  /**
+   * set the name to use for metrics
+   * @param metricName the name to use for emitting metrics
+   */
+  protected void setMetricName(String metricName) {
+    this.metricName = metricName;
+  }
 
   /**
    * open the table in the data fabric, to ensure it exists and is accessible.
