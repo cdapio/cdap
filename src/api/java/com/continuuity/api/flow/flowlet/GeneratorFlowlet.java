@@ -1,7 +1,7 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- * A special kind of {@link Flowlet} that generates data.
+ * A special kind of {@link Flowlet} that generates data and never consume any input.
  */
 public interface GeneratorFlowlet extends Flowlet {
 

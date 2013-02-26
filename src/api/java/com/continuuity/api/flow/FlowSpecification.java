@@ -24,14 +24,12 @@ import java.util.Map;
  *      FlowSpecification.Builder.with()
  *        .setName("tokenCount")
  *        .setDescription("Token counting flow")
- *        .withDataset().add("token")
- *        .withStream().add("text")
- *        .withFlowlets().add("source", StreamSource.class, 1).apply()
- *                      .add("tokenizer", Tokenizer.class, 1).setCpu(1).setMemoryInMB(100).apply()
- *                      .add("count", CountByField.class, 1).apply()
- *        .withInput().add("text", "source")
- *        .withConnection().add("source", "tokenizer")
- *                         .add("tokenizer", "count")
+ *        .withFlowlets().add("source", new StreamSource())
+ *                       .add("tokenizer", new Tokenizer())
+ *                       .add("count", new CountByField())
+ *        .connect().fromStream("text").to("source")
+ *                  .from("source").to("tokenizer")
+ *                  .from("tokenizer").to("count")
  *        .build();
  * }
  * </pre>
@@ -281,22 +279,12 @@ public interface FlowSpecification {
       private String fromStream;
       private FlowletDefinition fromFlowlet;
 
-      /**
-       * Defines the flowlet that is at run of the connection.
-       * @param flowlet that is run of connection.
-       * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
-       */
       @Override
       public ConnectTo from(Flowlet flowlet) {
         Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
         return from(flowlet.configure().getName());
       }
 
-      /**
-       * Defines the stream that the connection is reading from.
-       * @param stream Instance of stream.
-       * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
-       */
       @Override
       public ConnectTo from(Stream stream) {
         Preconditions.checkArgument(stream != null, "Stream cannot be null");
@@ -319,11 +307,6 @@ public interface FlowSpecification {
         return this;
       }
 
-      /**
-       * Defines the flowlet that the connection is connecting to.
-       * @param flowlet the connection connects to.
-       * @return A instance of {@link MoreConnect} to define more connections of flowlets in a flow.
-       */
       @Override
       public MoreConnect to(Flowlet flowlet) {
         Preconditions.checkArgument(flowlet != null, "Flowlet cannot be null");
