@@ -1,6 +1,5 @@
 package com.continuuity.common.metrics;
 
-import com.continuuity.api.common.CMetricsIntfc;
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.*;
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  *
  * It current supports {@link Counter} and {@link Gauge}.
  */
-public class CMetrics implements CMetricsIntfc {
+public class CMetrics {
   /**
    * Type of metric the {@link CMetrics} is responsible for collecting.
    */
