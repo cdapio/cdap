@@ -10,7 +10,7 @@ import com.continuuity.api.data.stream.Stream;
  */
 public class CountCounts implements Application {
 
-  public static final String tableName = "tokenTable";
+  public static final String tableName = "countCounterTable";
 
   @Override
   public ApplicationSpecification configure() {
