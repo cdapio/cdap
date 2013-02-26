@@ -4,7 +4,7 @@
     <import file="../ant-common.xml"/>
 
     <target name="jar">
-        <exec executable="mvn">
+        <exec executable="mvn" failonerror="false">
             <arg line="clean package assembly:single" />
         </exec>
     </target>

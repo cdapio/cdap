@@ -76,13 +76,4 @@ public class CountCountsProcedure extends AbstractProcedure {
       writer.close();
     }
   }
-
-  public static void main(String[] args) throws IOException {
-    Map<Long, Long> map = new HashMap<Long, Long>();
-    map.put(1L, 2L);
-    map.put(2L, 3L);
-    map.put(4L, 5L);
-    ObjectMapper mapper = new ObjectMapper();
-    System.out.println(Bytes.toString(mapper.writeValueAsBytes(map)));
-  }
 }

@@ -5,11 +5,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 public class UniqueCounter extends AbstractFlowlet {
-
-  public UniqueCounter() {
-    super("uniqueCounter");
-  }
-
   @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
 
