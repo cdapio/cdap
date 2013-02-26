@@ -417,4 +417,20 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
     return vpcReturned;
   }
+
+  @Override
+  public Account getAccountForVPC(String vpcName) {
+    Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");
+    Preconditions.checkNotNull(vpcDao, "VPC data access objects cannot be null");
+    Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
+
+    Account account = null;
+
+    try {
+      account = vpcDao.getAccountForVPC(vpcName);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return account;
+  }
 }

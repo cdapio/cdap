@@ -8,6 +8,7 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
+import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Preconditions;
@@ -282,5 +283,51 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       close(connection, ps, rs);
     }
     return count;
+  }
+
+  @Override
+  public Account getAccountForVPC(String vpcName) {
+    Account account = null;
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Preconditions.checkNotNull(this.poolManager,"Connection pool is null");
+
+    try {
+      connection = this.poolManager.getValidConnection();
+
+      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+        DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
+        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+        DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN,   // Dis-ambiguate id column
+        DBUtils.AccountTable.API_KEY_COLUMN,
+        DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT, //SELECT
+        DBUtils.AccountTable.TABLE_NAME,
+        DBUtils.VPC.TABLE_NAME,   // JOIN
+        DBUtils.AccountTable.TABLE_NAME + "."+DBUtils.AccountTable.ID_COLUMN,
+        DBUtils.VPC.TABLE_NAME + "."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //JOIN Condition
+        DBUtils.VPC.NAME_COLUMN // WHERE clause
+      );
+
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1, vpcName);
+      rs = ps.executeQuery();
+
+      int count = 0;
+      while (rs.next()) {
+        count++;
+        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
+          rs.getString(4), rs.getInt(5), rs.getString(6),
+          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+        if (count > 1) { // Note: This condition should never occur since ids are auto generated.
+          throw new RuntimeException("Multiple accounts with same account ID");
+        }
+      }
+    } catch (SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection, ps, rs);
+    }
+    return account;
   }
 }

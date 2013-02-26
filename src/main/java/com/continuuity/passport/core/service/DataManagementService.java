@@ -203,14 +203,22 @@ public interface DataManagementService {
   public void regenerateApiKey(int accountId);
 
   /**
-   * Register a component with the account- Example: register VPC, Register DataSet
-   * TODO: Note: This is not implemented for initial free VPC use case
-   *
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
+   * GetAccount given a VPC name
+   * @param vpcName
+   * @return
    */
+  public Account getAccountForVPC(String vpcName);
+
+
+    /**
+     * Register a component with the account- Example: register VPC, Register DataSet
+     * TODO: Note: This is not implemented for initial free VPC use case
+     *
+     * @param accountId
+     * @param credentials
+     * @param component
+     * @return Instance of {@code Status}
+     */
   public Status registerComponents(String accountId, Credentials credentials,
                                    Component component);
 
