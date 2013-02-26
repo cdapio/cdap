@@ -1,6 +1,5 @@
 package com.continuuity.metrics2.frontend;
 
-import com.continuuity.api.common.LogTag;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
@@ -130,12 +129,8 @@ public class MetricsFrontendServiceImpl
   public List<String> getLog(final String accountId, final String applicationId,
                              final String flowId, int size)
     throws MetricsServiceException, TException {
-    LogTag logTag = new LogTag() {
-      @Override
-      public String getTag() {
-        return String.format("%s:%s:%s", accountId, applicationId, flowId);
-      }
-    };
+
+    String logTag = String.format("%s:%s:%s", accountId, applicationId, flowId);
 
     if(size < 0) {
       size = 10 * 1024;
@@ -143,11 +138,11 @@ public class MetricsFrontendServiceImpl
 
     List<String> lines = null;
     try {
-      lines = collector.tail(logTag.getTag(), size);
+      lines = collector.tail(logTag, size);
       return lines;
     } catch (IOException e) {
       LOG.warn("Failed to tail log file. Tag {}. Reason : {}",
-               logTag.getTag(), e.getMessage());
+               logTag, e.getMessage());
       throw new MetricsServiceException(e.getMessage());
     }
   }
