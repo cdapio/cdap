@@ -110,4 +110,37 @@ public class VPCHandler extends PassportHandler {
         .build();
     }
   }
+
+  /**
+   * Gets account if for VPC
+   * Endpoint is obfuscated on purpose
+   * @param vpcName
+   * @return Instance of {@code Response}
+   */
+  @Path("xkcd/{vpcName}")
+  @GET
+  public Response getIdForVPC(@PathParam("vpcName") String vpcName ) {
+    try {
+      Account account = dataManagementService.getAccountForVPC(vpcName);
+      if (account != null) {
+        requestSuccess();
+        return Response.ok().entity(Utils.getIdJson(null,account.getAccountId())) .build();
+      } else {
+        requestFailed();
+        LOG.error(String.format("xkcd not found. Processing endpoint: %s ",
+                                "GET /passport/v1/vpc/xkcd/{vpcName}"));
+        return Response.status(Response.Status.NOT_FOUND)
+          .entity(Utils.getIdJson("FAILED","xkcd not found for VPC"))
+          .build();
+      }
+    } catch (Exception e) {
+      requestFailed();
+      LOG.error(String.format("xkcd not found. endpoint: %s %s","GET /passport/v1/xkcd/{vpcName}",e.getMessage()));
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getIdJson("FAILED","xkcd not found for VPC"))
+        .build();
+    }
+  }
+
+
 }
