@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.OperationBase;
 import com.continuuity.data.operation.ReadOperation;
 import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -10,10 +9,8 @@ import org.apache.hadoop.hbase.util.Bytes;
  * starting from the head of the queue. Entry selected depends on the mode of
  * dequeue execution.
  */
-public class QueueDequeue implements ReadOperation {
+public class QueueDequeue extends ReadOperation {
 
-  /** Unique id for the operation */
-  private final long id;
   private final byte [] queueName;
   private final QueueConsumer consumer;
   private final QueueConfig config;
@@ -21,14 +18,16 @@ public class QueueDequeue implements ReadOperation {
   public QueueDequeue(final byte [] queueName,
                       final QueueConsumer consumer,
                       final QueueConfig config) {
-    this(OperationBase.getId(), queueName, consumer, config);
+    this.queueName = queueName;
+    this.consumer = consumer;
+    this.config = config;
   }
 
   public QueueDequeue(final long id,
                       final byte [] queueName,
                       final QueueConsumer consumer,
                       final QueueConfig config) {
-    this.id = id;
+    super(id);
     this.queueName = queueName;
     this.consumer = consumer;
     this.config = config;
@@ -52,10 +51,5 @@ public class QueueDequeue implements ReadOperation {
         .add("consumer", Objects.toStringHelper(this.consumer))
         .add("config", this.config.toString())
         .toString();
-  }
-
-  @Override
-  public long getId() {
-    return id;
   }
 }

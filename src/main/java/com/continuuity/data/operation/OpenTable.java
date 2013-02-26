@@ -1,24 +1,16 @@
 package com.continuuity.data.operation;
 
-public class OpenTable implements Operation {
-
-  /** Unique id for the operation */
-  private final long id;
+public class OpenTable extends Operation {
 
   /** name of the table to open */
   final String table;
-
-  @Override
-  public long getId() {
-    return id;
-  }
 
   /**
    * To open the named table
    * @param tableName the name of the table to open
    */
   public OpenTable(String tableName) {
-    this(OperationBase.getId(), tableName);
+    this.table = tableName;
   }
 
   /**
@@ -27,7 +19,7 @@ public class OpenTable implements Operation {
    * @param tableName the name of the table to open
    */
   public OpenTable(long id, String tableName) {
-    this.id = id;
+    super(id);
     this.table = tableName;
   }
 

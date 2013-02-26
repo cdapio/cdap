@@ -35,6 +35,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   private static final org.apache.thrift.protocol.TField CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("consumer", org.apache.thrift.protocol.TType.STRUCT, (short)3);
   private static final org.apache.thrift.protocol.TField NUM_GROUPS_FIELD_DESC = new org.apache.thrift.protocol.TField("numGroups", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)6);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,6 +48,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   public TQueueConsumer consumer; // required
   public int numGroups; // required
   public long id; // required
+  public String metric; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -54,7 +56,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     ENTRY_POINTER((short)2, "entryPointer"),
     CONSUMER((short)3, "consumer"),
     NUM_GROUPS((short)4, "numGroups"),
-    ID((short)5, "id");
+    ID((short)5, "id"),
+    METRIC((short)6, "metric");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -79,6 +82,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
           return NUM_GROUPS;
         case 5: // ID
           return ID;
+        case 6: // METRIC
+          return METRIC;
         default:
           return null;
       }
@@ -122,6 +127,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   private static final int __NUMGROUPS_ISSET_ID = 0;
   private static final int __ID_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
+  private _Fields optionals[] = {_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -135,6 +141,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueAck.class, metaDataMap);
   }
@@ -177,6 +185,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     }
     this.numGroups = other.numGroups;
     this.id = other.id;
+    if (other.isSetMetric()) {
+      this.metric = other.metric;
+    }
   }
 
   public TQueueAck deepCopy() {
@@ -192,6 +203,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     this.numGroups = 0;
     setIdIsSet(false);
     this.id = 0;
+    this.metric = null;
   }
 
   public byte[] getQueueName() {
@@ -322,6 +334,30 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     __isset_bit_vector.set(__ID_ISSET_ID, value);
   }
 
+  public String getMetric() {
+    return this.metric;
+  }
+
+  public TQueueAck setMetric(String metric) {
+    this.metric = metric;
+    return this;
+  }
+
+  public void unsetMetric() {
+    this.metric = null;
+  }
+
+  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetric() {
+    return this.metric != null;
+  }
+
+  public void setMetricIsSet(boolean value) {
+    if (!value) {
+      this.metric = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -364,6 +400,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       }
       break;
 
+    case METRIC:
+      if (value == null) {
+        unsetMetric();
+      } else {
+        setMetric((String)value);
+      }
+      break;
+
     }
   }
 
@@ -383,6 +427,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
 
     case ID:
       return Long.valueOf(getId());
+
+    case METRIC:
+      return getMetric();
 
     }
     throw new IllegalStateException();
@@ -405,6 +452,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       return isSetNumGroups();
     case ID:
       return isSetId();
+    case METRIC:
+      return isSetMetric();
     }
     throw new IllegalStateException();
   }
@@ -464,6 +513,15 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (!(this_present_id && that_present_id))
         return false;
       if (this.id != that.id)
+        return false;
+    }
+
+    boolean this_present_metric = true && this.isSetMetric();
+    boolean that_present_metric = true && that.isSetMetric();
+    if (this_present_metric || that_present_metric) {
+      if (!(this_present_metric && that_present_metric))
+        return false;
+      if (!this.metric.equals(that.metric))
         return false;
     }
 
@@ -533,6 +591,16 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetMetric()).compareTo(typedOther.isSetMetric());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetric()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metric, typedOther.metric);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -584,6 +652,16 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     sb.append("id:");
     sb.append(this.id);
     first = false;
+    if (isSetMetric()) {
+      if (!first) sb.append(", ");
+      sb.append("metric:");
+      if (this.metric == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metric);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -670,6 +748,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 6: // METRIC
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metric = iprot.readString();
+              struct.setMetricIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -706,6 +792,13 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       oprot.writeFieldBegin(ID_FIELD_DESC);
       oprot.writeI64(struct.id);
       oprot.writeFieldEnd();
+      if (struct.metric != null) {
+        if (struct.isSetMetric()) {
+          oprot.writeFieldBegin(METRIC_FIELD_DESC);
+          oprot.writeString(struct.metric);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -739,7 +832,10 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetId()) {
         optionals.set(4);
       }
-      oprot.writeBitSet(optionals, 5);
+      if (struct.isSetMetric()) {
+        optionals.set(5);
+      }
+      oprot.writeBitSet(optionals, 6);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
@@ -755,12 +851,15 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetId()) {
         oprot.writeI64(struct.id);
       }
+      if (struct.isSetMetric()) {
+        oprot.writeString(struct.metric);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueAck struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(5);
+      BitSet incoming = iprot.readBitSet(6);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
@@ -782,6 +881,10 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (incoming.get(4)) {
         struct.id = iprot.readI64();
         struct.setIdIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.metric = iprot.readString();
+        struct.setMetricIsSet(true);
       }
     }
   }

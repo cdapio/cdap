@@ -224,13 +224,17 @@ public class ConverterUtils {
 
   /** wrap a ClearFabric operation */
   TClearFabric wrap(ClearFabric clearFabric) {
-    return new TClearFabric(
+    TClearFabric tClearFabric = new TClearFabric(
         clearFabric.shouldClearData(),
         clearFabric.shouldClearMeta(),
         clearFabric.shouldClearTables(),
         clearFabric.shouldClearQueues(),
         clearFabric.shouldClearStreams(),
         clearFabric.getId());
+    if (clearFabric.getMetricName() != null) {
+      tClearFabric.setMetric(clearFabric.getMetricName());
+    }
+    return tClearFabric;
   }
   /** unwrap a ClearFabric operation */
   ClearFabric unwrap(TClearFabric tClearFabric) {
@@ -240,16 +244,28 @@ public class ConverterUtils {
     if (tClearFabric.isClearTables()) toClear.add(ClearFabric.ToClear.TABLES);
     if (tClearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
     if (tClearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
-    return new ClearFabric(tClearFabric.getId(), toClear);
+    ClearFabric clearFabric = new ClearFabric(tClearFabric.getId(), toClear);
+    if (tClearFabric.isSetMetric()) {
+      clearFabric.setMetricName(tClearFabric.getMetric());
+    }
+    return clearFabric;
   }
 
   /** wrap an OpenTable operation */
   public TOpenTable wrap(OpenTable openTable) {
-    return new TOpenTable(openTable.getTableName(), openTable.getId());
+    TOpenTable tOpenTable = new TOpenTable(openTable.getTableName(), openTable.getId());
+    if (openTable.getMetricName() != null) {
+      tOpenTable.setMetric(openTable.getMetricName());
+    }
+    return tOpenTable;
   }
   /** unwrap an OpenTable operation */
   public OpenTable unwrap(TOpenTable tOpenTable) {
-    return new OpenTable(tOpenTable.getTable());
+    OpenTable openTable = new OpenTable(tOpenTable.getId(), tOpenTable.getTable());
+    if (tOpenTable.isSetMetric()) {
+      openTable.setMetricName(tOpenTable.getMetric());
+    }
+    return openTable;
   }
 
   /** wrap a Write operation */
@@ -259,18 +275,26 @@ public class ConverterUtils {
         wrap(write.getColumns()),
         wrap(write.getValues()),
         write.getId());
-    if (write.getTable() != null)
+    if (write.getTable() != null) {
       tWrite.setTable(write.getTable());
+    }
+    if (write.getMetricName() != null) {
+      tWrite.setMetric(write.getMetricName());
+    }
     return tWrite;
   }
   /** unwrap a Write operation */
   Write unwrap(TWrite tWrite) {
-    return new Write(
+    Write write = new Write(
         tWrite.getId(),
         tWrite.isSetTable() ? tWrite.getTable() : null,
         tWrite.getKey(),
         unwrap(tWrite.getColumns()),
         unwrap(tWrite.getValues()));
+    if (tWrite.isSetMetric()) {
+      write.setMetricName(tWrite.getMetric());
+    }
+    return write;
   }
 
   /** wrap a Delete operation */
@@ -279,17 +303,25 @@ public class ConverterUtils {
         wrap(delete.getKey()),
         wrap(delete.getColumns()),
         delete.getId());
-    if (delete.getTable() != null)
+    if (delete.getTable() != null) {
       tDelete.setTable(delete.getTable());
+    }
+    if (delete.getMetricName() != null) {
+      tDelete.setMetric(delete.getMetricName());
+    }
     return tDelete;
   }
   /** unwrap a Delete operation */
   Delete unwrap(TDelete tDelete) {
-    return new Delete(
+    Delete delete = new Delete(
         tDelete.getId(),
         tDelete.isSetTable() ? tDelete.getTable() : null,
         tDelete.getKey(),
         unwrap(tDelete.getColumns()));
+    if (tDelete.isSetMetric()) {
+      delete.setMetricName(tDelete.getMetric());
+    }
+    return delete;
   }
 
   /** wrap an Increment operation */
@@ -299,18 +331,26 @@ public class ConverterUtils {
         wrap(increment.getColumns()),
         wrap(increment.getAmounts()),
         increment.getId());
-    if (increment.getTable() != null)
+    if (increment.getTable() != null) {
       tIncrement.setTable(increment.getTable());
+    }
+    if (increment.getMetricName() != null) {
+      tIncrement.setMetric(increment.getMetricName());
+    }
     return tIncrement;
   }
   /** unwrap an Increment operation */
   Increment unwrap(TIncrement tIncrement) {
-    return new Increment(
+    Increment increment = new Increment(
         tIncrement.getId(),
         tIncrement.isSetTable() ? tIncrement.getTable() : null,
         tIncrement.getKey(),
         unwrap(tIncrement.getColumns()),
         unwrapAmounts(tIncrement.getAmounts()));
+    if (tIncrement.isSetMetric()) {
+      increment.setMetricName(tIncrement.getMetric());
+    }
+    return increment;
   }
 
   /** wrap a CompareAndSwap operation */
@@ -321,19 +361,27 @@ public class ConverterUtils {
         wrap(compareAndSwap.getExpectedValue()),
         wrap(compareAndSwap.getNewValue()),
         compareAndSwap.getId());
-    if (compareAndSwap.getTable() != null)
+    if (compareAndSwap.getTable() != null) {
       tCompareAndSwap.setTable(compareAndSwap.getTable());
+    }
+    if (compareAndSwap.getMetricName() != null) {
+      tCompareAndSwap.setMetric(compareAndSwap.getMetricName());
+    }
     return tCompareAndSwap;
   }
   /** unwrap a CompareAndSwap operation */
   CompareAndSwap unwrap(TCompareAndSwap tCompareAndSwap) {
-    return new CompareAndSwap(
+    CompareAndSwap compareAndSwap = new CompareAndSwap(
         tCompareAndSwap.getId(),
         tCompareAndSwap.isSetTable() ? tCompareAndSwap.getTable() : null,
         tCompareAndSwap.getKey(),
         tCompareAndSwap.getColumn(),
         tCompareAndSwap.getExpectedValue(),
         tCompareAndSwap.getNewValue());
+    if (tCompareAndSwap.isSetMetric()) {
+      compareAndSwap.setMetricName(tCompareAndSwap.getMetric());
+    }
+    return compareAndSwap;
   }
 
   /** wrap a Read operation */
@@ -342,17 +390,25 @@ public class ConverterUtils {
         wrap(read.getKey()),
         wrap(read.getColumns()),
         read.getId());
-    if (read.getTable() != null)
+    if (read.getTable() != null) {
       tRead.setTable(read.getTable());
+    }
+    if (read.getMetricName() != null) {
+      tRead.setMetric(read.getMetricName());
+    }
     return tRead;
   }
   /** unwrap a Read operation */
   Read unwrap(TRead tRead) {
-    return new Read(
+    Read read = new Read(
         tRead.getId(),
         tRead.isSetTable() ? tRead.getTable() : null,
         tRead.getKey(),
         unwrap(tRead.getColumns()));
+    if (tRead.isSetMetric()) {
+      read.setMetricName(tRead.getMetric());
+    }
+    return read;
   }
 
   /** wrap a ReadAllKeys operation */
@@ -361,17 +417,25 @@ public class ConverterUtils {
         readAllKeys.getOffset(),
         readAllKeys.getLimit(),
         readAllKeys.getId());
-    if (readAllKeys.getTable() != null)
+    if (readAllKeys.getTable() != null) {
       tReadAllKeys.setTable(readAllKeys.getTable());
+    }
+    if (readAllKeys.getMetricName() != null) {
+      tReadAllKeys.setMetric(readAllKeys.getMetricName());
+    }
     return tReadAllKeys;
   }
   /** unwrap a ReadAllKeys operation */
   ReadAllKeys unwrap(TReadAllKeys tReadAllKeys) {
-    return new ReadAllKeys(
+    ReadAllKeys readAllKeys = new ReadAllKeys(
         tReadAllKeys.getId(),
         tReadAllKeys.isSetTable() ? tReadAllKeys.getTable() : null,
         tReadAllKeys.getOffset(),
         tReadAllKeys.getLimit());
+    if (tReadAllKeys.isSetMetric()) {
+      readAllKeys.setMetricName(tReadAllKeys.getMetric());
+    }
+    return readAllKeys;
   }
 
   /** wrap a ReadColumnRange operation */
@@ -382,19 +446,27 @@ public class ConverterUtils {
         wrap(readColumnRange.getStopColumn()),
         readColumnRange.getLimit(),
         readColumnRange.getId());
-    if (readColumnRange.getTable() != null)
+    if (readColumnRange.getTable() != null) {
       tReadColumnRange.setTable(readColumnRange.getTable());
+    }
+    if (readColumnRange.getMetricName() != null) {
+      tReadColumnRange.setMetric(readColumnRange.getMetricName());
+    }
     return tReadColumnRange;
   }
   /** unwrap a ReadColumnRange operation */
   ReadColumnRange unwrap(TReadColumnRange tReadColumnRange) {
-    return new ReadColumnRange(
+    ReadColumnRange readColumnRange = new ReadColumnRange(
         tReadColumnRange.getId(),
         tReadColumnRange.isSetTable() ? tReadColumnRange.getTable() : null,
         tReadColumnRange.getKey(),
         tReadColumnRange.getStartColumn(),
         tReadColumnRange.getStopColumn(),
         tReadColumnRange.getLimit());
+    if (tReadColumnRange.isSetMetric()) {
+      readColumnRange.setMetricName(tReadColumnRange.getMetric());
+    }
+    return readColumnRange;
   }
 
   QueueEntry unwrap(TQueueEntry entry) {
@@ -412,75 +484,115 @@ public class ConverterUtils {
         wrap(enqueue.getKey()),
         wrap(enqueue.getEntry()),
         enqueue.getId());
-    if (enqueue.getProducer() != null)
+    if (enqueue.getProducer() != null) {
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
+    }
+    if (enqueue.getMetricName() != null) {
+      tQueueEnqueue.setMetric(enqueue.getMetricName());
+    }
     return tQueueEnqueue;
   }
   /** unwrap an EnqueuePayload operation */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
-    return new QueueEnqueue(
+    QueueEnqueue enqueue = new QueueEnqueue(
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
         unwrap(tEnqueue.getEntry()));
+    if (tEnqueue.isSetMetric()) {
+      enqueue.setMetricName(tEnqueue.getMetric());
+    }
+    return enqueue;
   }
 
   /** wrap a DequeuePayload operation */
   TQueueDequeue wrap(QueueDequeue dequeue) {
-    return new TQueueDequeue(
+    TQueueDequeue tQueueDequeue = new TQueueDequeue(
         wrap(dequeue.getKey()),
         wrap(dequeue.getConsumer()),
         wrap(dequeue.getConfig()),
         dequeue.getId());
+    if (dequeue.getMetricName() != null) {
+      tQueueDequeue.setMetric(dequeue.getMetricName());
+    }
+    return tQueueDequeue;
   }
   /** unwrap a DequeuePayload operation */
   QueueDequeue unwrap(TQueueDequeue tDequeue) {
-    return new QueueDequeue(
+    QueueDequeue dequeue =new QueueDequeue(
         tDequeue.getId(),
         tDequeue.getQueueName(),
         unwrap(tDequeue.getConsumer()),
         unwrap(tDequeue.getConfig()));
+    if (tDequeue.isSetMetric()) {
+      dequeue.setMetricName(tDequeue.getMetric());
+    }
+    return dequeue;
   }
 
   /** wrap a QueueAck operation */
   TQueueAck wrap(QueueAck ack) {
-    return new TQueueAck(
+    TQueueAck tAck = new TQueueAck(
         wrap(ack.getKey()),
         wrap(ack.getEntryPointer()),
         wrap(ack.getConsumer()),
         ack.getNumGroups(),
         ack.getId());
+    if (ack.getMetricName() != null) {
+      tAck.setMetric(ack.getMetricName());
+    }
+    return tAck;
   }
   /** unwrap a QueueAck operation */
   QueueAck unwrap(TQueueAck tQueueAck) {
-    return new QueueAck(
+    QueueAck ack = new QueueAck(
         tQueueAck.getId(),
         tQueueAck.getQueueName(),
         unwrap(tQueueAck.getEntryPointer()),
         unwrap(tQueueAck.getConsumer()),
         tQueueAck.getNumGroups());
+    if (tQueueAck.isSetMetric()) {
+      ack.setMetricName(tQueueAck.getMetric());
+    }
+    return ack;
   }
 
   /** wrap a GetQueueInfo operation */
   TGetQueueInfo wrap(QueueAdmin.GetQueueInfo getQueueInfo) {
-    return new TGetQueueInfo(
+    TGetQueueInfo tGetQueueInfo = new TGetQueueInfo(
         wrap(getQueueInfo.getQueueName()),
         getQueueInfo.getId());
+    if (getQueueInfo.getMetricName() != null) {
+      tGetQueueInfo.setMetric(getQueueInfo.getMetricName());
+    }
+    return tGetQueueInfo;
   }
   /** unwrap a GetQueueInfo operation */
   QueueAdmin.GetQueueInfo unwrap(TGetQueueInfo tGetQueueInfo) {
-    return new QueueAdmin.GetQueueInfo(
+    QueueAdmin.GetQueueInfo getQueueInfo = new QueueAdmin.GetQueueInfo(
         tGetQueueInfo.getId(),
         tGetQueueInfo.getQueueName());
+    if (tGetQueueInfo.isSetMetric()) {
+      getQueueInfo.setMetricName(tGetQueueInfo.getMetric());
+    }
+    return getQueueInfo;
   }
 
   /** wrap a GetGroupId operation */
   TGetGroupId wrap(QueueAdmin.GetGroupID getGroupId) {
-    return new TGetGroupId(wrap(getGroupId.getQueueName()));
+    TGetGroupId tGetGroupId = new TGetGroupId(wrap(getGroupId.getQueueName()));
+    if (getGroupId.getMetricName() != null) {
+      tGetGroupId.setMetric(getGroupId.getMetricName());
+    }
+    return tGetGroupId;
   }
   /** unwrap a GetGroupId operation */
   QueueAdmin.GetGroupID unwrap(TGetGroupId tGetGroupId) {
-    return new QueueAdmin.GetGroupID(tGetGroupId.getQueueName());
+    QueueAdmin.GetGroupID getGroupID = new QueueAdmin.GetGroupID(tGetGroupId.getQueueName());
+    if (tGetGroupId.isSetMetric()) {
+      getGroupID.setMetricName(tGetGroupId.getMetric());
+    }
+    return getGroupID;
   }
 
   /** wrap a queue entry pointer */

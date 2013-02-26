@@ -1,16 +1,26 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.common.Bytes;
+import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.executor.NoOperationExecutor;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
+import com.continuuity.data.operation.executor.TransactionProxy;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Collections;
 
 public class DataSetTest extends DataSetTestBase {
 
@@ -64,6 +74,25 @@ public class DataSetTest extends DataSetTestBase {
     // try to instantiate the incomplete data set
     @SuppressWarnings("unused")
     ThrowingDataSet ds = instantiator.getDataSet("badguy");
+  }
+
+  class DummyOpex extends NoOperationExecutor {
+    @Override
+    public void commit(OperationContext context, WriteOperation op) throws OperationException {
+      Assert.assertEquals("testtest", op.getMetricName());
+    }
+  }
+
+  @Test
+  public void testDataSetInstantiationWithMetricName() throws OperationException {
+    OperationExecutor opex = new DummyOpex();
+    TransactionProxy proxy = new TransactionProxy();
+    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationContext.DEFAULT), proxy, null);
+    DataSetSpecification spec = new KeyValueTable("testtest").configure();
+    inst.setDataSets(Collections.singletonList(spec));
+    KeyValueTable kvTable = inst.getDataSet("testtest");
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationContext.DEFAULT));
+    kvTable.write("a".getBytes(), "b".getBytes());
   }
 
 }

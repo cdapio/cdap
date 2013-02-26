@@ -1,9 +1,11 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.data.BatchCollectionClient;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import org.slf4j.Logger;
@@ -35,8 +37,6 @@ public class DataSetInstantiator implements DataSetContext {
 
   // the data fabric (an operation executor and an operation context
   private DataFabric fabric;
-  // the batch collection client, TODO old-style, remove
-  private BatchCollectionClient collectionClient;
   // the transaction proxy
   private TransactionProxy transactionProxy;
   // the class loader to use for data set classes
@@ -46,23 +46,6 @@ public class DataSetInstantiator implements DataSetContext {
 
   private Map<String, DataSetSpecification> datasets =
       new HashMap<String, DataSetSpecification>();
-
-  /**
-   * a constructor from data fabric and collection client
-   * @param fabric the data fabric
-   * @param collectionClient the collection client to use for all data sets
-   * @param classLoader the class loader to use for loading data set classes.
-   *                    If null, then the default class loader is used
-   * TODO old-style, will go away
-   */
-  public DataSetInstantiator(DataFabric fabric,
-                             BatchCollectionClient collectionClient,
-                             ClassLoader classLoader) {
-    this.fabric = fabric;
-    this.transactionProxy = null;
-    this.collectionClient = collectionClient;
-    this.classLoader = classLoader;
-  }
 
   /**
    * a constructor from data fabric and transaction proxy
@@ -76,7 +59,6 @@ public class DataSetInstantiator implements DataSetContext {
                              ClassLoader classLoader) {
     this.fabric = fabric;
     this.transactionProxy = transactionProxy;
-    this.collectionClient = null;
     this.classLoader = classLoader;
   }
 
@@ -99,23 +81,6 @@ public class DataSetInstantiator implements DataSetContext {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
     }
-  }
-
-  /**
-   * Add one data set spec to this instantiator.
-   * @param spec the data set specification
-   */
-  public void addDataSet(DataSetSpecification spec) {
-    this.datasets.put(spec.getName(), spec);
-  }
-
-  /**
-   * Find out whether the instantiator has a spec for a named data set
-   * @param name the name of the data set
-   * @return whether the instantiator knows the spec for the data set
-   */
-  public boolean hasDataSet(String name) {
-    return this.datasets.containsKey(name);
   }
 
   /**
@@ -167,7 +132,7 @@ public class DataSetInstantiator implements DataSetContext {
     }
 
     // inject the data fabric runtime
-    this.injectDataFabric(ds);
+    this.injectDataFabric(ds, dataSetName);
 
     // cast to the actual data set class and return
     return this.convert(ds, className);
@@ -210,24 +175,17 @@ public class DataSetInstantiator implements DataSetContext {
    * keeps the DataSet API itself clean.
    *
    * @param obj The com.continuuity.data.dataset to inject into
+   * @param metricName the name to inject for emitting metrics
    * @throws DataSetInstantiationException If any of the reflection magic
    *         goes wrong, or a table cannot be opened
    */
-  private void injectDataFabric(Object obj) throws DataSetInstantiationException{
+  private void injectDataFabric(Object obj, String metricName) throws DataSetInstantiationException{
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
       // this sets the delegate table of the Table to a new ReadWriteTable
-      RuntimeTable runtimeTable;
-      if (this.transactionProxy == null) {
-        // TODO old-style, go away!
-        runtimeTable = this.readOnly
-          ? ReadOnlyTable.setReadOnlyTable((Table) obj, this.fabric, null)
-          : ReadWriteTable.setReadWriteTable((Table)obj, this.fabric, this.collectionClient);
-      } else {
-        runtimeTable = this.readOnly
-          ? ReadOnlyTable.setReadOnlyTable((Table) obj, this.fabric, this.transactionProxy)
-          : ReadWriteTable.setReadWriteTable((Table)obj, this.fabric, this.transactionProxy);
-      }
+      RuntimeTable runtimeTable = this.readOnly
+        ? ReadOnlyTable.setReadOnlyTable((Table) obj, this.fabric, metricName, this.transactionProxy)
+        : ReadWriteTable.setReadWriteTable((Table)obj, this.fabric, metricName, this.transactionProxy);
       // also ensure that the table exists in the data fabric
       try {
         runtimeTable.open();
@@ -249,7 +207,7 @@ public class DataSetInstantiator implements DataSetContext {
           throw logAndException(e, "Cannot access field %s of data set class %s",
               field.getName(), objClass.getName());
         }
-        injectDataFabric(fieldValue);
+        injectDataFabric(fieldValue, metricName);
       }
     }
   }
