@@ -136,6 +136,7 @@ task singlenode_dist (type: Zip) {
 
   into("web-app/cloud/server"){
     from project(':web-cloud-app').file('build/cloud/server')
+    exclude "certs/"
   }
 
   into("web-app/cloud/common"){
@@ -219,6 +220,7 @@ task cloud_dist (type: Tar) {
 
   into("web-app/cloud/server"){
     from project(':web-cloud-app').file('build/cloud/server')
+    exclude "certs/"
   }
 
   into("web-app/cloud/common"){
