@@ -34,13 +34,6 @@ public class TestAppFabricClientConfigParse {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testValidInvalidVerifyArgs() throws ParseException {
-    AppFabricClient client = new AppFabricClient();
-    String command = client.configure(CConfiguration.create(), new String[]{"verify", "--application", "args"});
-
-  }
-
-  @Test(expected = IllegalArgumentException.class)
   public void testValidInvalidStartArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = client.configure(CConfiguration.create(), new String[]{"SomeRandomCommand", "--application", "args"});
@@ -115,9 +108,6 @@ public class TestAppFabricClientConfigParse {
     String command = null;
     command = client.configure(CConfiguration.create(), new String[]{"deploy", "--resource", "jar"});
     assertTrue("deploy".equals(command));
-
-    command = client.configure(CConfiguration.create(), new String[]{"verify", "--resource", "jar"});
-    assertTrue("verify".equals(command));
 
     command = client.configure(CConfiguration.create(), new String[]{"start", "--application", "appId",
       "--processor", "processor"});
