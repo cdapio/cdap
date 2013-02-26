@@ -1,5 +1,5 @@
 var sys = require('util');
-var XMLHttpRequest = require("./XMLHttpRequest").XMLHttpRequest;
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 var xhr = new XMLHttpRequest();
 
