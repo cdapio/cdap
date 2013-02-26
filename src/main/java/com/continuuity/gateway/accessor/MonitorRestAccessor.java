@@ -25,9 +25,9 @@ extends Accessor implements NettyRequestHandlerFactory {
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("accessor.metrics")
+      new HttpConfig("monitor.rest")
           .setPort(10005)
-          .setPathMiddle("/metrics/");
+          .setPathMiddle("/monitor/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default

@@ -46,9 +46,7 @@ public class FlumeClient {
   int port = -1;                 // the Flume port of the gateway
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the flume collector
-  String apikey =                // the api key for authentication.
-    Constants.DEVELOPER_ACCOUNT_ID; // by default, assuming that connecting to
-                                                                  // the AppFabric running in local mode
+  String apikey = null;           // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
@@ -70,24 +68,17 @@ public class FlumeClient {
     out.println("  " + name +
         " --stream <id> --body <value> [ <option> ... ]");
     out.println("Options:");
-    out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      " +
-        "To specify the name of the flume collector");
-    out.println("  --apikey <apikey>       " +
-        "To specify an API key for authentication");
-    out.println("  --stream <id>         " +
-        "To specify the destination event stream of the");
+    out.println("  --port <number>         To specify the port to use");
+    out.println("  --connector <name>      To specify the name of the flume collector");
+    out.println("  --apikey <apikey>       To specify an API key for authentication");
+    out.println("  --stream <id>           To specify the destination event stream of the");
     out.println("                          <stream>.");
-    out.println("  --header <name> <value> " +
-        "To specify a header for the event to send. Can");
+    out.println("  --header <name> <value> To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
-    out.println("  --body <value>          " +
-        "To specify the body of the event as a string");
-    out.println("  --body-file <path>      " +
-        "Alternative to --body, to specify a file that");
-    out.println("                          " +
-        "contains the binary body of the event");
+    out.println("  --body <value>          To specify the body of the event as a string");
+    out.println("  --body-file <path>      Alternative to --body, to specify a file that");
+    out.println("                          contains the binary body of the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
