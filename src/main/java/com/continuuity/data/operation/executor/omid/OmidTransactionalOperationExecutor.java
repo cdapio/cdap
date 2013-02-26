@@ -206,13 +206,13 @@ public class OmidTransactionalOperationExecutor
     streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
   }
 
-  private void namedTableMetric_read(String tableName) {
-    streamMetric.meter("dataset.read." + tableName, 1);
+  private void dataSetMetric_read(String dataSetName) {
+    streamMetric.meter("dataset.read." + dataSetName, 1);
   }
   
-  private void namedTableMetric_write(String tableName, int dataSize) {
-    streamMetric.meter("dataset.write." + tableName, 1);
-    streamMetric.meter("dataset.storage." + tableName, dataSize);
+  private void dataSetMetric_write(String dataSetName, int dataSize) {
+    streamMetric.meter("dataset.write." + dataSetName, 1);
+    streamMetric.meter("dataset.storage." + dataSetName, dataSize);
   }
   
   /* -------------------  end metrics ---------------- */
@@ -416,7 +416,7 @@ public class OmidTransactionalOperationExecutor
       transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), pointer);
     end("ReadAllKeys", begin);
-    namedTableMetric_read(readKeys.getTable());
+    dataSetMetric_read(readKeys.getMetricName());
     return new OperationResult<List<byte[]>>(result);
   }
 
@@ -441,7 +441,7 @@ public class OmidTransactionalOperationExecutor
     OperationResult<Map<byte[], byte[]>> result =
       table.get(read.getKey(), read.getColumns(), pointer);
     end("Read", begin);
-    namedTableMetric_read(read.getTable());
+    dataSetMetric_read(read.getMetricName());
     return result;
   }
 
@@ -470,7 +470,7 @@ public class OmidTransactionalOperationExecutor
       readColumnRange.getStopColumn(), readColumnRange.getLimit(),
       pointer);
     end("ReadColumnRange", begin);
-    namedTableMetric_read(readColumnRange.getTable());
+    dataSetMetric_read(readColumnRange.getMetricName());
     return result;
   }
 
@@ -751,7 +751,7 @@ public class OmidTransactionalOperationExecutor
     OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
     table.put(write.getKey(), write.getColumns(), transaction.getTransactionId(), write.getValues());
     end("Write", begin);
-    namedTableMetric_write(write.getTable(), write.getSize());
+    dataSetMetric_write(write.getMetricName(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
     return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
   }
@@ -765,7 +765,7 @@ public class OmidTransactionalOperationExecutor
         this.findRandomTable(context, delete.getTable());
     table.deleteAll(delete.getKey(), delete.getColumns(), transaction.getTransactionId());
     end("Delete", begin);
-    namedTableMetric_write(delete.getTable(), delete.getSize());
+    dataSetMetric_write(delete.getMetricName(), delete.getSize());
     return new WriteTransactionResult(
         new UndoDelete(delete.getTable(), delete.getKey(), delete.getColumns()));
   }
@@ -785,7 +785,7 @@ public class OmidTransactionalOperationExecutor
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("Increment", begin);
-    namedTableMetric_write(increment.getTable(), increment.getSize());
+    dataSetMetric_write(increment.getMetricName(), increment.getSize());
     return new WriteTransactionResult(
         new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()), map);
   }
@@ -804,7 +804,7 @@ public class OmidTransactionalOperationExecutor
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("CompareAndSwap", begin);
-    namedTableMetric_write(write.getTable(), write.getSize());
+    dataSetMetric_write(write.getMetricName(), write.getSize());
     return new WriteTransactionResult(
         new UndoWrite(write.getTable(), write.getKey(), new byte[][] { write.getColumn() }));
   }
