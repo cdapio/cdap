@@ -154,13 +154,15 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
             try {
               input.submitAck(txAgent);
               txAgent.finish();
-              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
               callback.onSuccess(event, inputContext);
             } catch (Throwable t) {
               LOGGER.error("Fail to commit transction: " + input, t);
               callback.onFailure(event, inputContext,
                                  new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage(), t),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
+            } finally {
+              // we want to emit metrics after every retry after finish() so that deferred operations are also logged
+              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
             }
           }
         });
@@ -181,8 +183,9 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
           @Override
           public void run() {
             try {
-              txAgent.abort();
+              // emitting metrics before abort is fine: we don't perform any operataions during abort();
               flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
+              txAgent.abort();
             } catch (Throwable t) {
               LOGGER.error("OperationException when aborting transaction.", t);
             } finally {
