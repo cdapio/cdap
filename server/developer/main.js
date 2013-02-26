@@ -89,7 +89,7 @@ io.sockets.on('connection', function (newSocket) {
 	});
 
 	socket.on('gateway', function (request) {
-		Api.gateway('developer', request.method, request.params, function (error, response) {
+		Api.gateway('apikey', request.method, request.params, function (error, response) {
 			socketResponse(request, error, response);
 		});
 	});
