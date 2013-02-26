@@ -95,46 +95,32 @@ public class StreamClient {
     if (System.getProperty("script") != null) name = System.getProperty("script").replaceAll("[./]", "");
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name +
-                  " create --stream <id>");
-    out.println("  " + name +
-        " send --stream <id> --body <value> [ <option> ... ]");
-    out.println("  " + name + " id --stream <id> [ <option> ... ]");
-    out.println("  " + name +
-        " fetch --stream <id> --consumer <id> [ <option> ... ]");
+    out.println("  " + name + " create --stream <id>");
+    out.println("  " + name + " send --stream <id> --body <value> [ <option> ... ]");
+    out.println("  " + name + " group --stream <id> [ <option> ... ]");
+    out.println("  " + name + " fetch --stream <id> --group <id> [ <option> ... ]");
     out.println("  " + name + " view --stream <id> [ <option> ... ]");
     out.println("  " + name + " info --stream <id> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      " +
-        "To specify the name of the rest collector");
-    out.println("  --apikey <apikey>       " +
-        "To specify an API key for authentication");
-    out.println("  --stream <id>           " +
-        "To specify the destination event stream of the");
+    out.println("  --connector <name>      To specify the name of the rest collector");
+    out.println("  --apikey <apikey>       To specify an API key for authentication");
+    out.println("  --stream <id>           To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
-    out.println("  --header <name> <value> " +
-        "To specify a header for the event to send. Can");
+    out.println("  --header <name> <value> To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
-    out.println("  --body <value>          " +
-        "To specify the body of the event as a string");
-    out.println("  --body-file <path>      " +
-        "Alternative to --body, to specify a file that");
-    out.println("                          " +
-        "contains the binary body of the event");
-    out.println("  --hex                   " +
-        "To specify hexadecimal encoding for --body");
+    out.println("  --body <value>          To specify the body of the event as a string");
+    out.println("  --body-file <path>      Alternative to --body, to specify a file that");
+    out.println("                          contains the binary body of the event");
+    out.println("  --hex                   To specify hexadecimal encoding for --body");
     out.println("  --url                   To specify url encoding for --body");
-    out.println("  --id <group id>         " +
-        "To specify a consumer group id for the stream, as ");
-    out.println("                          obtained by " + name + " id");
+    out.println("  --group <id>            To specify a consumer group id for the stream, as ");
+    out.println("                          obtained by " + name + " group command ");
     out.println("  --all                   To view the entire stream.");
-    out.println("  --first <number>        " +
-        "To view the first N events in the stream. Default ");
+    out.println("  --first <number>        To view the first N events in the stream. Default ");
     out.println("                          for view is --first 10.");
-    out.println("  --last <number>         " +
-        "To view the last N events in the stream.");
+    out.println("  --last <number>         To view the last N events in the stream.");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -210,7 +196,7 @@ public class StreamClient {
         } catch (NumberFormatException e) {
           usage(true);
         }
-      } else if ("--id".equals(arg)) {
+      } else if ("--group".equals(arg)) {
         if (++pos >= args.length) usage(true);
         try {
           consumer = args[pos];
@@ -232,7 +218,7 @@ public class StreamClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("create", "send", "id", "fetch", "view", "info");
+      Arrays.asList("create", "send", "group", "fetch", "view", "info");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -258,7 +244,7 @@ public class StreamClient {
           "(binary input)");
     // make sure that fetch command has a consumer id
     if ("fetch".equals(command) && consumer == null)
-      usage("--consumer must be specified for fetch");
+      usage("--group must be specified for fetch");
     // make sure that view command does not have contradicting options
     if ("view".equals(command)) {
       if ((all && first != null) || (all && last != null) ||
@@ -391,7 +377,7 @@ public class StreamClient {
       return "OK.";
     }
 
-    else if ("id".equals(command)) {
+    else if ("group".equals(command)) {
       String id = getConsumerId(requestUrl);
       if (id != null) {
         System.out.println(id);
@@ -419,6 +405,12 @@ public class StreamClient {
         System.err.println(e.getMessage());
         return null;
       }
+
+      if (event == null) {
+        System.out.println("no event");
+        return "";
+      }
+
       // print all the headers
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
@@ -498,7 +490,7 @@ public class StreamClient {
   }
 
   /**
-   * This implements --id, it obtains a new consumer group id
+   * This implements --group, it obtains a new consumer group id
    * @param requestUrl the base url with the stream added to it
    * @return the consumer group id returned by the gateway
    */
