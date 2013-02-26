@@ -35,6 +35,10 @@ in your local ant build file with the following syntax:
 Note: Due to the way Ant handles properties, it is important to insert the
 property BEFORE you import the common build file.
 
+Some of the examples include maven configuration pom and can be built with
+maven build tool as well. CountCounts is an example with third-party
+dependencies (jackson JSON lib) and requires maven for building ('mvn'
+command should be available on command line).
 
 List of Example Projects
 ========================
