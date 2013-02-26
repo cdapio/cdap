@@ -766,7 +766,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           if (buffer.hasArray()) {
             int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
             if (len > 0) {
-              buffer.position(buffer.arrayOffset() + len);
+              buffer.position(buffer.position() + len);
             }
             return len;
           }
