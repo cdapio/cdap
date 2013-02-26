@@ -62,7 +62,6 @@ import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -79,21 +78,15 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
-import com.ning.http.client.FilePart;
+import com.ning.http.client.Body;
+import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import com.ning.http.client.StringPart;
-import com.ning.http.client.ThrowableHandler;
-import com.ning.http.client.generators.FileBodyGenerator;
-import com.ning.http.client.generators.InputStreamBodyGenerator;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -716,7 +709,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
-      InputStream reader = applicationDir.getInputStream();
       String schema = "https";
       if("localhost".equals(hostname)) {
         schema = "http";
@@ -729,12 +721,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
         .setHeader("X-Archive-Name", applicationDir.getName())
         .setHeader("X-Continuuity-ApiKey", authToken.getToken())
-        .setHeader("Content-Type", "multipart/form-data")
-        .setHeader("Content-Length", String.valueOf(applicationDir.length()))
         .build();
 
       try {
-        Future<Response> future = client.put(new InputStreamBodyGenerator(reader));
+        Future<Response> future = client.put(new LocationBodyGenerator(applicationDir));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if(response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
@@ -742,10 +732,59 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return true;
       } finally {
         client.close();
-        reader.close();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  private static final class LocationBodyGenerator implements BodyGenerator {
+
+    private final Location location;
+
+    private LocationBodyGenerator(Location location) {
+      this.location = location;
+    }
+
+    @Override
+    public Body createBody() throws IOException {
+      final InputStream input = location.getInputStream();
+
+      return new Body() {
+        @Override
+        public long getContentLength() {
+          try {
+            return location.length();
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public long read(ByteBuffer buffer) throws IOException {
+          // Fast path
+          if (buffer.hasArray()) {
+            int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            if (len > 0) {
+              buffer.position(buffer.arrayOffset() + len);
+            }
+            return len;
+          }
+
+          byte[] bytes = new byte[buffer.remaining()];
+          int len = input.read(bytes);
+          if (len < 0) {
+            return len;
+          }
+          buffer.put(bytes, 0, len);
+          return len;
+        }
+
+        @Override
+        public void close() throws IOException {
+          input.close();
+        }
+      };
     }
   }
 
