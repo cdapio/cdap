@@ -120,12 +120,18 @@ fs.readFile(configPath, function (error, result) {
 
 			if (req.session.account_id) {
 
+				next();
+
+				/*
+
 				if (req.session.account_id !== config['user']) {
 					res.write('Denied (' + config['user'] + ':' + req.session.account_id + ')');
 					res.end();
 				} else {
 					next();
 				}
+
+				*/
 
 			} else {
 
@@ -175,21 +181,33 @@ fs.readFile(configPath, function (error, result) {
 
 					logger.trace('> /getSSOUser', data);
 
-					var account = JSON.parse(data);
-					// Create a unique ID for this session.
-					var current_date = (new Date()).valueOf().toString();
-					var random = Math.random().toString();
-					req.session.session_id = crypto.createHash('sha1')
-						.update(current_date + random).digest('hex');
+					if (res.statusCode !== 200) {
 
-					if (account.account_id !== config['user']) {
-						res.write('Denied (' + config['user'] + ':' + account.account_id + ')');
+						res.write('Error: ' + data);
 						res.end();
+
 					} else {
-					
-						req.session.account_id = account.account_id;
-						req.session.name = account.first_name + ' ' + account.last_name;
-						res.redirect('/');
+
+						var account = JSON.parse(data);
+						// Create a unique ID for this session.
+						var current_date = (new Date()).valueOf().toString();
+						var random = Math.random().toString();
+						req.session.session_id = crypto.createHash('sha1')
+							.update(current_date + random).digest('hex');
+
+						/*
+						if (account.account_id !== config['user']) {
+							res.write('Denied (' + config['user'] + ':' + account.account_id + ')');
+							res.end();
+						} else {
+						*/
+							req.session.account_id = account.account_id;
+							req.session.name = account.first_name + ' ' + account.last_name;
+							res.redirect('/');
+						/*
+						}
+						*/
+
 					}
 
 				});
@@ -418,6 +436,8 @@ fs.readFile(configPath, function (error, result) {
 					 */
 					var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
 					logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+
+					logger.info('Listening on port ');
 
 					/**
 					 * Configure Socket IO
