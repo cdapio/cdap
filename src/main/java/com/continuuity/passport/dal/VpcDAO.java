@@ -6,6 +6,7 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
+import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 import com.continuuity.passport.meta.VPC;
 
@@ -33,4 +34,6 @@ public interface VpcDAO {
 
   public int getVPCCount(String vpcName);
 
-}
+  public Account getAccountForVPC(String vpcName);
+
+  }

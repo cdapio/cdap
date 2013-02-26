@@ -4,6 +4,7 @@
 
 package com.continuuity.passport.http.handlers;
 
+import com.continuuity.passport.meta.Account;
 import com.google.gson.JsonObject;
 
 /**
@@ -23,6 +24,10 @@ public class Utils {
     object.addProperty("error", error);
     object.addProperty("reason", reason);
     return object.toString();
+  }
+
+  public static String getJsonError(String error, Account account)  {
+    return String.format("{\"error\": \"%s\", \"reason\":%s}",error, account.toString()) ;
   }
 
   public static String getJson(String status, String message) {
@@ -66,6 +71,7 @@ public class Utils {
     object.add("error", null);
     return object.toString();
   }
+
 
 
 }
