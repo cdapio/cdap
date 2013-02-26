@@ -147,7 +147,7 @@
 
     this.socket.setBuffer(true);
   };
-  
+
   /**
    * Creates a new JSONP poll that can be used to listen
    * for messages from the Socket.IO server.
@@ -174,7 +174,7 @@
       self.onClose();
     };
 
-    var insertAt = document.getElementsByTagName('script')[0]
+    var insertAt = document.getElementsByTagName('script')[0];
     insertAt.parentNode.insertBefore(script, insertAt);
     this.script = script;
 
@@ -196,7 +196,7 @@
 
   JSONPPolling.prototype._ = function (msg) {
     this.onData(msg);
-    if (this.open) {
+    if (this.isOpen) {
       this.get();
     }
     return this;
