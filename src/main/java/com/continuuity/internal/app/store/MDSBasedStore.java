@@ -389,7 +389,7 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification appSpec = getApplication(id.getApplication());
     if (appSpec == null) {
       throw new IllegalArgumentException("no such application @ account id: " + id.getAccountId() +
-                                           ", app id: " + id.getApplication());
+                                           ", app id: " + id.getApplication().getId());
     }
     return appSpec;
   }

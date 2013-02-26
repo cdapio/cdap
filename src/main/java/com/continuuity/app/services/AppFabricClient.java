@@ -47,7 +47,7 @@ import java.util.Set;
 public class AppFabricClient {
 
   private static Set<String> availableCommands = Sets.newHashSet("deploy", "stop", "start", "help",
-    "promote", "verify", "status");
+                                                                 "promote", "verify", "status");
   private final String RESOURCE_LONG_OPT_ARG = "resource";
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCESSOR_LONG_OPT_ARG = "processor";
@@ -107,7 +107,7 @@ public class AppFabricClient {
         AuthToken dummyAuthToken = new AuthToken("AppFabricClient");
         FlowIdentifier identifier = new FlowIdentifier("Account", application, processor, 0);
         RunIdentifier runIdentifier = client.start(dummyAuthToken,
-          new FlowDescriptor(identifier, new ArrayList<String>()));
+                                                   new FlowDescriptor(identifier, new ArrayList<String>()));
 
         Preconditions.checkNotNull(runIdentifier, "Problem starting the application");
         LOG.info("Started application with id: " + runIdentifier.getId());
@@ -125,7 +125,7 @@ public class AppFabricClient {
 
       if ("promote".equals(command)) {
         ResourceIdentifier identifier = new ResourceIdentifier("Account", this.application, this.resource, 0);
-        boolean status = client.promote(new AuthToken(this.authToken),identifier);
+        boolean status = client.promote(new AuthToken(this.authToken),identifier, this.vpc);
         if (status) {
           LOG.info("Promoted to cloud");
         }
@@ -145,7 +145,7 @@ public class AppFabricClient {
       if ("verify".equals(command)) {
         Location location = new LocalLocationFactory().create(this.resource);
         final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
-          new DataFabricModules().getInMemoryModules());
+                                                       new DataFabricModules().getInMemoryModules());
 
         ManagerFactory factory = injector.getInstance(ManagerFactory.class);
         Manager<Location, ApplicationWithPrograms> manager = (Manager<Location, ApplicationWithPrograms>) factory.create();
@@ -183,11 +183,12 @@ public class AppFabricClient {
     CommandLineParser commandLineParser = new GnuParser();
 
     Options options = new Options();
-    options.addOption(RESOURCE_SHORT_OPT_ARG,RESOURCE_LONG_OPT_ARG, true, "Jar that contains the application");
-    options.addOption(APPLICATION_SHORT_OPT_ARG,APPLICATION_LONG_OPT_ARG, true, "Application Id");
-    options.addOption(PROCESSOR_SHORT_OPT_ARG,PROCESSOR_LONG_OPT_ARG, true, "Processor Id");
-    options.addOption(VPC_SHORT_OPT_ARG,VPC_LONG_OPT_ARG, true, "VPC to push the application");
-    options.addOption(AUTH_TOKEN_SHORT_OPT_ARG,AUTH_TOKEN_LONG_OPT_ARG, true, "Auth token of the account");
+
+    options.addOption(RESOURCE_SHORT_OPT_ARG,RESOURCE_LONG_OPT_ARG, true, "Jar that contains the application.");
+    options.addOption(APPLICATION_SHORT_OPT_ARG,APPLICATION_LONG_OPT_ARG, true, "Application Id.");
+    options.addOption(PROCESSOR_SHORT_OPT_ARG,PROCESSOR_LONG_OPT_ARG, true, "Processor Id.");
+    options.addOption(VPC_SHORT_OPT_ARG,VPC_LONG_OPT_ARG, true, "Fully qualified VPC name to push the application to.");
+    options.addOption(AUTH_TOKEN_SHORT_OPT_ARG,AUTH_TOKEN_LONG_OPT_ARG, true, "Auth token of the account.");
 
 
     CommandLine commandLine = null;
@@ -202,7 +203,7 @@ public class AppFabricClient {
 
       if ("deploy".equals(command)) {
         Preconditions.checkArgument(commandLine.hasOption(RESOURCE_LONG_OPT_ARG),
-                          "deploy command should have resource argument");
+                                    "deploy command should have resource argument");
         this.resource = commandLine.getOptionValue(RESOURCE_LONG_OPT_ARG);
       }
       if ("start".equals(command)) {

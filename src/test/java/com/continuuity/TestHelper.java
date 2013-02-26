@@ -106,7 +106,7 @@ public class TestHelper {
 
     // Call init to get a session identifier - yes, the name needs to be changed.
     AuthToken token = new AuthToken("12345");
-    ResourceIdentifier id = server.init(token, new ResourceInfo("demo","", fileName, 123455, 45343));
+    ResourceIdentifier id = server.init(token, new ResourceInfo("developer","", fileName, 123455, 45343));
 
     // Upload the jar file to remote location.
     BufferFileInputStream is =
