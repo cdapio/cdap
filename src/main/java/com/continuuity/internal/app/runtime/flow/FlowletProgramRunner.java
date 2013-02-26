@@ -156,7 +156,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletType,
-                                   processMethodFactory(flowlet,
+                                   processMethodFactory(flowlet, flowletContext,
                                                         createSchemaCache(program),
                                                         txAgentSupplier,
                                                         outputSubmitter),
@@ -381,13 +381,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
+                                                    final BasicFlowletContext flowletContext,
                                                     final SchemaCache schemaCache,
                                                     final TransactionAgentSupplier txAgentSupplier,
                                                     final OutputSubmitter outputSubmitter) {
     return new ProcessMethodFactory() {
       @Override
       public ProcessMethod create(Method method, TypeToken<?> dataType, Schema schema) {
-        return ReflectionProcessMethod.create(flowlet, method, dataType, schema,
+        return ReflectionProcessMethod.create(flowlet, flowletContext, method, dataType, schema,
                                               schemaCache, txAgentSupplier, outputSubmitter);
 
 

@@ -37,6 +37,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private static final Logger LOGGER = LoggerFactory.getLogger(ReflectionProcessMethod.class);
 
   private final Flowlet flowlet;
+  private final BasicFlowletContext flowletContext;
   private final Method method;
   private final SchemaCache schemaCache;
   private final TransactionAgentSupplier txAgentSupplier;
@@ -47,21 +48,24 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final ByteBufferInputStream byteBufferInput;
   private final BinaryDecoder decoder;
 
-  public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, Method method,
+  public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, BasicFlowletContext flowletContext,
+                                                      Method method,
                                                       TypeToken<T> dataType,
                                                       Schema schema, SchemaCache schemaCache,
                                                       TransactionAgentSupplier txAgentSupplier,
                                                       OutputSubmitter outputSubmitter) {
-    return new ReflectionProcessMethod<T>(flowlet, method, dataType, schema,
+    return new ReflectionProcessMethod<T>(flowlet, flowletContext, method, dataType, schema,
                                           schemaCache, txAgentSupplier, outputSubmitter);
   }
 
-  private ReflectionProcessMethod(Flowlet flowlet, Method method,
+  private ReflectionProcessMethod(Flowlet flowlet, BasicFlowletContext flowletContext,
+                                  Method method,
                                   TypeToken<T> dataType,
                                   Schema schema, SchemaCache schemaCache,
                                   TransactionAgentSupplier txAgentSupplier,
                                   OutputSubmitter outputSubmitter) {
     this.flowlet = flowlet;
+    this.flowletContext = flowletContext;
     this.method = method;
     this.schemaCache = schemaCache;
     this.txAgentSupplier = txAgentSupplier;
@@ -150,6 +154,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
             try {
               input.submitAck(txAgent);
               txAgent.finish();
+              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
               callback.onSuccess(event, inputContext);
             } catch (Throwable t) {
               LOGGER.error("Fail to commit transction: " + input, t);
@@ -177,6 +182,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
           public void run() {
             try {
               txAgent.abort();
+              flowletContext.getMetrics().count("dataops", txAgent.getSucceededCount());
             } catch (Throwable t) {
               LOGGER.error("OperationException when aborting transaction.", t);
             } finally {
