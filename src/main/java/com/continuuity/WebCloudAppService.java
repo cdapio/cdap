@@ -60,7 +60,7 @@ public class WebCloudAppService {
       boolean successful = false;
       String line;
       while ((line = br.readLine()) != null) {
-        logger.debug("[User Interface output] " + line);
+        logger.debug(line);
         if (line.contains("Listening on port ")) {
           successful = true;
           break;
@@ -80,7 +80,7 @@ public class WebCloudAppService {
           try {
             String line;
             while ((line = br.readLine()) != null) {
-              logger.trace("[User Interface output] " + line);
+              logger.trace(line);
             }
           } catch (IOException ie) {
             logger.error(ie.getMessage());
