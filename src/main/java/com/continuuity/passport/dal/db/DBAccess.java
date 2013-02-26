@@ -26,15 +26,16 @@ public abstract class DBAccess {
    */
   public void close(Connection connection, PreparedStatement ps, ResultSet rs) {
     try {
-      if (connection != null) {
-        connection.close();
+      if (rs != null) {
+        rs.close();
       }
       if (ps != null) {
         ps.close();
       }
-      if (rs != null) {
-        rs.close();
+      if (connection != null) {
+        connection.close();
       }
+
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     }
