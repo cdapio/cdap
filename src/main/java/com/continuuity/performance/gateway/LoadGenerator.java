@@ -66,7 +66,7 @@ public class LoadGenerator extends SimpleBenchmark {
 
     // determine the base url for the GET request
     if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestCollector.class, null, hostname);
+        Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, false);
     if (baseUrl == null) {
       throw new BenchmarkException(
           "Can't figure out gateway URL. Please specify --base");
