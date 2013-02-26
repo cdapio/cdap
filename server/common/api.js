@@ -365,7 +365,9 @@ logger.setLevel(LOG_LEVEL);
 
 		post_options.headers['Content-Length'] = post_data.length;
 
-		var request = http.request(post_options, function(res) {
+		var lib = apiKey === 'apikey' ? http : https;
+
+		var request = lib.request(post_options, function(res) {
 			res.setEncoding('utf8');
 			var data = [];
 

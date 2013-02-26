@@ -137,9 +137,7 @@ io.sockets.on('connection', function (newSocket) {
  */
 app.post('/upload/:file', function (req, res) {
 
-
 	var accountID = 'developer';
-
 	Api.upload(accountID, req, res, req.params.file, socket);				
 	
 });
