@@ -24,7 +24,6 @@ die ( ) {
     exit 1
 }
 
-
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
@@ -73,7 +72,9 @@ function splitJvmOpts() {
 }
 eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_APP_FABRIC_OPTS
 
-#echo "${JVM_OPTS[@]}"
+if [ -d /opt/continuuity ]; then
+ CONTINUUITY_HOME=/opt/continuuity
+fi
 
 # PID Location
 PID_DIR=$APP_HOME/data
