@@ -1,8 +1,10 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 /**
  * This package contains utility classes and helper functions.
- * {@link com.continuuity.api.data.util.Bytes} class handles byte arrays, conversions to/from other types,
- * comparisons, hash code generation, manufacturing keys for HashMaps or HashSets
- * {@link com.continuuity.api.data.util.Helpers} classes contain utility functions for timestamp
- *
+ * <p>
+ * {@link com.continuuity.api.data.util.Helpers} class contain utility functions for timestamp manipulation
  */
 package com.continuuity.api.data.util;
