@@ -5,6 +5,8 @@
 package com.continuuity.passport.dal.db;
 
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,6 +18,8 @@ import java.sql.SQLException;
  */
 public abstract class DBAccess {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DBAccess.class);
+
   /**
    * Close DB related objects
    *
@@ -25,18 +29,27 @@ public abstract class DBAccess {
    * @throws RuntimeException
    */
   public void close(Connection connection, PreparedStatement ps, ResultSet rs) {
+
     try {
-      if (connection != null) {
-        connection.close();
-      }
-      if (ps != null) {
-        ps.close();
-      }
       if (rs != null) {
         rs.close();
       }
     } catch (SQLException e) {
-      throw Throwables.propagate(e);
+      LOG.error(String.format("Error while closing Result set %s", e.getMessage()));
+    }
+    try {
+      if (ps != null) {
+        ps.close();
+      }
+    } catch (SQLException e) {
+      LOG.error(String.format("Error while closing PreparedStatement set %s", e.getMessage()));
+    }
+    try {
+      if (connection != null) {
+        connection.close();
+      }
+    } catch (SQLException e) {
+      LOG.error(String.format("Error while closing Connection set %s", e.getMessage()));
     }
   }
 

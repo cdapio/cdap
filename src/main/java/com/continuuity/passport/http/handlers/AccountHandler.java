@@ -116,9 +116,10 @@ public class AccountHandler extends PassportHandler {
       }
     } catch (Exception e) {
       requestFailed(); // Request failed
-      LOG.error("Exception while processing endpoint: %s. %s","PUT /passport/v1/account/{id}/password",e.getMessage());
+      LOG.error(String.format("Exception while processing endpoint: %s  %s",
+                              "PUT /passport/v1/account/{id}/password",e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-        .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
+        .entity(Utils.getJson("FAILED", String.format("Exception processing change password %s", e.getMessage())))
         .build();
     }
   }

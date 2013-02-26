@@ -456,10 +456,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s and %s = ?",
+      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.PASSWORD_COLUMN,
-        DBUtils.AccountTable.API_KEY_COLUMN,
         DBUtils.AccountTable.ID_COLUMN,
         DBUtils.AccountTable.PASSWORD_COLUMN);
 
@@ -468,6 +467,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setInt(2, accountId);
       ps.setString(3, PasswordUtils.generateHashedPassword(oldPassword));
       ps.executeUpdate();
+
 
     } catch (SQLException e) {
       throw Throwables.propagate(e);
