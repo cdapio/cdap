@@ -311,18 +311,20 @@ public class RestHandler extends NettyRestHandler {
                                      .toString();
           GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
           OperationResult<QueueInfo> info = null;
-          boolean notfound = false;
+          boolean noEventsInDF = false;
+
           try {
+
             info = this.collector.getExecutor().
                 execute(operationContext, getInfo);
-            notfound = info.isEmpty()
+            noEventsInDF = info.isEmpty()
                 || info.getValue().getJSONString() == null;
           } catch (Exception e) {
             if (e instanceof OperationException) {
               OperationException oe = (OperationException)e;
-              notfound = oe.getStatus() == StatusCode.QUEUE_NOT_FOUND;
+              noEventsInDF = oe.getStatus() == StatusCode.QUEUE_NOT_FOUND;
             }
-            if (!notfound) {
+            if (!noEventsInDF) {
               LOG.error("Exception for GetQueueInfo: " + e.getMessage(), e);
               helper.finish(Error);
               respondError(message.getChannel(),
@@ -330,9 +332,23 @@ public class RestHandler extends NettyRestHandler {
               break;
             }
           }
-          if (notfound) {
-            respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-            helper.finish(NotFound);
+          if (noEventsInDF) {
+            MetadataService mds = this.collector.getMetadataService();
+            //Check if a stream exists
+            Stream existingStream = mds.getStream(new Account(accountId), new Stream(destination));
+            boolean existsInMDS = existingStream.isExists();
+
+            if (existsInMDS) {
+              byte[] responseBody = "{}".getBytes();
+              Map<String, String> headers = Maps.newHashMap();
+              headers.put(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+              respond(message.getChannel(), request,
+                      HttpResponseStatus.OK, headers, responseBody);
+              helper.finish(Success);
+            } else {
+              respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+              helper.finish(NotFound);
+            }
             this.collector.getStreamCache().refreshStream(accountId, destination);
           } else {
             byte[] responseBody = info.getValue().getJSONString().getBytes();
