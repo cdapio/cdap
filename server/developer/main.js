@@ -42,7 +42,9 @@ if (fs.existsSync(__dirname + '/../client/')) {
 	app.use(express.static(__dirname + '/../../client/'));
 }
 
-io = io.listen(app);
+var server = http.createServer(app);
+
+io = require('socket.io').listen(server);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
 	io.set('log level', 1);
@@ -312,7 +314,7 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 
 			logger.info('Listening on port',
 				config['node-port']);	
-			app.listen(config['node-port']);
+			server.listen(config['node-port']);
 
 			logger.info(config);
 
