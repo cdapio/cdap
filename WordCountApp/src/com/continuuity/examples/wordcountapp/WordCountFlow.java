@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcountapp;
 
 
 import com.continuuity.api.flow.Flow;
@@ -34,12 +34,12 @@ public class WordCountFlow implements Flow {
         .withFlowlets()
             .add("wordSplitter", new WordSplitterFlowlet())
             .add("wordCounter", new WordCounterFlowlet())
-            .add("wordAssociator", new WordAssociatorFlowlet())
+            .add("wordAssociater", new WordAssociaterFlowlet())
             .add("uniqueCounter", new UniqueCounterFlowlet())
         .connect()
             .fromStream("wordStream").to("wordSplitter")
             .from("wordSplitter").to("wordCounter")
-            .from("wordSplitter").to("wordAssociator")
+            .from("wordSplitter").to("wordAssociater")
             .from("wordCounter").to("uniqueCounter")
         .build();
   }

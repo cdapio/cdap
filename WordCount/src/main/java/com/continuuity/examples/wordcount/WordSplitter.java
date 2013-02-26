@@ -1,4 +1,4 @@
-package WordCount;
+package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.common.Bytes;
@@ -9,12 +9,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WordSplitterFlowlet extends AbstractFlowlet {
-
-  public WordSplitterFlowlet() {
-    super("wordSplitter");
-  }
-
+public class WordSplitter extends AbstractFlowlet {
   @Output("wordOut")
   private OutputEmitter<String> wordOutput;
 

@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package com.continuuity.examples.wordcountapp;
 
 import java.io.IOException;
 import java.util.Map;
