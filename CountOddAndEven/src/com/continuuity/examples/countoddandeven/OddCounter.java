@@ -11,7 +11,7 @@ public class OddCounter extends AbstractFlowlet {
   int count = 0;
 
   @ProcessInput("oddNumbers")
-  public void process() {
+  public void process(Integer number) {
     count++;
   }
 

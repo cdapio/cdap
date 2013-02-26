@@ -19,9 +19,6 @@ import java.util.TreeMap;
 
 public class RetrieveCounts extends AbstractProcedure {
 
-  public RetrieveCounts() {
-    super("RetrieveCounts");
-  }
   @Override
   public ProcedureSpecification configure() {
     return ProcedureSpecification.Builder.with()
