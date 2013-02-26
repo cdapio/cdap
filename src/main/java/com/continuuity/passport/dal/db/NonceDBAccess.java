@@ -129,7 +129,6 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
     Connection connection = null;
     PreparedStatement ps = null;
-    String id = null;
 
     try {
       connection = this.poolManager.getValidConnection();
@@ -141,6 +140,8 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       ps.executeUpdate();
     } catch (SQLException e) {
       throw Throwables.propagate(e);
+    } finally {
+      close(connection, ps);
     }
   }
 
