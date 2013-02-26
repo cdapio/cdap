@@ -4,8 +4,8 @@
 
 package com.continuuity.internal.io;
 
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;

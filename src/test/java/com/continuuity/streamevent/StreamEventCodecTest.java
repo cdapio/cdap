@@ -1,9 +1,9 @@
 package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaHash;
-import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.SchemaHash;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionDatumReader;

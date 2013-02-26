@@ -4,15 +4,14 @@
 
 package com.continuuity.io;
 
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -169,7 +168,7 @@ public class DatumCodecTest {
     String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() {})
                         .read(new BinaryDecoder(input), sourceSchema);
 
-    Assert.assertArrayEquals(new String[] {"1", "2", "3"}, array);
+    Assert.assertArrayEquals(new String[]{"1", "2", "3"}, array);
   }
 
   public static final class Node {
