@@ -184,7 +184,8 @@ describe('WebSocket', function() {
   });
 
   describe('connection establishing', function() {
-    it('can disconnect before connection is established', function(done) {server.createServer(++port, function(srv) {
+    it('can disconnect before connection is established', function(done) {
+      server.createServer(++port, function(srv) {
         var ws = new WebSocket('ws://localhost:' + port);
         ws.terminate();
         ws.on('open', function() {
@@ -225,6 +226,19 @@ describe('WebSocket', function() {
       server.createServer(++port, server.handlers.closeAfterConnect, function(srv) {
         var ws = new WebSocket('ws://localhost:' + port);
         ws.on('close', function() {
+          srv.close();
+          done();
+        });
+      });
+    });
+
+    it('error is emitted if server aborts connection', function(done) {
+      server.createServer(++port, server.handlers.return401, function(srv) {
+        var ws = new WebSocket('ws://localhost:' + port);
+        ws.on('open', function() {
+          assert.fail('connect shouldnt be raised here');
+        });
+        ws.on('error', function() {
           srv.close();
           done();
         });
@@ -1275,6 +1289,38 @@ describe('WebSocket', function() {
       });
     });
 
+    it('should receive valid CloseEvent when server closes with code 1000', function(done) {
+      var wss = new WebSocketServer({port: ++port}, function() {
+        var ws = new WebSocket('ws://localhost:' + port);
+        ws.addEventListener('close', function(closeEvent) {
+          assert.equal(true, closeEvent.wasClean);
+          assert.equal(1000, closeEvent.code);
+          ws.terminate();
+          wss.close();
+          done();
+        });
+      });
+      wss.on('connection', function(client) {
+        client.close(1000);
+      });
+    });
+
+    it('should receive vaild CloseEvent when server closes with code 1001', function(done) {
+      var wss = new WebSocketServer({port: ++port}, function() {
+        var ws = new WebSocket('ws://localhost:' + port);
+        ws.addEventListener('close', function(closeEvent) {
+          assert.equal(false, closeEvent.wasClean);
+          assert.equal(1001, closeEvent.code);
+          assert.equal('some daft reason', closeEvent.reason);
+          ws.terminate();
+          wss.close();
+          done();
+        });
+      });
+      wss.on('connection', function(client) {
+        client.close(1001, 'some daft reason');
+      });
+    });
   });
 
   describe('ssl', function() {

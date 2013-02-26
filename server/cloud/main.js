@@ -116,6 +116,8 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		function checkSSO (req, res, next) {
 
+			logger.trace(req.session);
+
 			if (req.session.account_id) {
 
 				if (req.session.account_id !== config['user']) {
@@ -151,6 +153,8 @@ fs.readFile(configPath, function (error, result) {
 
 			var nonce = req.params.nonce;
 
+			logger.trace('< /sso/' + nonce);
+
 			var options = {
 				hostname: config['accounts-host'],
 				port: config['accounts-port'],
@@ -169,6 +173,8 @@ fs.readFile(configPath, function (error, result) {
 
 				result.on('end', function () {
 
+					logger.trace('> /getSSOUser', data);
+
 					var account = JSON.parse(data);
 					// Create a unique ID for this session.
 					var current_date = (new Date()).valueOf().toString();
@@ -180,6 +186,7 @@ fs.readFile(configPath, function (error, result) {
 						res.write('Denied (' + config['user'] + ':' + account.account_id + ')');
 						res.end();
 					} else {
+					
 						req.session.account_id = account.account_id;
 						req.session.name = account.first_name + ' ' + account.last_name;
 						res.redirect('/');
@@ -191,7 +198,7 @@ fs.readFile(configPath, function (error, result) {
 			}).end();
 
 		});
-		app.get('/sso/logout', function (req, res) {
+		app.get('/logout', function (req, res) {
 
 			req.session = null;
 			res.redirect('https://accounts.continuuity.com/logout');
