@@ -19,10 +19,18 @@ public abstract class AbstractProcedure implements Procedure {
   private final String name;
   private ProcedureContext procedureContext;
 
+  /**
+   * Default constructor which uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
+   * procedure name.
+   */
   protected AbstractProcedure() {
     this.name = getClass().getSimpleName();
   }
 
+  /**
+   * Constructor that uses the given name as the procedure name.
+   * @param name Name of the procedure.
+   */
   protected AbstractProcedure(String name) {
     this.name = name;
   }

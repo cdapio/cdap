@@ -5,17 +5,22 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- * Defines the basic Flowlet interface. A Flowlet should provide the
+ * Defines the Flowlet interface. A Flowlet should provide the
  * functionality for initializing and configuring itself.
  */
 public interface Flowlet {
   /**
    * Provides an interface to configure a Flowlet.
    * <p>
-   *   {@link #configure()} could be possibly called multiple times and hence
+   *   This method could possibly be called multiple times and hence
    *   should not be used for allocating resources needed at run-time. This
-   *   method is generally called during the configuration phase of the flowlet
-   *   which happens during deployment time and few times during run-time.
+   *   method is generally called in configuration phase of the flowlet
+   *   which happens during application deployment.
+   * </p>
+   * <p>
+   *   The {@link FlowletSpecification} returned from this method is available
+   *   at runtime through the {@link FlowletContext} which is given through
+   *   the {@link #initialize(FlowletContext)} method.
    * </p>
    *
    * @return An instance of {@link FlowletSpecification}
@@ -25,21 +30,19 @@ public interface Flowlet {
   /**
    *  Initializes a Flowlet.
    *  <p>
-   *    {@link #initialize(FlowletContext)} is called only once during the startup of
-   *    a flowlet and on every instance of this flowlet.
+   *    This method will be called only once per {@link Flowlet} instance..
    *  </p>
-   *
    *  @param context An instance of {@link FlowletContext}
-   *  @throws FlowletException
+   *  @throws FlowletException If there is any error during initialization.
    */
   void initialize(FlowletContext context) throws FlowletException;
 
   /**
    * Destroy is the last thing that gets called before the flowlet is
-   * shutdown. So, if there any cleanups then they can be specified here.
+   * shutdown. So, if there are any cleanups then they can be specified here.
    *
    * <p>
-   *   {@link #destroy()} will be called only when there are no more events beings processed
+   *   This method will be called only when there are no more events beings processed
    *   by the flowlet.
    * </p>
    */

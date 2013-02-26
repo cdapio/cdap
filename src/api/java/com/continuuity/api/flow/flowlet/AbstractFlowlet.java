@@ -5,11 +5,12 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- * Default implementation of {@link Flowlet} for easy extension.
+ * This abstract class provides default implementation of {@link Flowlet} methods for easy extension.
  * It uses result of {@link #getName()} as the Flowlet name
- * and result of {@link #getDescription()}} as the Flowlet description.
+ * and result of {@link #getDescription()}} as the Flowlet description. By default, the {@link Class#getSimpleName()}
+ * would be used as the Flowlet name.
  * <p>
- *   Children classes can overrides the {@link #getName()}} and/or {@link #getDescription()}
+ *   Children classes can overrides the {@link #getName()} and/or {@link #getDescription()}
  *   methods to have custom namings. Children can also overrides the {@link #configure()} method
  *   to have more controls on customization the {@link FlowletSpecification}.
  * </p>
@@ -19,10 +20,18 @@ public abstract class AbstractFlowlet implements Flowlet {
   private final String name;
   private FlowletContext flowletContext;
 
+  /**
+   * Default constructor which uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
+   * flowlet name
+   */
   protected AbstractFlowlet() {
     this.name = getClass().getSimpleName();
   }
 
+  /**
+   * Constructor that uses the given name as the flowlet name.
+   * @param name Name of the flowlet
+   */
   protected AbstractFlowlet(String name) {
     this.name = name;
   }

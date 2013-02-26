@@ -5,9 +5,16 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- * Enumerates class that defines multiple ways of handling a failure policy.
+ * Enumerates class that defines policy for handling failure.
  */
 public enum FailurePolicy {
-  RETRY, // In case of failure, the event is tried again.
-  IGNORE // In case of failure, the event is ignore from reprocessing.
+  /**
+   * Resend the input object to the process method again.
+   */
+  RETRY,
+
+  /**
+   * Skips the input object which will permanently removed it from the input.
+   */
+  IGNORE
 }

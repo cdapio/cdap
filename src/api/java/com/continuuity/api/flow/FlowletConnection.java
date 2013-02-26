@@ -5,7 +5,9 @@
 package com.continuuity.api.flow;
 
 /**
- * Class that defines a connection between two flowlets.
+ * Defines a connection between two {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets} or
+ * from {@link com.continuuity.api.data.stream.Stream Stream} to
+ * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlet}.
  */
 public final class FlowletConnection {
 
@@ -21,7 +23,7 @@ public final class FlowletConnection {
   private final String sourceName;
   private final String targetName;
 
-  public FlowletConnection(Type sourceType, String sourceName, String targetName) {
+  FlowletConnection(Type sourceType, String sourceName, String targetName) {
     this.sourceType = sourceType;
     this.sourceName = sourceName;
     this.targetName = targetName;
@@ -47,5 +49,4 @@ public final class FlowletConnection {
   public String getTargetName() {
     return targetName;
   }
-
 }

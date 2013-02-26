@@ -3,7 +3,7 @@ package com.continuuity.api.flow.flowlet;
 import com.google.common.base.Objects;
 
 /**
- *
+ * This class carries information about the reason of failure.
  */
 public final class FailureReason {
 
@@ -13,12 +13,19 @@ public final class FailureReason {
    * generated during the processing.
    */
   public enum Type {
+    /**
+     * Failure triggered by exception being thrown from the process method.
+     */
     USER,
+
+    /**
+     * Error related to read/write of {@link com.continuuity.api.data.DataSet DataSet} or writing output.
+     */
     IO_ERROR,
   }
 
   /**
-   * Type of message.
+   * Type of the failure.
    */
   private final Type type;
 

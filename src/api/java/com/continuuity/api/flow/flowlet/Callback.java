@@ -3,7 +3,7 @@ package com.continuuity.api.flow.flowlet;
 import javax.annotation.Nullable;
 
 /**
- * Interface for flowlet to implement to receive callback on process result.
+ * Interface for flowlet to implement in order to receive callback on process result.
  */
 public interface Callback {
 
@@ -17,7 +17,8 @@ public interface Callback {
 
   /**
    * This method will be called when processing of a given input failed. Failure could be triggered due to
-   * exception thrown in the process method or a system error.
+   * exception thrown in the process method or a system error. The return value of this method
+   * is used to determine what action to take about the failure input.
    *
    * @param input The input object that was given to the process method.
    * @param inputContext The {@link InputContext} that was given to the process method.

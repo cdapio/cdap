@@ -13,7 +13,7 @@ import com.continuuity.api.Processor;
  * <p>
  *   To create a Flow, one must implement this interface. The {@link #configure()} method will be
  *   invoked during deployment time and it returns a {@link FlowSpecification} to specify how to
- *   configure the given Flow.
+ *   configure the Flow.
  * </p>
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
