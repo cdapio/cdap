@@ -1,18 +1,17 @@
 package com.continuuity.gateway.connector;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.Connector;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
-import com.continuuity.passport.http.client.PassportClient;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -28,7 +27,7 @@ public class AppFabricRestConnector extends Connector implements NettyRequestHan
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("connector.appfabric")
+      new HttpConfig("app.rest")
           .setPort(10007)
           .setPathMiddle("/app/");
 

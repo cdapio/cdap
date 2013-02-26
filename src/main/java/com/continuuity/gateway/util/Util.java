@@ -114,7 +114,7 @@ public class Util {
    */
   public static String findBaseUrl(CConfiguration config, Class connectorClass,
                                    String connectorName, String hostname,
-                                   String apiKey) {
+                                   int port, boolean ssl) {
 
     if (connectorName == null) {
       // find the name of the connector
@@ -135,9 +135,10 @@ public class Util {
           + connectorName + "': " + e.getMessage());
       return null;
     }
-    if (apiKey != null) {
-      httpConfig.setSsl(true);
+    if (port>0) {
+      httpConfig.setPort(port);
     }
+    httpConfig.setSsl(ssl);
     return httpConfig.getBaseUrl(hostname);
   }
 
