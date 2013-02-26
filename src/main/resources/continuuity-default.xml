@@ -123,74 +123,74 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>collector.rest,collector.flume,accessor.rest,query.rest,monitor.rest,connector.appfabric</value>
+        <value>data.rest,stream.flume,stream.rest,procedure.rest,monitor.rest,app.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
     <!-- Todd: I'm really unhappy that we have to use so much XML to describe
          the Collectors, but that's 'cos we are using the Hadoop config object -->
     <property>
-        <name>accessor.rest.class</name>
+        <name>data.rest.class</name>
         <value>com.continuuity.gateway.accessor.DataRestAccessor</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
     <property>
-        <name>accessor.rest.port</name>
+        <name>data.rest.port</name>
         <value>10002</value>
     </property>
 
     <property>
-        <name>accessor.rest.threads</name>
+        <name>data.rest.threads</name>
         <value>20</value>
     </property>
 
     <property>
-        <name>accessor.rest.middle</name>
+        <name>data.rest.middle</name>
         <value>/data/</value>
     </property>
 
     <!-- AppFabric Connector -->
     <property>
-        <name>connector.appfabric.class</name>
+        <name>app.rest.class</name>
         <value>com.continuuity.gateway.connector.AppFabricRestConnector</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
     <property>
-        <name>connector.appfabric.port</name>
+        <name>app.rest.port</name>
         <value>10007</value>
     </property>
 
     <property>
-        <name>connector.appfabric.threads</name>
+        <name>app.rest.threads</name>
         <value>5</value>
     </property>
 
     <property>
-        <name>connector.appfabric.middle</name>
+        <name>app.rest.middle</name>
         <value>/app/</value>
     </property>
 
     <!-- Procedure Handler -->
     <property>
-        <name>query.rest.class</name>
+        <name>procedure.rest.class</name>
         <value>com.continuuity.gateway.accessor.QueryRestAccessor</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
     <property>
-        <name>query.rest.port</name>
-        <value>10003</value>
+        <name>procedure.rest.port</name>
+        <value>10010</value>
     </property>
 
     <property>
-        <name>query.rest.threads</name>
+        <name>procedure.rest.threads</name>
         <value>20</value>
     </property>
 
     <property>
-        <name>query.rest.middle</name>
+        <name>procedure.rest.middle</name>
         <value>/procedure/</value>
     </property>
 
@@ -217,44 +217,39 @@
     </property>
 
     <property>
-        <name>application.rest.middle</name>
-        <value>/app/</value>
-    </property>
-
-    <property>
-        <name>collector.rest.class</name>
+        <name>stream.rest.class</name>
         <value>com.continuuity.gateway.collector.RestCollector</value>
         <description>Specifies the class for the REST collector</description>
     </property>
 
     <property>
-        <name>collector.rest.port</name>
+        <name>stream.rest.port</name>
         <value>10000</value>
     </property>
 
     <property>
-        <name>collector.rest.threads</name>
+        <name>stream.rest.threads</name>
         <value>20</value>
     </property>
 
     <property>
-        <name>collector.rest.middle</name>
+        <name>stream.rest.middle</name>
         <value>/stream/</value>
     </property>
 
     <property>
-        <name>collector.flume.class</name>
+        <name>stream.flume.class</name>
         <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
         <description>Specifies the class for the Flume collector</description>
     </property>
 
     <property>
-        <name>collector.flume.port</name>
+        <name>stream.flume.port</name>
         <value>10004</value>
     </property>
 
     <property>
-        <name>collector.flume.threads</name>
+        <name>stream.flume.threads</name>
         <value>20</value>
     </property>
 
