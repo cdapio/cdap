@@ -49,12 +49,14 @@ function checkSSO (req, res, next) {
 
 	if (req.session.account_id) {
 
-		logger.trace('SSO exists', req.session.account_id);
-		next();
+		if (req.session.account_id !== config['user']) {
+			res.write('Denied', config['user'], req.session.account_id);
+			res.end();
+		} else {
+			next();
+		}
 
 	} else {
-
-		logger.trace('SSO retrieving');
 
 		var ret = config['cluster-name'];
 		var host = config['accounts-host'];
@@ -99,19 +101,20 @@ app.get('/sso/:nonce', function (req, res) {
 		result.on('end', function () {
 
 			var account = JSON.parse(data);
-
-			logger.trace('SSO signin', account);
-
 			// Create a unique ID for this session.
 			var current_date = (new Date()).valueOf().toString();
 			var random = Math.random().toString();
 			req.session.session_id = crypto.createHash('sha1')
 				.update(current_date + random).digest('hex');
 
-			req.session.account_id = account.account_id;
-			req.session.name = account.first_name + ' ' + account.last_name;
-
-			res.redirect('/');
+			if (account.account_id !== config['user']) {
+				res.write('Denied', config['user'], account.account_id);
+				res.end();
+			} else {
+				req.session.account_id = account.account_id;
+				req.session.name = account.first_name + ' ' + account.last_name;
+				res.redirect('/');
+			}
 
 		});
 	}).on('error', function(e) {
@@ -308,6 +311,32 @@ if (fs.existsSync(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml')) 
 	configPath = process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml';
 }
 
+/**
+ * Get user.
+ */
+function getUser (name, done) {
+
+	var options = {
+		hostname: config['accounts-host'],
+		port: config['accounts-port'],
+		path: '/api/vpc/getUser/' + name,
+		method: 'GET'
+	};
+	https.request(options, function(result) {
+		result.setEncoding('utf8');
+		var data = '';
+		result.on('data', function(chunk) {
+			data += chunk;
+		});
+		result.on('end', function () {
+			var account = JSON.parse(data);
+			done(account.result);
+		});
+	}).on('error', function(e) {
+		console.error(e);
+	}).end();
+}
+
 fs.readFile(configPath, function (error, result) {
 
 	var parser = new xml2js.Parser();
@@ -320,77 +349,81 @@ fs.readFile(configPath, function (error, result) {
 			config[item.name] = item.value;
 		}
 
-		Env.getVersion(function (version) {
-			Env.getAddress(function (error, address) {
+		getUser(config['cluster-name'], function (user) {
+			config['user'] = user;
+			Env.getVersion(function (version) {
+				Env.getAddress(function (error, address) {
 
-				logger.trace('Version', version);
-				logger.trace('IP Address', address);
+					logger.trace('Version', version);
+					logger.trace('IP Address', address);
+					logger.trace('User', user);
 
-				logger.trace('Configuring with', config);
-				Api.configure(config);
+					logger.trace('Configuring with', config);
+					Api.configure(config);
 
-				/**
-				 * Express cookie sessions.
-				 */
-				app.use(express.cookieParser());
-				app.use(express.cookieSession({
-					key: 'continuuity-sso',
-					secret: config['cookie-secret'],
-					cookie: {
-						path: '/',
-						domain: '.continuuity.net',
-						maxAge: 24 * 60 * 60 * 1000
-					}
-				}));
+					/**
+					 * Express cookie sessions.
+					 */
+					app.use(express.cookieParser());
+					app.use(express.cookieSession({
+						key: 'continuuity-sso',
+						secret: config['cookie-secret'],
+						cookie: {
+							path: '/',
+							domain: '.continuuity.net',
+							maxAge: 24 * 60 * 60 * 1000
+						}
+					}));
 
-				/**
-				 * Create an HTTP server that redirects to HTTPS.
-				 */
-				http.createServer(function (request, response) {
+					/**
+					 * Create an HTTP server that redirects to HTTPS.
+					 */
+					http.createServer(function (request, response) {
 
-					var host = request.headers.host.split(':')[0];
+						var host = request.headers.host.split(':')[0];
 
-					var path = 'https://' + host + ':' +
-						config['cloud-ui-ssl-port'] + request.url;
+						var path = 'https://' + host + ':' +
+							config['cloud-ui-ssl-port'] + request.url;
 
-					response.writeHead(302, {'Location': path});
-					response.end();
+						response.writeHead(302, {'Location': path});
+						response.end();
 
-				}).listen(config['cloud-ui-port']);
-				logger.trace('HTTP listening on port', config['cloud-ui-port']);
+					}).listen(config['cloud-ui-port']);
+					logger.trace('HTTP listening on port', config['cloud-ui-port']);
 
-				/**
-				 * HTTPS credentials
-				 */
-				var certs = {
-					ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
-					key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
-					cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
-				};
+					/**
+					 * HTTPS credentials
+					 */
+					var certs = {
+						ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
+						key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
+						cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
+					};
 
-				/**
-				 * Create the HTTPS server
-				 */
-				var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
-				logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+					/**
+					 * Create the HTTPS server
+					 */
+					var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
+					logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
 
-				/**
-				 * Configure Socket IO
-				 */
-				io = io.listen(server, certs);
-				io.configure('production', function(){
-					io.set('transports', ['websocket', 'xhr-polling']);
-					io.enable('browser client minification');
-					io.enable('browser client gzip');
-					io.set('log level', 1);
-					io.set('resource', '/socket.io');
+					/**
+					 * Configure Socket IO
+					 */
+					io = io.listen(server, certs);
+					io.configure('production', function(){
+						io.set('transports', ['websocket', 'xhr-polling']);
+						io.enable('browser client minification');
+						io.enable('browser client gzip');
+						io.set('log level', 1);
+						io.set('resource', '/socket.io');
+					});
+					
+					/**
+					 * Set the handlers after io has been configured.
+					 */
+					setSocketHandlers();
+
 				});
-				
-				/**
-				 * Set the handlers after io has been configured.
-				 */
-				setSocketHandlers();
-
 			});
 		});
 	});

@@ -356,7 +356,7 @@ logger.setLevel(LOG_LEVEL);
 			case 'query':
 
 				post_options.port = 10003;
-				post_options.path = '/query/' + params.app + '/' + 
+				post_options.path = '/procedure/' + params.app + '/' + 
 					params.service + '/' + params.method;
 
 				post_data = post_data || '{}';
