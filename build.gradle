@@ -45,19 +45,29 @@ task binaries (type: Copy) {
 	into 'build/bin'
 }
 
-task y_server_dev(type:Copy, description: 'Copies relevant server files to build') {
-	from 'server/'
-	into 'build/' + "developer" + '/server'
+task y_server_dev_common(type:Copy, description: 'Copies common server files to build') {
+    from 'server/common/'
+    into 'build/developer/common'
 }
-task y_server_cloud(type:Copy, description: 'Copies relevant server files to build') {
-	from 'server/'
-	into 'build/' + "cloud" + '/server'
+
+task y_server_cloud_common(type:Copy, description: 'Copies common server files to build') {
+    from 'server/common/'
+    into 'build/cloud/common'
+}
+
+task y_server_dev(type:Copy, description: 'Copies relevant server files to build', dependsOn: 'y_server_dev_common') {
+	from 'server/developer/'
+	into 'build/developer/server'
+}
+task y_server_cloud(type:Copy, description: 'Copies relevant server files to build', dependsOn: 'y_server_cloud_common') {
+	from 'server/cloud/'
+	into 'build/cloud/server'
 }
 y_server_dev.configure {
-	include('common/**/*', 'developer/**/*', 'bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'main.js')
 }
 y_server_cloud.configure {
-	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'continuuity-local.xml', 'env.js')
 }
 
 

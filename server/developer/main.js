@@ -36,7 +36,11 @@ logger.setLevel(LOG_LEVEL);
  */
 app = express.createServer();
 app.use(express.bodyParser());
-app.use(express.static(__dirname + '/../../client/'));
+if (fs.existsSync(__dirname + '/../client/')) {
+	app.use(express.static(__dirname + '/../client/'));
+} else {
+	app.use(express.static(__dirname + '/../../client/'));
+}
 
 io = io.listen(app);
 io.configure('development', function(){
@@ -309,6 +313,8 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 			logger.info('Listening on port',
 				config['node-port']);	
 			app.listen(config['node-port']);
+
+			logger.info(config);
 
 		});
 

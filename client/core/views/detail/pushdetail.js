@@ -66,9 +66,11 @@ define([
 				return;
 			}
 
+			destination += '.continuuity.net';
+
 			C.get('far', {
 				method: 'promote',
-				params: [current.id, destination]
+				params: [current.id, destination, self.get('apiKey')]
 			}, function (error, response) {
 
 				if (error) {
