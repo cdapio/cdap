@@ -114,6 +114,9 @@ class TopKCollector {
 
     @Override
     public int compareTo(Entry other) {
+      if (count == other.count) {
+        return word.compareTo(other.word);
+      }
       return Long.signum(count - other.count);
     }
   }
