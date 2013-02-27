@@ -22,6 +22,14 @@ import java.util.List;
  */
 public interface Store {
 
+  /**
+   * Loads a given program
+   *
+   * @param program id of the program
+   * @param type of program
+   * @return An instance of {@link Program} if found.
+   * @throws IOException
+   */
   Program loadProgram(Id.Program program, Type type) throws IOException;
 
   /**

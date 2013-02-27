@@ -114,6 +114,17 @@ public final class HDFSLocation implements Location {
     return fs.delete(path, false);
   }
 
+  @Override
+  public Location renameTo(Location destination) throws IOException {
+    // destination will always be of the same type as this location
+    boolean success = fs.rename(path, ((HDFSLocation) destination).path);
+    if (success) {
+      return new HDFSLocation(fs, destination.toURI());
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Requests that the file or directory denoted by this abstract pathname be
    * deleted when the virtual machine terminates. Files (or directories) are deleted in

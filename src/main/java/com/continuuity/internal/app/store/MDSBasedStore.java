@@ -14,6 +14,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
+import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -23,6 +24,7 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
+import com.continuuity.internal.app.util.ProgramJarUtil;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
@@ -44,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Implementation of the Store that ultimately places data into
@@ -96,18 +99,26 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public Program loadProgram(Id.Program id, Type type ) throws IOException {
-    Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
-    Location newOutputDir = outputDir.append(id.getAccountId());
+    Location programLocation = getProgramLocation(id, type);
+    return new Program(programLocation);
+  }
+
+  /**
+   * NOTE: fails with RuntimeException if program can't be found
+   */
+  private Location getProgramLocation(Id.Program id, Type type) throws IOException {
+    Location allAppsLocation = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
+    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location programDir = newOutputDir.append(name);
-    if(! programDir.exists()) {
-      throw new RuntimeException("Unable to load Program");
+    Location applicationProgramsLocation = accountAppsLocation.append(name);
+    if(! applicationProgramsLocation.exists()) {
+      throw new RuntimeException("Unable to locate the Program");
     }
-    Location program = programDir.append(String.format("%s.jar", id.getId()));
-    if(! program.exists()) {
+    Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
+    if(! programLocation.exists()) {
       throw new RuntimeException(type.toString() + " does not exist.");
     }
-    return new Program(program);
+    return programLocation;
   }
 
   /**
@@ -280,7 +291,17 @@ public class MDSBasedStore implements Store {
 
     LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+
+    ApplicationSpecification newAppSpec = setFlowletInstancesInAppSpecInMDS(id, flowletId, count);
+    replaceAppSpecInProgramJar(id, newAppSpec, Type.FLOW);
+
+    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+  }
+
+  private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId, int count) throws OperationException {
     ApplicationSpecification appSpec = getAppSpecSafely(id);
+
+
     FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
 
@@ -288,8 +309,64 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
     addApplication(id.getApplication(), newAppSpec);
+    return newAppSpec;
+  }
 
-    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification newAppSpec, Type type) {
+    Location programLocation;
+    try {
+      programLocation = getProgramLocation(id, Type.FLOW);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    ArchiveBundler bundler = new ArchiveBundler(programLocation);
+
+    // Create a tempoaray application specification
+    Location appSpecDir = locationFactory.create(configuration.get("app.temp.dir", "/tmp") + "/"
+                                                   + UUID.randomUUID() + "/" + System.nanoTime());
+
+    try {
+      if(!appSpecDir.mkdirs()) {
+        throw new IOException("Failed to create directory");
+      }
+      try {
+        Location appSpecFile = appSpecDir.append("application.json");
+        try {
+          ProgramJarUtil.write(newAppSpec, appSpecFile);
+
+          String className = newAppSpec.getFlows().get(id.getId()).getClassName();
+          Location tmpProgramLocation = locationFactory.create(programLocation.getName() + "." + UUID.randomUUID());
+          try {
+            ProgramJarUtil.clone(id.getApplication(), bundler, tmpProgramLocation, id.getId(),
+                                 className, type, appSpecFile);
+
+            Location movedTo = tmpProgramLocation.renameTo(programLocation);
+            if (movedTo == null) {
+              throw new RuntimeException("Could not replace program jar with the one with updated app spec, " +
+                                           "original program file: " + programLocation.toURI() +
+                                           ", was trying to replace with file: " + tmpProgramLocation.toURI());
+            }
+          } finally {
+            // if smth failed in the middle we don't want to leave tmp file there
+            if (tmpProgramLocation != null && tmpProgramLocation.exists()) {
+              tmpProgramLocation.delete();
+            }
+          }
+
+        } finally {
+          if(appSpecFile != null && appSpecFile.exists()) {
+            appSpecFile.delete();
+          }
+        }
+      } finally {
+        if(appSpecDir != null && appSpecDir.exists()) {
+          appSpecDir.delete();
+        }
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private FlowletDefinition getFlowletDefinitionSafely(FlowSpecification flowSpec, String flowletId, Id.Program id) {

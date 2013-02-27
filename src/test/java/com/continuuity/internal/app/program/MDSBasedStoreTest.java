@@ -360,17 +360,27 @@ public class MDSBasedStoreTest {
   }
 
   @Test
-  public void testSetFlowletInstances() throws OperationException {
+  public void testSetFlowletInstances() throws Exception {
+    TestHelper.deployApplication(WordCountApp.class);
+
     ApplicationSpecification spec = new WordCountApp().configure();
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
-    Id.Application id = new Id.Application(new Id.Account("account1"), spec.getName());
-    store.addApplication(id, spec);
+    Id.Application appId = new Id.Application(new Id.Account("developer"), spec.getName());
+    store.addApplication(appId, spec);
 
-    store.setFlowletInstances(new Id.Program(id, "WordCountFlow"), "StreamSource",
+    Id.Program programId = new Id.Program(appId, "WordCountFlow");
+    store.setFlowletInstances(programId, "StreamSource",
                                                       initialInstances + 5);
-    ApplicationSpecification adjustedSpec = store.getApplication(id);
+    // checking that app spec in store was adjusted
+    ApplicationSpecification adjustedSpec = store.getApplication(appId);
     Assert.assertEquals(initialInstances + 5,
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
+
+    // checking that program spec in program jar was adjsuted
+    Program program = store.loadProgram(programId, Type.FLOW);
+    Assert.assertEquals(initialInstances + 5,
+                        program.getSpecification().
+                          getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
   }
 
   @Test

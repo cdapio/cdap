@@ -4,6 +4,7 @@
 
 package com.continuuity.filesystem;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -67,6 +68,14 @@ public interface Location {
    */
   boolean delete() throws IOException;
 
+  /**
+   * Moves the file or directory denoted by this abstract pathname.
+   *
+   * @param destination destination location
+   * @return new location if and only if the file or directory is successfully moved; null otherwise.
+   */
+  @Nullable
+  Location renameTo(Location destination) throws IOException;
 
   /**
    * Requests that the file or directory denoted by this abstract pathname be
