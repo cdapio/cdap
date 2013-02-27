@@ -126,12 +126,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
         } else {
           method.invoke(flowlet);
         }
-        outputSubmitter.submit(txAgent);
-
         return getPostProcess(txAgent, input, event, inputContext);
-
       } catch(Throwable t) {
         return getFailurePostProcess(t, txAgent, input, event, inputContext);
+      } finally {
+        outputSubmitter.submit(txAgent);
       }
     } catch (Exception e) {
       // If it reaches here, something very wrong.
