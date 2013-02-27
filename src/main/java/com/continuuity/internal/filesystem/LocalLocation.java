@@ -119,6 +119,17 @@ public final class LocalLocation implements Location {
     return file.delete();
   }
 
+  @Override
+  public Location renameTo(Location destination) throws IOException {
+    // destination will always be of the same type as this location
+    boolean success = file.renameTo(((LocalLocation) destination).file);
+    if (success) {
+      return new LocalLocation(((LocalLocation) destination).file);
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Requests that the file or directory denoted by this abstract pathname be
    * deleted when the virtual machine terminates. Files (or directories) are deleted in
