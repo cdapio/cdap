@@ -14,7 +14,7 @@ public class Constants {
   /**
    * The prefix for all continuity classes
    */
-  static final String CONTINUUITY_PREFIX = "com.continuuity.";
+  static final String CONTINUUITY_PREFIX = "X-Continuuity-";
 
   /**
    * The prefix for all gateway properties
@@ -25,20 +25,20 @@ public class Constants {
    * Used by the external client to identify and authenticate the client
    */
   public static final String HEADER_STREAM_CONSUMER
-      = CONTINUUITY_PREFIX + "stream.consumer";
+      = CONTINUUITY_PREFIX + "ConsumerId";
 
   /**
    * Used by the external client to indicate what end point an event goes to
    */
   public static final String HEADER_DESTINATION_STREAM
-      = CONTINUUITY_PREFIX + "destination";
+      = CONTINUUITY_PREFIX + "Destination";
 
   /**
    * Created by gateway to annotate each event with the name of the collector
    * through which it was ingested
    */
   public static final String HEADER_FROM_COLLECTOR
-      = CONTINUUITY_PREFIX + "collector";
+      = CONTINUUITY_PREFIX + "FromCollector";
 
   /**
    * List of named collectors for the gateway
