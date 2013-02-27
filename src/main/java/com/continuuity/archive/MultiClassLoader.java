@@ -43,21 +43,23 @@ public abstract class MultiClassLoader extends ClassLoader {
       return result;
     }
 
-    //Check with the primordial class loader
-    try {
-      result = super.findSystemClass(className);
-      return result;
-    } catch(ClassNotFoundException e) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
-      }
-    }
-
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
     byte[] classBytes = loadClassBytes(className);
     if(classBytes == null) {
-      throw new ClassNotFoundException(className);
+      //Check with the primordial class loader
+      try {
+        result = super.findSystemClass(className);
+        return result;
+      } catch(ClassNotFoundException e) {
+        if(LOG.isTraceEnabled()) {
+          LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+        }
+        throw e;
+      }
+
+//
+//      throw new ClassNotFoundException(className);
     }
 
     //Define it (parse the class file)
