@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,11 +50,11 @@ public class TestPassportClient {
     System.out.println("Added account");
  }
   @Test
-  public void testValidAccount(){
+  public void testValidAccount() throws URISyntaxException {
     PassportClient client = new PassportClient();
     System.out.println("Trying to get account");
-    String uri = String.format("http://localhost:%d",port);
-    AccountProvider accountProvider = client.getAccount(uri,"apiKey1");
+    URI uri = new URI(String.format("http://localhost:%d",port));
+    AccountProvider accountProvider = client.getAccount(uri, "apiKey1");
     System.out.println("Got an account");
 
     assert (accountProvider !=null);
@@ -62,9 +64,9 @@ public class TestPassportClient {
   }
 
   @Test(expected = RuntimeException.class)
-  public void testInvalidAccount() {
+  public void testInvalidAccount() throws URISyntaxException {
     PassportClient client = new PassportClient();
-    String uri = String.format("http://localhost:%d",port);
+    URI uri = new URI(String.format("http://localhost:%d",port));
     AccountProvider accountProvider = client.getAccount(uri,"apiKey100");
 
   }
