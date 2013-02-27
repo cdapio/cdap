@@ -20,6 +20,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -46,19 +49,20 @@ public class PassportClient {
 
   /**
    * Get List of VPC for the apiKey
-   * @param uri
+   * @param baseURI
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String uri,  String apiKey) throws RuntimeException {
-    String url = getEndPoint(uri, "passport/v1/vpc");
+  public List<String> getVPCList(URI baseURI,  String apiKey) throws RuntimeException {
     //Check in cache- if present return it.
     List<String> vpcList = Lists.newArrayList();
 
     try {
+      URI uri = getEndPoint(baseURI, "passport/v1/vpc");
+
       String data = responseCache.getIfPresent(apiKey);
       if (data == null) {
-        data = httpGet(url, apiKey);
+        data = httpGet(uri, apiKey);
 
         if (data != null) {
           responseCache.put(apiKey, data);
@@ -88,19 +92,20 @@ public class PassportClient {
   /**
    * Get List of VPC for the apiKey
    *
-   * @param uri uri of the service
-   * @return Instance of {@Account}
+   * @param baseURI uri of the service
+   * @return Instance of {@AccountProvider}
    * @throws Exception RunTimeExceptions
    */
-  public AccountProvider<Account> getAccount(String uri, String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(uri);
-    String url = getEndPoint(uri, "passport/v1/account/authenticate");
-    Account account = null;
+  public AccountProvider<Account> getAccount(URI baseURI, String apiKey) throws RuntimeException {
+    Preconditions.checkNotNull(baseURI);
 
     try {
+      URI uri = getEndPoint(baseURI, "passport/v1/account/authenticate");
+      Account account = null;
+
       account = accountCache.getIfPresent(apiKey);
       if (account == null) {
-        String data = httpPost(url, apiKey);
+        String data = httpPost(uri, apiKey);
         Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         account = gson.fromJson(data, Account.class);
       }
@@ -116,9 +121,9 @@ public class PassportClient {
   }
 
 
-  private String httpGet(String url, String apiKey) throws RuntimeException {
+  private String httpGet(URI uri, String apiKey) throws RuntimeException {
     String payload = null;
-    HttpGet get = new HttpGet(url);
+    HttpGet get = new HttpGet(uri);
     get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
 
     // prepare for HTTP
@@ -142,9 +147,9 @@ public class PassportClient {
     return payload;
   }
 
-  private String httpPost(String url, String apiKey) throws RuntimeException {
+  private String httpPost(URI uri, String apiKey) throws RuntimeException {
     String payload = null;
-    HttpPost post = new HttpPost(url);
+    HttpPost post = new HttpPost(uri);
     post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
     //Ad content type
     post.addHeader(PassportConstants.CONTENT_TYPE_HEADER,PassportConstants.CONTENT_TYPE);
@@ -171,8 +176,8 @@ public class PassportClient {
     return payload;
   }
 
-  private String getEndPoint(String uri, String endpoint) {
-    return String.format("%s/%s", uri, endpoint);
+  private URI getEndPoint(URI baseURI, String endpoint) throws MalformedURLException, URISyntaxException {
+    return new URI (baseURI.getScheme(),baseURI.getUserInfo(),baseURI.getHost(),
+                    baseURI.getPort(),baseURI.getPath()+"/"+endpoint,baseURI.getQuery(),baseURI.getFragment());
   }
-
 }
