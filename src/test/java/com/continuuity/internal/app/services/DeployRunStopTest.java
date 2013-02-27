@@ -84,6 +84,9 @@ public class DeployRunStopTest {
       public void generate() throws Exception {
         if (i < 10000) {
           output.emit("Testing " + ++i);
+          if (i == 1000) {
+            throw new IllegalStateException("1000 hitted");
+          }
         }
       }
     }
@@ -100,7 +103,7 @@ public class DeployRunStopTest {
       public void process(String text) throws InterruptedException {
         if (messageCount.incrementAndGet() == 5000) {
           messageSemaphore.release();
-        } else if (messageCount.get() == 10000) {
+        } else if (messageCount.get() == 9999) {
           messageSemaphore.release();
         }
       }
@@ -121,9 +124,13 @@ public class DeployRunStopTest {
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
+    // TODO: The flow test need to reform later using the new test framework.
+    // Sleep one extra seconds to consume any unconsumed items (there shouldn't be, but this is for catching error).
+    TimeUnit.SECONDS.sleep(1);
+
     server.stop(token, flowIdentifier);
 
-    Assert.assertEquals(10000, messageCount.get());
+    Assert.assertEquals(9999, messageCount.get());
     Assert.assertEquals(3, instanceCount.get());
   }
 
