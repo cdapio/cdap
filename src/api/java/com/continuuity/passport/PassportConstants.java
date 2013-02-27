@@ -10,4 +10,7 @@ public class PassportConstants {
   public final static String CFG_PASSPORT_SERVER_PORT_KEY = "passport.server.port";
   //Config for api header
   public final static String CONTINUUITY_API_KEY_HEADER = "X-Continuuity-ApiKey";
+
+  public final static String CONTENT_TYPE_HEADER = "Content-Type";
+  public final static String CONTENT_TYPE = "application/json";
 }
