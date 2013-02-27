@@ -112,7 +112,7 @@ logger.setLevel(LOG_LEVEL);
 
 		conn.on('error', function (error) {
 			logger.warn(error);
-			done({'fatal': 'Could not connect to FlowMonitor.'});
+			done({'fatal': 'Could not connect to AppFabric (Manager).'});
 		});
 		
 		var Manager = thrift.createClient(AppFabricService, conn);
@@ -197,7 +197,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-			done('Could not connect to AppFabricService');
+			done({'fatal': 'Could not connect to AppFabric(FAR).'});
 		});
 		
 		FAR = thrift.createClient(AppFabricService, conn);
@@ -252,8 +252,7 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
-
-			done('Could not connect to FlowMonitor.');
+			done({'fatal': 'Could not connect to MetricsService.'});
 		});
 		
 		conn.on('connect', function (response) {
