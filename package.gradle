@@ -14,13 +14,16 @@ evaluationDependsOn(":gateway")
 evaluationDependsOn(":passport")
 
 task javadoc(type: Javadoc, overwrite: true) {
-  source project.parent.subprojects.collect { proj ->
+  source = project.parent.subprojects.collect { proj ->
    if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
-     return proj.sourceSets.api.allJava
+     return proj.sourceSets.api.allJava.exclude{ print it.file.name }
    }else{
     return []       
    }
   }
+
+  exclude '**/internal/**'
+  exclude '**/passport/**'
 
   doFirst{
     classpath = files(project.parent.subprojects.collect { project ->
@@ -136,16 +139,25 @@ task createApiSourceJar(type: Jar) {
     baseName "continuuity-api"
     appendix ""
     classifier "source"
-    from project(':app-fabric').sourceSets.api.allSource
+    from (project(':app-fabric').sourceSets.api.allSource) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
     from project(':data-fabric').sourceSets.api.allSource
-    from project(':common').sourceSets.api.allSource
+    from (project(':common').sourceSets.api.allSource) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
 }
 
 task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
     baseName "continuuity-api"
     appendix ""
     classifier "javadoc"
-    from javadoc.destinationDir
+    from (javadoc.destinationDir) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
 }
 
 
