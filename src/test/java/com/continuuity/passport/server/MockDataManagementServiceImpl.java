@@ -54,7 +54,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void deleteAccount(int accountId) throws AccountNotFoundException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -65,7 +65,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void confirmRegistration(Account account, String password) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -75,7 +75,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void confirmDownload(int accountId) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -86,7 +86,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Account getAccount(int accountId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -97,7 +97,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Account getAccount(String emailId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -108,7 +108,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void updateAccount(int accountId, Map<String, Object> params) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -120,7 +120,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void changePassword(int accountId, String oldPassword, String newPassword) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -128,7 +128,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Account resetPassword(int nonceId, String password) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -141,7 +141,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public VPC addVPC(int accountId, VPC vpc) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -153,7 +153,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public VPC getVPC(int accountId, int vpcID) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -166,7 +166,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void deleteVPC(int accountId, int vpcId) throws VPCNotFoundException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -177,7 +177,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public List<VPC> getVPC(int accountId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -188,7 +188,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public List<VPC> getVPC(String apiKey) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -200,7 +200,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public int getActivationNonce(String id) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;  
   }
 
   /**
@@ -214,7 +214,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public String getActivationId(int nonce) throws StaleNonceException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -226,7 +226,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public int getSessionNonce(String id) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;  
   }
 
   /**
@@ -237,7 +237,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public int getVPCCount(String vpcName) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;  
   }
 
   /**
@@ -251,7 +251,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public String getSessionId(int nonce) throws StaleNonceException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -262,7 +262,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public int getResetNonce(String id) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;  
   }
 
   /**
@@ -272,7 +272,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public void regenerateApiKey(int accountId) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   /**
@@ -283,7 +283,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Account getAccountForVPC(String vpcName) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -297,7 +297,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -311,7 +311,7 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status unRegisterComponent(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   /**
@@ -324,6 +324,6 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    */
   @Override
   public Status updateComponent(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 }

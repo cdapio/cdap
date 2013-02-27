@@ -46,14 +46,12 @@ public class PassportClient {
 
   /**
    * Get List of VPC for the apiKey
-   *
-   * @param hostname Host of the service
-   * @param apiKey   apiKey of the developer
+   * @param uri
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String protocol, String hostname, int port,  String apiKey) throws RuntimeException {
-    String url = getEndPoint(protocol, hostname, port, "passport/v1/vpc");
+  public List<String> getVPCList(String uri,  String apiKey) throws RuntimeException {
+    String url = getEndPoint(uri, "passport/v1/vpc");
     //Check in cache- if present return it.
     List<String> vpcList = Lists.newArrayList();
 
@@ -90,17 +88,13 @@ public class PassportClient {
   /**
    * Get List of VPC for the apiKey
    *
-   * @param hostname Host of the service
-   * @param apiKey   apiKey of the developer
+   * @param uri uri of the service
    * @return Instance of {@Account}
    * @throws Exception RunTimeExceptions
    */
-  public AccountProvider<Account> getAccount(String protocol, String hostname,
-                                             int port, String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(hostname);
-    Preconditions.checkNotNull(protocol);
-
-    String url = getEndPoint(protocol,hostname, port, "passport/v1/account/authenticate");
+  public AccountProvider<Account> getAccount(String uri, String apiKey) throws RuntimeException {
+    Preconditions.checkNotNull(uri);
+    String url = getEndPoint(uri, "passport/v1/account/authenticate");
     Account account = null;
 
     try {
@@ -177,27 +171,8 @@ public class PassportClient {
     return payload;
   }
 
-  private String getEndPoint(String protocol,String hostname, int port, String endpoint) {
-    return String.format("%s://%s:%d/%s", protocol, hostname, port, endpoint);
+  private String getEndPoint(String uri, String endpoint) {
+    return String.format("%s/%s", uri, endpoint);
   }
-
-  public static class AuthenticateJson {
-    private final String error;
-    private final Account result;
-
-    private AuthenticateJson(String error, Account result) {
-      this.error = error;
-      this.result = result;
-    }
-
-    public String getError() {
-      return error;
-    }
-
-    public Account getResult() {
-      return result;
-    }
-  }
-
 
 }

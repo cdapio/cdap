@@ -17,41 +17,41 @@ public class MockVPCDAO implements VpcDAO {
 
   @Override
   public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   @Override
   public void removeVPC(int accountId, int vpcId) throws ConfigurationException, VPCNotFoundException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   @Override
   public boolean addRoles(int accountId, int vpcId, int userId, Role role, String overrides) throws ConfigurationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;  
   }
 
   @Override
   public List<VPC> getVPC(int accountId) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   @Override
   public VPC getVPC(int accountId, int vpcId) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   @Override
   public List<VPC> getVPC(String apiKey) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   @Override
   public int getVPCCount(String vpcName) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;  
   }
 
   @Override
   public Account getAccountForVPC(String vpcName) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 }
