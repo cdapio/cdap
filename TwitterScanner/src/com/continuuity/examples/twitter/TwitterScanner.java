@@ -27,6 +27,10 @@ public class TwitterScanner implements Application {
   };
   public static final String PASSWORD = "Wh00pa$$123!";
 
+  public static void main(String[] args) {
+    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
+  }
+
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
