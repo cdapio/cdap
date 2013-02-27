@@ -54,6 +54,9 @@ public class PassportClient {
    * @throws Exception RunTimeExceptions
    */
   public List<String> getVPCList(URI baseURI,  String apiKey) throws RuntimeException {
+    Preconditions.checkNotNull(baseURI,"URI cannot be null");
+    Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
+
     //Check in cache- if present return it.
     List<String> vpcList = Lists.newArrayList();
 
@@ -97,7 +100,8 @@ public class PassportClient {
    * @throws Exception RunTimeExceptions
    */
   public AccountProvider<Account> getAccount(URI baseURI, String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(baseURI);
+    Preconditions.checkNotNull(baseURI,"URI cannot be null");
+    Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
 
     try {
       URI uri = getEndPoint(baseURI, "passport/v1/account/authenticate");
@@ -152,7 +156,7 @@ public class PassportClient {
     HttpPost post = new HttpPost(uri);
     post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
     //Ad content type
-    post.addHeader(PassportConstants.CONTENT_TYPE_HEADER,PassportConstants.CONTENT_TYPE);
+    post.addHeader("Content-Type","application/json");
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
