@@ -52,8 +52,8 @@ public class PassportClient {
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String hostname, int port,  String apiKey) throws RuntimeException {
-    String url = getEndPoint(hostname, port, "passport/v1/vpc");
+  public List<String> getVPCList(String protocol, String hostname, int port,  String apiKey) throws RuntimeException {
+    String url = getEndPoint(protocol, hostname, port, "passport/v1/vpc");
     //Check in cache- if present return it.
     List<String> vpcList = Lists.newArrayList();
 
@@ -95,9 +95,12 @@ public class PassportClient {
    * @return Instance of {@Account}
    * @throws Exception RunTimeExceptions
    */
-  public AccountProvider<Account> getAccount(String hostname, int port, String apiKey) throws RuntimeException {
+  public AccountProvider<Account> getAccount(String protocol, String hostname,
+                                             int port, String apiKey) throws RuntimeException {
     Preconditions.checkNotNull(hostname);
-    String url = getEndPoint(hostname, port, "passport/v1/account/authenticate");
+    Preconditions.checkNotNull(protocol);
+
+    String url = getEndPoint(protocol,hostname, port, "passport/v1/account/authenticate");
     Account account = null;
 
     try {
@@ -105,8 +108,7 @@ public class PassportClient {
       if (account == null) {
         String data = httpPost(url, apiKey);
         Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        AuthenticateJson authJson = gson.fromJson(data, AuthenticateJson.class);
-        account = authJson.getResult();
+        account = gson.fromJson(data, Account.class);
       }
       if(account != null) {
         accountCache.put(apiKey,account);
@@ -148,21 +150,25 @@ public class PassportClient {
 
   private String httpPost(String url, String apiKey) throws RuntimeException {
     String payload = null;
-    HttpPost get = new HttpPost(url);
-    get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+    HttpPost post = new HttpPost(url);
+    post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+    //Ad content type
+    post.addHeader(PassportConstants.CONTENT_TYPE_HEADER,PassportConstants.CONTENT_TYPE);
 
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
+
     HttpResponse response;
 
     try {
-      response = client.execute(get);
-      payload = IOUtils.toString(response.getEntity().getContent());
+      response = client.execute(post);
 
       if(response.getStatusLine().getStatusCode() != 200){
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }
+      payload = IOUtils.toString(response.getEntity().getContent());
+
     } catch (IOException e) {
       throw Throwables.propagate(e);
     } finally{
@@ -171,11 +177,11 @@ public class PassportClient {
     return payload;
   }
 
-  private String getEndPoint(String hostname, int port, String endpoint) {
-    return String.format("http://%s:%d/%s", hostname, port, endpoint);
+  private String getEndPoint(String protocol,String hostname, int port, String endpoint) {
+    return String.format("%s://%s:%d/%s", protocol, hostname, port, endpoint);
   }
 
-  private static class AuthenticateJson {
+  public static class AuthenticateJson {
     private final String error;
     private final Account result;
 
