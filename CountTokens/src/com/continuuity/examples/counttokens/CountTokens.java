@@ -13,6 +13,10 @@ public class CountTokens implements Application {
 
   public static final String tableName = "tokenCountTable";
 
+  public static void main(String[] args) {
+    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
+  }
+
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
