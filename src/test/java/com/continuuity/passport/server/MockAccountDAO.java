@@ -46,8 +46,7 @@ public class MockAccountDAO implements AccountDAO {
 
   @Override
   public boolean confirmRegistration(Account account, String password) throws ConfigurationException {
-
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  return false; 
   }
 
   /**
@@ -58,7 +57,6 @@ public class MockAccountDAO implements AccountDAO {
    */
   @Override
   public void confirmDownload(int accountId) throws ConfigurationException {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   /**
@@ -70,7 +68,7 @@ public class MockAccountDAO implements AccountDAO {
    */
   @Override
   public boolean deleteAccount(int accountId) throws ConfigurationException, RuntimeException, AccountNotFoundException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false; 
   }
 
   /**
@@ -82,7 +80,7 @@ public class MockAccountDAO implements AccountDAO {
    */
   @Override
   public Account getAccount(int accountId) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null; 
   }
 
   /**
@@ -94,37 +92,35 @@ public class MockAccountDAO implements AccountDAO {
    */
   @Override
   public Account getAccount(String emailId) throws ConfigurationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null; 
   }
 
   @Override
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public boolean addRoleType(int accountId, Role role) throws ConfigurationException {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public void updateAccount(int accountId, Map<String, Object> keyValueParams) throws ConfigurationException {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public void changePassword(int accountId, String oldPassword, String newPassword) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public Account resetPassword(int nonce, String newPassword) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  
   }
 
   @Override
   public void regenerateApiKey(int accountId) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    
   }
 
   public static Account authenticate(String apiKey) {

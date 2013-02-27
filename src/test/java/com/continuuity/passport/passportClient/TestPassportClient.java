@@ -51,7 +51,8 @@ public class TestPassportClient {
   public void testValidAccount(){
     PassportClient client = new PassportClient();
     System.out.println("Trying to get account");
-    AccountProvider accountProvider = client.getAccount("http","localhost",port,"apiKey1");
+    String uri = String.format("http://localhost:%d",port);
+    AccountProvider accountProvider = client.getAccount(uri,"apiKey1");
     System.out.println("Got an account");
 
     assert (accountProvider !=null);
@@ -63,7 +64,8 @@ public class TestPassportClient {
   @Test(expected = RuntimeException.class)
   public void testInvalidAccount() {
     PassportClient client = new PassportClient();
-    AccountProvider accountProvider = client.getAccount("http","localhost",port,"apiKey100");
+    String uri = String.format("http://localhost:%d",port);
+    AccountProvider accountProvider = client.getAccount(uri,"apiKey100");
 
   }
 
