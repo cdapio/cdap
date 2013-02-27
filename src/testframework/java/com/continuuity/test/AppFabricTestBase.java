@@ -259,17 +259,24 @@ public class AppFabricTestBase {
       }
     }
 
-    FlowletRewriter rewriter = new FlowletRewriter(flowletClassNames);
+    FlowletRewriter flowletRewriter = new FlowletRewriter();
 
     URI basePath = relativeBase.toURI();
     while (!queue.isEmpty()) {
       File file = queue.remove();
-      jarOut.putNextEntry(new JarEntry(basePath.relativize(file.toURI()).toString()));
+      String entryName = basePath.relativize(file.toURI()).toString();
+      jarOut.putNextEntry(new JarEntry(entryName));
 
       if (file.isFile()) {
         InputStream is = new FileInputStream(file);
         try {
-          jarOut.write(rewriter.rewrite(ByteStreams.toByteArray(is)));
+          byte[] bytes = ByteStreams.toByteArray(is);
+          if (flowletClassNames.contains(entryName.replace('/', '.').substring(0, entryName.length() - ".class".length()))) {
+            jarOut.write(flowletRewriter.generate(bytes));
+          } else {
+            jarOut.write(bytes);
+          }
+
         } finally {
           is.close();
         }
