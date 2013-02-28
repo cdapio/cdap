@@ -9,6 +9,7 @@ smartyFacts {
     enableSourceJar()
   }
   thrift
+  testframework
 }
 
 /**
@@ -52,6 +53,9 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
+
+  testframeworkCompile libraries.junit
+  testframeworkCompile libraries.asm
 }
 
 /**
