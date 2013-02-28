@@ -189,6 +189,7 @@ public final class ReflectionDatumReader<T> {
       for(Schema.Field sourceField : sourceSchema.getFields()) {
         Schema.Field targetField = targetSchema.getField(sourceField.getName());
         if(targetField == null) {
+          skip(decoder, sourceField.getSchema());
           continue;
         }
         Field field = null;
@@ -240,6 +241,72 @@ public final class ReflectionDatumReader<T> {
       throw new IOException(String.format("Fail to resolve %s to %s", sourceSchema, targetSchema));
     } else {
       return read(decoder, sourceValueSchema, targetSchema, targetTypeToken);
+    }
+  }
+
+  private void skip(Decoder decoder, Schema schema) throws IOException {
+    switch (schema.getType()) {
+      case NULL:
+        break;
+      case BOOLEAN:
+        decoder.readBool();
+        break;
+      case INT:
+        decoder.readInt();
+        break;
+      case LONG:
+        decoder.readLong();
+        break;
+      case FLOAT:
+        decoder.readFloat();
+        break;
+      case DOUBLE:
+        decoder.readDouble();
+        break;
+      case BYTES:
+        decoder.skipBytes();
+        break;
+      case STRING:
+        decoder.skipString();
+        break;
+      case ENUM:
+        decoder.readInt();
+        break;
+      case ARRAY:
+        skipArray(decoder, schema.getComponentSchema());
+        break;
+      case MAP:
+        skipMap(decoder, schema.getMapSchema());
+        break;
+      case RECORD:
+        skipRecord(decoder, schema);
+        break;
+      case UNION:
+        skip(decoder, schema.getUnionSchema(decoder.readInt()));
+        break;
+    }
+  }
+
+  private void skipArray(Decoder decoder, Schema componentSchema) throws IOException {
+    int len = decoder.readInt();
+    while (len != 0) {
+      skip(decoder, componentSchema);
+      len = decoder.readInt();
+    }
+  }
+
+  private void skipMap(Decoder decoder, Map.Entry<Schema, Schema> mapSchema) throws IOException {
+    int len = decoder.readInt();
+    while (len != 0) {
+      skip(decoder, mapSchema.getKey());
+      skip(decoder, mapSchema.getValue());
+      len = decoder.readInt();
+    }
+  }
+
+  private void skipRecord(Decoder decoder, Schema recordSchema) throws IOException {
+    for (Schema.Field field : recordSchema.getFields()) {
+      skip(decoder, field.getSchema());
     }
   }
 
