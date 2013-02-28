@@ -1,10 +1,11 @@
-package com.continuuity.internal.app.util;
+package com.continuuity.internal.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -23,11 +24,12 @@ import java.util.jar.Manifest;
 /**
  *
  */
-public final class ProgramJarUtil {
+public final class ProgramBundle {
+  public static final String APPLICATION_META_ENTRY = "application.json";
   private static final Predicate<JarEntry> META_IGNORE = new Predicate<JarEntry>() {
     @Override
     public boolean apply(@Nullable JarEntry input) {
-      return input.getName().contains("MANIFEST.MF") || input.getName().contains("application.json");
+      return input.getName().contains("MANIFEST.MF") || input.getName().contains(APPLICATION_META_ENTRY);
     }
   };
 
@@ -39,7 +41,31 @@ public final class ProgramJarUtil {
    *
    * @throws java.io.IOException in case of any issue related to copying jars.
    */
-  public static Location clone(Id.Application id, ArchiveBundler bundler, Location output, String programName,
+  public static Location create(Id.Application id, ArchiveBundler appJar, Location output, String programName,
+                               String className, Type type, ApplicationSpecification appSpec)
+    throws IOException {
+
+    Location tmpSpecFile = output.getTempFile(APPLICATION_META_ENTRY);
+    try {
+      write(appSpec, tmpSpecFile);
+      return clone(id, appJar, output, programName, className, type, tmpSpecFile);
+    } finally {
+      if (tmpSpecFile != null && tmpSpecFile.exists()) {
+        tmpSpecFile.delete();
+      }
+    }
+
+  }
+
+  /**
+   * Clones a give application archive using the {@link com.continuuity.archive.ArchiveBundler}.
+   * A new manifest file will be amended to the jar.
+   *
+   * @return An instance of {@link com.continuuity.filesystem.Location} containing the program JAR.
+   *
+   * @throws java.io.IOException in case of any issue related to copying jars.
+   */
+  private static Location clone(Id.Application id, ArchiveBundler bundler, Location output, String programName,
                                String className, Type type, Location specFile)
     throws IOException {
     // Create a MANIFEST file
@@ -51,11 +77,12 @@ public final class ProgramJarUtil {
     manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getAccountId());
     manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
     manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
-    bundler.clone(output, manifest, ImmutableList.of(specFile), META_IGNORE);
+    bundler.clone(output, manifest,
+                  ImmutableList.of(new ImmutablePair<String, Location>(APPLICATION_META_ENTRY, specFile)), META_IGNORE);
     return output;
   }
 
-  public static void write(ApplicationSpecification appSpec, Location destination) throws IOException {
+  private static void write(ApplicationSpecification appSpec, Location destination) throws IOException {
     final OutputStream os = destination.getOutputStream();
     try {
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());

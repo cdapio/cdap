@@ -26,11 +26,6 @@ public final class Program {
   private final ApplicationSpecification specification;
   private final Id.Program id;
 
-  @Deprecated
-  public Program(File file) throws IOException {
-    this(new JarResources(file));
-  }
-
   public Program(Location location) throws IOException {
     this(new JarResources(location));
   }

@@ -2,6 +2,7 @@ package com.continuuity.archive;
 
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
@@ -48,7 +49,7 @@ public class ArchiveBundlerTest {
       ArchiveBundler bundler = new ArchiveBundler(lf.create(jarfile));
 
       // Create a bundle with modified manifest and added application.json.
-      bundler.clone(out, manifest, ImmutableList.of(f));
+      bundler.clone(out, manifest, ImmutableList.of(new ImmutablePair<String, Location>("application.json", f)));
       Assert.assertTrue(out.exists());
       JarFile file = new JarFile(new File(out.toURI()));
       Enumeration<JarEntry> entries = file.entries();

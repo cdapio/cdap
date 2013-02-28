@@ -23,6 +23,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
@@ -56,8 +57,8 @@ public class DefaultAppFabricServiceTest {
   @BeforeClass
   public static void before() throws Exception {
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", "/tmp/app");
-    configuration.set("app.tmp.dir", "/tmp/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/temp");
 
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                                    new BigMamaModule(configuration));

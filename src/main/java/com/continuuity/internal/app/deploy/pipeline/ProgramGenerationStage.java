@@ -7,9 +7,10 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
-import com.continuuity.internal.app.util.ProgramJarUtil;
+import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
@@ -39,61 +40,42 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
 
-    // Create a tempoaray application specification
-    Location appSpecDir = locationFactory.create(configuration.get("app.temp.dir", "/tmp") + "/"
-                                                   + UUID.randomUUID() + "/" + System.nanoTime());
-    if(!appSpecDir.mkdirs()) {
+    // Make sure we have a directory to store the original artifact.
+    Location outputDir = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp"));
+    Location newOutputDir = outputDir
+      .append(o.getApplicationId().getAccountId());
+    if(! newOutputDir.exists() && !newOutputDir.mkdirs()) {
       throw new IOException("Failed to create directory");
     }
-    Location appSpecFile = appSpecDir.append("application.json");
 
-    ProgramJarUtil.write(appSpec, appSpecFile);
-
-    try {
-      // Make sure we have a directory to store the original artifact.
-      Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
-      Location newOutputDir = outputDir
-        .append(o.getApplicationId().getAccountId());
-      if(! newOutputDir.exists() && !newOutputDir.mkdirs()) {
-        throw new IOException("Failed to create directory");
+    // Now, we iterate through FlowSpecification and generate programs
+    for(FlowSpecification flow : appSpec.getFlows().values()) {
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
+      Location flowAppDir = newOutputDir.append(name);
+      if(! flowAppDir.exists()) {
+        flowAppDir.mkdirs();
       }
-
-      // Now, we iterate through FlowSpecification and generate programs
-      for(FlowSpecification flow : appSpec.getFlows().values()) {
-        String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
-        Location flowAppDir = newOutputDir.append(name);
-        if(! flowAppDir.exists()) {
-          flowAppDir.mkdirs();
-        }
-        Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
-        Location loc = ProgramJarUtil.clone(o.getApplicationId(), bundler, output, flow.getName(), flow.getClassName(),
-                                            Type.FLOW, appSpecFile);
-        PROGRAMS.add(new Program(loc));
-      }
-
-      // Iterate through ProcedureSpecification and generate program
-      for(ProcedureSpecification procedure : appSpec.getProcedures().values()) {
-        String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
-        Location procedureAppDir = newOutputDir.append(name);
-        if(! procedureAppDir.exists()) {
-          procedureAppDir.mkdirs();
-        }
-        Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
-        Location loc = ProgramJarUtil.clone(o.getApplicationId(), bundler, output, procedure.getName(), procedure.getClassName(), Type.PROCEDURE, appSpecFile);
-        PROGRAMS.add(new Program(loc));
-      }
-
-      // Iterate through MapReduceSpecification and generate program
-      // ...
-
-    } finally {
-      if(appSpecDir != null && appSpecDir.exists()) {
-        appSpecDir.delete();
-      }
-      if(appSpecFile != null && appSpecFile.exists()) {
-        appSpecFile.delete();
-      }
+      Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
+      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, flow.getName(), flow.getClassName(),
+                                         Type.FLOW, appSpec);
+      PROGRAMS.add(new Program(loc));
     }
+
+    // Iterate through ProcedureSpecification and generate program
+    for(ProcedureSpecification procedure : appSpec.getProcedures().values()) {
+      String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
+      Location procedureAppDir = newOutputDir.append(name);
+      if(! procedureAppDir.exists()) {
+        procedureAppDir.mkdirs();
+      }
+      Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
+      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, procedure.getName(),
+                                         procedure.getClassName(), Type.PROCEDURE, appSpec);
+      PROGRAMS.add(new Program(loc));
+    }
+
+    // Iterate through MapReduceSpecification and generate program
+    // ...
 
     // Emits the received specification with programs.
     emit(new ApplicationWithPrograms(o, PROGRAMS.build()));

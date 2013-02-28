@@ -11,6 +11,7 @@ import com.continuuity.app.DefaultId;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -35,8 +36,8 @@ public class LocalManagerTest {
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
     configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp");
-    configuration.set("app.output.dir", "/tmp/" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/" + UUID.randomUUID());
   }
 
   /**
