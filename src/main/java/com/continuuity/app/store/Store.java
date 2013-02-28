@@ -109,6 +109,14 @@ public interface Store {
   void remove(Id.Program id) throws OperationException;
 
   /**
+   * Removes all program under the given application and also the application itself.
+   * @param id Application id
+   * @return An {@link ApplicationSpecification} of the application being removed.
+   * @throws OperationException
+   */
+  ApplicationSpecification removeApplication(Id.Application id) throws OperationException;
+
+  /**
    * Removes all applications (with programs) of the given account
    * @param id account id whose applications to remove
    */
