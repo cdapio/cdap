@@ -375,7 +375,7 @@ fs.readFile(configPath, function (error, result) {
 						request.params, function (error, response) {
 						socketResponse(socket, request, error, response);
 					});
-				});
+				}, true);
 			});
 
 		}

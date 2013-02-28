@@ -332,7 +332,7 @@ logger.setLevel(LOG_LEVEL);
 
 	};
 
-	this.gateway = function (apiKey, method, params, done) {
+	this.gateway = function (apiKey, method, params, done, secure) {
 
 		var post_data = params.payload || "";
 
@@ -364,7 +364,7 @@ logger.setLevel(LOG_LEVEL);
 
 		post_options.headers['Content-Length'] = post_data.length;
 
-		var lib = apiKey === 'apikey' ? http : https;
+		var lib = secure ? https : http;
 
 		var request = lib.request(post_options, function(res) {
 			res.setEncoding('utf8');
