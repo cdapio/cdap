@@ -40,10 +40,12 @@ public final class ReflectionDatumWriter {
 
   private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
     if(object != null) {
-      if (objSchema.getType() == Schema.Type.RECORD && seenRefs.contains(object)) {
+      if (seenRefs.contains(object)) {
         throw new IOException("Circular reference not supported.");
       }
-      seenRefs.add(object);
+      if (objSchema.getType() == Schema.Type.RECORD) {
+        seenRefs.add(object);
+      }
     }
 
     switch(objSchema.getType()) {
