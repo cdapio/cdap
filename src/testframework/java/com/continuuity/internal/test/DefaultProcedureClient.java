@@ -19,7 +19,7 @@ import java.net.URL;
 import java.util.Map;
 
 /**
- *
+ * Simple procedure client that uses java URLConnection to fire requests.
  */
 public final class DefaultProcedureClient implements ProcedureClient {
 

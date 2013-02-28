@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
-  private Map<String, Class<?>> classes = Maps.newHashMap();
+  private final Map<String, Class<?>> classes = Maps.newHashMap();
   private char classNameReplacementChar;
 
   /**
@@ -47,19 +47,15 @@ public abstract class MultiClassLoader extends ClassLoader {
     // Note loadClassBytes() is an abstract method
     byte[] classBytes = loadClassBytes(className);
     if(classBytes == null) {
-      //Check with the primordial class loader
+      //Check with the parent classloader
       try {
-        result = super.findSystemClass(className);
-        return result;
+        return super.findSystemClass(className);
       } catch(ClassNotFoundException e) {
         if(LOG.isTraceEnabled()) {
           LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
         }
         throw e;
       }
-
-//
-//      throw new ClassNotFoundException(className);
     }
 
     //Define it (parse the class file)

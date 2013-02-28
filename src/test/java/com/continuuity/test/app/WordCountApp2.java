@@ -167,7 +167,7 @@ public class WordCountApp2 implements Application {
 
     @ProcessInput("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
-      LOG.info("process count by field: " + fieldToken);
+//      LOG.info("process count by field: " + fieldToken);
 
       String token = fieldToken.get("word");
       if (token == null) {

@@ -5,7 +5,7 @@ import com.continuuity.test.StreamWriter;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- *
+ * This interface is using Guice assisted inject to create {@link StreamWriter}.
  */
 public interface StreamWriterFactory {
 

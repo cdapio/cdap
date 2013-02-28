@@ -4,7 +4,7 @@ import com.continuuity.test.ProcedureClient;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- *
+ * This interface is using Guice assisted inject to create instance of {@link ProcedureClient}.
  */
 public interface ProcedureClientFactory {
 
