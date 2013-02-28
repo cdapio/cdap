@@ -20,6 +20,7 @@ dependencies {
 
     apiCompile libraries.apache_http_client
     apiCompile libraries.apache_commons_io
+    apiCompile libraries.slf4j_api
 
     apiCompile libraries.google_gson
     apiCompile libraries.google_guava
