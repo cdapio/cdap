@@ -41,11 +41,15 @@ import java.util.concurrent.TimeUnit;
  * Client to communicate to the passport service.
  */
 
-public final class PassportClient {
+public class PassportClient {
   private static final Logger LOG = LoggerFactory.getLogger(PassportClient.class);
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
   private final URI baseUri;
+
+  public PassportClient() {
+    this(URI.create("http://localhost"));
+  }
 
   private PassportClient(URI baseUri) {
     Preconditions.checkNotNull(baseUri);
