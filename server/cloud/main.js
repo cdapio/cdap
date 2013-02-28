@@ -135,7 +135,7 @@ fs.readFile(configPath, function (error, result) {
 
 			} else {
 
-				var ret = config['cluster-name'];
+				var ret = config['gateway.cluster.name'];
 				var host = config['accounts-host'];
 				if (config['accounts-port'] !== '443') {
 					host += ':' + config['accounts-port'];
@@ -375,7 +375,7 @@ fs.readFile(configPath, function (error, result) {
 						request.params, function (error, response) {
 						socketResponse(socket, request, error, response);
 					});
-				});
+				}, true);
 			});
 
 		}
@@ -394,7 +394,7 @@ fs.readFile(configPath, function (error, result) {
 			process.exit(1);
 		});
 
-		getUser(config['cluster-name'], function (user) {
+		getUser(config['gateway.cluster.name'], function (user) {
 			config['user'] = user;
 			Env.getVersion(function (version) {
 				Env.getAddress(function (error, address) {

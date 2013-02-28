@@ -277,8 +277,9 @@ define([], function () {
 							if (fls[flowletName][streamName].second === 'IN') {
 
 								uri = fls[flowletName][streamName].first;
-
 								uri = uri.replace(/:/g, '');
+								uri = uri.replace(/_out/g, '');
+
 								if (uri.indexOf('stream') === 0) {
 									enqueue = 'stream.enqueue.' + uri + '.meanRate';
 								} else {
@@ -303,7 +304,8 @@ define([], function () {
 
 								uri = fls[flowletName][streamName].first;
 								uri = uri.replace(/:/g, '');
-
+								uri = uri.replace(/_out/g, '');
+								
 								if (uri.indexOf('stream') === 0) {
 									enqueue = 'stream.enqueue.' + uri + '.count';
 									ack = 'q.ack.' + uri + '.count';
