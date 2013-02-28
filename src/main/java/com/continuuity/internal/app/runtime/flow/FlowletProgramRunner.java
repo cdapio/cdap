@@ -51,6 +51,7 @@ import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -366,7 +367,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema, flowletContext);
+              return new DatumOutputEmitter<Object>(flowletContext, queueProducer, queueSpec.getQueueName(),
+                                                    schema, new ReflectionDatumWriter(schema));
             }
           }
 

@@ -1,13 +1,15 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.api.io.Schema;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.internal.api.io.Schema;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -21,7 +23,7 @@ import java.util.UUID;
 /**
  *
  */
-public final class ReflectionDatumWriter {
+public final class ReflectionDatumWriter implements DatumWriter<Object> {
 
   private final Schema schema;
 
@@ -33,9 +35,10 @@ public final class ReflectionDatumWriter {
     return schema;
   }
 
-  public void write(Object object, Encoder encoder) throws IOException {
+  @Override
+  public void encode(Object data, Encoder encoder) throws IOException {
     Set<Object> seenRefs = Sets.newIdentityHashSet();
-    write(object, encoder, schema, seenRefs);
+    write(data, encoder, schema, seenRefs);
   }
 
   private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
