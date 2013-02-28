@@ -220,6 +220,12 @@ public class MonitorRestHandler extends NettyRestHandler {
       }
 
       String accountId = accessor.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        helper.finish(NotFound);
+        return;
+      }
 
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(path)) {
