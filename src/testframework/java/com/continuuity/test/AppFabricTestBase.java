@@ -6,6 +6,7 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
@@ -310,7 +311,8 @@ public class AppFabricTestBase {
    * @param appSpec The {@link ApplicationSpecification} of the deploying application.
    */
   private static File jarDir(File dir, File relativeBase, Manifest manifest,
-                             File outputFile, ApplicationSpecification appSpec) throws IOException {
+                             File outputFile, ApplicationSpecification appSpec) throws IOException,
+    ClassNotFoundException {
 
     JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile), manifest);
     Queue<File> queue = Lists.newLinkedList();
@@ -331,7 +333,8 @@ public class AppFabricTestBase {
       procedureClassNames.add(procedureSpec.getClassName());
     }
 
-    FlowletRewriter flowletRewriter = new FlowletRewriter(appSpec.getName());
+    FlowletRewriter flowletRewriter = new FlowletRewriter(appSpec.getName(), false);
+    FlowletRewriter generatorRewriter = new FlowletRewriter(appSpec.getName(), true);
     ProcedureRewriter procedureRewriter = new ProcedureRewriter(appSpec.getName());
 
     URI basePath = relativeBase.toURI();
@@ -344,9 +347,14 @@ public class AppFabricTestBase {
         InputStream is = new FileInputStream(file);
         try {
           byte[] bytes = ByteStreams.toByteArray(is);
-          if (flowletClassNames.containsKey(pathToClassName(entryName))) {
-            jarOut.write(flowletRewriter.generate(bytes, flowletClassNames.get(pathToClassName(entryName))));
-          } else if (procedureClassNames.contains(pathToClassName(entryName))) {
+          String className = pathToClassName(entryName);
+          if (flowletClassNames.containsKey(className)) {
+            if (GeneratorFlowlet.class.isAssignableFrom(Class.forName(className))) {
+              jarOut.write(generatorRewriter.generate(bytes, flowletClassNames.get(className)));
+            } else {
+              jarOut.write(flowletRewriter.generate(bytes, flowletClassNames.get(className)));
+            }
+          } else if (procedureClassNames.contains(className)) {
             jarOut.write(procedureRewriter.generate(bytes));
           } else {
             jarOut.write(bytes);

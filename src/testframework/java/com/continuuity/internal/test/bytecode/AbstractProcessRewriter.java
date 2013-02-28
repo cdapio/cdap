@@ -1,7 +1,9 @@
 package com.continuuity.internal.test.bytecode;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -9,6 +11,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
@@ -47,12 +50,12 @@ public abstract class AbstractProcessRewriter {
 
   protected AbstractProcessRewriter(Class<?> processorClass,
                                     String processMethodPrefix,
-                                    Class<?> methodAnnotation,
+                                    Class<? extends Annotation> methodAnnotation,
                                     String statsPrefix) {
 
     try {
       this.processMethodPrefix = processMethodPrefix;
-      this.annotate = methodAnnotation.getName().replace('.', '/');
+      this.annotate = methodAnnotation == null ? null : methodAnnotation.getName().replace('.', '/');
       this.statsPrefix = statsPrefix;
 
       String context = null;
@@ -109,6 +112,7 @@ public abstract class AbstractProcessRewriter {
       @Override
       public MethodVisitor visitMethod(int access, final String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = cw.visitMethod(access, name, desc, signature, exceptions);
+        final int argumentSize = new org.objectweb.asm.commons.Method(name, desc).getArgumentTypes().length;
 
         if (name.equals("initialize") && desc.equals("(" + internalNameToDesc(context) + ")V")) {
           initialized = true;
@@ -121,14 +125,15 @@ public abstract class AbstractProcessRewriter {
 
         return new MethodVisitor(ASM4, mv) {
 
-          boolean rewriteMethod = name.startsWith(processMethodPrefix);
+          boolean rewriteMethod = (annotate == null) ? name.equals(processMethodPrefix)
+                                                     : name.startsWith(processMethodPrefix);
           Label tryLabel;
           Label endTryLabel;
           Label catchLabel;
 
           @Override
           public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-            rewriteMethod = rewriteMethod || (desc.equals(internalNameToDesc(annotate)));
+            rewriteMethod = rewriteMethod || (annotate != null && desc.equals(internalNameToDesc(annotate)));
             return mv.visitAnnotation(desc, visible);
           }
 
@@ -155,16 +160,16 @@ public abstract class AbstractProcessRewriter {
               mv.visitJumpInsn(GOTO, endCatchLabel);
               mv.visitLabel(catchLabel);
               mv.visitFrame(F_SAME1, 0, null, 1, new Object[]{"java/lang/Throwable"});
-              mv.visitVarInsn(ASTORE, 2);
+              mv.visitVarInsn(ASTORE, argumentSize + 1);
               generateLogStats(className, mv, statsMiddle, "exception");
 
-              mv.visitVarInsn(ALOAD, 2);
+              mv.visitVarInsn(ALOAD, argumentSize + 1);
               mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate", "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
               mv.visitInsn(ATHROW);
               mv.visitLabel(endCatchLabel);
               mv.visitFrame(F_SAME, 0, null, 0, null);
             }
-            super.visitInsn(opcode);    //To change body of overridden methods use File | Settings | File Templates.
+            super.visitInsn(opcode);
           }
 
           @Override
@@ -172,7 +177,7 @@ public abstract class AbstractProcessRewriter {
             if (rewriteMethod) {
               mv.visitMaxs(maxStack, maxLocals + 1);
             } else {
-              mv.visitMaxs(maxStack, maxLocals);    //To change body of overridden methods use File | Settings | File Templates.
+              mv.visitMaxs(maxStack, maxLocals);
             }
           }
         };
@@ -195,7 +200,7 @@ public abstract class AbstractProcessRewriter {
           mv.visitMaxs(2, 2);
           mv.visitEnd();
         }
-        cw.visitEnd();    //To change body of overridden methods use File | Settings | File Templates.
+        cw.visitEnd();
       }
     }, 0);
 
