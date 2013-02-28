@@ -26,7 +26,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
   @Test
   public void test() throws InterruptedException, IOException, TimeoutException {
-    ApplicationManager applicationManager = deployApplication(new WordCountApp2());
+    ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
     try {
       applicationManager.startFlow("WordCountFlow");
