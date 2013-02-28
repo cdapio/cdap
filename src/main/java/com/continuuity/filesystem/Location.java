@@ -18,6 +18,11 @@ import java.net.URI;
  */
 public interface Location {
   /**
+   * Suffix added to every temp file name generated with {@link #getTempFile(String)}.
+   */
+  public static final String TEMP_FILE_SUFFIX = ".TEMP_FILE";
+
+  /**
    * Checks if the this location exists.
    *
    * @return true if found; false otherwise.
@@ -53,6 +58,15 @@ public interface Location {
    * @throws IOException
    */
   Location append(String child) throws IOException;
+
+  /**
+   * Returns unique location for temporary file to be placed near this location.
+   * Allows all temp files to follow same pattern for easier management of them.
+   * @param suffix part of the file name to include in the temp file name
+   * @return location of the temp file
+   * @throws IOException
+   */
+  Location getTempFile(String suffix) throws IOException;
 
   /**
    * @return A {@link URI} for this location.

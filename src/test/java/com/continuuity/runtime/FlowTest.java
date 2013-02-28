@@ -16,6 +16,7 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -68,8 +69,8 @@ public class FlowTest {
   @Test
   public void testFlow() throws Exception {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp/app/temp");
-    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
@@ -160,8 +161,8 @@ public class FlowTest {
   @Test
   public void testCountRandomApp() throws Exception {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp/app/temp");
-    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
@@ -205,8 +206,8 @@ public class FlowTest {
   @Test
   public void testCountAndFilterWord() throws Exception {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp/app/temp");
-    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));

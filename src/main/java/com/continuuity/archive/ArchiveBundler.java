@@ -4,6 +4,7 @@
 
 package com.continuuity.archive;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -69,10 +70,11 @@ public final class ArchiveBundler {
    *
    * @param output   Cloned output archive
    * @param manifest New manifest file to be added to the cloned archive
-   * @param files    Additional files to be added to cloned archive
+   * @param files    Additional files to be added to cloned archive. Pairs are: resource_name_in_manifest,file_to_add
    * @throws IOException thrown when issue with handling of files.
    */
-  public void clone(Location output, Manifest manifest, Iterable<Location> files) throws IOException {
+  public void clone(Location output, Manifest manifest, Iterable<ImmutablePair<String, Location>> files)
+    throws IOException {
     clone(output, manifest, files, Predicates.<JarEntry>alwaysTrue());
   }
 
@@ -82,12 +84,14 @@ public final class ArchiveBundler {
    *
    * @param output       Cloned output archive
    * @param manifest     New manifest file to be added to the cloned archive
-   * @param files        Additional files to be added to cloned archive
+   * @param files        Additional files to be added to cloned archive.
+   *                     Pairs are: resource_name_in_manifest,file_to_add
    * @param acceptFilter Filter applied on ZipEntry, if true file is accepted, otherwise will be ignored output.
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest,
-                    Iterable<Location> files, Predicate<JarEntry> acceptFilter) throws IOException {
+                    Iterable<ImmutablePair<String, Location>> files,
+                    Predicate<JarEntry> acceptFilter) throws IOException {
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
 
@@ -112,8 +116,11 @@ public final class ArchiveBundler {
 
         String name = entry.getName();
         boolean absenceInJar = true;
-        for(Location f : files) {
-          if(f.getName().equals(name)) {
+
+        // adding entries missing in jar
+        for(ImmutablePair<String, Location> toAdd : files) {
+          String entryToAdd = toAdd.getFirst();
+          if(entryToAdd.equals(name)) {
             absenceInJar = false;
             break;
           }
@@ -132,10 +139,12 @@ public final class ArchiveBundler {
 
     try {
       // Add the new files.
-      for(Location file : files) {
+      for(ImmutablePair<String, Location> toAdd : files) {
+        Location file = toAdd.getSecond();
+        String entryName = toAdd.getFirst();
         InputStream in = file.getInputStream();
         try {
-          zout.putNextEntry(new JarEntry(jarEntryPrefix + file.getName()));
+          zout.putNextEntry(new JarEntry(jarEntryPrefix + entryName));
           ByteStreams.copy(in, zout);
           zout.closeEntry();
         } finally {

@@ -3,6 +3,7 @@ package com.continuuity.discovery;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.base.Cancellable;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
@@ -28,8 +29,8 @@ public class DiscoveryServiceTest {
   @Test
   public void testDiscovery() {
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.temp.dir", "/tmp/app/temp");
-    configuration.set("app.output.dir", "/tmp/app/archive" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
