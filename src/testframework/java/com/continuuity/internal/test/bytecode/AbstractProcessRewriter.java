@@ -1,9 +1,7 @@
 package com.continuuity.internal.test.bytecode;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -110,18 +108,9 @@ public abstract class AbstractProcessRewriter {
       }
 
       @Override
-      public MethodVisitor visitMethod(int access, final String name, String desc, String signature, String[] exceptions) {
+      public MethodVisitor visitMethod(int access, final String name, final String desc, String signature, String[] exceptions) {
         MethodVisitor mv = cw.visitMethod(access, name, desc, signature, exceptions);
         final int argumentSize = new org.objectweb.asm.commons.Method(name, desc).getArgumentTypes().length;
-
-        if (name.equals("initialize") && desc.equals("(" + internalNameToDesc(context) + ")V")) {
-          initialized = true;
-          mv.visitCode();
-          mv.visitVarInsn(ALOAD, 0);
-          mv.visitVarInsn(ALOAD, 1);
-          mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
-          return mv;
-        }
 
         return new MethodVisitor(ASM4, mv) {
 
@@ -140,6 +129,14 @@ public abstract class AbstractProcessRewriter {
           @Override
           public void visitCode() {
             mv.visitCode();
+            if (name.equals("initialize") && desc.equals("(" + internalNameToDesc(context) + ")V")) {
+              initialized = true;
+              mv.visitVarInsn(ALOAD, 0);
+              mv.visitVarInsn(ALOAD, 1);
+              mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
+              return;
+            }
+
             if (rewriteMethod) {
               tryLabel = new Label();
               endTryLabel = new Label();
