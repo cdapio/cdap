@@ -6,6 +6,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -20,18 +21,11 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   private final String clusterName;
 
-  private final String passportHostname;
-
   private final PassportClient passportClient;
 
-  private final int passportPort;
-
-  public PassportVPCAuthenticator(String clusterName, String passportHostname, int passportPort,
-      PassportClient passportClient) {
+  public PassportVPCAuthenticator(String clusterName,PassportClient passportClient) {
     this.clusterName = clusterName;
-    this.passportHostname = passportHostname;
     this.passportClient = passportClient;
-    this.passportPort = passportPort;
   }
 
   @Override
@@ -60,7 +54,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
     if (apiKey == null) {
       throw new RuntimeException("http request was not authenticated");
     }
-    return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
+    return this.passportClient.getAccount(apiKey).getAccountId();
   }
 
   @Override
@@ -70,7 +64,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
       String headerKey = headerEntry.getKey().toString();
       if (headerKey.equals(CONTINUUITY_API_KEY)) {
         String apiKey = headerEntry.getValue().toString();
-        return this.passportClient.getAccount(this.passportHostname, this.passportPort, apiKey).getAccountId();
+        return this.passportClient.getAccount(apiKey).getAccountId();
       }
     }
     // Key not found in headers
@@ -85,7 +79,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
   private boolean authenticate(String apiKey) {
     try {
       List<String> authorizedClusters =
-          this.passportClient.getVPCList(this.passportHostname, this.passportPort, apiKey);
+          this.passportClient.getVPCList(apiKey);
       if (authorizedClusters == null || authorizedClusters.isEmpty())
         return false;
       for (String authorizedCluster : authorizedClusters) {
