@@ -93,7 +93,7 @@ public abstract class AbstractProcessRewriter {
 
   public final byte[] generate(byte[] bytecodes, final String statsMiddle) {
     ClassReader cr = new ClassReader(bytecodes);
-    final ClassWriter cw = new ClassWriter(ASM4);
+    final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     cr.accept(new ClassVisitor(ASM4, cw) {
 
@@ -159,7 +159,7 @@ public abstract class AbstractProcessRewriter {
               Label endCatchLabel = new Label();
               mv.visitJumpInsn(GOTO, endCatchLabel);
               mv.visitLabel(catchLabel);
-              mv.visitFrame(F_SAME1, 0, null, 1, new Object[]{"java/lang/Throwable"});
+              mv.visitFrame(F_SAME1, 0, null, 1, new Object[]{"java/lang/Throwable"});  // Ignored by COMPUTE_FRAME
               mv.visitVarInsn(ASTORE, argumentSize + 1);
               generateLogStats(className, mv, statsMiddle, "exception");
 
@@ -167,18 +167,9 @@ public abstract class AbstractProcessRewriter {
               mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate", "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
               mv.visitInsn(ATHROW);
               mv.visitLabel(endCatchLabel);
-              mv.visitFrame(F_SAME, 0, null, 0, null);
+              mv.visitFrame(F_SAME, 0, null, 0, null);       // Ignored by COMPUTE_FRAME
             }
             super.visitInsn(opcode);
-          }
-
-          @Override
-          public void visitMaxs(int maxStack, int maxLocals) {
-            if (rewriteMethod) {
-              mv.visitMaxs(maxStack, maxLocals + 1);
-            } else {
-              mv.visitMaxs(maxStack, maxLocals);
-            }
           }
         };
       }
@@ -197,7 +188,7 @@ public abstract class AbstractProcessRewriter {
           mv.visitVarInsn(ALOAD, 1);
           mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
           mv.visitInsn(RETURN);
-          mv.visitMaxs(2, 2);
+          mv.visitMaxs(0, 0);   // Ignored by COMPUTE_FRAME
           mv.visitEnd();
         }
         cw.visitEnd();
