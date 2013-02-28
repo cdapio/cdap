@@ -46,6 +46,7 @@ public class PassportClient {
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
   private final URI baseUri;
+  private static final String API_BASE = "/passport/v1/";
 
   public PassportClient() {
     this(URI.create("http://localhost"));
@@ -83,7 +84,7 @@ public class PassportClient {
       String data = responseCache.getIfPresent(apiKey);
 
       if (data == null) {
-        data = httpGet("passport/v1/vpc", apiKey);
+        data = httpGet(API_BASE + "vpc", apiKey);
         if (data != null) {
           responseCache.put(apiKey, data);
         }
@@ -120,14 +121,19 @@ public class PassportClient {
     try {
       Account account = accountCache.getIfPresent(apiKey);
       if (account == null) {
-        String data = httpPost("/passport/v1/account/authenticate", apiKey);
-        Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        account = gson.fromJson(data, Account.class);
-        accountCache.put(apiKey,account);
+        String data = httpPost(API_BASE + "account/authenticate", apiKey);
+        if(data != null) {
+          Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+          account = gson.fromJson(data, Account.class);
+          accountCache.put(apiKey,account);
+          return new AccountProvider<Account>(account);
+        }
+      } else {
+        return new AccountProvider<Account>(account);
       }
       // This is a hack for overriding accountId type to String.
-      // Ideally Account should use String type for account id instead.
-      return new AccountProvider<Account>(account);
+      // Ideally Account should use String type for account id instead
+      return new AccountProvider<Account>(null);
     }  catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
