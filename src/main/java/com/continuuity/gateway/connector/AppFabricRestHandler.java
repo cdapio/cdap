@@ -59,6 +59,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public class AppFabricRestHandler extends NettyRestHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
   private final static String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+  private final static String APPFABRIC_SERVICE_NAME = "app.fabric.service";
 
   /**
    * The allowed methods for this handler
@@ -214,7 +215,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
 
   private AppFabricService.Client getAppFabricClient() throws TTransportException  {
     List<Discoverable> endpoints
-      = Lists.newArrayList(connector.getDiscoveryServiceClient().discover("app.fabric.service"));
+      = Lists.newArrayList(connector.getDiscoveryServiceClient().discover(APPFABRIC_SERVICE_NAME));
     if(endpoints.isEmpty()) {
       LOG.trace("Received a request for deploy, but AppFabric service was not available.");
       return null;
