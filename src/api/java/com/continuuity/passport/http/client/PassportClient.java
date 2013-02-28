@@ -11,15 +11,26 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.gson.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpMessage;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,43 +41,45 @@ import java.util.concurrent.TimeUnit;
  * Client to communicate to the passport service.
  */
 
-public class PassportClient {
-
-  private boolean debugEnabled = false;
+public final class PassportClient {
+  private static final Logger LOG = LoggerFactory.getLogger(PassportClient.class);
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
+  private final URI baseUri;
 
-  public PassportClient() {
+  private PassportClient(URI baseUri) {
+    Preconditions.checkNotNull(baseUri);
+    this.baseUri = baseUri;
     //Cache valid responses from Servers for 10 mins
     responseCache = CacheBuilder.newBuilder()
       .maximumSize(10000)
       .expireAfterAccess(10, TimeUnit.MINUTES)
       .build();
-
-    accountCache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterAccess(10,TimeUnit.MINUTES).build();
+    accountCache = CacheBuilder.newBuilder()
+      .maximumSize(1000)
+      .expireAfterAccess(10, TimeUnit.MINUTES)
+      .build();
   }
 
+  public static PassportClient create(String uri) {
+    Preconditions.checkNotNull(uri);
+    return new PassportClient(URI.create(uri));
+  }
 
   /**
    * Get List of VPC for the apiKey
-   * @param baseURI
    * @return List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(URI baseURI,  String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(baseURI,"URI cannot be null");
+  public List<String> getVPCList(String apiKey) throws RuntimeException {
     Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
-
-    //Check in cache- if present return it.
     List<String> vpcList = Lists.newArrayList();
 
     try {
-      URI uri = getEndPoint(baseURI, "passport/v1/vpc");
-
       String data = responseCache.getIfPresent(apiKey);
-      if (data == null) {
-        data = httpGet(uri, apiKey);
 
+      if (data == null) {
+        data = httpGet("passport/v1/vpc", apiKey);
         if (data != null) {
           responseCache.put(apiKey, data);
         }
@@ -85,35 +98,27 @@ public class PassportClient {
         }
       }
     }  catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw Throwables.propagate(e);
     }
     return vpcList;
-
   }
 
 
   /**
    * Get List of VPC for the apiKey
    *
-   * @param baseURI uri of the service
    * @return Instance of {@AccountProvider}
    * @throws Exception RunTimeExceptions
    */
-  public AccountProvider<Account> getAccount(URI baseURI, String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(baseURI,"URI cannot be null");
+  public AccountProvider<Account> getAccount(String apiKey) {
     Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
 
     try {
-      URI uri = getEndPoint(baseURI, "passport/v1/account/authenticate");
-      Account account = null;
-
-      account = accountCache.getIfPresent(apiKey);
+      Account account = accountCache.getIfPresent(apiKey);
       if (account == null) {
-        String data = httpPost(uri, apiKey);
+        String data = httpPost("/passport/v1/account/authenticate", apiKey);
         Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         account = gson.fromJson(data, Account.class);
-      }
-      if(account != null) {
         accountCache.put(apiKey,account);
       }
       // This is a hack for overriding accountId type to String.
@@ -124,64 +129,38 @@ public class PassportClient {
     }
   }
 
-
-  private String httpGet(URI uri, String apiKey) throws RuntimeException {
-    String payload = null;
+  private String httpGet(String api, String apiKey)  {
+    URI uri = URI.create(baseUri.toASCIIString() + "/" + api);
     HttpGet get = new HttpGet(uri);
     get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
-
-    // prepare for HTTP
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response;
-
-    try {
-      response = client.execute(get);
-      payload = IOUtils.toString(response.getEntity().getContent());
-
-      if(response.getStatusLine().getStatusCode() != 200){
-        throw new RuntimeException(String.format("Call failed with status : %d",
-          response.getStatusLine().getStatusCode()));
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-     finally {
-      client.getConnectionManager().shutdown();
-    }
-    return payload;
+    return request(get);
   }
 
-  private String httpPost(URI uri, String apiKey) throws RuntimeException {
-    String payload = null;
+  private String httpPost(String api, String apiKey) {
+    URI uri = URI.create(baseUri.toASCIIString() + "/" + api);
     HttpPost post = new HttpPost(uri);
     post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
-    //Ad content type
     post.addHeader("Content-Type","application/json");
+    return request(post);
+  }
 
-    // prepare for HTTP
+  private String request(HttpUriRequest uri)  {
+    LOG.trace("Requesting " + uri.getURI().toASCIIString());
     HttpClient client = new DefaultHttpClient();
-
-    HttpResponse response;
-
     try {
-      response = client.execute(post);
-
+      HttpResponse response = client.execute(uri);
       if(response.getStatusLine().getStatusCode() != 200){
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }
-      payload = IOUtils.toString(response.getEntity().getContent());
-
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      ByteStreams.copy(response.getEntity().getContent(), bos);
+      return bos.toString("UTF-8");
     } catch (IOException e) {
-      throw Throwables.propagate(e);
-    } finally{
+      LOG.warn("Failed to retrieve data from " + uri.getURI().toASCIIString(), e);
+      return null;
+    } finally {
       client.getConnectionManager().shutdown();
     }
-    return payload;
-  }
-
-  private URI getEndPoint(URI baseURI, String endpoint) throws MalformedURLException, URISyntaxException {
-    return new URI (baseURI.getScheme(),baseURI.getUserInfo(),baseURI.getHost(),
-                    baseURI.getPort(),baseURI.getPath()+"/"+endpoint,baseURI.getQuery(),baseURI.getFragment());
   }
 }

@@ -51,10 +51,9 @@ public class TestPassportClient {
  }
   @Test
   public void testValidAccount() throws URISyntaxException {
-    PassportClient client = new PassportClient();
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d",port));
     System.out.println("Trying to get account");
-    URI uri = new URI(String.format("http://localhost:%d",port));
-    AccountProvider accountProvider = client.getAccount(uri, "apiKey1");
+    AccountProvider accountProvider = client.getAccount("apiKey1");
     System.out.println("Got an account");
 
     assert (accountProvider !=null);
@@ -65,9 +64,8 @@ public class TestPassportClient {
 
   @Test(expected = RuntimeException.class)
   public void testInvalidAccount() throws URISyntaxException {
-    PassportClient client = new PassportClient();
-    URI uri = new URI(String.format("http://localhost:%d",port));
-    AccountProvider accountProvider = client.getAccount(uri,"apiKey100");
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d",port));
+    AccountProvider accountProvider = client.getAccount("apiKey100");
 
   }
 
@@ -76,7 +74,6 @@ public class TestPassportClient {
      server.stop();
      Thread.sleep(1000);
   }
-
 
   private static void addAccount(Map<String,String> account) throws IOException {
     Gson gson =new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
