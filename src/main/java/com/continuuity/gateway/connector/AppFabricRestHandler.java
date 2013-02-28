@@ -98,6 +98,16 @@ public class AppFabricRestHandler extends NettyRestHandler {
                               MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
     MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics, this.connector.getMetricsQualifier());
+    HttpMethod method = request.getMethod();
+    String requestUri = request.getUri();
+
+    // Ping doesn't need a auth token.
+    if ("/ping".equals(requestUri)) {
+      helper.setMethod("ping");
+      respondToPing(message.getChannel(), request);
+      helper.finish(Success);
+      return;
+    }
 
     if(! connector.getAuthenticator().authenticateRequest(request)) {
       respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
@@ -111,9 +121,6 @@ public class AppFabricRestHandler extends NettyRestHandler {
       helper.finish(BadRequest);
       return;
     }
-
-    HttpMethod method = request.getMethod();
-    String requestUri = request.getUri();
 
     try {
       if(method != HttpMethod.PUT) {
