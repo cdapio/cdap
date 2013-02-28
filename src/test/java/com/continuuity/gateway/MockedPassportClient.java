@@ -19,13 +19,13 @@ public class MockedPassportClient extends PassportClient {
   }
 
   @Override
-  public List<String> getVPCList(String hostname, int port, String apiKey)
+  public List<String> getVPCList(String apiKey)
       throws RuntimeException {
     return this.keysAndClusters.get(apiKey);
   }
 
   @Override
-  public AccountProvider<Account> getAccount(String hostname, int port, String apiKey)
+  public AccountProvider<Account> getAccount(String apiKey)
     throws RuntimeException {
     return new AccountProvider<Account>(new Account("John","Smith", "john@smith.com")) {
       @Override
