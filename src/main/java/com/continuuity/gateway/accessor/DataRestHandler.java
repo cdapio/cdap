@@ -132,6 +132,12 @@ public class DataRestHandler extends NettyRestHandler {
       }
 
       String accountId = accessor.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        helper.finish(NotFound);
+        return;
+      }
 
       if (method == HttpMethod.PUT) {
         operation = WRITE;

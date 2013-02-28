@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -311,15 +312,11 @@ public class Gateway implements Server {
     if (requireAuthentication) {
       // Tests may set a passport client, so only create one if it dne
       if (this.passportClient == null) {
-        this.passportClient = new PassportClient();
+        this.passportClient = PassportClient.create(
+          myConfiguration.get(PassportConstants.CFG_PASSPORT_SERVER_URI)
+        );
       }
-      // Get the hostname for the passport service from config for now
-      // TODO: Use constant from passport once committed
-      String passportHostname = myConfiguration.get(PassportConstants.CFG_PASSPORT_SERVER_ADDRESS_KEY,
-          "localhost");
-      int passportPort = myConfiguration.getInt(PassportConstants.CFG_PASSPORT_SERVER_PORT_KEY, 7777);
-      this.authenticator = new PassportVPCAuthenticator(this.clusterName,
-          passportHostname, passportPort, this.passportClient);
+      this.authenticator = new PassportVPCAuthenticator(this.clusterName, this.passportClient);
     } else {
       this.authenticator = new NoAuthenticator();
     }
