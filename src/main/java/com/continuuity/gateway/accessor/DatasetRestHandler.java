@@ -2,6 +2,7 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
@@ -242,6 +243,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     // no more components allowed on path
     if (!pathComponents.isEmpty()) {
       respondBadRequest(message, request, helper, "extra components in path");
+      return;
     }
 
     // is there an operation parameter? Can have only one value, and only list and increment are allowed
@@ -390,11 +392,11 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
 
     Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
-    Type longMapType = new TypeToken<Map<String, String>>() {}.getType();
+    // Type longMapType = new TypeToken<Map<String, Long>>() {}.getType();
 
     // for operations write and increment, there must be a JSON string in the body
     Map<String, String> valueMap = null;
-    Map<String, Long> longMap = null;
+    // Map<String, Long> longMap = null;
     try {
       if (operation == TableOp.Increment || operation == TableOp.Write) {
         InputStreamReader reader = new InputStreamReader(
@@ -402,7 +404,9 @@ public class DatasetRestHandler extends NettyRestHandler {
         if (operation == TableOp.Write) {
           valueMap = new Gson().fromJson(reader, stringMapType);
         } else {
-          longMap = new Gson().fromJson(reader, longMapType);
+          // does not seem to work, Gson returns Map<String,String>
+          // longMap = new Gson().fromJson(reader, longMapType);
+          valueMap = new Gson().fromJson(reader, stringMapType);
         }
       }
     } catch (Exception e) {
@@ -552,7 +556,7 @@ public class DatasetRestHandler extends NettyRestHandler {
 
     else if (operation.equals(TableOp.Increment)) {
       Increment increment;
-      if (longMap == null || longMap.isEmpty()) {
+      if (valueMap == null || valueMap.isEmpty()) {
         // this happens when we have no content
         respondBadRequest(message, request, helper, "request body has no columns to increment");
         return;
@@ -562,12 +566,15 @@ public class DatasetRestHandler extends NettyRestHandler {
         byte[][] cols = new byte[valueMap.size()][];
         long[] vals = new long[valueMap.size()];
         int i = 0;
-        for (Map.Entry<String, Long> entry : longMap.entrySet()) {
+        for (Map.Entry<String, String> entry : valueMap.entrySet()) {
           cols[i] = Util.decodeBytes(entry.getKey(), encoding);
-          vals[i] = entry.getValue();
+          vals[i] = Long.parseLong(entry.getValue());
           i++;
         }
         increment = new Increment(rowKey, cols, vals);
+      } catch (NumberFormatException e) {
+        respondBadRequest(message, request, helper, "error converting values to long", e);
+        return;
       } catch (UnsupportedEncodingException e) {
         respondBadRequest(message, request, helper, "error decoding column key(s) and values", e);
         return;
@@ -577,9 +584,15 @@ public class DatasetRestHandler extends NettyRestHandler {
       try {
         results = table.incrementAndGet(increment);
       } catch (OperationException e) {
-        helper.finish(Error);
-        LOG.error("Error during Writte: " + e.getMessage(), e);
-        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        // if this was an illegal increment, then it was a bad request
+        if (StatusCode.ILLEGAL_INCREMENT == e.getStatus()) {
+          respondBadRequest(message, request, helper, "attempt to increment a value that is not a long");
+        } else {
+          // otherwise it is an internal error
+          helper.finish(Error);
+          LOG.error("Error during Write: " + e.getMessage(), e);
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
         return;
       }
       // first convert the bytes to strings

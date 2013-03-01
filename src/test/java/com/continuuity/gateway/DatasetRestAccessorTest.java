@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Read;
@@ -20,6 +21,7 @@ import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -29,6 +31,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -278,7 +281,88 @@ public class DatasetRestAccessorTest {
     assertDelete(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/abc/a?op=list" + row); // delete with op
     assertDelete(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/" + t.getName()); // no/empty row key
     assertDelete(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table//" + t.getName()); // no/empty row key
+  }
 
+  Map<String, Long> assertIncrement(String prefix, int expected, String query, String json) throws IOException {
+    HttpPost post = new HttpPost(prefix + query);
+    post.setEntity(new StringEntity(json, "UTF-8"));
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(post);
+    client.getConnectionManager().shutdown();
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+    if (expected != HttpStatus.SC_OK) return null;
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    // JSon always returns string maps, no matter what the type, must be due to type erasure
+    Type valueMapType = new TypeToken<Map<String, String>>(){}.getType();
+    Map<String, String> map = new Gson().fromJson(reader, valueMapType);
+    // convert to map(string->long)
+    Map<String, Long> longMap = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      longMap.put(entry.getKey(), Long.parseLong(entry.getValue()));
+    }
+    return longMap;
+  }
+
+  @Test
+  public void testIncrement() throws Exception {
+    String urlPrefix = setupAccessor("data", "", "/data/");
+    Table t = createTable("tI");
+    String row = "abc";
+    // directly write a row with two columns, a long, b not
+    final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
+    t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
+
+    // submit increment for row with c1 and c3, should succeed
+    String json = "{\"a\":35,\"c\":11}";
+    Map<String,Long> map = assertIncrement(urlPrefix, 200, "Table/" + t.getName() + "/" + row + "?op=increment", json);
+    // verify result is the incremented value
+    Assert.assertNotNull(map);
+    Assert.assertEquals(2L, map.size());
+    Assert.assertEquals(new Long(42), map.get("a"));
+    Assert.assertEquals(new Long(11), map.get("c"));
+
+    // verify directly incremented has happened
+    OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(3, result.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
+    Assert.assertArrayEquals(b, result.getValue().get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+
+    // submit an increment for a and b, must fail with not-a-number
+    json = "{\"a\":1,\"b\":12}";
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/" + row + "?op=increment", json);
+    // verify directly that the row is unchanged
+    result = t.read(new Read(row.getBytes()));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(3, result.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
+    Assert.assertArrayEquals(b, result.getValue().get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+
+    // submit an increment for non-existent row, should succeed
+    json = "{\"a\":1,\"b\":-12}";
+    map = assertIncrement(urlPrefix, 200, "Table/" + t.getName() + "/xyz?op=increment", json);
+    // verify return value is equal to increments
+    Assert.assertNotNull(map);
+    Assert.assertEquals(2L, map.size());
+    Assert.assertEquals(new Long(1), map.get("a"));
+    Assert.assertEquals(new Long(-12), map.get("b"));
+    // verify directly that new values are there
+    // verify directly that the row is unchanged
+    result = t.read(new Read("xyz".getBytes()));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(2, result.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(1L), result.getValue().get(a));
+    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.getValue().get(b));
+
+    // test some bad cases
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "?op=increment", json); // no row key
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/?op=increment", json); // empty row key
+    assertIncrement(urlPrefix, 404, "Table/" + t.getName() + "1/abc?op=increment", json); // table does not exist
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "1/abc/x?op=increment", json); // path does not end on row
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/xyz?op=increment", "{\"a\":\"b\"}"); // json invalid
+    assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/xyz?op=increment", "{\"a\":1"); // json invalid
 
   }
 }
