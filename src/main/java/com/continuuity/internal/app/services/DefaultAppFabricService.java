@@ -82,6 +82,7 @@ import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import net.sf.cglib.core.Local;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -712,10 +714,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
     Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
-    final Location applicationDir = locationFactory.create(archiveDir + "/" + id.getAccountId()
-                                                             + "/" + id.getApplicationId() + ".jar");
+    final Location appArchive = getApplicationLocation(Id.Application.from(id.getAccountId(),
+                                                                               id.getApplicationId()));
     try {
-      if(! applicationDir.exists()) {
+      if(! appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
@@ -729,12 +731,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
-        .setHeader("X-Archive-Name", applicationDir.getName())
+        .setHeader("X-Archive-Name", appArchive.getName())
         .setHeader("X-Continuuity-ApiKey", authToken.getToken())
         .build();
 
       try {
-        Future<Response> future = client.put(new LocationBodyGenerator(applicationDir));
+        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if(response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
@@ -807,6 +809,48 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
     Preconditions.checkNotNull(token);
+  }
+
+  @Override
+  public void removeApplication(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
+    Preconditions.checkNotNull(token, "No auth token provided.");
+    Preconditions.checkNotNull(identifier, "No application id provided.");
+
+    Id.Account accountId = Id.Account.from(identifier.getAccountId());
+    Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
+
+    // Check if all are stopped.
+    for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(Type.FLOW).entrySet()) {
+      Id.Program programId = entry.getValue().getProgramId();
+      if (programId.getApplication().equals(appId)) {
+        throw new IllegalStateException(String.format("Program still running: application=%s, type=%s, program=%s",
+                                                      appId.getId(), entry.getValue().getType(), programId.getId()));
+      }
+    }
+
+    // Delete the App from store
+    try {
+      store.removeApplication(appId);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+
+    // Remove the Program jar
+    Location appArchive = getApplicationLocation(appId);
+    try {
+      appArchive.delete();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    // Reset metrics
+    try {
+      MetricsFrontendServiceImpl mfs = new MetricsFrontendServiceImpl(configuration);
+      mfs.clear(accountId.getId(), appId.getId());
+    } catch (Exception e) {
+      LOG.error("Fail to clear metrics for application " + appId.getId() + " for account " + accountId);
+      throw new AppFabricServiceException(e.getMessage());
+    }
   }
 
   @Override
@@ -938,5 +982,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
+  }
+
+  private Location getApplicationLocation(Id.Application appId) {
+    return locationFactory.create(String.format("%s/%s/%s.jar", archiveDir, appId.getAccount(), appId.getId()));
   }
 }
