@@ -53,6 +53,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
@@ -96,7 +97,7 @@ public class MDSBasedStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     TestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from("demo", "ToyApp", "ToyFlow"), Type.FLOW);
+    Program program = store.loadProgram(Id.Program.from("developer", "ToyApp", "ToyFlow"), Type.FLOW);
     Assert.assertNotNull(program);
   }
 
@@ -421,12 +422,14 @@ public class MDSBasedStoreTest {
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
-    Id.Application appId = new Id.Application(accountId, "application1");
+    Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec);
 
+    ApplicationSpecification appSpec = store.getApplication(appId);
+
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
-    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    Assert.assertNotNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", spec.getName())));
     Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
     Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
 
@@ -434,8 +437,8 @@ public class MDSBasedStoreTest {
     store.removeAllApplications(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
-    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
+    Assert.assertNotNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", spec.getName())));
     // Streams and DataSets should survive deletion
     Assert.assertEquals(1, metadataService.getStreams(new Account("account1")).size());
     Assert.assertEquals(1, metadataService.getDatasets(new Account("account1")).size());
