@@ -1,10 +1,12 @@
 package com.continuuity.gateway;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
+import com.continuuity.data.metadata.MetaDataStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +68,14 @@ public class Gateway implements Server {
    */
   @Inject
   private MetadataService mds;
+
+  @Inject
+  private MetaDataStore metaDataStore;
+
+  @Inject
+  private StoreFactory storeFactory;
+
+  private Store store;
 
   @Inject
   private DiscoveryServiceClient discoveryServiceClient;
@@ -185,7 +195,15 @@ public class Gateway implements Server {
       // TODO: This should probably be done in the addConnector method?
       if (connector instanceof Collector) {
         ((Collector) connector).setConsumer(this.consumer);
-        ((Collector) connector).setMetadataService(this.mds);
+      }
+      if (connector instanceof MetaDataServiceAware) {
+        ((MetaDataServiceAware) connector).setMetadataService(this.mds);
+      }
+      if (connector instanceof MetaDataStoreAware) {
+        ((MetaDataStoreAware) connector).setMetadataStore(this.metaDataStore);
+      }
+      if (connector instanceof StoreAware) {
+        ((StoreAware) connector).setStore(this.store);
       }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
@@ -289,6 +307,8 @@ public class Gateway implements Server {
     if (this.mds == null) {
       this.mds = new MetadataService(executor);
     }
+
+    store = storeFactory.create();
 
     // Save the configuration so we can use it again later
     myConfiguration = configuration;
