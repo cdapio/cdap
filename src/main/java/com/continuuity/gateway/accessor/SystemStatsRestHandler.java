@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -40,9 +39,9 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 /**
  * This is the http request handler for the system stats REST API.
  * <p>
- * Examples of well-formed reqeuests:
+ * Example of well-formed reqeuest:
  * <PRE>
- *   TODO
+ *   http://localhost:10006/systemstats
  * </PRE>
  *
  */
