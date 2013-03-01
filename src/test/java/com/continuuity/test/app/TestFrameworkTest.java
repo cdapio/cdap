@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 public class TestFrameworkTest extends AppFabricTestBase {
 
   @Test
-  public void test() throws InterruptedException, IOException, TimeoutException {
+  public void testApp() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
     try {
@@ -61,6 +61,31 @@ public class TestFrameworkTest extends AppFabricTestBase {
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
       procedureMetrics.waitForProcessed(1, 1, TimeUnit.SECONDS);
       Assert.assertEquals(0L, procedureMetrics.getException());
+
+    } finally {
+      applicationManager.stopAll();
+    }
+  }
+
+  @Test
+  public void testGenerator() throws InterruptedException, IOException, TimeoutException {
+    ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
+
+    try {
+      applicationManager.startFlow("GenSinkFlow");
+
+      // Check the flowlet metrics
+      RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+                                                                 "GenSinkFlow",
+                                                                 "GenFlowlet");
+
+      RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+                                                                  "GenSinkFlow",
+                                                                  "SinkFlowlet");
+      sinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+      Assert.assertEquals(0L, sinkMetrics.getException());
+
+      Assert.assertEquals(1L, genMetrics.getException());
 
     } finally {
       applicationManager.stopAll();

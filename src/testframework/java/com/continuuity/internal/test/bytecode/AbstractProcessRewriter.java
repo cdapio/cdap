@@ -6,9 +6,11 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
@@ -47,12 +49,12 @@ public abstract class AbstractProcessRewriter {
 
   protected AbstractProcessRewriter(Class<?> processorClass,
                                     String processMethodPrefix,
-                                    Class<?> methodAnnotation,
+                                    Class<? extends Annotation> methodAnnotation,
                                     String statsPrefix) {
 
     try {
       this.processMethodPrefix = processMethodPrefix;
-      this.annotate = methodAnnotation.getName().replace('.', '/');
+      this.annotate = methodAnnotation == null ? null : methodAnnotation.getName().replace('.', '/');
       this.statsPrefix = statsPrefix;
 
       String context = null;
@@ -90,7 +92,7 @@ public abstract class AbstractProcessRewriter {
 
   public final byte[] generate(byte[] bytecodes, final String statsMiddle) {
     ClassReader cr = new ClassReader(bytecodes);
-    final ClassWriter cw = new ClassWriter(ASM4);
+    final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
     cr.accept(new ClassVisitor(ASM4, cw) {
 
@@ -107,34 +109,35 @@ public abstract class AbstractProcessRewriter {
       }
 
       @Override
-      public MethodVisitor visitMethod(int access, final String name, String desc, String signature, String[] exceptions) {
+      public MethodVisitor visitMethod(int access, final String name, final String desc, String signature, String[] exceptions) {
         MethodVisitor mv = cw.visitMethod(access, name, desc, signature, exceptions);
-
-        if (name.equals("initialize") && desc.equals("(" + internalNameToDesc(context) + ")V")) {
-          initialized = true;
-          mv.visitCode();
-          mv.visitVarInsn(ALOAD, 0);
-          mv.visitVarInsn(ALOAD, 1);
-          mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
-          return mv;
-        }
+        final int argumentSize = new org.objectweb.asm.commons.Method(name, desc).getArgumentTypes().length;
 
         return new MethodVisitor(ASM4, mv) {
 
-          boolean rewriteMethod = name.startsWith(processMethodPrefix);
+          boolean rewriteMethod = (annotate == null) ? name.equals(processMethodPrefix)
+                                                     : name.startsWith(processMethodPrefix);
           Label tryLabel;
           Label endTryLabel;
           Label catchLabel;
 
           @Override
           public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-            rewriteMethod = rewriteMethod || (desc.equals(internalNameToDesc(annotate)));
+            rewriteMethod = rewriteMethod || (annotate != null && desc.equals(internalNameToDesc(annotate)));
             return mv.visitAnnotation(desc, visible);
           }
 
           @Override
           public void visitCode() {
             mv.visitCode();
+            if (name.equals("initialize") && desc.equals("(" + internalNameToDesc(context) + ")V")) {
+              initialized = true;
+              mv.visitVarInsn(ALOAD, 0);
+              mv.visitVarInsn(ALOAD, 1);
+              mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
+              return;
+            }
+
             if (rewriteMethod) {
               tryLabel = new Label();
               endTryLabel = new Label();
@@ -149,31 +152,30 @@ public abstract class AbstractProcessRewriter {
           public void visitInsn(int opcode) {
             if (rewriteMethod && opcode == RETURN) {    // When the origin method return
               generateLogStats(className, mv, statsMiddle, "processed");
-              mv.visitLabel(endTryLabel);
-
-              Label endCatchLabel = new Label();
-              mv.visitJumpInsn(GOTO, endCatchLabel);
-              mv.visitLabel(catchLabel);
-              mv.visitFrame(F_SAME1, 0, null, 1, new Object[]{"java/lang/Throwable"});
-              mv.visitVarInsn(ASTORE, 2);
-              generateLogStats(className, mv, statsMiddle, "exception");
-
-              mv.visitVarInsn(ALOAD, 2);
-              mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate", "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
-              mv.visitInsn(ATHROW);
-              mv.visitLabel(endCatchLabel);
-              mv.visitFrame(F_SAME, 0, null, 0, null);
             }
-            super.visitInsn(opcode);    //To change body of overridden methods use File | Settings | File Templates.
+            super.visitInsn(opcode);
           }
 
           @Override
           public void visitMaxs(int maxStack, int maxLocals) {
             if (rewriteMethod) {
-              mv.visitMaxs(maxStack, maxLocals + 1);
-            } else {
-              mv.visitMaxs(maxStack, maxLocals);    //To change body of overridden methods use File | Settings | File Templates.
+              mv.visitLabel(endTryLabel);
+
+              Label endCatchLabel = new Label();
+              mv.visitJumpInsn(GOTO, endCatchLabel);
+              mv.visitLabel(catchLabel);
+              mv.visitFrame(F_SAME1, 0, null, 1, new Object[]{"java/lang/Throwable"});  // Ignored by COMPUTE_FRAME
+              mv.visitVarInsn(ASTORE, argumentSize + 1);
+              generateLogStats(className, mv, statsMiddle, "exception");
+
+              mv.visitVarInsn(ALOAD, argumentSize + 1);
+              mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate", "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
+              mv.visitInsn(ATHROW);
+              mv.visitLabel(endCatchLabel);
+              mv.visitFrame(F_SAME, 0, null, 0, null);       // Ignored by COMPUTE_FRAME
+              mv.visitInsn(RETURN);
             }
+            super.visitMaxs(0, 0);
           }
         };
       }
@@ -192,10 +194,10 @@ public abstract class AbstractProcessRewriter {
           mv.visitVarInsn(ALOAD, 1);
           mv.visitFieldInsn(PUTFIELD, className, "__genContext", internalNameToDesc(context));
           mv.visitInsn(RETURN);
-          mv.visitMaxs(2, 2);
+          mv.visitMaxs(0, 0);   // Ignored by COMPUTE_FRAME
           mv.visitEnd();
         }
-        cw.visitEnd();    //To change body of overridden methods use File | Settings | File Templates.
+        cw.visitEnd();
       }
     }, 0);
 
