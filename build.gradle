@@ -9,6 +9,9 @@ smartyFacts {
     enableSourceJar()
   }
   thrift
+  testframework {
+    enableJavadoc()
+  }
 }
 
 /**
@@ -30,6 +33,9 @@ dependencies {
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+  testframeworkCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  testframeworkCompile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+
 
   // Dependencies required by api.
   apiCompile libraries.jsr_305
@@ -52,6 +58,17 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
+
+  // Test framework dependencies
+  testframeworkCompile libraries.junit
+  testframeworkCompile libraries.asm
+  testframeworkCompile libraries.google_gson
+  testframeworkCompile libraries.google_guice
+  testframeworkCompile libraries.google_guice_assistedinject
+  testframeworkCompile libraries.google_guice_multibindings
+  testframeworkCompile libraries.google_guava
+  testframeworkCompile libraries.jsr_305
+
 }
 
 /**
@@ -66,9 +83,19 @@ sourceSets {
   }
   test {
     compileClasspath += api.output
+    compileClasspath += testframework.output
     compileClasspath += thrift.output
     runtimeClasspath += api.output
+    runtimeClasspath += testframework.output
     runtimeClasspath += thrift.output
+  }
+  testframework {
+    compileClasspath += api.output
+    compileClasspath += thrift.output
+    compileClasspath += main.output
+    runtimeClasspath += api.output
+    runtimeClasspath += thrift.output
+    runtimeClasspath += main.output
   }
 }
 
@@ -76,7 +103,7 @@ sourceSets {
  * Generates API javadoc.
  */
 javadoc {
-  classpath += (sourceSets.api.output + sourceSets.thrift.output)
+  classpath += (sourceSets.api.output + sourceSets.testframework.output + sourceSets.thrift.output)
 }
 
 /**
