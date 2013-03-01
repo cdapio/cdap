@@ -59,15 +59,23 @@ public class AccountHandler extends PassportHandler {
 
     requestReceived();
 
-    Account account = dataManagementService.getAccount(id);
-    if (account != null) {
-      requestSuccess();
-      return Response.ok(account.toString()).build();
-    } else {
-      requestFailed();
-      LOG.error(String.format("Account not found. Processing endpoint: %s ","GET /passport/v1/account"));
-      return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJsonError("Account not found"))
+    try{
+      Account account = dataManagementService.getAccount(id);
+      if (account != null) {
+        requestSuccess();
+        return Response.ok(account.toString()).build();
+      } else {
+        requestFailed();
+        LOG.error(String.format("Account not found. Processing endpoint: %s ","GET /passport/v1/account"));
+        return Response.status(Response.Status.NOT_FOUND)
+          .entity(Utils.getJsonError("Account not found"))
+          .build();
+      }
+    } catch (Exception e){
+      LOG.error(String.format("Error while processing end point %s. Error %s",
+                              "GET /passport/v1/account", e.getMessage()));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", String.format("Exception while fetching account")))
         .build();
     }
   }
@@ -131,7 +139,6 @@ public class AccountHandler extends PassportHandler {
     requestReceived();
 
     try {
-
       dataManagementService.confirmDownload(id);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
