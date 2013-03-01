@@ -383,6 +383,15 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
+  public ApplicationSpecification removeApplication(Id.Application id) throws OperationException {
+    LOG.trace("Removing application: account: {}, application: {}", id.getAccountId(), id.getId());
+    ApplicationSpecification appSpec = getApplication(id);
+    Preconditions.checkNotNull(appSpec, "No such application: %s", id.getId());
+    removeApplicationFromAppSpec(id.getAccount(), appSpec);
+    return appSpec;
+  }
+
+  @Override
   public void removeAllApplications(Id.Account id) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
     LOG.trace("Removing all applications of account with id: {}", id.getId());
@@ -392,10 +401,7 @@ public class MDSBasedStore implements Store {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
 
     for (MetaDataEntry entry : applications) {
-      ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
-      removeAllFlowsFromMetadataStore(id, appSpec);
-      removeAllProceduresFromMetadataStore(id, appSpec);
-      metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
+      removeApplicationFromAppSpec(id, adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON)));
     }
   }
 
@@ -440,6 +446,13 @@ public class MDSBasedStore implements Store {
         throw Throwables.propagate(e);
       }
     }
+  }
+
+  private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    removeAllFlowsFromMetadataStore(id, appSpec);
+    removeAllProceduresFromMetadataStore(id, appSpec);
+    metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {

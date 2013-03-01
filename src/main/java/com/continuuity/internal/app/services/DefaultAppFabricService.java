@@ -61,8 +61,10 @@ import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -82,6 +84,7 @@ import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import net.sf.cglib.core.Local;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +98,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -712,10 +716,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
     Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
-    final Location applicationDir = locationFactory.create(archiveDir + "/" + id.getAccountId()
-                                                             + "/" + id.getApplicationId() + ".jar");
+    final Location appArchive = getApplicationLocation(Id.Application.from(id.getAccountId(),
+                                                                               id.getApplicationId()));
     try {
-      if(! applicationDir.exists()) {
+      if(! appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
@@ -729,12 +733,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
-        .setHeader("X-Archive-Name", applicationDir.getName())
+        .setHeader("X-Archive-Name", appArchive.getName())
         .setHeader("X-Continuuity-ApiKey", authToken.getToken())
         .build();
 
       try {
-        Future<Response> future = client.put(new LocationBodyGenerator(applicationDir));
+        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if(response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
@@ -799,29 +803,125 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Deletes a flow specified by {@code FlowIdentifier}.
+   * Deletes a program specified by {@code FlowIdentifier}.
    *
    * @param identifier of a flow.
    * @throws AppFabricServiceException when there is an issue deactivating the flow.
    */
   @Override
   public void remove(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
-    Preconditions.checkNotNull(token);
+    Preconditions.checkNotNull(identifier, "No application id provided.");
+
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+
+    // Make sure it is not running
+    Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.equals(programId);
+      }
+    }, Type.values()), "Program still running for application " + programId.getApplication() + "," + programId.getId());
+
+
+    Type programType = entityTypeToType(identifier);
+    for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(programType).entrySet()) {
+      Preconditions.checkState(!programId.equals(entry.getValue().getProgramId()),
+                               "Program still running: application=%s, type=%s, program=%s",
+                               programId.getApplication(), programType, programId.getId());
+    }
+
+    // Delete the program from store.
+    try {
+      store.remove(programId);
+    } catch (OperationException e) {
+      throw new AppFabricServiceException("Fail to delete program " + e.getMessage());
+    }
+  }
+
+  @Override
+  public void removeApplication(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
+    Preconditions.checkNotNull(identifier, "No application id provided.");
+
+    Id.Account accountId = Id.Account.from(identifier.getAccountId());
+    final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
+
+    // Check if all are stopped.
+    Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().equals(appId);
+      }
+    }, Type.values()), "There are program still running for application " + appId.getId());
+
+    // Delete the App from store
+    try {
+      store.removeApplication(appId);
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
+    }
+
+    // Remove the Program jar
+    Location appArchive = getApplicationLocation(appId);
+    try {
+      appArchive.delete();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    // Reset metrics
+    try {
+      MetricsFrontendServiceImpl mfs = new MetricsFrontendServiceImpl(configuration);
+      mfs.clear(accountId.getId(), appId.getId());
+    } catch (Exception e) {
+      LOG.error("Fail to clear metrics for application " + appId.getId() + " for account " + accountId);
+      throw new AppFabricServiceException(e.getMessage());
+    }
+  }
+
+  /**
+   * Check if any program that satisfy the given {@link Predicate} is running
+   * @param predicate Get call on each running {@link Id.Program}.
+   * @param types Types of program to check
+   * @return true if any of the running program satisfy the predicate, false otherwise.
+   */
+  private boolean anyRunning(Predicate<Id.Program> predicate, Type...types) {
+    for (Type type : types) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
+        if (predicate.apply(entry.getValue().getProgramId())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
   public void removeAll(AuthToken token, String account) throws AppFabricServiceException {
-    Preconditions.checkNotNull(token);
+    Preconditions.checkNotNull(account);
+    // TODO: Is it the same as reset??
   }
 
   @Override
   public void reset(AuthToken token, String account) throws AppFabricServiceException {
     Preconditions.checkNotNull(account);
 
+    final Id.Account accountId = Id.Account.from(account);
+
+    // Check if any program is still running
+    Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getAccountId().equals(accountId);
+      }
+    }, Type.values()), "There are program still running under account " + accountId.getId());
+
+
     deleteMetrics(account);
     // delete all meta data
     try {
-      mds.deleteAll(account);
+      store.removeAll(accountId);
     } catch (Exception e) {
       String message = String.format("Error deleting all meta data for " +
                                        "account '%s': %s. At %s", account, e.getMessage(),
@@ -938,5 +1038,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
+  }
+
+  private Location getApplicationLocation(Id.Application appId) {
+    return locationFactory.create(String.format("%s/%s/%s.jar", archiveDir, appId.getAccount(), appId.getId()));
   }
 }

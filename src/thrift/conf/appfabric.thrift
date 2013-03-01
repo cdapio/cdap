@@ -216,13 +216,20 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
-   * Disables a Flow
+   * Disables a Flow or Procedure
    */
   void remove(1:AuthToken token, 2:FlowIdentifier identifier)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Disables all Flows and Queries
+   * Deletes all Flows and Procedures of the given application.
+   * It current takes a FlowIdentifier, but this method only interest in account id and application id.
+   */
+  void removeApplication(1:AuthToken token, 2:FlowIdentifier id)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Disables all Flows and Queries of the account
    */
   void removeAll(1:AuthToken token, 2:string accountId)
     throws (1: AppFabricServiceException e),
