@@ -39,7 +39,7 @@ public final class RoundRobinQueueReader implements QueueReader {
 
     // While the input is empty, keep trying to read from subsequent readers,
     // until a non-empty input is read or it loop back to the beginning reader.
-    while (input.needProcess()) {
+    while (!input.needProcess()) {
       QueueReader reader = readers.next();
       if (reader == begin) {
         return input;
