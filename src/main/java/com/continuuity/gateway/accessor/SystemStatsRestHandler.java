@@ -64,17 +64,6 @@ public class SystemStatsRestHandler extends NettyRestHandler {
   }
 
   /**
-   * All the paths have to be of the form
-   * http://host:port&lt;prefix>&lt;appid>/&lt;flowid>?status
-   * or
-   * http://host:port&lt;prefix>&lt;appid>/&lt;flowid>?metrics&amp;counters=...
-   * example:
-   * <PRE>GET http://g.c.c/rest-status/myapp/flow1?status</PRE> or
-   * <PRE>GET http://g.c.c/rest-status/myapp/flow1?metrics&counters=c1,c2</PRE>
-   */
-  private String pathPrefix;
-
-  /**
    * Will help validate URL paths, and also has the name of the connector and
    * the data fabric executor.
    */
@@ -93,9 +82,6 @@ public class SystemStatsRestHandler extends NettyRestHandler {
   SystemStatsRestHandler(SystemStatsRestAccessor accessor) {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
-    this.pathPrefix =
-        accessor.getHttpConfig().getPathPrefix() +
-            accessor.getHttpConfig().getPathMiddle();
   }
 
   @Override
