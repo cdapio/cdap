@@ -123,7 +123,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,stream.rest,procedure.rest,monitor.rest,app.rest</value>
+        <value>data.rest,stream.flume,stream.rest,procedure.rest,monitor.rest,app.rest,systemstats.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -194,6 +194,7 @@
         <value>/procedure/</value>
     </property>
 
+    <!-- Metrics handler -->
     <property>
         <name>monitor.rest.class</name>
         <value>com.continuuity.gateway.accessor.MonitorRestAccessor</value>
@@ -216,6 +217,7 @@
         <value>/monitor/</value>
     </property>
 
+    <!-- Stream handles -->
     <property>
         <name>stream.rest.class</name>
         <value>com.continuuity.gateway.collector.RestCollector</value>
@@ -251,6 +253,29 @@
     <property>
         <name>stream.flume.threads</name>
         <value>20</value>
+    </property>
+
+    <!-- System stats handler -->
+    <property>
+        <name>systemstats.rest.class</name>
+        <value>com.continuuity.gateway.accessor.SystemStatsRestAccessor</value>
+        <description>Specifies the class for the REST system stats
+            connector</description>
+    </property>
+
+    <property>
+        <name>systemstats.rest.port</name>
+        <value>10006</value>
+    </property>
+
+    <property>
+        <name>systemstats.rest.threads</name>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>monitor.rest.middle</name>
+        <value>/systemstats/</value>
     </property>
 
     <!--
