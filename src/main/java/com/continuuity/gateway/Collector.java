@@ -16,7 +16,7 @@ import com.continuuity.metadata.MetadataService;
  * writes them to the data fabric. The consumer is set during initialization,
  * more precisely after configure() but before start().
  */
-public abstract class Collector extends Connector {
+public abstract class Collector extends Connector implements MetaDataServiceAware {
 
   /**
    * The consumer to pass all events to.
