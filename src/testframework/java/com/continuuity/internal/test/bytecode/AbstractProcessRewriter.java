@@ -6,6 +6,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
@@ -91,7 +92,7 @@ public abstract class AbstractProcessRewriter {
 
   public final byte[] generate(byte[] bytecodes, final String statsMiddle) {
     ClassReader cr = new ClassReader(bytecodes);
-    final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
     cr.accept(new ClassVisitor(ASM4, cw) {
 
@@ -151,6 +152,13 @@ public abstract class AbstractProcessRewriter {
           public void visitInsn(int opcode) {
             if (rewriteMethod && opcode == RETURN) {    // When the origin method return
               generateLogStats(className, mv, statsMiddle, "processed");
+            }
+            super.visitInsn(opcode);
+          }
+
+          @Override
+          public void visitMaxs(int maxStack, int maxLocals) {
+            if (rewriteMethod) {
               mv.visitLabel(endTryLabel);
 
               Label endCatchLabel = new Label();
@@ -165,8 +173,9 @@ public abstract class AbstractProcessRewriter {
               mv.visitInsn(ATHROW);
               mv.visitLabel(endCatchLabel);
               mv.visitFrame(F_SAME, 0, null, 0, null);       // Ignored by COMPUTE_FRAME
+              mv.visitInsn(RETURN);
             }
-            super.visitInsn(opcode);
+            super.visitMaxs(0, 0);
           }
         };
       }
