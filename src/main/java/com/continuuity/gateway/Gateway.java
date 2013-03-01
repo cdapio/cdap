@@ -1,13 +1,5 @@
 package com.continuuity.gateway;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
@@ -22,6 +14,12 @@ import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * The Gateway is the front door to the Continuuity platform. It provides a
@@ -185,11 +183,12 @@ public class Gateway implements Server {
       // TODO: This should probably be done in the addConnector method?
       if (connector instanceof Collector) {
         ((Collector) connector).setConsumer(this.consumer);
-        ((Collector) connector).setMetadataService(this.mds);
       }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
       }
+      // all connectors get the meta data service
+      connector.setMetadataService(this.mds);
 
       try {
         connector.start();

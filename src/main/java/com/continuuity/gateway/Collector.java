@@ -24,11 +24,6 @@ public abstract class Collector extends Connector {
   protected Consumer consumer;
 
   /**
-   * The meta data service.
-   */
-  protected MetadataService mds;
-
-  /**
    * Cache for Stream meta data lookups
    */
   protected StreamCache streamCache;
@@ -51,20 +46,18 @@ public abstract class Collector extends Connector {
     return this.consumer;
   }
 
+  public StreamCache getStreamCache() {
+    return this.streamCache;
+  }
+
   /**
    * Set the meta data service for this collector
    * @param service the metadata servrice to use
    */
+  @Override
   public void setMetadataService(MetadataService service) {
-    this.mds = service;
-    this.streamCache = new StreamCache(mds);
+    super.setMetadataService(service);
+    this.streamCache = new StreamCache(service);
   }
 
-  public MetadataService getMetadataService() {
-    return this.mds;
-  }
-
-  public StreamCache getStreamCache() {
-    return this.streamCache;
-  }
 }
