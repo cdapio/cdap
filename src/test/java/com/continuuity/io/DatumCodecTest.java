@@ -12,6 +12,8 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -186,5 +188,59 @@ public class DatumCodecTest {
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     new ReflectionDatumWriter(schema).write(head, new BinaryEncoder(output));
+  }
+
+
+  public static final class MoreFields {
+
+    static final class Inner {
+      final Map<String, String> map;
+      final String b;
+
+      Inner(String b) {
+        this.b = b;
+        map = ImmutableMap.of("b", b);
+      }
+    }
+
+    final int i;
+    final long j;
+    final String k;
+    final List<String> list;
+    final Inner inner;
+
+    public MoreFields(int i, long j, String k, List<String> list) {
+      this.i = i;
+      this.j = j;
+      this.k = k;
+      this.list = list;
+      inner = new Inner("inner");
+    }
+  }
+
+  public static final class LessFields {
+    static final class Inner {
+      String b;
+    }
+
+    String k;
+    Inner inner;
+  }
+
+  @Test
+  public void testReduceProjection() throws IOException, UnsupportedTypeException {
+    PipedOutputStream output = new PipedOutputStream();
+    PipedInputStream input = new PipedInputStream(output);
+
+    Schema sourceSchema = new ReflectionSchemaGenerator().generate(MoreFields.class);
+    Schema targetSchema = new ReflectionSchemaGenerator().generate(LessFields.class);
+
+    MoreFields moreFields = new MoreFields(10, 20, "30", ImmutableList.of("1", "2"));
+    new ReflectionDatumWriter(sourceSchema).write(moreFields, new BinaryEncoder(output));
+    LessFields lessFields = new ReflectionDatumReader<LessFields>(targetSchema, TypeToken.of(LessFields.class))
+                                            .read(new BinaryDecoder(input), sourceSchema);
+
+    Assert.assertEquals("30", lessFields.k);
+    Assert.assertEquals(moreFields.inner.b, lessFields.inner.b);
   }
 }
