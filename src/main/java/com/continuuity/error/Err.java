@@ -74,6 +74,10 @@ public final class Err {
         " Should atleast have one connection."
     );
 
+    public static final Errors OUTPUT_NOT_CONNECTED = new Errors(
+      "Flowlet %s has outputs but no consumer."
+    );
+
     public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
       "Input of flowlet '%s' does not define a compatible " +
         "type method for processing output of '%s' '%s'."
