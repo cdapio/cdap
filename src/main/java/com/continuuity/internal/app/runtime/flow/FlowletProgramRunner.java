@@ -145,7 +145,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
             .create(flowSpec);
 
-      Flowlet flowlet = new InstantiatorFactory().get(TypeToken.of(flowletClass), false).create();
+      Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
       // Inject DataSet, OutputEmitter, Metric fields

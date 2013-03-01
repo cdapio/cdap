@@ -7,6 +7,9 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,6 +32,8 @@ public final class InstantiatorFactory {
 
   private static final Unsafe UNSAFE;
 
+  private final LoadingCache<TypeToken<?>, Instantiator<?>> instantiatorCache;
+
   static {
     Unsafe unsafe;
     try {
@@ -42,24 +47,29 @@ public final class InstantiatorFactory {
     UNSAFE = unsafe;
   }
 
-  public <T> Instantiator<T> get(TypeToken<T> type, boolean useKnownType) {
-    Instantiator<T> creator = getByDefaultConstructor(type);
-    if(creator != null) {
-      return creator;
-    }
+  public InstantiatorFactory(final boolean useKnownType) {
+    instantiatorCache = CacheBuilder.newBuilder().build(new CacheLoader<TypeToken<?>, Instantiator<?>>() {
+      @Override
+      public Instantiator<?> load(TypeToken<?> type) throws Exception {
+        Instantiator<?> creator = getByDefaultConstructor(type);
+        if(creator != null) {
+          return creator;
+        }
 
-    if (useKnownType) {
-      creator = getByKnownType(type);
-      if(creator != null) {
-        return creator;
+        if (useKnownType) {
+          creator = getByKnownType(type);
+          if(creator != null) {
+            return creator;
+          }
+        }
+
+        return getByUnsafe(type);
       }
-    }
-
-    return getByUnsafe(type);
+    });
   }
 
   public <T> Instantiator<T> get(TypeToken<T> type) {
-    return get(type, true);
+    return (Instantiator<T>)instantiatorCache.getUnchecked(type);
   }
 
   /**

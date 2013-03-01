@@ -1,8 +1,8 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.internal.api.io.Schema;
 import com.continuuity.common.io.Decoder;
+import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.app.runtime.Instantiator;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -13,7 +13,6 @@ import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -32,6 +31,7 @@ public final class ReflectionDatumReader<T> {
   private final TypeToken<T> type;
   private final Map<Class<?>, Instantiator<?>> creators;
   private final InstantiatorFactory creatorFactory;
+  private final FieldAccessorFactory fieldAccessorFactory;
 
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
@@ -40,8 +40,9 @@ public final class ReflectionDatumReader<T> {
     this.type = type.getRawType().equals(StreamEvent.class)
                       ? (TypeToken<T>) TypeToken.of(DefaultStreamEvent.class) : type;
 
-    this.creatorFactory = new InstantiatorFactory();
+    this.creatorFactory = new InstantiatorFactory(true);
     this.creators = Maps.newIdentityHashMap();
+    this.fieldAccessorFactory = new ReflectionFieldAccessorFactory();
   }
 
   public T read(Decoder decoder, Schema sourceSchema) throws IOException {
@@ -192,22 +193,9 @@ public final class ReflectionDatumReader<T> {
           skip(decoder, sourceField.getSchema());
           continue;
         }
-        Field field = null;
-        for(TypeToken<?> type : targetTypeToken.getTypes().classes()) {
-          try {
-            field = type.getRawType().getDeclaredField(sourceField.getName());
-          } catch(NoSuchFieldException e) {
-            // It's ok, keep searching.
-            continue;
-          }
-          break;
-        }
-        check(field != null, "No such field in type. Type: %s, field: %s", targetTypeToken, sourceField.getName());
-        if(!field.isAccessible()) {
-          field.setAccessible(true);
-        }
-        TypeToken<?> fieldTypeToken = targetTypeToken.resolveType(field.getGenericType());
-        field.set(record, read(decoder, sourceField.getSchema(), targetField.getSchema(), fieldTypeToken));
+        FieldAccessor fieldAccessor = fieldAccessorFactory.getFieldAccessor(targetTypeToken, sourceField.getName());
+        fieldAccessor.set(record,
+                          read(decoder, sourceField.getSchema(), targetField.getSchema(), fieldAccessor.getType()));
       }
       return record;
     } catch(Exception e) {
