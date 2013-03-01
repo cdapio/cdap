@@ -57,6 +57,7 @@ public final class GenSinkApp2 implements Application {
         if (i == 10) {
           throw new IllegalStateException("10 hitted");
         }
+        return;
       }
     }
   }
