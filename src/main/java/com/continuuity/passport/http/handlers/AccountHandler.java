@@ -72,6 +72,8 @@ public class AccountHandler extends PassportHandler {
           .build();
       }
     } catch (Exception e){
+      LOG.error(String.format("Error while processing end point %s. Error %s",
+                              "GET /passport/v1/account", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Exception while fetching account")))
         .build();
