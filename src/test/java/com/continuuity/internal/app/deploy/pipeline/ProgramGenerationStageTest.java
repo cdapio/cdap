@@ -7,9 +7,9 @@ package com.continuuity.internal.app.deploy.pipeline;
 import com.continuuity.ToyApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.Id;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -27,7 +27,7 @@ public class ProgramGenerationStageTest {
 
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
-    configuration.set("app.output.dir", "/tmp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp");
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
     ApplicationSpecification appSpec = new ToyApp().configure();

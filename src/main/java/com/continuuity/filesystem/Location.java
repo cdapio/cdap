@@ -4,6 +4,7 @@
 
 package com.continuuity.filesystem;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +17,11 @@ import java.net.URI;
  * </p>
  */
 public interface Location {
+  /**
+   * Suffix added to every temp file name generated with {@link #getTempFile(String)}.
+   */
+  public static final String TEMP_FILE_SUFFIX = ".TEMP_FILE";
+
   /**
    * Checks if the this location exists.
    *
@@ -54,6 +60,15 @@ public interface Location {
   Location append(String child) throws IOException;
 
   /**
+   * Returns unique location for temporary file to be placed near this location.
+   * Allows all temp files to follow same pattern for easier management of them.
+   * @param suffix part of the file name to include in the temp file name
+   * @return location of the temp file
+   * @throws IOException
+   */
+  Location getTempFile(String suffix) throws IOException;
+
+  /**
    * @return A {@link URI} for this location.
    */
   URI toURI();
@@ -67,6 +82,14 @@ public interface Location {
    */
   boolean delete() throws IOException;
 
+  /**
+   * Moves the file or directory denoted by this abstract pathname.
+   *
+   * @param destination destination location
+   * @return new location if and only if the file or directory is successfully moved; null otherwise.
+   */
+  @Nullable
+  Location renameTo(Location destination) throws IOException;
 
   /**
    * Requests that the file or directory denoted by this abstract pathname be

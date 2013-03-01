@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.UUID;
 
 /**
  * A concrete implementation of {@link Location} for the Local filesystem.
@@ -99,6 +100,11 @@ public final class LocalLocation implements Location {
     return new LocalLocation(new File(file, child));
   }
 
+  @Override
+  public Location getTempFile(String suffix) throws IOException {
+    return new LocalLocation(file.getPath() + "." + UUID.randomUUID() + TEMP_FILE_SUFFIX);
+  }
+
   /**
    * @return A {@link URI} for this location on local filesystem.
    */
@@ -117,6 +123,17 @@ public final class LocalLocation implements Location {
   @Override
   public boolean delete() throws IOException {
     return file.delete();
+  }
+
+  @Override
+  public Location renameTo(Location destination) throws IOException {
+    // destination will always be of the same type as this location
+    boolean success = file.renameTo(((LocalLocation) destination).file);
+    if (success) {
+      return new LocalLocation(((LocalLocation) destination).file);
+    } else {
+      return null;
+    }
   }
 
   /**

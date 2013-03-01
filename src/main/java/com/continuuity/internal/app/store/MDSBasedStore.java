@@ -14,7 +14,9 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
+import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
@@ -23,6 +25,7 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
+import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
@@ -96,18 +99,26 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public Program loadProgram(Id.Program id, Type type ) throws IOException {
-    Location outputDir = locationFactory.create(configuration.get("app.output.dir", "/tmp"));
-    Location newOutputDir = outputDir.append(id.getAccountId());
+    Location programLocation = getProgramLocation(id, type);
+    return new Program(programLocation);
+  }
+
+  /**
+   * NOTE: fails with RuntimeException if program can't be found
+   */
+  private Location getProgramLocation(Id.Program id, Type type) throws IOException {
+    Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp"));
+    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location programDir = newOutputDir.append(name);
-    if(! programDir.exists()) {
-      throw new RuntimeException("Unable to load Program");
+    Location applicationProgramsLocation = accountAppsLocation.append(name);
+    if(! applicationProgramsLocation.exists()) {
+      throw new RuntimeException("Unable to locate the Program");
     }
-    Location program = programDir.append(String.format("%s.jar", id.getId()));
-    if(! program.exists()) {
+    Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
+    if(! programLocation.exists()) {
       throw new RuntimeException(type.toString() + " does not exist.");
     }
-    return new Program(program);
+    return programLocation;
   }
 
   /**
@@ -280,7 +291,19 @@ public class MDSBasedStore implements Store {
 
     LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+
+    ApplicationSpecification newAppSpec = setFlowletInstancesInAppSpecInMDS(id, flowletId, count);
+    replaceAppSpecInProgramJar(id, newAppSpec, Type.FLOW);
+
+    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+  }
+
+  private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId, int count)
+    throws OperationException {
     ApplicationSpecification appSpec = getAppSpecSafely(id);
+
+
     FlowSpecification flowSpec = getFlowSpecSafely(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
 
@@ -288,8 +311,39 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
     addApplication(id.getApplication(), newAppSpec);
+    return newAppSpec;
+  }
 
-    LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}", id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
+  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
+    Location programLocation;
+    try {
+      programLocation = getProgramLocation(id, Type.FLOW);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    ArchiveBundler bundler = new ArchiveBundler(programLocation);
+
+    String className = appSpec.getFlows().get(id.getId()).getClassName();
+    try {
+      Location tmpProgramLocation = programLocation.getTempFile("");
+      try {
+        ProgramBundle.create(id.getApplication(), bundler, tmpProgramLocation, id.getId(), className, type, appSpec);
+
+        Location movedTo = tmpProgramLocation.renameTo(programLocation);
+        if (movedTo == null) {
+          throw new RuntimeException("Could not replace program jar with the one with updated app spec, " +
+                                       "original program file: " + programLocation.toURI() +
+                                       ", was trying to replace with file: " + tmpProgramLocation.toURI());
+        }
+      } finally {
+        if (tmpProgramLocation != null && tmpProgramLocation.exists()) {
+          tmpProgramLocation.delete();
+        }
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private FlowletDefinition getFlowletDefinitionSafely(FlowSpecification flowSpec, String flowletId, Id.Program id) {
@@ -315,7 +369,8 @@ public class MDSBasedStore implements Store {
 
   @Override
   public void remove(Id.Program id) throws OperationException {
-    LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(), id.getId());
+    LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(),
+              id.getId());
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
     addApplication(id.getApplication(), newAppSpec);
@@ -365,7 +420,8 @@ public class MDSBasedStore implements Store {
     }
   }
 
-  private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
+  private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
+    throws OperationException {
     for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
       try {
         metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
@@ -375,7 +431,8 @@ public class MDSBasedStore implements Store {
     }
   }
 
-  private void removeAllFlowsFromMetadataStore(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
+  private void removeAllFlowsFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
+    throws OperationException {
     for (FlowSpecification flow : appSpec.getFlows().values()) {
       try {
         metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), flow.getName()));
@@ -422,7 +479,8 @@ public class MDSBasedStore implements Store {
     };
   }
 
-  private ApplicationSpecification removeProgramFromAppSpec(final ApplicationSpecification appSpec, final Id.Program id) {
+  private ApplicationSpecification removeProgramFromAppSpec(final ApplicationSpecification appSpec,
+                                                            final Id.Program id) {
     // we try to remove from both procedures and flows as both of them are "programs"
     // this somewhat ugly api dictated by old UI
     return new ForwardingApplicationSpecification(appSpec) {

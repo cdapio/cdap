@@ -31,8 +31,8 @@ public class AppFabricServerTest {
   public static void before() throws Exception {
     configuration = CConfiguration.create();
     configuration.setInt(Constants.CFG_APP_FABRIC_SERVER_PORT, 45000);
-    configuration.set("app.output.dir", "/tmp/app");
-    configuration.set("app.tmp.dir", "/tmp/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/temp");
 
     Injector injector = Guice.createInjector(
       new BigMamaModule(configuration),

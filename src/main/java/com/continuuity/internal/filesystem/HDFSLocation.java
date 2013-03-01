@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.UUID;
 
 /**
  * A concrete implementation of {@link Location} for the HDFS filesystem.
@@ -86,6 +87,11 @@ public final class HDFSLocation implements Location {
     return new HDFSLocation(fs, child);
   }
 
+  @Override
+  public Location getTempFile(String suffix) throws IOException {
+    return new HDFSLocation(fs, path.toUri() + "." + UUID.randomUUID() + TEMP_FILE_SUFFIX);
+  }
+
   /**
    * @return Returns the name of the file or directory denoteed by this abstract pathname.
    */
@@ -112,6 +118,17 @@ public final class HDFSLocation implements Location {
   @Override
   public boolean delete() throws IOException {
     return fs.delete(path, false);
+  }
+
+  @Override
+  public Location renameTo(Location destination) throws IOException {
+    // destination will always be of the same type as this location
+    boolean success = fs.rename(path, ((HDFSLocation) destination).path);
+    if (success) {
+      return new HDFSLocation(fs, destination.toURI());
+    } else {
+      return null;
+    }
   }
 
   /**
