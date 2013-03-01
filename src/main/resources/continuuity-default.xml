@@ -484,7 +484,7 @@
     <!-- UI Setting -->
     <property>
         <name>webapp.main</name>
-        <value>web-app/server/developer/main.js</value>
+        <value>web-app/developer/server/main.js</value>
         <description>Specifies location of the webapp's main.js file</description>
     </property>
 
