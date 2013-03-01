@@ -202,7 +202,8 @@ public class Gateway implements Server {
       if (connector instanceof MetaDataStoreAware) {
         ((MetaDataStoreAware) connector).setMetadataStore(this.metaDataStore);
       }
-      if (connector instanceof StoreAware) {
+      // for many unit-tests it is null. We will figure out better strategy around injection for unit-tests and fix it
+      if (store != null && connector instanceof StoreAware) {
         ((StoreAware) connector).setStore(this.store);
       }
       if (connector instanceof DataAccessor) {
@@ -308,7 +309,9 @@ public class Gateway implements Server {
       this.mds = new MetadataService(executor);
     }
 
-    store = storeFactory.create();
+    if (storeFactory != null) {
+      store = storeFactory.create();
+    }
 
     // Save the configuration so we can use it again later
     myConfiguration = configuration;
