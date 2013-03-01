@@ -25,6 +25,44 @@ import java.util.concurrent.TimeoutException;
 public class TestFrameworkTest extends AppFabricTestBase {
 
   @Test
+  public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
+    ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
+    try {
+      applicationManager.startFlow("JoinMultiFlow");
+
+      StreamWriter s1 = applicationManager.getStreamWriter("s1");
+      StreamWriter s2 = applicationManager.getStreamWriter("s2");
+      StreamWriter s3 = applicationManager.getStreamWriter("s3");
+
+      s1.send("testing 1");
+      s2.send("testing 2");
+      s3.send("testing 3");
+
+      RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
+                                                                     "JoinMultiFlow",
+                                                                     "Terminal");
+
+      terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+
+      TimeUnit.SECONDS.sleep(1);
+
+      ProcedureManager queryManager = applicationManager.startProcedure("Query");
+      Gson gson = new Gson();
+
+      ProcedureClient client = queryManager.getClient();
+      Assert.assertEquals("testing 1",
+                          gson.fromJson(client.query("get", ImmutableMap.of("key", "input1")), String.class));
+      Assert.assertEquals("testing 2",
+                          gson.fromJson(client.query("get", ImmutableMap.of("key", "input2")), String.class));
+      Assert.assertEquals("testing 3",
+                          gson.fromJson(client.query("get", ImmutableMap.of("key", "input3")), String.class));
+
+    } finally {
+      applicationManager.stopAll();
+    }
+  }
+
+  @Test
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
