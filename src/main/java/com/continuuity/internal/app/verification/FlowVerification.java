@@ -17,6 +17,7 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
 import java.util.Collection;
@@ -79,6 +80,15 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
     }
 
     // We go through each Flowlet and verify the flowlets.
+
+    // First collect all source flowlet names
+    Set<String> sourceFlowletNames = Sets.newHashSet();
+    for (FlowletConnection connection : input.getConnections()) {
+      if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        sourceFlowletNames.add(connection.getSourceName());
+      }
+    }
+
     for(Map.Entry<String, FlowletDefinition> entry : input.getFlowlets().entrySet()) {
       FlowletDefinition defn = entry.getValue();
       String flowletName = defn.getFlowletSpec().getName();
@@ -93,6 +103,11 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
         if(!isId(dataSet)) {
           return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
         }
+      }
+
+      // Check if the flowlet has output, it must be appear as source flowlet in at least one connection
+      if (!sourceFlowletNames.contains(flowletName)) {
+        return VerifyResult.FAILURE(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
       }
     }
 
