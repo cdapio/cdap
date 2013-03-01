@@ -57,7 +57,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
                                         procedureSpec);
 
     TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
-    procedure = new InstantiatorFactory().get(procedureType).create();
+    procedure = new InstantiatorFactory(false).get(procedureType).create();
     injectFields(procedure, procedureType, context);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
