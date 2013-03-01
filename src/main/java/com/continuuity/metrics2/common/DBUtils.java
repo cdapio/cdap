@@ -49,6 +49,44 @@ public class DBUtils {
   }
 
   /**
+   * Clears the metrics for a given program
+   * @param connection connection to DB
+   * @param accountId
+   * @param applicationId
+   * @return true if successful; false otherwise.
+   */
+  public static boolean clearApplicationMetrics(Connection connection, String accountId, String applicationId) {
+
+    try {
+      PreparedStatement stmt = connection.prepareStatement(
+                                  "DELETE FROM metrics WHERE (account_id=? OR account_id=?) AND application_id=?");
+      try {
+        stmt.setString(1, accountId);
+        stmt.setString(2, "-");
+        stmt.setString(3, applicationId);
+        stmt.executeUpdate();
+      } finally {
+        stmt.close();
+      }
+
+      stmt = connection.prepareStatement(
+                              "DELETE FROM timeseries WHERE (account_id=? OR account_id=?) AND application_id=?");
+      try {
+        stmt.setString(1, accountId);
+        stmt.setString(2, "-");
+        stmt.setString(3, applicationId);
+        stmt.executeUpdate();
+      } finally {
+        stmt.close();
+      }
+      return true;
+    } catch (SQLException e) {
+      Log.error("Fail to remove metrics. ", e);
+      return false;
+    }
+  }
+
+  /**
    * Clears the tables for metrics.
    *
    * @param connection connection to DB

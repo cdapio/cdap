@@ -11,6 +11,7 @@ import com.continuuity.metrics2.temporaldb.Timeseries;
 import com.continuuity.metrics2.thrift.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -103,6 +104,19 @@ public class MetricsFrontendServiceImpl
       return poolManager.getValidConnection();
     }
     return null;
+  }
+
+  @Override
+  public void clear(String accountId, String applicationId) throws MetricsServiceException, TException {
+    try {
+      if (!DBUtils.clearApplicationMetrics(getConnection(), accountId, applicationId)) {
+        throw new MetricsServiceException("Fail to reset metrics for application " +
+                                            applicationId + " for account " + accountId);
+      }
+
+    } catch (SQLException e) {
+      throw new MetricsServiceException(e.getMessage());
+    }
   }
 
   /**
