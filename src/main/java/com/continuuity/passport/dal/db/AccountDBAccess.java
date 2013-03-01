@@ -453,6 +453,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   public void changePassword(int accountId, String oldPassword, String newPassword) {
     Connection connection = null;
     PreparedStatement ps = null;
+
     try {
       connection = this.poolManager.getValidConnection();
 
@@ -466,9 +467,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       ps.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       ps.setInt(2, accountId);
       ps.setString(3, PasswordUtils.generateHashedPassword(oldPassword));
-      ps.executeUpdate();
-
-
+      int count = ps.executeUpdate();
+      Preconditions.checkArgument(count==1,"Update password failed");
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
