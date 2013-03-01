@@ -89,6 +89,12 @@ service MetricsFrontendService {
     throws (1: MetricsServiceException e),
 
   /**
+   * Clear metrics for the application under the given account.
+   */
+  void clear(1: string accountId, 2: string applicationId)
+    throws (1: MetricsServiceException e),
+
+  /**
    * Resets the tables for a given account.
    */
   void reset(1: string accountId)
