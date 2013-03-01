@@ -3,6 +3,7 @@ package com.continuuity.data.metadata;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -237,5 +238,13 @@ public interface MetaDataStore {
    */
   public void clear(OperationContext context,
                     String account, String application)
+      throws OperationException;
+
+  /**
+   * Gets all accounts.
+   * @param context The operation context of the caller.
+   * @throws OperationException if something goes wrong
+   */
+  public Collection<String> listAccounts(OperationContext context)
       throws OperationException;
 }

@@ -1,10 +1,12 @@
 package com.continuuity.data.metadata;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
@@ -46,6 +48,12 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
   private static byte[] makeRowKey(MetaDataEntry meta) {
     return makeRowKey(meta.getAccount());
+  }
+
+  private static String extractAccountFromRowKey(byte[] rowkey) {
+    // +1 because of appending \0 above
+    int offset = rowkeyPrefix.length() + 1;
+    return Bytes.toString(rowkey, offset, rowkey.length - offset);
   }
 
   private static byte[] makeColumnKey(String app, String type, String id) {
@@ -635,5 +643,20 @@ public class SerializingMetaDataStore implements MetaDataStore {
       Log.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
+  }
+
+  @Override
+  public Collection<String> listAccounts(OperationContext context) throws OperationException {
+    // Integer.MAX_VALUE basically means "give me all" here ;)
+    ReadAllKeys readAllKeysOperation = new ReadAllKeys(tableName, 0, Integer.MAX_VALUE);
+    OperationResult<List<byte[]>> result = opex.execute(context, readAllKeysOperation);
+    List<String> accounts = Lists.newArrayList();
+    if (!result.isEmpty()) {
+      for (byte[] row : result.getValue()) {
+        accounts.add(extractAccountFromRowKey(row));
+      }
+    }
+
+    return accounts;
   }
 }

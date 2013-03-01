@@ -9,7 +9,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -202,6 +204,12 @@ abstract public class MetaDataStoreTest {
     entries = mds.list(context, "a", null, "x", hasFieldA1);
     Assert.assertEquals(1, entries.size());
     Assert.assertTrue(entries.contains(meta1));
+
+    // list all accounts
+    Collection<String> accounts = mds.listAccounts(new OperationContext("root"));
+    List<String> sortedAccounts = new ArrayList<String>(accounts);
+    Collections.sort(sortedAccounts);
+    Assert.assertArrayEquals(new String[]{"a", "b"},  sortedAccounts.toArray(new String[sortedAccounts.size()]));
   }
 
   // test delete
