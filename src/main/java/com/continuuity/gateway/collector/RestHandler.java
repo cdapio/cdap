@@ -20,6 +20,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
@@ -142,8 +143,8 @@ public class RestHandler extends NettyRestHandler {
     String requestUri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + requestUri);
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.collector.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.collector.getMetricsQualifier()), collector.getGatewayMetrics());
 
     try {
 

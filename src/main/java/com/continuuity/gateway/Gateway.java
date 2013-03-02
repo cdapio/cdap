@@ -79,6 +79,8 @@ public class Gateway implements Server {
   @Inject
   private DiscoveryServiceClient discoveryServiceClient;
 
+  private GatewayMetrics gatewayMetrics = new GatewayMetrics();
+
   /**
    * This will be shared by all connectors for zk service discovery
    */
@@ -210,6 +212,8 @@ public class Gateway implements Server {
       }
       // all connectors get the meta data service
       connector.setMetadataService(this.mds);
+
+      connector.setGatewayMetrics(this.gatewayMetrics);
 
       try {
         connector.start();

@@ -10,6 +10,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.Write;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Lists;
@@ -105,8 +106,8 @@ public class DataRestHandler extends NettyRestHandler {
     String requestUri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + requestUri);
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+        this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // check whether the request's HTTP method is supported

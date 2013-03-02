@@ -9,6 +9,7 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.discovery.Discoverable;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.base.Preconditions;
@@ -88,7 +89,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
   public void messageReceived(ChannelHandlerContext context,
                               MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
-    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics, this.connector.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.connector.getMetricsQualifier()), connector.getGatewayMetrics());
     HttpMethod method = request.getMethod();
     String requestUri = request.getUri();
 
