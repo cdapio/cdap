@@ -1,5 +1,6 @@
 package com.continuuity.gateway.accessor;
 
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.StatusCode;
@@ -15,12 +16,16 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.thrift.TException;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -226,7 +231,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     return encodingParams.get(0);
   }
 
-  private enum TableOp { List, Increment, Read, Write, Delete }
+  private enum TableOp { List, Increment, Read, Write, Create, Delete }
 
   private void handleTableOperation(MessageEvent message, HttpRequest request,
                                     MetricsHelper helper, LinkedList<String> pathComponents,
@@ -234,6 +239,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     // all operations must have table name
     if (pathComponents.isEmpty()) {
       respondBadRequest(message, request, helper, "table name missing");
+      return;
     }
     String tableName = pathComponents.removeFirst();
 
@@ -260,7 +266,8 @@ public class DatasetRestHandler extends NettyRestHandler {
         } else if ("increment".equals(op)) {
           operation = TableOp.Increment;
         } else {
-         respondBadRequest(message, request, helper, "unsupported 'op' parameter");
+          respondBadRequest(message, request, helper, "unsupported 'op' parameter");
+          return;
         }
       }
     }
@@ -368,10 +375,10 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       // must be a write, requires a row
       if (row == null) {
-        respondBadRequest(message, request, helper, "write must have a row key");
-        return;
+        operation = TableOp.Create;
+      } else {
+        operation = TableOp.Write;
       }
-      operation = TableOp.Write;
 
     } else if (HttpMethod.POST.equals(method)) {
       // make sure no operation was given with ?op=
@@ -415,6 +422,28 @@ public class DatasetRestHandler extends NettyRestHandler {
       return;
     }
 
+    if (operation.equals(TableOp.Create)) {
+      DataSetSpecification spec = new Table(tableName).configure();
+      Dataset ds = new Dataset(spec.getName());
+      ds.setName(spec.getName());
+      ds.setType(spec.getType());
+      ds.setSpecification(new Gson().toJson(spec));
+      try {
+        this.accessor.getMetadataService().assertDataset(new Account(opContext.getAccount()), ds);
+      } catch (MetadataServiceException e) {
+        respondBadRequest(message, request, helper, "table already exists", HttpResponseStatus.CONFLICT);
+        return;
+      } catch (TException e) {
+        helper.finish(Error);
+        LOG.error("Thrift error creating table: " + e.getMessage(), e);
+        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
+      }
+      respondSuccess(message.getChannel(), request);
+      helper.finish(Success);
+      return;
+    }
+
     // make sure the table exists and instantiate dataset
     Table table;
     try {
@@ -440,8 +469,7 @@ public class DatasetRestHandler extends NettyRestHandler {
 
     if (operation.equals(TableOp.List)) {
       // TODO not implemented
-    }
-    else if (operation.equals(TableOp.Read)) {
+    } else if (operation.equals(TableOp.Read)) {
       Read read;
       try {
         if (columns == null || columns.isEmpty()) {
@@ -477,7 +505,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       } else {
         // result is not empty, now construct a json response
         // first convert the bytes to strings
-        Map<String, String> map = Maps.newHashMap();
+        Map<String, String> map = Maps.newTreeMap();
         try {
           for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
             map.put(Util.encodeBytes(entry.getKey(), encoding), Util.encodeBytes(entry.getValue(), encoding));
@@ -596,7 +624,7 @@ public class DatasetRestHandler extends NettyRestHandler {
         return;
       }
       // first convert the bytes to strings
-      Map<String, Long> map = Maps.newHashMap();
+      Map<String, Long> map = Maps.newTreeMap();
       try {
         for (Map.Entry<byte[], Long> entry : results.entrySet()) {
           map.put(Util.encodeBytes(entry.getKey(), encoding), entry.getValue());

@@ -1,15 +1,28 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
@@ -20,6 +33,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.Stream;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -82,7 +96,7 @@ public class DatasetRestAccessorTest {
   } // end of setupGateway
 
 
-  static Table createTable(String name) throws TException, MetadataServiceException {
+  static Table newTable(String name) throws TException, MetadataServiceException {
     DataSetSpecification spec = new Table(name).configure();
     Dataset ds = new Dataset(spec.getName());
     ds.setName(spec.getName());
@@ -181,9 +195,10 @@ public class DatasetRestAccessorTest {
   @Test
   public void testTableReads() throws Exception {
     String urlPrefix = setupAccessor("data", "", "/data/");
-    Table t = createTable("tTR");
+    Table t = newTable("tTR");
     // write a row with 10 cols c0...c9 with values v0..v9
-    byte[] rowKey = "tTR10".getBytes();
+    String row = "tTR10";
+    byte[] rowKey = row.getBytes();
     byte[][] cols = new byte[10][];
     byte[][] vals = new byte[10][];
     for (int i = 0; i < 10; ++i) {
@@ -192,7 +207,7 @@ public class DatasetRestAccessorTest {
     }
     t.write(new Write(rowKey, cols, vals));
     // now read back in various ways
-    String queryPrefix = urlPrefix + "Table/" + t.getName() + "/" + "tVR10";
+    String queryPrefix = urlPrefix + "Table/" + t.getName() + "/" + row;
     assertRead(queryPrefix, 0, 9, ""); // all columns
     assertRead(queryPrefix, 5, 5, "?columns=c5"); // only c5
     assertRead(queryPrefix, 3, 5, "?columns=c5,c3,c4"); // only c3,c4, and c5
@@ -238,7 +253,7 @@ public class DatasetRestAccessorTest {
   @Test
   public void testTableWritesAndDeletes() throws Exception {
     String urlPrefix = setupAccessor("data", "", "/data/");
-    Table t = createTable("tTW");
+    Table t = newTable("tTW");
     String row = "abc";
     byte[] c1 = { 'c', '1' }, c2 = { 'c', '2' }, c3 = { 'c', '3' };
     byte[] v1 = { 'v', '1' }, mt = { }, v3 = { 'v', '3' };
@@ -269,8 +284,6 @@ public class DatasetRestAccessorTest {
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/abc/a/x" + row, json); // path does not end with row
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/abc?op=increment" + row, json); // put with increment
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/abc/a?op=increment" + row, json); // put with increment
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/" + t.getName(), json); // no/empty row key
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table//" + t.getName(), json); // no/empty row key
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/" + t.getName() + "/" + row, ""); // no json
     assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "Table/" + t.getName() + "/" + row, "{\"\"}"); // wrong json
     // test errors for delete
@@ -306,7 +319,7 @@ public class DatasetRestAccessorTest {
   @Test
   public void testIncrement() throws Exception {
     String urlPrefix = setupAccessor("data", "", "/data/");
-    Table t = createTable("tI");
+    Table t = newTable("tI");
     String row = "abc";
     // directly write a row with two columns, a long, b not
     final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
@@ -363,7 +376,131 @@ public class DatasetRestAccessorTest {
     assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "1/abc/x?op=increment", json); // path does not end on row
     assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/xyz?op=increment", "{\"a\":\"b\"}"); // json invalid
     assertIncrement(urlPrefix, 400, "Table/" + t.getName() + "/xyz?op=increment", "{\"a\":1"); // json invalid
+  }
 
+  void assertCreate(String prefix, int expected, String query) throws IOException {
+    HttpPut put = new HttpPut(prefix + query);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(put);
+    client.getConnectionManager().shutdown();
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testCreateTable() throws Exception {
+    String urlPrefix = setupAccessor("data", "", "/data/");
+    urlPrefix += "Table/";
+    String table = "tCTbl";
+    String table2 = "tCTbl2";
+    try {
+      instantiator.getDataSet(table, context);
+      Assert.fail("instantiator should have failed for non-existent table.");
+    } catch (DataSetInstantiationException e) {
+      // expected
+    }
+    assertCreate(urlPrefix, HttpStatus.SC_OK, table);
+    assertWrite(urlPrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c1\":\"v1\"}");
+    // creating the table again should work (it is compatible with existing spec)
+    assertCreate(urlPrefix, HttpStatus.SC_OK, table);
+    assertWrite(urlPrefix, HttpStatus.SC_OK, table + "/abc", "{ \"c2\":\"v2\"}");
+    // make sure both columns are there
+    assertRead(urlPrefix, 1, 2, table + "/abc");
+
+    // try to create a table that exists with a different dataset type
+    DataSetSpecification spec = new KeyValueTable(table2).configure();
+    Dataset ds = new Dataset(spec.getName());
+    ds.setName(spec.getName());
+    ds.setType(spec.getType());
+    ds.setSpecification(new Gson().toJson(spec));
+    mds.assertDataset(new Account(context.getAccount()), ds);
+    // should now fail with conflict
+    assertCreate(urlPrefix, HttpStatus.SC_CONFLICT, table2);
+
+    // try some other bad requests
+    assertCreate(urlPrefix, HttpStatus.SC_BAD_REQUEST, table + "?op=create"); // operation specified ->invalid
+    assertCreate(urlPrefix, HttpStatus.SC_BAD_REQUEST, "" + "?op=create"); // empty table name
+  }
+
+  final static QueueEntry streamEntry = new QueueEntryImpl("x".getBytes());
+  static WriteOperation addToStream(String name) {
+    return new QueueEnqueue(("stream:" + name).getBytes(), streamEntry);
+  }
+  static WriteOperation addToQueue(String name) {
+    return new QueueEnqueue(("queue:" + name).getBytes(), streamEntry);
+  }
+  static void createStream(String name) throws Exception {
+    Stream stream = new Stream(name);
+    stream.setName(name);
+    mds.assertStream(new Account(context.getAccount()), stream);
+    executor.commit(context, addToStream(name));
+  }
+  static void createQueue(String name) throws Exception {
+    executor.commit(context, addToQueue(name));
+  }
+  static Write addToTable = new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
+  static Table createTable(String name) throws Exception {
+    Table table = newTable(name);
+    table.write(addToTable);
+    return table;
+  }
+
+  boolean dequeueOne(String queue) throws Exception {
+    long groupId = executor.execute(context, new QueueAdmin.GetGroupID(queue.getBytes()));
+    QueueConsumer consumer = new QueueConsumer(0, groupId, 1,
+                                               new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
+    DequeueResult result = executor.execute(context,
+                                            new QueueDequeue(queue.getBytes(), consumer, consumer.getQueueConfig()));
+    return !result.isEmpty();
+  }
+  boolean verifyStream(String name) throws Exception {
+    Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
+    boolean streamExists = stream.isExists();
+    boolean dataExists = dequeueOne("stream:" + name);
+    return streamExists || dataExists;
+  }
+  boolean verifyQueue(String name) throws Exception {
+    boolean dataExists = dequeueOne("queue:" + name);
+    return dataExists;
+  }
+  boolean verifyTable(String name) throws OperationException {
+    OperationResult<Map<byte[], byte[]>> result;
+    try {
+      Table table = instantiator.getDataSet(name, context);
+      result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
+    } catch (DataSetInstantiationException e) {
+      result = executor.execute(
+        context, new com.continuuity.data.operation.Read(name, new byte[]{'a'}, new byte[]{'b'}));
+    }
+    return !result.isEmpty();
+  }
+
+
+  @Test
+  public void testClearData() throws Exception {
+    // setup accessor
+    setupAccessor("access.rest", "/continuuity", "/data/");
+    String clearUrl = this.accessor.getHttpConfig().getBaseUrl() + "?clear=";
+
+    String tableName = "mannamanna";
+    String streamName = "doobdoobee";
+    String queueName = "doobee";
+
+    // create a stream, a queue, a table
+    createTable(tableName);
+    createStream(streamName);
+    createQueue(queueName);
+
+    // verify they are all there
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyStream(streamName));
+    Assert.assertTrue(verifyQueue(queueName));
+
+    // clear all
+    Assert.assertEquals(200, TestUtil.sendPostRequest(clearUrl + "all"));
+    // verify all are gone
+    Assert.assertFalse(verifyTable(tableName));
+    Assert.assertFalse(verifyStream(streamName));
+    Assert.assertFalse(verifyQueue(queueName));
   }
 }
 
