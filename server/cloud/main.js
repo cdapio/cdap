@@ -18,11 +18,6 @@ var express = require('express'),
 var Api = require('../common/api'),
 	Env = require('./env');
 
-/**
- * Setting the environment to Cloud.
- */
-process.env.NODE_ENV = 'production';
-
 var LOG_LEVEL = 'INFO';
 var config = {};
 var sockets = {};
@@ -106,7 +101,7 @@ fs.readFile(configPath, function (error, result) {
 			secret: config['cookie-secret'],
 			cookie: {
 				path: '/',
-				domain: '.continuuity.net',
+				domain: process.env.NODE_ENV === 'production' ? '.continuuity.net' : '',
 				maxAge: 24 * 60 * 60 * 1000
 			}
 		}));
@@ -296,6 +291,9 @@ fs.readFile(configPath, function (error, result) {
 					"location": "remote",
 					"version": Env.version,
 					"ip": Env.ip,
+					"cloud": {
+						"name": config['gateway.cluster.name']
+					},
 					"account": {
 						"account_id": socket.handshake.account_id,
 						"name": socket.handshake.name
@@ -374,8 +372,8 @@ fs.readFile(configPath, function (error, result) {
 					Api.gateway(request.session.api_key, request.method,
 						request.params, function (error, response) {
 						socketResponse(socket, request, error, response);
-					});
-				}, true);
+					}, true);
+				});
 			});
 
 		}
