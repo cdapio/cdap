@@ -274,7 +274,7 @@
     </property>
 
     <property>
-        <name>monitor.rest.middle</name>
+        <name>systemstats.rest.middle</name>
         <value>/systemstats/</value>
     </property>
 

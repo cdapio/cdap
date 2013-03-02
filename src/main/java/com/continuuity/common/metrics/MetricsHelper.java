@@ -31,6 +31,19 @@ public class MetricsHelper {
     return base + "." + specific;
   }
 
+  public MetricsHelper(MetricsHelper other) {
+    metrics = other.metrics;
+
+    method = other.method;
+    scope = other.scope;
+    classe = other.classe;
+    startTime = other.startTime;
+
+    metricNamePerQualifier = other.metricNamePerQualifier;
+    metricNamePerMethod = other.metricNamePerMethod;
+    metricNamePerMethodAndScope = other.metricNamePerMethodAndScope;
+  }
+
   public MetricsHelper(Class<?> caller, CMetrics metrics,
                        String qualifier, String method) {
     this.classe = caller;
@@ -110,7 +123,7 @@ public class MetricsHelper {
   private void meter(String metric, Status status, Long millis) {
     String metricWithStatus = appendToMetric(metric, status.name());
     // increment qualifier[.method[.scope]].status
-    this.metrics.meter(metricWithStatus, 1L);
+    count(metricWithStatus, 1L);
     if (millis == null) return;
     // record qualifier[.method[.scope]].latency
     this.metrics.histogram(
@@ -118,6 +131,10 @@ public class MetricsHelper {
     // record qualifier[.method[.scope]].status.latency
     this.metrics.histogram(
         appendToMetric(metricWithStatus, METRIC_LATENCY), millis);
+  }
+
+  protected void count(String metricWithStatus, long count) {
+    this.metrics.meter(metricWithStatus, count);
   }
 
   public void finish(Status status) {
