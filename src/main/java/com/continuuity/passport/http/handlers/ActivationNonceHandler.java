@@ -155,7 +155,7 @@ public class ActivationNonceHandler extends PassportHandler {
       LOG.error(String.format("Bad request. Password empty. Endpoint %s",
                               "GET /passport/v1/resetPassword/{nonce}" ));
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "Must pass in password"))
+        .entity(Utils.getJson("FAILED", "Must send password in request"))
         .build();
     }
   }
