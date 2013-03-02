@@ -236,8 +236,8 @@ public class MockDataManagementServiceImpl implements DataManagementService {
    * @return
    */
   @Override
-  public int getVPCCount(String vpcName) {
-    return 0;  
+  public boolean isValidVPC (String vpcName) {
+    return false;
   }
 
   /**

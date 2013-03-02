@@ -353,8 +353,15 @@ public class AccountHandler extends PassportHandler {
 
       if ((vpcName != null) && (!vpcName.isEmpty()) && (vpcLabel != null) && (!vpcLabel.isEmpty())) {
         VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel));
-        requestSuccess();
-        return Response.ok(vpc.toString()).build();
+        if (vpc !=null ){
+          requestSuccess();
+          return Response.ok(vpc.toString()).build();
+         }
+         else {
+          return Response.status(Response.Status.BAD_REQUEST)
+            .entity(Utils.getJson("FAILED", String.format("VPC Creation failed. VPC name already exists")))
+            .build();
+        }
       } else {
         requestFailed(); // Request failed
         LOG.error(String.format("Bad request while processing endpoint: %s %s",

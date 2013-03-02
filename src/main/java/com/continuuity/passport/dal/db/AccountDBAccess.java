@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
@@ -39,10 +40,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    */
   @Inject
   public void AccountDBAccess(@Named("passport.config") Map<String, String> config) {
-    String connectionString = config.get("connectionString");
-    String jdbcType = config.get("jdbcType");
+    String connectionString = config.get(Constants.CFG_JDBC_CONNECTION_STRING);
+    String jdbcType = config.get(Constants.CFG_JDBC_TYPE);
 
-    if (jdbcType.toLowerCase().equals("mysql")) {
+    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
       MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);

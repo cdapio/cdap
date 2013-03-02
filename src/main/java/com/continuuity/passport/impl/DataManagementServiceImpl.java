@@ -13,6 +13,7 @@ import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
+import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
@@ -31,12 +32,15 @@ public class DataManagementServiceImpl implements DataManagementService {
   private final AccountDAO accountDAO;
   private final VpcDAO vpcDao;
   private final NonceDAO nonceDAO;
+  private final ProfanityFilter profanityFilter;
 
   @Inject
-  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO, NonceDAO nonceDAO) {
+  public DataManagementServiceImpl(AccountDAO accountDAO, VpcDAO vpcDAO,
+                                   NonceDAO nonceDAO, ProfanityFilter profanityFilter) {
     this.accountDAO = accountDAO;
     this.vpcDao = vpcDAO;
     this.nonceDAO = nonceDAO;
+    this.profanityFilter = profanityFilter;
   }
 
   /**
@@ -320,18 +324,23 @@ public class DataManagementServiceImpl implements DataManagementService {
   }
 
   /**
-   * VPC count for the vpc
-   *
+   * Returns if VPC is valid
    * @param vpcName
    * @return
    */
   @Override
-  public int getVPCCount(String vpcName) {
+  public boolean isValidVPC(String vpcName) {
     Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");
     Preconditions.checkNotNull(vpcDao, "VPC data access objects cannot be null");
     Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
+    Preconditions.checkNotNull(profanityFilter,"Profanity Filter is null");
     try {
-      return vpcDao.getVPCCount(vpcName);
+      if ( profanityFilter.isFiltered(vpcName) || vpcDao.getVPCCount(vpcName) > 0 ) {
+        return false;
+      }
+      else {
+        return true;
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -411,7 +420,9 @@ public class DataManagementServiceImpl implements DataManagementService {
 
     VPC vpcReturned = null;
     try {
-      vpcReturned = vpcDao.addVPC(accountId, vpc);
+      if ( ! profanityFilter.isFiltered(vpc.getVpcName())) {
+        vpcReturned = vpcDao.addVPC(accountId, vpc);
+      }
     } catch (ConfigurationException e) {
       throw Throwables.propagate(e);
     }

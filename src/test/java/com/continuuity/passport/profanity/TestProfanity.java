@@ -1,12 +1,9 @@
 package com.continuuity.passport.profanity;
 
-import com.continuuity.passport.dal.TestHelper;
-import com.continuuity.passport.dal.db.ProfanityFilterDBAccess;
+import com.continuuity.passport.dal.db.ProfanityFilterFileAccess;
 import org.junit.Test;
 
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -16,16 +13,22 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestProfanity {
 
+
   @Test
   public void testProfanity () throws SQLException, ClassNotFoundException {
 
-    TestHelper.startHsqlDB();
+    //TODO: Place holder for DBProfanity
+//    TestHelper.startHsqlDB();
+//
+//    Map<String,String> config = new HashMap<String,String>();
+//    config.put("connectionString","jdbc:hsqldb:mem:test?user=sa");
+//    config.put("jdbcType", "mysql" );
 
-    Map<String,String> config = new HashMap<String,String>();
-    config.put("connectionString","jdbc:hsqldb:mem:test?user=sa");
-    config.put("jdbcType", "mysql" );
 
-    ProfanityFilterDBAccess profanityFilter = new ProfanityFilterDBAccess("jdbc:hsqldb:mem:test?user=sa");
+    String profanePath =  getClass().getResource("/ProfaneWords").getPath();
+
+    //ProfanityFilterDBAccess profanityFilter = new ProfanityFilterDBAccess("jdbc:hsqldb:mem:test?user=sa");
+    ProfanityFilterFileAccess profanityFilter = new ProfanityFilterFileAccess(profanePath);
 
     assertFalse(profanityFilter.isFiltered("data"));
     assertTrue(profanityFilter.isFiltered("d23@#@"));
@@ -34,7 +37,9 @@ public class TestProfanity {
     assertTrue(profanityFilter.isFiltered("212fuck"));
     assertTrue(profanityFilter.isFiltered("f1u1c1k"));
 
-    TestHelper.stopHsqlDB();
+
+ //TODO: Placeholder for future
+ //   TestHelper.stopHsqlDB();
 
 
 

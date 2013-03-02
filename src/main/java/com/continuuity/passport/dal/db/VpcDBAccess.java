@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
@@ -36,10 +37,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   @Inject
   public void VpcDBAccess(@Named("passport.config") Map<String, String> configuration) {
 
-    String connectionString = configuration.get("connectionString");
-    String jdbcType = configuration.get("jdbcType");
+    String connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING);
+    String jdbcType = configuration.get(Constants.CFG_JDBC_TYPE);
 
-    if (jdbcType.toLowerCase().equals("mysql")) {
+    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
       MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);

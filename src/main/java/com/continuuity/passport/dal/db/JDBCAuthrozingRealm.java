@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
@@ -30,7 +31,6 @@ import java.util.Set;
  * and authorizations
  */
 public class JDBCAuthrozingRealm extends AuthorizingRealm {
-  private Map<String, String> configurations;
   private DBConnectionPoolManager poolManager = null;
 
   private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
@@ -61,11 +61,10 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
 
   public JDBCAuthrozingRealm(Map<String, String> configurations) {
-    this.configurations = configurations;
-    String connectionString = this.configurations.get("connectionString");
-    String jdbcType = this.configurations.get("jdbcType");
+    String connectionString = configurations.get(Constants.CFG_JDBC_CONNECTION_STRING);
+    String jdbcType = configurations.get(Constants.CFG_JDBC_TYPE);
 
-    if (jdbcType.toLowerCase().equals("mysql")) {
+    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
       MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
