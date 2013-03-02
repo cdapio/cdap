@@ -2,16 +2,16 @@ package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.dal.ProfanityFilter;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -37,29 +37,12 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
       return;
     }
     int count = 0;
-    BufferedReader br = null;
     try {
-      br = new BufferedReader(new FileReader(profaneFilePath));
-      String line;
-      while ((line = br.readLine()) != null) {
-        profanityDictionary.add(line.toLowerCase());
-        count++;
-      }
-    } catch (FileNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (IOException e) {
+     Iterables.addAll(profanityDictionary, Files.readLines(new File(profaneFilePath), Charsets.UTF_8));
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-    finally{
-      try{
-        if(br == null) {
-          br.close();
-        }
-      }
-      catch (IOException e){
-        LOG.error("Exception while closing profanity file");
-      }
-    }
+
     LOG.info(String.format("Profanity Dictionary loaded %d words from %s",count, profaneFilePath));
   }
   @Inject
