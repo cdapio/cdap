@@ -11,6 +11,7 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
@@ -197,8 +198,8 @@ public class MonitorRestHandler extends NettyRestHandler {
     String uri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + uri);
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // only GET is supported for now

@@ -4,6 +4,7 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.discovery.Discoverable;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -118,8 +119,8 @@ public final class QueryRestHandler extends NettyRestHandler {
     String uri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + uri);
-    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics,
-        this.accessor.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // only POST is supported for now

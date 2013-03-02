@@ -1,8 +1,11 @@
 package com.continuuity.gateway;
 
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -66,7 +69,17 @@ public class Gateway implements Server {
   private MetadataService mds;
 
   @Inject
+  private MetaDataStore metaDataStore;
+
+  @Inject
+  private StoreFactory storeFactory;
+
+  private Store store;
+
+  @Inject
   private DiscoveryServiceClient discoveryServiceClient;
+
+  private GatewayMetrics gatewayMetrics = new GatewayMetrics();
 
   /**
    * This will be shared by all connectors for zk service discovery
@@ -184,11 +197,23 @@ public class Gateway implements Server {
       if (connector instanceof Collector) {
         ((Collector) connector).setConsumer(this.consumer);
       }
+      if (connector instanceof MetaDataServiceAware) {
+        ((MetaDataServiceAware) connector).setMetadataService(this.mds);
+      }
+      if (connector instanceof MetaDataStoreAware) {
+        ((MetaDataStoreAware) connector).setMetadataStore(this.metaDataStore);
+      }
+      // for many unit-tests it is null. We will figure out better strategy around injection for unit-tests and fix it
+      if (store != null && connector instanceof StoreAware) {
+        ((StoreAware) connector).setStore(this.store);
+      }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
       }
       // all connectors get the meta data service
       connector.setMetadataService(this.mds);
+
+      connector.setGatewayMetrics(this.gatewayMetrics);
 
       try {
         connector.start();
@@ -287,6 +312,10 @@ public class Gateway implements Server {
 
     if (this.mds == null) {
       this.mds = new MetadataService(executor);
+    }
+
+    if (storeFactory != null) {
+      store = storeFactory.create();
     }
 
     // Save the configuration so we can use it again later

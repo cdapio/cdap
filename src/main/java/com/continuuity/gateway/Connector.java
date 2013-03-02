@@ -191,4 +191,14 @@ public abstract class Connector {
    * @throws Exception if any exception occurs during stop
    */
   public abstract void stop() throws Exception;
+
+  private GatewayMetrics gatewayMetrics;
+
+  public void setGatewayMetrics(GatewayMetrics metrics) {
+    this.gatewayMetrics = metrics;
+  }
+
+  public GatewayMetrics getGatewayMetrics() {
+    return gatewayMetrics;
+  }
 }
