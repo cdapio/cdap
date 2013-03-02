@@ -106,7 +106,7 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
       }
 
       // Check if the flowlet has output, it must be appear as source flowlet in at least one connection
-      if (!sourceFlowletNames.contains(flowletName)) {
+      if (entry.getValue().getOutputs().size() > 0 && !sourceFlowletNames.contains(flowletName)) {
         return VerifyResult.FAILURE(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
       }
     }
