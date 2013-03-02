@@ -6,9 +6,15 @@
 ##
 ##############################################################################
 
+if [ -d /opt/continuuity ]; then
+ CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
+ DEFAULT_JVM_OPTS="-Xmx6144m"
+else
+ DEFAULT_JVM_OPTS="-Xmx1024m"
+fi
+
 # Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_APP_FABRIC_OPTS to pass JVM options to this script.
-DEFAULT_JVM_OPTS="-Xmx1024m"
-CONTINUUITY_APP_FABRIC_OPTS="-Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+CONTINUUITY_APP_FABRIC_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc="
 
 APP_NAME="continuuity-app-fabric"
 APP_BASE_NAME=`basename "$0"`
