@@ -1,12 +1,15 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.app.services.*;
+import com.continuuity.app.services.ActiveFlow;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.FlowIdentifier;
+import com.continuuity.app.services.FlowStatus;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.discovery.Discoverable;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
@@ -35,9 +38,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.*;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 
 /**
  * This is the http request handler for the metrics and status REST API.
@@ -59,9 +62,8 @@ public class MonitorRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {
-      HttpMethod.GET
-  };
+  Set<HttpMethod> allowedMethods = Collections.singleton(
+      HttpMethod.GET);
 
   /**
    * All the paths have to be of the form

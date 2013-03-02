@@ -19,4 +19,4 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-java -cp @classpath@ -Dscript=$script com.continuuity.gateway.tools.DataClient "$@"
+java -cp @classpath@ -Dscript=$script com.continuuity.gateway.tools.DataSetClient "$@"

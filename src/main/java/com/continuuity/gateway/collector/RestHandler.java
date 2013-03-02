@@ -28,6 +28,7 @@ import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -64,7 +66,10 @@ public class RestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = { HttpMethod.PUT, HttpMethod.POST, HttpMethod.GET };
+  Set<HttpMethod> allowedMethods = Sets.newHashSet(
+    HttpMethod.PUT,
+    HttpMethod.POST,
+    HttpMethod.GET);
 
   /**
    * The collector that created this handler. It has collector name and consumer
@@ -488,10 +493,9 @@ public class RestHandler extends NettyRestHandler {
           //our user interfaces do not support stream name
           //we are using id for stream name until it is supported in UI's
           String streamId = destination;
-          String streamName = streamId;
 
           if (!isId(streamId)) {
-            LOG.info("Stream id '{}' is not a printable ascii character string", streamId);
+            LOG.info("Stream id '{}' is not a printable ascii character string", destination);
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             helper.finish(BadRequest);
             return;
@@ -501,7 +505,7 @@ public class RestHandler extends NettyRestHandler {
 
           Account account = new Account(accountId);
           Stream stream = new Stream(destination);
-          stream.setName(streamName); //
+          stream.setName(streamId); //
 
           //Check if a stream with the same id exists
           Stream existingStream = mds.getStream(account, stream);

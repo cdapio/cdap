@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +66,8 @@ public final class QueryRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  private static final HttpMethod[] allowedMethods = {HttpMethod.POST};
+  private static final Set<HttpMethod> allowedMethods = Collections.singleton(
+    HttpMethod.POST);
 
   /**
    * All the paths have to be of the form

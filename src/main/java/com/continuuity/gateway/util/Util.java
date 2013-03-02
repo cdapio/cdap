@@ -2,11 +2,18 @@ package com.continuuity.gateway.util;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Constants;
+import com.google.common.base.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -302,11 +309,58 @@ public class Util {
     else if ("url".equals(encoding)) return urlEncode(bytes);
     else if ("hex".equals(encoding)) return toHex(bytes);
     else try {
-      return new String(bytes, encoding);
+        return new String(bytes, encoding);
       } catch (UnsupportedEncodingException e) {
         return urlEncode(bytes);
       }
   }
+
+  public static String encodeBytes(byte[] bytes, String encoding) throws UnsupportedEncodingException {
+    if (bytes == null) {
+      return null;
+    }
+    if (encoding == null || encoding.isEmpty()) {
+      return new String(bytes, Charsets.UTF_8);
+    }
+    if ("url".equals(encoding)) {
+      return urlEncode(bytes);
+    }
+    if ("hex".equals(encoding)) {
+      return toHex(bytes);
+    }
+    if ("base64".equals(encoding)) {
+      return toBase64(bytes);
+    }
+    return new String(bytes, encoding);
+  }
+
+  public static String toBase64(byte[] bytes) {
+    return Base64.encodeBase64String(bytes);
+  }
+
+  public static byte[] decodeBytes(String string, String encoding) throws UnsupportedEncodingException {
+    if (string == null) {
+      return null;
+    }
+    if (encoding == null || encoding.isEmpty()) {
+      return string.getBytes(Charsets.UTF_8);
+    }
+    if ("url".equals(encoding)) {
+      return urlDecode(string);
+    }
+    if ("hex".equals(encoding)) {
+      return hexValue(string);
+    }
+    if ("base64".equals(encoding)) {
+      return fromBase64(string);
+    }
+    return string.getBytes(encoding);
+  }
+
+  public static byte[] fromBase64(String string) {
+    return Base64.decodeBase64(string);
+  }
+
 
   /**
    * Convert a long value into a big-endian byte array
