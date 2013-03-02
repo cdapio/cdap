@@ -290,17 +290,19 @@ public class AccountHandler extends PassportHandler {
       String firstName = jsonObject.get("first_name") == null ? null : jsonObject.get("first_name").getAsString();
       String lastName = jsonObject.get("last_name") == null ? null : jsonObject.get("last_name").getAsString();
       String company = jsonObject.get("company") == null ? null : jsonObject.get("company").getAsString();
+      String emailId = jsonObject.get("email_id") == null ? null : jsonObject.get("email_id").getAsString();
 
 
       if ((accountPassword == null) || (accountPassword.isEmpty()) ||
-        (firstName == null) || (firstName.isEmpty()) ||
-        (lastName == null) || (lastName.isEmpty()) ||
-        (company == null) || (company.isEmpty())) {
+          (emailId == null) || (emailId.isEmpty()) ||
+          (firstName == null) || (firstName.isEmpty()) ||
+          (lastName == null) || (lastName.isEmpty()) ||
+          (company == null) || (company.isEmpty())) {
         requestFailed(); // Request failed
         return Response.status(Response.Status.BAD_REQUEST)
           .entity(Utils.getJson("FAILED", "password, first_name, last_name, company should be passed in")).build();
       } else {
-        Account account = new Account(firstName, lastName, company, id);
+        Account account = new Account(firstName, lastName, company, emailId, id);
         dataManagementService.confirmRegistration(account, accountPassword);
         //Contract for the api is to return updated account to avoid a second call from the caller to get the
         // updated account
