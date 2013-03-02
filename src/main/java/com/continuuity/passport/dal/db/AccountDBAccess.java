@@ -108,36 +108,51 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     throws ConfigurationException, RuntimeException {
 
     Connection connection = null;
-    PreparedStatement ps = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
+    PreparedStatement updateStatement = null;
+    PreparedStatement deleteStatement = null;
+
+    Preconditions.checkNotNull(this.poolManager,"Data connection manager is null. Cannot connect to data source");
+
+    String UPDATE_SQL = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
+      DBUtils.AccountTable.TABLE_NAME,
+      DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
+      DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
+      DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
+      DBUtils.AccountTable.ID_COLUMN);
+
+    String DELETE_NONCE_BY_EMAIL = String.format("DELETE FROM %s where %s = ?",
+      DBUtils.Nonce.TABLE_NAME,DBUtils.Nonce.ID_COLUMN);
+
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
-        DBUtils.AccountTable.TABLE_NAME,
-        DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
-        DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
-        DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
-        DBUtils.AccountTable.ID_COLUMN);
+      // Set Auto commit to false since the update and delete nonce should be one transaction
+      connection.setAutoCommit(false);
 
-      ps = connection.prepareStatement(SQL);
-      ps.setString(1, PasswordUtils.generateHashedPassword(password));
-      ps.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
-      ps.setString(3, ApiKey.generateKey(String.valueOf(account.getAccountId())));
-      ps.setString(4, account.getFirstName());
-      ps.setString(5, account.getLastName());
-      ps.setString(6, account.getCompany());
-      ps.setInt(7, account.getAccountId());
+      updateStatement = connection.prepareStatement(UPDATE_SQL);
+      updateStatement.setString(1, PasswordUtils.generateHashedPassword(password));
+      updateStatement.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
+      updateStatement.setString(3, ApiKey.generateKey(String.valueOf(account.getAccountId())));
+      updateStatement.setString(4, account.getFirstName());
+      updateStatement.setString(5, account.getLastName());
+      updateStatement.setString(6, account.getCompany());
+      updateStatement.setInt(7, account.getAccountId());
 
-      ps.executeUpdate();
+      updateStatement.executeUpdate();
+
+      deleteStatement = connection.prepareStatement(DELETE_NONCE_BY_EMAIL);
+      deleteStatement.setString(1,account.getEmailId());
+      deleteStatement.executeUpdate();
+
+      //Commit the transaction
+      connection.commit();
 
     } catch (SQLException e) {
       throw new RuntimeException(e.getMessage(), e.getCause());
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e.getMessage(), e.getCause());
     } finally {
-      close(connection, ps);
+      close(null,deleteStatement);
+      close(connection, updateStatement);
     }
 
     return true;
@@ -487,42 +502,55 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     Connection connection = null;
     PreparedStatement update = null;
     PreparedStatement select = null;
+    PreparedStatement delete = null;
+
     ResultSet rs = null;
+
+    //Update the account table. Joining email id from nonce table
+    String UPDATE_SQL = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
+      DBUtils.AccountTable.TABLE_NAME,
+      DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+      DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
+    );
+
+    //Update is successful. now return the account information
+    String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+      "(SELECT %s FROM %s where %s = ?)",
+      DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
+      DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+      DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
+      DBUtils.AccountTable.CONFIRMED_COLUMN,
+      DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+      DBUtils.AccountTable.TABLE_NAME,
+      DBUtils.AccountTable.EMAIL_COLUMN,
+      DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
+      DBUtils.Nonce.NONCE_ID_COLUMN
+    );
+
+    String DELETE_NONCE = String.format("DELETE FROM %s where %s = ?",
+      DBUtils.Nonce.TABLE_NAME,DBUtils.Nonce.NONCE_ID_COLUMN);
+
     try {
       connection = this.poolManager.getValidConnection();
-
-
-      //Update the account table. Joining email id from nonce table
-      String UPDATE_SQL = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
-        DBUtils.AccountTable.TABLE_NAME,
-        DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
-      );
-
+      connection.setAutoCommit(false);
 
       update = connection.prepareStatement(UPDATE_SQL);
       update.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       update.setInt(2, nonce);
       update.executeUpdate();
 
-      //Update is successful. now return the account information
-      String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
-        "(SELECT %s FROM %s where %s = ?)",
-        DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
-        DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-        DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
-        DBUtils.AccountTable.CONFIRMED_COLUMN,
-        DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
-        DBUtils.AccountTable.TABLE_NAME,
-        DBUtils.AccountTable.EMAIL_COLUMN,
-        DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
-        DBUtils.Nonce.NONCE_ID_COLUMN
-      );
+
 
       select = connection.prepareStatement(SELECT_SQL);
 
       select.setInt(1, nonce);
       rs = select.executeQuery();
+
+      delete = connection.prepareStatement(DELETE_NONCE);
+      delete.setInt(1,nonce);
+      delete.executeUpdate();
+
+      connection.commit();
 
       while (rs.next()) {
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
@@ -533,7 +561,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
-      close(update);
+      close(null,update);
+      close(null,delete);
       close(connection, select, rs);
     }
   }

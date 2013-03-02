@@ -180,8 +180,9 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
-      //Delete the nonce after it is used
-      if (id != null && !id.isEmpty()) {
+      // Delete the nonce after it is used for session
+      // For activation and reset the nonce will be deleted by the upstream.
+      if (id != null && !id.isEmpty() && NONCE_TYPE.SESSION.equals(type)) {
         deleteNonce(nonce);
       }
       return id;
