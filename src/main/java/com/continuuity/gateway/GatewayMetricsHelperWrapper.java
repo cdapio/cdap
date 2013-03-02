@@ -17,6 +17,9 @@ public class GatewayMetricsHelperWrapper extends MetricsHelper {
   @Override
   protected void count(String metricWithStatus, long count) {
     super.count(metricWithStatus, count);
-    gatewayMetrics.count(metricWithStatus, count);
+    // in unit-tests it can be not initialized
+    if (gatewayMetrics != null) {
+      gatewayMetrics.count(metricWithStatus, count);
+    }
   }
 }
