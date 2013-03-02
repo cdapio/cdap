@@ -48,6 +48,7 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
   @Inject
   public ProfanityFilterFileAccess(@Named(Constants.CFG_PROFANE_WORDS_FILE_PATH)String profaneFilePath) {
     this.profaneFilePath = profaneFilePath;
+    loadProfaneDictionary();
   }
   /**
    * Filter words based on a set of criteria.
@@ -60,10 +61,6 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
    */
   @Override
   public boolean isFiltered(String data) {
-
-    if ( profanityDictionary.isEmpty()) {
-      loadProfaneDictionary();
-    }
 
     //1. if the word has special characters other than a-z, A-Z, 0-9 - Filter out
     if ( ! p.matcher(data).matches()) {
