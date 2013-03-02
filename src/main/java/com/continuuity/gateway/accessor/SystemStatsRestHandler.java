@@ -17,6 +17,7 @@ import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import org.apache.thrift.TException;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -56,10 +58,8 @@ public class SystemStatsRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {
-      HttpMethod.GET
-  };
-
+  static final Set<HttpMethod> allowedMethods = Sets.newHashSet(HttpMethod.GET);
+  
   public static interface MetricsFormatter {
     String format(Map<String, ?> metrics);
   }
