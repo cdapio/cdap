@@ -55,6 +55,9 @@ function(Models, Views, Controllers){
 			user: {
 				name: ""
 			},
+			cloud: {
+				name: ""
+			},
 			breadcrumbs: Em.ArrayProxy.create({
 				names: {
 					'flows': 'Process',
@@ -388,6 +391,7 @@ function(Models, Views, Controllers){
 
 				window.ENV.account = env.account;
 				C.router.applicationController.set('user', env.account);
+				C.router.applicationController.set('cloud', env.cloud);
 
 			} else {
 

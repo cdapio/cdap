@@ -2,3 +2,4 @@ build/
 .gradle/
 *.iml
 *.credential
+*.DS_Store
