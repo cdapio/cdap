@@ -90,7 +90,7 @@ abstract public class MetaDataStoreTest {
       mds.add(context, meta, false);
       Assert.fail("expected an OperationException for adding existing entry.");
     } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.ENTRY_EXISTS, e.getStatus());
+      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
     }
     // now add a modified record -> even conflict resolution must now fail
     meta.addField("new", "field");
@@ -98,7 +98,7 @@ abstract public class MetaDataStoreTest {
       mds.add(context, meta);
       Assert.fail("expected an OperationException for adding existing entry.");
     } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.ENTRY_EXISTS, e.getStatus());
+      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
     }
   }
 
