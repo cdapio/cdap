@@ -70,8 +70,7 @@ public class VPCHandler extends PassportHandler {
   @GET
   public Response isValidVPC(@PathParam("vpcName") String vpcName) {
     try {
-      int count = dataManagementService.getVPCCount(vpcName);
-      if (count == 0) {
+      if (dataManagementService.isValidVPC(vpcName)) {
         return Response.ok().entity(Utils.getJsonOK()).build();
       } else {
         return Response.ok().entity(Utils.getJsonError("VPC already exists")).build();

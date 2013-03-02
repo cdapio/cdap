@@ -169,12 +169,11 @@ public interface DataManagementService {
   public int getSessionNonce(String id);
 
   /**
-   * VPC count for the vpc
-   *
+   * isValidVPC
    * @param vpcName
-   * @return
+   * @return True if VPC name doesn't exist in the system and is not profane
    */
-  public int getVPCCount(String vpcName);
+  public boolean isValidVPC(String vpcName);
 
   /**
    * Get id for nonce

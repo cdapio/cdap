@@ -4,14 +4,14 @@
 
 package com.continuuity.passport.http.modules;
 
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.NonceDAO;
+import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
-import com.continuuity.passport.dal.db.AccountDBAccess;
-import com.continuuity.passport.dal.db.NonceDBAccess;
-import com.continuuity.passport.dal.db.VpcDBAccess;
+import com.continuuity.passport.dal.db.*;
 import com.continuuity.passport.http.handlers.AccountHandler;
 import com.continuuity.passport.http.handlers.ActivationNonceHandler;
 import com.continuuity.passport.http.handlers.SessionNonceHandler;
@@ -56,11 +56,15 @@ public class PassportGuiceBindings extends JerseyServletModule {
       configBinder.addBinding(entry.getKey()).toInstance(entry.getValue());
     }
 
+    bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH)).
+                                to(config.get(Constants.CFG_PROFANE_WORDS_FILE_PATH));
+
     //Bind ReST resources
     bind(AccountHandler.class);
     bind(ActivationNonceHandler.class);
     bind(SessionNonceHandler.class);
     bind(VPCHandler.class);
+
 
     //Bind DataManagementService and AuthenticatorService to default implementations
     bind(DataManagementService.class).to(DataManagementServiceImpl.class);
@@ -70,7 +74,7 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(AccountDAO.class).to(AccountDBAccess.class);
     bind(VpcDAO.class).to(VpcDBAccess.class);
     bind(NonceDAO.class).to(NonceDBAccess.class);
-
+    bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
 
     bind(GuiceContainer.class).asEagerSingleton();
     bind(DefaultServlet.class).asEagerSingleton();
