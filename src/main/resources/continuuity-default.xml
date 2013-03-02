@@ -131,7 +131,7 @@
          the Collectors, but that's 'cos we are using the Hadoop config object -->
     <property>
         <name>data.rest.class</name>
-        <value>com.continuuity.gateway.accessor.DataRestAccessor</value>
+        <value>com.continuuity.gateway.accessor.DatasetRestAccessor</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
