@@ -163,6 +163,13 @@ public class DatasetRestHandler extends NettyRestHandler {
         return;
       }
       String accountId = accessor.getAuthenticator().getAccountId(request);
+      if (accountId == null || accountId.isEmpty()) {
+        // this should not happen after successful auth... but better to check
+        LOG.info("No valid account information found");
+        respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
+        helper.finish(BadRequest);
+        return;
+      }
       OperationContext opContext = new OperationContext(accountId);
 
       LinkedList<String> pathComponents = splitPath(path.substring(this.pathPrefix.length()));
@@ -217,6 +224,10 @@ public class DatasetRestHandler extends NettyRestHandler {
     respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST, e);
   }
 
+  /**
+   * Looks for encoding parameters in the url. If more than one is found, responds with bad request
+   * and returns null. If none is found, returns empty string. If one is found, returns that.
+   */
   private String getEncodingParameter(MessageEvent message, HttpRequest request,
                                       MetricsHelper helper, Map<String, List<String>> parameters) {
     // optional parameters encoding
