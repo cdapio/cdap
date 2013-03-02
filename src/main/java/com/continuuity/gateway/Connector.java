@@ -6,6 +6,7 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
+import com.continuuity.metadata.MetadataService;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type
@@ -61,6 +62,11 @@ public abstract class Connector {
    * Authenticates requests to this connector.
    */
   private GatewayAuthenticator authenticator;
+
+  /**
+   * The meta data service.
+   */
+  private MetadataService mds;
 
   /**
    * Retrieve the metrics client of the connector
@@ -159,6 +165,18 @@ public abstract class Connector {
   }
 
   /**
+   * Set the meta data service for this collector
+   * @param service the metadata servrice to use
+   */
+  public void setMetadataService(MetadataService service) {
+    this.mds = service;
+  }
+
+  public MetadataService getMetadataService() {
+    return this.mds;
+  }
+
+  /**
    * Start this connector. After this, the connector is assumed to be fully
    * operational.
    *
@@ -173,4 +191,14 @@ public abstract class Connector {
    * @throws Exception if any exception occurs during stop
    */
   public abstract void stop() throws Exception;
+
+  private GatewayMetrics gatewayMetrics;
+
+  public void setGatewayMetrics(GatewayMetrics metrics) {
+    this.gatewayMetrics = metrics;
+  }
+
+  public GatewayMetrics getGatewayMetrics() {
+    return gatewayMetrics;
+  }
 }

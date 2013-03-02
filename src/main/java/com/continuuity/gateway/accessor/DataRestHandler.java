@@ -10,9 +10,11 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.Write;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -28,6 +30,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -47,12 +50,11 @@ public class DataRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {
+  Set<HttpMethod> allowedMethods = Sets.newHashSet(
       HttpMethod.GET,
       HttpMethod.DELETE,
       HttpMethod.PUT,
-      HttpMethod.POST
-  };
+      HttpMethod.POST);
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -104,13 +106,12 @@ public class DataRestHandler extends NettyRestHandler {
     String requestUri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + requestUri);
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+        this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // check whether the request's HTTP method is supported
-      if (method != HttpMethod.GET && method != HttpMethod.DELETE &&
-          method != HttpMethod.PUT && method != HttpMethod.POST) {
+      if (!allowedMethods.contains(method)) {
         LOG.trace("Received a " + method + " request, which is not supported");
         respondNotAllowed(message.getChannel(), allowedMethods);
         helper.finish(BadRequest);

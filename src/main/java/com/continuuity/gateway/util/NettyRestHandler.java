@@ -52,7 +52,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param allowedMethods the HTTP methods that are accepted
    */
   protected void respondNotAllowed(Channel channel,
-                                   HttpMethod[] allowedMethods) {
+                                   Iterable<HttpMethod> allowedMethods) {
     HttpResponse response = new DefaultHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
     StringBuilder allowed = new StringBuilder();

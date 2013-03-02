@@ -5,24 +5,17 @@ import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.discovery.Discoverable;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -40,13 +33,12 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
@@ -64,9 +56,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {
-      HttpMethod.PUT
-  };
+  Set<HttpMethod> allowedMethods = Collections.singleton(
+      HttpMethod.PUT);
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -98,7 +89,8 @@ public class AppFabricRestHandler extends NettyRestHandler {
   public void messageReceived(ChannelHandlerContext context,
                               MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
-    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics, this.connector.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.connector.getMetricsQualifier()), connector.getGatewayMetrics());
     HttpMethod method = request.getMethod();
     String requestUri = request.getUri();
 
