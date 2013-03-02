@@ -36,7 +36,7 @@ task javadoc(type: Javadoc, overwrite: true) {
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
-task singlenode_dist (type: Zip) {
+task developer_suite_dist (type: Zip) {
   dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
   group = 'Continuuity'
 
@@ -131,6 +131,90 @@ task singlenode_dist (type: Zip) {
     from project(':web-cloud-app').file('build/developer/common')
   }
 
+  // VERSION
+  from("VERSION"){
+    def versiontxt
+    if( project.hasProperty('teamcityBuildNumber')) {
+      versiontxt = version + "-" + teamcityBuildNumber
+    } else {
+      versiontxt = version
+    }
+    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+  }
+
+  //classifier = "beta"
+  if( project.hasProperty('teamcityBuildNumber')) {
+    classifier = teamcityBuildNumber
+  } else {
+    classifier = ""
+  }
+  ext.distName = "${baseName}-${appendix}"
+}
+
+task sandbox_dist (type: Zip) {
+  dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
+  group = 'Continuuity'
+
+  baseName = "continuuity"
+  appendix = "developer-sandbox"
+  into "${baseName}-${appendix}-${version}"
+  description = 'Generates the dev suite distribution zip file for cloud'
+
+  //copySpec:
+  //root
+  from project(':singlenode').tasks.getByName('createApiJar').outputs
+  from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
+  from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+  from project(':singlenode').files('src/dist')
+  from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
+
+
+  //bin
+  into ("bin"){
+    // :singlenode/bin contains the startscript, not using startScripts task
+    // include project bin directories
+    from project.parent.subprojects.collect { project ->
+      project.file('bin')
+    }
+
+    exclude 'node'
+    exclude 'far-server'
+    exclude 'run-java'
+    exclude 'flow-config.sh'
+    exclude 'service'
+    exclude 'dfbench'
+    exclude 'benchmark'
+    exclude 'event-gen'
+    exclude 'flume-client'
+    exclude 'common*'
+    def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+  }
+
+
+  //create/include empty data directory
+  doFirst{
+    new File("${buildDir}/tmp/singlenode/data").mkdirs()
+  }
+
+  from("${buildDir}/tmp/singlenode/")
+
+  //conf
+  from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
+    into "conf"
+  }
+
+  //distribution
+  into("lib"){
+    from project(':singlenode').configurations.getByName('runtime')
+    from project(':singlenode').tasks.getByName('jar').outputs
+    from project(':test').tasks.getByName('testJar').outputs
+    exclude 'overlord-*-loggly.jar'
+    exclude 'cglib-*v2*.jar'
+  }
+
+  //webapp
   into ("web-app/cloud/client"){
     from project(':web-cloud-app').file('build/cloud/client')
   }
@@ -164,6 +248,7 @@ task singlenode_dist (type: Zip) {
   }
   ext.distName = "${baseName}-${appendix}"
 }
+
 
 task cloud_dist (type: Tar) {
   dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
@@ -270,8 +355,9 @@ deb.dependsOn(cloud_dist)
 
 artifacts{
   // Asigning the artifact to the configuration
-  distributions singlenode_dist
+  distributions developer_suite_dist
   distributions cloud_dist
+  distributions sandbox_dist
 }
 
 uploadDistributions {
@@ -283,14 +369,18 @@ uploadDistributions {
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
       }
-      addFilter('singlenode') {artifact, file ->
-        file.name == singlenode_dist.archiveName
+      addFilter('developer_suite') {artifact, file ->
+        file.name == developer_suite_dist.archiveName
       }
       addFilter('cloud') {artifact, file ->
         file.name == cloud_dist.archiveName
       }
-      pom('singlenode').artifactId = singlenode_dist.distName
+      addFilter('sandbox') {artifact, file ->
+        file.name == sandbox_dist.archiveName
+      }
+      pom('developer_suite').artifactId = developer_suite_dist.distName
       pom('cloud').artifactId = cloud_dist.distName
+      pom('sandbox').artifactId = sandbox_dist.distName
     }
   }
 }
