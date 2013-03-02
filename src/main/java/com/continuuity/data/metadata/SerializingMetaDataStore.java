@@ -195,7 +195,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Meta data entry for %s already exists.", entry);
       Log.debug(message);
-      throw new OperationException(StatusCode.WRITE_CONFLICT, message);
+      throw new OperationException(StatusCode.ENTRY_EXISTS, message);
     }
     if (isUpdate) {
       if (bytesRead == null) {
