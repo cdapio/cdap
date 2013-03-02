@@ -38,9 +38,10 @@
   <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a href="/logout">Logout</a>
+        <a href="https://accounts.continuuity.com/logout">Logout</a>
         <a href="http://support.continuuity.com/" target="_blank">Support</a>
-        {{user.name}}
+        <a href="https://accounts.continuuity.com/" class="user-link">{{user.name}}</a>
+        <a href="#" class="cloud-link">{{cloud.name}}</a>
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}

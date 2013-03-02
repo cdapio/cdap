@@ -1,7 +1,7 @@
 
 
 
-@import url("http://fast.fonts.com/t/1.css?apiType=css&projectid=90566de1-c9c9-44de-b73e-60c6f16500bf");
+@import url("https://fast.fonts.com/t/1.css?apiType=css&projectid=90566de1-c9c9-44de-b73e-60c6f16500bf");
 @font-face{
 	font-family:"HelveticaNeueW01-Thin";
 	src:url("../fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix");
@@ -17,6 +17,12 @@
 	src:url("../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix");
 	src:url("../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix") format("eot"),url("../fonts/842088d0-1ae2-40d0-8561-3c95761ba7a6.woff") format("woff"),url("../fonts/c74505d5-13e8-47ed-94a8-630aab4da3e6.ttf") format("truetype"),url("../fonts/6cd480d1-47d0-48b4-86bd-283db2cb9235.svg#6cd480d1-47d0-48b4-86bd-283db2cb9235") format("svg");
 }
+@font-face{
+	font-family:"HelveticaNeueW01-75Bold";
+	src:url("../fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix");
+	src:url("../fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix") format("eot"),url("../fonts/14ff6081-326d-4dae-b778-d7afa66166fc.woff") format("woff"),url("../fonts/8fda1e47-19be-46c7-8d83-8d4fb35572f0.ttf") format("truetype"),url("../fonts/f751c8ae-1057-46d9-8d74-62592e002568.svg#f751c8ae-1057-46d9-8d74-62592e002568") format("svg");
+}
+
 
 html {
 	height: 100%;
@@ -210,10 +216,7 @@ a, a:visited {
 	float: right;
 	padding: 3px;
 	color: #fff;
-	padding: 0px 20px 0px 32px;
-	background-image: url(/assets/img/global-icons.png);
-	background-position: left middle;
-	background-repeat: no-repeat;
+	padding: 0px 20px;
 	line-height: 36px;
 	font-size: 14px;
 	height: 32px;
@@ -225,6 +228,15 @@ a, a:visited {
 	height: 36px;
 	padding-left: 12px;
 	text-decoration: none;
+}
+#global .cloud-link, #global .user-link {
+	background-image: url(/assets/img/global-icons.png);
+	background-position: left middle;
+	background-repeat: no-repeat;
+	padding-left: 32px;
+}
+.cloud-link {
+	background-position: 0px -104px;
 }
 .global-link {
 	display: block;
@@ -788,9 +800,11 @@ input[type="text"] {
 .app-list-name {
 	line-height: 18px;
 	font-size: 16px;
-	font-weight: bold;
 	line-height: 14px !important;
 	padding-left: 14px !important;
+}
+.app-list-name a {
+	font-family: "HelveticaNeueW01-75Bold";
 }
 .app-list-name span {
 	color: #333;
@@ -1451,9 +1465,7 @@ a strong {
 	text-align: left;
 	font-size: 14px;
 	color: #8C9495;
-	line-height: 14px;
-	font-weight: 500;
-	letter-spacing: 0.08em;
+
 
 	border: 1px solid #efefef;
 	border-radius: 3px;
@@ -1463,10 +1475,11 @@ a strong {
 	padding: 25px 25px 22px 25px;
 
 }
+.object-list-empty-content div {
+	font-family: "HelveticaNeueW01-75Bold";
+}
 .object-list-empty-content span {
 	font-size: 12px;
-	font-weight: 300;
-	letter-spacing: normal;
 }
 h3 a {
 	text-decoration: underline;
