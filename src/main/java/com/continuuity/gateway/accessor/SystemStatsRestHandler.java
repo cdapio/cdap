@@ -7,6 +7,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
@@ -93,8 +94,8 @@ public class SystemStatsRestHandler extends NettyRestHandler {
     String uri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + uri);
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getMetricsQualifier());
+    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
+      this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // only GET is supported for now
@@ -125,10 +126,15 @@ public class SystemStatsRestHandler extends NettyRestHandler {
         Collection<String> accounts = accessor.getMetaDataStore().listAccounts(new OperationContext("root"));
 
         // Using tree map to make metrics sorted - just for easier "eye-balling"
-        Map<String, Integer> stats = Maps.newTreeMap();
+        Map<String, Long> stats = Maps.newTreeMap();
+
+        // User apps metrics
         for (String accountId : accounts) {
           collectStatsForAccount(accountId, stats);
         }
+
+        // System metrics: gateway
+        stats.putAll(accessor.getGatewayMetrics().getMetrics());
 
         respondSuccess(message.getChannel(), request, METRICS_FORMATTER.format(stats).getBytes());
         helper.finish(Success);
@@ -147,7 +153,7 @@ public class SystemStatsRestHandler extends NettyRestHandler {
     }
   }
 
-  private void collectStatsForAccount(String accountId, Map<String, Integer> stats)
+  private void collectStatsForAccount(String accountId, Map<String, Long> stats)
     throws MetadataServiceException, TException, OperationException {
     Account account = new Account(accountId);
 
@@ -169,7 +175,7 @@ public class SystemStatsRestHandler extends NettyRestHandler {
     collectRunHistory(accountId, stats);
   }
 
-  private void collectRunHistory(String accountId, Map<String, Integer> stats) throws OperationException {
+  private void collectRunHistory(String accountId, Map<String, Long> stats) throws OperationException {
     // note: this could be quite expensive to collect
     Table<Type, Id.Program, RunRecord> runHistory = accessor.getStore().getAllRunHistory(new Id.Account(accountId));
     for (Table.Cell<Type, Id.Program, RunRecord> run : runHistory.cellSet()) {
@@ -186,8 +192,8 @@ public class SystemStatsRestHandler extends NettyRestHandler {
     }
   }
 
-  private static void inc(Map<String, Integer> stats, String key, int delta) {
-    Integer existingValue = stats.get(key);
+  private static void inc(Map<String, Long> stats, String key, long delta) {
+    Long existingValue = stats.get(key);
     if (existingValue == null) {
       stats.put(key, delta);
     } else {
