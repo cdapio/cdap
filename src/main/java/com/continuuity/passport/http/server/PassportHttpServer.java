@@ -6,6 +6,7 @@ package com.continuuity.passport.http.server;
 
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.continuuity.passport.http.modules.PassportGuiceServletContextListener;
 import com.google.inject.servlet.GuiceFilter;
@@ -97,19 +98,18 @@ public class PassportHttpServer {
 
     Map<String, String> config = new HashMap<String, String>();
 
+    //TODO: Pass in the CConfiguration object directly instead of copying it in to a HashMap
     CConfiguration conf = CConfiguration.create();
 
-    String jdbcType = conf.get("passport.jdbc.type","mysql");
-    String connectionString  = conf.get("passport.jdbc.connection.string",
-                                        "jdbc:mysql://localhost:3306/passport?user=root&" +
-                                        "zeroDateTimeBehavior=convertToNull");
+    int port = conf.getInt(Constants.CFG_SERVER_PORT, Constants.DEFAULT_SERVER_PORT);
+    int gracefulShutdownTime = conf.getInt(Constants.CFG_GRACEFUL_SHUTDOWN_TIME,Constants.DEFAULT_GRACEFUL_SHUTDOWN_TIME);
+    int maxThreads = conf.getInt(Constants.CFG_HTTP_MAX_THREADS,Constants.DEFAULT_HTTP_MAX_THREADS);
 
-    int port = conf.getInt("passport.http.server.port", 7777);
-    int gracefulShutdownTime = conf.getInt("passport.http.graceful.shutdown.time",10000);
-    int maxThreads = conf.getInt("passport.http.max.threads",100);
-
-    config.put("jdbcType", jdbcType);
-    config.put("connectionString",connectionString);
+    config.put(Constants.CFG_JDBC_TYPE, conf.get(Constants.CFG_JDBC_TYPE,Constants.DEFAULT_JDBC_TYPE));
+    config.put(Constants.CFG_JDBC_CONNECTION_STRING,conf.get(Constants.CFG_JDBC_CONNECTION_STRING,
+                                           Constants.DEFAULT_JDBC_CONNECTION_STRING));
+    config.put(Constants.CFG_PROFANE_WORDS_FILE_PATH,conf.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
+                                                              Constants.DEFAULT_PROFANE_WORDS_FILE_PATH));
 
     Realm realm = new JDBCAuthrozingRealm(config);
 
