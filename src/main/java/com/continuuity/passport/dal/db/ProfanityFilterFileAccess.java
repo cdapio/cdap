@@ -55,6 +55,8 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
   @Override
   public boolean isFiltered(String data) {
 
+    Preconditions.checkNotNull(data,"Data passed to profanity filter is null");
+
     //1. if the word has special characters other than a-z, A-Z, 0-9 - Filter out
     if ( ! p.matcher(data).matches()) {
       return true;
