@@ -335,12 +335,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     Preconditions.checkNotNull(nonceDAO, "Nonce data access objects cannot be null");
     Preconditions.checkNotNull(profanityFilter,"Profanity Filter is null");
     try {
-      if ( profanityFilter.isFiltered(vpcName) || vpcDao.getVPCCount(vpcName) > 0 ) {
-        return false;
-      }
-      else {
-        return true;
-      }
+      return ( ! profanityFilter.isFiltered(vpcName) && vpcDao.getVPCCount(vpcName) == 0 );
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

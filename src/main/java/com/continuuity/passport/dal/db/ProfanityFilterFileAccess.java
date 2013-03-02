@@ -2,16 +2,18 @@ package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.dal.ProfanityFilter;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -23,48 +25,23 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProfanityFilterFileAccess.class);
 
-  private Set<String> profanityDictionary = new HashSet<String>();
+  private final Set<String> profanityDictionary;
 
   private Pattern p = Pattern.compile("^[a-zA-Z0-9]+$");
 
-  private String profaneFilePath;
-
-  private void loadProfaneDictionary() {
-    //Note: This is not an error case. This is the current way to disable this feature
-    //TODO: Use DB to get profane words
-    if ((profaneFilePath == null )|| (profaneFilePath.isEmpty())){
-      LOG.info("Profanity dictionary not loaded");
-      return;
-    }
-    int count = 0;
-    BufferedReader br = null;
-    try {
-      br = new BufferedReader(new FileReader(profaneFilePath));
-      String line;
-      while ((line = br.readLine()) != null) {
-        profanityDictionary.add(line.toLowerCase());
-        count++;
-      }
-    } catch (FileNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-    finally{
-      try{
-        if(br == null) {
-          br.close();
-        }
-      }
-      catch (IOException e){
-        LOG.error("Exception while closing profanity file");
-      }
-    }
-    LOG.info(String.format("Profanity Dictionary loaded %d words from %s",count, profaneFilePath));
-  }
   @Inject
   public ProfanityFilterFileAccess(@Named(Constants.CFG_PROFANE_WORDS_FILE_PATH)String profaneFilePath) {
-    this.profaneFilePath = profaneFilePath;
+
+    Preconditions.checkNotNull(profaneFilePath);
+
+    Set<String> dictionary = new HashSet<String>();
+    try {
+      Iterables.addAll(dictionary, Files.readLines(new File(profaneFilePath), Charsets.UTF_8));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    this.profanityDictionary = ImmutableSet.copyOf(dictionary);
+    LOG.info(String.format("Loaded %d words into profane dictionary",this.profanityDictionary.size()));
   }
   /**
    * Filter words based on a set of criteria.
@@ -77,10 +54,6 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
    */
   @Override
   public boolean isFiltered(String data) {
-
-    if ( profanityDictionary.isEmpty()) {
-      loadProfaneDictionary();
-    }
 
     //1. if the word has special characters other than a-z, A-Z, 0-9 - Filter out
     if ( ! p.matcher(data).matches()) {
