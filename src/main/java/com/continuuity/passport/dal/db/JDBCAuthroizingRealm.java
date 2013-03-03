@@ -5,12 +5,11 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.google.inject.Inject;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -19,18 +18,18 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Shiro Realm that is responsible for Communicating with Database to get the credentials for authentication
  * and authorizations
  */
-public class JDBCAuthrozingRealm extends AuthorizingRealm {
+public class JDBCAuthroizingRealm extends AuthorizingRealm {
   private DBConnectionPoolManager poolManager = null;
 
   private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
@@ -60,15 +59,10 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
     DBUtils.AccountTable.API_KEY_COLUMN);
 
 
-  public JDBCAuthrozingRealm(Map<String, String> configurations) {
-    String connectionString = configurations.get(Constants.CFG_JDBC_CONNECTION_STRING);
-    String jdbcType = configurations.get(Constants.CFG_JDBC_TYPE);
-
-    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
-      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-    }
+  @Inject
+  public JDBCAuthroizingRealm(ConnectionPoolDataSource dataSource) {
+    Preconditions.checkNotNull(dataSource, "Data source should not be null");
+    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
   }
 
   /**
@@ -213,6 +207,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         devsuiteDownloadedTime = DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8));
         count++;
       }
+
 
       Preconditions.checkArgument(count == 1, "Account not found in DB");
       Preconditions.checkArgument(!password.isEmpty(), "Password not found for %s in the data store", emailId);
