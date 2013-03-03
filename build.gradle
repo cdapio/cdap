@@ -32,6 +32,8 @@ dependencies {
     compile libraries.google_guice_assistedinject
 
     compile libraries.shiro_core
+    //TODO: Move this to central dependency
+    compile "org.apache.shiro:shiro-guice:1.2.1"
 
     compile libraries.yammer_metrics
 

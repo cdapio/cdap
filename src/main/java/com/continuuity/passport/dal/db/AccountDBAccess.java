@@ -5,7 +5,6 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
@@ -20,9 +19,8 @@ import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Map;
@@ -39,15 +37,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
   @Inject
-  public void AccountDBAccess(@Named("passport.config") Map<String, String> config) {
-    String connectionString = config.get(Constants.CFG_JDBC_CONNECTION_STRING);
-    String jdbcType = config.get(Constants.CFG_JDBC_TYPE);
-
-    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
-      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-    }
+  public void AccountDBAccess(ConnectionPoolDataSource dataSource) {
+    Preconditions.checkNotNull(dataSource,"Data source should not be null");
+    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
   }
 
   /**

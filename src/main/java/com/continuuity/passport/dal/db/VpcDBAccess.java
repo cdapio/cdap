@@ -5,7 +5,6 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
@@ -15,9 +14,8 @@ import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,16 +33,9 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
 
   @Inject
-  public void VpcDBAccess(@Named("passport.config") Map<String, String> configuration) {
-
-    String connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING);
-    String jdbcType = configuration.get(Constants.CFG_JDBC_TYPE);
-
-    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
-      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-    }
+  public void VpcDBAccess(ConnectionPoolDataSource dataSource) {
+    Preconditions.checkNotNull(dataSource,"Data source should not be null");
+    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
   }
 
   @Override

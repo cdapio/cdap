@@ -7,12 +7,9 @@ package com.continuuity.passport.http.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
-import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.continuuity.passport.http.modules.PassportGuiceServletContextListener;
+import com.google.common.base.Preconditions;
 import com.google.inject.servlet.GuiceFilter;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.mgt.DefaultSecurityManager;
-import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -25,8 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Jetty based Http Servers
@@ -37,15 +32,17 @@ public class PassportHttpServer {
   private final int port;
   private final int maxThreads;
 
-  private final Map<String, String> configuration;
+  private final CConfiguration configuration;
   private static final Logger LOG = LoggerFactory.getLogger(PassportHttpServer.class);
 
-  public PassportHttpServer(int port, Map<String, String> configuration,
-                            int maxThreads, int gracefulShutdownTime) {
-    this.port = port;
+  public PassportHttpServer( CConfiguration configuration)  {
+    Preconditions.checkNotNull(configuration,"Configuration should not be null");
+    this.port = configuration.getInt(Constants.CFG_SERVER_PORT, Constants.DEFAULT_SERVER_PORT);
+    this.gracefulShutdownTime = configuration.getInt(Constants.CFG_GRACEFUL_SHUTDOWN_TIME,
+                                                     Constants.DEFAULT_GRACEFUL_SHUTDOWN_TIME);
+    this.maxThreads = configuration.getInt(Constants.CFG_HTTP_MAX_THREADS,Constants.DEFAULT_HTTP_MAX_THREADS);
+
     this.configuration = configuration;
-    this.maxThreads = maxThreads;
-    this.gracefulShutdownTime = gracefulShutdownTime;
   }
 
   private void start() {
@@ -80,9 +77,6 @@ public class PassportHttpServer {
       LOG.info("Starting the server with the following parameters");
       LOG.info(String.format("Port: %d",port));
       LOG.info(String.format("Threads: %d",maxThreads));
-      for(Map.Entry<String,String> e: configuration.entrySet()){
-        LOG.info(String.format("Config %s : %s", e.getKey(),e.getValue()));
-      }
 
       server.start();
       server.join();
@@ -96,27 +90,9 @@ public class PassportHttpServer {
 
   public static void main(String[] args) {
 
-    Map<String, String> config = new HashMap<String, String>();
+    CConfiguration configuration = CConfiguration.create();
 
-    //TODO: Pass in the CConfiguration object directly instead of copying it in to a HashMap
-    CConfiguration conf = CConfiguration.create();
-
-    int port = conf.getInt(Constants.CFG_SERVER_PORT, Constants.DEFAULT_SERVER_PORT);
-    int gracefulShutdownTime = conf.getInt(Constants.CFG_GRACEFUL_SHUTDOWN_TIME,Constants.DEFAULT_GRACEFUL_SHUTDOWN_TIME);
-    int maxThreads = conf.getInt(Constants.CFG_HTTP_MAX_THREADS,Constants.DEFAULT_HTTP_MAX_THREADS);
-
-    config.put(Constants.CFG_JDBC_TYPE, conf.get(Constants.CFG_JDBC_TYPE,Constants.DEFAULT_JDBC_TYPE));
-    config.put(Constants.CFG_JDBC_CONNECTION_STRING,conf.get(Constants.CFG_JDBC_CONNECTION_STRING,
-                                           Constants.DEFAULT_JDBC_CONNECTION_STRING));
-    config.put(Constants.CFG_PROFANE_WORDS_FILE_PATH,conf.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
-                                                              Constants.DEFAULT_PROFANE_WORDS_FILE_PATH));
-
-    Realm realm = new JDBCAuthrozingRealm(config);
-
-    org.apache.shiro.mgt.SecurityManager securityManager = new DefaultSecurityManager(realm);
-    SecurityUtils.setSecurityManager(securityManager);
-
-    PassportHttpServer server = new PassportHttpServer(port, config, maxThreads,gracefulShutdownTime);
+    PassportHttpServer server = new PassportHttpServer(configuration);
     server.start();
 
 
