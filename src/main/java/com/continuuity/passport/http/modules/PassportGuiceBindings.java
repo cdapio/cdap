@@ -61,7 +61,6 @@ public class PassportGuiceBindings extends JerseyServletModule {
   }
 
   private void bindings() {
-
     Preconditions.checkNotNull(jdbcType,"JDBC type cannot be null");
     Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE),"Unsupported JDBC type");
 
@@ -103,6 +102,5 @@ public class PassportGuiceBindings extends JerseyServletModule {
     MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
     mysqlDataSource.setUrl(connectionString);
     return mysqlDataSource;
-
-  }
+ }
 }

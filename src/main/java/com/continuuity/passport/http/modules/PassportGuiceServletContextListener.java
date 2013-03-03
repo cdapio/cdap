@@ -19,7 +19,6 @@ import javax.servlet.ServletContextEvent;
  */
 public class PassportGuiceServletContextListener extends GuiceServletContextListener {
 
-
   private final CConfiguration configuration;
   private ServletContext servletContext;
 

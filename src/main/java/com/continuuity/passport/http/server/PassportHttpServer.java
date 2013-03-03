@@ -37,6 +37,7 @@ public class PassportHttpServer {
 
   public PassportHttpServer( CConfiguration configuration)  {
     Preconditions.checkNotNull(configuration,"Configuration should not be null");
+
     this.port = configuration.getInt(Constants.CFG_SERVER_PORT, Constants.DEFAULT_SERVER_PORT);
     this.gracefulShutdownTime = configuration.getInt(Constants.CFG_GRACEFUL_SHUTDOWN_TIME,
                                                      Constants.DEFAULT_GRACEFUL_SHUTDOWN_TIME);
@@ -46,10 +47,8 @@ public class PassportHttpServer {
   }
 
   private void start() {
-
     try {
-
-      Server server = new Server();
+     Server server = new Server();
       server.setStopAtShutdown(true);
       server.setGracefulShutdown(gracefulShutdownTime);
 
@@ -89,12 +88,9 @@ public class PassportHttpServer {
   }
 
   public static void main(String[] args) {
-
     CConfiguration configuration = CConfiguration.create();
 
     PassportHttpServer server = new PassportHttpServer(configuration);
     server.start();
-
-
   }
 }
