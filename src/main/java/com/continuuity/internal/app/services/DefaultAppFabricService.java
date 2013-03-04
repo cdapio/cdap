@@ -748,7 +748,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         client.close();
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getLocalizedMessage());
     }
   }
 
@@ -1041,6 +1042,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private Location getApplicationLocation(Id.Application appId) {
-    return locationFactory.create(String.format("%s/%s/%s.jar", archiveDir, appId.getAccount(), appId.getId()));
+    return locationFactory.create(String.format("%s/%s/%s.jar", archiveDir, appId.getAccountId(), appId.getId()));
   }
 }
