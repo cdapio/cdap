@@ -78,6 +78,9 @@ function accountsRequest (path, done) {
 			data += chunk;
 		});
 		result.on('end', function () {
+
+			logger.info('Response from accounts', result.statusCode, data);
+
 			try {
 				data = JSON.parse(data);
 				done(result.statusCode, data);
@@ -179,9 +182,10 @@ fs.readFile(configPath, function (error, result) {
 
 			accountsRequest('/getSSOUser/' + nonce, function (status, account) {
 
-				if (status !== 200) {
+				if (status !== 200 || account.error) {
 
 					logger.warn('getSSOUser', status, account);
+					logger.warn('Redirecting to https://' + config['accounts-host']);
 					res.redirect('https://' + config['accounts-host']);
 					res.end();
 
@@ -193,6 +197,7 @@ fs.readFile(configPath, function (error, result) {
 					req.session.session_id = crypto.createHash('sha1')
 						.update(current_date + random).digest('hex');
 
+					// Perform ownership check.
 					if (process.env.NODE_ENV === 'production') {
 						
 						if (account.account_id !== config['info'].owner) {
@@ -205,7 +210,15 @@ fs.readFile(configPath, function (error, result) {
 							req.session.api_key = account.api_key;
 							res.redirect('/');
 						}
-					}	
+
+					} else {
+
+						req.session.account_id = account.account_id;
+						req.session.name = account.first_name + ' ' + account.last_name;
+						req.session.api_key = account.api_key;
+						res.redirect('/');
+
+					}
 
 				}
 			});
