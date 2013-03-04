@@ -343,20 +343,21 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public List<ActiveFlow> getFlows(String accountId) throws AppFabricServiceException, TException {
 
     try {
-      Table<Type, Id.Program, RunRecord> histories = store.getAllRunHistory(Id.Account.from(accountId));
+      Table<Type, Id.Program, List<RunRecord>> histories = store.getAllRunHistory(Id.Account.from(accountId));
       List<ActiveFlow> result = Lists.newLinkedList();
-      for (Table.Cell<Type, Id.Program, RunRecord> cell : histories.cellSet()) {
+      for (Table.Cell<Type, Id.Program, List<RunRecord>> cell : histories.cellSet()) {
         Id.Program programId = cell.getColumnKey();
-        RunRecord runRecord = cell.getValue();
-        ActiveFlow activeFlow = new ActiveFlow(programId.getApplicationId(),
-                                               programId.getId(),
-                                               typeToEntityType(cell.getRowKey()),
-                                               runRecord.getStopTs(),
-                                               runRecord.getStartTs(),
-                                               null,        // TODO
-                                               0            // TODO
-                                               );
-          result.add(activeFlow);
+        for (RunRecord runRecord : cell.getValue()) {
+          ActiveFlow activeFlow = new ActiveFlow(programId.getApplicationId(),
+                                                 programId.getId(),
+                                                 typeToEntityType(cell.getRowKey()),
+                                                 runRecord.getStopTs(),
+                                                 runRecord.getStartTs(),
+                                                 null,        // TODO
+                                                 0            // TODO
+                                                 );
+            result.add(activeFlow);
+        }
       }
       return result;
 

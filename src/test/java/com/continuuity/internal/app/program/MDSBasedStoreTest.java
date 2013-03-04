@@ -53,7 +53,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
@@ -120,6 +119,9 @@ public class MDSBasedStoreTest {
     store.setStart(programId2, "run4", 100);
     store.setStop(programId2, "run4", 109, "SUCCEEDED");
 
+    // record for different account
+    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", 60);
+
     // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
     List<RunRecord> history = store.getRunHistory(programId);
 
@@ -135,6 +137,31 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(20, run.getStartTs());
     Assert.assertEquals(29, run.getStopTs());
     Assert.assertEquals("FAILED", run.getEndStatus());
+
+    // testing "get all history for account"
+    // note: we need to add account's apps info into store
+    store.addApplication(Id.Application.from("account1", "application1"),
+                         ApplicationSpecification.Builder.with().setName("application1").setDescription("")
+                         .noStream().noDataSet()
+                         .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
+                         .noProcedure().build());
+    store.addApplication(Id.Application.from("account2", "application1"),
+                         ApplicationSpecification.Builder.with().setName("application1").setDescription("")
+                         .noStream().noDataSet()
+                         .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
+                         .noProcedure().build());
+
+    com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
+                                                           store.getAllRunHistory(new Id.Account("account1"));
+
+    // we ran two programs (flows)
+    Assert.assertEquals(2, runHistory.size());
+    int totalHistoryRecords = 0;
+    for (com.google.common.collect.Table.Cell<Type, Id.Program, List<RunRecord>> cell : runHistory.cellSet()) {
+      totalHistoryRecords += cell.getValue().size();
+    }
+    // there were 3 "finished" runs of different programs
+    Assert.assertEquals(3, totalHistoryRecords);
   }
 
   @Test
