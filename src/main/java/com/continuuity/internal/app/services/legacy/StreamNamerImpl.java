@@ -1,13 +1,16 @@
 package com.continuuity.internal.app.services.legacy;
 
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -104,7 +107,7 @@ public final class StreamNamerImpl {
    * @return true if successful; false otherwise.
    */
   public boolean name(String accountName, FlowDefinition definition) {
-    Map<StreamKey, StreamName> assignedStreams = Maps.newHashMap();
+    List<ImmutablePair<StreamKey, StreamName>> assignedStreams = Lists.newArrayList();
     Collection<? extends ConnectionDefinition> connections =
         definition.getConnections();
 
@@ -136,29 +139,7 @@ public final class StreamNamerImpl {
         return false;
 			}	else {
         // case 1. or 3., destination is an input of a flowlet.
-        // First check whether this input was seen before
         StreamKey toKey = new StreamKey(to.getFlowlet(), to.getStream());
-        StreamName toName = assignedStreams.get(toKey);
-        if (toName != null) {
-          if (!StreamType.IN.equals(toName.getType())) {
-            // Have seen this before, but the type is different -> error
-            LOG.error("Input stream '{}' of flowlet '{}' was also used as an"
-                        + " output stream with uri '{}'",
-                      new Object[]{to.getStream(), to.getFlowlet(), toName.getUri()});
-            return false;
-          } else {
-            // seen this before, also as input -> duplicate assignment -> error
-            LOG.error("Input stream '{}' of flowlet '{}' is assigned by " +
-                        "multiple connections", new Object[]{to.getStream(),
-              to.getFlowlet()});
-            return false;
-          }
-        } else {
-          // we have not see this flowlet/stream combination before
-          // verify that the flowlet name is valid
-          if (!verifyFlowlet(definition, to.getFlowlet()))
-            return false;
-        }
         // based on the source of the connection, determine URI for the stream
         URI streamUri;
         if (connection.getFrom().isFlowStream()) {
@@ -171,43 +152,32 @@ public final class StreamNamerImpl {
           // case 3. flowlet -> flowlet. Perhaps we have already built this?
           StreamKey fromKey =
               new StreamKey(from.getFlowlet(), from.getStream());
-          StreamName fromName = assignedStreams.get(fromKey);
-          if (fromName == null) {
-            // Haven't seen this from stream before.
-            // First verify the flowlet is defined
-            if (!verifyFlowlet(definition, from.getFlowlet())) return false;
-            // Build the stream URI from flow/flowlet/stream name
-            streamUri = FlowletStream.
-                defaultURI(name, from.getFlowlet(), from.getStream());
-            // and remember this URI and type for that flowlet and stream
-            fromName = new StreamName(StreamType.OUT, streamUri);
-            assignedStreams.put(fromKey, fromName);
-          }
-          else if (!StreamType.OUT.equals(fromName.getType())) {
-            // Have seen this before, but the type is different -> error
-            LOG.error("Output stream '{}' of flowlet '{}' was also used as "
-                        + "an input stream with uri '{}'",
-                      new Object[]{from.getStream(), from.getFlowlet(), fromName.getUri()});
+          // First verify the flowlet is defined
+          if (!verifyFlowlet(definition, from.getFlowlet())){
             return false;
-          } else {
-            // Have seen this before as a from stream and it already has a URI
-            streamUri = fromName.getUri();
           }
+          // Build the stream URI from flow/flowlet/stream name
+          streamUri = FlowletStream.
+              defaultURI(name, from.getFlowlet(), from.getStream());
+          // and remember this URI and type for that flowlet and stream
+          StreamName fromName = new StreamName(StreamType.OUT, streamUri);
+          assignedStreams.add(new ImmutablePair<StreamKey, StreamName>(fromKey, fromName));
         }
         // we already checked that this in stream was not assigned before
         // now we know the correct URI, we can just add it to the assignments
-        toName = new StreamName(StreamType.IN, streamUri);
-        assignedStreams.put(toKey, toName);
+        StreamName toName = new StreamName(StreamType.IN, streamUri);
+        assignedStreams.add(new ImmutablePair<StreamKey, StreamName>(toKey, toName));
       }
     }
     // Now add all the assignments to the flow definition
-    for(StreamKey streamKey : assignedStreams.keySet()) {
-      StreamName streamName = assignedStreams.get(streamKey);
+    for(ImmutablePair<StreamKey, StreamName> stream : assignedStreams) {
+      StreamKey streamKey = stream.getFirst();
+      StreamName streamName = stream.getSecond();
       modifier.setStreamURI(streamKey.getFlowlet(), streamKey.getStream(),
           streamName.getUri(), streamName.getType());
     }
     // all fine
-    return true;
+      return true;
   }
 
   /**
