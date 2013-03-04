@@ -69,8 +69,6 @@ public class DataSetClient {
   String stopcol = null;         // the column to end a range
   int limit = -1;                // the limit for a range
 
-  List<String> toClear = Lists.newLinkedList(); // arguments for the clear commmand
-
   boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
 
   public DataSetClient disallowSSL() {
@@ -91,7 +89,6 @@ public class DataSetClient {
     if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name + " clear ( --all | --queues | --streams | --tables | --meta)");
     out.println("  " + name + " create --table name");
     out.println("  " + name + " read --table name --row <row key> ...");
     out.println("  " + name + " write --table name --row <row key> ...");
@@ -111,10 +108,6 @@ public class DataSetClient {
     out.println("  --encoding <number>     To specify an encoding for keys/values");
     out.println("  --hex                   To specify hex encoding for keys/values");
     out.println("  --base64                To specify base64 encoding for keys/values");
-    out.println("  --all                   To clear all data");
-    out.println("  --data                  To clear all table data");
-    out.println("  --streams               To clear all event streams");
-    out.println("  --queues                To clear all intra-flow queues");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
@@ -167,21 +160,6 @@ public class DataSetClient {
       else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) usage(true);
         apikey = args[pos];
-      }
-      else if ("--all".equals(arg)) {
-        toClear.add("all");
-      }
-      else if ("--queues".equals(arg)) {
-        toClear.add("queues");
-      }
-      else if ("--streams".equals(arg)) {
-        toClear.add("streams");
-      }
-      else if ("--tables".equals(arg)) {
-        toClear.add("tables");
-      }
-      else if ("--meta".equals(arg)) {
-        toClear.add("meta");
       }
       else if ("--table".equals(arg)) {
         if (++pos >= args.length) usage(true);
@@ -255,7 +233,7 @@ public class DataSetClient {
   }
 
   static List<String> supportedCommands =
-    Arrays.asList("clear", "read", "write", "increment", "delete", "create");
+    Arrays.asList("read", "write", "increment", "delete", "create");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -266,40 +244,32 @@ public class DataSetClient {
     if (!supportedCommands.contains(command))
       usage("Unsupported command '" + command + "'.");
 
-    // validate that a table and a row is given
-    if ("clear".equals(command)) {
-      if (table != null)
-        usage("A table cannot be specified for --clear");
-      if (toClear.isEmpty())
-        usage("you must specify what to clear.");
-    } else { // table operation
-      if (table == null)
-        usage("--table is required for table operations.");
-      if ("create".equals(command)) {
-        if (row != null)
-          usage("--row is not allowed for table create command.");
-        if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty())
-          usage("specifying columns or values is not allowed for table create command.");
-      } else {
-        if (row == null)
-          usage("--row is required for table operations.");
-        if ("read".equals(command)) {
-          if ((startcol != null || stopcol != null) && !columns.isEmpty()) {
-            usage("--start/stop and --column(s) may not be used together.");
-          }
-        } else { // table op but not read
-          if (columns.isEmpty())
-            usage("--column(s) is required for table write operations.");
-          if (!"delete".equals(command)) {
-            if (columns.size() != values.size())
-              usage("number of values must match number of columns.");
-          }
-          if ("increment".equals(command)) {
-            try {
-              for (String value : values) Long.parseLong(value);
-            } catch (NumberFormatException e) {
-              usage("for increment all values must be numbers");
-            }
+    if (table == null)
+      usage("--table is required for table operations.");
+    if ("create".equals(command)) {
+      if (row != null)
+        usage("--row is not allowed for table create command.");
+      if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty())
+        usage("specifying columns or values is not allowed for table create command.");
+    } else {
+      if (row == null)
+        usage("--row is required for table operations.");
+      if ("read".equals(command)) {
+        if ((startcol != null || stopcol != null) && !columns.isEmpty()) {
+          usage("--start/stop and --column(s) may not be used together.");
+        }
+      } else { // table op but not read
+        if (columns.isEmpty())
+          usage("--column(s) is required for table write operations.");
+        if (!"delete".equals(command)) {
+          if (columns.size() != values.size())
+            usage("number of values must match number of columns.");
+        }
+        if ("increment".equals(command)) {
+          try {
+            for (String value : values) Long.parseLong(value);
+          } catch (NumberFormatException e) {
+            usage("for increment all values must be numbers");
           }
         }
       }
@@ -346,29 +316,6 @@ public class DataSetClient {
       // this can only happen if the --host, or --base are not valid for a URL
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
       return null;
-    }
-
-    if ("clear".equals(command)) {
-      String requestUrl = baseUrl + "?clear=";
-      String sep = "";
-      for (String what : toClear) {
-        requestUrl += sep + what;
-        sep = ",";
-      }
-      // now execute this as a post
-      try {
-        HttpPost post = new HttpPost(requestUrl);
-        if (apikey != null) {
-          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
-        }
-        response = client.execute(post);
-        client.getConnectionManager().shutdown();
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      }
-      if (!checkHttpStatus(response)) return null;
-      return "OK.";
     }
 
     // must be a table operation
