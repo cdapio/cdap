@@ -426,7 +426,12 @@ fs.readFile(configPath, function (error, result) {
 							response.end();
 
 						}).listen(config['cloud-ui-port']);
-						logger.info('HTTP listening on port', config['cloud-ui-port']);
+
+						/*
+						 * Don't change this.
+						 * Reactor start-up script looks for "Listening on port "
+						 */
+						logger.info('Listening on port (HTTP)', config['cloud-ui-port']);
 
 						/**
 						 * HTTPS credentials
@@ -441,7 +446,12 @@ fs.readFile(configPath, function (error, result) {
 						 * Create the HTTPS server
 						 */
 						var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
-						logger.info('HTTPS listening on port', config['cloud-ui-ssl-port']);
+
+						/*
+						 * Don't change this.
+						 * Reactor start-up script looks for output "Listening on port "
+						 */
+						logger.info('Listening on port (HTTPS)', config['cloud-ui-ssl-port']);
 
 						/**
 						 * Configure Socket IO
