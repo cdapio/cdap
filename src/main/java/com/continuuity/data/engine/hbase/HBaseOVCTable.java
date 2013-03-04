@@ -485,13 +485,17 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     HTable writeTable=null;
     try {
       KeyValue kv = getLatestVisible(row, column, readPointer);
-      long l=amount;
-      if (kv!=null) {
-        l+=Bytes.toLong(removeTypePrefix(kv.getValue()));
+      long value = amount;
+      if (kv != null) {
+        try {
+          value += Bytes.toLong(removeTypePrefix(kv.getValue()));
+        } catch(IllegalArgumentException e) {
+          throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+        }
       }
       writeTable=getWriteTable();
-      writeTable.put(new Put(row).add(this.family, column, writeVersion, prependWithTypePrefix(DATA, Bytes.toBytes(l))));
-      return l;
+      writeTable.put(new Put(row).add(this.family, column, writeVersion, prependWithTypePrefix(DATA, Bytes.toBytes(value))));
+      return value;
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return -1L;

@@ -343,6 +343,11 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       if (result.isEmpty()) return 0L;
       return Bytes.toLong(result.value());
     } catch (IOException e) {
+      // figure out whether this is an illegal increment
+      // currently there is not other way to extract that from the HBase exception than string match
+      if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
+        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+      }
       this.exceptionHandler.handle(e);
       return -1L;
     }
