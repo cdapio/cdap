@@ -73,10 +73,12 @@ define([
 				params: [current.id, destination, self.get('apiKey')]
 			}, function (error, response) {
 
+				console.log(arguments);
+
 				if (error) {
 					C.Vw.Modal.show(
 						"Deployment Error",
-						response.message, function () {
+						response.message || response, function () {
 							self.set('current', null);
 							$(self.get('element')).hide();
 

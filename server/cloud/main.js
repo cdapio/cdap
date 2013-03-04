@@ -80,14 +80,14 @@ function accountsRequest (path, done) {
 		result.on('end', function () {
 			try {
 				data = JSON.parse(data);
-				done(req.status, data);
+				done(result.statusCode, data);
 			} catch (e) {
 				logger.warn('Parsing error', data);
 				done(500, e);
 			}
 		});
 	}).on('error', function(e) {
-		console.error(e);
+		logger.warn(e);
 	}).end();
 
 }
@@ -133,8 +133,6 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		function checkSSO (req, res, next) {
 
-			logger.trace(req.session);
-
 			if (req.session.account_id) {
 
 				next();
@@ -177,13 +175,14 @@ fs.readFile(configPath, function (error, result) {
 
 			var nonce = req.params.nonce;
 
-			logger.trace('< /sso/' + nonce);
+			logger.info('SSO Inbound for nonce', nonce);
 
 			accountsRequest('/getSSOUser/' + nonce, function (status, account) {
 
 				if (status !== 200) {
 
-					res.write('Error: ' + account);
+					logger.warn('getSSOUser', status, account);
+					res.redirect('https://' + config['accounts-host']);
 					res.end();
 
 				} else {
@@ -414,7 +413,7 @@ fs.readFile(configPath, function (error, result) {
 							response.end();
 
 						}).listen(config['cloud-ui-port']);
-						logger.trace('HTTP listening on port', config['cloud-ui-port']);
+						logger.info('HTTP listening on port', config['cloud-ui-port']);
 
 						/**
 						 * HTTPS credentials
@@ -429,9 +428,7 @@ fs.readFile(configPath, function (error, result) {
 						 * Create the HTTPS server
 						 */
 						var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
-						logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
-
-						logger.info('Listening on port ');
+						logger.info('HTTPS listening on port', config['cloud-ui-ssl-port']);
 
 						/**
 						 * Configure Socket IO

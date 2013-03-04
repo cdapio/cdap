@@ -326,9 +326,7 @@ logger.setLevel(LOG_LEVEL);
 						resource: 'name'
 					});
 
-					FAR.promote(auth_token, identifier, params[1], function () {
-						logger.info(arguments);
-					});
+					FAR.promote(auth_token, identifier, params[1], done);
 
 					break;
 
