@@ -42,7 +42,8 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	outline: 0;
 	padding: 0;
 	vertical-align: baseline;
-	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+       box-sizing: border-box;
 }
 :focus {
 	outline: 0;
@@ -104,14 +105,14 @@ a, a:visited {
 
 #logo {
 	background-image: url(/assets/img/continuuity-logo-2x.png);
-	background-position: 8px bottom;
+	background-position: 5px bottom;
 	background-repeat: no-repeat;
 	width: 224px;
 	height: 80px;
 	padding: 0 0px 0px;
 	display: block;
 	margin: 0;
-	background-size: 200px 38px;
+	background-size: 208px 38px;
 }
 
 #nav {
@@ -134,7 +135,7 @@ a, a:visited {
 	text-transform: uppercase;
 	font-size: 13px;
 	letter-spacing: 0.1em;
-	padding-left: 46px;
+	padding-left: 45px;
 	line-height: 0;
 }
 #nav ul li {
@@ -160,11 +161,12 @@ a, a:visited {
 	padding-left: 38px;
 	color: #fff;
 	text-decoration: none;
-	background-image: url(../img/icons-large.png);
+	background-image: url(../img/icn-nav.png);
 	background-repeat: no-repeat;
-	line-height: 30px;
+	line-height: 32px;
 	font-weight: 200;
 	font-size: 18px;
+	background-size: 32px 160px;
 }
 
 .nav-queries-list a {
@@ -183,20 +185,17 @@ a, a:visited {
 .nav-dash {
 	background-position: 0px 0px;
 }
-.nav-apps {
-	background-position: 0px -30px;
+.nav-streams {
+	background-position: 0px -32px;
 }
 .nav-flows {
-	background-position: 0px -60px;
-}
-.nav-streams {
-	background-position: 0px -90px;
+	background-position: 0px -64px;
 }
 .nav-datasets {
-	background-position: 0px -120px;
+	background-position: 0px -96px;
 }
 .nav-queries {
-	background-position: 0px -150px;
+	background-position: 0px -128px;
 }
 
 #warning {
@@ -704,13 +703,13 @@ input[type="text"] {
 	border-top: 0 !important;
 }
 .dash-app-resource a {
-	background-image: url(../img/dash-entity-icons.png);
+	background-image: url(../img/icn-dash.png);
+	background-size: 64px 256px;
 	line-height: 88px;
-	padding-left: 56px;
+	padding-left: 64px;
 	font-size: 56px;
 	background-repeat: no-repeat;
 	color: #555;
-	font-weight: 300;
 	font-family: "HelveticaNeueW01-Thin";
 }
 .dash-app-resource a:hover {
@@ -729,23 +728,18 @@ input[type="text"] {
 	padding: 5px 0px;
 
 }
+
 .dash-app-resource-stream {
 	background-position: 0px 0px;
 }
-
 .dash-app-resource-flow {
-	background-position: 0px -130px;
-}
-
-.dash-app-resource-stream {
 	background-position: 0px -64px;
 }
-
-.dash-app-resource-app {
-	background-position: 0px -196px;
+.dash-app-resource-dataset {
+	background-position: 0px -129px;
 }
 .dash-app-resource-query {
-	background-position: 0px -258px;
+	background-position: 0px -191px;
 }
 
 .dash-app-resource-usage {
