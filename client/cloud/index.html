@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Sandbox (Cloud) » Continuuity</title>
+  <title>Sandbox » Continuuity</title>
   <link rel="shortcut icon" type="image/x-icon" href="http://www.continuuity.com/wp-content/themes/continuuity/images/favicon.ico">
 
   <meta name="description" content="">
@@ -274,7 +274,7 @@
 
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
-          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
 
         </div>
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
