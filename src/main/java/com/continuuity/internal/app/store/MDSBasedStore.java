@@ -210,7 +210,7 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public Table<Type, Id.Program, RunRecord> getAllRunHistory(Id.Account account) throws OperationException {
+  public Table<Type, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException {
     OperationContext context = new OperationContext(account.getId());
     LOG.trace("Removing all applications of account with id: {}", account.getId());
     List<MetaDataEntry> applications =
@@ -218,23 +218,29 @@ public class MDSBasedStore implements Store {
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
 
-    ImmutableTable.Builder<Type, Id.Program, RunRecord> builder = ImmutableTable.builder();
+    ImmutableTable.Builder<Type, Id.Program, List<RunRecord>> builder = ImmutableTable.builder();
     for (MetaDataEntry entry : applications) {
       ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), flowSpec.getName());
-        for (RunRecord runRecord : getRunHistory(programId)) {
-          builder.put(Type.FLOW, programId, runRecord);
-        }
+        List<RunRecord> runRecords = getRunRecords(programId);
+        builder.put(Type.FLOW, programId, runRecords);
       }
       for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), procedureSpec.getName());
-        for (RunRecord runRecord : getRunHistory(programId)) {
-          builder.put(Type.PROCEDURE, programId, runRecord);
-        }
+        List<RunRecord> runRecords = getRunRecords(programId);
+        builder.put(Type.PROCEDURE, programId, runRecords);
       }
     }
     return builder.build();
+  }
+
+  private List<RunRecord> getRunRecords(Id.Program programId) throws OperationException {
+    List<RunRecord> runRecords = Lists.newArrayList();
+    for (RunRecord runRecord : getRunHistory(programId)) {
+      runRecords.add(runRecord);
+    }
+    return runRecords;
   }
 
   /**

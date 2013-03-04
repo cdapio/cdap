@@ -69,10 +69,10 @@ public interface Store {
   /**
    * Returns all {@link RunRecord} of the account.
    * @param account account id
-   * @return An immutable table of program type, id and run record
+   * @return An immutable table of program type, id and run records
    * @throws OperationException
    */
-  Table<Type, Id.Program, RunRecord> getAllRunHistory(Id.Account account) throws OperationException;
+  Table<Type, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
