@@ -1,19 +1,13 @@
 package com.continuuity.data.engine.leveldb;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.Scanner;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -27,14 +21,19 @@ import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.table.Scanner;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 /**
  * Implementation of an OVCTable over a LevelDB Database.
@@ -691,7 +690,11 @@ implements OrderedVersionedColumnarTable {
     // Read existing value
     OperationResult<byte[]> readResult = get(row, column, readPointer);
     if (!readResult.isEmpty()) {
-      newAmount += Bytes.toLong(readResult.getValue());
+      try {
+        newAmount += Bytes.toLong(readResult.getValue());
+      } catch(IllegalArgumentException e) {
+        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+      }
     }
     // Write new value
     performInsert(row, column, writeVersion, Type.Put,

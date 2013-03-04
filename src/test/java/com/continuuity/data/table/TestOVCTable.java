@@ -2,6 +2,7 @@ package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -589,30 +590,50 @@ public abstract class TestOVCTable {
 
   @Test
   public void testIncrementCASIncrementWithSameTimestamp()
-      throws OperationException {
+    throws OperationException {
     byte [] row = Bytes.toBytes("testICASIWSTS");
 
     // increment with same read and write pointer
-    
+
     assertEquals(4L, this.table.increment(row, COL, 4L,
-        new MemoryReadPointer(3L), 3L));
+                                          new MemoryReadPointer(3L), 3L));
     assertEquals(4L, Bytes.toLong(
-        this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
-    
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+
     // cas from 4 to 6 @ ts3
     this.table.compareAndSwap(row, COL, Bytes.toBytes(4L),
-        Bytes.toBytes(6L), new MemoryReadPointer(3L), 3L);
+                              Bytes.toBytes(6L), new MemoryReadPointer(3L), 3L);
 
     assertEquals(6L, Bytes.toLong(
-        this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
-    
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+
     // increment to 7 @ ts3
     assertEquals(7L, this.table.increment(row, COL, 1L,
-        new MemoryReadPointer(3L), 3L));
+                                          new MemoryReadPointer(3L), 3L));
     assertEquals(7L, Bytes.toLong(
-        this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
-    
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+
   }
+
+  @Test
+  public void testIllegalIncrement()
+    throws OperationException {
+    byte[] row = Bytes.toBytes("testIlIn");
+    byte[] x = {'x'};
+
+    // write a 1-byte value
+    this.table.put(row, x, 10L, x);
+    try {
+      // attempt to increment it
+      this.table.increment(row, x, 1L, new MemoryReadPointer(20L), 20L);
+      // should throw operation exception ...
+      fail("Increment of 1-byte value should have failed");
+    } catch (OperationException e) {
+      // ... with ILLEGAL_INCREMENT as the status code
+      assertEquals(StatusCode.ILLEGAL_INCREMENT, e.getStatus());
+    }
+  }
+
   @Test
   public void testSameVersionOverwritesExisting() throws OperationException {
 
