@@ -25,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +112,7 @@ public class DeployRunStopTest {
     }
   }
 
-  @Test
+  @Test @Ignore
   public void testDeployRunStop() throws Exception {
     TestHelper.deployApplication(GenSinkApp.class);
 
