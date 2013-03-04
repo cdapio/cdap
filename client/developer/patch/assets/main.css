@@ -14,3 +14,8 @@
 	font-size: 14px;
 	font-weight: 200;
 }
+
+#nav ul li .nav-link:hover {
+	color: #61bed8;
+	background-image: url(/assets/img/icons-large-hover.png);
+}

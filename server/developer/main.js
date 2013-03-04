@@ -54,7 +54,7 @@ var server = http.createServer(app);
 io = require('socket.io').listen(server);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
-	io.set('log level', 1);
+	//io.set('log level', 1);
 });
 
 var config = {};
@@ -306,9 +306,7 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 
 		for (var item in result) {
 			item = result[item];
-			if (item.value === 'localhost') {
-				item.value = localhost;
-			}
+			
 			config[item.name] = item.value;
 		}
 

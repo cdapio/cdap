@@ -87,7 +87,7 @@ define([], function () {
 							"Deployment Error",
 							response.message, function () {
 								window.location.reload();
-							});
+							}, true);
 
 				}
 			}

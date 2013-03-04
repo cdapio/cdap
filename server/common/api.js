@@ -47,7 +47,6 @@ logger.setLevel(LOG_LEVEL);
 
 	this.auth = null;
 	this.config = null;
-
 	this.configure = function (config, credential) {
 		this.config = config;
 		this.credential = credential;
@@ -64,36 +63,42 @@ logger.setLevel(LOG_LEVEL);
 			protocol: tprotocol.TBinaryProtocol
 		});
 		conn.on('error', function (error) {
+			logger.warn(error);
 			done({'fatal': 'Could not connect to MetadataService.'});
 		});
 
-		var MetaData = thrift.createClient(MetadataService, conn);
+		conn.on('connect', function (response) {
 
-		if (params.length === 2) {
-			var entityType = params.shift();
-			params[0] = new metadataservice_types[entityType](params[0]);
-		}
+			var MetaData = thrift.createClient(MetadataService, conn);
 
-		if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
-			method === 'getFlowsByStream' || method === 'getFlowsByDataset') {
-			params.unshift(accountID);
-		} else {
-			params.unshift(new metadataservice_types.Account({
-				id: accountID
-			}));
-		}
-
-		if (method in MetaData) {
-			try {
-				MetaData[method].apply(MetaData, params.concat(done));
-			} catch (e) {
-				logger.warn(done);
-				done(e);
+			if (params.length === 2) {
+				var entityType = params.shift();
+				params[0] = new metadataservice_types[entityType](params[0]);
 			}
-		} else {
-			done('Unknown method for MetadataService: ' + method, null);
-		}
-		
+
+			if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
+				method === 'getFlowsByStream' || method === 'getFlowsByDataset') {
+				params.unshift(accountID);
+			} else {
+				params.unshift(new metadataservice_types.Account({
+					id: accountID
+				}));
+			}
+
+			if (method in MetaData) {
+				try {
+					MetaData[method].apply(MetaData, params.concat(done));
+				} catch (e) {
+					logger.warn(done);
+					done(e);
+				}
+			} else {
+				done('Unknown method for MetadataService: ' + method, null);
+			}
+
+			conn.end();
+		});
+
 	},
 
 	this.manager = function (accountID, method, params, done) {
@@ -115,128 +120,75 @@ logger.setLevel(LOG_LEVEL);
 			done({'fatal': 'Could not connect to AppFabric (Manager).'});
 		});
 		
-		var Manager = thrift.createClient(AppFabricService, conn);
-		var identifier = new appfabricservice_types.FlowIdentifier({
-			applicationId: params[1],
-			flowId: params[2],
-			version: params[3] ? parseInt(params[3], 10) : -1,
-			accountId: params[0],
-			type: appfabricservice_types.EntityType[params[4] || 'FLOW']
-		});
+		conn.on('connect', function (response) {
 
-		switch (method) {
-			case 'start':
-				identifier = new appfabricservice_types.FlowDescriptor({
-					identifier: new appfabricservice_types.FlowIdentifier({
+			var Manager = thrift.createClient(AppFabricService, conn);
+			var identifier = new appfabricservice_types.FlowIdentifier({
+				applicationId: params[1],
+				flowId: params[2],
+				version: params[3] ? parseInt(params[3], 10) : -1,
+				accountId: params[0],
+				type: appfabricservice_types.EntityType[params[4] || 'FLOW']
+			});
+
+			switch (method) {
+				case 'start':
+					identifier = new appfabricservice_types.FlowDescriptor({
+						identifier: new appfabricservice_types.FlowIdentifier({
+							applicationId: params[1],
+							flowId: params[2],
+							version: parseInt(params[3], 10),
+							accountId: params[0],
+							type: appfabricservice_types.EntityType[params[4] || 'FLOW']
+						}),
+						"arguments": []
+					});
+					Manager.start(auth_token, identifier, done);
+				break;
+				case 'stop':
+					Manager.stop(auth_token, identifier, done);
+				break;
+				case 'status':
+					Manager.status(auth_token, identifier, done);
+				break;
+				case 'getFlowDefinition':
+					Manager.getFlowDefinition(identifier, done);
+				break;
+				case 'getFlowHistory':
+					Manager.getFlowHistory(identifier, done);
+				break;
+				case 'setInstances':
+
+					var flowlet_id = params[4];
+					var instances = params[5];
+
+					identifier = new appfabricservice_types.FlowIdentifier({
+						accountId: params[0],
 						applicationId: params[1],
 						flowId: params[2],
-						version: parseInt(params[3], 10),
-						accountId: params[0],
-						type: appfabricservice_types.EntityType[params[4] || 'FLOW']
-					}),
-					"arguments": []
-				});
-				Manager.start(auth_token, identifier, done);
-			break;
-			case 'stop':
-				Manager.stop(auth_token, identifier, done);
-			break;
-			case 'status':
-				Manager.status(auth_token, identifier, done);
-			break;
-			case 'getFlowDefinition':
-				Manager.getFlowDefinition(identifier, done);
-			break;
-			case 'getFlowHistory':
-				Manager.getFlowHistory(identifier, done);
-			break;
-			case 'setInstances':
+						version: params[3] || -1
+					});
 
-				var flowlet_id = params[4];
-				var instances = params[5];
+					Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
 
-				identifier = new appfabricservice_types.FlowIdentifier({
-					accountId: params[0],
-					applicationId: params[1],
-					flowId: params[2],
-					version: params[3] || -1
-				});
+				break;
 
-				Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
-
-			break;
-
-			default:
-				if (method in Manager) {
-					try {
-						Manager[method].apply(Manager, params.concat(done));
-					} catch (e) {
-						logger.warn(e);
-						done(e);
+				default:
+					if (method in Manager) {
+						try {
+							Manager[method].apply(Manager, params.concat(done));
+						} catch (e) {
+							logger.warn(e);
+							done(e);
+						}
+					} else {
+						done('Unknown method for service Manager: ' + method, null);
 					}
-				} else {
-					done('Unknown method for service Manager: ' + method, null);
-				}
-				
-		}
-
-		conn.end();
-
-	};
-
-	this.far = function (accountID, method, params, done) {
-
-		var identifier, conn, FAR,
-			auth_token = new appfabricservice_types.AuthToken({ token: params[2] });
-
-		conn = thrift.createConnection(
-			this.config['resource.manager.server.address'],
-			this.config['resource.manager.server.port'], {
-			transport: ttransport.TFramedTransport,
-			protocol: tprotocol.TBinaryProtocol
-		});
-
-		conn.on('error', function (error) {
-			done({'fatal': 'Could not connect to AppFabric(FAR).'});
-		});
-		
-		FAR = thrift.createClient(AppFabricService, conn);
-            
-		switch (method) {
-
-			case 'remove':
-
-				identifier = new appfabricservice_types.FlowIdentifier({
-					applicationId: params[0],
-					flowId: '',
-					version: 1,
-					accountId: accountID
-				});
-				FAR.remove(auth_token, identifier, done);
-				break;
-
-			case 'promote':
-
-				identifier = new appfabricservice_types.ResourceIdentifier({
-					applicationId: params[0],
-					version: 1,
-					accountId: accountID,
-					resource: 'name'
-				});
-
-				FAR.promote(auth_token, identifier, params[1], done);
-
-				break;
-
-			case 'reset':
-
-				FAR.reset(auth_token, accountID, done);
-
-				break;
-
+					
 			}
 
 			conn.end();
+		});
 
 	};
 
@@ -252,10 +204,12 @@ logger.setLevel(LOG_LEVEL);
 		});
 
 		conn.on('error', function (error) {
+			logger.warn(error);
 			done({'fatal': 'Could not connect to MetricsService.'});
 		});
 		
 		conn.on('connect', function (response) {
+
 			var Monitor = thrift.createClient(MetricsFrontendService, conn);
 			var flow, request;
 
@@ -327,9 +281,67 @@ logger.setLevel(LOG_LEVEL);
 			}
 
 			conn.end();
-			
+		});
+	};
+
+	this.far = function (accountID, method, params, done) {
+
+		var identifier, conn, FAR,
+			auth_token = new appfabricservice_types.AuthToken({ token: params[2] });
+
+		conn = thrift.createConnection(
+			this.config['resource.manager.server.address'],
+			this.config['resource.manager.server.port'], {
+			transport: ttransport.TFramedTransport,
+			protocol: tprotocol.TBinaryProtocol
 		});
 
+		conn.on('error', function (error) {
+			done({'fatal': 'Could not connect to AppFabric(FAR).'});
+		});
+		
+		conn.on('connect', function (response) {
+
+			FAR = thrift.createClient(AppFabricService, conn);
+	            
+			switch (method) {
+
+				case 'remove':
+
+					identifier = new appfabricservice_types.FlowIdentifier({
+						applicationId: params[0],
+						flowId: '',
+						version: -1,
+						accountId: accountID
+					});
+					FAR.removeApplication(auth_token, identifier, done);
+					break;
+
+				case 'promote':
+
+					identifier = new appfabricservice_types.ResourceIdentifier({
+						applicationId: params[0],
+						version: -1,
+						accountId: accountID,
+						resource: 'name'
+					});
+
+					FAR.promote(auth_token, identifier, params[1], function () {
+						logger.info(arguments);
+					});
+
+					break;
+
+				case 'reset':
+
+					FAR.reset(auth_token, accountID, done);
+
+					break;
+
+			}
+
+			conn.end();
+		});
 	};
 
 	this.gateway = function (apiKey, method, params, done, secure) {
@@ -426,7 +438,7 @@ logger.setLevel(LOG_LEVEL);
 
 		req.on('end', function() {
 
-			res.redirect('back');
+			res.write('');
 			res.end();
 
 			var conn = thrift.createConnection(
@@ -436,93 +448,100 @@ logger.setLevel(LOG_LEVEL);
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
+				logger.warn(error);
 				socket.emit('upload', {'status': 'failed', 'step': 4, 'message': 'Could not connect to AppFabricService'});
 			});
 
-			var FAR = thrift.createClient(AppFabricService, conn);
-			FAR.init(auth_token, new appfabricservice_types.ResourceInfo({
-				'accountId': accountID,
-				'applicationId': 'nil',
-				'filename': file,
-				'size': data.length,
-				'modtime': new Date().getTime()
-			}), function (error, resource_identifier) {
-				if (error) {
-					logger.warn('AppFabric Init', error);
-					socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
-				} else {
+			conn.on('connect', function (response) {
 
-					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
+				var FAR = thrift.createClient(AppFabricService, conn);
+				FAR.init(auth_token, new appfabricservice_types.ResourceInfo({
+					'accountId': accountID,
+					'applicationId': 'nil',
+					'filename': file,
+					'size': data.length,
+					'modtime': new Date().getTime()
+				}), function (error, resource_identifier) {
+					if (error) {
+						logger.warn('AppFabric Init', error);
+						socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 
-					var send_deploy = function () {
+					} else {
 
-						socket.emit('upload', {'status': 'Deploying...'});
+						socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
 
-						FAR.deploy(auth_token, resource_identifier, function (error, result) {
-							if (error) {
-								logger.warn('FARManager deploy', error);
-								socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
-							} else {
-								socket.emit('upload', {step: 0, 'status': 'Verifying...', result: arguments});
+						var send_deploy = function () {
 
-								var current_status = -1;
+							socket.emit('upload', {'status': 'Deploying...'});
 
-								var status_interval = setInterval(function () {
-									FAR.dstatus(auth_token, resource_identifier, function (error, result) {
-										if (error) {
-											logger.warn('FARManager verify', error);
-											socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
-										} else {
-
-											if (current_status !== result.overall) {
-												socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});
-												current_status = result.overall;
-											}
-											if (result.overall === 0 ||	// Not Found
-												result.overall === 4 || // Failed
-												result.overall === 5 || // Success
-												result.overall === 6 || // Undeployed
-												result.overall === 7) {
-
-												logger.trace('Uploaded completed with', result);
-
-												clearInterval(status_interval);
-											} // 1 (Registered), 2 (Uploading), 3 (Verifying)
-										}
-									});
-								}, 500);
-							}
-						});
-
-					};
-
-					var send_chunk = function (index, size) {
-
-						FAR.chunk(auth_token, resource_identifier, data.slice(index, index + size), function () {
-
-							if (error) {
-								socket.emit('Chunk error');
-							} else {
-
-								if (index + size === data.length) {
-									send_deploy();
-
+							FAR.deploy(auth_token, resource_identifier, function (error, result) {
+								if (error) {
+									logger.warn('FARManager deploy', error);
+									socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
 								} else {
-									var length = size;
-									if (index + (size * 2) > data.length) {
-										length = data.length % size;
-									}
-									send_chunk(index + size, length);
+									socket.emit('upload', {step: 0, 'status': 'Verifying...', result: arguments});
+
+									var current_status = -1;
+
+									var status_interval = setInterval(function () {
+										FAR.dstatus(auth_token, resource_identifier, function (error, result) {
+											if (error) {
+												logger.warn('FARManager verify', error);
+												socket.emit('upload', {'status': 'failed', 'step': 4, 'message': error.name + ': ' + error.message });
+											} else {
+
+												if (current_status !== result.overall) {
+													socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});
+													current_status = result.overall;
+												}
+												if (result.overall === 0 ||	// Not Found
+													result.overall === 4 || // Failed
+													result.overall === 5 || // Success
+													result.overall === 6 || // Undeployed
+													result.overall === 7) {
+
+													logger.trace('Uploaded completed with', result);
+
+													conn.end();
+
+													clearInterval(status_interval);
+												} // 1 (Registered), 2 (Uploading), 3 (Verifying)
+											}
+										});
+									}, 500);
 								}
-							}
-						});
-					};
+							});
 
-					var CHUNK_SIZE = 102400;
-					
-					send_chunk(0, CHUNK_SIZE > data.length ? data.length : CHUNK_SIZE);
+						};
 
-				}
+						var send_chunk = function (index, size) {
+
+							FAR.chunk(auth_token, resource_identifier, data.slice(index, index + size), function () {
+
+								if (error) {
+									socket.emit('Chunk error');
+								} else {
+
+									if (index + size === data.length) {
+										send_deploy();
+
+									} else {
+										var length = size;
+										if (index + (size * 2) > data.length) {
+											length = data.length % size;
+										}
+										send_chunk(index + size, length);
+									}
+								}
+							});
+						};
+
+						var CHUNK_SIZE = 102400;
+						
+						send_chunk(0, CHUNK_SIZE > data.length ? data.length : CHUNK_SIZE);
+
+					}
+				});
 			});
 		});
 	};
