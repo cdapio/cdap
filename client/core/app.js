@@ -115,17 +115,20 @@ function(Models, Views, Controllers){
 		interstitial: {
 			__code: null,
 			show: function () {
-				$('#interstitial').show();
+			//	$('#interstitial').show();
+			//	$('#content-body').hide();
 				return this;
 			},
 			hide: function (code) {
 				if (this.__code) {
 					if (this.__code === code) {
-						$('#interstitial').fadeOut();
+					//	$('#interstitial').fadeOut();
+					//	$('#content-body').fadeIn();
 						this.__code = null;
 					}
 				} else {
-					$('#interstitial').fadeOut();
+				//	$('#interstitial').fadeOut();
+				//	$('#content-body').fadeIn();
 				}
 				$('#interstitial').html('<img src="/assets/img/loading.gif" />');
 				return this;
@@ -136,8 +139,8 @@ function(Models, Views, Controllers){
 			},
 			loading: function (message, code) {
 				this.__code = code;
-				$('#interstitial').html((message ? '<h3>' + message + '</h3>' : '') +
-				'<img src="/assets/img/loading.gif" />').show();
+				//$('#interstitial').html((message ? '<h3>' + message + '</h3>' : '') +
+				//'<img src="/assets/img/loading.gif" />').show();
 				return this;
 			}
 		},
@@ -425,7 +428,8 @@ function(Models, Views, Controllers){
 		} else {
 
 			// Reconnected.
-			C.interstitial.hide();
+			// C.interstitial.hide();
+			$('#warning').html('<div>Reconnected!</div>').fadeOut();
 
 		}
 	}
@@ -447,7 +451,9 @@ function(Models, Views, Controllers){
 			}
 			message = message.message;
 		}
-		C.interstitial.label(message).show();
+
+		$('#warning').html('<div>' + message + '</div>').show();
+//		C.interstitial.label(message).show();
 		
 	}
 
@@ -492,7 +498,6 @@ function(Models, Views, Controllers){
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
-			/*
 			if (window.ENV.isCloud) {
 
 				toAverage.push(new Date().getTime() - pending[response.id][2]);
@@ -522,7 +527,6 @@ function(Models, Views, Controllers){
 					}
 				}
 			}
-			*/
 
 			pending[response.id][0](err, response, pending[response.id][1]);
 			delete pending[response.id];
@@ -552,7 +556,7 @@ function(Models, Views, Controllers){
 		error('Reconnected.', arguments);
 	});
 	socket.on('reconnecting', function (timeout, attempt) {
-		error('Reconnecting. Attempt ' + attempt + '.', arguments);
+		error('Disconnected. Attempting to reconnect. (' + attempt + ')', arguments);
 	});
 
 	C.debug('Models, Views, Controllers loaded and assigned.');

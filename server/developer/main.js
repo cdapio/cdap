@@ -245,7 +245,7 @@ app.post('/credential', function (req, res) {
 	// Write down credentials.
 	fs.writeFile(__dirname + '/.credential', apiKey,
 		function (error, result) {
-
+logger.info(arguments);
 		if (error) {
 
 			res.write('Error: Could not write credentials file.');

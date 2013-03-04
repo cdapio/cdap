@@ -23,6 +23,11 @@ var config = {};
 var sockets = {};
 
 /**
+ * By default.
+ */
+process.env.NODE_ENV = 'development';
+
+/**
 * Configure logger.
 */
 log4js.configure({
@@ -40,13 +45,18 @@ logger.setLevel(LOG_LEVEL);
 var configPath = __dirname + '/continuuity-local.xml';
 if (fs.existsSync(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml')) {
 	configPath = process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml';
+
+	// If the production config exists, we're in production.
+	process.env.NODE_ENV = 'production';
+
 }
-console.log(configPath);
 
 /**
  * Make a request to the Accounts system.
  */
 function accountsRequest (path, done) {
+
+	logger.info('Requesting from accounts, ', path);
 
 	var options = {
 		hostname: config['accounts-host'],
@@ -68,7 +78,13 @@ function accountsRequest (path, done) {
 			data += chunk;
 		});
 		result.on('end', function () {
-			done(req.status, JSON.parse(data));
+			try {
+				data = JSON.parse(data);
+				done(req.status, data);
+			} catch (e) {
+				logger.warn('Parsing error', data);
+				done(500, e);
+			}
 		});
 	}).on('error', function(e) {
 		console.error(e);
@@ -91,9 +107,6 @@ fs.readFile(configPath, function (error, result) {
 			item = result[item];
 			config[item.name] = item.value;
 		}
-
-		logger.info('Continuuity HOME', process.env.CONTINUUITY_HOME);
-		logger.info(config);
 
 		/**
 		 * Configure Express Web server.
@@ -170,7 +183,7 @@ fs.readFile(configPath, function (error, result) {
 
 				if (status !== 200) {
 
-					res.write('Error: ' + data);
+					res.write('Error: ' + account);
 					res.end();
 
 				} else {
@@ -379,11 +392,12 @@ fs.readFile(configPath, function (error, result) {
 				Env.getVersion(function (version) {
 					Env.getAddress(function (error, address) {
 
-						logger.trace('Version', version);
-						logger.trace('IP Address', address);
-						logger.trace('Cluster Info', info);
+						logger.info('CONTINUUITY_HOME is', process.env.CONTINUUITY_HOME);
+						logger.info('NODE_ENV is', process.env.NODE_ENV);
+						logger.info('Version', version);
+						logger.info('IP Address', address);
+						logger.info('Configuring with', config);
 
-						logger.trace('Configuring with', config);
 						Api.configure(config);
 
 						/**
