@@ -1,12 +1,15 @@
 
 <div class="popup-container">
-
+<div class="popup-body">
 <div class="popup-close" {{action close on="click"}}>×</div>
+
+{{#if C.Ctl.Flow.current.isRunning}}
 <div class="btn-group pull-right" style="margin-top: 16px;">
 <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
 <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
 <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{controller.current.instances}} instance{{controller.current.plural}}</button>
 </div>
+{{/if}}
 
 <div class="popup-icon" />
 <h1 class="popup-title"> {{controller.current.name}}</h1>
@@ -95,6 +98,6 @@ There are no outputs on this flowlet.
 </div>
 {{/if}}
 </div>
-
+</div>
 </div>
 </div>

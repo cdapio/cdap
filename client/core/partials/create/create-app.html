@@ -1,10 +1,10 @@
 <div class="modal-header">
 <a {{action "hide" on="click"}} class="close">&times;</a>
-<h2>Create an Application</h2>
+<h2>Add an Application</h2>
 </div>
 <div class="modal-loading"></div>
 <div class="modal-body">
-{{view C.Vw.DropZone uploadType="Create"}}
+{{view C.Vw.DropZone}}
 </table>
 <div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
 </div>

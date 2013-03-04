@@ -3,7 +3,9 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Continuuity</title>
+  <title>Local Development » Continuuity</title>
+  <link rel="shortcut icon" type="image/x-icon" href="http://www.continuuity.com/wp-content/themes/continuuity/images/favicon.ico">
+
   <meta name="description" content="">
   <meta name="author" content="Continuuity, Inc.">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
@@ -26,6 +28,7 @@
 <body>
  <div id="nav">
     <a href="#" id="logo"></a>
+    <span>Developer Suite</span>
     <ul>
       <li class="overview"><a class="nav-link nav-dash" href="#">Dashboard</a></li>
       <li><a class="nav-link nav-streams" href="#/streams">Collect</a></li>
@@ -36,10 +39,11 @@
   </div>
 
   <script type="text/x-handlebars" data-template-name="main">
+    <div id="interstitial"></div>
     <div id="header">
       <div id="global">
-        <a href="https://support.continuuity.com/" target="_blank">Support</a>
-        {{user.name}}
+        <a href="http://support.continuuity.com/" target="_blank">Support</a>
+        <a href="https://accounts.continuuity.com/" target="_blank" class="user-link">My Account</a>
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -47,14 +51,19 @@
       {{/each}}
       </ul>
     </div>
-    <div id="warning"><div>Experiencing latency issues. Please contact <a href="mailto:ops@continuuity.com">ops@continuuity.com</a></div></div>
-    <div id="interstitial"></div>
     <div id="content-body">
       {{outlet}}
     </div>
     <div id="footer" style="clear: both;">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
-    <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
-    Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset AppFabric</a></div>
+
+    <a href="http://www.continuuity.com/terms-and-privacy" target="blank">Terms and Privacy</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a href="http://www.continuuity.com/contact-us" target="blank">Contact</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a href="https://accounts.continuuity.com/go-to-uservoice" target="blank">Support</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset</a></div>
+
   </script>
 
   <script type="text/x-handlebars" data-template-name="dashboard">
@@ -264,7 +273,7 @@
 
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
-          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="border-right:0;width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
 
         </div>
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
@@ -369,7 +378,10 @@
             </table>
           {{else}}
             <div class="object-list-empty">
-              This Flow has not completed a run yet.
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Flow has not completed a run yet.</span>
+            </div>
             </div>
           {{/if}}
         </div>

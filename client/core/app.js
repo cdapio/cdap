@@ -55,8 +55,8 @@ function(Models, Views, Controllers){
 			user: {
 				name: ""
 			},
-			cloud: {
-				name: ""
+			cluster: {
+				vpc_label: ""
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				names: {
@@ -150,7 +150,7 @@ function(Models, Views, Controllers){
 			reset: function () {
 				C.Vw.Modal.show(
 					"Reset AppFabric",
-					"You are about to DELETE CONTINUUITY ALL DATA on your cluster. Are you sure you would like to do this?",
+					"You are about to DELETE ALL CONTINUUITY DATA on your cluster. Are you sure you would like to do this?",
 					function () {
 
 						C.interstitial.loading('Clearing...');
@@ -390,8 +390,9 @@ function(Models, Views, Controllers){
 			if (env.account) {
 
 				window.ENV.account = env.account;
+				window.ENV.cluster = env.cluster;
 				C.router.applicationController.set('user', env.account);
-				C.router.applicationController.set('cloud', env.cloud);
+				C.router.applicationController.set('cluster', env.cluster.info);
 
 			} else {
 
@@ -491,6 +492,7 @@ function(Models, Views, Controllers){
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
+			/*
 			if (window.ENV.isCloud) {
 
 				toAverage.push(new Date().getTime() - pending[response.id][2]);
@@ -520,6 +522,7 @@ function(Models, Views, Controllers){
 					}
 				}
 			}
+			*/
 
 			pending[response.id][0](err, response, pending[response.id][1]);
 			delete pending[response.id];

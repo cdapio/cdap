@@ -7,7 +7,7 @@ define([], function () {
 	return Em.View.extend({
 		tagName: 'button',
 		classNames: ['btn', 'create-btn', 'pull-right'],
-		template: Em.Handlebars.compile('Create'),
+		template: Em.Handlebars.compile('Add an App'),
 		entityType: 'Application',
 		click: function () {
 

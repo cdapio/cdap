@@ -41,30 +41,39 @@ var configPath = __dirname + '/continuuity-local.xml';
 if (fs.existsSync(process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml')) {
 	configPath = process.env.CONTINUUITY_HOME + '/conf/continuuity-site.xml';
 }
+console.log(configPath);
 
 /**
- * Get user.
+ * Make a request to the Accounts system.
  */
-function getUser (name, done) {
+function accountsRequest (path, done) {
 
 	var options = {
 		hostname: config['accounts-host'],
 		port: config['accounts-port'],
-		path: '/api/vpc/getUser/' + name,
+		path: path,
 		method: 'GET'
 	};
-	https.request(options, function(result) {
+
+	if (process.env.NODE_ENV === 'production') {
+		lib = https;
+	} else {
+		lib = http;
+	}
+
+	var req = lib.request(options, function(result) {
 		result.setEncoding('utf8');
 		var data = '';
 		result.on('data', function(chunk) {
 			data += chunk;
 		});
 		result.on('end', function () {
-			done(data);
+			done(req.status, JSON.parse(data));
 		});
 	}).on('error', function(e) {
 		console.error(e);
 	}).end();
+
 }
 
 /**
@@ -117,16 +126,15 @@ fs.readFile(configPath, function (error, result) {
 
 				next();
 
-				/*
-
-				if (req.session.account_id !== config['user']) {
-					res.write('Denied (' + config['user'] + ':' + req.session.account_id + ')');
-					res.end();
-				} else {
-					next();
+				if (process.env.NODE_ENV === 'production') {
+					if (req.session.account_id !== config['info'].owner.account_id) {
+						logger.warn('Denied (' + config['info'].owner + ':' + req.session.account_id + ')');
+						res.redirect('https://' + config['accounts-host']);
+						res.end();
+					} else {
+						next();
+					}
 				}
-
-				*/
 
 			} else {
 
@@ -143,10 +151,12 @@ fs.readFile(configPath, function (error, result) {
 
 		}
 		// Root in production.
-		app.get('/', checkSSO);
-
-		// Root in development.
-		app.get('/cloud/', checkSSO);
+		if (process.env.NODE_ENV === 'production') {
+			app.get('/', checkSSO);
+		} else {
+			// Root in development.
+			app.get('/cloud/', checkSSO);
+		}
 
 		// Redirected from central with a fresh nonce.
 		// Todo: encrypt an SSO token with the user info.
@@ -156,66 +166,37 @@ fs.readFile(configPath, function (error, result) {
 
 			logger.trace('< /sso/' + nonce);
 
-			var options = {
-				hostname: config['accounts-host'],
-				port: config['accounts-port'],
-				path: '/getSSOUser/' + nonce,
-				method: 'GET'
-			};
+			accountsRequest('/getSSOUser/' + nonce, function (status, account) {
 
-			https.request(options, function(result) {
+				if (status !== 200) {
 
-				result.setEncoding('utf8');
-				var data = '';
+					res.write('Error: ' + data);
+					res.end();
 
-				result.on('data', function(chunk) {
-					data += chunk;
-				});
+				} else {
 
-				result.on('end', function () {
+					// Create a unique ID for this session.
+					var current_date = (new Date()).valueOf().toString();
+					var random = Math.random().toString();
+					req.session.session_id = crypto.createHash('sha1')
+						.update(current_date + random).digest('hex');
 
-					logger.trace('> /getSSOUser', data);
-
-					if (res.statusCode !== 200) {
-
-						res.write('Error: ' + data);
-						res.end();
-
-					} else {
-
-						var account = JSON.parse(data);
-						// Create a unique ID for this session.
-						var current_date = (new Date()).valueOf().toString();
-						var random = Math.random().toString();
-						req.session.session_id = crypto.createHash('sha1')
-							.update(current_date + random).digest('hex');
-
-						/*
-						if (account.account_id !== config['user']) {
-							res.write('Denied (' + config['user'] + ':' + account.account_id + ')');
+					if (process.env.NODE_ENV === 'production') {
+						
+						if (account.account_id !== config['info'].owner) {
+							logger.warn('Denied (' + config['info'].owner + ':' + account.account_id + ')');
+							res.redirect('https://' + config['accounts-host']);
 							res.end();
 						} else {
-						*/
 							req.session.account_id = account.account_id;
 							req.session.name = account.first_name + ' ' + account.last_name;
 							req.session.api_key = account.api_key;
 							res.redirect('/');
-						/*
 						}
-						*/
+					}	
 
-					}
-
-				});
-			}).on('error', function(e) {
-				console.error(e);
-			}).end();
-
-		});
-		app.get('/logout', function (req, res) {
-
-			req.session = null;
-			res.redirect('https://accounts.continuuity.com/logout');
+				}
+			});
 
 		});
 
@@ -287,13 +268,12 @@ fs.readFile(configPath, function (error, result) {
 				/**
 				 * Emits environment information to the client.
 				 */
+
 				socket.emit('env', {
 					"location": "remote",
-					"version": Env.version,
+					"version": Env.version || 'UNKNOWN',
 					"ip": Env.ip,
-					"cloud": {
-						"name": config['gateway.cluster.name']
-					},
+					"cluster": config['info'],
 					"account": {
 						"account_id": socket.handshake.account_id,
 						"name": socket.handshake.name
@@ -392,70 +372,72 @@ fs.readFile(configPath, function (error, result) {
 			process.exit(1);
 		});
 
-		getUser(config['gateway.cluster.name'], function (user) {
-			config['user'] = user;
-			Env.getVersion(function (version) {
-				Env.getAddress(function (error, address) {
+		accountsRequest('/api/vpc/getUser/' + config['gateway.cluster.name'],
+			function (status, info) {
 
-					logger.trace('Version', version);
-					logger.trace('IP Address', address);
-					logger.trace('User', user);
+				config['info'] = info;
+				Env.getVersion(function (version) {
+					Env.getAddress(function (error, address) {
 
-					logger.trace('Configuring with', config);
-					Api.configure(config);
+						logger.trace('Version', version);
+						logger.trace('IP Address', address);
+						logger.trace('Cluster Info', info);
 
-					/**
-					 * Create an HTTP server that redirects to HTTPS.
-					 */
-					http.createServer(function (request, response) {
+						logger.trace('Configuring with', config);
+						Api.configure(config);
 
-						var host = request.headers.host.split(':')[0];
+						/**
+						 * Create an HTTP server that redirects to HTTPS.
+						 */
+						http.createServer(function (request, response) {
 
-						var path = 'https://' + host + ':' +
-							config['cloud-ui-ssl-port'] + request.url;
+							var host = request.headers.host.split(':')[0];
 
-						response.writeHead(302, {'Location': path});
-						response.end();
+							var path = 'https://' + host + ':' +
+								config['cloud-ui-ssl-port'] + request.url;
 
-					}).listen(config['cloud-ui-port']);
-					logger.trace('HTTP listening on port', config['cloud-ui-port']);
+							response.writeHead(302, {'Location': path});
+							response.end();
 
-					/**
-					 * HTTPS credentials
-					 */
-					var certs = {
-						ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
-						key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
-						cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
-					};
+						}).listen(config['cloud-ui-port']);
+						logger.trace('HTTP listening on port', config['cloud-ui-port']);
 
-					/**
-					 * Create the HTTPS server
-					 */
-					var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
-					logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
+						/**
+						 * HTTPS credentials
+						 */
+						var certs = {
+							ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
+							key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
+							cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
+						};
 
-					logger.info('Listening on port ');
+						/**
+						 * Create the HTTPS server
+						 */
+						var server = https.createServer(certs, app).listen(config['cloud-ui-ssl-port']);
+						logger.trace('HTTPS listening on port', config['cloud-ui-ssl-port']);
 
-					/**
-					 * Configure Socket IO
-					 */
-					io = io.listen(server, certs);
-					io.configure('production', function(){
-						io.set('transports', ['websocket', 'xhr-polling']);
-						io.enable('browser client minification');
-						io.enable('browser client gzip');
-						io.set('log level', 1);
-						io.set('resource', '/socket.io');
+						logger.info('Listening on port ');
+
+						/**
+						 * Configure Socket IO
+						 */
+						io = io.listen(server, certs);
+						io.configure('production', function(){
+							io.set('transports', ['websocket', 'xhr-polling']);
+							io.enable('browser client minification');
+							io.enable('browser client gzip');
+							io.set('log level', 1);
+							io.set('resource', '/socket.io');
+						});
+						
+						/**
+						 * Set the handlers after io has been configured.
+						 */
+						setSocketHandlers();
+
 					});
-					
-					/**
-					 * Set the handlers after io has been configured.
-					 */
-					setSocketHandlers();
-
 				});
-			});
 		});
 	});
 });
