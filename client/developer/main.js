@@ -246,5 +246,22 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 
 	$(function () {
 		C.initialize();
+
+		$.getJSON('/version', function (version) {
+
+			if (version && version.current !== 'UNKNOWN') {
+
+				if (version.current !== version.newest) {
+
+					$('#warning').html('<div>New version available: ' + version.current + ' » ' +
+						version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' + 
+						'Click here to download</a>.</div>').show();
+
+				}
+
+			}
+
+		});
+
 	});
 });
