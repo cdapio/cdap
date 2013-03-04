@@ -54,7 +54,7 @@ var server = http.createServer(app);
 io = require('socket.io').listen(server);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
-	//io.set('log level', 1);
+	io.set('log level', 1);
 });
 
 var config = {};
@@ -182,6 +182,8 @@ app.get('/destinations', function  (req, res) {
 
 	fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
 
+
+
 		if (error) {
 
 			res.write('false');
@@ -242,8 +244,6 @@ app.post('/credential', function (req, res) {
 
 	var apiKey = req.body.apiKey;
 
-	logger.info('Writing API Key to file', __dirname + '/.credential', apiKey);
-
 	// Write down credentials.
 	fs.writeFile(__dirname + '/.credential', apiKey,
 		function (error, result) {
@@ -255,6 +255,8 @@ app.post('/credential', function (req, res) {
 			res.end();
 
 		} else {
+
+			Api.credential = apiKey;
 
 			res.write('true');
 			res.end();
@@ -309,7 +311,6 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 
 		for (var item in result) {
 			item = result[item];
-			
 			config[item.name] = item.value;
 		}
 
