@@ -1,5 +1,6 @@
 
-<div class="popup-container" style="min-height: 246px;width: 350px;">
+<div class="popup-container" style="min-height: 246px;width: 390px;">
+	<div class="popup-body">
 	{{#unless view.pushing}}
 	<div class="popup-close" {{action hide on="click"}}>×</div>
 	{{/unless}}
@@ -30,7 +31,7 @@
 					<img src="/assets/img/chart-loading.gif" />
 				</div>
 			{{else}}
-				<div style="padding: 16px 0px;">
+				<div class="popup-description">
 				{{#if view.network}}
 					There was a problem connecting to Continuuity. Please check your internet connection.
 				{{else}}
@@ -40,13 +41,15 @@
 			{{/if}}
 		{{/if}}
 	{{else}}
-		<div style="padding: 16px 0px;">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
+		<div class="popup-description">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
 	{{/if}}
 
 	<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
 {{/if}}
 </div>
+</div>
 {{#unless view.pushing}}
+
 	<div class="modal-footer">
 	<button {{action "hide" on="click"}} class="btn">Cancel</button>
 		{{#if view.destinations.length}}

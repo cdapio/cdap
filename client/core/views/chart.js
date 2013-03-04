@@ -187,7 +187,7 @@ define([], function () {
 				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle() + '</div>');
 				
 				container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
-				width = width - 44;
+				width = width - 40;
 
 			} else if (this.get('listMode') || entityType) {
 
@@ -238,7 +238,7 @@ define([], function () {
 
 			if (this.get('unit') === 'percent' && entityType !== 'Flowlet' && !this.get('listMode')) {
 				this.get('label').css({
-					paddingTop: '38px'
+					paddingTop: '42px'
 				});
 			}
 

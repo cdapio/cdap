@@ -8,8 +8,7 @@ define([
 			this._super();
 			this.set('controller', C.Ctl.Upload);
 
-			this.set('template', Em.Handlebars.compile('Drop a JAR to ' + 
-				(this.get('uploadType') || 'Deploy')));
+			this.set('template', Em.Handlebars.compile('Drop an Application JAR'));
 
 		},
 		didInsertElement: function () {

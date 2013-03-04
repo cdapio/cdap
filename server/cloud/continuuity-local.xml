@@ -15,17 +15,17 @@
 
 	<property>
 		<name>accounts-host</name>
-		<value>accounts.continuuity.com</value>
+		<value>127.0.0.1</value>
 	</property>
 
 	<property>
 		<name>accounts-port</name>
-		<value>443</value>
+		<value>7777</value>
 	</property>
 
 	<property>
 		<name>resource.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -45,7 +45,7 @@
 
 	<property>
 		<name>flow.manager.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -55,7 +55,7 @@
 
 	<property>
 		<name>flow.monitor.server.address</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -65,7 +65,7 @@
 
 	<property>
 		<name>gateway.hostname</name>
-		<value>127.0.0.1</value>
+		<value>localhost</value>
 	</property>
 
 	<property>
@@ -75,7 +75,7 @@
 
 	<property>
         <name>gateway.cluster.name</name>
-        <value>not-a-cluster</value>
+        <value>mosites</value>
     </property>
 
 	<property>

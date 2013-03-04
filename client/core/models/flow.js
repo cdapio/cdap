@@ -81,6 +81,8 @@ define([], function () {
 				return;
 			}
 
+			start = -60;
+
 			return ['monitor', {
 				method: 'getTimeSeries',
 				params: [app, id, metrics, start, undefined, 'FLOW_LEVEL']
@@ -131,6 +133,14 @@ define([], function () {
 			}
 			return arr;
 		}.property('meta'),
+		isRunning: function() {
+
+			if (this.currentState !== 'RUNNING') {
+				return false;
+			}
+			return true;
+
+		}.property('currentState'),
 		started: function () {
 			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
 		}.property('timeTrigger'),
