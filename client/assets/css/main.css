@@ -205,7 +205,6 @@ a, a:visited {
 	top: 0px;
 	left: 0px;
 	width: 100%;
-	pointer-events: none;
 }
 #warning div {
 	background-color: #ed6d6d;
