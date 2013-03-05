@@ -36,6 +36,9 @@ libraries.google_guice_multibindings = "com.google.inject.extensions:guice-multi
 // Thrift
 libraries.thrift = "org.apache.thrift:libthrift:0.8.0"
 
+// ASM
+libraries.asm = "org.ow2.asm:asm-all:4.0"
+
 // AVRO
 libraries.avro = "org.apache.avro:avro:$versions.avroVersion"
 libraries.avro_ipc = "org.apache.avro:avro-ipc:$versions.avroVersion"
