@@ -84,11 +84,15 @@ function accountsRequest (path, done) {
 
 			try {
 				data = JSON.parse(data);
-				done(result.statusCode, data);
+				status = result.statusCode;
 			} catch (e) {
-				logger.warn('Parsing error', data);
-				done(500, e);
+				logger.warn('Parsing error', e, data);
+				data = e;
+				status = 500;
 			}
+		
+			done(status, data);
+
 		});
 	}).on('error', function(e) {
 		logger.warn(e);
@@ -111,7 +115,11 @@ function renderAccessError(req, res) {
 		root += 'cloud';
 	}
 
-	res.sendfile('access-error.html', {'root': root});
+	try {
+		res.sendfile('access-error.html', {'root': root});
+	} catch (e) {
+		res.write('Access error.');
+	}
 
 }
 
@@ -124,11 +132,35 @@ fs.readFile(configPath, function (error, result) {
 	var parser = new xml2js.Parser();
 	parser.parseString(result, function (err, result) {
 
+		/**
+		 * Check configuration file error.
+		 */
+		if (err) {
+			logger.error('Error reading config! Aborting!');
+			logger.error(err, result);
+			process.exit(1);
+			return;
+		}
+
 		result = result.property;
 
 		for (var item in result) {
 			item = result[item];
 			config[item.name] = item.value;
+		}
+
+		/**
+		 * Display configuration.
+		 */
+		logger.info('Configuring with', config);
+
+		/**
+		 * Check cluster name.
+		 */
+		if (typeof config['gateway.cluster.name'] !== 'string') {
+			logger.error('No cluster name in config! Aborting!');
+			process.exit(1);
+			return;
 		}
 
 		/**
@@ -446,6 +478,12 @@ fs.readFile(configPath, function (error, result) {
 		accountsRequest('/api/vpc/getUser/' + config['gateway.cluster.name'],
 			function (status, info) {
 
+				if (!info) {
+					logger.error('No cluster info received from Accounts! Aborting!');
+					process.exit(1);
+					return;
+				}
+
 				config['info'] = info;
 				Env.getVersion(function (version) {
 					Env.getAddress(function (error, address) {
@@ -454,7 +492,6 @@ fs.readFile(configPath, function (error, result) {
 						logger.info('NODE_ENV is', process.env.NODE_ENV);
 						logger.info('Version', version);
 						logger.info('IP Address', address);
-						logger.info('Configuring with', config);
 
 						Api.configure(config);
 
