@@ -1,5 +1,8 @@
 package com.continuuity.test.app;
 
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.internal.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
@@ -7,7 +10,9 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.StreamWriter;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -15,6 +20,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -63,7 +69,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testApp() throws InterruptedException, IOException, TimeoutException {
+  public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
     ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
 
     try {
@@ -72,7 +78,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
       // Send some inputs to streams
       StreamWriter streamWriter = applicationManager.getStreamWriter("text");
       for (int i = 0; i < 100; i++) {
-        streamWriter.send("testing message " + i);
+        streamWriter.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
       }
 
       // Check the flowlet metrics
@@ -94,6 +100,10 @@ public class TestFrameworkTest extends AppFabricTestBase {
                                                resultType);
 
       Assert.assertEquals(100L, result.get("text:testing").longValue());
+
+      // Verify by looking into dataset
+      KeyValueTable mydataset = applicationManager.getDataSet("mydataset");
+      Assert.assertEquals(100L, Longs.fromByteArray(mydataset.read("title:title".getBytes(Charsets.UTF_8))));
 
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
