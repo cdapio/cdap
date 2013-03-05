@@ -359,6 +359,7 @@ deb.dependsOn(cloud_dist)
 
 artifacts{
   // Asigning the artifact to the configuration
+  distributions project(':singlenode').tasks.getByName('createApiJar')
   distributions developer_suite_dist
   distributions cloud_dist
   distributions sandbox_dist
@@ -373,6 +374,9 @@ uploadDistributions {
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
       }
+      addFilter('continuuity-api') {artifact, file ->
+        file.name == project(':singlenode').tasks.getByName('createApiJar').archiveName
+      }
       addFilter('developer_suite') {artifact, file ->
         file.name == developer_suite_dist.archiveName
       }
@@ -382,6 +386,7 @@ uploadDistributions {
       addFilter('sandbox') {artifact, file ->
         file.name == sandbox_dist.archiveName
       }
+      pom('continuuity-api').artifactId = project(':singlenode').tasks.getByName('createApiJar').baseName
       pom('developer_suite').artifactId = developer_suite_dist.distName
       pom('cloud').artifactId = cloud_dist.distName
       pom('sandbox').artifactId = sandbox_dist.distName
