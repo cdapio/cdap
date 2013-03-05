@@ -243,7 +243,7 @@ define([], function () {
 			}
 
 			if (!metrics.length) {
-				C.debug('NO METRIC FOR sparkline', this);
+				C.debug('No metric provided for sparkline.', this);
 
 			} else {
 				if (this.get('listMode')) {
