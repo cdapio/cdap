@@ -20,7 +20,7 @@ public class CountTokens implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountTokensDemo")
+      .setName("CountTokens")
       .setDescription("Example applicaiton that counts tokens")
       .withStreams()
         .add(new Stream("text"))
