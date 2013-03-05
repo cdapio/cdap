@@ -394,12 +394,18 @@ function(Models, Views, Controllers){
 
 				window.ENV.account = env.account;
 				window.ENV.cluster = env.cluster;
+
+				// Start the router.
+				C.initialize();
 				C.router.applicationController.set('user', env.account);
 				C.router.applicationController.set('cluster', env.cluster.info);
 
 			} else {
 
 				window.ENV.credential = env.credential;
+
+				// Start the router.
+				C.initialize();
 				C.router.applicationController.set('user', {
 					name: "Developer"
 				});

@@ -46,7 +46,7 @@ define([
 
 				if (error) {
 					self.set('responseCode', error.statusCode);
-					self.set('responseBody', JSON.stringify(error.response) || '[ No Content ]');
+					self.set('responseBody', JSON.stringify(error.response, undefined, 2) || '[ No Content ]');
 				} else {
 					self.set('responseCode', response.statusCode);
 					var pretty;

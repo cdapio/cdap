@@ -68,4 +68,14 @@
 		<value>10000</value>
 	</property>
 
+	<property>
+		<name>stream.rest.port</name>
+		<value>10000</value>
+	</property>
+
+	<property>
+		<name>procedure.rest.port</name>
+		<value>10010</value>
+	</property>
+
 </configuration>
