@@ -315,53 +315,6 @@ public class Util {
       }
   }
 
-  public static String encodeBytes(byte[] bytes, String encoding) throws UnsupportedEncodingException {
-    if (bytes == null) {
-      return null;
-    }
-    if (encoding == null || encoding.isEmpty()) {
-      return new String(bytes, Charsets.UTF_8);
-    }
-    if ("url".equals(encoding)) {
-      return urlEncode(bytes);
-    }
-    if ("hex".equals(encoding)) {
-      return toHex(bytes);
-    }
-    if ("base64".equals(encoding)) {
-      return toBase64(bytes);
-    }
-    return new String(bytes, encoding);
-  }
-
-  public static String toBase64(byte[] bytes) {
-    return Base64.encodeBase64String(bytes);
-  }
-
-  public static byte[] decodeBytes(String string, String encoding) throws UnsupportedEncodingException {
-    if (string == null) {
-      return null;
-    }
-    if (encoding == null || encoding.isEmpty()) {
-      return string.getBytes(Charsets.UTF_8);
-    }
-    if ("url".equals(encoding)) {
-      return urlDecode(string);
-    }
-    if ("hex".equals(encoding)) {
-      return hexValue(string);
-    }
-    if ("base64".equals(encoding)) {
-      return fromBase64(string);
-    }
-    return string.getBytes(encoding);
-  }
-
-  public static byte[] fromBase64(String string) {
-    return Base64.decodeBase64(string);
-  }
-
-
   /**
    * Convert a long value into a big-endian byte array
    * @param value the value to convert
@@ -387,9 +340,69 @@ public class Util {
    */
   public static long bytesToLong(byte[] bytes) {
     long value = 0;
-    for (int i = 0; i < bytes.length; i++) {
-      value = (value << 8) | (((long)bytes[i]) & 0xff);
+    for (byte aByte : bytes) {
+      value = (value << 8) | (((long) aByte) & 0xff);
     }
     return value;
   }
+
+  //-----------------------------------------------------------------------------------
+  // the following 3 belong together: encodeBinary, decodeBinary, supportedEncoding
+  //-----------------------------------------------------------------------------------
+
+  public static String encodeBinary(byte[] binary, String encoding) {
+    if (encoding == null) {
+      return new String(binary, Charsets.US_ASCII);
+    }
+    if ("hex".equals(encoding)) {
+      return toHex(binary);
+    }
+    if ("base64".equals(encoding)) {
+      return Base64.encodeBase64URLSafeString(binary);
+    }
+    if ("url".equals(encoding)) {
+      try {
+        // URLEncoder does not take byte[], so we convert it into a String with the same code points using
+        // ISO-8859-1. This string only contains code points 0-255. Then we URL-encode that string using
+        // ISO-8859-1 again. This way, every byte ends up as the exact same, %-escaped byte, in the URL string
+        return URLEncoder.encode(new String(binary, Charsets.ISO_8859_1), Charsets.UTF_8.name());
+      } catch (UnsupportedEncodingException e) {
+        // can't happen
+        throw new RuntimeException("Charsets.ISO_8859_1 is unsupported? Something is wrong with the JVM", e);
+      }
+    }
+    // this can never happen because we only call it with null, hex, base64, or url
+    throw new RuntimeException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
+  }
+
+  public static byte[] decodeBinary(String str, String encoding) throws NumberFormatException {
+
+    if (encoding == null) {
+      return str.getBytes(Charsets.US_ASCII);
+    }
+    if ("hex".equals(encoding)) {
+      return hexValue(str);
+    }
+    if ("base64".equals(encoding)) {
+      return Base64.decodeBase64(str);
+    }
+    if ("url".equals(encoding)) {
+      try {
+        // URLDecoder does not produce byte[], so we decode to a String using ISO-8859. Note that the URL
+        // decoder produces chars between 0-255, and thus each %-escaped byet in the URL results in
+        // exactly one char in the string. That can be safely converted 1:1 into byte[] using getBuytes().
+        return URLDecoder.decode(str, Charsets.ISO_8859_1.name()).getBytes(Charsets.ISO_8859_1);
+      } catch (UnsupportedEncodingException e) {
+        // can't happen
+        throw new RuntimeException("Charsets.ISO_8859_1 is unsupported? Something is wrong with the JVM", e);
+      }
+    }
+    // this can never happen because we only call it with null, hex, base64, or url
+    throw new RuntimeException("Unexpected encoding: " + encoding + " Only hex, base64 and url are supported.");
+  }
+
+  public static boolean supportedEncoding(String enc) {
+    return "hex".equals(enc) || "url".equals(enc) || "base64".equals(enc);
+  }
+
 }
