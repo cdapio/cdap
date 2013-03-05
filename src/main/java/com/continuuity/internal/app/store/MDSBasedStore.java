@@ -259,7 +259,27 @@ public class MDSBasedStore implements Store {
 
   @Override
   public void addApplication(final Id.Application id,
-                             final ApplicationSpecification spec) throws OperationException {
+                             final ApplicationSpecification spec, Location appArchiveLocation)
+    throws OperationException {
+    storeAppSpec(id, spec);
+    storeAppToArchiveLocationMapping(id, appArchiveLocation);
+  }
+
+  private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation)
+    throws OperationException {
+    // there always be an entry for application
+    LOG.trace("Updating id to app archive location mapping: app id: {}, app location: {}",
+              id.getId(), appArchiveLocation.toURI());
+
+    OperationContext context = new OperationContext(id.getAccountId());
+    metaDataStore.updateField(context, id.getAccountId(), null,
+                              FieldTypes.Application.ENTRY_TYPE, id.getId(),
+                              FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
+    LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
+              id.getId(), appArchiveLocation.toURI());
+  }
+
+  private void storeAppSpec(Id.Application id, ApplicationSpecification spec) throws OperationException {
     ApplicationSpecificationAdapter adapter =
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     String jsonSpec = adapter.toJson(spec);
@@ -275,10 +295,8 @@ public class MDSBasedStore implements Store {
       metaDataStore.add(context, entry);
       LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
     } else {
-      LOG.trace("Application exists in mds: id: {}, spec: {}",
-                id.getId(), existing.getTextField(FieldTypes.Application.SPEC_JSON));
-      MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
-      entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
+      LOG.trace("Application exists in mds: id: {}, spec: {}", id.getId(),
+                existing.getTextField(FieldTypes.Application.SPEC_JSON));
 
       metaDataStore.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
@@ -316,7 +334,7 @@ public class MDSBasedStore implements Store {
     final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
-    addApplication(id.getApplication(), newAppSpec);
+    storeAppSpec(id.getApplication(), newAppSpec);
     return newAppSpec;
   }
 
@@ -379,7 +397,7 @@ public class MDSBasedStore implements Store {
               id.getId());
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
-    addApplication(id.getApplication(), newAppSpec);
+    storeAppSpec(id.getApplication(), newAppSpec);
 
     try {
       metadataServiceHelper.deleteFlow(id);
@@ -532,4 +550,18 @@ public class MDSBasedStore implements Store {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     return adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
   }
+
+  @Override
+  public Location getApplicationArchiveLocation(Id.Application id) throws OperationException {
+    OperationContext context = new OperationContext(id.getAccountId());
+    MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
+                                            id.getId());
+
+    if(entry == null) {
+      return null;
+    }
+
+    return locationFactory.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION));
+  }
+
 }
