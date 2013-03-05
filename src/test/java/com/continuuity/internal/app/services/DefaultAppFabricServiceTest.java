@@ -30,6 +30,7 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinition;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -37,7 +38,6 @@ import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
 
@@ -130,7 +130,7 @@ public class DefaultAppFabricServiceTest {
     Store store = sFactory.create();
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application appId = new Id.Application(new Id.Account("account1"), "application1");
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "WordCountFlow", 0);
     String flowDefJson = server.getFlowDefinition(flowId);
