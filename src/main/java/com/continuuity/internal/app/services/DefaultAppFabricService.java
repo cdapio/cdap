@@ -733,12 +733,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public boolean promote(AuthToken authToken, ResourceIdentifier id, String hostname)
     throws AppFabricServiceException {
-    Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
-    Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
-    final Location appArchive = getApplicationLocation(Id.Application.from(id.getAccountId(),
-                                                                               id.getApplicationId()));
     try {
+      Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
+      Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
+
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(),
+                                                                                          id.getApplicationId()));
       if(! appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
@@ -864,13 +865,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   @Override
   public void removeApplication(AuthToken token, FlowIdentifier identifier) throws AppFabricServiceException {
-    Id.Account accountId = null;
-    final Id.Application appId;
     try {
       Preconditions.checkNotNull(identifier, "No application id provided.");
 
-      accountId = Id.Account.from(identifier.getAccountId());
-      appId = Id.Application.from(accountId, identifier.getApplicationId());
+      Id.Account accountId = Id.Account.from(identifier.getAccountId());
+      final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
 
       // Check if all are stopped.
       Preconditions.checkState(!anyRunning(new Predicate<Id.Program>() {
@@ -880,9 +879,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values()), "There are program still running for application " + appId.getId());
 
-      store.removeApplication(appId);
-      Location appArchive = getApplicationLocation(appId);
+      Location appArchive = store.getApplicationArchiveLocation(appId);
       appArchive.delete();
+      store.removeApplication(appId);
       MetricsFrontendServiceImpl mfs = new MetricsFrontendServiceImpl(configuration);
       mfs.clear(accountId.getId(), appId.getId());
     } catch (Throwable  throwable) {
@@ -1036,9 +1035,5 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
-  }
-
-  private Location getApplicationLocation(Id.Application appId) {
-    return locationFactory.create(String.format("%s/%s/%s.jar", archiveDir, appId.getAccountId(), appId.getId()));
   }
 }

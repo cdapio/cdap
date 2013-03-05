@@ -45,11 +45,17 @@ import java.util.jar.Manifest;
  */
 public class TestHelper {
   private static CConfiguration configuration;
+  private static Injector injector;
 
   static {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", "/tmp/app");
     configuration.set("app.tmp.dir", "/tmp/temp");
+    injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
+  }
+
+  public static Injector getInjector() {
+    return injector;
   }
 
   /**
@@ -69,10 +75,7 @@ public class TestHelper {
    * @return Returns an instance of {@link LocalManager}
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
-    LocationFactory lf = new LocalLocationFactory();
-    PipelineFactory pf = new SynchronousPipelineFactory();
-
-    final Injector injector = Guice.createInjector(new BigMamaModule(configuration),
+    injector = Guice.createInjector(new BigMamaModule(configuration),
                                                    new DataFabricModules().getInMemoryModules());
 
 
@@ -89,9 +92,6 @@ public class TestHelper {
    */
   public static void deployApplication(Class<? extends Application> application, String fileName) throws Exception {
     AppFabricService.Iface server;
-
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new BigMamaModule(configuration));
 
     server = injector.getInstance(AppFabricService.Iface.class);
 

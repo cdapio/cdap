@@ -56,18 +56,10 @@ public class DefaultAppFabricServiceTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/temp");
-
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new BigMamaModule(configuration));
-
+    final Injector injector = TestHelper.getInjector();
     server = injector.getInstance(AppFabricService.Iface.class);
-
     // Create location factory.
     lf = injector.getInstance(LocationFactory.class);
-
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);
   }
