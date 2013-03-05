@@ -39,6 +39,7 @@ clover.license
 /watchdog
 /tools
 /web-app
+/unit-test
 
 # Ignore Node stuff
 npm*
