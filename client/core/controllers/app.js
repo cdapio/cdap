@@ -145,26 +145,38 @@ define([], function () {
 				done();
 
 			} else {
+				
+				var requested = false;
 
 				while(i--) {
 
-					flows[i].set('currentState', 'STOPPING');
+					if (flows[i].get('currentState') !== 'STOPPED') {
 
-					C.socket.request('manager', {
-						method: 'stop',
-						params: [flows[i].application, flows[i].id, -1, 'FLOW']
-					}, function (error, response, flow) {
+						requested = true;
 
-						flow.set('currentState', 'STOPPED');
+						flows[i].set('currentState', 'STOPPING');
 
-						if (!--flowCount) {
+						C.socket.request('manager', {
+							method: 'stop',
+							params: [flows[i].application, flows[i].id, -1, 'FLOW']
+						}, function (error, response, flow) {
 
-							done();
+							flow.set('currentState', 'STOPPED');
 
-						}
+							if (!--flowCount) {
 
-					}, flows[i]);
+								done();
+
+							}
+
+						}, flows[i]);
+					}
 				}
+
+				if (!requested) {
+					done();
+				}
+
 			}
 
 		},
