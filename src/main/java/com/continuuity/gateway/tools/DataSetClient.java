@@ -105,8 +105,8 @@ public class DataSetClient {
     out.println("  --start <key>           To specify the start of a column range");
     out.println("  --stop <key>            To specify the end of a column range");
     out.println("  --limit <number>        To specify a limit for a column range");
-    out.println("  --encoding <number>     To specify an encoding for keys/values");
     out.println("  --hex                   To specify hex encoding for keys/values");
+    out.println("  --url                   To specify hex encoding for keys/values");
     out.println("  --base64                To specify base64 encoding for keys/values");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
@@ -203,12 +203,11 @@ public class DataSetClient {
         for (String value : args[pos].split(","))
           values.add(value);
       }
-      else if ("--encoding".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        encoding = args[pos];
-      }
       else if ("--hex".equals(arg)) {
         encoding = "hex";
+      }
+      else if ("--url".equals(arg)) {
+        encoding = "url";
       }
       else if ("--base64".equals(arg)) {
         encoding = "base64";

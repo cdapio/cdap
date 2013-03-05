@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
@@ -224,24 +223,6 @@ public class DatasetRestHandler extends NettyRestHandler {
     respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST, e);
   }
 
-  /**
-   * Looks for encoding parameters in the url. If more than one is found, responds with bad request
-   * and returns null. If none is found, returns empty string. If one is found, returns that.
-   */
-  private String getEncodingParameter(MessageEvent message, HttpRequest request,
-                                      MetricsHelper helper, Map<String, List<String>> parameters) {
-    // optional parameters encoding
-    List<String> encodingParams = parameters.get("encoding");
-    if (encodingParams == null || encodingParams.isEmpty()) {
-      return "";
-    }
-    if (encodingParams.size() > 1) {
-      respondBadRequest(message, request, helper, "more than one 'encoding' parameter");
-      return null;
-    }
-    return encodingParams.get(0);
-  }
-
   private enum TableOp { List, Increment, Read, Write, Create, Delete }
 
   private void handleTableOperation(MessageEvent message, HttpRequest request,
@@ -326,9 +307,22 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
 
     // optional parameter encoding
-    String encoding = getEncodingParameter(message, request, helper, parameters);
-    if (encoding == null) { // error
-      return;
+    String encoding = null;
+    List<String> encodingParams = parameters.get("encoding");
+    if (encodingParams != null) {
+      // make sure there is at most one
+      if (encodingParams.size() > 1) {
+        respondBadRequest(message, request, helper, "more than one 'encoding' parameter");
+        return;
+      }
+      // make sure that if there is one, it is supported
+      if (!encodingParams.isEmpty()) {
+        encoding = encodingParams.get(0);
+        if (!Util.supportedEncoding(encoding)) {
+          respondBadRequest(message, request, helper, "unsupported 'encoding' parameter");
+          return;
+        }
+      }
     }
 
     // make sure the operations and parameters are valid
@@ -472,7 +466,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     // try to convert the row ket to bytes, using the given encoding
     byte[] rowKey;
     try {
-      rowKey = row == null ? null : Util.decodeBytes(row, encoding);
+      rowKey = row == null ? null : Util.decodeBinary(row, encoding);
     } catch (Exception e) {
       respondBadRequest(message, request, helper, "error decoding row key", e);
       return;
@@ -485,18 +479,18 @@ public class DatasetRestHandler extends NettyRestHandler {
       try {
         if (columns == null || columns.isEmpty()) {
           // column range
-          byte[] startCol = Util.decodeBytes(start, encoding);
-          byte[] stopCol = Util.decodeBytes(stop, encoding);
+          byte[] startCol = start == null ? null : Util.decodeBinary(start, encoding);
+          byte[] stopCol = stop == null ? null : Util.decodeBinary(stop, encoding);
           read = new Read(rowKey, startCol, stopCol, limit == null ? -1 : limit);
         } else {
           byte[][] cols = new byte[columns.size()][];
           int i = 0;
           for (String column : columns) {
-            cols[i++] = Util.decodeBytes(column, encoding);
+            cols[i++] = Util.decodeBinary(column, encoding);
           }
           read = new Read(rowKey, cols);
         }
-      } catch (UnsupportedEncodingException e) {
+      } catch (Exception e) {
         respondBadRequest(message, request, helper, "error decoding column key(s)", e);
         return;
       }
@@ -517,17 +511,11 @@ public class DatasetRestHandler extends NettyRestHandler {
         // result is not empty, now construct a json response
         // first convert the bytes to strings
         Map<String, String> map = Maps.newTreeMap();
-        try {
-          for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
-            map.put(Util.encodeBytes(entry.getKey(), encoding), Util.encodeBytes(entry.getValue(), encoding));
-          }
-        } catch (UnsupportedEncodingException e) {
-          respondBadRequest(message, request, helper, "error encoding read result", e);
-          return;
+        for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
+          map.put(Util.encodeBinary(entry.getKey(), encoding), Util.encodeBinary(entry.getValue(), encoding));
         }
         // now write a json string representing the map
         byte[] response = new Gson().toJson(map).getBytes(Charsets.UTF_8);
-        System.err.println(new String(response, Charsets.UTF_8));
         respondSuccess(message.getChannel(), request, response);
         helper.finish(Success);
       }
@@ -538,10 +526,10 @@ public class DatasetRestHandler extends NettyRestHandler {
         byte[][] cols = new byte[columns.size()][];
         int i = 0;
         for (String column : columns) {
-          cols[i++] = Util.decodeBytes(column, encoding);
+          cols[i++] = Util.decodeBinary(column, encoding);
         }
         delete = new Delete(rowKey, cols);
-      } catch (UnsupportedEncodingException e) {
+      } catch (Exception e) {
         respondBadRequest(message, request, helper, "error decoding column key(s)", e);
         return;
       }
@@ -571,12 +559,12 @@ public class DatasetRestHandler extends NettyRestHandler {
         byte[][] vals = new byte[valueMap.size()][];
         int i = 0;
         for (Map.Entry<String, String> entry : valueMap.entrySet()) {
-          cols[i] = Util.decodeBytes(entry.getKey(), encoding);
-          vals[i] = Util.decodeBytes(entry.getValue(), encoding);
+          cols[i] = Util.decodeBinary(entry.getKey(), encoding);
+          vals[i] = Util.decodeBinary(entry.getValue(), encoding);
           i++;
         }
         write = new Write(rowKey, cols, vals);
-      } catch (UnsupportedEncodingException e) {
+      } catch (Exception e) {
         respondBadRequest(message, request, helper, "error decoding column key(s) and values", e);
         return;
       }
@@ -606,15 +594,12 @@ public class DatasetRestHandler extends NettyRestHandler {
         long[] vals = new long[valueMap.size()];
         int i = 0;
         for (Map.Entry<String, String> entry : valueMap.entrySet()) {
-          cols[i] = Util.decodeBytes(entry.getKey(), encoding);
+          cols[i] = Util.decodeBinary(entry.getKey(), encoding);
           vals[i] = Long.parseLong(entry.getValue());
           i++;
         }
         increment = new Increment(rowKey, cols, vals);
-      } catch (NumberFormatException e) {
-        respondBadRequest(message, request, helper, "error converting values to long", e);
-        return;
-      } catch (UnsupportedEncodingException e) {
+      } catch (Exception e) {
         respondBadRequest(message, request, helper, "error decoding column key(s) and values", e);
         return;
       }
@@ -636,13 +621,8 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       // first convert the bytes to strings
       Map<String, Long> map = Maps.newTreeMap();
-      try {
-        for (Map.Entry<byte[], Long> entry : results.entrySet()) {
-          map.put(Util.encodeBytes(entry.getKey(), encoding), entry.getValue());
-        }
-      } catch (UnsupportedEncodingException e) {
-        respondBadRequest(message, request, helper, "error encoding read result", e);
-        return;
+      for (Map.Entry<byte[], Long> entry : results.entrySet()) {
+        map.put(Util.encodeBinary(entry.getKey(), encoding), entry.getValue());
       }
       // now write a json string representing the map
       byte[] response = new Gson().toJson(map).getBytes(Charsets.UTF_8);

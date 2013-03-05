@@ -40,6 +40,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -474,7 +475,6 @@ public class DatasetRestAccessorTest {
     return !result.isEmpty();
   }
 
-
   @Test
   public void testClearData() throws Exception {
     // setup accessor
@@ -502,5 +502,63 @@ public class DatasetRestAccessorTest {
     Assert.assertFalse(verifyStream(streamName));
     Assert.assertFalse(verifyQueue(queueName));
   }
+
+  void assertRead(String prefix, String query, String col, String val) throws IOException {
+    HttpGet get = new HttpGet(prefix + query);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(get);
+    client.getConnectionManager().shutdown();
+    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+    Map<String, String> map = new Gson().fromJson(reader, stringMapType);
+    Assert.assertEquals(1, map.size());
+    Assert.assertEquals(val, map.get(col));
+  }
+
+  @Test
+  public void testEncodingOfKeysAndValues() throws Exception {
+
+    // first create the table
+    String tableName = "tEOCAV";
+    Table table = createTable(tableName);
+    byte[] x = { 'x' }, y = { 'y' }, z = { 'z' }, a = { 'a' };
+
+    // setup accessor
+    String urlPrefix = setupAccessor("data", "/", "data/");
+    String tablePrefix = urlPrefix + "Table/" + tableName + "/";
+
+    // table is empty, write value z to column y of row x, use encoding "url"
+    assertWrite(tablePrefix, HttpStatus.SC_OK, "%78" + "?encoding=url", "{\"%79\":\"%7A\"}");
+    // read back directly and verify
+    OperationResult<Map<byte[], byte[]>> result = table.read(new Read(x));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, result.getValue().size());
+    Assert.assertArrayEquals(z, result.getValue().get(y));
+
+    // read back with same encoding through REST - the response will not escape y or z
+    assertRead(tablePrefix, "%78" + "?columns=%79" + "&encoding=url", "y", "z");
+    // read back with hex encoding through REST - the response will escape y and z
+    assertRead(tablePrefix, "78" + "?columns=79" + "&encoding=hex", "79", "7a");
+    // read back with base64 encoding through REST - the response will escape y and z
+    assertRead(tablePrefix, "eA" + "?columns=eQ" + "&encoding=base64", "eQ", "eg");
+
+    // delete using hex encoding
+    assertDelete(tablePrefix, 200, "78" + "?columns=79" + "&encoding=hex");
+    // and verify that it is really gone
+    Assert.assertTrue(table.read(new Read(x)).isEmpty());
+
+    // increment column using REST
+    assertIncrement(tablePrefix, 200, "eA" + "?op=increment" + "&encoding=base64", "{\"YQ\":42}");
+    // verify the value was written using the Table
+    result = table.read(new Read(x));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, result.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
+    // read back via REST with hex encoding
+    assertRead(tablePrefix, "eA" + "?column=YQ" + "&encoding=base64", "YQ",
+               Base64.encodeBase64URLSafeString(Bytes.toBytes(42L)));
+  }
+
 }
 
