@@ -1,12 +1,11 @@
-Continuuity AppFabric (tm) Developer Edition
+Continuuity AppFabric (tm) Developer Suite
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
 
-AppFabric Developer Edition is a fully functioning stand alone edition of the
-Continuuity AppFabric platform. You can use this edition to write, debug and
-test your BigData applications, before deploying to the Continuuity Cloud
-Platform.
+Continuuity Developer Suite is a fully functioning single node edition of the 
+Continuuity AppFabric runtime. You can use this edition to write, debug and
+test your BigData applications, before deploying to the Continuuity Cloud.
 
 Installation
 ============
@@ -18,26 +17,26 @@ pre-requisite requirements:
   2. Node.js 0.8.1+ (required to run the AppFabric UI)
   3. Ant 1.8+ (required to build the example applications)
 
-Once you have installed the prerequisites, you should unzip the AppFabric
+Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-developer-suite-1.3.0.zip
+  %> unzip /tmp/continuuity-developer-suite-1.4.0.zip
 
 You are now ready to start AppFabric. Do so by running the
-'continuuity-app-fabric' script in the $APP_FABRIC_DIR/bin folder. E.g.
+'continuuity-app-fabric' script in the $CONTINUUITY/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-developer-suite-1.3.0
-  %> bin/continuuity-app-fabric
+  %> cd ~/Projects/continuuity-developer-suite-1.4.0
+  %> bin/continuuity-app-fabric start
 
 
 Directory Structure
 ===================
-The directory structure for AppFabric is shown below.
+The directory structure for the Developer Suite is shown below.
 
-continuuity-developer-suite-1.3.0
+continuuity-developer-suite-1.4.0
  |-- README                                                          (this file)
- |-- LICENSE                                     (the Developer Edition license)
+ |-- LICENSE                                       (the Developer Suite license)
  |-- continuuity-api.jar                             (the API jar for AppFabric)
  |-- bin                                               (execution/tools scripts)
  | |-- continuuity-app-fabric                     (Single-Node AppFabric Daemon)
