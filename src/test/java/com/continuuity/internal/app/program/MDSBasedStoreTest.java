@@ -144,12 +144,12 @@ public class MDSBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build());
+                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build());
+                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
 
     com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
@@ -168,31 +168,35 @@ public class MDSBasedStoreTest {
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
-    store.addApplication(id, spec);
+    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
 
     ApplicationSpecification stored = store.getApplication(id);
     assertWordCountAppSpecAndInMetadataStore(stored);
+
+    Assert.assertEquals("/foo/path/application1.jar", store.getApplicationArchiveLocation(id).toURI().getPath());
   }
 
   @Test
   public void testUpdateSameApplication() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
-    store.addApplication(id, spec);
+    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
     // update
-    store.addApplication(id, spec);
+    store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1_modified.jar"));
 
     ApplicationSpecification stored = store.getApplication(id);
     assertWordCountAppSpecAndInMetadataStore(stored);
+    Assert.assertEquals("/foo/path/application1_modified.jar",
+                        store.getApplicationArchiveLocation(id).toURI().getPath());
   }
 
   @Test
   public void testUpdateChangedApplication() throws Exception {
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
 
-    store.addApplication(id, new FooApp().configure());
+    store.addApplication(id, new FooApp().configure(), new LocalLocationFactory().create("/foo"));
     // update
-    store.addApplication(id, new ChangedFooApp().configure());
+    store.addApplication(id, new ChangedFooApp().configure(), new LocalLocationFactory().create("/foo"));
 
     ApplicationSpecification stored = store.getApplication(id);
     assertChangedFooAppSpecAndInMetadataStore(stored);
@@ -394,7 +398,7 @@ public class MDSBasedStoreTest {
     ApplicationSpecification spec = new WordCountApp().configure();
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     Id.Application appId = new Id.Application(new Id.Account("developer"), spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Id.Program programId = new Id.Program(appId, "WordCountFlow");
     store.setFlowletInstances(programId, "StreamSource",
@@ -415,7 +419,7 @@ public class MDSBasedStoreTest {
   public void testRemoveProgram() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
-    store.addApplication(id, spec);
+    store.addApplication(id, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
     Assert.assertNotNull(metadataService.getQuery(new Account("account1"), new Query("WordFrequency", "application1")));
@@ -450,7 +454,7 @@ public class MDSBasedStoreTest {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
     Id.Application appId = new Id.Application(accountId, spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     ApplicationSpecification appSpec = store.getApplication(appId);
 
@@ -476,7 +480,7 @@ public class MDSBasedStoreTest {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
     Id.Application appId = new Id.Application(accountId, "application1");
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
     Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
