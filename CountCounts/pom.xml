@@ -53,6 +53,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.6.4</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <!-- Set the main class and tell maven to include dependencies in the jar -->
