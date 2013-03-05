@@ -177,17 +177,19 @@ public class SystemStatsRestHandler extends NettyRestHandler {
 
   private void collectRunHistory(String accountId, Map<String, Long> stats) throws OperationException {
     // note: this could be quite expensive to collect
-    Table<Type, Id.Program, RunRecord> runHistory = accessor.getStore().getAllRunHistory(new Id.Account(accountId));
-    for (Table.Cell<Type, Id.Program, RunRecord> run : runHistory.cellSet()) {
-      Type programType = run.getRowKey();
-      inc(stats, "run.start.count", 1);
-      inc(stats, "run.start.program_type." + programType.name() + ".count", 1);
-      if (run.getValue().getStopTs() > 0) {
-        inc(stats, "run.stop.count", 1);
-        inc(stats, "run.stop.end_status." + run.getValue().getEndStatus() + ".count", 1);
-        inc(stats, "run.stop.program_type." + programType.name() + ".count", 1);
-        inc(stats, "run.stop.program_type.end_status." +
-          programType.name() + "." + run.getValue().getEndStatus() + ".count", 1);
+    Table<Type, Id.Program, List<RunRecord>> runHistory = accessor.getStore().getAllRunHistory(new Id.Account(accountId));
+    for (Table.Cell<Type, Id.Program, List<RunRecord>> run : runHistory.cellSet()) {
+      for (RunRecord runRecord : run.getValue()) {
+        Type programType = run.getRowKey();
+        inc(stats, "run.start.count", 1);
+        inc(stats, "run.start.program_type." + programType.name() + ".count", 1);
+        if (runRecord.getStopTs() > 0) {
+          inc(stats, "run.stop.count", 1);
+          inc(stats, "run.stop.end_status." + runRecord.getEndStatus() + ".count", 1);
+          inc(stats, "run.stop.program_type." + programType.name() + ".count", 1);
+          inc(stats, "run.stop.program_type.end_status." +
+            programType.name() + "." + runRecord.getEndStatus() + ".count", 1);
+        }
       }
     }
   }
