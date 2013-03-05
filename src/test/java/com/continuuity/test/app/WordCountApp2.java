@@ -199,7 +199,7 @@ public class WordCountApp2 implements Application {
     private KeyValueTable counters;
 
     @Handle("wordfreq")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    private void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));

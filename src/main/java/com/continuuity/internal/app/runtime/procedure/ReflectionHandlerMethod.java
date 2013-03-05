@@ -28,6 +28,10 @@ final class ReflectionHandlerMethod implements HandlerMethod {
     this.procedure = procedure;
     this.method = method;
     this.txAgentSupplier = txAgentSupplier;
+
+    if(!this.method.isAccessible()) {
+      this.method.setAccessible(true);
+    }
   }
 
   @Override
