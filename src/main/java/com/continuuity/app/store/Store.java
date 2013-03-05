@@ -10,6 +10,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
+import com.continuuity.filesystem.Location;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.common.collect.Table;
 
@@ -79,10 +80,11 @@ public interface Store {
    *
    * @param id            application id
    * @param specification application specification to store
+   * @param appArchiveLocation location of the deployed app archive
    * @throws OperationException
    */
   void addApplication(Id.Application id,
-                      ApplicationSpecification specification) throws OperationException;
+                      ApplicationSpecification specification, Location appArchiveLocation) throws OperationException;
 
   /**
    * Returns application specification by id.
@@ -92,6 +94,14 @@ public interface Store {
    * @throws OperationException
    */
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
+
+  /**
+   * Returns location of the application archive
+   * @param id application id
+   * @return application archive location
+   * @throws OperationException
+   */
+  Location getApplicationArchiveLocation(Id.Application id) throws OperationException;
 
   /**
    * Sets number of instances of specific flowlet
