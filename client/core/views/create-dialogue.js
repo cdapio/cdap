@@ -35,7 +35,6 @@ define([
 			}
 		}.observes('form.name'),
 		idChanged: function () {
-			console.log(arguments);
 			this.get('parentView').__idWasModified = true;
 		},
 		init: function () {

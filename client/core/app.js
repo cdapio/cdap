@@ -559,7 +559,7 @@ function(Models, Views, Controllers){
 		error('Disconnected. Attempting to reconnect. (' + attempt + ')', arguments);
 	});
 
-	C.debug('Models, Views, Controllers loaded and assigned.');
+	C.debug('Configuration done.');
 
 	return C;
 

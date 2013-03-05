@@ -252,20 +252,6 @@ define([], function () {
 			}
 
 		},
-
-		stopAll: function () {
-
-			C.get('manager', {
-				method: 'stopAll',
-				params: []
-			}, function (error, response) {
-
-				console.log(arguments);
-
-			});
-
-		},
-
 		__timeout: null,
 		getStats: function () {
 
