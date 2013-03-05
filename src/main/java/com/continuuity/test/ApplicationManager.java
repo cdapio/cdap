@@ -32,8 +32,8 @@ public interface ApplicationManager {
 
   /**
    * Gets an instance of {@link DataSet} of the given dataset name.
-   * Operations on the returned {@link DataSet} always perform synchronously,
-   * i.e. no support on multi-operations transaction.
+   * Operations on the returned {@link DataSet} always performed synchronously,
+   * i.e. no support for multi-operations transaction.
    * @param dataSetName Name of the dataset to retrieve.
    * @param <T> Type of the dataset.
    * @return A {@link DataSet} instance of the given dataset type.
