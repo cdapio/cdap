@@ -234,9 +234,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                      System.currentTimeMillis()/1000);
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 
@@ -250,22 +250,27 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public FlowStatus status(AuthToken token, FlowIdentifier id)
     throws AppFabricServiceException, TException {
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
+    try {
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
-    int version = 1;  // FIXME, how to get version?
-    if (runtimeInfo == null) {
-      return new FlowStatus(id.getApplicationId(), id.getFlowId(),
-                            version, null, ProgramController.State.STOPPED.toString());
+      int version = 1;  // FIXME, how to get version?
+      if (runtimeInfo == null) {
+        return new FlowStatus(id.getApplicationId(), id.getFlowId(),
+                              version, null, ProgramController.State.STOPPED.toString());
+      }
+
+      Id.Program programId = runtimeInfo.getProgramId();
+      RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
+
+      // NOTE: This was a temporary hack done to map the status to something that is
+      // UI friendly. Internal states of program controller are reasonable and hence
+      // no point in changing them.
+      String status = controllerStateToString(runtimeInfo.getController().getState());
+      return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
+    } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
-
-    Id.Program programId = runtimeInfo.getProgramId();
-    RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
-
-    // NOTE: This was a temporary hack done to map the status to something that is
-    // UI friendly. Internal states of program controller are reasonable and hence
-    // no point in changing them.
-    String status = controllerStateToString(runtimeInfo.getController().getState());
-    return new FlowStatus(programId.getApplicationId(), programId.getId(), version, runId, status);
   }
 
   private String controllerStateToString(ProgramController.State state) {
@@ -286,10 +291,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public RunIdentifier stop(AuthToken token, FlowIdentifier identifier)
     throws AppFabricServiceException, TException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-    Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
-
     try {
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      Preconditions.checkNotNull(runtimeInfo, "Unable to find runtime info for %s", identifier);
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
@@ -298,7 +302,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return new RunIdentifier(runId.getId());
     } catch (Exception e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 
@@ -320,7 +324,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       runtimeInfo.getController().command("instances", ImmutableMap.of(flowletId, (int) instances)).get();
     } catch (Exception e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
+      throw new AppFabricServiceException(e.getMessage());
     }
 
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
@@ -330,7 +334,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                 identifier.getFlowId()), flowletId, instances);
     } catch (OperationException e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 
@@ -399,12 +403,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public String getFlowDefinition(FlowIdentifier id)
     throws AppFabricServiceException, TException {
-    if(id.getType() == EntityType.FLOW) {
-      FlowDefinitionImpl flowDef = getFlowDef(id);
-      return new Gson().toJson(flowDef);
-    } else if(id.getType() == EntityType.QUERY) {
-      QueryDefinitionImpl queryDef = getQueryDefn(id);
-      return new Gson().toJson(queryDef);
+    try {
+      if(id.getType() == EntityType.FLOW) {
+        FlowDefinitionImpl flowDef = getFlowDef(id);
+        return new Gson().toJson(flowDef);
+      } else if(id.getType() == EntityType.QUERY) {
+        QueryDefinitionImpl queryDef = getQueryDefn(id);
+        return new Gson().toJson(queryDef);
+      }
+    } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
     return null;
   }
@@ -522,20 +531,25 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws AppFabricServiceException, TException {
     List<RunRecord> log;
-    Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
     try {
-      log = store.getRunHistory(programId);
-    } catch(OperationException e) {
-      throw  new AppFabricServiceException("Unable to retrieve application for " +
-                                           id.toString() + e.getMessage());
+      Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+      try {
+        log = store.getRunHistory(programId);
+      } catch(OperationException e) {
+        throw  new AppFabricServiceException("Unable to retrieve application for " +
+                                             id.toString() + e.getMessage());
+      }
+      List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
+      for (RunRecord runRecord : log) {
+        history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
+                                      runRecord.getStopTs(),runRecord.getEndStatus())
+        );
+      }
+      return history;
+    } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
-    List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
-    for (RunRecord runRecord : log) {
-      history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
-                                    runRecord.getStopTs(),runRecord.getEndStatus())
-      );
-    }
-    return history;
   }
 
   /**
@@ -546,21 +560,27 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void stopAll(String id) throws AppFabricServiceException, TException {
     // FIXME: Is id application id?
-    List<ListenableFuture<?>> futures = Lists.newLinkedList();
-    for (Type type : Type.values()) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(type).entrySet()) {
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = entry.getValue();
-        if (runtimeInfo.getProgramId().getApplicationId().equals(id)) {
-          futures.add(runtimeInfo.getController().stop());
+    try {
+      List<ListenableFuture<?>> futures = Lists.newLinkedList();
+      for (Type type : Type.values()) {
+        for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(type).entrySet()) {
+          ProgramRuntimeService.RuntimeInfo runtimeInfo = entry.getValue();
+          if (runtimeInfo.getProgramId().getApplicationId().equals(id)) {
+            futures.add(runtimeInfo.getController().stop());
+          }
         }
       }
-    }
-    if (!futures.isEmpty()) {
-      try {
-        Futures.successfulAsList(futures).get();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
+      if (!futures.isEmpty()) {
+        try {
+          Futures.successfulAsList(futures).get();
+        } catch (Exception e) {
+          LOG.warn(StackTraceUtil.toStringStackTrace(e));
+          throw new AppFabricServiceException(e.getMessage());
+        }
       }
+    } catch (Exception e) {
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 
@@ -597,9 +617,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       SessionInfo sessionInfo = new SessionInfo(identifier, info, archive, DeployStatus.REGISTERED);
       sessions.put(info.getAccountId(), sessionInfo);
       return identifier;
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      throw Throwables.propagate(e);
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 
@@ -861,7 +881,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       store.removeApplication(appId);
     } catch (OperationException e) {
-      throw Throwables.propagate(e);
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
 
     // Remove the Program jar
@@ -869,7 +890,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       appArchive.delete();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      LOG.warn(StackTraceUtil.toStringStackTrace(e));
+      throw new AppFabricServiceException(e.getMessage());
     }
 
     // Reset metrics
