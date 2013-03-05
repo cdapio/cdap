@@ -138,11 +138,9 @@ fs.readFile(configPath, function (error, result) {
 
 			if (req.session.account_id) {
 
-				next();
-
 				if (process.env.NODE_ENV === 'production') {
 					if (req.session.account_id !== config['info'].owner.account_id) {
-						logger.warn('Denied (' + config['info'].owner + ':' + req.session.account_id + ')');
+						logger.warn('Denied (' + config['info'].owner.account_id + ':' + req.session.account_id + ')');
 						res.redirect('https://' + config['accounts-host']);
 						res.end();
 					} else {
@@ -200,8 +198,8 @@ fs.readFile(configPath, function (error, result) {
 					// Perform ownership check.
 					if (process.env.NODE_ENV === 'production') {
 						
-						if (account.account_id !== config['info'].owner) {
-							logger.warn('Denied (' + config['info'].owner + ':' + account.account_id + ')');
+						if (account.account_id !== config['info'].owner.account_id) {
+							logger.warn('Denied (' + config['info'].owner.account_id + ':' + account.account_id + ')');
 							res.redirect('https://' + config['accounts-host']);
 							res.end();
 						} else {
