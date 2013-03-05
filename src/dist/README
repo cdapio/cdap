@@ -3,8 +3,8 @@ Continuuity AppFabric (tm) Developer Suite
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
 
-Continuuity Developer Suite is a fully functioning single node alone edition of 
-the Continuuity AppFabric runtime. You can use this edition to write, debug and
+Continuuity Developer Suite is a fully functioning single node edition of the 
+Continuuity AppFabric runtime. You can use this edition to write, debug and
 test your BigData applications, before deploying to the Continuuity Cloud.
 
 Installation
