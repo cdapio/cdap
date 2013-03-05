@@ -102,7 +102,7 @@ public class DBUtils {
   }
 
 
-  public static long getDevsuiteDownloadedTime(Timestamp time) {
+  public static long timestampToLong(Timestamp time) {
     if (time == null) {
       return -1;
     }
