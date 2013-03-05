@@ -245,7 +245,10 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 	});
 
 	$(function () {
-		C.initialize();
+
+		/*
+		 * Do version check.
+		 */
 
 		$.getJSON('/version', function (version) {
 

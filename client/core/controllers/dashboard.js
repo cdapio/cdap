@@ -104,6 +104,21 @@ define([], function () {
 				}
 			});
 
+			/**
+			 * Check disk space.
+			 */
+			if (window.ENV.cluster) {
+
+				$.getJSON('/disk', function (status) {
+
+					var bytes = C.util.bytes(status.free);
+					$('#diskspace').find('.sparkline-box-title').html(
+						'Storage (' + bytes[0] + bytes[1] + ' Free)');
+
+				});
+
+			}
+
 		},
 		__timeout: null,
 		getStats: function () {
