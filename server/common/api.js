@@ -1,4 +1,5 @@
 var http = require('http'),
+	https = require('https'),
 	thrift = require('thrift'),
 	fs = require('fs'),
 	log4js = require('log4js');
@@ -359,6 +360,7 @@ logger.setLevel(LOG_LEVEL);
 		switch (method) {
 			case 'inject':
 				
+				post_options.port = 10000;
 				post_options.path = '/stream/' + params.stream;
 				
 			break;
@@ -385,8 +387,6 @@ logger.setLevel(LOG_LEVEL);
 			});
 			res.on('end', function () {
 				data = data.join('');
-
-				logger.trace('Gateway Done', apiKey, post_data, res.statusCode, data);
 
 				done(res.statusCode !== 200 ? {
 					statusCode: res.statusCode,
@@ -497,8 +497,6 @@ logger.setLevel(LOG_LEVEL);
 													result.overall === 5 || // Success
 													result.overall === 6 || // Undeployed
 													result.overall === 7) {
-
-													logger.trace('Uploaded completed with', result);
 
 													conn.end();
 

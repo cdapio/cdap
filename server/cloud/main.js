@@ -255,6 +255,7 @@ fs.readFile(configPath, function (error, result) {
 					var signedCookies = utils.parseSignedCookies(cookies, config['cookie-secret']);
 					var obj = utils.parseJSONCookies(signedCookies);
 
+					data.api_key = obj['continuuity-sso'].api_key;
 					data.account_id = obj['continuuity-sso'].account_id;
 					data.name = obj['continuuity-sso'].name;
 
@@ -372,7 +373,7 @@ fs.readFile(configPath, function (error, result) {
 				 * Gateway request. Requires an API Key.
 				 */
 				socket.on('gateway', function (request) {
-					Api.gateway(request.session.api_key, request.method,
+					Api.gateway(socket.handshake.api_key, request.method,
 						request.params, function (error, response) {
 						socketResponse(socket, request, error, response);
 					}, true);
