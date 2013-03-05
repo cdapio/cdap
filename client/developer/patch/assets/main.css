@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
 
 #breadcrumb li a {
 	display: block;
@@ -18,4 +21,8 @@
 #nav ul li .nav-link:hover {
 	color: #61bed8;
 	background-image: url(/assets/img/icn-nav-down.png);
+}
+
+#nav span {
+	letter-spacing: 0.3em;
 }

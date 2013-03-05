@@ -1,21 +1,7 @@
-
-#header {
-
-}
 /*
-#logo {
-	background-image: url(/assets/img/continuuity-logo-2x.png);
-}
-
-#global a {
-	border-left: 1px solid #FFF;
-}
-
-#breadcrumb li a {
-	background-image: url(/assets/img/breadcrumb-split-blue.png);
-}
-*/
-
+ * Copyright (c) 2013 Continuuity, Inc.
+ */
+ 
 #nav {
 	background-image: -o-linear-gradient(120deg, #3794af, #6DBEDA);
 	background-image: -moz-linear-gradient(120deg, #3794af, #6DBEDA);
@@ -25,4 +11,7 @@
 }
 #nav li {
 	border-color: #88c5db !important;
+}
+#nav span {
+	letter-spacing: 0.2em;
 }
