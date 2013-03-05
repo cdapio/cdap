@@ -1,5 +1,7 @@
 package com.continuuity.test;
 
+import com.continuuity.api.data.DataSet;
+
 /**
  * Instance of this class is for managing deployed application.
  *
@@ -27,6 +29,16 @@ public interface ApplicationManager {
    * @return A {@link StreamWriter}.
    */
   StreamWriter getStreamWriter(String streamName);
+
+  /**
+   * Gets an instance of {@link DataSet} of the given dataset name.
+   * Operations on the returned {@link DataSet} always performed synchronously,
+   * i.e. no support for multi-operations transaction.
+   * @param dataSetName Name of the dataset to retrieve.
+   * @param <T> Type of the dataset.
+   * @return A {@link DataSet} instance of the given dataset type.
+   */
+  <T extends DataSet> T getDataSet(String dataSetName);
 
   /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.

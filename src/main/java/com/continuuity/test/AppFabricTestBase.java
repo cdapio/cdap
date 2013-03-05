@@ -6,16 +6,11 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.FlowDescriptor;
-import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
@@ -25,17 +20,16 @@ import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.test.ApplicationManagerFactory;
+import com.continuuity.internal.test.DefaultApplicationManager;
 import com.continuuity.internal.test.DefaultProcedureClient;
 import com.continuuity.internal.test.DefaultStreamWriter;
 import com.continuuity.internal.test.ProcedureClientFactory;
-import com.continuuity.internal.test.RuntimeStats;
 import com.continuuity.internal.test.StreamWriterFactory;
 import com.continuuity.internal.test.bytecode.FlowletRewriter;
 import com.continuuity.internal.test.bytecode.ProcedureRewriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -61,7 +55,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -132,106 +125,8 @@ public class AppFabricTestBase {
       }
       Preconditions.checkState(status == 5, "Fail to deploy app.");
 
-      return new ApplicationManager() {
-
-        private final ConcurrentMap<String, FlowIdentifier> runningProcessses = Maps.newConcurrentMap();
-
-        @Override
-        public FlowManager startFlow(final String flowName) {
-          try {
-            final FlowIdentifier flowId = new FlowIdentifier(accountId, applicationId, flowName, 0);
-            Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
-                                     "Flow %s is already running", flowName);
-            try {
-              appFabricServer.start(token, new FlowDescriptor(flowId, ImmutableList.<String>of()));
-            } catch (Exception e) {
-              runningProcessses.remove(flowName);
-              throw Throwables.propagate(e);
-            }
-
-            return new FlowManager() {
-              @Override
-              public void setFlowletInstances(String flowletName, int instances) {
-                Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
-                try {
-                  appFabricServer.setInstances(token, flowId, flowletName, (short)instances);
-                } catch (Exception e) {
-                  throw Throwables.propagate(e);
-                }
-              }
-
-              @Override
-              public void stop() {
-                try {
-                  if (runningProcessses.remove(flowName, flowId)) {
-                    appFabricServer.stop(token, flowId);
-                  }
-                } catch (Exception e) {
-                  throw Throwables.propagate(e);
-                }
-              }
-            };
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public ProcedureManager startProcedure(final String procedureName) {
-          try {
-            final FlowIdentifier procedureId = new FlowIdentifier(accountId, applicationId, procedureName, 0);
-            procedureId.setType(EntityType.QUERY);
-            Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
-                                     "Flow %s is already running", procedureName);
-            try {
-              appFabricServer.start(token, new FlowDescriptor(procedureId, ImmutableList.<String>of()));
-            } catch (Exception e) {
-              runningProcessses.remove(procedureName);
-              throw Throwables.propagate(e);
-            }
-
-            return new ProcedureManager() {
-              @Override
-              public void stop() {
-                try {
-                  if (runningProcessses.remove(procedureName, procedureId)) {
-                    appFabricServer.stop(token, procedureId);
-                  }
-                } catch (Exception e) {
-                  throw Throwables.propagate(e);
-                }
-              }
-
-              @Override
-              public ProcedureClient getClient() {
-                return injector.getInstance(ProcedureClientFactory.class)
-                  .create(accountId, applicationId, procedureName);
-              }
-            };
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public StreamWriter getStreamWriter(String streamName) {
-          QueueName queueName = QueueName.fromStream(Id.Account.from(accountId), streamName);
-          return injector.getInstance(StreamWriterFactory.class).create(queueName, accountId, applicationId);
-        }
-
-        @Override
-        public void stopAll() {
-          try {
-            for (Map.Entry<String, FlowIdentifier> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
-              appFabricServer.stop(token, entry.getValue());
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          } finally {
-            RuntimeStats.clearStats(applicationId);
-          }
-        }
-      };
+      return injector.getInstance(ApplicationManagerFactory.class).create(token, accountId, applicationId,
+                                                                          appFabricServer, deployedJar, appSpec);
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -259,11 +154,14 @@ public class AppFabricTestBase {
                                       @Override
                                       protected void configure() {
                                         install(new FactoryModuleBuilder()
-                                                  .implement(StreamWriter.class, DefaultStreamWriter.class)
-                                                  .build(StreamWriterFactory.class));
+                                                  .implement(ApplicationManager.class, DefaultApplicationManager.class)
+                                                  .build(ApplicationManagerFactory.class));
                                         install(new FactoryModuleBuilder()
-                                                  .implement(ProcedureClient.class, DefaultProcedureClient.class)
-                                                  .build(ProcedureClientFactory.class));
+                                                .implement(StreamWriter.class, DefaultStreamWriter.class)
+                                                .build(StreamWriterFactory.class));
+                                        install(new FactoryModuleBuilder()
+                                                .implement(ProcedureClient.class, DefaultProcedureClient.class)
+                                                .build(ProcedureClientFactory.class));
                                       }
                                     });
 
