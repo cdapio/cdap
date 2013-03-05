@@ -1658,10 +1658,10 @@ ol {
 	background-color: white;
 	border-radius: 0px;
 	padding: 0;
-	height: 108px;
-	padding-right: 22px;
-	width: 86px;
-	border: 0;
+	height: 107px;
+	padding: 4px 16px 0px 0px;
+	width: 113px;
+	border-color: #fff;
 }
 .window.source .window-input {
 	background-image: url(../img/stream-input.png);
