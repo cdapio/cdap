@@ -13,7 +13,8 @@ var express = require('express'),
 	log4js = require('log4js'),
 	utils = require('connect').utils,
 	cookie = require('cookie'),
-	crypto = require('crypto');
+	crypto = require('crypto'),
+	diskspace = require('diskspace');
 
 var Api = require('../common/api'),
 	Env = require('./env');
@@ -95,6 +96,25 @@ function accountsRequest (path, done) {
 
 }
 
+function renderAccessError(req, res) {
+
+	logger.warn('Denied user (current, owner)', req.session.account_id, config['info'].owner.account_id);
+
+	var root;
+	if (fs.existsSync(__dirname + '/../client/')) {
+		root = __dirname + '/../client/';
+	} else {
+		root = __dirname + '/../../client/';
+	}
+
+	if (process.env.NODE_ENV === 'development') {
+		root += 'cloud';
+	}
+
+	res.sendfile('access-error.html', {'root': root});
+
+}
+
 /**
  * Read the configuration file.
  */
@@ -140,12 +160,13 @@ fs.readFile(configPath, function (error, result) {
 
 				if (process.env.NODE_ENV === 'production') {
 					if (req.session.account_id !== config['info'].owner.account_id) {
-						logger.warn('Denied (' + config['info'].owner.account_id + ':' + req.session.account_id + ')');
-						res.redirect('https://' + config['accounts-host']);
-						res.end();
+						renderAccessError(req, res);
 					} else {
 						next();
 					}
+				} else {
+					logger.warn('Allowed non-owner access (development only)');
+					next();
 				}
 
 			} else {
@@ -180,10 +201,12 @@ fs.readFile(configPath, function (error, result) {
 
 			accountsRequest('/getSSOUser/' + nonce, function (status, account) {
 
+				logger.info(arguments);
+
 				if (status !== 200 || account.error) {
 
 					logger.warn('getSSOUser', status, account);
-					logger.warn('Redirecting to https://' + config['accounts-host']);
+					logger.warn('SSO Failed. Redirecting to https://' + config['accounts-host']);
 					res.redirect('https://' + config['accounts-host']);
 					res.end();
 
@@ -199,9 +222,7 @@ fs.readFile(configPath, function (error, result) {
 					if (process.env.NODE_ENV === 'production') {
 						
 						if (account.account_id !== config['info'].owner.account_id) {
-							logger.warn('Denied (' + config['info'].owner.account_id + ':' + account.account_id + ')');
-							res.redirect('https://' + config['accounts-host']);
-							res.end();
+							renderAccessError(req, res);
 						} else {
 							req.session.account_id = account.account_id;
 							req.session.name = account.first_name + ' ' + account.last_name;
@@ -391,9 +412,35 @@ fs.readFile(configPath, function (error, result) {
 			Api.upload(req.session.account_id, req, res, req.params.file, io.sockets.in(session_id));
 
 		});
+
+		/**
+		 * Disk space.
+		 */
+		app.get('/disk', function (req, res) {
+
+			var path = process.env.NODE_ENV === 'production' ? '/dev/vdb1 ' : '/';
+
+			diskspace.check(path, function (total, free, status) {
+
+				res.write(JSON.stringify({
+					total: total,
+					free: free,
+					status: status
+				}));
+				res.end();
+
+			});
+
+		});
+
+		/**
+		 * Bind error
+		 */
 		app.on('error', function () {
+
 			logger.warn('Port ' + config['node-port'] + ' is in use.');
 			process.exit(1);
+
 		});
 
 		accountsRequest('/api/vpc/getUser/' + config['gateway.cluster.name'],
@@ -428,7 +475,7 @@ fs.readFile(configPath, function (error, result) {
 
 						/*
 						 * Don't change this.
-						 * Reactor start-up script looks for "Listening on port "
+						 * Reactor start-up script looks for output "Listening on port "
 						 */
 						logger.info('Listening on port (HTTP)', config['cloud-ui-port']);
 

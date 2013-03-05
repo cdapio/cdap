@@ -360,13 +360,13 @@ logger.setLevel(LOG_LEVEL);
 		switch (method) {
 			case 'inject':
 				
-				post_options.port = 10000;
+				post_options.port = this.config['stream.rest.port'];
 				post_options.path = '/stream/' + params.stream;
 				
 			break;
 			case 'query':
 
-				post_options.port = 10003;
+				post_options.port = this.config['procedure.rest.port'];
 				post_options.path = '/procedure/' + params.app + '/' + 
 					params.service + '/' + params.method;
 
