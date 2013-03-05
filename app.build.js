@@ -11,5 +11,10 @@
 		"views": "../core/views",
 		"controllers": "../core/controllers",
 		"partials": "../core/partials"
-	}
+	},
+    wrap: {
+        start: "var copyright = 'Copyright (c) 2013 Continuuity, Inc. Minified using RequireJS. https://github.com/jrburke/requirejs';",
+        end: "var thanks = 'Thanks for using Continuuity.';"
+    },
+    preserveLicenseComments: false
 })

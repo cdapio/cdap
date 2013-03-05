@@ -22,6 +22,8 @@ define([
 			self.set('message', null);
 			self.set('network', false);
 
+			ENV.credential = this.get('apiKey');
+
 			$.post('/credential', 'apiKey=' + this.get('apiKey'),
 				function (result, status) {
 
@@ -74,21 +76,19 @@ define([
 			}, function (error, response) {
 
 				if (error) {
-					C.Vw.Modal.show(
-						"Deployment Error",
-						response.message || JSON.stringify(response), function () {
-							self.set('current', null);
-							$(self.get('element')).hide();
 
-						}, true);
+					self.set('finished', 'Error');
+					if (error.name) {
+						self.set('finishedMessage', error.name + ': ' + error.message);
+					} else {
+						self.set('finishedMessage', response.message || JSON.stringify(error));
+					}
+
 				} else {
-					C.Vw.Modal.show(
-						"Success",
-						"Successfully pushed to " + destination + ".",
-						function () {
-							self.set('current', null);
-							$(self.get('element')).hide();
-						}, true);
+
+					self.set('finished', 'Success');
+					self.set('finishedMessage', "Successfully pushed to " + destination + ".");
+
 				}
 
 				self.set("pushing", false);
@@ -110,6 +110,7 @@ define([
 		},
 		hide: function () {
 
+			this.set('finished', null);
 			this.set('current', null);
 			$(this.get('element')).hide();
 
