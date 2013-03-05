@@ -44,6 +44,12 @@
             <scope>provided</scope>
             <classifier>api</classifier>
         </dependency>
+        <dependency>
+            <groupId>com.continuuity</groupId>
+            <artifactId>continuuity-test</artifactId>
+            <version>${continuuityVersion}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <!-- Set the main class and tell maven to include dependencies in the jar -->
     <build>
