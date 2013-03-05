@@ -1613,6 +1613,8 @@ ol {
 	height: 54px;
 	position: absolute;
 	background-image: url(../img/flowlet-input.png);
+	background-repeat: no-repeat;
+	
 	top: 20px;
 	left: -64px;
 	line-height: 55px;
@@ -1656,6 +1658,7 @@ ol {
 .window.source {
 	background-image: url(../img/stream-shape.png) !important;
 	background-color: white;
+	background-repeat: no-repeat;
 	border-radius: 0px;
 	padding: 0;
 	height: 107px;
