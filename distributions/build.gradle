@@ -71,6 +71,7 @@ task developer_suite_dist (type: Zip) {
     exclude 'benchmark'
     exclude 'event-gen'
     exclude 'flume-client'
+    exclude 'NonceCleanup.sh'
     exclude 'common*'
     def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
     cp += ":\$APP_HOME/conf/"
@@ -186,6 +187,7 @@ task sandbox_dist (type: Zip) {
     exclude 'benchmark'
     exclude 'event-gen'
     exclude 'flume-client'
+    exclude 'NonceCleanup.sh'
     exclude 'common*'
     def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
     cp += ":\$APP_HOME/conf/"
