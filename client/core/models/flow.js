@@ -76,7 +76,7 @@ define([], function () {
 				}
 			}
 			if (!metrics.length) {
-				C.debug('Cannot update. Not tracking any metrics for ' + app + ':' + id);
+				C.debug('Not tracking any metrics for Flow ' + app + ':' + id);
 				this.set('__loadingData', false);
 				return;
 			}

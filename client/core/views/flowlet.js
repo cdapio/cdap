@@ -6,12 +6,8 @@ define([
 
 	return Em.View.create({
 		compile: function () {
-
-			console.log('Compiling flowlet detail.');
-
 			Ember.TEMPLATES.flowlet = Em.Handlebars.compile(Flowlet);
 			Ember.TEMPLATES['input-stream'] = Em.Handlebars.compile(Input);
-
 			this.append();
 		},
 		templateName: function () {

@@ -105,9 +105,6 @@ define([], function () {
 			});
 
 		},
-		testing: function () {
-			console.log('trigg');
-		}.property('current.metricData.processedcount'),
 		__timeout: null,
 		getStats: function () {
 

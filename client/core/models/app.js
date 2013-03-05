@@ -46,7 +46,7 @@ define([], function () {
 				}
 			}
 			if (!metrics.length) {
-				C.debug('Cannot update. Not tracking any metrics for APP: ' + id);
+				C.debug('Not tracking any metrics for Application ' + id);
 				this.set('__loadingData', false);
 				return;
 			}
