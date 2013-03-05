@@ -137,7 +137,7 @@ a, a:visited {
 	font-size: 13px;
 	letter-spacing: 0.1em;
 	padding-left: 45px;
-	line-height: 0;
+	line-height: 8px;
 }
 #nav ul li {
 	list-style: none;
