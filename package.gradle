@@ -135,6 +135,13 @@ task createApiJar(type: Jar) {
     from project(':common').sourceSets.api.output
 }
 
+task createTestJar(type: Jar) {
+    baseName "continuuity-test"
+    appendix ""
+    classifier ""
+    from project(':unit-test').sourceSets.main.output
+}
+
 task createApiSourceJar(type: Jar) {
     baseName "continuuity-api"
     appendix ""
@@ -157,6 +164,15 @@ task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
     from (javadoc.destinationDir) {
       exclude "**/internal/"
       exclude "**/passport/"
+    }
+}
+
+task createTestJavadocJar(type: Jar, dependsOn: javadoc) {
+    baseName "continuuity-test"
+    appendix ""
+    classifier "javadoc"
+    from project(':unit-test').javadoc {
+        exclude "**/internal/"
     }
 }
 
