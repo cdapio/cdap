@@ -18,6 +18,7 @@ import com.google.inject.assistedinject.Assisted;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  *
@@ -60,9 +61,29 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void send(ByteBuffer buffer) throws IOException {
-      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(), buffer);
-      QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntryImpl(codec.encodePayload(event)));
+    send(ImmutableMap.<String, String>of(), buffer);
+  }
+
+  @Override
+  public void send(Map<String, String> headers, String content) throws IOException {
+    send(headers, Charsets.UTF_8.encode(content));
+  }
+
+  @Override
+  public void send(Map<String, String> headers, byte[] content) throws IOException {
+    send(headers, content, 0, content.length);
+  }
+
+  @Override
+  public void send(Map<String, String> headers, byte[] content, int off, int len) throws IOException {
+    send(headers, ByteBuffer.wrap(content, off, len));
+  }
+
+  @Override
+  public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
+    StreamEvent event = new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer);
+    QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
+                                            new QueueEntryImpl(codec.encodePayload(event)));
     try {
       opex.commit(opCtx, enqueue);
     } catch (OperationException e) {

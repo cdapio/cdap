@@ -104,7 +104,7 @@ public class WordCountApp2 implements Application {
       return FlowSpecification.Builder.with()
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
-        .withFlowlets().add("StreamSource", new StreamSucker())
+        .withFlowlets().add(new StreamSource())
                        .add(new Tokenizer())
                        .add(new CountByField())
         .connect().fromStream("text").to("StreamSource")
@@ -114,7 +114,7 @@ public class WordCountApp2 implements Application {
     }
   }
 
-  public static final class StreamSucker extends AbstractFlowlet {
+  public static final class StreamSource extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
 
