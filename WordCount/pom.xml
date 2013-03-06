@@ -25,24 +25,9 @@
     <dependencies>
         <dependency>
             <groupId>com.continuuity</groupId>
-            <artifactId>app-fabric</artifactId>
+            <artifactId>continuuity-api</artifactId>
             <version>${continuuityVersion}</version>
             <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>common</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>data-fabric</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>

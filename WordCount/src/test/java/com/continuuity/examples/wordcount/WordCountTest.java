@@ -1,12 +1,12 @@
 package com.continuuity.examples.wordcount;
 
-import com.continuuity.internal.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
