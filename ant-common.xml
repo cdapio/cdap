@@ -8,7 +8,7 @@
     <condition property="appfabric.lib" value="../.." else="${appfabric.home}">
         <matches string="${appfabric.home}" pattern="..env.APP_FABRIC_HOME."/>
     </condition>
-    <echo message="Expecting AppFabric API libraries in ${appfabric.lib}"/>
+    <!-- echo message="Expecting AppFabric API libraries in ${appfabric.lib}"/ -->
 
     <property name="example.name" value="${ant.project.name}"/>
     <property name="main.class" value="${example.package}.${example.name}"/>
