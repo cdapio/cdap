@@ -122,6 +122,11 @@ public interface DataManagementService {
    */
   public void deleteVPC(int accountId, int vpcId) throws VPCNotFoundException;
 
+  /**
+   * Deletes VPC given VPC name
+   * @param vpcName name of VPC to be deleted
+   */
+  public void deleteVPC (String vpcName) throws VPCNotFoundException;
 
   /**
    * Get VPC list for accountID

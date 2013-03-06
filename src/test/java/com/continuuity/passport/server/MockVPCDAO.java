@@ -21,6 +21,10 @@ public class MockVPCDAO implements VpcDAO {
   }
 
   @Override
+  public void removeVPC(String vpcName) throws VPCNotFoundException {
+  }
+
+  @Override
   public void removeVPC(int accountId, int vpcId) throws ConfigurationException, VPCNotFoundException {
     
   }

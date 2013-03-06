@@ -85,6 +85,27 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
+  public void removeVPC(String vpcName) throws VPCNotFoundException{
+    Preconditions.checkNotNull(this.poolManager,"Data source connector cannot be null");
+    Connection connection = null;
+    PreparedStatement ps = null;
+    String SQL = String.format("DELETE FROM %s where %s = ?",DBUtils.VPC.TABLE_NAME,DBUtils.VPC.NAME_COLUMN);
+    try {
+      connection =  this.poolManager.getValidConnection();
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1,vpcName);
+      int count = ps.executeUpdate();
+      if (count == 0 ) {
+        throw new VPCNotFoundException("VPC not found");
+      }
+    } catch (SQLException e){
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection,ps);
+    }
+  }
+
+  @Override
   public void removeVPC(int accountId, int vpcId)
     throws ConfigurationException, VPCNotFoundException {
 
