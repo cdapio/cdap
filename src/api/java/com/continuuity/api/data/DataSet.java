@@ -10,7 +10,7 @@ package com.continuuity.api.data;
  *   that contains all information needed to instantiate the data set at
  *   runtime.</li>
  * <li>At runtime (in a flow or procedure) the data set is instantiated
- *   by calling a factory method of the execution context. This uses the
+ *   by dependency injection using @UseDataSet annotation. This uses the
  *   constructor of the the data set that takes the above specification
  *   as argument. It is important that the data set is instantiated through
  *   the context: This also makes sure that the data fabric runtime is

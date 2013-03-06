@@ -261,6 +261,14 @@ public class IndexedTable extends DataSet {
     }
   }
 
+  /**
+   * Perform an increment operation by primary key.
+   * @param increment The increment operation, as if it were on a non-indexed table.
+   *             Note that if the increment is on the secondary key column,
+   *             then the index must be updated; otherwise this is a
+   *             pass-through to the underlying table.
+   * @throws OperationException if the operation goes wrong
+   */
   public void increment(Increment increment) throws OperationException {
     // if the increment is on columns other than the index, just pass
     // it through to the table - the index is not affected
