@@ -189,8 +189,12 @@ public class DataManagementServiceImpl implements DataManagementService {
     } catch (ConfigurationException e) {
       throw Throwables.propagate(e);
     }
+  }
 
-
+  @Override
+  public void deleteVPC(String vpcName) throws VPCNotFoundException {
+    Preconditions.checkNotNull(vpcDao, "VPC data access objects cannot be null");
+    vpcDao.removeVPC(vpcName);
   }
 
   @Override

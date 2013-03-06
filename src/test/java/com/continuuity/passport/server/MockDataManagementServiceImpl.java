@@ -170,6 +170,15 @@ public class MockDataManagementServiceImpl implements DataManagementService {
   }
 
   /**
+   * Deletes VPC given VPC name
+   *
+   * @param vpcName name of VPC to be deleted
+   */
+  @Override
+  public void deleteVPC(String vpcName) throws VPCNotFoundException {
+  }
+
+  /**
    * Get VPC list for accountID
    *
    * @param accountId accountId identifying accounts
