@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare name for {@link com.continuuity.api.flow.flowlet.OutputEmitter}.
+ * Annotation to declare the name for a {@link com.continuuity.api.flow.flowlet.OutputEmitter}.
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
  */

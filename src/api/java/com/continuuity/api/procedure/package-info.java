@@ -4,11 +4,11 @@
 
 /**
  * <p>
- *   This package provides API for procedure implementations.
+ *   This package provides the API for procedure implementations.
  * </p>
  * <p>
- *   Every procedure should implement {@link Procedure} interface. For convenience the package comes with
- *   {@link AbstractProcedure} class which implements basic initialization logic and that is preferable to use in most
+ *   Every procedure should implement the {@link Procedure} interface. For convenience the package comes with
+ *   {@link AbstractProcedure} class which implements basic initialization logic that is preferable to use in most
  *   cases.
  * </p>
  */
