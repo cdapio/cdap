@@ -12,14 +12,15 @@ import java.io.IOException;
  * object back to client.
  */
 public interface ProcedureResponder {
+
   /**
    * Adds the response to be returned to the caller. Calling this method multiple times to the same
-   * {@link ProcedureResponder} will return the same {@link ProcedureResponse.Writer} instance and the
-   * latter submitted {@link ProcedureResponse} would be ignored.
+   * {@link ProcedureResponder} will return the same {@link ProcedureResponse.Writer} instance and any
+   * newer {@link ProcedureResponse} will be ignored.
    *
    * @param response A {@link ProcedureResponse} containing the response to be returned.
    * @return  An instance of {@link ProcedureResponse.Writer} for writing data of the response.
-   * @throws IOException When there is issue sending the response to the callee.
+   * @throws IOException When there is an issue sending the response to the callee.
    */
   ProcedureResponse.Writer stream(ProcedureResponse response) throws IOException;
 
@@ -27,7 +28,7 @@ public interface ProcedureResponder {
    * Sends a response with a json body.
    *
    * @param response A {@link ProcedureResponse} containing the response to be returned.
-   * @param object An object to be serialized into json and send as response body.
+   * @param object An object to be serialized into json and sent as response body.
    * @throws IOException When there is issue sending the response to the callee.
    */
   void sendJson(ProcedureResponse response, Object object) throws IOException;
@@ -36,8 +37,8 @@ public interface ProcedureResponder {
    * Sends an error response to client with the given error message.
    *
    * @param errorCode The error code
-   * @param errorMessage The error message send back to client. If it is {@code null}, no error message would be sent.
-   * @throws IOException When there is issue sending the response to the callee.
+   * @param errorMessage The error message sent back to client. If it is {@code null}, no error message will be sent.
+   * @throws IOException When there is an issue sending the response to the callee.
    */
   void error(ProcedureResponse.Code errorCode, String errorMessage) throws IOException;
 }

@@ -4,7 +4,7 @@
 
 /**
  * <p>
- *   This package provides API for flow implementations.
+ *   This package provides APIs for {@link Flow} implementations.
  * </p>
  * <p>
  *   Every flow should implement {@link Flow} interface.

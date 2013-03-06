@@ -37,14 +37,14 @@ public final class FlowletConnection {
   }
 
   /**
-   * @return name of the source.
+   * @return Name of the source.
    */
   public String getSourceName() {
     return sourceName;
   }
 
   /**
-   * @return name of the flowlet, the connection is connected to.
+   * @return Name of the flowlet the connection is connected to.
    */
   public String getTargetName() {
     return targetName;

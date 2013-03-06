@@ -4,7 +4,7 @@
 
 /**
  * This package contains Continuuity API interfaces -  {@link com.continuuity.api.flow.Flow Flows},
- * {@link com.continuuity.api.flow.flowlet.Flowlet FLowlets},
+ * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets},
  * {@link com.continuuity.api.data.stream.Stream Streams}, {@link com.continuuity.api.data.DataSet Datasets} and
  * {@link com.continuuity.api.procedure.Procedure Procedures}
  *
@@ -16,11 +16,11 @@
  * {@link com.continuuity.api.procedure.Procedure Procedures} that are deployable.
  *
  * <p>
- *   In order to create and application in AppFabric, you begin by implementing an interface
+ *   In order to create an application in AppFabric, you begin by implementing an interface
  *   {@link com.continuuity.api.Application}.
  *   Within the implementation of {@link com.continuuity.api.Application#configure()},
  *   you create an {@link com.continuuity.api.ApplicationSpecification}
- *   that defines and/or create all the components of an {@link com.continuuity.api.Application}.
+ *   that defines and/or creates all the components of an {@link com.continuuity.api.Application}.
  * </p>
  *
  * <p>
@@ -48,8 +48,8 @@
  * </p>
  *
  * <h1>Flow</h1>
- * A {@link com.continuuity.api.flow.Flow} is type of Processor that enables real time processing of events as a DAG.
- * A {@link com.continuuity.api.flow.Flow} is set of {@link com.continuuity.api.flow.flowlet.Flowlet}
+ * A {@link com.continuuity.api.flow.Flow} is type of Processor that enables real time processing of events.
+ * A {@link com.continuuity.api.flow.Flow} is set of {@link com.continuuity.api.flow.flowlet.Flowlet}s
  * connected by queues.
  * <p>
  *   In order to define a {@link com.continuuity.api.flow.Flow}, you need to implement
@@ -71,8 +71,8 @@
  * </p>
  *
  * <h1>Procedure</h1>
- * A {@link com.continuuity.api.procedure.Procedure} is for handling requests from external systems to the AppFabric
- * and perform arbitrary server-side processing on-demand.
+ * A {@link com.continuuity.api.procedure.Procedure} is for handling queries from external systems to the AppFabric
+ * and performing arbitrary server-side processing on-demand.
  * <p>
  *   To define a {@link com.continuuity.api.procedure.Procedure}, you need to implement the
  *   {@link com.continuuity.api.procedure.Procedure} interface.
@@ -83,7 +83,7 @@
  *
  * <h1>Dataset</h1>
  * {@link com.continuuity.api.data.DataSet} defines the way you store and retrieve data. The AppFabric provides
- * several {@link com.continuuity.api.data.DataSet} implementation and you could also implement you own.
+ * several {@link com.continuuity.api.data.DataSet} implementations and you could also implement your own.
  * <p>
  *   See {@link com.continuuity.api.data.DataSet} for more details.
  * </p>

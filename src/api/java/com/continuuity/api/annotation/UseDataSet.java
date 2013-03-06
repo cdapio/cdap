@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare for {@link com.continuuity.api.data.DataSet} usage.
+ * Annotation to declare a method for {@link com.continuuity.api.data.DataSet} usage.
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
  * @see com.continuuity.api.procedure.Procedure Procedure

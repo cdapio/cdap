@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class provides specification of a Flow. Instance of this class should be created through
+ * This class provides the specification of a Flow. Instances of this class should be created through
  * the {@link Builder} class by invoking the {@link Builder#with()} method.
  *
  * <pre>
@@ -47,7 +47,7 @@ public interface FlowSpecification {
   String getName();
 
   /**
-   * @return Description of the flow.
+   * @return Description of the {@link Flow}.
    */
   String getDescription();
 
@@ -57,7 +57,7 @@ public interface FlowSpecification {
   Map<String, FlowletDefinition> getFlowlets();
 
   /**
-   * @return Immutable list of {@link FlowletConnection}.
+   * @return Immutable list of {@link FlowletConnection}s.
    */
   List<FlowletConnection> getConnections();
 
@@ -83,6 +83,7 @@ public interface FlowSpecification {
      * Class for setting flow name.
      */
     public final class NameSetter {
+
       /**
        * Sets the name of the Flow
        * @param name of the flow.
@@ -99,6 +100,7 @@ public interface FlowSpecification {
      * Defines a class for defining the actual description.
      */
     public final class DescriptionSetter {
+
       /**
        * Sets the description for the flow.
        * @param description of the flow.
@@ -116,6 +118,7 @@ public interface FlowSpecification {
      * has been added.
      */
     public final class AfterDescription {
+
       /**
        * @return An instance of {@link FlowletAdder} for adding flowlets to specification.
        */
@@ -129,6 +132,7 @@ public interface FlowSpecification {
      * specification creation.
      */
     public interface FlowletAdder {
+
       /**
        * Add a flowlet to the flow.
        * @param flowlet {@link Flowlet} instance to be added to flow.
@@ -137,7 +141,7 @@ public interface FlowSpecification {
       MoreFlowlet add(Flowlet flowlet);
 
       /**
-       * Add a flowlet to flow with minimum number of instances to begin with.
+       * Add a flowlet to the flow with minimum number of instances to begin with.
        * @param flowlet {@link Flowlet} instance to be added to flow.
        * @param instances Number of instances for the flowlet
        * @return An instance of {@link MoreFlowlet} for adding more flowlets
@@ -212,9 +216,10 @@ public interface FlowSpecification {
      * Defines the starting flowlet for a connection.
      */
     public interface ConnectFrom {
+
       /**
-       * Defines the flowlet that is at run of the connection.
-       * @param flowlet that is run of connection.
+       * Defines the flowlet that is at the start of the connection.
+       * @param flowlet that is at the start of connection.
        * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       ConnectTo from(Flowlet flowlet);
@@ -227,7 +232,7 @@ public interface FlowSpecification {
       ConnectTo from(Stream stream);
 
       /**
-       * Defines the flowlet that is at run of the connection by the flowlet name.
+       * Defines the flowlet that is at the start of the connection by the flowlet name.
        * @param flowlet Name of the flowlet.
        * @return And instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
@@ -245,6 +250,7 @@ public interface FlowSpecification {
      * Class defining the connect to interface for a connection.
      */
     public interface ConnectTo {
+
       /**
        * Defines the flowlet that the connection is connecting to.
        * @param flowlet the connection connects to.

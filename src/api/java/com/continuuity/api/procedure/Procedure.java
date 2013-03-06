@@ -10,12 +10,12 @@ package com.continuuity.api.procedure;
 public interface Procedure {
 
   /**
-   * Configures this procedure providing a specification with more details about procedure.
+   * Configures this procedure providing a specification with more details about the procedure.
    * <p>
    *   To create a Procedure, one must implement this interface. The {@link #configure()} method will be
    *   invoked during deployment time and it returns a {@link ProcedureSpecification} to specify how to
    *   configure the given procedure. There are no guarantees around how many times the {@link #configure()}
-   *   will be calling during deployment or runtime, hence, the configuration should be very simple and should
+   *   will be called during deployment or runtime, hence, the configuration should be very simple and should
    *   not include initialization of resources.
    * </p>
    * @return An instance of {@link ProcedureSpecification}
@@ -26,7 +26,7 @@ public interface Procedure {
   /**
    * Initializes this Procedure at run-time.
    * <p>
-   *  This method is invoked only once during startup of Procedure on per instance basis. This method can be
+   *  This method is invoked only once during startup of Procedure on a per instance basis. This method can be
    *  be used to initialize any user related resources.
    * </p>
    * @param context
