@@ -97,7 +97,7 @@ task developer_suite_dist (type: Zip) {
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
-    from project(':test').tasks.getByName('testJar').outputs
+    from project(':unit-test').tasks.getByName('jar').outputs
     exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
@@ -213,7 +213,7 @@ task sandbox_dist (type: Zip) {
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
-    from project(':test').tasks.getByName('testJar').outputs
+    from project(':unit-test').tasks.getByName('jar').outputs
     exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
