@@ -6,31 +6,72 @@ evaluationDependsOn(':passport')
 apply plugin:'maven'
 apply plugin:'ubuntu'
 
-configurations{
-  distributions
-}
-
 task javadoc(type: Javadoc, overwrite: true) {
+  source = project.parent.subprojects.collect { proj ->
+   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
+     return proj.sourceSets.api.allJava.exclude{ print it.file.name }
+   }else{
+    return []
+   }
+  }
+
+  exclude '**/internal/**'
+  exclude '**/passport/**'
+
+  doFirst{
+    classpath = files(project.parent.subprojects.collect { project ->
+    if(project.plugins.findPlugin("java")){
+      return  project.sourceSets.main.compileClasspath
+    }else{
+      return []
+    }
+   })
+  }
   group = 'Documentation'
   description = 'Aggregates API javadocs across all projects.'
-  doFirst{
-    source project.parent.subprojects.collect { project ->
-      if(project.plugins.findPlugin("java")){
-        project.sourceSets.api.allJava
-      }
-      []
-    }
-  }
+
   destinationDir = new File(buildDir, 'javadoc')
   // Might need a classpath
-  doFirst{
-    classpath files(project.parent.subprojects.collect { project ->
-      if(project.plugins.findPlugin("java")){
-        project.sourceSets.main.compileClasspath
-      }
-      []
-    })
-  }
+
+}
+
+task combinedApiJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    classifier ""
+    from project(':app-fabric').sourceSets.api.output
+    from project(':data-fabric').sourceSets.api.output
+    from project(':common').sourceSets.api.output
+}
+
+task combinedApiSourceJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    classifier "source"
+    from (project(':app-fabric').sourceSets.api.allSource) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
+    from project(':data-fabric').sourceSets.api.allSource
+    from (project(':common').sourceSets.api.allSource) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
+}
+
+task combinedApiJavadocJar(type: Jar, dependsOn: javadoc) {
+    baseName "continuuity-api"
+    appendix ""
+    classifier "javadoc"
+    from (javadoc.destinationDir) {
+      exclude "**/internal/"
+      exclude "**/passport/"
+    }
+}
+
+configurations{
+  distributions
+  apiArchives
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -47,9 +88,9 @@ task developer_suite_dist (type: Zip) {
 
   //copySpec:
   //root
-  from project(':singlenode').tasks.getByName('createApiJar').outputs
-  from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
-  from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+  from combinedApiJar.outputs
+  from combinedApiSourceJar.outputs
+  from combinedApiJavadocJar.outputs
   from project(':singlenode').files('src/dist')
   from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
 
@@ -163,9 +204,9 @@ task sandbox_dist (type: Zip) {
 
   //copySpec:
   //root
-  from project(':singlenode').tasks.getByName('createApiJar').outputs
-  from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
-  from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+  from combinedApiJar.outputs
+  from combinedApiSourceJar.outputs
+  from combinedApiJavadocJar.outputs
   from project(':singlenode').files('src/dist')
   from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
 
@@ -336,30 +377,8 @@ task cloud_dist (type: Tar) {
   ext.distName = "${baseName}-${appendix}"
 }
 
-
-ubuntu {
-  println cloud_dist.archivePath.toURI()
-  archive = cloud_dist.archivePath.toURI()
-  releaseNotes = "Continuuity Cloud Distribution"
-  author = 'continuuity'
-  email = 'info@continuuity.com'
-  homepage = 'http://www.continuuity.com'
-  depends {
-
-  }
-  dirs {
-
-  }
-}
-
-deb.dependsOn(cloud_dist)
-
-
 artifacts{
   // Asigning the artifact to the configuration
-  distributions project(':singlenode').tasks.getByName('createApiJar')
-  distributions project(':singlenode').tasks.getByName('createApiSourceJar')
-  distributions project(':singlenode').tasks.getByName('createApiJavadocJar')
   distributions developer_suite_dist
   distributions cloud_dist
   distributions sandbox_dist
@@ -374,15 +393,6 @@ uploadDistributions {
       snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
         authentication(userName: nexusUsername, password: nexusPassword)
       }
-      addFilter('continuuity-api') {artifact, file ->
-        file.name == project(':singlenode').tasks.getByName('createApiJar').archiveName
-      }
-      addFilter('continuuity-api-source') {artifact, file ->
-        file.name == project(':singlenode').tasks.getByName('createApiSourceJar').archiveName
-      }
-      addFilter('continuuity-api-javadoc') {artifact, file ->
-        file.name == project(':singlenode').tasks.getByName('createApiJavadocJar').archiveName
-      }
       addFilter('developer_suite') {artifact, file ->
         file.name == developer_suite_dist.archiveName
       }
@@ -392,9 +402,6 @@ uploadDistributions {
       addFilter('sandbox') {artifact, file ->
         file.name == sandbox_dist.archiveName
       }
-      pom('continuuity-api').artifactId = project(':singlenode').tasks.getByName('createApiJar').baseName
-      pom('continuuity-api-source').artifactId = project(':singlenode').tasks.getByName('createApiSourceJar').baseName
-      pom('continuuity-api-javadoc').artifactId = project(':singlenode').tasks.getByName('createApiJavadocJar').baseName
       pom('developer_suite').artifactId = developer_suite_dist.distName
       pom('cloud').artifactId = cloud_dist.distName
       pom('sandbox').artifactId = sandbox_dist.distName
@@ -402,3 +409,27 @@ uploadDistributions {
   }
 }
 
+artifacts {
+  apiArchives combinedApiJar
+  apiArchives combinedApiSourceJar
+  apiArchives combinedApiJavadocJar
+}
+
+uploadApiArchives {
+  repositories {
+    repositories.mavenDeployer {
+      repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+      }
+      snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+        authentication(userName: nexusUsername, password: nexusPassword)
+      }
+      pom.whenConfigured { pom ->
+        // Removes groovy dependency and test dependencies from generated pom file
+        pom.dependencies = pom.dependencies.findAll { dep ->
+          dep.artifactId != 'groovy-all' && dep.scope != 'test'
+        }
+      }
+    }
+  }
+}
