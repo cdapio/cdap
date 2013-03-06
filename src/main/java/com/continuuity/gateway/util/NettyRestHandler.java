@@ -1,11 +1,13 @@
 package com.continuuity.gateway.util;
 
+import com.continuuity.common.metrics.MetricsHelper;
 import com.google.common.base.Charsets;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -18,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 
 /**
  * This is a base class for the gateway's Netty-based Http request handlers.
@@ -152,4 +156,31 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   protected void respondToPing(Channel channel, HttpRequest request) {
     respondSuccess(channel, request, ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode("OK.\n")));
   }
+
+  protected void respondBadRequest(MessageEvent message, HttpRequest request,
+                                 MetricsHelper helper, String reason,
+                                 HttpResponseStatus status, Exception e) {
+    if (LOG.isTraceEnabled()) {
+      reason = (e == null || e.getMessage() == null) ?  reason : reason + ": " + e.getMessage();
+      LOG.trace("Received an unsupported request (" + reason + ") with URI '" + request.getUri() + "'");
+    }
+    helper.finish(BadRequest);
+    respondError(message.getChannel(), status);
+  }
+
+  protected void respondBadRequest(MessageEvent message, HttpRequest request, MetricsHelper helper, String reason,
+                                   HttpResponseStatus status) {
+    respondBadRequest(message, request, helper, reason, status, null);
+  }
+
+  protected void respondBadRequest(MessageEvent message, HttpRequest request, MetricsHelper helper, String reason) {
+    respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST);
+  }
+
+  protected void respondBadRequest(MessageEvent message, HttpRequest request, MetricsHelper helper, String reason,
+                                   Exception e) {
+    respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST, e);
+  }
+
+
 }
