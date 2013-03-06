@@ -31,7 +31,18 @@ dependencies {
     compile libraries.mysql
     compile libraries.hsql
     compile libraries.mina_core
-    compile libraries.mina_jmx
+    compile (libraries.mina_beans) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+    }
+    compile (libraries.mina_ognl) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+    }
+    compile (libraries.mina_jmx) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+        exclude group: 'org.apache.mina', module: 'mina-integration-ognl'
+    }
     compile libraries.http_client
     compile libraries.leveldb
 
@@ -59,28 +70,3 @@ javadoc {
 }
 
 jar.exclude '*.xml'
-
-
-uploadArchives {
-    repositories {
-        repositories.mavenDeployer {
-            repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
-                authentication(userName: nexusUsername, password: nexusPassword)
-            }
-            snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
-                authentication(userName: nexusUsername, password: nexusPassword)
-            }
-            pom.whenConfigured { pom ->
-                // Removes groovy dependency and test dependencies from generated pom file
-                pom.dependencies.each() { dep ->
-                    if (dep.groupId == 'org.apache.mina') {
-                        dep.type = 'bundle'
-                    }
-                }
-                pom.dependencies = pom.dependencies.findAll { dep ->
-                    dep.artifactId != 'groovy-all' && dep.scope != 'test'
-                }
-            }
-        }
-    }
-}
