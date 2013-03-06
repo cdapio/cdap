@@ -450,7 +450,7 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		app.get('/disk', function (req, res) {
 
-			var path = process.env.NODE_ENV === 'production' ? '/dev/vdb1 ' : '/';
+			var path = process.env.NODE_ENV === 'production' ? '/dev/vdb1' : '/';
 
 			diskspace.check(path, function (total, free, status) {
 
