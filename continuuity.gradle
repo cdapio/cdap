@@ -7,7 +7,6 @@ project.buildscript {
     if (!ext.has("com.continuuity.gradle.ContinuuityPlugin"))
     {
         repositories {
-            mavenLocal()
             maven {
                 credentials {
                     username "gradle"
