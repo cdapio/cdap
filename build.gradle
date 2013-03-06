@@ -59,28 +59,3 @@ javadoc {
 }
 
 jar.exclude '*.xml'
-
-
-uploadArchives {
-    repositories {
-        repositories.mavenDeployer {
-            repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
-                authentication(userName: nexusUsername, password: nexusPassword)
-            }
-            snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
-                authentication(userName: nexusUsername, password: nexusPassword)
-            }
-            pom.whenConfigured { pom ->
-                // Removes groovy dependency and test dependencies from generated pom file
-                pom.dependencies.each() { dep ->
-                    if (dep.groupId == 'org.apache.mina') {
-                        dep.type = 'bundle'
-                    }
-                }
-                pom.dependencies = pom.dependencies.findAll { dep ->
-                    dep.artifactId != 'groovy-all' && dep.scope != 'test'
-                }
-            }
-        }
-    }
-}
