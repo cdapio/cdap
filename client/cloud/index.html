@@ -519,7 +519,11 @@
             </td>
             <td>
               {{view Ember.TextField valueBinding="view.requestParams" width="100%"}}
+              {{#if view.canSubmit}}
               <button {{action "submit" on="click"}} class="btn" style="margin:0px 16px;">Execute</button>
+              {{else}}
+              <button disabled="disabled" class="btn" style="margin: 0px 16px;">Click "Start" Above</button>
+              {{/if}}
             </td>
           </tr>
           </tbody>

@@ -61,7 +61,14 @@ define([
 			});
 
 		},
+		canSubmit: function () {
 
+			if (this.get('current.currentState') === 'RUNNING') {
+				return true;
+			}
+			return false;
+
+		}.property('current.currentState'),
 		exec: function (event) {
 			
 			var control = $(event.target);
