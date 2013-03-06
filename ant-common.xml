@@ -27,6 +27,10 @@
             <include name="*.jar" />
         </fileset>
 
+        <fileset dir="./lib-to-package" erroronmissingdir="false">
+            <include name="*.jar" />
+        </fileset>
+
     </path>
 
     <target name="init">
@@ -47,7 +51,9 @@
     </target>
 
     <target name="jar" depends="compile, manifest">
-        <jar destfile="${jar.name}" basedir="classes" manifest="${manifest.file}"/>
+        <jar destfile="${jar.name}" basedir="classes" manifest="${manifest.file}" duplicate="preserve">
+            <zipgroupfileset dir="./lib-to-package" includes="*.jar" erroronmissingdir="false"/>
+        </jar>
     </target>
 
     <target name="clean">
