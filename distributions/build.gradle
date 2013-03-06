@@ -360,6 +360,10 @@ deb.dependsOn(cloud_dist)
 artifacts{
   // Asigning the artifact to the configuration
   distributions project(':singlenode').tasks.getByName('createApiJar')
+  distributions project(':singlenode').tasks.getByName('createTestJar')
+  distributions project(':singlenode').tasks.getByName('createApiSourceJar')
+  distributions project(':singlenode').tasks.getByName('createApiJavadocJar')
+  distributions project(':singlenode').tasks.getByName('createTestJavadocJar')
   distributions developer_suite_dist
   distributions cloud_dist
   distributions sandbox_dist
@@ -377,6 +381,18 @@ uploadDistributions {
       addFilter('continuuity-api') {artifact, file ->
         file.name == project(':singlenode').tasks.getByName('createApiJar').archiveName
       }
+      addFilter('continuuity-test') {artifact, file ->
+        file.name == project(':singlenode').tasks.getByName('createTestJar').archiveName
+      }
+      addFilter('continuuity-api-source') {artifact, file ->
+        file.name == project(':singlenode').tasks.getByName('createApiSourceJar').archiveName
+      }
+      addFilter('continuuity-api-javadoc') {artifact, file ->
+        file.name == project(':singlenode').tasks.getByName('createApiJavadocJar').archiveName
+      }
+      addFilter('continuuity-test-javadoc') {artifact, file ->
+        file.name == project(':singlenode').tasks.getByName('createTestJavadocJar').archiveName
+      }
       addFilter('developer_suite') {artifact, file ->
         file.name == developer_suite_dist.archiveName
       }
@@ -387,6 +403,10 @@ uploadDistributions {
         file.name == sandbox_dist.archiveName
       }
       pom('continuuity-api').artifactId = project(':singlenode').tasks.getByName('createApiJar').baseName
+      pom('continuuity-test').artifactId = project(':singlenode').tasks.getByName('createTestJar').baseName
+      pom('continuuity-api-source').artifactId = project(':singlenode').tasks.getByName('createApiSourceJar').baseName
+      pom('continuuity-api-javadoc').artifactId = project(':singlenode').tasks.getByName('createApiJavadocJar').baseName
+      pom('continuuity-test-javadoc').artifactId = project(':singlenode').tasks.getByName('createTestJavadocJar').baseName
       pom('developer_suite').artifactId = developer_suite_dist.distName
       pom('cloud').artifactId = cloud_dist.distName
       pom('sandbox').artifactId = sandbox_dist.distName
