@@ -54,32 +54,6 @@ sonar {
   }
 }
 
-install {
-    repositories {
-        repositories.mavenInstaller {
-            pom.whenConfigured { pom ->
-                // Removes groovy dependency and test dependencies from generated pom file
-                pom.dependencies = pom.dependencies.findAll { dep ->
-                    dep.artifactId != 'groovy-all' && dep.scope != 'test'
-                }
-                def dep = pom.dependencies.get(0).getClass().newInstance()
-                dep.groupId = 'com.continuuity'
-                dep.artifactId = 'app-fabric'
-                dep.version = "${version}"
-                dep.classifier = 'thrift'
-                pom.dependencies.add(dep)
-
-                dep = pom.dependencies.get(0).getClass().newInstance()
-                dep.groupId = 'com.continuuity'
-                dep.artifactId = 'overlord'
-                dep.version = "${version}"
-                dep.classifier = 'thrift'
-                pom.dependencies.add(dep)
-            }
-        }
-    }
-}
-
 uploadArchives {
     repositories {
         repositories.mavenDeployer {
