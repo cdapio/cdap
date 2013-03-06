@@ -2,10 +2,4 @@
 <project name="CountCounts" default="jar">
     <property name="example.package" value="com.continuuity.examples.countcounts"/>
     <import file="../ant-common.xml"/>
-
-    <target name="jar">
-        <exec executable="mvn" failonerror="false">
-            <arg line="clean package assembly:single" />
-        </exec>
-    </target>
 </project>
