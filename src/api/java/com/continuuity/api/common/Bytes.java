@@ -147,6 +147,9 @@ public class Bytes {
   }
 
   /**
+   * This method will convert utf8 encoded bytes into a string. If
+   * an UnsupportedEncodingException occurs, this method will eat it
+   * and return null instead.
    * @param b Presumed UTF-8 encoded byte array.
    * @return String made from <code>b</code>
    */
@@ -463,6 +466,7 @@ public class Bytes {
   }
 
   /**
+   * Put a float value out to the specified byte array position.
    * @param bytes byte array
    * @param offset offset to write to
    * @param f float value
@@ -482,6 +486,7 @@ public class Bytes {
   }
 
   /**
+   * Return double made from passed bytes
    * @param bytes byte array
    * @return Return double made from passed bytes.
    */
@@ -490,6 +495,7 @@ public class Bytes {
   }
 
   /**
+   * Return double made from passed bytes
    * @param bytes byte array
    * @param offset offset where double is
    * @return Return double made from passed bytes.
@@ -499,6 +505,7 @@ public class Bytes {
   }
 
   /**
+   * Put a double value out to the specified byte array position.
    * @param bytes byte array
    * @param offset offset to write to
    * @param d value
@@ -749,6 +756,7 @@ public class Bytes {
 
 
   /**
+   * Lexicographically compare two arrays.
    * @param left left operand
    * @param right right operand
    * @return 0 if equal, < 0 if left is less than right, etc.
@@ -834,6 +842,7 @@ public class Bytes {
   }
 
   /**
+   * Checks two byte arrays for equality
    * @param left left operand
    * @param right right operand
    * @return True if equal
@@ -854,6 +863,16 @@ public class Bytes {
     return compareTo(left, right) == 0;
   }
 
+  /**
+   * Checks segments of two byte arrays for equality
+   * @param left left operand
+   * @param leftOffset offset from which to start comparison
+   * @param leftLen length of left segment
+   * @param right right operand
+   * @param rightOffset offset from which to start comparison
+   * @param rightLen length of right segment
+   * @return True if two segments are equal
+   */
   public static boolean equals(final byte[] left, int leftOffset, int leftLen,
       final byte[] right, int rightOffset, int rightLen) {
     // short circuit case
@@ -892,6 +911,7 @@ public class Bytes {
   }
 
   /**
+   * Compute hash for binary data
    * @param b bytes to hash
    * @return Runs {@link #hashBytes(byte[], int)} on the
    * passed in array.
@@ -901,6 +921,7 @@ public class Bytes {
   }
 
   /**
+   * Compute hash for binary data
    * @param b value
    * @param length length of the value
    * @return Runs {@link #hashBytes(byte[], int)} on the
@@ -924,6 +945,7 @@ public class Bytes {
   }
 
   /**
+   * Returns a hash of a byte array as an Integer that can be used as key in Maps
    * @param b bytes to hash
    * @return A hash of <code>b</code> as an Integer that can be used as key in
    * Maps.
@@ -933,6 +955,7 @@ public class Bytes {
   }
 
   /**
+   * Returns a hash of a byte array segment as an Integer that can be used as key in Maps
    * @param b bytes to hash
    * @param length length to hash
    * @return A hash of <code>b</code> as an Integer that can be used as key in
@@ -942,9 +965,13 @@ public class Bytes {
     return hashCode(b, length);
   }
 
+  /**
+   *  Byte array of size zero
+   */
   public static final byte [] EMPTY_BYTE_ARRAY = new byte [0];
 
   /**
+   * Concatenate two byte arrays
    * @param a lower half
    * @param b upper half
    * @return New array that has a in lower half and b in upper half.
@@ -954,6 +981,7 @@ public class Bytes {
   }
 
   /**
+   * Concatenate three byte arrays
    * @param a first third
    * @param b second third
    * @param c third third
@@ -968,6 +996,7 @@ public class Bytes {
   }
 
   /**
+   * Returns first <code>length</code> bytes from byte array
    * @param a array
    * @param length amount of bytes to grab
    * @return First <code>length</code> bytes from <code>a</code>
@@ -982,6 +1011,7 @@ public class Bytes {
   }
 
   /**
+   * Returns last <code>length</code> bytes from byte array
    * @param a array
    * @param length amount of bytes to snarf
    * @return Last <code>length</code> bytes from <code>a</code>
@@ -996,6 +1026,7 @@ public class Bytes {
   }
 
   /**
+   * Return a byte array with value in <code>a</code> plus <code>length</code> prepended 0 bytes
    * @param a array
    * @param length new array size
    * @return Value in <code>a</code> plus <code>length</code> prepended 0 bytes
@@ -1009,6 +1040,7 @@ public class Bytes {
   }
 
   /**
+   * Return a byte array with value in <code>a</code> plus <code>length</code> appended 0 bytes
    * @param a array
    * @param length new array size
    * @return Value in <code>a</code> plus <code>length</code> appended 0 bytes
@@ -1161,6 +1193,7 @@ public class Bytes {
   }
 
   /**
+   * Returns an array of byte arrays made from passed array of Text
    * @param t operands
    * @return Array of byte arrays made from passed array of Text
    */
@@ -1173,8 +1206,10 @@ public class Bytes {
   }
 
   /**
+   * Returns an array of byte arrays where first and only entry is
+   * <code>column</code>
    * @param column operand
-   * @return A byte array of a byte array where first and only entry is
+   * @return An array of byte arrays where first and only entry is
    * <code>column</code>
    */
   public static byte [][] toByteArrays(final String column) {
@@ -1182,8 +1217,10 @@ public class Bytes {
   }
 
   /**
+   * Returns an array of byte arrays  where first and only entry is
+   * <code>column</code>
    * @param column operand
-   * @return A byte array of a byte array where first and only entry is
+   * @return An array of byte arrays  where first and only entry is
    * <code>column</code>
    */
   public static byte [][] toByteArrays(final byte [] column) {
