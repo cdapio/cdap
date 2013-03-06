@@ -25,24 +25,15 @@
     <dependencies>
         <dependency>
             <groupId>com.continuuity</groupId>
-            <artifactId>app-fabric</artifactId>
+            <artifactId>continuuity-api</artifactId>
             <version>${continuuityVersion}</version>
             <scope>provided</scope>
-            <classifier>api</classifier>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>continuuity-test</artifactId>
             <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>data-fabric</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <!-- Set the main class and tell maven to include dependencies in the jar -->
