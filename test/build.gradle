@@ -88,19 +88,3 @@ task testJar(type: Jar) {
     baseName = "continuuity-test"
     from sourceSets.test.output
 }
-
-artifacts {
-    archives testJar
-}
-
-// add a filter to the upload task that only passes the test jar. Otherwise
-// we would be uploading test.jar, test-sources.jar, test-javadoc.jar and
-// test.pom, when all we have is really the test jar
-
-uploadArchives {
-    repositories.mavenDeployer {
-        addFilter('test') {artifact, file ->
-            artifact.name == 'continuuity-test'
-        }
-    }
-}
