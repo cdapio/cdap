@@ -20,6 +20,8 @@ public interface VpcDAO {
   public VPC addVPC(int accountId, VPC vpc)
     throws ConfigurationException;
 
+  public void removeVPC(String vpcName)throws VPCNotFoundException;
+
   public void removeVPC(int accountId, int vpcId)
     throws ConfigurationException, VPCNotFoundException;
 
