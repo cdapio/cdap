@@ -14,7 +14,7 @@ public enum FailurePolicy {
   RETRY,
 
   /**
-   * Skips the input object which will permanently removed it from the input.
+   * Skips the input object which will permanently remove it from the input.
    */
   IGNORE
 }

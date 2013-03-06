@@ -5,7 +5,7 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- *
+ * Exception thrown when there is an error during {@link Flowlet} initialization
  */
 public class FlowletException extends Exception {
 

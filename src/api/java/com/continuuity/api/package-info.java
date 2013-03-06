@@ -3,6 +3,11 @@
  */
 
 /**
+ * This package contains Continuuity API interfaces -  {@link com.continuuity.api.flow.Flow Flows},
+ * {@link com.continuuity.api.flow.flowlet.Flowlet FLowlets},
+ * {@link com.continuuity.api.data.stream.Stream Streams}, {@link com.continuuity.api.data.DataSet Datasets} and
+ * {@link com.continuuity.api.procedure.Procedure Procedures}
+ *
  * <h1>Application</h1>
  * Application is a logical grouping of
  * {@link com.continuuity.api.data.stream.Stream Streams},
@@ -48,7 +53,7 @@
  * connected by queues.
  * <p>
  *   In order to define a {@link com.continuuity.api.flow.Flow}, you need to implement
- *   the {@link com.continuuity.api.flow.Flow} interface and implements the
+ *   the {@link com.continuuity.api.flow.Flow} interface and implement the
  *   {@link com.continuuity.api.flow.Flow#configure()} method.
  * </p>
  * <p>
