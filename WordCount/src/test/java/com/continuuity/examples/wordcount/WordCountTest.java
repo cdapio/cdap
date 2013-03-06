@@ -65,6 +65,7 @@ public class WordCountTest extends AppFabricTestBase {
     Assert.assertEquals("world", omap.get("word"));
     Assert.assertEquals(3.0, omap.get("count"));
     // the associations are a map within the map
+    @SuppressWarnings("unchecked")
     Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
     Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
     Assert.assertTrue(assocs.containsKey("hello"));
