@@ -1,6 +1,5 @@
 package com.continuuity.test;
 
-import com.continuuity.test.RuntimeMetrics;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
