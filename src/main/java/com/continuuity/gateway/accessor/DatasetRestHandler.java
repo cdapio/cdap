@@ -200,29 +200,6 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
   }
 
-  private void respondBadRequest(MessageEvent message, HttpRequest request,
-                                 MetricsHelper helper, String reason,
-                                 HttpResponseStatus status, Exception e) {
-    if (LOG.isTraceEnabled()) {
-      reason = (e == null || e.getMessage() == null) ?  reason : reason + ": " + e.getMessage();
-      LOG.trace("Received an unsupported request (" + reason + ") with URI '" + request.getUri() + "'");
-    }
-    helper.finish(BadRequest);
-    respondError(message.getChannel(), status);
-  }
-  private void respondBadRequest(MessageEvent message, HttpRequest request,
-                                 MetricsHelper helper, String reason, HttpResponseStatus status) {
-    respondBadRequest(message, request, helper, reason, status, null);
-  }
-  private void respondBadRequest(MessageEvent message, HttpRequest request,
-                                 MetricsHelper helper, String reason) {
-    respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST);
-  }
-  private void respondBadRequest(MessageEvent message, HttpRequest request,
-                                 MetricsHelper helper, String reason, Exception e) {
-    respondBadRequest(message, request, helper, reason, HttpResponseStatus.BAD_REQUEST, e);
-  }
-
   private enum TableOp { List, Increment, Read, Write, Create, Delete }
 
   private void handleTableOperation(MessageEvent message, HttpRequest request,
