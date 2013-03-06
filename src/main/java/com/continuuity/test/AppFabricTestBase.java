@@ -282,7 +282,8 @@ public class AppFabricTestBase {
         if (uri.getScheme().equals("file")) {
           File baseDir = new File(uri).getParentFile();
 
-          String packagePath = clz.getPackage().getName().replace('.', '/');
+          Package appPackage = clz.getPackage();
+          String packagePath = appPackage == null ? "" : appPackage.getName().replace('.', '/');
           String basePath = baseDir.getAbsolutePath();
           File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
 
