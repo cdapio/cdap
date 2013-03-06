@@ -360,13 +360,15 @@ logger.setLevel(LOG_LEVEL);
 		switch (method) {
 			case 'inject':
 				
-				post_options.port = this.config['stream.rest.port'];
+				// Adding 1000 to be picked up by nginx.
+				post_options.port = parseInt(this.config['stream.rest.port']) + 1000;
 				post_options.path = '/stream/' + params.stream;
 				
 			break;
 			case 'query':
 
-				post_options.port = this.config['procedure.rest.port'];
+				// Adding 1000 to be picked up by nginx.
+				post_options.port = parseInt(this.config['procedure.rest.port']) + 1000;
 				post_options.path = '/procedure/' + params.app + '/' + 
 					params.service + '/' + params.method;
 
@@ -412,7 +414,10 @@ logger.setLevel(LOG_LEVEL);
 
 		request.on('error', function (e) {
 
-			done(e, null);
+			done({
+				statusCode: 500,
+				response: e
+			});
 
 		});
 

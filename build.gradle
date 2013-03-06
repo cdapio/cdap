@@ -128,11 +128,12 @@ task asset_patch_cloud(type:Copy, dependsOn: 'patch_mkdir_cloud') {
 }
 
 task z_client_dev(type:Copy, dependsOn: 'asset_patch_dev') {
-    from 'client/' + "developer" + '/index.html'
+    from 'client/' + "developer" + '/**.html'
     into 'build/' + "developer" + '/client'
 }
 task z_client_cloud(type:Copy, dependsOn: 'asset_patch_cloud') {
     from 'client/' + "cloud" + '/index.html'
+    from 'client/' + "cloud" + '/access-error.html'
     into 'build/' + "cloud" + '/client'
 }
 
