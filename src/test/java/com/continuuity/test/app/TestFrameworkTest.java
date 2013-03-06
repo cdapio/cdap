@@ -1,9 +1,8 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.internal.test.RuntimeStats;
+import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.ProcedureClient;
@@ -20,7 +19,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -85,7 +83,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
       RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
                                                                      "WordCountFlow",
                                                                      "CountByField");
-      flowletMetrics.waitForProcessed(300, 5, TimeUnit.SECONDS);
+      flowletMetrics.waitForProcessed(500, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, flowletMetrics.getException());
 
       // Query the result

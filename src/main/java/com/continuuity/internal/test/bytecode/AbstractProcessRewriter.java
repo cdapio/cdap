@@ -1,5 +1,6 @@
 package com.continuuity.internal.test.bytecode;
 
+import com.continuuity.test.RuntimeStats;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.objectweb.asm.AnnotationVisitor;
@@ -8,6 +9,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -225,7 +227,7 @@ public abstract class AbstractProcessRewriter {
     mv.visitMethodInsn(INVOKEVIRTUAL, STRING_BUILDER, "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
     mv.visitMethodInsn(INVOKEVIRTUAL, STRING_BUILDER, "toString", "()Ljava/lang/String;");
     mv.visitInsn(ICONST_1);
-    mv.visitMethodInsn(INVOKESTATIC, "com/continuuity/internal/test/RuntimeStats", "count", "(Ljava/lang/String;I)V");
+    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeStats.class), "count", "(Ljava/lang/String;I)V");
   }
 
   private static String internalNameToDesc(String className) {
