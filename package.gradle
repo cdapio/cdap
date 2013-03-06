@@ -135,13 +135,6 @@ task createApiJar(type: Jar) {
     from project(':common').sourceSets.api.output
 }
 
-task createTestJar(type: Jar) {
-    baseName "continuuity-test"
-    appendix ""
-    classifier ""
-    from project(':unit-test').sourceSets.main.output
-}
-
 task createApiSourceJar(type: Jar) {
     baseName "continuuity-api"
     appendix ""
