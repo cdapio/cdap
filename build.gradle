@@ -31,7 +31,18 @@ dependencies {
     compile libraries.mysql
     compile libraries.hsql
     compile libraries.mina_core
-    compile libraries.mina_jmx
+    compile (libraries.mina_beans) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+    }
+    compile (libraries.mina_ognl) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+    }
+    compile (libraries.mina_jmx) {
+        exclude group: 'org.apache.mina', module: 'mina-core'
+        exclude group: 'org.apache.mina', module: 'mina-integration-beans'
+        exclude group: 'org.apache.mina', module: 'mina-integration-ognl'
+    }
     compile libraries.http_client
     compile libraries.leveldb
 
