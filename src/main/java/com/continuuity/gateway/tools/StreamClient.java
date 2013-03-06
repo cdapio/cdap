@@ -26,8 +26,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Level;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -51,9 +50,10 @@ import java.util.TreeMap;
  */
 public class StreamClient {
 
-@SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory
-      .getLogger(StreamClient.class);
+  static {
+    // this turns off all logging but we don't need that for a cmdline tool
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+  }
 
   /**
    * for debugging. should only be set to true in unit tests.
