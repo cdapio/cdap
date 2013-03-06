@@ -1,6 +1,5 @@
-package com.continuuity.internal.test;
+package com.continuuity.test;
 
-import com.continuuity.test.RuntimeMetrics;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -79,9 +78,14 @@ public final class RuntimeStats {
       private void waitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
         AtomicLong value = counters.get(name);
-        while (value == null || value.get() < count) {
+        while (timeout > 0 && (value == null || value.get() < count)) {
           timeoutUnit.sleep(1);
           value = counters.get(name);
+          timeout--;
+        }
+
+        if (timeout == 0 && (value == null || value.get() < count)) {
+          throw new TimeoutException("Time limit reached.");
         }
       }
 
