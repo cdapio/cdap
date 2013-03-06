@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        mavenLocal()
         maven {
             credentials {
                 username "gradle"
