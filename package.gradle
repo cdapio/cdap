@@ -23,6 +23,18 @@ task stageConfSingleNode (type: Copy) {
 }
 
 /**
+ * NOTE: This is needed solely for building API jar for examples
+ */
+task createApiJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    classifier ""
+    from project(':app-fabric').sourceSets.api.output
+    from project(':data-fabric').sourceSets.api.output
+    from project(':common').sourceSets.api.output
+}
+
+/**
  * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
  *
  * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
