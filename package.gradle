@@ -1,7 +1,6 @@
-//evaluationDependsOn(":distribution")
-// import the build.gradle file for the compilation
 apply from: 'build.gradle'
 apply plugin: 'application'
+
 mainClassName = 'com.continuuity.SingleNodeMain'
 
 /**
@@ -13,35 +12,6 @@ evaluationDependsOn(":app-fabric")
 evaluationDependsOn(":gateway")
 evaluationDependsOn(":passport")
 
-task javadoc(type: Javadoc, overwrite: true) {
-  source = project.parent.subprojects.collect { proj ->
-   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
-     return proj.sourceSets.api.allJava.exclude{ print it.file.name }
-   }else{
-    return []       
-   }
-  }
-
-  exclude '**/internal/**'
-  exclude '**/passport/**'
-
-  doFirst{
-    classpath = files(project.parent.subprojects.collect { project ->
-    if(project.plugins.findPlugin("java")){
-      return  project.sourceSets.main.compileClasspath
-    }else{
-      return []
-    }
-   })
-  }	
-  group = 'Documentation' 
-  description = 'Aggregates API javadocs across all projects.'
-   
-  destinationDir = new File(buildDir, 'javadoc')
-  // Might need a classpath
-    
-}
-
 // stage the singlenode conf dir
 task stageConfSingleNode (type: Copy) {
     group 'Deployment'
@@ -50,11 +20,6 @@ task stageConfSingleNode (type: Copy) {
     include 'logback.xml'
     include 'continuuity-site.xml'
     into "${buildDir}/conf"
-}
-
-// include staging conf dir (incl token-replaced files) in distZip
-applicationDistribution.from("$buildDir/conf") {
-    into "conf"
 }
 
 /**
@@ -84,136 +49,4 @@ startScripts {
     }
 }
 
-/**
- * Configure distZip task
- */
-tasks.distZip {
-    baseName = "continuuity"
-    appendix = "developer-edition"
-    version = "1.2.2"
-    classifier = "beta"
-}
-
 run.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', ':passport:compileJava'
-installApp.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':passport:compileJava', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
-distZip.dependsOn build, ':web-cloud-app:build', ':app-fabric:build', ':passport:compileJava', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', javadoc, stageConfSingleNode
-//exclude any .gitignores (used as placeholders for empty dirs: logs, data
-applicationDistribution.exclude(".gitignore")
-
-// include api javadoc   
-applicationDistribution.from("$buildDir/javadoc") {
-    into "docs/api"
-}
-
-// include examples from example project
-//   the "exclude */*.jar" is to exclude any local-gradle-compiled jars we have in our work area.
-//   any "*/lib/*.jar" should still be included
-task copyExamples (type: Copy) {
-    def examplesdir = file ("$buildDir/examples")
-    from project(':examples').projectDir
-    into examplesdir 
-    exclude "README.md"
-    exclude "build/"
-    exclude ".gitignore"
-    exclude "**/*.gradle"
-    exclude "**/classes/"
-    exclude "*/*.jar"
-    exclude "PayvmentDemo/"
-    exclude "DependencyRandomNumber/"
-}
-applicationDistribution.from(copyExamples) {
-    into "examples"
-}
-
-// release version pulled from distributions build
-task createApiJar(type: Jar) {
-    baseName "continuuity-api"
-    appendix ""
-    classifier ""
-    from project(':app-fabric').sourceSets.api.output
-    from project(':data-fabric').sourceSets.api.output
-    from project(':common').sourceSets.api.output
-}
-
-task createApiSourceJar(type: Jar) {
-    baseName "continuuity-api"
-    appendix ""
-    classifier "source"
-    from (project(':app-fabric').sourceSets.api.allSource) {
-      exclude "**/internal/"
-      exclude "**/passport/"
-    }
-    from project(':data-fabric').sourceSets.api.allSource
-    from (project(':common').sourceSets.api.allSource) {
-      exclude "**/internal/"
-      exclude "**/passport/"
-    }
-}
-
-task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
-    baseName "continuuity-api"
-    appendix ""
-    classifier "javadoc"
-    from (javadoc.destinationDir) {
-      exclude "**/internal/"
-      exclude "**/passport/"
-    }
-}
-
-applicationDistribution.from(createApiJar) {
-}
-applicationDistribution.from(createApiSourceJar) {
-}
-applicationDistribution.from(createApiJavadocJar) {
-}
-
-// include :web-cloud-app/build/client directly
-applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
-    into "web-app/client"
-}
-
-//include :web-cloud-app/build/server directly
-applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
-    into "web-app/server"
-}
-/**
- * Collect bin scripts from gateway project and replace @classpath@ token - done within distZip task
- */
-
-import org.apache.tools.ant.filters.ReplaceTokens
-
-// dynamically generate "stageConf-[project]" tasks
-project.parent.subprojects.each { p ->
-    // skip the common bin scripts which are for distributed mode
-    if (p.name != "common") {
-		if (p.file('bin').isDirectory()) {
-		    applicationDistribution.from(project(":${p.name}").file('bin')) {
-				into "bin"
-				exclude 'node'
-				exclude 'far-server'
-				exclude 'run-java'
-				exclude 'flow-config.sh'
-				exclude 'flow-client'
-				exclude 'dfbench'
-				def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-				cp += ":\$APP_HOME/conf/"
-				filter(ReplaceTokens, tokens: [classpath: cp])
-		    }
-		} 
-    }         
-}
-
-task release (overwrite: true, type: Tar, dependsOn: distZip) << {
-    // overwrite global release task as a wrapper around distZip since singleNode has specific packaging requirements
-    
-    // set release.ArchiveName so it can be used downstream by distro task
-    release.archiveName = distZip.archiveName
-}
-
-task upload_release (overwrite: true) << {
-    //no action for singlenode
-}
-task distro (overwrite: true) << {
-    //no action for singlenode
-}
-
