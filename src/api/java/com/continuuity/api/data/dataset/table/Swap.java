@@ -2,7 +2,7 @@ package com.continuuity.api.data.dataset.table;
 
 /**
  * Compare a column of a row with an expected value. If the value matches,
- * write a new value to the columns. It it does not match, the operation
+ * write a new value to the column. It it does not match, the operation
  * fails.
  */
 public class Swap extends AbstractWriteOperation {
