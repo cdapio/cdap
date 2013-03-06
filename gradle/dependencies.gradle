@@ -98,6 +98,8 @@ libraries.jersey_core = "com.sun.jersey:jersey-core:$versions.jerseyVersion"
 
 // Mina
 libraries.mina_core = "org.apache.mina:mina-core:$versions.minaVersion"
+libraries.mina_beans = "org.apache.mina:mina-integration-beans:$versions.minaVersion"
+libraries.mina_ognl = "org.apache.mina:mina-integration-ognl:$versions.minaVersion"
 libraries.mina_jmx = "org.apache.mina:mina-integration-jmx:$versions.minaVersion"
 
 // FindBugs / JSR-311
