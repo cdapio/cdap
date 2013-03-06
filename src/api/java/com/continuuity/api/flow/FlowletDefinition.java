@@ -79,7 +79,7 @@ public final class FlowletDefinition {
 
   /**
    * Creates a definition from a copy and overrides the number of instances
-   * @param definition definition o copy from
+   * @param definition definition to copy from
    * @param instances new number of instances
    */
   public FlowletDefinition(FlowletDefinition definition, int instances) {
@@ -164,7 +164,7 @@ public final class FlowletDefinition {
 
   /**
    * This method is responsible for inspecting the flowlet class and inspecting to figure out what
-   * method are used for processing input and what are used for emitting outputs.
+   * methods are used for processing input and what are used for emitting outputs.
    * @param flowletClass defining the flowlet that needs to be inspected.
    * @param datasets reference to set of datasets names.
    * @param inputs reference to map of name to input types used for processing events on queues.

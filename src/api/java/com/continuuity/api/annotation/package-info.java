@@ -3,6 +3,6 @@
  */
 
 /**
- * Provides annotation for writing AppFabric applications.
+ * Provides annotations for writing AppFabric applications.
  */
 package com.continuuity.api.annotation;

@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class defines an specification for a {@link Procedure}.
- * An {@link Procedure} runtime attributes are always defined using this class.
+ * This class defines a specification for a {@link Procedure}.
+ * A {@link Procedure} runtime attributes are always defined using this class.
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
  */
@@ -36,8 +36,8 @@ public interface ProcedureSpecification {
   String getDescription();
 
   /**
-   * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} name that
-   *         used by the {@link Procedure}.
+   * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
+   *         are used by the {@link Procedure}.
    */
   Set<String> getDataSets();
 
@@ -63,6 +63,7 @@ public interface ProcedureSpecification {
      * Class for setting name.
      */
     public final class NameSetter {
+
       /**
        * Sets the name of the {@link Procedure}
        * @param name of the procedure.
@@ -80,6 +81,7 @@ public interface ProcedureSpecification {
      * the specification.
      */
     public final class DescriptionSetter {
+
       /**
        * Sets the description for this {@link Procedure}
        * @param description of the {@link Procedure}

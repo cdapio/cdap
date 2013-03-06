@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class provides an specification of an application to be executed within AppFabric.
+ * This class provides a specification of an application to be executed within AppFabric.
  */
 public interface ApplicationSpecification {
 
@@ -107,6 +107,7 @@ public interface ApplicationSpecification {
      * Class for setting name.
      */
     public final class NameSetter {
+
       /**
        * Sets the application name.
        *
@@ -126,9 +127,9 @@ public interface ApplicationSpecification {
     public final class DescriptionSetter {
 
       /**
-       * Sets the application description
+       * Sets the Application description.
        *
-       * @param description Description of the application.
+       * @param description Description of the Application.
        * @return A {@link AfterDescription} for defining streams in the application.
        */
       public AfterDescription setDescription(String description) {
@@ -144,9 +145,9 @@ public interface ApplicationSpecification {
     public final class AfterDescription {
 
       /**
-       * Declares that there is {@link Stream} in the application.
+       * Declares that there is a {@link Stream} in the application.
        *
-       * @return A {@link StreamAdder} for adding {@link Stream} to the application.
+       * @return A {@link StreamAdder} for adding a {@link Stream} to the application.
        */
       public StreamAdder withStreams() {
         return new MoreStream();
@@ -163,9 +164,10 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding {@link Stream}.
+     * Class for adding a {@link Stream}.
      */
     public interface StreamAdder {
+
       /**
        * Adds a {@link Stream} to the application.
        *
@@ -181,9 +183,9 @@ public interface ApplicationSpecification {
     public interface AfterStream {
 
       /**
-       * Declares that there is {@link DataSet} in the application.
+       * Declares that there is a {@link DataSet} in the application.
        *
-       * @return A {@link DataSetAdder} for adding {@link DataSet} to the application.
+       * @return A {@link DataSetAdder} for adding a {@link DataSet} to the application.
        */
       DataSetAdder withDataSets();
 
@@ -196,12 +198,12 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more {@link Stream} to the application and for proceeding to next configuration step.
+     * Class for adding more {@link Stream}s to the application and for proceeding to next configuration step.
      */
     public final class MoreStream implements StreamAdder, AfterStream {
 
       /**
-       * Adds more {@link Stream} to application.
+       * Adds another {@link Stream} to the application.
        * @param stream The {@link Stream} to be included in the application.
        * @return An instance of {@link MoreStream}
        */
@@ -214,7 +216,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Sets if the {@link Application} has dataset or no.
+       * Sets if the {@link Application} has Datasets or not.
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -223,7 +225,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines what needs to happen after adding {@link DataSet}
+       * Defines what needs to happen after adding a {@link DataSet}
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -237,9 +239,9 @@ public interface ApplicationSpecification {
      */
     public interface DataSetAdder {
       /**
-       * Adds a {@link DataSet} to the application.
-       * @param dataset The {@link DataSet} to be included in the application.
-       * @return A {@link MoreDataSet} for adding more datasets.
+       * Adds a {@link DataSet} to the Application.
+       * @param dataset The {@link DataSet} to be included in the Application.
+       * @return A {@link MoreDataSet} for adding more Datasets.
        */
       MoreDataSet add(DataSet dataset);
     }
@@ -250,9 +252,9 @@ public interface ApplicationSpecification {
     public interface AfterDataSet {
 
       /**
-       * Declares that there is {@link Flow} in the application.
+       * Declares that there is a {@link Flow} in the application.
        *
-       * @return A {@link FlowAdder} for adding {@link Flow} to the application.
+       * @return A {@link FlowAdder} for adding a {@link Flow} to the application.
        */
       FlowAdder withFlows();
 
@@ -283,7 +285,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines that {@link Application} has a {@link Flow} that is defined after {@link DataSet}
+       * Defines that {@link Application} has a {@link Flow} that is defined after a {@link DataSet}
        * @return An instance of {@link FlowAdder}
        */
       @Override
@@ -320,9 +322,9 @@ public interface ApplicationSpecification {
     public interface AfterFlow {
 
       /**
-       * Declares that there is {@link Procedure} in the application.
+       * Declares that there is a {@link Procedure} in the application.
        *
-       * @return A {@link ProcedureAdder} for adding {@link Procedure} to the application.
+       * @return A {@link ProcedureAdder} for adding a {@link Procedure} to the application.
        */
       ProcedureAdder withProcedures();
 
@@ -342,7 +344,7 @@ public interface ApplicationSpecification {
       /**
        * Adds a {@link Flow} to an {@link Application}
        * @param flow The {@link Flow} to be included in the application.
-       * @return An instance of {@link MoreFlow} allowing to add more {@link Flow} to {@link Application}
+       * @return An instance of {@link MoreFlow} allowing to add more {@link Flow}s to the {@link Application}
        */
       @Override
       public MoreFlow add(Flow flow) {
@@ -353,7 +355,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step is to add {@link Procedure}
+       * After {@link Flow} has been added, next step is to add a {@link Procedure}
        * @return An instance of {@link MoreProcedure}
        */
       @Override
@@ -362,7 +364,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}
+       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}s
        * @return An instance of {@link AfterProcedure} defining next steps in builder.
        */
       @Override
@@ -372,7 +374,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding {@link Procedure}.
+     * Class for adding a {@link Procedure}.
      */
     public interface ProcedureAdder {
 
@@ -391,7 +393,7 @@ public interface ApplicationSpecification {
     public interface AfterProcedure {
 
       /**
-       * Builds the {@link ApplicationSpecification} based on what being configured.
+       * Builds the {@link ApplicationSpecification} based on what is being configured.
        *
        * @return A new {@link ApplicationSpecification}.
        */

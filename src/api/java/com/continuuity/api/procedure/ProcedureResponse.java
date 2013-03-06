@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * This class represents the response from a procedure.
+ * This class represents the response from a {@link Procedure}.
  */
 public final class ProcedureResponse {
 
@@ -25,7 +25,7 @@ public final class ProcedureResponse {
      * @param buffer {@link ByteBuffer} holding the content to be written. After this method
      *               returns, the {@link ByteBuffer} is drained.
      * @return The same {@link Writer} instance for writing more data.
-     * @throws IOException When there is error while writing.
+     * @throws IOException When there is an error while writing.
      */
     Writer write(ByteBuffer buffer) throws IOException;
 
@@ -35,7 +35,7 @@ public final class ProcedureResponse {
      *
      * @param bytes bytes to be written out.
      * @return The same {@link Writer} instance for writing more data.
-     * @throws IOException When there is error while writing.
+     * @throws IOException When there is an error while writing.
      */
     Writer write(byte[] bytes) throws IOException;
 
@@ -44,7 +44,7 @@ public final class ProcedureResponse {
      *
      * @param bytes bytes to be written out.
      * @return The same {@link Writer} instance for writing more data.
-     * @throws IOException When there is error while writing.
+     * @throws IOException When there is an error while writing.
      * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative or if {@code off + len} is greater
      *                                   than {@code bytes.length}.
      */
@@ -55,7 +55,7 @@ public final class ProcedureResponse {
      *
      * @param content {@link String} content to be written out.
      * @return The same {@link Writer} instance for writing more data.
-     * @throws IOException When there is error while writing.
+     * @throws IOException When there is an error while writing.
      */
     Writer write(String content) throws IOException;
   }

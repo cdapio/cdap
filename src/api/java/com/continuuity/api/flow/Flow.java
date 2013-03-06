@@ -8,7 +8,7 @@ import com.continuuity.api.Processor;
 
 /**
  * Flow is a collection of {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets} that are
- * wired together into a DAG (Direct Acylic Graph).
+ * wired together into a Direct Acylic Graph (DAG).
  *
  * <p>
  *   To create a Flow, one must implement this interface. The {@link #configure()} method will be
@@ -20,7 +20,7 @@ import com.continuuity.api.Processor;
  */
 public interface Flow extends Processor {
   /**
-   * Configure the {@link Flow} by returning an {@link FlowSpecification}.
+   * Configure the {@link Flow} by returning a {@link FlowSpecification}.
    *
    * @return An instance of {@link FlowSpecification}.
    */
