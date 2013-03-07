@@ -155,7 +155,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
               txAgent.finish();
               callback.onSuccess(event, inputContext);
             } catch (Throwable t) {
-              LOGGER.error("Fail to commit transction: " + input, t);
+              LOGGER.error("Fail to commit transaction: " + input);
               callback.onFailure(event, inputContext,
                                  new FailureReason(FailureReason.Type.IO_ERROR, t.getMessage(), t),
                                  new SimpleInputAcknowledger(txAgentSupplier, input));
