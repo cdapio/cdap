@@ -2,6 +2,7 @@ evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
 evaluationDependsOn(':performance')
 evaluationDependsOn(':passport')
+evaluationDependsOn(':loom')
 
 apply plugin:'maven'
 apply plugin:'ubuntu'
@@ -17,6 +18,7 @@ task javadoc(type: Javadoc, overwrite: true) {
 
   exclude '**/internal/**'
   exclude '**/passport/**'
+  exclude '**/loom/**'
 
   doFirst{
     classpath = files(project.parent.subprojects.collect { project ->
@@ -51,11 +53,13 @@ task combinedApiSourceJar(type: Jar) {
     from (project(':app-fabric').sourceSets.api.allSource) {
       exclude "**/internal/"
       exclude "**/passport/"
+      exclude "**/loom/"
     }
     from project(':data-fabric').sourceSets.api.allSource
     from (project(':common').sourceSets.api.allSource) {
       exclude "**/internal/"
       exclude "**/passport/"
+      exclude "**/loom/"
     }
 }
 
@@ -66,6 +70,7 @@ task combinedApiJavadocJar(type: Jar, dependsOn: javadoc) {
     from (javadoc.destinationDir) {
       exclude "**/internal/"
       exclude "**/passport/"
+      exclude "**/loom/"
     }
 }
 
@@ -308,7 +313,10 @@ task cloud_dist (type: Tar) {
     from tasks.findByPath(':performance:jar')
     from project(':passport').tasks.getByName('jar').outputs
     from project(':passport').configurations.runtime.files 
+    from project(':loom').tasks.getByName('jar').outputs
+    from project(':loom').configurations.runtime.files 
     exclude 'passport-*-sources.jar'
+    exclude 'loom-*-sources.jar'
     exclude 'overlord-*-loggly.jar'
   }
 
