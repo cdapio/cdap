@@ -45,7 +45,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private static final long BACKOFF_MIN = TimeUnit.MILLISECONDS.toNanos(1); // 1ms
   private static final long BACKOFF_MAX = TimeUnit.SECONDS.toNanos(2);      // 2 seconds
   private static final int BACKOFF_EXP = 2;
-  private static final int PROCESS_MAX_RETRY = 2;
+  private static final int PROCESS_MAX_RETRY = 10;
   private static final String INPUT_METRIC_POSTFIX = FlowletDefinition.INPUT_ENDPOINT_POSTFIX + ".stream.in";
 
   private final Flowlet flowlet;
@@ -159,10 +159,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       CountDownLatch suspendLatch = suspension.get();
       if (suspendLatch != null) {
         try {
-          // Use a spin loop to wait for all inflight to be done
-          while (inflight.get() != 0) {
-            TimeUnit.MILLISECONDS.sleep(10);
-          }
+          waitForRetries(processQueue);
           suspendBarrier.await();
           suspendLatch.await();
         } catch (Exception e) {
@@ -225,8 +222,53 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         }
       }
     }
+    waitForRetries(processQueue);
 
     destroyFlowlet();
+  }
+
+  /**
+   * Process all the retry entries in the queue.
+   * @param processQueue
+   */
+  private void waitForRetries(PriorityBlockingQueue<ProcessEntry> processQueue) {
+    List<ProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
+    boolean hasRetry;
+
+    do {
+      hasRetry = false;
+      processList.clear();
+      processQueue.drainTo(processList);
+
+      for (ProcessEntry entry : processList) {
+        if (!entry.isRetry()) {
+          processQueue.offer(entry);
+          continue;
+        }
+        hasRetry = true;
+        try {
+          ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+          flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
+          flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
+          flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
+
+          inflight.getAndIncrement();
+
+          try {
+            // Call the process method and commit the transaction
+            processMethod.invoke(input)
+              .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
+
+          } catch (Throwable t) {
+            LOG.error(String.format("Fail to invoke process method: %s, %s", entry.getProcessSpec(), flowletContext), t);
+          }
+        } catch (OperationException e) {
+          // This should never happen for retry entries
+          LOG.error("Queue operation failure: " + flowletContext, e);
+        }
+      }
+    } while (hasRetry || inflight.get() != 0);
   }
 
   private void initFlowlet() {
@@ -271,7 +313,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       public void onFailure(Object inputObject, InputContext inputContext, FailureReason reason,
                             PostProcess.InputAcknowledger inputAcknowledger) {
 
-        LOG.info("Process failure. " + reason.getMessage(), reason.getCause());
+        LOG.info("Process failure. " + reason.getMessage() + ", input: " + input, reason.getCause().getCause());
         FailurePolicy failurePolicy;
         try {
           try {
