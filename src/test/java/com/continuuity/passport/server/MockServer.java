@@ -2,36 +2,19 @@ package com.continuuity.passport.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
-import com.continuuity.passport.core.service.AuthenticatorService;
-import com.continuuity.passport.core.service.DataManagementService;
-import com.continuuity.passport.dal.AccountDAO;
-import com.continuuity.passport.dal.NonceDAO;
-import com.continuuity.passport.dal.ProfanityFilter;
-import com.continuuity.passport.dal.VpcDAO;
-import com.continuuity.passport.dal.db.AccountDBAccess;
-import com.continuuity.passport.dal.db.NonceDBAccess;
-import com.continuuity.passport.dal.db.ProfanityFilterFileAccess;
-import com.continuuity.passport.dal.db.VpcDBAccess;
-import com.continuuity.passport.http.handlers.AccountHandler;
-import com.continuuity.passport.impl.AuthenticatorServiceImpl;
-import com.continuuity.passport.impl.DataManagementServiceImpl;
+import com.continuuity.passport.http.modules.ShiroGuiceModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.GuiceServletContextListener;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.SecurityManager;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
-import javax.sql.ConnectionPoolDataSource;
 
 /**
  * Mock Server to test out the Http endpoints.
@@ -68,10 +51,14 @@ public class MockServer {
   public class MockGuiceContextListener extends GuiceServletContextListener {
 
     private final String connectionString;
+    private final String profaneWordsPath;
     private ServletContext servletContext;
+    private final CConfiguration configuration;
 
     public MockGuiceContextListener(CConfiguration configuration) {
       this.connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING);
+      this.profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH);
+      this.configuration = configuration;
     }
 
     @Override
@@ -82,39 +69,13 @@ public class MockServer {
 
     @Override
     protected Injector getInjector() {
-      return Guice.createInjector(new JerseyServletModule() {
-        @Override
-        public void configureServlets() {
-          MapBinder<String, String> configBinder = MapBinder.newMapBinder(binder(), String.class, String.class,
-            Names.named("passport.config"));
+      Injector injector = Guice.createInjector(new MockGuiceBindings(configuration), new ShiroGuiceModule());
+      org.apache.shiro.mgt.SecurityManager securityManager = injector.getInstance(SecurityManager.class);
+      SecurityUtils.setSecurityManager(securityManager);
 
-          //Bind ResT Resources
-          bind(AccountHandler.class);
-          //TODO: Bind other ReST resources
-
-          bind(DataManagementService.class).to(DataManagementServiceImpl.class);
-          bind(AuthenticatorService.class).to(AuthenticatorServiceImpl.class);
-          bind(AccountDAO.class).to(AccountDBAccess.class);
-          bind(VpcDAO.class).to(VpcDBAccess.class);
-          bind(NonceDAO.class).to(NonceDBAccess.class);
-          bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
-
-
-          bind(GuiceContainer.class).asEagerSingleton();
-          bind(DefaultServlet.class).asEagerSingleton();
-          serve("/*").with(DefaultServlet.class);
-          filter("/passport/*").through(GuiceContainer.class);
-        }
-
-        @Provides
-        ConnectionPoolDataSource provider() {
-          JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
-          jdbcDataSource.setUrl(connectionString);
-          return jdbcDataSource;
-        }
-      });
-    }
+      return injector;
   }
+ }
 }
 
 
