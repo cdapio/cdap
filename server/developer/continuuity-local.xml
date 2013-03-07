@@ -60,7 +60,7 @@
 
 	<property>
 		<name>gateway.hostname</name>
-		<value>localhost</value>
+		<value>127.0.0.1</value>
 	</property>
 
 	<property>

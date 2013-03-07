@@ -81,8 +81,6 @@ define([], function () {
 				return;
 			}
 
-			start = -60;
-
 			return ['monitor', {
 				method: 'getTimeSeries',
 				params: [app, id, metrics, start, undefined, 'FLOW_LEVEL']

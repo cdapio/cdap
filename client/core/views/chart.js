@@ -3,7 +3,7 @@ define([], function () {
 
 	return Em.View.extend({
 
-		updateData: function () {
+		updateData: function (redraw) {
 
 			var metrics = this.get('metrics');
 
@@ -16,7 +16,7 @@ define([], function () {
 					var data = this.get('model').metricData[metric];
 
 					if (data && data.length) {
-						if (!this.get('sparkline')) {
+						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
 
 							this.get('container').html('');
 							this.get('container').css({margin: ''});
@@ -160,6 +160,26 @@ define([], function () {
 				return C.util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
 			}
 		},
+		fillContainer: function (rerender) {
+			
+			var width = this.get('width') || $(this.get('container')).outerWidth();
+			var height = this.get('height') || $(this.get('container')).outerHeight();
+
+			if (rerender) {
+				width = $(this.get('container')).outerWidth();
+				width += width * 0.08;
+			} else {
+				width -= this.get('overlapX') || 0;
+			}
+
+			this.set('width', width);
+			this.set('height', height);
+
+			if (rerender) {
+				this.updateData(true);
+			}
+
+		},
 		didInsertElement: function () {
 
 			var entityId = this.get('entity-id');
@@ -174,11 +194,7 @@ define([], function () {
 
 			this.set('metrics', metrics);
 
-			var height = parseInt(this.get('height'), 10),
-				width = parseInt(this.get('width'), 10), label, container;
-
-			height = height || 70;
-			width = width || $(this.get('element')).parent().outerWidth();
+			var label, container;
 
 			if (entityType === "Flowlet") {
 
@@ -187,7 +203,7 @@ define([], function () {
 				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle() + '</div>');
 				
 				container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
-				width = width - 40;
+				this.set('overlapX', 40);
 
 			} else if (this.get('listMode') || entityType) {
 
@@ -196,8 +212,8 @@ define([], function () {
 				$(this.get('element')).addClass(color || 'blue');
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">&nbsp;</div></div>').appendTo(this.get('element'));
-				height = 34;
-				width = width - 70;
+				this.set('overlapX', 50);
+				this.set('height', 38);
 
 			} else {
 
@@ -207,28 +223,29 @@ define([], function () {
 				if (this.get('mode') === "dash") {
 					container.addClass('sparkline-box-container-white');
 					$(this.get('element')).append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
-					container.appendTo(this.get('element'));
-					container = $('<div />').appendTo(container);
+					container.appendTo(this.get('element'));					
+					this.set('overlapX', 36);
+					this.set('height', 70);
 
-					width = width - 48;
+					var self = this;
+					C.addResizeHandler(this.get('entity-id') + this.get('metrics').join(':'), function () {
+
+						self.fillContainer(true);
+
+					});
 
 				} else {
 					container.addClass('sparkline-box-container');
 					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
 					container.appendTo(this.get('element'));
-					container = $('<div style="height: 69px;" />').appendTo(container);
-
-					width = width - 68;
-
+					this.set('overlapX', 64);
+					this.set('height', 70);
 				}
 			}
 
 			if (entityType === 'Stream') {
 				this.set('listMode', false);
 			}
-
-			this.set('width', width);
-			this.set('height', height);
 
 			this.set('label', label);
 			this.set('container', container);
@@ -242,7 +259,10 @@ define([], function () {
 				});
 			}
 
+			this.fillContainer();
+		
 			if (!metrics.length) {
+
 				C.debug('No metric provided for sparkline.', this);
 
 			} else {
@@ -259,6 +279,12 @@ define([], function () {
 
 				this.updateModel();
 			}
+
+		},
+		willDestroyElement: function () {
+
+			C.removeResizeHandler(this.get('entity-id') + this.get('metrics').join(':'));
+
 		}
 	});
 });

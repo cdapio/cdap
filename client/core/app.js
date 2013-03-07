@@ -367,8 +367,32 @@ function(Models, Views, Controllers){
 		__timeLabel: 'Last 1 Minute',
 		Mdl: Models,
 		Vw: Views,
-		Ctl: Controllers
+		Ctl: Controllers,
+		resizeHandlers: {},
+		addResizeHandler: function (id, handler) {
+			this.resizeHandlers[id] = handler;
+		},
+		removeResizeHandler: function (id) {
+			delete this.resizeHandlers[id];
+		}
 	});
+
+	var resizeTimeout = null;
+
+	window.onresize = function () {
+
+		clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(function () {
+
+			for (var h in C.resizeHandlers) {
+				if (typeof C.resizeHandlers[h] === 'function') {
+					C.resizeHandlers[h]();
+				}
+			}
+
+		}, 500);
+
+	};
 
 	window.onblur = function () {
 		if (C && typeof C.blur === 'function') {

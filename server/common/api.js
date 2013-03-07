@@ -361,14 +361,14 @@ logger.setLevel(LOG_LEVEL);
 			case 'inject':
 				
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['stream.rest.port']) + 1000;
+				post_options.port = parseInt(this.config['stream.rest.port']) + (secure ? 1000 : 0);
 				post_options.path = '/stream/' + params.stream;
 				
 			break;
 			case 'query':
 
 				// Adding 1000 to be picked up by nginx.
-				post_options.port = parseInt(this.config['procedure.rest.port']) + 1000;
+				post_options.port = parseInt(this.config['procedure.rest.port']) + (secure ? 1000 : 0);
 				post_options.path = '/procedure/' + params.app + '/' + 
 					params.service + '/' + params.method;
 

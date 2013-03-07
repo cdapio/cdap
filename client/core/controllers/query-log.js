@@ -77,7 +77,10 @@ define([], function () {
 					} else {
 
 						var items = response.params;
-						response = items.join('\n');
+						for (var i = 0; i < items.length; i ++) {
+							items[i] = '<code>' + items[i] + '</code>';
+						}
+						response = items.join('');
 
 						if (items.length === 0) {
 							response = '[ No Log Messages ]';

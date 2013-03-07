@@ -4,7 +4,7 @@
 <div class="popup-close" {{action close on="click"}}>×</div>
 
 {{#if C.Ctl.Flow.current.isRunning}}
-<div class="btn-group pull-right" style="margin-top: 16px;">
+<div class="btn-group pull-right" style="margin-top: 4px;">
 <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
 <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
 <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{controller.current.instances}} instance{{controller.current.plural}}</button>
