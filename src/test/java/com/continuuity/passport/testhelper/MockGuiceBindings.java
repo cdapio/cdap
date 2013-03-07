@@ -1,4 +1,4 @@
-package com.continuuity.passport.server;
+package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;

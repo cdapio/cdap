@@ -3,10 +3,10 @@ package com.continuuity.passport.passportClient;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.passport.Constants;
-import com.continuuity.passport.dal.TestHelper;
+import com.continuuity.passport.testhelper.TestPassportServer;
+import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.http.client.AccountProvider;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.passport.server.MockServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestPassportClient {
 
-  private static MockServer server;
+  private static TestPassportServer server;
   private static int port;
 
   @BeforeClass
@@ -33,7 +33,7 @@ public class TestPassportClient {
     port = PortDetector.findFreePort();
 
     //Startup HSQL instance
-    TestHelper.startHsqlDB();
+    HyperSQL.startHsqlDB();
 
     CConfiguration configuration = CConfiguration.create();
     configuration.setInt(Constants.CFG_SERVER_PORT, port);
@@ -45,7 +45,7 @@ public class TestPassportClient {
     String profanePath = TestPassportClient.class.getResource("/ProfaneWords").getPath();
 
     configuration.set(Constants.CFG_PROFANE_WORDS_FILE_PATH, profanePath);
-    server = new MockServer(configuration);
+    server = new TestPassportServer(configuration);
 
     System.out.println("Starting server");
     server.start();
@@ -78,7 +78,7 @@ public class TestPassportClient {
   @AfterClass
   public static void stopServer() throws Exception {
     server.stop();
-    TestHelper.stopHsqlDB();
+    HyperSQL.stopHsqlDB();
   }
 
   private static void addAccount() throws IOException, SQLException {

@@ -1,4 +1,4 @@
-package com.continuuity.passport.dal;
+package com.continuuity.passport.testhelper;
 
 import org.hsqldb.Server;
 
@@ -11,7 +11,7 @@ import java.sql.SQLException;
  * Test Helper for unit/integration tests
  * Uses HSQLDB instance for testing
  */
-public class TestHelper {
+public class HyperSQL {
 
   private static Server server = null;
 

@@ -1,4 +1,4 @@
-package com.continuuity.passport.server;
+package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
@@ -20,13 +20,13 @@ import javax.servlet.ServletContextEvent;
  * Mock Server to test out the Http endpoints.
  * Uses Mock implementations.
  */
-public class MockServer {
+public class TestPassportServer {
 
   private final Server server;
   private final int port;
 
 
-  public MockServer(CConfiguration configuration) {
+  public TestPassportServer(CConfiguration configuration) {
     this.port = configuration.getInt(Constants.CFG_SERVER_PORT, 7777);
 
     server = new Server(port);
