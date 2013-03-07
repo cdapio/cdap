@@ -3,6 +3,7 @@ package com.continuuity.performance.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
+import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -27,6 +28,7 @@ import java.util.Random;
 
 public class LoadGenerator extends SimpleBenchmark {
 
+  String apikey = null;
   String hostname = null;
   String baseUrl = null;
   String destination = null;
@@ -58,15 +60,17 @@ public class LoadGenerator extends SimpleBenchmark {
 
     super.configure(config);
 
+    apikey = config.get("apikey");
     baseUrl = config.get("base");
     hostname = config.get("gateway");
     destination = config.get("stream");
     file = config.get("words");
     length = config.getInt("length", length);
+    boolean ssl = apikey != null;
 
     // determine the base url for the GET request
     if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, false);
+        Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
     if (baseUrl == null) {
       throw new BenchmarkException(
           "Can't figure out gateway URL. Please specify --base");
@@ -142,6 +146,9 @@ public class LoadGenerator extends SimpleBenchmark {
 
                 // create an HttpPost
                 HttpPost post = new HttpPost(requestUrl);
+                if (apikey != null) {
+                  post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apikey);
+                }
                 byte[] binaryBody = body.getBytes();
                 post.setEntity(new ByteArrayEntity(binaryBody));
 
