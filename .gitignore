@@ -40,6 +40,7 @@ clover.license
 /tools
 /web-app
 /unit-test
+/loom
 
 # Ignore Node stuff
 npm*
