@@ -161,7 +161,7 @@ define([], function () {
 
 					// If first value, initialize timeseries with current total across the board
 					if (undefined === series) {
-						var length = Math.abs(start);
+						var length = Math.abs(start) - 21;
 						series = [];
 						while (length--) {
 							series[length] = currentValue;
@@ -176,7 +176,7 @@ define([], function () {
 
 			} else {
 
-				var length = Math.abs(start);
+				var length = Math.abs(start) - 21;
 				var series = [];
 				while (length--) {
 					series[length] = 0;

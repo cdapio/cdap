@@ -46,7 +46,9 @@ define([], function () {
 				}
 			}
 			if (!metrics.length) {
-				C.debug('Not tracking any metrics for Application ' + id);
+				
+				//C.debug('Not tracking any metrics for Application ' + id);
+
 				this.set('__loadingData', false);
 				return;
 			}

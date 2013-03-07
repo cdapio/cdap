@@ -31,7 +31,7 @@ a, abbr, acronym, address, big, cite, code,
 del, dfn, em, font, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
 dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
+fieldset, form, label, legend, textarea,
 table, caption, tbody, tfoot, thead, tr, th, td {
 	border: 0;
 	font-family: inherit;
@@ -342,6 +342,7 @@ h1 {
 	color: #505050;
 	line-height: 32px;
 	padding-bottom: 4px;
+	text-shadow: 0px 1px #fff;
 }
 h1 span {
 	color: #aaa;
@@ -510,6 +511,7 @@ h1 span {
 	color: #555;
 	line-height: 14px;
 	overflow: hidden;
+	text-shadow: 0px 1px #fff;
 }
 .sparkline-box-value span {
 	padding: 0;
@@ -638,8 +640,8 @@ input {
 
 input[type="text"] {
 	border-radius: 2px !important;
-	font-size: 12px;
 	padding: 3px 6px !important;
+	font-size: 14px;
 }
 
 .guttered {
@@ -919,11 +921,11 @@ a.brand {
 	color: #005580 !important;
 }
 .modal-push {
-	padding: 0px 15px 15px;
+	padding: 0px;
 	min-height: 114px;
 }
 .modal-push input[type=text] {
-	width: 308px;
+	width: 340px;
 }
 .modal-push select {
 	width: 322px;
@@ -1155,7 +1157,7 @@ a strong {
 
 .flow-state {
 	float: right;
-	padding-top: 27px;
+	padding-top: 28px;
 	padding-right: 16px;
 	width: 120px;
 	text-align: right;
@@ -1194,6 +1196,14 @@ a strong {
 	stroke: #8C9495;
 	stroke-width: 2px;
 }
+.popup-modal h2 {
+	color: #535353;
+	text-align: left;
+	font-size: 20px;
+	margin-bottom: 16px;
+	font-family: "HelveticaNeueW01-75Bold";
+	letter-spacing: normal;
+}
 .popup-modal {
 	position: absolute;
 	top: 160px;
@@ -1205,16 +1215,15 @@ a strong {
 	min-height: 700px;
 }
 .popup-container {
-	width: 670px;
-	margin: 32px auto 0;
+	width: 706px;
+	margin: 24px auto 0;
 	background-color: #fff;
-	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+	box-shadow: 0px 2px 16px rgba(0,0,0,0.33);
 }
 .popup-description {
 	color: #5c6e71;
 	font-size: 14px;
-	padding: 16px;
-	padding-bottom: 22px;
+	padding: 16px 0px 0px;
 	line-height: 1.3em;
 	font-family: 'HelveticaNeueW01-Thin';
 }
@@ -1223,18 +1232,18 @@ a strong {
 	text-decoration: none;
 }
 .popup-body {
-	padding: 8px 20px 15px 20px;
+	padding: 38px;
 }
 .popup-close {
 	float: right;
 	cursor: pointer;
-	font-size: 22px;
-	line-height: 18px;
-	width: 22px;
-	height: 22px;
+	font-size: 24px;
+	line-height: 20px;
+	width: 26px;
+	height: 26px;
 	text-align: center;
-	margin: -20px -30px 0px 0px;
-	background-color: #8c9495;
+	margin: -52px -51px 0px 0px;
+	background-color: #8b9395;
 	border-radius: 100%;
 	color: white;
 	box-shadow: 1px 1px 4px rgba(0, 0, 0, .35);
@@ -1244,7 +1253,7 @@ a strong {
 	width: 32px;
 	height: 32px;
 	background-image: url(../img/flowlet-types-white.png);
-	margin: 16px 0px 0px 12px;
+	margin: 2px 0px 0px 12px;
 }
 .popup-stream-table {
 	border-top: 1px solid #eaeaea;
@@ -1257,7 +1266,7 @@ a strong {
  }
 .popup-title {
 	line-height: 36px;
-	padding: 12px 0px 12px 52px;
+	padding: 2px 0px 16px 52px;
 }
 .popup-title span {
 	color: #AAA;
@@ -1274,9 +1283,8 @@ a strong {
 }
 .popup-inject-wrapper {
 	float: right;
-	height: 27px;
-	margin: 12px 0px;
-	padding: 4px 0px;
+	margin: 0px;
+	padding: 5px 0px;
 }
 #flowlet-popup-tabs {
 	width: 100%;
@@ -1485,17 +1493,27 @@ a strong {
 	overflow: hidden;
 }
 
+#logView {
+	background-color: #353d3e;
+	color: #fff;
+	border-color: #222;
+}
 .query-response {
-	width: 100%;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
 	height: 540px;
-	margin:0;
+	width: 100%;
+	margin: 0;
 	overflow: auto;
-	padding: 0 8px;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: text;
+	white-space: pre-wrap;
+	font-family: Consolas, "Lucida Console", Monaco, monospace;
+	display: block;
+}
+.query-response code {
+	display: block;
+	text-indent: -1em;
+	padding-left: 1em;
+	padding-bottom: 0.3em;
 }
 
 #object-list {
