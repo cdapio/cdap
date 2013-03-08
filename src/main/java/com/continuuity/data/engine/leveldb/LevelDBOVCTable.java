@@ -3,6 +3,8 @@ package com.continuuity.data.engine.leveldb;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.memory.Row;
+import com.continuuity.data.engine.memory.RowLock;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
@@ -58,6 +61,9 @@ implements OrderedVersionedColumnarTable {
   private final String encodedTableName;
 
   private DB db;
+
+  private final ConcurrentHashMap<Row, RowLock> locks =
+    new ConcurrentHashMap<Row, RowLock>();
 
   LevelDBOVCTable(final String basePath, final String tableName) {
     this.basePath = basePath;
@@ -689,9 +695,8 @@ implements OrderedVersionedColumnarTable {
 
   // Read-Modify-Write Operations
 
-  @Override
-  public synchronized long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) throws OperationException {
+  private long internalIncrement(byte[] row, byte[] column, long amount, ReadPointer readPointer,
+                                 long writeVersion) throws OperationException {
     long newAmount = amount;
     // Read existing value
     OperationResult<byte[]> readResult = get(row, column, readPointer);
@@ -704,18 +709,38 @@ implements OrderedVersionedColumnarTable {
     }
     // Write new value
     performInsert(row, column, writeVersion, Type.Put,
-        Bytes.toBytes(newAmount));
+                  Bytes.toBytes(newAmount));
     return newAmount;
   }
 
   @Override
-  public synchronized Map<byte[], Long> increment(byte[] row, byte[][] columns,
+  public long increment(byte[] row, byte[] column, long amount,
+      ReadPointer readPointer, long writeVersion) throws OperationException {
+    Row r = new Row(row);
+    lockRow(r);
+    long newAmount;
+    try {
+      newAmount = internalIncrement(row, column, amount, readPointer, writeVersion);
+    } finally {
+      unlockRow(r);
+    }
+    return newAmount;
+  }
+
+  @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
       long[] amounts, ReadPointer readPointer, long writeVersion)
       throws OperationException {
+    Row r = new Row(row);
+    lockRow(r);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-    for (int i=0; i<columns.length; i++) {
-      ret.put(columns[i], increment(row, columns[i], amounts[i],
-          readPointer, writeVersion));
+    try {
+      for (int i=0; i<columns.length; i++) {
+        ret.put(columns[i], internalIncrement(row, columns[i], amounts[i],
+            readPointer, writeVersion));
+      }
+    } finally {
+      unlockRow(r);
     }
     return ret;
   }
@@ -728,41 +753,47 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public synchronized void compareAndSwap(byte[] row, byte[] column,
+  public void compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) throws OperationException {
 
-    // Read existing value
-    OperationResult<byte[]> readResult = get(row, column, readPointer);
-    byte [] existingValue = readResult.getValue();
-    
-    // Handle cases regarding non-existent values
-    if (existingValue == null && expectedValue != null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    if (existingValue != null && expectedValue == null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    
-    // if nothing existed, write data
-    if (expectedValue == null) {
+    Row r = new Row(row);
+    lockRow(r);
+    try {
+      // Read existing value
+      OperationResult<byte[]> readResult = get(row, column, readPointer);
+      byte [] existingValue = readResult.getValue();
+
+      // Handle cases regarding non-existent values
+      if (existingValue == null && expectedValue != null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+      if (existingValue != null && expectedValue == null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if nothing existed, write data
+      if (expectedValue == null) {
+        performInsert(row, column, writeVersion, Type.Put, newValue);
+        return;
+      }
+
+      // check if expected == existing, fail if not
+      if (!Bytes.equals(expectedValue, existingValue))
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if newValue is null, just delete.
+      if (newValue == null) {
+        deleteAll(row, column, writeVersion);
+        return;
+      }
+
+      // Checks passed, write new value
       performInsert(row, column, writeVersion, Type.Put, newValue);
-      return;
+    } finally {
+      unlockRow(r);
     }
-
-    // check if expected == existing, fail if not
-    if (!Bytes.equals(expectedValue, existingValue))
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-
-    // if newValue is null, just delete.
-    if (newValue == null) {
-      deleteAll(row, column, writeVersion);
-      return;
-    }
-
-    // Checks passed, write new value
-    performInsert(row, column, writeVersion, Type.Put, newValue);
   }
   
   private void handleIOException(IOException e, String where)
@@ -779,5 +810,22 @@ implements OrderedVersionedColumnarTable {
         e.getMessage() + ")";
     LOG.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
+  private RowLock lockRow(Row row) {
+    RowLock lock = this.locks.get(row);
+    if (lock == null) {
+      lock = new RowLock(row);
+      RowLock existing = this.locks.putIfAbsent(row, lock);
+      if (existing != null) lock = existing;
+    }
+    lock.lock();
+    return lock;
+  }
+  private void unlockRow(Row row) {
+    RowLock lock = this.locks.get(row);
+    if (lock == null) {
+      throw new RuntimeException("Attempted to unlock invalid row lock");
+    }
+    lock.unlock();
   }
 }
