@@ -21,12 +21,10 @@ import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
@@ -639,32 +637,41 @@ public class TTQueueOnVCTable implements TTQueue {
         getValue(), newValue, dirty.getFirst(), dirty.getSecond());
 
     // We successfully finalized our ack.  Perform evict-on-ack if possible.
-    Pair<Boolean, Set<byte[]>> groupsFinalizedResult = null;
-    if (totalNumGroups == 1 ||
-        (totalNumGroups > 0 && (groupsFinalizedResult =
-            allOtherGroupsFinalized(entryPointer, totalNumGroups,
-                consumer.getGroupId(), dirty)).getFirst())) {
-      // Evict!
-      // Set entry metadata to EVICTED state
-      byte [] entryMetaColumn =
-          makeColumn(entryPointer.getEntryId(), ENTRY_META);
-      this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
-          new EntryMeta(EntryState.EVICTED).getBytes());
-      // Delete entry data and group meta entries
-      Set<byte[]> groupColumns = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-      if (totalNumGroups != 1) {
-        groupColumns.addAll(groupsFinalizedResult.getSecond());
-      }
-      byte [] entryDataColumn =
-          makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
-      groupColumns.add(entryDataColumn);
-      this.table.deleteAll(shardRow,
-          groupColumns.toArray(new byte[groupColumns.size()][]),
-              dirty.getSecond());
+    Set<byte[]> groupsFinalizedResult = null;
+    boolean canEvict;
+    if (totalNumGroups <= 0) {
+      canEvict = false;
+    } else if (totalNumGroups == 1) {
+      canEvict = true;
+    } else {
+      groupsFinalizedResult = allOtherGroupsFinalized(entryPointer, totalNumGroups, consumer.getGroupId(), dirty);
+      canEvict = groupsFinalizedResult != null;
     }
+    if (!canEvict) {
+      return;
+    }
+    // Evict!
+    // Set entry metadata to EVICTED state
+    byte [] entryMetaColumn = makeColumn(entryPointer.getEntryId(), ENTRY_META);
+    this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
+                   new EntryMeta(EntryState.EVICTED).getBytes());
+
+    // Delete entry data and group meta entries
+    byte[][] groupColumns = new byte[totalNumGroups + 1][];
+    if (totalNumGroups == 1) {
+      groupColumns[0] = groupColumn;
+    } else {
+      // that set contains exactly totalNumGroups entries.
+      // copy them into the groupColumns array, that leaves room for one
+      groupsFinalizedResult.toArray(groupColumns);
+    }
+    byte [] entryDataColumn =
+      makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
+    groupColumns[totalNumGroups] = entryDataColumn;
+    this.table.deleteDirty(shardRow, groupColumns, dirty.getSecond());
   }
 
-  private Pair<Boolean, Set<byte[]>> allOtherGroupsFinalized(
+  private Set<byte[]> allOtherGroupsFinalized(
       QueueEntryPointer entryPointer, int totalNumGroups, long curGroup,
       ImmutablePair<ReadPointer,Long> dirtyPointer) throws OperationException {
 
@@ -680,7 +687,7 @@ public class TTQueueOnVCTable implements TTQueue {
             dirtyPointer.getFirst()).getValue();
     
     if (groupEntries.size() < totalNumGroups) {
-      return new Pair<Boolean,Set<byte[]>>(false, null);
+      return null;
     }
     
     for (Map.Entry<byte[],byte[]> groupEntry : groupEntries.entrySet()) {
@@ -691,9 +698,9 @@ public class TTQueueOnVCTable implements TTQueue {
       EntryGroupMeta groupMeta =
           EntryGroupMeta.fromBytes(groupEntry.getValue());
       if (!groupMeta.isAcked())
-        return new Pair<Boolean,Set<byte[]>>(false, null);
+        return null;
     }
-    return new Pair<Boolean,Set<byte[]>>(true, groupEntries.keySet());
+    return groupEntries.keySet();
   }
 
   @Override

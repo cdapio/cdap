@@ -246,6 +246,12 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version)
+    throws OperationException {
+    deleteAll(row, columns, version);
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version)
       throws OperationException {
     performInsert(row, column, version, Type.UndeleteColumn, NULL_VAL);

@@ -194,9 +194,15 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteAll(byte[] row, byte[][] columns, long version)
-      throws OperationException {
+    throws OperationException {
     performInsert(row, columns, version, Type.DELETE_ALL,
-        generateDeleteVals(columns.length));
+                  generateDeleteVals(columns.length));
+  }
+
+  @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version)
+    throws OperationException {
+    deleteAll(row, columns, version);
   }
 
   @Override

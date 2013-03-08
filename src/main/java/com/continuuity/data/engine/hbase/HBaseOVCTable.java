@@ -160,6 +160,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version)
+    throws OperationException {
+    deleteAll(row, columns, version);
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     undeleteAll(row, new byte[][]{column}, version);
   }
