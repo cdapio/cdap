@@ -185,6 +185,48 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
+  private ImmutablePair<Long, byte[]> readKeyValueRangeAndGetLatest(
+      byte [] startKey, byte [] endKey, ReadPointer readPointer)
+  throws DBException, IOException {
+    DBIterator iterator = db.iterator();
+    try {
+      long lastDelete = -1;
+      long undeleted = -1;
+      for (iterator.seek(startKey); iterator.hasNext(); iterator.next()) {
+        byte [] key = iterator.peekNext().getKey();
+        byte [] value = iterator.peekNext().getValue();
+        // If we have reached past the endKey, nothing was found, return null
+        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+          return null;
+        }
+        KeyValue kv = createKeyValue(key, value);
+        // Determine if this KV is visible
+        long curVersion = kv.getTimestamp();
+        if (!readPointer.isVisible(curVersion)) continue;
+        Type type = Type.codeToType(kv.getType());
+        if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          continue;
+        }
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) continue;
+          else break;
+        }
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+          continue;
+        }
+        if (curVersion == lastDelete) continue;
+        // If we get here, this version is visible
+        return new ImmutablePair<Long, byte[]>(curVersion, kv.getValue());
+      }
+    } finally {
+      iterator.close();
+    }
+    // Nothing found
+    return null;
+  }
+
   private KeyValue createKeyValue(byte[] key, byte[] value) {
     int len = key.length + value.length + (2 * Bytes.SIZEOF_INT);
     byte [] kvBytes = new byte[len];
@@ -316,11 +358,10 @@ implements OrderedVersionedColumnarTable {
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
     try {
-      List<KeyValue> kvs = readKeyValueRange(
-          createStartKey(row, column), createEndKey(row, column));
+      ImmutablePair<Long,byte[]> latest = readKeyValueRangeAndGetLatest(
+          createStartKey(row, column), createEndKey(row, column),
+          readPointer);
       
-      ImmutablePair<Long,byte[]> latest = filteredLatest(kvs, readPointer);
-
       if (latest == null)
         return new OperationResult<ImmutablePair<byte[], Long>>(
             StatusCode.KEY_NOT_FOUND);
@@ -542,37 +583,6 @@ implements OrderedVersionedColumnarTable {
     for (int i=0; i<columns.length; i++) {
       performInsert(row, columns[i], version, type, values[i]);
     }
-  }
-
-  /**
-   * Result has (version, kvtype, id, value)
-   * @throws DBException
-   */
-  private ImmutablePair<Long, byte[]> filteredLatest(
-      List<KeyValue> kvs, ReadPointer readPointer) throws DBException {
-    if (kvs == null || kvs.isEmpty()) return null;
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (KeyValue kv : kvs) {
-      long curVersion = kv.getTimestamp();
-      if (!readPointer.isVisible(curVersion)) continue;
-      Type type = Type.codeToType(kv.getType());
-      if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-        continue;
-      }
-      if (type == Type.DeleteColumn) {
-        if (undeleted == curVersion) continue;
-        else break;
-      }
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-        continue;
-      }
-      if (curVersion == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion, kv.getValue());
-    }
-    return null;
   }
 
   /**
