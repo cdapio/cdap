@@ -4,12 +4,9 @@
 package com.continuuity.data.runtime;
 
 import java.io.File;
-import java.util.Random;
-
-import org.jruby.util.io.DirectoryAsFileException;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -27,6 +24,8 @@ import com.google.inject.name.Names;
 public class DataFabricLevelDBModule extends AbstractModule {
 
   private final String basePath;
+  private final Integer blockSize;
+  private final Long cacheSize;
 
   public DataFabricLevelDBModule() {
     this(CConfiguration.create());
@@ -43,12 +42,16 @@ public class DataFabricLevelDBModule extends AbstractModule {
         throw new RuntimeException("Unable to create directory for ldb");
       }
     }
-
     this.basePath = path;
+    this.blockSize = configuration.getInt("data.local.leveldb.blocksize", 1024);
+    this.cacheSize = configuration.getLong("data.local.leveldb.cachesize", 1024*1024*10);
   }
 
-  public DataFabricLevelDBModule(String basePath) {
+  public DataFabricLevelDBModule(String basePath, Integer blockSize,
+      Long cacheSize) {
     this.basePath = basePath;
+    this.blockSize = blockSize;
+    this.cacheSize = cacheSize;
   }
 
   @Override
@@ -63,7 +66,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionOracle.class).to(MemoryOracle.class);
 
     // This is the primary mapping of the data fabric to underlying storage
-    bind(OVCTableHandle.class).to(LevelDBOVCTableHandle.class);
+    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
     
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
@@ -73,5 +76,14 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
         .toInstance(basePath);
+    
+    bind(Integer.class)
+        .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
+        .toInstance(blockSize);
+    
+    bind(Long.class)
+        .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
+        .toInstance(cacheSize);
+    
   }
 }
