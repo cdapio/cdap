@@ -71,7 +71,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);
     long nanoStart=System.nanoTime();
-    int m=200;
+    int m=10000;
     for (int j=0; j<m; j++) {
       System.out.println("Run no. "+j);
       // enqueue thousand entries

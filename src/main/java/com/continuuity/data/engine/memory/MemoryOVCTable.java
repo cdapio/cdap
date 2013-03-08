@@ -450,12 +450,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
 
     long newAmount;
-    long writeVersion = 0L;
-    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    long writeVersion;
 
     try {
-      // first determine new values for all columns. This can thrown an
-      // exception if an existing value is not sizeof(long).
+        // first determine new values for the column. This can thrown an
+        // exception if an existing value is not sizeof(long).
         NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
         long existingAmount = 0L;
         ImmutablePair<Long, byte[]> latest = latest(versions);
