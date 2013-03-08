@@ -13,6 +13,7 @@ import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -82,7 +83,11 @@ public final class ReflectionDatumReader<T> {
       case ENUM:
         String enumValue = sourceSchema.getEnumValue(decoder.readInt());
         check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.", enumValue);
-        return enumValue;
+        try {
+          return targetTypeToken.getRawType().getMethod("valueOf", String.class).invoke(null, enumValue);
+        } catch (Exception e) {
+          throw new IOException(e);
+        }
       case ARRAY:
         check(sourceType == targetType, "Fails to resolve %s to %s", sourceType, targetType);
         return readArray(decoder, sourceSchema, targetSchema, targetTypeToken);
