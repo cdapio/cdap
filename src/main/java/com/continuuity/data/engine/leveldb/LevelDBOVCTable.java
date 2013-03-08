@@ -3,6 +3,8 @@ package com.continuuity.data.engine.leveldb;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.memory.Row;
+import com.continuuity.data.engine.memory.RowLock;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
@@ -57,11 +60,20 @@ implements OrderedVersionedColumnarTable {
   
   private final String encodedTableName;
 
+  private final Integer blockSize;
+  private final Long cacheSize;
+
   private DB db;
 
-  LevelDBOVCTable(final String basePath, final String tableName) {
+  private final ConcurrentHashMap<Row, RowLock> locks =
+    new ConcurrentHashMap<Row, RowLock>();
+
+  LevelDBOVCTable(final String basePath, final String tableName,
+                  final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.tableName = tableName;
+    this.blockSize = blockSize;
+    this.cacheSize = cacheSize;
     try {
       this.encodedTableName = URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -76,14 +88,13 @@ implements OrderedVersionedColumnarTable {
   }
 
   private Options generateDBOptions(boolean createIfMissing,
-      boolean errorIfExists) {
+                                    boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
     options.comparator(new KeyValueDBComparator());
-    // Disabling optimizations until all tests pass
-    // options.blockSize(1024);
-    // options.cacheSize(1024*1024*32);
+    options.blockSize(blockSize);
+    options.cacheSize(cacheSize);
     return options;
   }
 
@@ -177,6 +188,48 @@ implements OrderedVersionedColumnarTable {
     } finally {
       iterator.close();
     }
+  }
+
+  private ImmutablePair<Long, byte[]> readKeyValueRangeAndGetLatest(
+      byte [] startKey, byte [] endKey, ReadPointer readPointer)
+  throws DBException, IOException {
+    DBIterator iterator = db.iterator();
+    try {
+      long lastDelete = -1;
+      long undeleted = -1;
+      for (iterator.seek(startKey); iterator.hasNext(); iterator.next()) {
+        byte [] key = iterator.peekNext().getKey();
+        byte [] value = iterator.peekNext().getValue();
+        // If we have reached past the endKey, nothing was found, return null
+        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+          return null;
+        }
+        KeyValue kv = createKeyValue(key, value);
+        // Determine if this KV is visible
+        long curVersion = kv.getTimestamp();
+        if (!readPointer.isVisible(curVersion)) continue;
+        Type type = Type.codeToType(kv.getType());
+        if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          continue;
+        }
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) continue;
+          else break;
+        }
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+          continue;
+        }
+        if (curVersion == lastDelete) continue;
+        // If we get here, this version is visible
+        return new ImmutablePair<Long, byte[]>(curVersion, kv.getValue());
+      }
+    } finally {
+      iterator.close();
+    }
+    // Nothing found
+    return null;
   }
 
   private KeyValue createKeyValue(byte[] key, byte[] value) {
@@ -310,11 +363,10 @@ implements OrderedVersionedColumnarTable {
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
     try {
-      List<KeyValue> kvs = readKeyValueRange(
-          createStartKey(row, column), createEndKey(row, column));
+      ImmutablePair<Long,byte[]> latest = readKeyValueRangeAndGetLatest(
+          createStartKey(row, column), createEndKey(row, column),
+          readPointer);
       
-      ImmutablePair<Long,byte[]> latest = filteredLatest(kvs, readPointer);
-
       if (latest == null)
         return new OperationResult<ImmutablePair<byte[], Long>>(
             StatusCode.KEY_NOT_FOUND);
@@ -539,37 +591,6 @@ implements OrderedVersionedColumnarTable {
   }
 
   /**
-   * Result has (version, kvtype, id, value)
-   * @throws DBException
-   */
-  private ImmutablePair<Long, byte[]> filteredLatest(
-      List<KeyValue> kvs, ReadPointer readPointer) throws DBException {
-    if (kvs == null || kvs.isEmpty()) return null;
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (KeyValue kv : kvs) {
-      long curVersion = kv.getTimestamp();
-      if (!readPointer.isVisible(curVersion)) continue;
-      Type type = Type.codeToType(kv.getType());
-      if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-        continue;
-      }
-      if (type == Type.DeleteColumn) {
-        if (undeleted == curVersion) continue;
-        else break;
-      }
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-        continue;
-      }
-      if (curVersion == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion, kv.getValue());
-    }
-    return null;
-  }
-
-  /**
    * Result has (column, version, kvtype, id, value)
    * @throws DBException
    */
@@ -689,9 +710,8 @@ implements OrderedVersionedColumnarTable {
 
   // Read-Modify-Write Operations
 
-  @Override
-  public synchronized long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) throws OperationException {
+  private long internalIncrement(byte[] row, byte[] column, long amount, ReadPointer readPointer,
+                                 long writeVersion) throws OperationException {
     long newAmount = amount;
     // Read existing value
     OperationResult<byte[]> readResult = get(row, column, readPointer);
@@ -704,18 +724,38 @@ implements OrderedVersionedColumnarTable {
     }
     // Write new value
     performInsert(row, column, writeVersion, Type.Put,
-        Bytes.toBytes(newAmount));
+                  Bytes.toBytes(newAmount));
     return newAmount;
   }
 
   @Override
-  public synchronized Map<byte[], Long> increment(byte[] row, byte[][] columns,
+  public long increment(byte[] row, byte[] column, long amount,
+      ReadPointer readPointer, long writeVersion) throws OperationException {
+    Row r = new Row(row);
+    lockRow(r);
+    long newAmount;
+    try {
+      newAmount = internalIncrement(row, column, amount, readPointer, writeVersion);
+    } finally {
+      unlockRow(r);
+    }
+    return newAmount;
+  }
+
+  @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
       long[] amounts, ReadPointer readPointer, long writeVersion)
       throws OperationException {
+    Row r = new Row(row);
+    lockRow(r);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-    for (int i=0; i<columns.length; i++) {
-      ret.put(columns[i], increment(row, columns[i], amounts[i],
-          readPointer, writeVersion));
+    try {
+      for (int i=0; i<columns.length; i++) {
+        ret.put(columns[i], internalIncrement(row, columns[i], amounts[i],
+            readPointer, writeVersion));
+      }
+    } finally {
+      unlockRow(r);
     }
     return ret;
   }
@@ -728,41 +768,47 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public synchronized void compareAndSwap(byte[] row, byte[] column,
+  public void compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) throws OperationException {
 
-    // Read existing value
-    OperationResult<byte[]> readResult = get(row, column, readPointer);
-    byte [] existingValue = readResult.getValue();
-    
-    // Handle cases regarding non-existent values
-    if (existingValue == null && expectedValue != null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    if (existingValue != null && expectedValue == null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    
-    // if nothing existed, write data
-    if (expectedValue == null) {
+    Row r = new Row(row);
+    lockRow(r);
+    try {
+      // Read existing value
+      OperationResult<byte[]> readResult = get(row, column, readPointer);
+      byte [] existingValue = readResult.getValue();
+
+      // Handle cases regarding non-existent values
+      if (existingValue == null && expectedValue != null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+      if (existingValue != null && expectedValue == null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if nothing existed, write data
+      if (expectedValue == null) {
+        performInsert(row, column, writeVersion, Type.Put, newValue);
+        return;
+      }
+
+      // check if expected == existing, fail if not
+      if (!Bytes.equals(expectedValue, existingValue))
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if newValue is null, just delete.
+      if (newValue == null) {
+        deleteAll(row, column, writeVersion);
+        return;
+      }
+
+      // Checks passed, write new value
       performInsert(row, column, writeVersion, Type.Put, newValue);
-      return;
+    } finally {
+      unlockRow(r);
     }
-
-    // check if expected == existing, fail if not
-    if (!Bytes.equals(expectedValue, existingValue))
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-
-    // if newValue is null, just delete.
-    if (newValue == null) {
-      deleteAll(row, column, writeVersion);
-      return;
-    }
-
-    // Checks passed, write new value
-    performInsert(row, column, writeVersion, Type.Put, newValue);
   }
   
   private void handleIOException(IOException e, String where)
@@ -779,5 +825,22 @@ implements OrderedVersionedColumnarTable {
         e.getMessage() + ")";
     LOG.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
+  private RowLock lockRow(Row row) {
+    RowLock lock = this.locks.get(row);
+    if (lock == null) {
+      lock = new RowLock(row);
+      RowLock existing = this.locks.putIfAbsent(row, lock);
+      if (existing != null) lock = existing;
+    }
+    lock.lock();
+    return lock;
+  }
+  private void unlockRow(Row row) {
+    RowLock lock = this.locks.get(row);
+    if (lock == null) {
+      throw new RuntimeException("Attempted to unlock invalid row lock");
+    }
+    lock.unlock();
   }
 }

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -28,7 +27,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An in-memory implementation of a column-oriented table similar to HBase.
@@ -671,35 +669,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     return columnMap;
   }
 
-  static class Row implements Comparable<Row> {
-    final byte[] value;
-
-    Row(final byte[] value) {
-      this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof Row) && Bytes.equals(this.value, ((Row)o).value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Bytes.hashCode(this.value);
-    }
-
-    @Override
-    public int compareTo(Row r) {
-      return Bytes.compareTo(this.value, r.value);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-          .add("rowkey", Bytes.toString(this.value)).toString();
-    }
-  }
-
   static class Column extends Row {
     Column(final byte[] key) {
       super(key);
@@ -736,58 +705,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     @Override
     public String toString() {
       return Objects.toStringHelper(this).add("type", this.type).toString();
-    }
-  }
-
-  private static final Random lockIdGenerator = new Random();
-
-  static class RowLock {
-    final Row row;
-    final long id;
-    final AtomicBoolean locked;
-
-    RowLock(Row row) {
-      this.row = row;
-      this.id = MemoryOVCTable.lockIdGenerator.nextLong();
-      this.locked = new AtomicBoolean(false);
-    }
-
-    public boolean unlock() {
-      synchronized (this.locked) {
-        boolean ret = this.locked.compareAndSet(true, false);
-        this.locked.notifyAll();
-        return ret;
-      }
-    }
-
-    public void lock() {
-      synchronized (this.locked) {
-        while (this.locked.get()) {
-          try {
-            this.locked.wait();
-          } catch (InterruptedException e) {
-            System.out.println("RowLock.lock() interrupted");
-          }
-        }
-        this.locked.compareAndSet(false, true);
-      }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof RowLock) && this.id == ((RowLock)o).id
-          && Bytes.equals(this.row.value, ((RowLock)o).row.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Bytes.hashCode(this.row.value);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this).add("row", this.row)
-          .add("id", this.id).add("locked", this.locked).toString();
     }
   }
 
