@@ -119,9 +119,10 @@ public abstract class TestTTQueue {
     }
   }
 
+  // this must match the way that TTQueueOnVCTable creates dirty pointers!
   protected ReadPointer getDirtyPointer() {
-    return new MemoryReadPointer(
-        Long.MAX_VALUE, timeOracle.getTimestamp(), null);
+      return new MemoryReadPointer(
+        timeOracle.getTimestamp(), 1, null);
   }
   
   protected ReadPointer getCleanPointer() {
