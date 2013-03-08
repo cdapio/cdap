@@ -60,14 +60,20 @@ implements OrderedVersionedColumnarTable {
   
   private final String encodedTableName;
 
+  private final Integer blockSize;
+  private final Long cacheSize;
+
   private DB db;
 
   private final ConcurrentHashMap<Row, RowLock> locks =
     new ConcurrentHashMap<Row, RowLock>();
 
-  LevelDBOVCTable(final String basePath, final String tableName) {
+  LevelDBOVCTable(final String basePath, final String tableName,
+                  final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.tableName = tableName;
+    this.blockSize = blockSize;
+    this.cacheSize = cacheSize;
     try {
       this.encodedTableName = URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -82,14 +88,13 @@ implements OrderedVersionedColumnarTable {
   }
 
   private Options generateDBOptions(boolean createIfMissing,
-      boolean errorIfExists) {
+                                    boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
     options.comparator(new KeyValueDBComparator());
-    // Disabling optimizations until all tests pass
-    // options.blockSize(1024);
-    // options.cacheSize(1024*1024*32);
+    options.blockSize(blockSize);
+    options.cacheSize(cacheSize);
     return options;
   }
 
