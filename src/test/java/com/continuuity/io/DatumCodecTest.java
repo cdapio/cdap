@@ -243,4 +243,28 @@ public class DatumCodecTest {
     Assert.assertEquals("30", lessFields.k);
     Assert.assertEquals(moreFields.inner.b, lessFields.inner.b);
   }
+
+  public static enum TestEnum {
+    VALUE1, VALUE2, VALUE3
+  }
+
+  @Test
+  public void testEnum() throws IOException, UnsupportedTypeException {
+    PipedOutputStream output = new PipedOutputStream();
+    PipedInputStream input = new PipedInputStream(output);
+
+    Schema schema = new ReflectionSchemaGenerator().generate(TestEnum.class);
+    ReflectionDatumWriter writer = new ReflectionDatumWriter(schema);
+    BinaryEncoder encoder = new BinaryEncoder(output);
+    writer.write(TestEnum.VALUE1, encoder);
+    writer.write(TestEnum.VALUE3, encoder);
+    writer.write(TestEnum.VALUE2, encoder);
+
+    BinaryDecoder decoder = new BinaryDecoder(input);
+    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<TestEnum>(schema, TypeToken.of(TestEnum.class));
+
+    Assert.assertEquals(TestEnum.VALUE1, reader.read(decoder, schema));
+    Assert.assertEquals(TestEnum.VALUE3, reader.read(decoder, schema));
+    Assert.assertEquals(TestEnum.VALUE2, reader.read(decoder, schema));
+  }
 }
