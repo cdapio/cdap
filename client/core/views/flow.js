@@ -66,7 +66,7 @@ define([
 			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
 
-			if (action.toLowerCase() in C.Ctl.Flow) {
+			if (action && action.toLowerCase() in C.Ctl.Flow) {
 				C.Ctl.Flow[action.toLowerCase()](app, id, -1);
 			}
 		},

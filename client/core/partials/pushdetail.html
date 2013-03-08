@@ -11,13 +11,16 @@
 <div class="modal-push">
 
 {{#if view.pushing}}
-<div style="text-align: center; padding: 24px;">
-	<img src="/assets/img/pushing.gif" />
+<div style="text-align: center; padding: 26px;height:182px;">
+	<img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
 </div>
 {{else}}
 	{{#if view.finished}}
 		<div class="popup-description" style="padding:0;">
 			{{view.finishedMessage}}
+			{{#if view.finishedLink}}
+				<br /><a target="_blank" {{bindAttr href="view.finishedLink"}}>{{view.finishedLink}}</a>
+			{{/if}}
 		</div>
 	{{else}}
 		<div class="sparkline-box-title" style="padding-left:0;">API Key</div>
