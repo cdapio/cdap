@@ -86,7 +86,7 @@ public interface TTQueue {
    * @throws OperationException if unsuccessful
    */
   public void finalize(QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups) throws OperationException;
+                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
 
   /**
    * Unacknowledges a previously acknowledge ack.
