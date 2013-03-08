@@ -182,7 +182,9 @@ app.get('/destinations', function  (req, res) {
 
 	fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
 
-
+		res.on('error', function (e) {
+			logger.trace('/destinations', e);
+		});
 
 		if (error) {
 
@@ -209,6 +211,12 @@ app.get('/destinations', function  (req, res) {
 					res.end();
 
 				});
+
+				response.on('error', function () {
+					res.write('network');
+					res.end();
+				});
+
 			});
 
 			request.on('error', function () {

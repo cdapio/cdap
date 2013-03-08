@@ -205,6 +205,7 @@ a, a:visited {
 	top: 0px;
 	left: 0px;
 	width: 100%;
+	z-index: 100;
 }
 #warning div {
 	background-color: #ed6d6d;
@@ -922,13 +923,12 @@ a.brand {
 }
 .modal-push {
 	padding: 0px;
-	min-height: 114px;
 }
 .modal-push input[type=text] {
 	width: 340px;
 }
 .modal-push select {
-	width: 322px;
+	width: 354px;
 }
 .table {
 	margin: 0;
@@ -1197,7 +1197,7 @@ a strong {
 	stroke-width: 2px;
 }
 .popup-modal h2 {
-	color: #535353;
+	color: #5c5c5c;
 	text-align: left;
 	font-size: 20px;
 	margin-bottom: 16px;
@@ -1225,7 +1225,6 @@ a strong {
 	font-size: 14px;
 	padding: 16px 0px 0px;
 	line-height: 1.3em;
-	font-family: 'HelveticaNeueW01-Thin';
 }
 .popup-description a {
 	border-bottom: 1px solid #e7eeef;
@@ -1253,7 +1252,7 @@ a strong {
 	width: 32px;
 	height: 32px;
 	background-image: url(../img/flowlet-types-white.png);
-	margin: 2px 0px 0px 12px;
+	margin: 4px 0px 0px 12px;
 }
 .popup-stream-table {
 	border-top: 1px solid #eaeaea;
@@ -1693,3 +1692,15 @@ ol {
 
 ._jsPlumb_connector { z-index:1; }
 ._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:2; cursor:pointer; }
+
+/*
+ * Retina stuff.
+ */
+@media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
+only screen and (-moz-min-device-pixel-ratio: 1.5),
+only screen and (-o-min-device-pixel-ratio: 3/2),
+only screen and (min-device-pixel-ratio: 1.5) {
+	.popup-description {
+		font-family: 'HelveticaNeueW01-Thin';
+	}
+}

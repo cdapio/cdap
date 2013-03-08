@@ -87,8 +87,8 @@ define([
 				} else {
 
 					self.set('finished', 'Success');
-					self.set('finishedMessage', "Successfully pushed to " + destination + ".");
-
+					self.set('finishedMessage', 'Successfully pushed to ' + destination + '.');
+					self.set('finishedLink', 'https://' + destination + '/' + window.location.hash);
 				}
 
 				self.set("pushing", false);
