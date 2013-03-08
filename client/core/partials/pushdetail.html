@@ -1,38 +1,37 @@
 
-<div class="popup-container" style="min-height: 246px;width: 390px;">
-	<div class="popup-body" style="min-height: 220px;">
-	{{#unless view.pushing}}
-	<div class="popup-close" {{action hide on="click"}}>×</div>
-	{{/unless}}
+<div class="popup-container" style="min-height: 246px;width: 430px;">
+	<div class="popup-body" style="min-height: 240px;">
 
-<div class="popup-icon-cloud" />
 {{#if view.finished}}
-	<h1 class="popup-title">Push {{view.finished}}</h1>
+	<h2>Push {{view.finished}}</h1>
 {{else}}
-	<h1 class="popup-title">Push to Cloud</h1>
+	<h2>Push to Cloud</h1>
 {{/if}}
 <div class="modal-loading"></div>
 <div class="modal-push">
 
 {{#if view.pushing}}
-<div style="text-align: center; padding: 24px;">
-	<img src="/assets/img/pushing.gif" />
+<div style="text-align: center; padding: 26px;height:182px;">
+	<img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
 </div>
 {{else}}
 	{{#if view.finished}}
 		<div class="popup-description" style="padding:0;">
 			{{view.finishedMessage}}
+			{{#if view.finishedLink}}
+				<br /><a target="_blank" {{bindAttr href="view.finishedLink"}}>{{view.finishedLink}}</a>
+			{{/if}}
 		</div>
 	{{else}}
 		<div class="sparkline-box-title" style="padding-left:0;">API Key</div>
 		<div>{{view C.Vw.TextField valueBinding="view.apiKey" }}</div>
 		{{#if view.apiKey}}
-			<div class="sparkline-box-title" style="padding-left:0;margin-top:8px;">Destination</div>
 			{{#if view.destinations.length}}
+				<div class="sparkline-box-title" style="padding-left:0;margin-top:8px;">Destination</div>
 				<div>{{view Ember.Select valueBinding="view.destination" contentBinding="view.destinations" optionLabelPath="content.name" optionValuePath="content.id"}}</div>
 			{{else}}
 				{{#if view.loading}}
-					<div style="text-align: center; padding: 4px;">
+					<div style="text-align: center; padding: 24px 0px 16px;">
 						<img src="/assets/img/chart-loading.gif" />
 					</div>
 				{{else}}
@@ -40,7 +39,7 @@
 					{{#if view.network}}
 						There was a problem connecting to Continuuity. Please check your internet connection.
 					{{else}}
-						There are no destinations available. Make sure your API Key is correct.<br /><br />If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home</a> page.</div>
+						There are no destinations available. Make sure your API Key is correct. If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home page</a>.</div>
 					{{/if}}
 					</div>
 				{{/if}}

@@ -73,9 +73,8 @@ define([
 					C.Vw.Modal.show(
 					"Inject Error",
 					"The gateway responded with: " + error.statusCode + '. Info: ' +
-						JSON.stringify(error.response), function () {
-						window.location.reload();
-					}, true);
+						JSON.stringify(error.response),
+					true, true);
 				}
 
 			});
