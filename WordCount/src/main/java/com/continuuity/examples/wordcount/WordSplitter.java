@@ -18,9 +18,9 @@ public class WordSplitter extends AbstractFlowlet {
   @UseDataSet("wordStats")
   private Table wordStatsTable;
 
-  byte[] TOTALS_ROW = Bytes.toBytes("totals");
-  byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
-  byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
+  private static final byte[] TOTALS_ROW = Bytes.toBytes("totals");
+  private static final byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
+  private static final byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
 
   @Output("wordOut")
   private OutputEmitter<String> wordOutput;
