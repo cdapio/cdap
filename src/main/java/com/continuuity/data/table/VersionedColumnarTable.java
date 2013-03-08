@@ -75,6 +75,17 @@ public interface VersionedColumnarTable {
   public void deleteAll(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
+   * Deletes all versions of the specified row and columns that have a version
+   * less than or equal to the specified version. If the implementation supports it
+   * this delete will affect all readers, even those with a read pointer less than
+   * the given version, and it cannot be undone.
+   * @param row
+   * @param columns
+   * @param version
+   */
+  public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
+
+  /**
    * Undeletes (invalidates) a previously executed
    * {@link #deleteAll(byte[], byte[], long)} operation.
    * @param row

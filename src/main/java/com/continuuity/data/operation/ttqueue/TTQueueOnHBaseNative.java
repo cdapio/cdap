@@ -165,7 +165,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   @Override
   public void finalize(QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups)
+      QueueConsumer consumer, int totalNumGroups, long writePoint)
           throws OperationException {
     if (TRACE) log("Finalizing " + entryPointer);
     long now = this.timeOracle.getTimestamp();

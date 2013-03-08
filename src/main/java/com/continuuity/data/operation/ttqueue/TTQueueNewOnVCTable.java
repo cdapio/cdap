@@ -341,8 +341,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups) throws
-    OperationException {
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups, long writePoint)
+    throws OperationException {
     // TODO: Evict queue entries
   }
 

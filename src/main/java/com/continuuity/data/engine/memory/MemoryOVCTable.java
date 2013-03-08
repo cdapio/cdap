@@ -7,14 +7,24 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -114,6 +124,23 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     for (byte [] column : columns) {
       NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
       columnMap.put(new Version(version, type), Value.delete());
+    }
+    unlockRow(r);
+  }
+
+  @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version) {
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
+      p = getAndLockRow(r);
+    for (byte [] column : columns) {
+      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+      while (!columnMap.isEmpty() && columnMap.lastKey().stamp <= version) {
+        columnMap.pollLastEntry();
+      }
+      if (columnMap.isEmpty()) {
+        p.getSecond().remove(new Column(column));
+      }
     }
     unlockRow(r);
   }
@@ -425,12 +452,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
 
     long newAmount;
-    long writeVersion = 0L;
-    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    long writeVersion;
 
     try {
-      // first determine new values for all columns. This can thrown an
-      // exception if an existing value is not sizeof(long).
+        // first determine new values for the column. This can thrown an
+        // exception if an existing value is not sizeof(long).
         NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
         long existingAmount = 0L;
         ImmutablePair<Long, byte[]> latest = latest(versions);

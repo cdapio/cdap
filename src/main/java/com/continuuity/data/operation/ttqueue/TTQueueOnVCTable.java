@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -20,13 +21,15 @@ import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
@@ -37,8 +40,8 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
  */
 public class TTQueueOnVCTable implements TTQueue {
 
-  //  private static final Logger LOG =
-  //      LoggerFactory.getLogger(TTQueueOnVCTable.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TTQueueOnVCTable.class);
 
   private final VersionedColumnarTable table;
   private final byte [] queueName;
@@ -397,6 +400,8 @@ public class TTQueueOnVCTable implements TTQueue {
                 dirty.getFirst(), dirty.getSecond());
             // Successfully moved group head, move on
             groupState = newGroupState;
+            // attempt to delete the old shard - if all of its entrys have been evicted
+            garbageCollectOldShards(entryPointer.getShardId(), readPointer);
           } catch (OperationException e) {
             // Group head update failed, someone else has changed it, move on
             groupState = GroupState.fromBytes(
@@ -569,6 +574,112 @@ public class TTQueueOnVCTable implements TTQueue {
         "Somehow broke from loop, bug in TTQueue");
   }
 
+  public void garbageCollectOldShards(long currentShardId, ReadPointer readPointer) {
+    if (!(this.table instanceof MemoryOVCTable)) return;
+    try {
+      // read all columns of each shard. there may be data entries, meta entries, and group meta entries
+      // we only delete if entries are evicted, that is, all data and group meta entries are gone and
+      // all meta entries are not VALID (that is INVALID, EVICTED, or SHARD_END, and that must be true
+      // for all older shards, too. First find the oldest shard, seeking backward from current shard.
+      LinkedList<byte[]> shardRowsToDelete = Lists.newLinkedList();
+      for (long shardId = currentShardId; shardId >= 0; --shardId) {
+        byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, shardId);
+        // read the first entry.
+        OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, 1,
+                                                                     this.dirtyPointer().getFirst());
+        if (result.isEmpty() || result.getValue().isEmpty()) {
+          // this shard does not exist. stop
+          break;
+        }
+        // get the first and only entry (it is not empty, and we got it with limit = 1
+        Map.Entry<byte[], byte[]> entry = result.getValue().entrySet().iterator().next();
+        if (!isEntryMeta(entry.getKey())) {
+          // this shard cannot be deleted (and none of the ones we already found)
+          shardRowsToDelete.clear();
+          continue;
+        }
+        EntryMeta entryMeta = EntryMeta.fromBytes(entry.getValue());
+        if (entryMeta.isValid()) {
+          // this shard cannot be deleted (and none of the ones we already found)
+          shardRowsToDelete.clear();
+          continue;
+        }
+        // first entry looks good. Now read and verify all meta entries until we find a shard end
+        boolean shardEndReached = false;
+        int batchSize = 100;
+        // we will read the row in column ranges. every range starts right after the last column read
+        // we use this as the start column for each range: last key with a 0 appended.
+        // the length of all meta keys is the same, so we can reuse the array
+        boolean deleteThisRow = true;
+        byte[] lastKey = entry.getKey();
+        byte[] startRead = new byte[lastKey.length + 1];
+        while (!shardEndReached && deleteThisRow) {
+          // copy the last key into the range start column (it still has another buyte 0 at the end)
+          System.arraycopy(lastKey, 0, startRead, 0, lastKey.length);
+          result = this.table.get(shardRow, startRead, null, batchSize, this.dirtyPointer().getFirst());
+          if (result.isEmpty() || result.getValue().isEmpty()) {
+            // no shard end present... better not delete
+            deleteThisRow = false;
+            continue;
+          }
+          for (Map.Entry<byte[], byte[]> e : result.getValue().entrySet()) {
+            if (isEntryMeta(e.getKey())) {
+              entryMeta = EntryMeta.fromBytes(e.getValue());
+              if (entryMeta.isEndOfShard()) {
+                shardEndReached = true;
+                continue;
+              } else if (!entryMeta.isValid()) {
+                lastKey = e.getKey();
+                continue; // this entry is good
+              }
+            }
+            deleteThisRow = false;
+            break;
+          }
+        }
+        if (!shardEndReached || !deleteThisRow) {
+          // this shard cannot be deleted (and none of the ones we already found)
+          shardRowsToDelete.clear();
+          continue;
+        }
+        // this shard is safe to delete. We build the list in reverse order, such that, if a
+        // delete of a row fails, only older shards have been deleted, and we don't create gaps.
+        shardRowsToDelete.addFirst(shardRow);
+      }
+      // nothing to delete?
+      if (shardRowsToDelete.isEmpty()) {
+        return;
+      }
+      // now there is one last caveat: The youngest one of these rows may still be needed: It could be
+      // that its last entry was just evicted by another consumer, but that consumer has not moved its
+      // head pointer to the next shard yet. In that case it would try to read this shard and find
+      // nothing, and therefore it would assume that the queue is empty. We must avoid that. Therefore
+      // We delete all but the youngest shard.
+      shardRowsToDelete.removeLast();
+
+      // we have identified all shards to delete
+      for (byte[] shardRow : shardRowsToDelete) {
+        LOG.debug("Deleting old shard " + new String(shardRow) + " in queue " + this.queueName);
+        // we know this row contains only (small) meta entries, read them all at once.
+        OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, -1,
+                                                                     this.dirtyPointer().getFirst());
+        if (result.isEmpty() || result.getValue().isEmpty()) {
+          // strange, did someone else delete this already? skip
+        }
+        byte[][] columnsToDelete = result.getValue().keySet().toArray(new byte[result.getValue().size()][]);
+        this.table.deleteDirty(shardRow, columnsToDelete, this.dirtyPointer().getFirst().getMaximum());
+      }
+    } catch (OperationException e) {
+      // ignore errors, failure to delete old shards should not block dequeue - but log it
+      LOG.error("Exception when trying to delete old shards: " + e.getMessage(), e);
+    }
+  }
+
+  boolean isEntryMeta(byte[] column) {
+    return (column.length == Bytes.SIZEOF_LONG + ENTRY_META.length) &&
+        (Bytes.equals(column, Bytes.SIZEOF_LONG, ENTRY_META.length, ENTRY_META, 0, ENTRY_META.length));
+  }
+
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
@@ -608,7 +719,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @Override
   public void finalize(QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups)
+                       QueueConsumer consumer, int totalNumGroups, long writePoint)
       throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
@@ -639,32 +750,41 @@ public class TTQueueOnVCTable implements TTQueue {
         getValue(), newValue, dirty.getFirst(), dirty.getSecond());
 
     // We successfully finalized our ack.  Perform evict-on-ack if possible.
-    Pair<Boolean, Set<byte[]>> groupsFinalizedResult = null;
-    if (totalNumGroups == 1 ||
-        (totalNumGroups > 0 && (groupsFinalizedResult =
-            allOtherGroupsFinalized(entryPointer, totalNumGroups,
-                consumer.getGroupId(), dirty)).getFirst())) {
-      // Evict!
-      // Set entry metadata to EVICTED state
-      byte [] entryMetaColumn =
-          makeColumn(entryPointer.getEntryId(), ENTRY_META);
-      this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
-          new EntryMeta(EntryState.EVICTED).getBytes());
-      // Delete entry data and group meta entries
-      Set<byte[]> groupColumns = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-      if (totalNumGroups != 1) {
-        groupColumns.addAll(groupsFinalizedResult.getSecond());
-      }
-      byte [] entryDataColumn =
-          makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
-      groupColumns.add(entryDataColumn);
-      this.table.deleteAll(shardRow,
-          groupColumns.toArray(new byte[groupColumns.size()][]),
-              dirty.getSecond());
+    Set<byte[]> groupsFinalizedResult = null;
+    boolean canEvict;
+    if (totalNumGroups <= 0) {
+      canEvict = false;
+    } else if (totalNumGroups == 1) {
+      canEvict = true;
+    } else {
+      groupsFinalizedResult = allOtherGroupsFinalized(entryPointer, totalNumGroups, consumer.getGroupId(), dirty);
+      canEvict = groupsFinalizedResult != null;
     }
+    if (!canEvict) {
+      return;
+    }
+    // Evict!
+    // Set entry metadata to EVICTED state
+    byte [] entryMetaColumn = makeColumn(entryPointer.getEntryId(), ENTRY_META);
+    this.table.put(shardRow, entryMetaColumn, writePoint,
+                   new EntryMeta(EntryState.EVICTED).getBytes());
+
+    // Delete entry data and group meta entries
+    byte[][] groupColumns = new byte[totalNumGroups + 1][];
+    if (totalNumGroups == 1) {
+      groupColumns[0] = groupColumn;
+    } else {
+      // that set contains exactly totalNumGroups entries.
+      // copy them into the groupColumns array, that leaves room for one
+      groupsFinalizedResult.toArray(groupColumns);
+    }
+    byte [] entryDataColumn =
+      makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
+    groupColumns[totalNumGroups] = entryDataColumn;
+    this.table.deleteDirty(shardRow, groupColumns, writePoint);
   }
 
-  private Pair<Boolean, Set<byte[]>> allOtherGroupsFinalized(
+  private Set<byte[]> allOtherGroupsFinalized(
       QueueEntryPointer entryPointer, int totalNumGroups, long curGroup,
       ImmutablePair<ReadPointer,Long> dirtyPointer) throws OperationException {
 
@@ -680,7 +800,7 @@ public class TTQueueOnVCTable implements TTQueue {
             dirtyPointer.getFirst()).getValue();
     
     if (groupEntries.size() < totalNumGroups) {
-      return new Pair<Boolean,Set<byte[]>>(false, null);
+      return null;
     }
     
     for (Map.Entry<byte[],byte[]> groupEntry : groupEntries.entrySet()) {
@@ -691,9 +811,9 @@ public class TTQueueOnVCTable implements TTQueue {
       EntryGroupMeta groupMeta =
           EntryGroupMeta.fromBytes(groupEntry.getValue());
       if (!groupMeta.isAcked())
-        return new Pair<Boolean,Set<byte[]>>(false, null);
+        return null;
     }
-    return new Pair<Boolean,Set<byte[]>>(true, groupEntries.keySet());
+    return groupEntries.keySet();
   }
 
   @Override
