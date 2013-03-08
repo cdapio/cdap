@@ -401,7 +401,7 @@ public class TTQueueOnVCTable implements TTQueue {
             // Successfully moved group head, move on
             groupState = newGroupState;
             // attempt to delete the old shard - if all of its entrys have been evicted
-            attemptEvictOldShards(entryPointer.getShardId(), readPointer);
+            garbageCollectOldShards(entryPointer.getShardId(), readPointer);
           } catch (OperationException e) {
             // Group head update failed, someone else has changed it, move on
             groupState = GroupState.fromBytes(
@@ -574,7 +574,7 @@ public class TTQueueOnVCTable implements TTQueue {
         "Somehow broke from loop, bug in TTQueue");
   }
 
-  public void attemptEvictOldShards(long currentShardId, ReadPointer readPointer) {
+  public void garbageCollectOldShards(long currentShardId, ReadPointer readPointer) {
     if (!(this.table instanceof MemoryOVCTable)) return;
     try {
       // read all columns of each shard. there may be data entries, meta entries, and group meta entries
@@ -593,8 +593,7 @@ public class TTQueueOnVCTable implements TTQueue {
         }
         // get the first and only entry (it is not empty, and we got it with limit = 1
         Map.Entry<byte[], byte[]> entry = result.getValue().entrySet().iterator().next();
-        Long entryId = isEntryMeta(entry.getKey());
-        if (entry == null) {
+        if (!isEntryMeta(entry.getKey())) {
           // this shard cannot be deleted (and none of the ones we already found)
           shardRowsToDelete.clear();
           continue;
@@ -624,7 +623,7 @@ public class TTQueueOnVCTable implements TTQueue {
             continue;
           }
           for (Map.Entry<byte[], byte[]> e : result.getValue().entrySet()) {
-            if (isEntryMeta(e.getKey()) != null) {
+            if (isEntryMeta(e.getKey())) {
               entryMeta = EntryMeta.fromBytes(e.getValue());
               if (entryMeta.isEndOfShard()) {
                 shardEndReached = true;
@@ -676,15 +675,10 @@ public class TTQueueOnVCTable implements TTQueue {
     }
   }
 
-  Long isEntryMeta(byte[] column) {
-    if (column.length == Bytes.SIZEOF_LONG + ENTRY_META.length) {
-      if (Bytes.equals(column, Bytes.SIZEOF_LONG, ENTRY_META.length, ENTRY_META, 0, ENTRY_META.length)) {
-        return Bytes.toLong(column, 0, Bytes.SIZEOF_LONG);
-      }
-    }
-    return null;
+  boolean isEntryMeta(byte[] column) {
+    return (column.length == Bytes.SIZEOF_LONG + ENTRY_META.length) &&
+        (Bytes.equals(column, Bytes.SIZEOF_LONG, ENTRY_META.length, ENTRY_META, 0, ENTRY_META.length));
   }
-
 
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
