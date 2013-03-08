@@ -125,7 +125,7 @@ public class FlowTest {
       opex.commit(opCtx, enqueue);
     }
 
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(10);
 
     // Query
     Gson gson = new Gson();
