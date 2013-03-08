@@ -24,6 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -168,6 +169,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     } else if(this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
+      jdbcDataSource.setProperties(getHsqlProperties());
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 100);
     }
 
@@ -181,6 +183,16 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     // Create any tables needed for initializing.
     DBUtils.createMetricsTables(getConnection(), this.type);
 
+  }
+
+  private Properties getHsqlProperties() {
+    Properties hsqlProperties = new Properties();
+    // Assume 1K rows and 512MB cache size
+    hsqlProperties.setProperty("hsqldb.cache_rows", "" + 512000);
+    hsqlProperties.setProperty("hsqldb.cache_size", "" + 512000);
+    // Disable logging
+    hsqlProperties.setProperty("hsqldb.log_data", "false");
+    return hsqlProperties;
   }
 
   /**

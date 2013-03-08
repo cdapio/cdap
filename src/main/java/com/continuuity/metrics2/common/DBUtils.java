@@ -145,7 +145,7 @@ public class DBUtils {
     }
 
     // DDL for creating metrics tables.
-    String metricsTableCreateDDL = "CREATE TABLE metrics\n" +
+    String metricsTableCreateDDL = "CREATE CACHED TABLE metrics\n" +
       "   (account_id VARCHAR(64) NOT NULL, \n" +
       "    application_id VARCHAR(64) NOT NULL, \n" +
       "    flow_id VARCHAR(64) NOT NULL, \n" +
@@ -158,7 +158,7 @@ public class DBUtils {
       " PRIMARY KEY(account_id, application_id, flow_id, run_id, flowlet_id," +
       "             instance_id, metric))";
 
-    String metricsTimeseriesCreateTableDDL = "CREATE TABLE timeseries\n" +
+    String metricsTimeseriesCreateTableDDL = "CREATE CACHED TABLE timeseries\n" +
       "   (account_id VARCHAR(64) NOT NULL, \n" +
       "    application_id VARCHAR(64) NOT NULL, \n" +
       "    flow_id VARCHAR(64) NOT NULL, \n" +
