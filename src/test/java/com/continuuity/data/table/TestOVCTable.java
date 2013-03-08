@@ -28,7 +28,7 @@ public abstract class TestOVCTable {
   private static final Logger Log = LoggerFactory.getLogger(TestOVCTable.class);
 
   protected OrderedVersionedColumnarTable table;
-  private OVCTableHandle tableHandle;
+  protected OVCTableHandle tableHandle;
 
   protected static final Random r = new Random();
 
