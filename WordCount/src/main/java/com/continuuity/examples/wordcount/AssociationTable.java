@@ -9,6 +9,7 @@ import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -40,18 +41,33 @@ public class AssociationTable extends DataSet {
    * Stores associations between the specified set of words.  That is, for every
    * word in the set, an association will be stored for each of the other words
    * in the set.
-   * <p>
-   * This is an asynchronous write operation.
    * @param words words to store associations between
    * @throws OperationException
    */
   public void writeWordAssocs(Set<String> words) throws OperationException {
-    for (String rootWord : words) {
-      for (String assocWord : words) {
-        if (!rootWord.equals(assocWord)) {
-          this.table.write(new Increment(Bytes.toBytes(rootWord), Bytes.toBytes(assocWord), 1L));
-        }
-      }
+
+    // for sets of less than 2 words, there are no associations
+    int n = words.size();
+    if (n < 2) return;
+
+    // every word will get (n-1) increments (one for each of the other words)
+    long[] values = new long[n - 1];
+    Arrays.fill(values, 1);
+
+    // convert all words to bytes
+    byte[][] wordBytes = new byte[n][];
+    int i = 0;
+    for (String word : words) {
+      wordBytes[i++] = Bytes.toBytes(word);
+    }
+
+    // generate an increment for each word
+    for (int j = 0; j < n; j++) {
+      byte[] row =  wordBytes[j];
+      byte[][] columns = new byte[n - 1][];
+      System.arraycopy(wordBytes, 0, columns, 0, j);
+      System.arraycopy(wordBytes, j + 1, columns, j, n - j - 1);
+      this.table.write(new Increment(row, columns, values));
     }
   }
 
@@ -81,7 +97,7 @@ public class AssociationTable extends DataSet {
   }
 
   /**
-   * Retruns how many timnes two words occur together
+   * Returns how many times two words occur together
    * @param word1 the first word
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together
