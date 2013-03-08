@@ -87,4 +87,10 @@ public class SchemaTest {
 
     Assert.assertTrue(s2.isCompatible(s3));
   }
+
+  @Test
+  public void testPrimitiveArray() throws UnsupportedTypeException {
+    Schema schema = new ReflectionSchemaGenerator().generate(int[].class);
+    Assert.assertEquals(Schema.arrayOf(Schema.of(Schema.Type.INT)), schema);
+  }
 }
