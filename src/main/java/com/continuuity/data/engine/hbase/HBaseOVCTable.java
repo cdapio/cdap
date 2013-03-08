@@ -537,10 +537,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
     throws OperationException {
     try {
-      Increment increment = new Increment(row);
-      increment.addColumn(this.family, column, amount);
-      Result result = this.readTable.increment(increment);
-      return Bytes.toLong(result.value());
+      return this.readTable.incrementColumnValue(row, this.family, column, amount);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return -1L;

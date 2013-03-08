@@ -12,12 +12,14 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
+import com.continuuity.data.operation.ttqueue.internal.QueuePartitionMapSerializer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -159,12 +161,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
   @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
-    byte[] data=entry.getData();
-    byte[] headerData=null;
+    byte[] data = entry.getData();
+    byte[] headerData;
     try {
-      data = QueueEntrySerializer.serialize(entry);
+      headerData = QueuePartitionMapSerializer.serialize(entry.getPartitioningMap());
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException");
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue partition map serialization failed due to IOException");
     }
     if (TRACE)
       log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
@@ -204,7 +206,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                    cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
     // Delete data since it's invalidated
     this.table.delete(rowName, ENTRY_DATA, cleanWriteVersion);
-    log("Invalidated " + entryPointer);
+    if (TRACE) log("Invalidated " + entryPointer);
   }
   /**
    * {@inheritDoc}
@@ -218,6 +220,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
+  }
+
+  @Override
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                               ReadPointer readPointer) throws OperationException {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
@@ -238,7 +246,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       if(result.isEmpty()) {
         // This entry doesn't exist or is not visible, queue is empty for this consumer
-        log("Queue is empty, nothing found at " + entryId + " using " +
+        if (TRACE) log("Queue is empty, nothing found at " + entryId + " using " +
               "read pointer " + readPointer);
         return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
       }
@@ -316,7 +324,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
                      readPointer.getMaximum(),
                      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
-                     Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+                     INVALID_ACTIVE_ENTRY_ID_BYTES});
     } else {
 
       byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
