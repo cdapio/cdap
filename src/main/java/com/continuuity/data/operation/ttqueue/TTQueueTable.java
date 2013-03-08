@@ -66,10 +66,11 @@ public interface TTQueueTable {
    * @param consumer
    * @param totalNumGroups total number of groups to use when doing evict-on-ack
    *                       or -1 to disable
+   * @param writePoint the version to use for writing queue state
    * @throws OperationException if something goes wrong
    */
   public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups) throws OperationException;
+                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
 
   /**
    * Unacknowledges a previously acknowledge ack.

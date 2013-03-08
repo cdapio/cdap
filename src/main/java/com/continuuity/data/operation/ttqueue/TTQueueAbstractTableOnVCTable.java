@@ -59,8 +59,8 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
 
   @Override
   public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups) throws OperationException {
-    getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups);
+                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException {
+    getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups, writePoint);
   }
 
   @Override

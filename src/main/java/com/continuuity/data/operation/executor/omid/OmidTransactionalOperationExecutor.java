@@ -605,7 +605,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()));
+      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getTransactionId());
     }
 
     // emit metrics for the transaction and the queues/streams involved
