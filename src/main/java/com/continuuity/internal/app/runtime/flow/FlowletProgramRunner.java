@@ -12,6 +12,7 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
@@ -21,9 +22,6 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaGenerator;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -31,7 +29,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
-import com.continuuity.app.queue.QueueSpecificationGenerator;
+import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -40,6 +38,9 @@ import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.SchemaGenerator;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -68,6 +69,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -141,7 +143,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext.setInstanceCount(instanceCount);
 
       // Creates QueueSpecification
-      Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs =
+      Table<Node, String, Set<QueueSpecification>> queueSpecs =
         new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId()))
             .create(flowSpec);
 
@@ -353,16 +355,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private OutputEmitterFactory outputEmitterFactory(final String flowletName,
                                                     final BasicFlowletContext flowletContext,
                                                     final QueueProducer queueProducer,
-                                                    final Table<QueueSpecificationGenerator.Node,
-                                                                String,
-                                                                Set<QueueSpecification>> queueSpecs) {
+                                                    final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
       public OutputEmitter<?> create(String outputName, TypeToken<?> type) {
         try {
           Schema schema = schemaGenerator.generate(type.getType());
 
-          QueueSpecificationGenerator.Node flowlet = QueueSpecificationGenerator.Node.flowlet(flowletName);
+          Node flowlet = Node.flowlet(flowletName);
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
@@ -400,7 +400,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                   final QueueReaderFactory queueReaderFactory,
                                                                   final BasicFlowletContext flowletContext,
                                                                   final String flowletName,
-                                                                  final Table<QueueSpecificationGenerator.Node,
+                                                                  final Table<Node,
                                                                               String,
                                                                               Set<QueueSpecification>> queueSpecs) {
     return new ProcessSpecificationFactory() {
@@ -416,13 +416,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
       public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
-        for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletName).values())) {
-          QueueName queueName = queueSpec.getQueueName();
-          if (queueSpec.getInputSchema().equals(schema)
-              && (inputNames.contains(queueName.getSimpleName())
-                  || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
+        for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
+          for (QueueSpecification queueSpec : entry.getValue()) {
+            QueueName queueName = queueSpec.getQueueName();
 
-            queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer));
+            if (queueSpec.getInputSchema().equals(schema)
+              && (inputNames.contains(queueName.getSimpleName())
+              || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
+
+              int numGroups = (entry.getKey().getType() == FlowletConnection.Type.STREAM)
+                                  ? -1 : queueSpecs.row(entry.getKey()).size();
+
+              queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer, numGroups));
+            }
           }
         }
 

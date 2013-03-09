@@ -22,18 +22,26 @@ public final class QueueInputDatum implements InputDatum {
   private final QueueConsumer consumer;
   private final DequeueResult dequeueResult;
   private final QueueName queueName;
+  private final int numGroups;
   private final AtomicInteger retry;
 
-  public QueueInputDatum(QueueConsumer consumer, QueueName queueName, DequeueResult dequeueResult) {
+  public QueueInputDatum(QueueConsumer consumer, QueueName queueName, DequeueResult dequeueResult, int numGroups) {
     this.consumer = consumer;
     this.dequeueResult = dequeueResult;
     this.queueName = queueName;
+    this.numGroups = numGroups;
     this.retry = new AtomicInteger(0);
   }
 
   @Override
   public void submitAck(TransactionAgent txAgent) throws OperationException {
-    txAgent.submit(new QueueAck(queueName.toBytes(), dequeueResult.getEntryPointer(), consumer));
+    QueueAck ack;
+    if (numGroups > 0) {
+      ack = new QueueAck(queueName.toBytes(), dequeueResult.getEntryPointer(), consumer, numGroups);
+    } else {
+      ack = new QueueAck(queueName.toBytes(), dequeueResult.getEntryPointer(), consumer);
+    }
+    txAgent.submit(ack);
   }
 
   @Override
