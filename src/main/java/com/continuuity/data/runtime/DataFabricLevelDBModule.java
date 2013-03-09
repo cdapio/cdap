@@ -36,9 +36,12 @@ public class DataFabricLevelDBModule extends AbstractModule {
         System.getProperty("file.separator") +
         "ldb-test-" + Long.toString(System.currentTimeMillis());
     }
-    if (!new File(path).mkdirs()) {
+
+    File p = new File(path);
+    if (!p.exists() && !p.mkdirs()) {
       throw new RuntimeException("Unable to create directory for ldb");
     }
+
     this.basePath = path;
     this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
                                           Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
