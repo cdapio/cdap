@@ -85,6 +85,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
   static final byte[] INVALID_ACTIVE_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE);
+  static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
                                 final CConfiguration conf) {
@@ -225,19 +226,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // TODO: so that repeated reads to HBase on each dequeue is not required
     if(queueState == null) {
       queueState = new QueueStateImpl();
-      OperationResult<byte[]> activeEntryId =
+      OperationResult<Map<byte[], byte[]>> state =
         this.table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                       ACTIVE_ENTRY, readPointer);
-      if(!activeEntryId.isEmpty()) {
-        // TODO: Check max_tries
-        queueState.setActiveEntryId(Bytes.toLong(activeEntryId.getValue()));
-      }
-      OperationResult<byte[]> consumerReadPointer = this.table.get(
-        makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()), CONSUMER_READ_POINTER,readPointer);
-      if (!consumerReadPointer.isEmpty()) {
-        queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointer.getValue()));
-      } else {
-        queueState.setConsumerReadPointer(0);
+                       new byte[][] {ACTIVE_ENTRY, CONSUMER_READ_POINTER}, readPointer);
+      if(!state.isEmpty()) {
+        long activeEntryId = Bytes.toLong(state.getValue().get(ACTIVE_ENTRY));
+        // TODO: check max tries
+        queueState.setActiveEntryId(activeEntryId);
+
+        byte[] consumerReadPointerBytes = state.getValue().get(CONSUMER_READ_POINTER);
+        if(consumerReadPointerBytes != null) {
+          queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
+        }
       }
     }
 
@@ -282,7 +282,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer)
     throws OperationException {
-    if(queueState.getActiveEntryId() != QueueState.INVALID_ACTIVE_ENTRY_ID) {
+    if(queueState.getActiveEntryId() != INVALID_ACTIVE_ENTRY_ID_VALUE) {
       return queueState.getActiveEntryId();
     }
 
@@ -401,5 +401,47 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
   protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  public static class QueueStateImpl implements QueueState {
+    private long activeEntryId;
+    private long consumerReadPointer;
+    private final CachedList<QueueStateEntry> cachedEntries;
+
+    public QueueStateImpl() {
+      activeEntryId = INVALID_ACTIVE_ENTRY_ID_VALUE;
+      consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
+      cachedEntries = new CachedList<QueueStateEntry>(Collections.EMPTY_LIST);
+    }
+    public QueueStateImpl(CachedList<QueueStateEntry> cachedEntries) {
+      activeEntryId = INVALID_ACTIVE_ENTRY_ID_VALUE;
+      consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
+      this.cachedEntries = cachedEntries;
+    }
+
+    @Override
+    public long getActiveEntryId() {
+      return activeEntryId;
+    }
+
+    @Override
+    public void setActiveEntryId(long activeEntryId) {
+      this.activeEntryId = activeEntryId;
+    }
+
+    @Override
+    public long getConsumerReadPointer() {
+      return consumerReadPointer;
+    }
+
+    @Override
+    public void setConsumerReadPointer(long consumerReadPointer) {
+      this.consumerReadPointer = consumerReadPointer;
+    }
+
+    @Override
+    public CachedList<QueueStateEntry> getCachedEntries() {
+      return cachedEntries;
+    }
   }
 }
