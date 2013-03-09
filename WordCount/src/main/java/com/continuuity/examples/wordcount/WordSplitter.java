@@ -10,6 +10,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +31,8 @@ public class WordSplitter extends AbstractFlowlet {
 
   public void process(StreamEvent event) throws OperationException {
     // Input is a String, need to split it by whitespace
-    byte [] rawInput = Bytes.toBytes(event.getBody());
-    String inputString = new String(rawInput);
+    String inputString = Charset.forName("UTF-8")
+      .decode(event.getBody()).toString();
 
     String [] words = inputString.split("\\s+");
     List<String> wordList = new ArrayList<String>(words.length);
