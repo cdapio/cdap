@@ -229,6 +229,11 @@ public class Constants {
     CFG_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS
     = "overlord.metrics.timeseries.metrics";
 
+  public static final String CFG_METRICS_CLEANUP_TIME_TO_LIVE =
+      "overlord.metrics.cleanup.ttl";
+  public static final String CFG_METRICS_CLEANUP_PERIOD =
+      "overlord.metrics.cleanup.period";
+
   /**
    * Defaults for metrics collection server
    */
@@ -245,6 +250,9 @@ public class Constants {
     DEFAULT_METIRCS_CONNECTION_URL = "jdbc:hsqldb:mem:metricsdb?user=sa";
   public static final String
     DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS = "processed.count";
+
+  public static final long DEFAULT_METRICS_CLEANUP_TIME_TO_LIVE = 60 * 5;
+  public static final long DEFAULT_METRICS_CLEANUP_PERIOD = 60;
 
   /**
    * Configuration for Metadata service
