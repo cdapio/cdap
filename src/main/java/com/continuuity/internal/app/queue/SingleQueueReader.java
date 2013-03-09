@@ -22,16 +22,19 @@ public final class SingleQueueReader implements QueueReader {
   private final OperationContext operationCtx;
   private final QueueName queueName;
   private final Supplier<QueueConsumer> queueConsumer;
+  private final int numGroups;
 
   @Inject
   public SingleQueueReader(OperationExecutor opex,
                            @Assisted Program program,
                            @Assisted QueueName queueName,
-                           @Assisted Supplier<QueueConsumer> queueConsumer) {
+                           @Assisted Supplier<QueueConsumer> queueConsumer,
+                           @Assisted int numGroups) {
     this.opex = opex;
     this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.queueName = queueName;
     this.queueConsumer = queueConsumer;
+    this.numGroups = numGroups;
   }
 
   @Override
@@ -39,6 +42,6 @@ public final class SingleQueueReader implements QueueReader {
     QueueConsumer consumer = queueConsumer.get();
     byte[] queueNameBytes = queueName.toBytes();
     QueueDequeue dequeue = new QueueDequeue(queueNameBytes, consumer, consumer.getQueueConfig());
-    return new QueueInputDatum(consumer, queueName, opex.execute(operationCtx, dequeue));
+    return new QueueInputDatum(consumer, queueName, opex.execute(operationCtx, dequeue), numGroups);
   }
 }

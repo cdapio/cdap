@@ -18,6 +18,7 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
 
 import java.util.Map;
 
@@ -144,7 +145,9 @@ final class BasicFlowletContext implements FlowletContext {
   }
 
   private QueueConsumer createQueueConsumer() {
-    int groupId = 100000 + Objects.hashCode(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
+    int gid = 100000 + Objects.hashCode(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
+    long groupId = 0xffffffffL & gid;
+
     // TODO: Consumer partitioning
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
     return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
