@@ -44,7 +44,7 @@ public class AppFabricClient {
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCEDURE_LONG_OPT_ARG = "procedure";
   private final String FLOW_LONG_OPT_ARG = "flow";
-  private final String HOSTNAME_LONG_OPT_ARG = "hostname";
+  private final String HOSTNAME_LONG_OPT_ARG = "host";
   private final String APIKEY_LONG_OPT_ARG = "apikey";
 
   private String resource = null;
