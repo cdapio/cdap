@@ -3,8 +3,6 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.Decoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
@@ -17,11 +15,9 @@ import com.continuuity.data.operation.ttqueue.internal.QueuePartitionMapSerializ
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -83,8 +79,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] META_ENTRY_PREFIX = {20};     //row <queueName>30<groupId><consumerId>, column 20<entryId>
   static final byte [] CONSUMER_READ_POINTER = {30}; //row <queueName>30<groupId><consumerId>, column 30
 
-  static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
-  static final byte[] INVALID_ACTIVE_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE);
+  static final long INVALID_ENTRY_ID = -1;
+  static final byte[] INVALID_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ENTRY_ID);
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
@@ -107,6 +103,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
 
     while (!foundEntry) {
+      if(entryId >= queueState.getQueueWritePointer()) {
+        // Reached the end of queue as per cached QueueWritePointer,
+        // read it again to see if there is any progress made by producers
+        // TODO: use raw get insead of the workaround of incrementing zero
+        long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+        queueState.setQueueWritePointer(queueWritePointer);
+        // If still no progress, return empty queue
+        if(entryId >= queueState.getQueueWritePointer()) {
+          return INVALID_ENTRY_ID;
+        }
+      }
+
       if (partitioner.isDisjoint()) {
         ++entryId;
       } else {
@@ -221,9 +229,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
-    // Read any claimed entry that was not processed
     // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
     // TODO: so that repeated reads to HBase on each dequeue is not required
+    // QueueState is null, read the queue state from underlying storage.
+    // ACTIVE_ENTRY contains the entry if any that is dequeued, but not acked
+    // CONSUMER_READ_POINTER + 1 points to the next entry that can be read by this queue consuemr
+    //
     if(queueState == null) {
       queueState = new QueueStateImpl();
       OperationResult<Map<byte[], byte[]>> state =
@@ -239,11 +250,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
         }
       }
+
+      // TODO: use raw get insead of the workaround of incrementing zero
+      long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+      queueState.setQueueWritePointer(queueWritePointer);
     }
 
     while(true) {
       // Get the next entryId that can be dequeued by this consumer
       final long entryId = determineNextEntryId(consumer, config, queueState, readPointer);
+      if(entryId == INVALID_ENTRY_ID) {
+        if (TRACE) log("End of queue reached using " + "read pointer " + readPointer);
+        return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
+      }
 
       final byte [] entryRowName = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
       // Read visible entry meta and entry data for the entryId
@@ -282,12 +301,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer)
     throws OperationException {
-    if(queueState.getActiveEntryId() != INVALID_ACTIVE_ENTRY_ID_VALUE) {
+    if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
       return queueState.getActiveEntryId();
     }
 
     // Else get the next entryId
     long entryId = fetchNextEntryId(consumer, config, queueState, readPointer);
+    if(entryId == INVALID_ENTRY_ID) {
+      // End of queue reached for this consumer
+      return INVALID_ENTRY_ID;
+    }
+
     // Persist the entryId this consumer will be working on
     // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
@@ -297,12 +321,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
                      new byte[][] {CONSUMER_READ_POINTER, ACTIVE_ENTRY},
                      readPointer.getMaximum(),
                      new byte[][] {Bytes.toBytes(entryId), Bytes.toBytes(entryId)});
+      queueState.setConsumerReadPointer(entryId);
+      queueState.setActiveEntryId(entryId);
     } else {
       this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY},
                      readPointer.getMaximum(),
                      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
                        Bytes.toBytes(entryId)});
+      queueState.setActiveEntryId(entryId);
     }
     return entryId;
   }
@@ -320,8 +347,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
                      readPointer.getMaximum(),
-                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
-                     INVALID_ACTIVE_ENTRY_ID_BYTES});
+                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(), INVALID_ENTRY_ID_BYTES});
     } else {
 
       byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
@@ -341,7 +367,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.table.put(rowKey,
                      new byte[][] { colKey, ACTIVE_ENTRY },
                      readPointer.getMaximum(),
-                     new byte[][] { acked, INVALID_ACTIVE_ENTRY_ID_BYTES } );
+                     new byte[][] { acked, INVALID_ENTRY_ID_BYTES} );
     }
   }
 
@@ -404,18 +430,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   public static class QueueStateImpl implements QueueState {
-    private long activeEntryId;
-    private long consumerReadPointer;
+    private long activeEntryId = INVALID_ENTRY_ID;
+    private long consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
+    private long queueWrtiePointer = FIRST_QUEUE_ENTRY_ID - 1;
     private final CachedList<QueueStateEntry> cachedEntries;
 
     public QueueStateImpl() {
-      activeEntryId = INVALID_ACTIVE_ENTRY_ID_VALUE;
-      consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
       cachedEntries = new CachedList<QueueStateEntry>(Collections.EMPTY_LIST);
     }
     public QueueStateImpl(CachedList<QueueStateEntry> cachedEntries) {
-      activeEntryId = INVALID_ACTIVE_ENTRY_ID_VALUE;
-      consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
       this.cachedEntries = cachedEntries;
     }
 
@@ -437,6 +460,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void setConsumerReadPointer(long consumerReadPointer) {
       this.consumerReadPointer = consumerReadPointer;
+    }
+
+    @Override
+    public long getQueueWritePointer() {
+      return queueWrtiePointer;
+    }
+
+    @Override
+    public void setQueueWritePointer(long queueWritePointer) {
+      this.queueWrtiePointer = queueWritePointer;
     }
 
     @Override

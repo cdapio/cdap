@@ -15,6 +15,10 @@ public interface QueueState {
 
   public void setConsumerReadPointer(long consumerReadPointer);
 
+  public long getQueueWritePointer();
+
+  public void setQueueWritePointer(long queueWritePointer);
+
   public CachedList<QueueStateEntry> getCachedEntries();
 
 }
