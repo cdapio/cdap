@@ -67,6 +67,26 @@ public class Constants {
   public static final String DEFAULT_APP_FABRIC_SERVER_ADDRESS = "localhost";
 
   /**
+   * Data Fabric
+   */
+  public static final String CFG_DATA_LEVELDB_DIR = "data.local.leveldb";
+  public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.leveldb.blocksize";
+  public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.leveldb.cachesize";
+  public static final String CFG_DATA_HSQLDB_CACHE_ROWS = "data.local.hsqldb.cache_rows";
+  public static final String CFG_DATA_HSQLDB_CACHE_SIZE = "data.local.hsqldb.cache_size";
+  /**
+   * Defaults for Data Fabric
+   */
+  public static final String DEFAULT_DATA_LEVELDB_DIR = "data";
+  public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
+  public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024*1024*100;
+  public static final long DEFAULT_DATA_HSQLDB_CACHE_ROWS = 64000;
+  public static final long DEFAULT_DATA_HSQLDB_CACHE_SIZE = 64000;
+
+  // Disable logging
+
+
+  /**
    * Configuration key names used by resource manager.
    */
   @Deprecated
