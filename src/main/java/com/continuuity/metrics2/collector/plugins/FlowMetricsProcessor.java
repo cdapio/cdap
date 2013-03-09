@@ -169,7 +169,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     } else if(this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
-      jdbcDataSource.setProperties(getHsqlProperties());
+      jdbcDataSource.setProperties(getHsqlProperties(configuration));
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 100);
     }
 
@@ -185,11 +185,15 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
   }
 
-  private Properties getHsqlProperties() {
+  private Properties getHsqlProperties(CConfiguration configuration) {
     Properties hsqlProperties = new Properties();
     // Assume 1K rows and 512MB cache size
-    hsqlProperties.setProperty("hsqldb.cache_rows", "" + 512000);
-    hsqlProperties.setProperty("hsqldb.cache_size", "" + 512000);
+    hsqlProperties.setProperty("hsqldb.cache_rows",
+                               "" + configuration.getLong(Constants.CFG_DATA_HSQLDB_CACHE_ROWS,
+                                                          Constants.DEFAULT_DATA_HSQLDB_CACHE_ROWS));
+    hsqlProperties.setProperty("hsqldb.cache_size",
+                               "" + configuration.getLong(Constants.CFG_DATA_HSQLDB_CACHE_SIZE,
+                                                          Constants.DEFAULT_DATA_HSQLDB_CACHE_SIZE));
     // Disable logging
     hsqlProperties.setProperty("hsqldb.log_data", "false");
     return hsqlProperties;
