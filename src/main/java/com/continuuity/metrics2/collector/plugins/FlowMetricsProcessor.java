@@ -82,12 +82,15 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   private static final class TimeseriesCleanser
       extends AbstractScheduledService {
     private final FlowMetricsProcessor processor;
+    private final long metricsTimeToLiveInSeconds;
+    private final long cleanupPeriodInSeconds;
 
-    public TimeseriesCleanser(FlowMetricsProcessor processor) {
+    public TimeseriesCleanser(FlowMetricsProcessor processor,
+        long metricsTimeToLiveInSeconds, long cleanupPeriodInSeconds) {
       this.processor = processor;
+      this.metricsTimeToLiveInSeconds = metricsTimeToLiveInSeconds;
+      this.cleanupPeriodInSeconds = cleanupPeriodInSeconds;
     }
-
-    private long olderThanTimeInSeconds = 60*30;
 
     @Override
     protected void runOneIteration() throws Exception {
@@ -100,7 +103,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         connection = processor.getConnection();
         stmt = connection.prepareStatement(sb.toString());
         long oldestStartTime = ((System.currentTimeMillis()/1000)
-          - olderThanTimeInSeconds);
+          - metricsTimeToLiveInSeconds);
         stmt.setLong(1, oldestStartTime);
         stmt.executeUpdate();
         Log.trace("Cleaning up timeseries DB older than timeperiod {}",
@@ -125,7 +128,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
     @Override
     protected Scheduler scheduler() {
-      return Scheduler.newFixedRateSchedule(0, 120L, TimeUnit.SECONDS);
+      return Scheduler.newFixedRateSchedule(
+          cleanupPeriodInSeconds, cleanupPeriodInSeconds, TimeUnit.SECONDS);
     }
   }
 
@@ -175,7 +179,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
     // Starting the timeseries cleaners.
     if(timeseriesCleanser == null) {
-      timeseriesCleanser = new TimeseriesCleanser(this);
+      timeseriesCleanser = new TimeseriesCleanser(this,
+          configuration.getLong(Constants.CFG_METRICS_CLEANUP_TIME_TO_LIVE,
+              Constants.DEFAULT_METRICS_CLEANUP_TIME_TO_LIVE),
+          configuration.getLong(Constants.CFG_METRICS_CLEANUP_PERIOD,
+              Constants.DEFAULT_METRICS_CLEANUP_PERIOD));
       Log.debug("Starting timeseries db cleaner.");
       timeseriesCleanser.start();
     }
