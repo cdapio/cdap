@@ -657,7 +657,9 @@ public class TTQueueOnVCTable implements TTQueue {
 
       // we have identified all shards to delete
       for (byte[] shardRow : shardRowsToDelete) {
-        LOG.debug("Deleting old shard " + new String(shardRow) + " in queue " + new String(this.queueName));
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Deleting old shard " + new String(shardRow) + " in queue " + new String(this.queueName));
+        }
         // we know this row contains only (small) meta entries, read them all at once.
         OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, -1, readDirty);
         if (result.isEmpty() || result.getValue().isEmpty()) {
