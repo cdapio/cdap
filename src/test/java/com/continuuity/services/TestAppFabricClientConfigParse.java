@@ -58,7 +58,7 @@ public class TestAppFabricClientConfigParse {
   public void testValidInvalidPromoteArgs() throws ParseException {
     AppFabricClient client = new AppFabricClient();
     String command = null;
-    command = client.configure(CConfiguration.create(), new String[]{"promote", "--host", "hostname",
+    command = client.configure(CConfiguration.create(), new String[]{"promote", "--hostname", "host",
       "--application", "application"});
     assert (command == null);
   }
@@ -97,7 +97,7 @@ public class TestAppFabricClientConfigParse {
       "--flow", "processor"});
     assertTrue("status".equals(command));
 
-    command = client.configure(CConfiguration.create(), new String[]{"promote", "--hostname", "vpc_name",
+    command = client.configure(CConfiguration.create(), new String[]{"promote", "--host", "vpc_name",
       "--apikey", "Auth token",
       "--application", "application"});
     assertTrue("promote".equals(command));
