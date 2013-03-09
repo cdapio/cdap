@@ -215,7 +215,7 @@ public class SingleNodeMain {
     }
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.setIfUnset("data.local.leveldb", "data");
+    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     boolean inVPC = false;
     String environment = configuration.get("appfabric.environment", "devsuite");
