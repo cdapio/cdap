@@ -12,20 +12,11 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureResponse.Code;
-import com.continuuity.api.procedure.ProcedureSpecification;
 
 import java.util.Map;
 import java.util.TreeMap;
 
 public class RetrieveCounts extends AbstractProcedure {
-
-  @Override
-  public ProcedureSpecification configure() {
-    return ProcedureSpecification.Builder.with()
-        .setName("RetrieveCount")
-        .setDescription("Example Word Count Procedure")
-        .build();
-  }
 
   byte[] TOTALS_ROW = Bytes.toBytes("totals");
   byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
