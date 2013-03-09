@@ -7,12 +7,16 @@ import com.continuuity.data.operation.ttqueue.internal.CachedList;
  */
 public interface QueueState {
 
+  static final long INVALID_ACTIVE_ENTRY_ID = -1;
+
   public long getActiveEntryId();
 
   public void setActiveEntryId(long activeEntryId);
 
-  public CachedList<Integer> getCachedHeaders();
+  public long getConsumerReadPointer();
 
-  public CachedList<byte[]> getCachedEntries();
+  public void setConsumerReadPointer(long consumerReadPointer);
+
+  public CachedList<QueueStateEntry> getCachedEntries();
 
 }

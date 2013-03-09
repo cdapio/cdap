@@ -115,6 +115,12 @@ public class TTQueueOnHBaseNative implements TTQueue {
     return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
   }
 
+  @Override
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+    // TODO: Implement
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) throws OperationException {
 

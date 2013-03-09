@@ -10,6 +10,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.internal.CachedList;
 import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.QueuePartitionMapSerializer;
@@ -18,6 +19,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -94,62 +96,43 @@ public class TTQueueNewOnVCTable implements TTQueue {
 //  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
 //    throws OperationException;
 
-  public String getValueFromHeader(byte[] header, String key) {
-    ByteArrayInputStream bis = new ByteArrayInputStream(header);
-    Decoder decoder = new BinaryDecoder(bis);
-    int size=0;
-    try {
-      size = decoder.readInt();
-      if (size>0) {
-        for(int i=0; i<size; i++) {
-          if (key.equalsIgnoreCase(decoder.readString())) {
-            return decoder.readString();
-          }
-          decoder.skipString();
-        }
-      }
-      return null;
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    }
-  }
-
-  protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
+  protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                                  ReadPointer readPointer) throws OperationException {
 //    return this.table.incrementAtomicDirtily(
 //      makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
 //      CONSUMER_READ_POINTER, consumer.getGroupSize());
-    long entryId=-1;
+    long entryId = queueState.getConsumerReadPointer();
     boolean foundEntry=false;
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
 
     while (!foundEntry) {
       if (partitioner.isDisjoint()) {
-        OperationResult<byte[]> result=this.table.get(
-                                    makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                                    CONSUMER_READ_POINTER,readPointer);
-        if (!result.isEmpty()) {
-          entryId=Bytes.toLong(result.getValue());
-        }
+        ++entryId;
       } else {
         entryId = this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
                                                     GROUP_READ_POINTER, 1);
       }
-      if (entryId!=-1) {
-        if (partitioner.usesHeaderData()) {
-          OperationResult<byte[]> result = this.table.get(makeRowKey(GLOBAL_DATA_PREFIX, entryId), ENTRY_HEADER,
-                                                          readPointer);
-          String partitioningKey=consumer.getPartitioningKey();
-          if (!result.isEmpty() && partitioningKey!=null && partitioningKey.length()!=0) {
-            String value=getValueFromHeader(result.getValue(),partitioningKey);
-            int hashValue=Integer.parseInt(value);
-            foundEntry=partitioner.shouldEmit(consumer, entryId, hashValue);
-          } else {
-            foundEntry=partitioner.shouldEmit(consumer, entryId);
+      if (partitioner.usesHeaderData()) {
+        OperationResult<byte[]> result = this.table.get(makeRowKey(GLOBAL_DATA_PREFIX, entryId), ENTRY_HEADER,
+                                                        readPointer);
+        String partitioningKey = consumer.getPartitioningKey();
+        Map<String, Integer> partitionMap;
+        if (!result.isEmpty() && partitioningKey != null && partitioningKey.length() != 0) {
+          try {
+            partitionMap = QueuePartitionMapSerializer.deserialize(result.getValue());
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR, "Exception while deserializing queue partition map", e);
           }
+          if(partitionMap == null) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR, "queue partition map is null");
+          }
+          int hashValue = partitionMap.get(partitioningKey);
+          foundEntry = partitioner.shouldEmit(consumer, entryId, hashValue);
         } else {
-          foundEntry=partitioner.shouldEmit(consumer, entryId);
+          foundEntry = partitioner.shouldEmit(consumer, entryId);
         }
+      } else {
+        foundEntry = partitioner.shouldEmit(consumer, entryId);
       }
     }
     return entryId;
@@ -208,40 +191,63 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.table.delete(rowName, ENTRY_DATA, cleanWriteVersion);
     if (TRACE) log("Invalidated " + entryPointer);
   }
+
+  // TODO: consolidate dequeue method
   /**
    * {@inheritDoc}
    */
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
-    return dequeueInternal(consumer, config, readPointer);
+    return dequeueInternal(consumer, config, null, readPointer);
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
-    return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
+    return dequeueInternal(consumer, consumer.getQueueConfig(), null, readPointer);
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState,
                                ReadPointer readPointer) throws OperationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return dequeueInternal(consumer, config, queueState, readPointer);
   }
 
-  private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+  private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer)
     throws OperationException {
     // DO NOT USE THIS CLASS!
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
+    // Read any claimed entry that was not processed
+    // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
+    // TODO: so that repeated reads to HBase on each dequeue is not required
+    if(queueState == null) {
+      queueState = new QueueStateImpl();
+      OperationResult<byte[]> activeEntryId =
+        this.table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                       ACTIVE_ENTRY, readPointer);
+      if(!activeEntryId.isEmpty()) {
+        // TODO: Check max_tries
+        queueState.setActiveEntryId(Bytes.toLong(activeEntryId.getValue()));
+      }
+      OperationResult<byte[]> consumerReadPointer = this.table.get(
+        makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()), CONSUMER_READ_POINTER,readPointer);
+      if (!consumerReadPointer.isEmpty()) {
+        queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointer.getValue()));
+      } else {
+        queueState.setConsumerReadPointer(0);
+      }
+    }
+
     while(true) {
       // Get the next entryId that can be dequeued by this consumer
-      final long entryId = determineNextEntryId(consumer, config, readPointer);
+      final long entryId = determineNextEntryId(consumer, config, queueState, readPointer);
 
-      final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
+      final byte [] entryRowName = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
       // Read visible entry meta and entry data for the entryId
-      OperationResult<Map<byte[], byte[]>> result = this.table.get(rowName,
+      OperationResult<Map<byte[], byte[]>> result = this.table.get(entryRowName,
                       new byte[][]{ ENTRY_META, ENTRY_DATA }, readPointer);
 
       if(result.isEmpty()) {
@@ -274,25 +280,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+  private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer)
     throws OperationException {
-    // Read any claimed entry that was not processed
-    // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
-    // TODO: so that repeated reads to HBase on each dequeue is not required
-    OperationResult<byte[]> result =
-      this.table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                     ACTIVE_ENTRY, readPointer);
-    if(!result.isEmpty()) {
-      long activeEntryID = Bytes.toLong(result.getValue());
-      if(activeEntryID != INVALID_ACTIVE_ENTRY_ID_VALUE) {
-        return activeEntryID;
-      }
+    if(queueState.getActiveEntryId() != QueueState.INVALID_ACTIVE_ENTRY_ID) {
+      return queueState.getActiveEntryId();
     }
 
     // Else get the next entryId
-    long entryId = fetchNextEntryId(consumer, config, readPointer);
+    long entryId = fetchNextEntryId(consumer, config, queueState, readPointer);
     // Persist the entryId this consumer will be working on
-    // TODO: Later when active entry can saved in memory, there is no need to write it into HBase
+    // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
 
     if (partitioner.isDisjoint()) {

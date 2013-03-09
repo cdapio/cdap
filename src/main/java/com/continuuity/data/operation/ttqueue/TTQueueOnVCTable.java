@@ -220,6 +220,12 @@ public class TTQueueOnVCTable implements TTQueue {
     return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
   }
 
+  @Override
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+    // TODO: implement
+    return null;
+  }
+
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
 
