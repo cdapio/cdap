@@ -324,12 +324,6 @@
     </property>
 
     <property>
-        <name>data.local.leveldb</name>
-        <value>data</value>
-        <description>Specifies the database directory</description>
-    </property> 
-
-    <property>
         <name>data.local.leveldb.blocksize</name>
         <value>1024</value>
         <description>Specifies block size (in bytes)</description>
