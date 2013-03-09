@@ -28,13 +28,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final Integer blockSize;
   private final Long cacheSize;
 
-  public DataFabricLevelDBModule() {
-    this(CConfiguration.create());
-  }
-
   public DataFabricLevelDBModule(CConfiguration configuration) {
-    String path = configuration.get(Constants.CFG_DATA_LEVELDB_DIR,
-                                    Constants.DEFAULT_DATA_LEVELDB_DIR);
+    String path = configuration.get(Constants.CFG_DATA_LEVELDB_DIR);
     if (path == null || path.isEmpty()) {
       path =
         System.getProperty("java.io.tmpdir") +
