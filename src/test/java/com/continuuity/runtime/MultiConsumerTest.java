@@ -1,9 +1,13 @@
 package com.continuuity.runtime;
 
 import com.continuuity.TestHelper;
-import com.continuuity.WordCountApp;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -19,6 +23,12 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
+import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.filesystem.Location;
@@ -26,10 +36,13 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
@@ -49,7 +62,7 @@ public class MultiConsumerTest {
         .setName("MultiApp")
         .setDescription("MultiApp")
         .noStream()
-        .noDataSet()
+        .withDataSets().add(new KeyValueTable("accumulated"))
         .withFlows().add(new MultiFlow())
         .noProcedure()
         .build();
@@ -76,17 +89,25 @@ public class MultiConsumerTest {
 
   public static final class Generator extends AbstractGeneratorFlowlet {
 
-    private OutputEmitter<String> output;
+    private OutputEmitter<Integer> output;
+    private int i;
 
     @Override
     public void generate() throws Exception {
-      output.emit("Testing");
+      if (i < 100) {
+        output.emit(i++);
+      }
     }
   }
 
+  private static final byte[] KEY = new byte[] {'k','e','y'};
+
   public static final class Consumer extends AbstractFlowlet {
-    public void process(String str) {
-      System.out.println(getContext().getName() + " " + str);
+    @UseDataSet("accumulated")
+    private KeyValueTable accumulated;
+
+    public void process(long l) throws OperationException {
+      accumulated.increment(KEY, l);
     }
   }
 
@@ -104,7 +125,7 @@ public class MultiConsumerTest {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
-      JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(MultiApp.class))
+      JarFinder.getJar(MultiApp.class, TestHelper.getManifestWithMainClass(MultiApp.class))
     );
     deployedJar.deleteOnExit();
 
@@ -132,7 +153,22 @@ public class MultiConsumerTest {
       }));
     }
 
-    TimeUnit.MILLISECONDS.sleep(100);
+    TimeUnit.SECONDS.sleep(2);
+
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
+                                                  app.getAppSpecLoc().getSpecification().getName());
+
+    TransactionProxy proxy = new TransactionProxy();
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, opCtx), proxy,
+                                                                      getClass().getClassLoader());
+    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
+
+    KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
+    byte[] value = accumulated.read(KEY);
+
+    Assert.assertEquals(9900L, Longs.fromByteArray(value));
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

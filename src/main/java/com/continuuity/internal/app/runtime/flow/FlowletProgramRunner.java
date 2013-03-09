@@ -22,9 +22,6 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaGenerator;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -41,6 +38,9 @@ import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.api.io.SchemaGenerator;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -426,7 +426,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
               int numGroups = (entry.getKey().getType() == FlowletConnection.Type.STREAM)
                                   ? -1 : queueSpecs.row(entry.getKey()).size();
-              System.out.println("Num groups: " + numGroups + " " + queueName);
 
               queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer, numGroups));
             }
