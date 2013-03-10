@@ -13,6 +13,8 @@ import com.continuuity.common.metrics.MetricResponse;
 import com.continuuity.metrics2.common.DBUtils;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
@@ -470,16 +472,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    * @throws IOException
    */
   @Override
-  public Future<MetricResponse.Status>  process(final MetricRequest request)
+  public ListenableFuture<MetricResponse.Status> process(final MetricRequest request)
       throws IOException {
     // Future that returns an invalid status.
-    final Future<MetricResponse.Status> invalidFutureResponse =
-      Futures.future(new Callable<MetricResponse.Status>() {
-        @Override
-        public MetricResponse.Status call() throws Exception {
-          return MetricResponse.Status.INVALID;
-        }
-      }, ec);
+
+    SettableFuture<MetricResponse.Status> response = SettableFuture.create();
 
     // Break down the metric name into it's components.
     // If there are any issue with how it's constructed,
@@ -489,15 +486,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       final FlowMetricElements elements =
           new FlowMetricElements.Builder(request.getMetricName()).create();
       if(elements != null) {
-        return Futures.future(new Callable<MetricResponse.Status>() {
-          public MetricResponse.Status call() {
-            if (insertUpdateCounters(elements, request)) {
-              Log.trace("Successfully processed metric {}.", request.toString());
-              return MetricResponse.Status.SUCCESS;
-            }
-            return MetricResponse.Status.FAILED;
-          }
-        }, ec);
+        if(insertUpdateCounters(elements, request)) {
+          response.set(MetricResponse.Status.SUCCESS);
+        } else {
+          response.set(MetricResponse.Status.FAILED);
+        }
       } else {
         Log.warn("Invalid flow metric elements for request {}",
                   request.toString());
@@ -505,7 +498,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     } catch (BuilderException e) {
       Log.warn("Invalid flow metric received. Reason : {}.", e.getMessage());
     }
-    return invalidFutureResponse;
+    response.set(MetricResponse.Status.FAILED);
+    return response;
   }
 
   /**

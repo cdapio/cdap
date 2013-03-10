@@ -525,8 +525,7 @@ public class MetricsFrontendServiceImplTest {
       .create();
 
     // Blocks till we get the response back.
-    return Await.result(processor.process(request),
-                        Duration.create(2, TimeUnit.SECONDS));
+    return processor.process(request).get(2, TimeUnit.SECONDS);
   }
 
   private List<Counter> getCounters(FlowArgument argument, List<String> names)
