@@ -37,7 +37,7 @@ public class WordCountTest extends AppFabricTestBase {
 
     // start the flow and the procedure
     FlowManager flowManager = appManager.startFlow("WordCounter");
-    ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
+    ProcedureManager procManager = appManager.startProcedure("RetrieveCounts");
 
     // send a few events to the stream
     StreamWriter writer = appManager.getStreamWriter("wordStream");
