@@ -116,7 +116,8 @@ public class MDSBasedStore implements Store {
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if(! programLocation.exists()) {
-      throw new RuntimeException(type.toString() + " does not exist.");
+      throw new RuntimeException(String.format("Program %s.%s of %s does not exists.",
+                                               id.getApplication(), id.getId(), type));
     }
     return programLocation;
   }
