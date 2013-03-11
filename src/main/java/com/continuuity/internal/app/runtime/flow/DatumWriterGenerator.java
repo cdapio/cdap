@@ -11,8 +11,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -27,7 +25,6 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.Iterator;
@@ -89,13 +86,14 @@ public final class DatumWriterGenerator {
     // DEBUG block. Uncomment for debug
 //    org.objectweb.asm.ClassReader reader = new org.objectweb.asm.ClassReader(classWriter.toByteArray());
 //    reader.accept(new org.objectweb.asm.util.CheckClassAdapter(
-//                    new org.objectweb.asm.util.TraceClassVisitor(new PrintWriter(System.out))), 0);
+//                    new org.objectweb.asm.util.TraceClassVisitor(new java.io.PrintWriter(System.out))), 0);
 //
 //    java.io.File file = new java.io.File("/tmp/" + className + ".class");
 //    file.getParentFile().mkdirs();
 //    System.out.println(file);
 //    try {
-//      ByteStreams.write(classWriter.toByteArray(), Files.newOutputStreamSupplier(file));
+//      com.google.common.io.ByteStreams.write(classWriter.toByteArray(),
+//                                             com.google.common.io.Files.newOutputStreamSupplier(file));
 //    } catch (IOException e) {
 //      e.printStackTrace();
 //    }

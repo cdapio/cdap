@@ -359,7 +359,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                     final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
-      public OutputEmitter<?> create(String outputName, TypeToken<?> type) {
+      public <T> OutputEmitter<T> create(String outputName, TypeToken<T> type) {
         try {
           Schema schema = schemaGenerator.generate(type.getType());
 
@@ -367,8 +367,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              return new DatumOutputEmitter<Object>(flowletContext, queueProducer, queueSpec.getQueueName(),
-                                                    schema, new ReflectionDatumWriter(schema));
+              return new DatumOutputEmitter<T>(flowletContext, queueProducer, queueSpec.getQueueName(),
+                                                    schema, new ReflectionDatumWriter<T>(schema));
             }
           }
 
@@ -475,7 +475,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface OutputEmitterFactory {
-    OutputEmitter<?> create(String outputName, TypeToken<?> type);
+    <T> OutputEmitter<T> create(String outputName, TypeToken<T> type);
   }
 
   private static interface ProcessMethodFactory {

@@ -55,12 +55,12 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
   }
 
   @Override
-  public final void emit(T data) {
+  public void emit(T data) {
     emit(data, ImmutableMap.<String, Object>of());
   }
 
   @Override
-  public final void emit(T data, Map<String, Object> partitions) {
+  public void emit(T data, Map<String, Object> partitions) {
     try {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
       output.write(schemaHash);
@@ -73,7 +73,7 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
   }
 
   @Override
-  public final void submit(TransactionAgent agent) throws OperationException {
+  public void submit(TransactionAgent agent) throws OperationException {
     List<EmittedDatum> outputs = Lists.newArrayListWithExpectedSize(dataQueue.size());
     dataQueue.drainTo(outputs);
 

@@ -3,7 +3,6 @@ package com.continuuity.runtime;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.runtime.flow.ASMDatumWriterFactory;
@@ -19,58 +18,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureVisitor;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.lang.reflect.ParameterizedType;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-/**
- *
- */
 public class ASMDatumCodecTest {
-//
-//  public static final class MyOutputEmitter extends AbstractOutputEmitter<String[]> {
-//
-//    public MyOutputEmitter() {
-//      super(null, null, null, null);
-//    }
-//
-//    @Override
-//    protected void encodeData(String[] data, OutputStream os) throws IOException {
-//      //To change body of implemented methods use File | Settings | File Templates.
-//    }
-//  }
-//
-
-  public static final class MyDatumWriter implements DatumWriter<Map<String, List<String>>> {
-
-    private final Schema schema;
-
-    public MyDatumWriter(Schema schema) {
-      this.schema = schema;
-    }
-
-    @Override
-    public void encode(Map<String, List<String>> data, Encoder encoder) throws IOException {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
-  }
 
   private static final ASMDatumWriterFactory DATUM_WRITER_FACTORY = new ASMDatumWriterFactory();
 
@@ -157,8 +117,6 @@ public class ASMDatumCodecTest {
     TypeToken<int[]> type = new TypeToken<int[]>() {};
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
-
-    System.out.println(getSchema(type));
 
     int[] writeValue = {1, 2, 3, 4, -5, -6, -7, -8};
     DatumWriter<int[]> writer = getWriter(type);
@@ -258,17 +216,9 @@ public class ASMDatumCodecTest {
 
       Node node = (Node) o;
 
-      if (data != node.data) {
-        return false;
-      }
-      if (left != null ? !left.equals(node.left) : node.left != null) {
-        return false;
-      }
-      if (right != null ? !right.equals(node.right) : node.right != null) {
-        return false;
-      }
-
-      return true;
+      return data == node.data
+               && (left  != null ? left.equals(node.left) : node.left == null)
+               && (right != null ? right.equals(node.right) : node.right == null);
     }
 
     @Override
@@ -311,6 +261,7 @@ public class ASMDatumCodecTest {
     Assert.assertEquals(event.getBody(), value.getBody());
   }
 
+  @Ignore
   @Test
   public void testSpeed() throws UnsupportedTypeException, IOException {
     TypeToken<Node> type = new TypeToken<Node>() {};
@@ -356,77 +307,5 @@ public class ASMDatumCodecTest {
     }
     endTime = System.nanoTime();
     System.out.println("Time spent: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS));
-  }
-
-  @Test
-  public void testReadClass() throws IOException {
-    System.out.println(Type.getDescriptor(Schema.class));
-
-    ClassReader reader = new ClassReader(MyDatumWriter.class.getName());
-    reader.accept(new ClassVisitor(Opcodes.ASM4) {
-
-      @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        System.out.println(name);
-        System.out.println(signature);
-        System.out.println(superName);
-        System.out.println(Arrays.toString(interfaces));
-        System.out.println();
-        super.visit(version, access, name, signature, superName, interfaces);
-      }
-
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        System.out.println(name);
-        System.out.println(desc);
-        System.out.println(signature);
-        System.out.println(value);
-        System.out.println();
-        return super.visitField(access, name, desc, signature, value);
-      }
-
-      @Override
-      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        System.out.println(name);
-        System.out.println(desc);
-        System.out.println(signature);
-        System.out.println(Arrays.toString(exceptions));
-        System.out.println();
-        return super.visitMethod(access, name, desc, signature, exceptions);
-      }
-    }, 0);
-  }
-
-  private String getMethodSignature(TypeToken<?> objectType, java.lang.reflect.Method method) {
-    SignatureWriter signWriter = new SignatureWriter();
-    for (java.lang.reflect.Type type : method.getGenericParameterTypes()) {
-      TypeToken<?> argType = objectType.resolveType(type);
-      SignatureVisitor sv = signWriter.visitParameterType();
-      visitSignature(argType, sv, true);
-    }
-
-    TypeToken<?> returnType = objectType.resolveType(method.getGenericReturnType());
-    visitSignature(returnType, signWriter.visitReturnType(), false);
-
-    return signWriter.toString();
-  }
-
-  private void visitSignature(TypeToken<?> type, SignatureVisitor visitor, boolean visitEnd) {
-    Class<?> rawType = type.getRawType();
-    if (rawType.isPrimitive()) {
-      visitor.visitBaseType(Type.getType(rawType).toString().charAt(0));
-    } else {
-      visitor.visitClassType(Type.getType(rawType).getInternalName());
-    }
-
-    java.lang.reflect.Type visitType = type.getType();
-    if (visitType instanceof ParameterizedType) {
-      for (java.lang.reflect.Type argType : ((ParameterizedType) visitType).getActualTypeArguments()) {
-        visitSignature(TypeToken.of(argType), visitor.visitTypeArgument(SignatureVisitor.INSTANCEOF), true);
-      }
-    }
-    if (visitEnd) {
-      visitor.visitEnd();
-    }
   }
 }

@@ -32,7 +32,7 @@ public final class ASMDatumWriterFactory {
 
   private static final class ASMCacheLoader extends CacheLoader<CacheKey, Class<DatumWriter<?>>> {
 
-    private final ASMDatumWriterClassLoader classLoader = new ASMDatumWriterClassLoader();
+    private final ASMDatumWriterClassLoader classLoader = new ASMDatumWriterClassLoader(getClass().getClassLoader());
 
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
@@ -81,6 +81,11 @@ public final class ASMDatumWriterFactory {
   }
 
   private static final class ASMDatumWriterClassLoader extends ClassLoader {
+
+    private ASMDatumWriterClassLoader(ClassLoader parent) {
+      super(parent);
+    }
+
     private Class<?> defineClass(String name, byte[] bytes) {
       return defineClass(name, bytes, 0, bytes.length);
     }

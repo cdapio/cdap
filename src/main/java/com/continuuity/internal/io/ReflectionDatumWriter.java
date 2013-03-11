@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  *
  */
-public final class ReflectionDatumWriter implements DatumWriter<Object> {
+public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
 
   private final Schema schema;
 
@@ -36,7 +36,7 @@ public final class ReflectionDatumWriter implements DatumWriter<Object> {
   }
 
   @Override
-  public void encode(Object data, Encoder encoder) throws IOException {
+  public void encode(T data, Encoder encoder) throws IOException {
     Set<Object> seenRefs = Sets.newIdentityHashSet();
     write(data, encoder, schema, seenRefs);
   }
