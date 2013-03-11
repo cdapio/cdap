@@ -6,8 +6,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
@@ -131,6 +129,7 @@ public class MultiConsumerTest {
 
   @Test
   public void testMulti() throws Exception {
+    // TODO: Fix this test case to really test with numGroups settings.
     final CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
