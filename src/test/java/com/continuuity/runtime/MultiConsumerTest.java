@@ -3,6 +3,8 @@ package com.continuuity.runtime;
 import com.continuuity.TestHelper;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -80,9 +82,11 @@ public class MultiConsumerTest {
           .add("gen", new Generator())
           .add("c1", new Consumer())
           .add("c2", new Consumer())
+          .add("c3", new ConsumerStr())
         .connect()
           .from("gen").to("c1")
           .from("gen").to("c2")
+          .from("gen").to("c3")
         .build();
     }
   }
@@ -90,12 +94,16 @@ public class MultiConsumerTest {
   public static final class Generator extends AbstractGeneratorFlowlet {
 
     private OutputEmitter<Integer> output;
+    @Output("str")
+    private OutputEmitter<String> outString;
     private int i;
 
     @Override
     public void generate() throws Exception {
       if (i < 100) {
-        output.emit(i++);
+        output.emit(i);
+        outString.emit(Integer.toString(i));
+        i++;
       }
     }
   }
@@ -108,6 +116,16 @@ public class MultiConsumerTest {
 
     public void process(long l) throws OperationException {
       accumulated.increment(KEY, l);
+    }
+  }
+
+  public static final class ConsumerStr extends AbstractFlowlet {
+    @UseDataSet("accumulated")
+    private KeyValueTable accumulated;
+
+    @ProcessInput("str")
+    public void process(String str) throws OperationException {
+      accumulated.increment(KEY, Long.parseLong(str));
     }
   }
 
@@ -153,7 +171,7 @@ public class MultiConsumerTest {
       }));
     }
 
-    TimeUnit.SECONDS.sleep(2);
+    TimeUnit.SECONDS.sleep(4);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -168,7 +186,7 @@ public class MultiConsumerTest {
     KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     byte[] value = accumulated.read(KEY);
 
-    Assert.assertEquals(9900L, Longs.fromByteArray(value));
+    Assert.assertEquals(14850L, Longs.fromByteArray(value));
 
     for (ProgramController controller : controllers) {
       controller.stop().get();
