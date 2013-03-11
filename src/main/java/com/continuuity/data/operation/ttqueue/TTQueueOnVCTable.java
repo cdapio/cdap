@@ -96,16 +96,21 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max", 120 * 1000); // 120 seconds default
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
-    LOG.info("Checking for in-memory queues for throttling");
     if (table instanceof MemoryOVCTable) {
-      LOG.info("In-memory queues, enabling throttling");
+      if (TRACE) LOG.info("In-memory queues, enabling throttling");
       enableThrottling = true;
+      this.MAX_QUEUE_DEPTH = conf.getLong(
+          "ttqueue.mem.throttle.depth.max", MAX_QUEUE_DEPTH);
+      this.DRAIN_QUEUE_DEPTH = conf.getLong(
+          "ttqueue.mem.throttle.depth.drain", DRAIN_QUEUE_DEPTH);
+      this.QUEUE_CHECK_ITERATIONS = conf.getLong(
+          "ttqueue.mem.throttle.depth.iterations", QUEUE_CHECK_ITERATIONS);
     }
   }
 
-  static long MAX_QUEUE_DEPTH = 100000L;
-  static long DRAIN_QUEUE_DEPTH = 99000L;
-  static long QUEUE_CHECK_ITERATIONS = 1000L;
+  long MAX_QUEUE_DEPTH = 100000L;
+  long DRAIN_QUEUE_DEPTH = 99000L;
+  long QUEUE_CHECK_ITERATIONS = 1000L;
 
   AtomicLong enqueues = new AtomicLong(0);
   AtomicLong acks = new AtomicLong(0);
@@ -131,21 +136,6 @@ public class TTQueueOnVCTable implements TTQueue {
 
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
-    if (enableThrottling) {
-      long enqueueCount = enqueues.incrementAndGet();
-      if (enqueueCount % QUEUE_CHECK_ITERATIONS == 0) {
-        if (enqueueCount >= MAX_QUEUE_DEPTH) {
-          LOG.debug("Max queue depth hit, currently at " + enqueueCount);
-          while (getDepth() >= MAX_QUEUE_DEPTH - QUEUE_CHECK_ITERATIONS) {
-            try {
-              Thread.sleep(10);
-            } catch (InterruptedException e) {}
-          }
-          LOG.debug("Drained queue depth to " + getDepth());
-        }
-      }
-    }
-
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = dirtyReadPointer();
     // and a write version _only_ for dirty writes
@@ -170,6 +160,23 @@ public class TTQueueOnVCTable implements TTQueue {
       quickWait();
     }
     if (TRACE) log("Exclusive lock acquired for entry id " + entryId);
+
+    if (enableThrottling) {
+      long enqueueCount = enqueues.incrementAndGet();
+      if (enqueueCount % QUEUE_CHECK_ITERATIONS == 0) {
+        long depth = getDepth();
+        if (depth >= MAX_QUEUE_DEPTH) {
+          if (TRACE) log("Max queue depth hit, currently at " + depth);
+          while (depth >= DRAIN_QUEUE_DEPTH) {
+            try {
+              Thread.sleep(10);
+            } catch (InterruptedException e) {}
+            depth = getDepth();
+          }
+          if (TRACE) log("Drained queue depth to " + depth);
+        }
+      }
+    }
 
     // We have an exclusive lock, determine updated shard state
     ShardMeta shardMeta;
