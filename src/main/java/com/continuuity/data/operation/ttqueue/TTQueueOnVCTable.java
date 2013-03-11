@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -699,7 +700,9 @@ public class TTQueueOnVCTable implements TTQueue {
       // we have identified all shards to delete
       for (byte[] shardRow : shardRowsToDelete) {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Deleting old shard " + new String(shardRow) + " in queue " + new String(this.queueName));
+          long shardId = Bytes.toLong(Arrays.copyOfRange(
+            shardRow, shardRow.length - Bytes.SIZEOF_LONG, shardRow.length));
+          LOG.trace("Deleting old shard #" + shardId + " in queue " + new String(this.queueName));
         }
         // we know this row contains only (small) meta entries, read them all at once.
         OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, -1, readDirty);
@@ -749,7 +752,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Instance ids match, check if in an invalid state for ack'ing
     if (groupMeta.isAvailable() || groupMeta.isAckedOrSemiAcked())
       throw new OperationException(StatusCode.ILLEGAL_ACK,
-          "Attempt to ack an entry that is not in ack'able state.");
+          "Attempt to ack an entry that is not in ack'able state, but in state " + groupMeta.getState().name() + ".");
 
     // It is in the right state, attempt atomic semi_ack
     // (ack passed if this CAS works, fails if this CAS fails)
