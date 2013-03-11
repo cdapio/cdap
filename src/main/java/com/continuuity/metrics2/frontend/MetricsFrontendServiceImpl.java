@@ -81,11 +81,11 @@ public class MetricsFrontendServiceImpl
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(mysqlDataSource, 40);
+      poolManager = new DBConnectionPoolManager(mysqlDataSource, 1000);
     } else if(this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
+      poolManager = new DBConnectionPoolManager(jdbcDataSource, 1000);
     }
     DBUtils.createMetricsTables(getConnection(), this.type);
     // It seems like not a good idea to pass hadoop config that way.
@@ -99,7 +99,7 @@ public class MetricsFrontendServiceImpl
    * @return a {@link java.sql.Connection} based on the <code>connectionUrl</code>
    * @throws java.sql.SQLException thrown in case of any error.
    */
-  private synchronized Connection getConnection() throws SQLException {
+  private Connection getConnection() throws SQLException {
     if(poolManager != null) {
       return poolManager.getValidConnection();
     }
@@ -315,7 +315,7 @@ public class MetricsFrontendServiceImpl
       dataPointsFuture.add(submit);
     }
 
-    // Now, join on all dataPoints retrieved from future.
+    // Now, join on all dataPodints retrieved from future.
     long numPoints = Math.min(1800, end - start);
     Map<String, List<DataPoint>> dataPoints = Maps.newHashMap();
     for(Future<ImmutablePair<String, List<DataPoint>>> future : dataPointsFuture) {

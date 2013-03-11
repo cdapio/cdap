@@ -452,9 +452,6 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
   private boolean insertUpdateCounters(FlowMetricElements elements,
                                        MetricRequest request) {
-    Log.trace("Active connections {}, InActive connections {}",
-              poolManager.getActiveConnections(),
-              poolManager.getInactiveConnections());
     if(type == DBUtils.DBType.HSQLDB) {
       return insertUpdateHSQLDB(elements, request);
     } else if(type == DBUtils.DBType.MYSQL) {
