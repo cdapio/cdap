@@ -96,7 +96,26 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max", 120 * 1000); // 120 seconds default
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
+    LOG.info("Checking for in-memory queues for throttling");
+    if (table instanceof MemoryOVCTable) {
+      LOG.info("In-memory queues, enabling throttling");
+      enableThrottling = true;
+    }
   }
+
+  static long MAX_QUEUE_DEPTH = 10000L;
+  static long DRAIN_QUEUE_DEPTH = 9500L;
+  static long QUEUE_CHECK_ITERATIONS = 500L;
+
+  AtomicLong enqueues = new AtomicLong(0);
+  AtomicLong acks = new AtomicLong(0);
+
+  boolean enableThrottling = false;
+
+  long getDepth() {
+    return enqueues.get() - acks.get();
+  }
+
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
     return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
@@ -111,6 +130,21 @@ public class TTQueueOnVCTable implements TTQueue {
     }
 
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
+
+    if (enableThrottling) {
+      long enqueueCount = enqueues.incrementAndGet();
+      if (enqueueCount % QUEUE_CHECK_ITERATIONS == 0) {
+        if (enqueueCount >= MAX_QUEUE_DEPTH) {
+          LOG.debug("Max queue depth hit, currently at " + enqueueCount);
+          while (getDepth() >= MAX_QUEUE_DEPTH - QUEUE_CHECK_ITERATIONS) {
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e) {}
+          }
+          LOG.debug("Drained queue depth to " + getDepth());
+        }
+      }
+    }
 
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = dirtyReadPointer();
@@ -683,6 +717,8 @@ public class TTQueueOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
+
+    if (enableThrottling) acks.incrementAndGet();
 
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = dirtyReadPointer();
