@@ -20,6 +20,10 @@ public class EntryGroupMeta {
     this.instanceId = instanceId;
   }
 
+  public EntryGroupState getState() {
+    return state;
+  }
+
   public boolean isAvailable() {
     return state == EntryGroupState.AVAILABLE;
   }
