@@ -725,8 +725,6 @@ public class TTQueueOnVCTable implements TTQueue {
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
 
-    if (enableThrottling) acks.incrementAndGet();
-
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = dirtyReadPointer();
 
@@ -793,6 +791,8 @@ public class TTQueueOnVCTable implements TTQueue {
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.
         getValue(), newValue, readDirty, dirtyWriteVersion());
+
+    if (enableThrottling) acks.incrementAndGet();
 
     // We successfully finalized our ack.  Perform evict-on-ack if possible.
     Set<byte[]> groupsFinalizedResult = null;
