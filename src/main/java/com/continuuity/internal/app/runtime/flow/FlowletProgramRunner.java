@@ -425,7 +425,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
               int numGroups = (entry.getKey().getType() == FlowletConnection.Type.STREAM)
-                                  ? -1 : queueSpecs.row(entry.getKey()).size();
+                                  ? -1
+                                  : getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
 
               queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer, numGroups));
             }
@@ -435,6 +436,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
         return new ProcessSpecification(new RoundRobinQueueReader(queueReaders), method);
       }
     };
+  }
+
+  private int getNumGroups(Iterable<QueueSpecification> queueSpecs, QueueName queueName) {
+    int numGroups = 0;
+    for (QueueSpecification queueSpec : queueSpecs) {
+      if (queueName.equals(queueSpec.getQueueName())) {
+        numGroups++;
+      }
+    }
+    return numGroups;
   }
 
   private void setField(Flowlet flowlet, Field field, Object value) {
