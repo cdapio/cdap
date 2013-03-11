@@ -15,6 +15,10 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.integration.jmx.IoSessionMBean;
@@ -53,71 +57,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    */
   private final List<ImmutablePair<MetricType, MetricsProcessor>>
       processors = Lists.newCopyOnWriteArrayList();
-
-  /**
-   * Future reaper is iterating through all the futures and making
-   * sure that if it's completed, it's removed from the <code>futuresList</code>
-   * and also if the future is timed out it's removed from the list and the
-   * future is failed.
-   */
-  private final class FutureReaper extends AbstractScheduledService {
-    private final List<Future<MetricResponse.Status>> reapFutures
-       = Lists.newCopyOnWriteArrayList();
-
-    /**
-     * Run one iteration of the scheduled task. If any invocation of this
-     * method throws an exception,
-     * the service will transition to the {@link com.google.common.util
-     * .concurrent.Service.State#FAILED} state and this method will no
-     * longer be called.
-     */
-    @Override
-    protected void runOneIteration() throws Exception {
-      try {
-        Log.trace("Future reaper iterating through futures. Reaper list size {}.",
-          reapFutures.size());
-        if(reapFutures.size() < 1) {
-          return;
-        }
-
-        for(Future<MetricResponse.Status> future : reapFutures) {
-          // NOTE: This is a blocking operation.
-          try {
-            Await.ready(future, Duration.parse("2 second"));
-          } catch (TimeoutException e) {
-            future.failed();
-          }
-          reapFutures.remove(future);
-        }
-        Log.trace("Future reaper done. Reaper list size {}.", reapFutures
-            .size());
-      } catch (Exception e) {
-        Log.warn("There was issue during future reaping. Reason : {}.",
-                 e.getMessage());
-        Log.warn(StackTraceUtil.toStringStackTrace(e));
-      }
-    }
-
-    /**
-     * Returns the {@link com.google.common.util.concurrent
-     * .AbstractScheduledService.Scheduler} object used to configure this
-     * service.  This method will only be
-     * called once.
-     */
-    @Override
-    protected Scheduler scheduler() {
-      return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.SECONDS);
-    }
-
-    public synchronized void add(Future<MetricResponse.Status> status) {
-      reapFutures.add(status);
-    }
-  }
-
-  /**
-   * Instance of FutureReaper.
-   */
-  private static FutureReaper futureReaper = null;
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -181,16 +120,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
         loadCreateAndAddToList(MetricType.FlowUser, klass);
         Log.trace("Added {} plugin for processing flow user metrics.",
                   klass);
-      }
-    }
-
-    // If there were flow plugins that were enabled, then we would
-    // want to start the future. If not, we dont.
-    if(enabledFlowPlugin) {
-      if(futureReaper != null) {
-        Log.info("Starting future reaper.");
-        futureReaper = new FutureReaper();
-        futureReaper.start();
       }
     }
   }
@@ -292,64 +221,39 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       // one of the future in processing the request, we return failure
       // to the client.
       if(request.getValid()) {
-        Future<MetricResponse.Status> future = null;
+        ListenableFuture<MetricResponse.Status> future = null;
 
         // Iterate through the processor invoking the process method
         for(final ImmutablePair<MetricType, MetricsProcessor> processor :
-              processors) {
+          processors) {
 
           // If request metric type matches, then farm out the work
           // to the processor. If the
           if(request.getMetricType() == processor.getFirst()) {
-            if(future == null) {
-              future = processor.getSecond().process(request);
-            } else {
-              future = future.zip(processor.getSecond().process(request)).map(
-                new Mapper<Tuple2<MetricResponse.Status, MetricResponse.Status>, MetricResponse.Status>() {
-                  @Override
-                  public MetricResponse.Status apply(Tuple2<MetricResponse.Status, MetricResponse.Status> zipped) {
-                    if(zipped._1() != MetricResponse.Status.SUCCESS ||
-                       zipped._2() != MetricResponse.Status.SUCCESS) {
-                      return MetricResponse.Status.FAILED;
-                    }
-                    return MetricResponse.Status.SUCCESS;
-                  }
-                }
-              );
-            }
+            future = processor.getSecond().process(request);
+            Futures.addCallback(future, new FutureCallback<MetricResponse.Status>() {
+              @Override
+              public void onSuccess(MetricResponse.Status result) {
+                writeIfConnected(session, new MetricResponse(result));
+              }
+
+              @Override
+              public void onFailure(Throwable t) {
+                writeIfConnected(session,  new MetricResponse(MetricResponse.Status.FAILED));
+              }
+            }, MoreExecutors.sameThreadExecutor());
+
           }
         }
-
-        // After have got all the processors to work, we attach a completion
-        // handler that would write back to client the final status of
-        // processing.
-        if(future != null) {
-          future.onComplete(new OnComplete<MetricResponse.Status>() {
-            @Override
-            public void onComplete(Throwable failure, MetricResponse.Status
-              status) {
-              if(failure != null) {
-                writeIfConnected(session,
-                                 new MetricResponse(MetricResponse.Status.FAILED));
-              } else {
-                writeIfConnected(session,
-                                 new MetricResponse(status));
-              }
-            }
-          });
-
-          // Add to future reaper list.
-          futureReaper.add(future);
-        }
+      } else {
+        // if we are here that means either the request was invalid or the type
+        // of request is not MetricRequest type. In this case we return an
+        // status as INVALID to caller.
+        writeIfConnected(
+          session,
+          new MetricResponse(MetricResponse.Status.INVALID)
+        );
       }
-    } else {
-      // if we are here that means either the request was invalid or the type
-      // of request is not MetricRequest type. In this case we return an
-      // status as INVALID to caller.
-      writeIfConnected(
-         session,
-         new MetricResponse(MetricResponse.Status.INVALID)
-      );
     }
   }
 

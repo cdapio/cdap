@@ -13,6 +13,8 @@ import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.TemporalDataStore;
 import com.continuuity.metrics2.temporaldb.internal.LevelDBTemporalDataStore;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,16 +92,10 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
    * @throws java.io.IOException
    */
   @Override
-  public Future<MetricResponse.Status> process(final MetricRequest request)
+  public ListenableFuture<MetricResponse.Status> process(final MetricRequest request)
     throws IOException {
     // Future that returns an invalid status.
-    final Future<MetricResponse.Status> invalidFutureResponse =
-      Futures.future(new Callable<MetricResponse.Status>() {
-        @Override
-        public MetricResponse.Status call() throws Exception {
-          return MetricResponse.Status.INVALID;
-        }
-      }, ec);
+    SettableFuture<MetricResponse.Status> response = SettableFuture.create();
 
     // Break down the metric name into it's components.
     // If there are any issue with how it's constructed,
@@ -109,15 +105,11 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
       final FlowMetricElements elements =
         new FlowMetricElements.Builder(request.getMetricName()).create();
       if(elements != null) {
-        return Futures.future(new Callable<MetricResponse.Status>() {
-          public MetricResponse.Status call() {
-            if (updateDataPoint(elements, request)) {
-              Log.trace("Successfully processed metric {}.", request.toString());
-              return MetricResponse.Status.SUCCESS;
-            }
-            return MetricResponse.Status.FAILED;
-          }
-        }, ec);
+        if(updateDataPoint(elements, request)) {
+          response.set(MetricResponse.Status.SUCCESS);
+        } else {
+          response.set(MetricResponse.Status.FAILED);
+        }
       } else {
         Log.trace("Invalid flow metric elements for request {}",
                   request.toString());
@@ -125,7 +117,8 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
     } catch (BuilderException e) {
       Log.warn("Invalid flow metric received. Reason : {}.", e.getMessage());
     }
-    return invalidFutureResponse;
+    response.set(MetricResponse.Status.FAILED);
+    return response;
   }
 
   private boolean updateDataPoint(FlowMetricElements elements,

@@ -3,6 +3,7 @@ package com.continuuity.metrics2.collector.plugins;
 import akka.dispatch.Future;
 import com.continuuity.common.metrics.MetricRequest;
 import com.continuuity.common.metrics.MetricResponse;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -24,6 +25,6 @@ public interface MetricsProcessor extends Closeable {
    * @return Future for asynchronous processing of metric.
    * @throws IOException
    */
-  public Future<MetricResponse.Status> process(final MetricRequest request)
+  public ListenableFuture<MetricResponse.Status> process(final MetricRequest request)
   throws IOException;
 }
