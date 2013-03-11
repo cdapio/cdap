@@ -127,7 +127,7 @@ public class AppFabricClient {
       }
 
       if ("promote".equals(command)) {
-        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, this.resource, 1);
+        ResourceIdentifier identifier = new ResourceIdentifier("developer", this.application, "noresource", 1);
         boolean status = client.promote(new AuthToken(this.authToken), identifier, this.hostname);
         if (status) {
           System.out.println("Promoted to cloud");
