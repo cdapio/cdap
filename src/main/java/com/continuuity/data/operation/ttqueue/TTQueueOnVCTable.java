@@ -103,9 +103,9 @@ public class TTQueueOnVCTable implements TTQueue {
     }
   }
 
-  static long MAX_QUEUE_DEPTH = 10000L;
-  static long DRAIN_QUEUE_DEPTH = 9500L;
-  static long QUEUE_CHECK_ITERATIONS = 500L;
+  static long MAX_QUEUE_DEPTH = 100000L;
+  static long DRAIN_QUEUE_DEPTH = 99000L;
+  static long QUEUE_CHECK_ITERATIONS = 1000L;
 
   AtomicLong enqueues = new AtomicLong(0);
   AtomicLong acks = new AtomicLong(0);
@@ -138,7 +138,7 @@ public class TTQueueOnVCTable implements TTQueue {
           LOG.debug("Max queue depth hit, currently at " + enqueueCount);
           while (getDepth() >= MAX_QUEUE_DEPTH - QUEUE_CHECK_ITERATIONS) {
             try {
-              Thread.sleep(500);
+              Thread.sleep(10);
             } catch (InterruptedException e) {}
           }
           LOG.debug("Drained queue depth to " + getDepth());
