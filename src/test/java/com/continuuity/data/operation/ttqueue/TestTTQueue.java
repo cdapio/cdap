@@ -35,7 +35,7 @@ public abstract class TestTTQueue {
   protected static TimestampOracle timeOracle =
       new MemoryStrictlyMonotonicTimeOracle();
 
-  private TTQueue createQueue() throws OperationException {
+  protected TTQueue createQueue() throws OperationException {
     return createQueue(new CConfiguration());
   }
 
@@ -119,16 +119,16 @@ public abstract class TestTTQueue {
     }
   }
 
-  private ReadPointer getDirtyPointer() {
+  protected ReadPointer getDirtyPointer() {
     return new MemoryReadPointer(
         Long.MAX_VALUE, timeOracle.getTimestamp(), null);
   }
   
-  private ReadPointer getCleanPointer() {
+  protected ReadPointer getCleanPointer() {
     return getCleanPointer(timeOracle.getTimestamp());
   }
   
-  private ReadPointer getCleanPointer(long now) {
+  protected ReadPointer getCleanPointer(long now) {
     return new MemoryReadPointer(now + 1, now, null);
   }
   
@@ -382,7 +382,7 @@ public abstract class TestTTQueue {
       DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
       // verify we got something and it's the first value
       assertTrue(result.toString(), result.isSuccess());
-      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value"+i)));
+      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value" + i)));
       // dequeue again without acking, should still get first value
       result = queue.dequeue(consumers[i], dirtyReadPointer);
       assertTrue(result.isSuccess());
@@ -413,7 +413,7 @@ public abstract class TestTTQueue {
   public void testSingleConsumerWithHashPartitioning() throws Exception {
     final String HASH_KEY = "hashKey";
     final boolean singleEntry = true;
-    final int numQueueEntries = 8;
+    final int numQueueEntries = 88;
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
@@ -434,7 +434,7 @@ public abstract class TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
     // enqueue some more entries
     for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
@@ -443,13 +443,13 @@ public abstract class TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
   }
 
   @Test
   public void testSingleConsumerWithRoundRobinPartitioning() throws Exception {
     final boolean singleEntry = true;
-    final int numQueueEntries = 8;
+    final int numQueueEntries = 88;
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
@@ -470,7 +470,7 @@ public abstract class TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
     // enqueue some more entries
     for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
@@ -479,12 +479,14 @@ public abstract class TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
   }
 
-  private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers) throws Exception {
+  private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers, int totalEnqueues)
+    throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
     for(int i=0; i<numConsumers; i++) {
+      for(int j=0; j<totalEnqueues/(2*numConsumers); j++) {
       DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
       // verify we got something and it's the first value
       assertTrue(result.toString(), result.isSuccess());
@@ -506,9 +508,10 @@ public abstract class TestTTQueue {
       // ack
       queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
       queue.finalize(result.getEntryPointer(), consumers[i], -1);
+      }
 
       // verify queue is empty
-      result = queue.dequeue(consumers[i], dirtyReadPointer);
+      DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
       assertTrue(result.isEmpty());
     }
   }

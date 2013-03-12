@@ -221,9 +221,10 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+  public DequeueResult dequeue(StatefulQueueConsumer statefulConsumer, ReadPointer readPointer)
+    throws OperationException {
     // TODO: implement
-    return null;
+    throw new UnsupportedOperationException("Not yet implemented.");
   }
 
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
@@ -613,6 +614,11 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
+  public void ack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+
+  @Override
   public void finalize(QueueEntryPointer entryPointer,
                        QueueConsumer consumer, int totalNumGroups)
       throws OperationException {
@@ -732,7 +738,11 @@ public class TTQueueOnVCTable implements TTQueue {
         newValue, dirty.getFirst(), dirty.getSecond());
   }
 
-  // Private helpers
+  @Override
+  public void unack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+// Private helpers
 
   private boolean safeToMoveHead(EntryGroupMeta entryGroupMeta) {
     return entryGroupMeta.isAcked() ||

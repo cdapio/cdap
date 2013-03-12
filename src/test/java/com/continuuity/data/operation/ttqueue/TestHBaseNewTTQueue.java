@@ -3,6 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
@@ -14,6 +15,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
 
@@ -93,5 +97,115 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 //  public void testMultiConsumerMultiGroup() {}
 
   @Override @Test @Ignore
+  public void testSingleConsumerAckSemantics() {}
+
+  @Override @Test @Ignore
   public void testEvictOnAck_ThreeGroups() {}
+
+  @Test
+  public void testSingleStatefulConsumerWithHashPartitioning() throws Exception {
+    final String HASH_KEY = "hashKey";
+    final boolean singleEntry = true;
+    final int numQueueEntries = 88;
+    final int numConsumers = 4;
+    final int consumerGroupId = 0;
+    TTQueue queue = createQueue();
+    long dirtyVersion = 1;
+
+    // enqueue some entries
+    for(int i=0; i<numQueueEntries; i++) {
+      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+i%numConsumers));
+      queueEntry.addPartitioningKey(HASH_KEY, i);
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+    // dequeue it with HASH partitioner
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
+
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
+    for(int i=0; i<numConsumers; i++) {
+      consumers[i]=new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+    }
+
+    // dequeue and verify
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
+
+    // enqueue some more entries
+    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
+      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+i%numConsumers));
+      queueEntry.addPartitioningKey(HASH_KEY, i);
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+    // dequeue and verify
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
+  }
+
+  @Test
+  public void testSingleStatefulConsumerWithRoundRobinPartitioning() throws Exception {
+    final boolean singleEntry = true;
+    final int numQueueEntries = 88;
+    final int numConsumers = 4;
+    final int consumerGroupId = 0;
+    TTQueue queue = createQueue();
+    long dirtyVersion = 1;
+
+    // enqueue some entries
+    for(int i=0; i<numQueueEntries; i++) {
+      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+(i+1)%numConsumers));
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+
+    // dequeue it with ROUND_ROBIN partitioner
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
+
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
+    for(int i=0; i<numConsumers; i++) {
+      consumers[i]=new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+    }
+
+    // dequeue and verify
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
+
+    // enqueue some more entries
+    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
+      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+(i+1)%numConsumers));
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+
+    // dequeue and verify
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
+  }
+
+  private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers, int totalEnqueues)
+    throws Exception {
+    ReadPointer dirtyReadPointer = getDirtyPointer();
+    for(int i=0; i<numConsumers; i++) {
+      for(int j=0; j<totalEnqueues/(2*numConsumers); j++) {
+        DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
+        // verify we got something and it's the first value
+        assertTrue(result.toString(), result.isSuccess());
+        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+        // dequeue again without acking, should still get first value
+        result = queue.dequeue(consumers[i], dirtyReadPointer);
+        assertTrue(result.isSuccess());
+        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+
+        // ack
+        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+
+        // dequeue, should get second value
+        result = queue.dequeue(consumers[i], dirtyReadPointer);
+        assertTrue(result.isSuccess());
+        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+
+        // ack
+        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+      }
+
+      // verify queue is empty
+      DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
+      assertTrue(result.isEmpty());
+    }
+  }
 }

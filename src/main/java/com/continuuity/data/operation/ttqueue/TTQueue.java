@@ -64,13 +64,11 @@ public interface TTQueue {
    * Attempts to mark and return an entry from the queue for the specified
    * consumer from the specified group, according to the specified configuration
    * and read pointer.
-   * @param consumer the queue consumer
+   * @param statefulConsumer the queue consumer with state
    * @return dequeue result object
    * @throws OperationException if unsuccessful
-   * @deprecated
    */
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, QueueState queueState,
-                               ReadPointer readPointer) throws OperationException;
+  public DequeueResult dequeue(StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -91,6 +89,14 @@ public interface TTQueue {
       throws OperationException;
 
   /**
+   * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
+   * that is acknowledging is allowed to do so, false if not.
+   * @throws OperationException if unsuccessful
+   */
+  public void ack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer)
+    throws OperationException;
+
+  /**
    * Finalizes an ack.
    *
    * @param totalNumGroups total number of groups to use when doing evict-on-ack
@@ -106,6 +112,13 @@ public interface TTQueue {
    * @throws OperationException if unsuccessful
    */
   void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
+
+  /**
+   * Unacknowledges a previously acknowledge ack.
+   *
+   * @throws OperationException if unsuccessful
+   */
+  void unack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.
