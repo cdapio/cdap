@@ -127,7 +127,7 @@ public class DatumCodecTest {
     Schema sourceSchema = new ReflectionSchemaGenerator().generate(Record1.class);
     Schema targetSchema = new ReflectionSchemaGenerator().generate(Record2.class);
 
-    new ReflectionDatumWriter(sourceSchema).write(r1, new BinaryEncoder(output));
+    new ReflectionDatumWriter(sourceSchema).encode(r1, new BinaryEncoder(output));
     Record2 r2 = new ReflectionDatumReader<Record2>(targetSchema, TypeToken.of(Record2.class))
                             .read(new BinaryDecoder(input), sourceSchema);
 
@@ -158,7 +158,7 @@ public class DatumCodecTest {
     PipedOutputStream output = new PipedOutputStream();
     PipedInputStream input = new PipedInputStream(output);
 
-    new ReflectionDatumWriter(sourceSchema).write(list, new BinaryEncoder(output));
+    new ReflectionDatumWriter(sourceSchema).encode(list, new BinaryEncoder(output));
     Set<String> set = new ReflectionDatumReader<Set<String>>(targetSchema, new TypeToken<Set<String>>() {})
                         .read(new BinaryDecoder(input), sourceSchema);
 
@@ -166,7 +166,7 @@ public class DatumCodecTest {
 
 
     targetSchema = new ReflectionSchemaGenerator().generate(String[].class);
-    new ReflectionDatumWriter(sourceSchema).write(list, new BinaryEncoder(output));
+    new ReflectionDatumWriter(sourceSchema).encode(list, new BinaryEncoder(output));
     String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() {})
                         .read(new BinaryDecoder(input), sourceSchema);
 
@@ -187,7 +187,7 @@ public class DatumCodecTest {
     head.next.next = head;
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    new ReflectionDatumWriter(schema).write(head, new BinaryEncoder(output));
+    new ReflectionDatumWriter(schema).encode(head, new BinaryEncoder(output));
   }
 
 
@@ -236,7 +236,7 @@ public class DatumCodecTest {
     Schema targetSchema = new ReflectionSchemaGenerator().generate(LessFields.class);
 
     MoreFields moreFields = new MoreFields(10, 20, "30", ImmutableList.of("1", "2"));
-    new ReflectionDatumWriter(sourceSchema).write(moreFields, new BinaryEncoder(output));
+    new ReflectionDatumWriter(sourceSchema).encode(moreFields, new BinaryEncoder(output));
     LessFields lessFields = new ReflectionDatumReader<LessFields>(targetSchema, TypeToken.of(LessFields.class))
                                             .read(new BinaryDecoder(input), sourceSchema);
 
@@ -256,9 +256,9 @@ public class DatumCodecTest {
     Schema schema = new ReflectionSchemaGenerator().generate(TestEnum.class);
     ReflectionDatumWriter writer = new ReflectionDatumWriter(schema);
     BinaryEncoder encoder = new BinaryEncoder(output);
-    writer.write(TestEnum.VALUE1, encoder);
-    writer.write(TestEnum.VALUE3, encoder);
-    writer.write(TestEnum.VALUE2, encoder);
+    writer.encode(TestEnum.VALUE1, encoder);
+    writer.encode(TestEnum.VALUE3, encoder);
+    writer.encode(TestEnum.VALUE2, encoder);
 
     BinaryDecoder decoder = new BinaryDecoder(input);
     ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<TestEnum>(schema, TypeToken.of(TestEnum.class));
