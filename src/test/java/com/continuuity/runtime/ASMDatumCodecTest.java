@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +160,20 @@ public class ASMDatumCodecTest {
       new ReflectionDatumReader<Map<String, List<String>>>(getSchema(type), type);
 
     Assert.assertEquals(map, reader.read(new BinaryDecoder(is), getSchema(type)));
+  }
+
+  @Test
+  public void testURI() throws IOException, UnsupportedTypeException {
+    TypeToken<List<URI>> type = new TypeToken<List<URI>>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+
+    DatumWriter<List<URI>> writer = getWriter(type);
+    List<URI> writeValue = ImmutableList.of(URI.create("http://www.continuuity.com"));
+    writer.encode(writeValue, new BinaryEncoder(os));
+
+    ReflectionDatumReader<List<URI>> reader = new ReflectionDatumReader<List<URI>>(getSchema(type), type);
+    Assert.assertEquals(writeValue, reader.read(new BinaryDecoder(is), getSchema(type)));
   }
 
   public static class Record {
