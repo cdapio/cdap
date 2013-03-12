@@ -298,7 +298,7 @@ final class DatumWriterGenerator {
       case NULL:
         break;
       case BOOLEAN:
-        encodeSimple(mg, outputType, "writeBool", value, encoder);
+        encodeSimple(mg, outputType, schema, "writeBool", value, encoder);
         break;
       case INT:
       case LONG:
@@ -307,7 +307,7 @@ final class DatumWriterGenerator {
       case BYTES:
       case STRING:
         String encodeMethod = "write" + schemaType.name().charAt(0) + schemaType.name().substring(1).toLowerCase();
-        encodeSimple(mg, outputType, encodeMethod, value, encoder);
+        encodeSimple(mg, outputType, schema, encodeMethod, value, encoder);
         break;
       case ENUM:
         encodeEnum(mg, outputType, value, encoder, schemaLocal);
@@ -365,7 +365,7 @@ final class DatumWriterGenerator {
    * @param value
    * @param encoder
    */
-  private void encodeSimple(GeneratorAdapter mg, TypeToken<?> type,
+  private void encodeSimple(GeneratorAdapter mg, TypeToken<?> type, Schema schema,
                             String encodeMethod, int value, int encoder) {
     // encoder.writeXXX(value);
     TypeToken<?> encodeType = type;
@@ -374,6 +374,10 @@ final class DatumWriterGenerator {
     if (Primitives.isWrapperType(encodeType.getRawType())) {
       encodeType = TypeToken.of(Primitives.unwrap(encodeType.getRawType()));
       mg.unbox(Type.getType(encodeType.getRawType()));
+    } else if (schema.getType() == Schema.Type.STRING && !String.class.equals(encodeType.getRawType())) {
+      // For non-string object that has a String schema, invoke toString().
+      mg.invokeVirtual(Type.getType(encodeType.getRawType()), getMethod(String.class, "toString"));
+      encodeType = TypeToken.of(String.class);
     }
     mg.invokeInterface(Type.getType(Encoder.class), getMethod(Encoder.class, encodeMethod, encodeType.getRawType()));
     mg.pop();
