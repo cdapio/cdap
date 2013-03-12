@@ -1209,10 +1209,10 @@ a strong {
 	top: 160px;
 	left: 0px;
 	right: 0px;
+	bottom: 0px;
 	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
 	display: none;
-	min-height: 700px;
 }
 .popup-container {
 	width: 706px;
