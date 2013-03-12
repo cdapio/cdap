@@ -146,7 +146,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void put(byte[] row, byte[] column, long version, byte[] value)  throws OperationException {
-    put(row, new byte[][]{column}, version, new byte[][] {value});
+    put(row, new byte[][]{column}, version, new byte[][]{value});
   }
 
   @Override
@@ -214,37 +214,13 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
-    Set<Long> deleted = Sets.newHashSet();
     try {
       Get get = new Get(row);
       for (byte [] column : columns) get.addColumn(this.family, column);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.readTable.get(get);
-      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      byte[] last = null;
-      for (KeyValue kv : result.raw()) {
-        byte [] column = kv.getQualifier();
-        long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
-        if (deleted.contains(version))  {
-          deleted.remove(version);
-          continue;
-        }
-        if (Bytes.equals(last, column)) continue;
-        byte [] value = kv.getValue();
-        byte typePrefix=value[0];
-        if (typePrefix==DATA) {
-          map.put(column, removeTypePrefix(value));
-          deleted.clear();
-          last=column;
-        }
-        if (typePrefix==DELETE_ALL) {
-          deleted.clear();
-          last=column;
-        }
-        if (typePrefix==DELETE_VERSION) deleted.add(version);
-      }
+      Map<byte[], byte[]> map = parseRowResult(result, readPointer);
       if (map.isEmpty()) return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       else return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -252,6 +228,65 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     }
     // as fall-back return "not found".
     return new OperationResult<Map<byte[], byte[]>>(
+      StatusCode.COLUMN_NOT_FOUND);
+  }
+
+  private Map<byte[], byte[]> parseRowResult(Result result, ReadPointer readPointer) {
+    Set<Long> deleted = Sets.newHashSet();
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    byte[] last = null;
+    for (KeyValue kv : result.raw()) {
+      byte [] column = kv.getQualifier();
+      long version = kv.getTimestamp();
+      if (!readPointer.isVisible(version)) continue;
+      if (deleted.contains(version))  {
+        deleted.remove(version);
+        continue;
+      }
+      if (Bytes.equals(last, column)) continue;
+      byte [] value = kv.getValue();
+      byte typePrefix=value[0];
+      if (typePrefix==DATA) {
+        map.put(column, removeTypePrefix(value));
+        deleted.clear();
+        last=column;
+      }
+      if (typePrefix==DELETE_ALL) {
+        deleted.clear();
+        last=column;
+      }
+      if (typePrefix==DELETE_VERSION) deleted.add(version);
+    }
+    return map;
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer)
+    throws OperationException {
+    try {
+      List<Get> gets = new ArrayList<Get>(rows.length);
+      for (byte[] row : rows) {
+        Get get = new Get(row);
+        for (byte [] column : columns) get.addColumn(this.family, column);
+        get.setTimeRange(0, getMaxStamp(readPointer));
+        get.setMaxVersions();
+        gets.add(get);
+      }
+      Result results[] = this.readTable.get(gets);
+      Map<byte[], Map<byte[], byte[]>> resultMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
+      for (Result result : results) {
+        if(!result.isEmpty()) {
+          Map<byte[], byte[]> map = parseRowResult(result, readPointer);
+          resultMap.put(result.getRow(), map);
+        }
+      }
+      if (resultMap.isEmpty()) return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
+      else return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    // as fall-back return "not found".
+    return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(
       StatusCode.COLUMN_NOT_FOUND);
   }
 

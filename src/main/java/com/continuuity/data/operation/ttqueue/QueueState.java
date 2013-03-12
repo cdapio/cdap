@@ -21,4 +21,5 @@ public interface QueueState {
 
   public CachedList<QueueStateEntry> getCachedEntries();
 
+  public void setCachedEntries(CachedList<QueueStateEntry> entries);
 }

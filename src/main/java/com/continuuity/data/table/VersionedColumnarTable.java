@@ -159,6 +159,18 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer) throws OperationException;
 
   /**
+   * Reads the latest versions of the specified columns in the specified row,
+   * utilizing the specified read pointer to enforce visibility constraints.
+   * @param rows
+   * @param columns
+   * @param readPointer
+   * @return map of columns to values, never null
+   */
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(
+    byte [][] rows, byte[][] columns,
+    ReadPointer readPointer) throws OperationException;
+
+  /**
    * Increments (atomically) the specified row and column by the specified
    * amount, utilizing the specified read pointer to enforce visibility
    * constraints when performing the initial read.  The specified write version

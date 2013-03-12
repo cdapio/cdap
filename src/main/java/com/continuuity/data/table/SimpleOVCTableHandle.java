@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -71,7 +72,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
     
-    queueTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
+//    queueTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
+    queueTable = new TTQueueTableNewOnVCTable(table, timeOracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;

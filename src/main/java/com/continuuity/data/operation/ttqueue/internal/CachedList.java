@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -8,6 +9,11 @@ import java.util.List;
 public class CachedList<T> {
   final private List<T> list;
   private int currentIndex;
+
+  public static final CachedList EMPTY_LIST = new CachedList(Collections.emptyList());
+  public static <T> CachedList<T> emptyList() {
+    return EMPTY_LIST;
+  }
 
   public CachedList(List<T> list) {
     this.list = list;

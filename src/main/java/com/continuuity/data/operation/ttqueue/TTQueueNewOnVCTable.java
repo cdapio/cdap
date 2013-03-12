@@ -16,7 +16,9 @@ import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -83,6 +85,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte[] INVALID_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ENTRY_ID);
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
+  // TODO: move this to queue config
+  int batchSize = 20;
+
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
                                 final CConfiguration conf) {
     this.table = table;
@@ -90,61 +95,91 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.timeOracle = timeOracle;
   }
 
-//  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-//    throws OperationException;
+  private long getBatchSize() {
+    if(batchSize < 1) {
+      // TODO: Log a warning for invalid batchSize
+      return 1;
+    } else {
+      return batchSize;
+    }
+  }
 
-  protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+  protected List<Long> fetchNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState,
                                   ReadPointer readPointer) throws OperationException {
-//    return this.table.incrementAtomicDirtily(
-//      makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-//      CONSUMER_READ_POINTER, consumer.getGroupSize());
     long entryId = queueState.getConsumerReadPointer();
-    boolean foundEntry=false;
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+    List<Long> newEntryIds = new ArrayList<Long>();
 
-    while (!foundEntry) {
+    while (newEntryIds.isEmpty()) {
       if(entryId >= queueState.getQueueWritePointer()) {
         // Reached the end of queue as per cached QueueWritePointer,
         // read it again to see if there is any progress made by producers
-        // TODO: use raw get insead of the workaround of incrementing zero
+        // TODO: use raw Get instead of the workaround of incrementing zero
         long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
         queueState.setQueueWritePointer(queueWritePointer);
         // If still no progress, return empty queue
         if(entryId >= queueState.getQueueWritePointer()) {
-          return INVALID_ENTRY_ID;
+          return Collections.EMPTY_LIST;
         }
       }
 
+      long startEntryId;
+      long endEntryId;
+
       if (partitioner.isDisjoint()) {
-        ++entryId;
+        startEntryId = entryId + 1;
+        endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+                                       startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
       } else {
-        entryId = this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
-                                                    GROUP_READ_POINTER, 1);
+        // For now non-disjoint partitions use batchSize = 1
+        int tempBatchSize = 1;
+        endEntryId = this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
+                                                    GROUP_READ_POINTER, tempBatchSize);
+        startEntryId = endEntryId;
+        queueState.setActiveEntryId(endEntryId);
       }
+
+      final int cacheSize = (int)(endEntryId - startEntryId + 1);
+      OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult;
       if (partitioner.usesHeaderData()) {
-        OperationResult<byte[]> result = this.table.get(makeRowKey(GLOBAL_DATA_PREFIX, entryId), ENTRY_HEADER,
-                                                        readPointer);
-        String partitioningKey = consumer.getPartitioningKey();
-        Map<String, Integer> partitionMap;
-        if (!result.isEmpty() && partitioningKey != null && partitioningKey.length() != 0) {
-          try {
-            partitionMap = QueuePartitionMapSerializer.deserialize(result.getValue());
-          } catch (IOException e) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR, "Exception while deserializing queue partition map", e);
-          }
-          if(partitionMap == null) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR, "queue partition map is null");
-          }
-          int hashValue = partitionMap.get(partitioningKey);
-          foundEntry = partitioner.shouldEmit(consumer, entryId, hashValue);
-        } else {
-          foundEntry = partitioner.shouldEmit(consumer, entryId);
+        final String partitioningKey = consumer.getPartitioningKey();
+        byte [][] rowKeys = new byte[cacheSize][];
+        for(int id = 0; id < cacheSize; ++id) {
+          rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
         }
+        byte[][] columnKeys = new byte[1][];
+        columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
+        headerResult = this.table.get(rowKeys, columnKeys, readPointer);
       } else {
-        foundEntry = partitioner.shouldEmit(consumer, entryId);
+        headerResult = new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
       }
+
+      // TODO: check the case when some headers are skipped
+      for(int id = 0; id < cacheSize; ++id) {
+        final long currentEntryId = startEntryId + id;
+        if(partitioner.usesHeaderData()) {
+          final String partitioningKey = consumer.getPartitioningKey();
+          if (!headerResult.isEmpty()) {
+            Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
+            Map<byte[], byte[]> headerMap = headerValue.get(makeRowKey(GLOBAL_DATA_PREFIX, currentEntryId));
+            int hashValue = Bytes.toInt(headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey)));
+            if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
+              newEntryIds.add(currentEntryId);
+            }
+          } else {
+            if(partitioner.shouldEmit(consumer, currentEntryId)) {
+              newEntryIds.add(currentEntryId);
+            }
+          }
+        } else {
+          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+            newEntryIds.add(currentEntryId);
+          }
+        }
+      }
+      entryId = endEntryId;
     }
-    return entryId;
+    return newEntryIds;
   }
 
   @Override
@@ -181,10 +216,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
     Insert entry with version=<cleanWriteVersion> and
     row-key = <queueName>20<entryId> , column/value 20/<data> and 10/EntryState.VALID
     */
+
+    final int size = entry.getPartitioningMap().size() + 2;
+    byte[][] colKeys = new byte[size][];
+    byte[][] colValues = new byte[size][];
+
+    int colKeyIndex = 0;
+    int colValueIndex = 0;
+    colKeys[colKeyIndex++] = ENTRY_DATA;
+    colKeys[colKeyIndex++] = ENTRY_META;
+    colValues[colValueIndex++] = data;
+    colValues[colValueIndex++] = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+    for(Map.Entry<String, Integer> e : entry.getPartitioningMap().entrySet()) {
+      colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
+      colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
+    }
+
     this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
-                   new byte [][] { ENTRY_DATA, ENTRY_META, ENTRY_HEADER},
+                   colKeys,
                    cleanWriteVersion,
-                   new byte [][] {data, new EntryMeta(EntryMeta.EntryState.VALID).getBytes(), headerData});
+                   colValues);
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, new QueueEntryPointer(this.queueName, entryId));
@@ -201,7 +252,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if (TRACE) log("Invalidated " + entryPointer);
   }
 
-  // TODO: consolidate dequeue method
+  // TODO: consolidate dequeue methods
   /**
    * {@inheritDoc}
    */
@@ -251,67 +302,83 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
       }
 
-      // TODO: use raw get insead of the workaround of incrementing zero
+      // TODO: use raw Get instead of the workaround of incrementing zero
       long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
       queueState.setQueueWritePointer(queueWritePointer);
+
+      // If active entry is present, read that from storage
+      if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
+        readEntries(consumer, config, queueState, readPointer, Collections.singletonList(queueState.getActiveEntryId()));
+      }
     }
 
-    while(true) {
-      // Get the next entryId that can be dequeued by this consumer
-      final long entryId = determineNextEntryId(consumer, config, queueState, readPointer);
-      if(entryId == INVALID_ENTRY_ID) {
-        if (TRACE) log("End of queue reached using " + "read pointer " + readPointer);
-        return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
-      }
+    // If no more cached entries, read entries from storage
+    if(!queueState.getCachedEntries().hasNext()) {
+      List<Long> entryIds = fetchNextEntryId(consumer, config, queueState, readPointer);
+      readEntries(consumer, config, queueState, readPointer, entryIds);
+    }
 
-      final byte [] entryRowName = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
-      // Read visible entry meta and entry data for the entryId
-      OperationResult<Map<byte[], byte[]>> result = this.table.get(entryRowName,
-                      new byte[][]{ ENTRY_META, ENTRY_DATA }, readPointer);
-
-      if(result.isEmpty()) {
-        // This entry doesn't exist or is not visible, queue is empty for this consumer
-        if (TRACE) log("Queue is empty, nothing found at " + entryId + " using " +
-              "read pointer " + readPointer);
-        return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
-      }
-
-      // Queue entry exists and is visible, check the global state of it
-      EntryMeta entryMeta = EntryMeta.fromBytes(result.getValue().get(ENTRY_META));
-      if (TRACE) log("entryMeta : " + entryMeta.toString());
-
-      // Check if entry has been invalidated or evicted
-      if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
-        if (TRACE) log("Found invalidated or evicted entry at " + entryId +
-                         " (" + entryMeta.toString() + ")");
-        // This entry is invalid, move to the next entry and loop
-        continue;
-      }
-
-      // Entry is visible and valid!
-      assert(entryMeta.isValid());
-      byte [] entryData = result.getValue().get(ENTRY_DATA);
-      if (TRACE) log("Entry : " + entryId + " is dequeued");
+    if(queueState.getCachedEntries().hasNext()) {
+      QueueStateEntry cachedEntry = queueState.getCachedEntries().getNext();
       this.dequeueReturns.incrementAndGet();
-      QueueEntry entry=new QueueEntryImpl(entryData);
+      queueState.setActiveEntryId(cachedEntry.getEntryId());
+      queueState.setConsumerReadPointer(cachedEntry.getEntryId());
+      QueueEntry entry = new QueueEntryImpl(cachedEntry.getData());
+      saveDequeueEntryState(consumer, config, queueState, readPointer);
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                               new QueueEntryPointer(this.queueName, entryId), entry);
+                               new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
+    } else {
+      // No queue entries available to dequue, return queue empty
+      if (TRACE) log("End of queue reached using " + "read pointer " + readPointer);
+      saveDequeueEntryState(consumer, config, queueState, readPointer);
+      return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
     }
   }
 
-  private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer)
-    throws OperationException {
-    if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
-      return queueState.getActiveEntryId();
+  private void readEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer,
+                            List<Long> entryIds) throws OperationException{
+    if(entryIds.isEmpty()) {
+      queueState.setCachedEntries(CachedList.EMPTY_LIST);
+      return;
     }
 
-    // Else get the next entryId
-    long entryId = fetchNextEntryId(consumer, config, queueState, readPointer);
-    if(entryId == INVALID_ENTRY_ID) {
-      // End of queue reached for this consumer
-      return INVALID_ENTRY_ID;
+    final byte[][] entryRowKeys = new byte[entryIds.size()][];
+    for(int i = 0; i < entryIds.size(); ++i) {
+      entryRowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryIds.get(i));
     }
 
+    final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
+    OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
+                                                          this.table.get(entryRowKeys, entryColKeys, readPointer);
+    if(entriesResult.isEmpty()) {
+      queueState.setCachedEntries(CachedList.EMPTY_LIST);
+    } else {
+      List<QueueStateEntry> entries = new ArrayList<QueueStateEntry>(entryIds.size());
+      for(int i = 0; i < entryIds.size(); ++i) {
+        Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
+        if(entryMap == null) {
+          continue;
+        }
+        EntryMeta entryMeta = EntryMeta.fromBytes(entryMap.get(ENTRY_META));
+        if (TRACE) log("entryId:" +  entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
+
+        // Check if entry has been invalidated or evicted
+        if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
+          if (TRACE) log("Found invalidated or evicted entry at " + entryIds.get(i) +
+                           " (" + entryMeta.toString() + ")");
+        } else {
+          // Entry is visible and valid!
+          assert(entryMeta.isValid());
+          byte [] entryData = entryMap.get(ENTRY_DATA);
+          entries.add(new QueueStateEntry(entryData, entryIds.get(i)));
+        }
+      }
+      queueState.setCachedEntries(new CachedList<QueueStateEntry>(entries));
+    }
+  }
+
+  private void saveDequeueEntryState(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                                     ReadPointer readPointer) throws OperationException {
     // Persist the entryId this consumer will be working on
     // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
@@ -320,20 +387,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      new byte[][] {CONSUMER_READ_POINTER, ACTIVE_ENTRY},
                      readPointer.getMaximum(),
-                     new byte[][] {Bytes.toBytes(entryId), Bytes.toBytes(entryId)});
-      queueState.setConsumerReadPointer(entryId);
-      queueState.setActiveEntryId(entryId);
+                     new byte[][] {Bytes.toBytes(queueState.getConsumerReadPointer()), Bytes.toBytes(queueState.getActiveEntryId())});
     } else {
+      long entryId = queueState.getActiveEntryId();
       this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY},
                      readPointer.getMaximum(),
                      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
                        Bytes.toBytes(entryId)});
-      queueState.setActiveEntryId(entryId);
     }
-    return entryId;
   }
-
 
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
@@ -428,15 +491,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
   protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
   }
+  protected byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
+    return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
 
   public static class QueueStateImpl implements QueueState {
     private long activeEntryId = INVALID_ENTRY_ID;
     private long consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
     private long queueWrtiePointer = FIRST_QUEUE_ENTRY_ID - 1;
-    private final CachedList<QueueStateEntry> cachedEntries;
+    private CachedList<QueueStateEntry> cachedEntries;
 
     public QueueStateImpl() {
-      cachedEntries = new CachedList<QueueStateEntry>(Collections.EMPTY_LIST);
+      cachedEntries = CachedList.emptyList();
     }
     public QueueStateImpl(CachedList<QueueStateEntry> cachedEntries) {
       this.cachedEntries = cachedEntries;
@@ -475,6 +541,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public CachedList<QueueStateEntry> getCachedEntries() {
       return cachedEntries;
+    }
+
+    @Override
+    public void setCachedEntries(CachedList<QueueStateEntry> cachedEntries) {
+      this.cachedEntries = cachedEntries;
     }
   }
 }
