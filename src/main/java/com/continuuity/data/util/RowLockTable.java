@@ -84,6 +84,8 @@ public class RowLockTable {
       lock.lock();
       if (lock.isValid()) {
         return lock;
+      } else {
+        lock.unlock();
       }
     }
   }
