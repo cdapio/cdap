@@ -1,6 +1,5 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.api.io.Schema;
 import com.google.common.collect.Maps;
@@ -9,7 +8,6 @@ import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -21,7 +19,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- *
+ * A {@link DatumWriter} that uses java reflection to encode data. The encoding schema it uses is
+ * the same as the binary encoding as specified in Avro, with the enhancement of support non-string
+ * map key.
  */
 public final class ReflectionDatumWriter<T> implements DatumWriter<T> {
 
