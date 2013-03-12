@@ -96,14 +96,12 @@ function accountsRequest (path, done) {
 		});
 	}).on('error', function(e) {
 		logger.warn(e);
+		done(500, e);
 	}).end();
 
 }
 
-function renderAccessError(req, res) {
-
-	logger.warn('Denied user (current, owner)', req.session.account_id, config['info'].owner.account_id);
-
+function getRoot () {
 	var root;
 	if (fs.existsSync(__dirname + '/../client/')) {
 		root = __dirname + '/../client/';
@@ -114,11 +112,29 @@ function renderAccessError(req, res) {
 	if (process.env.NODE_ENV === 'development') {
 		root += 'cloud';
 	}
+	return root;
+}
+
+function renderError(req, res) {
 
 	try {
-		res.sendfile('access-error.html', {'root': root});
+		res.sendfile('internal-error.html', {'root': getRoot()});
 	} catch (e) {
-		res.write('Access error.');
+		res.write('Internal error. Please email <a href="mailto:support@continuuity.com">support@continuuity.com</a>.');
+	}	
+
+}
+
+function renderAccessError(req, res) {
+
+	if (req.session && config.info && config.info.owner) {
+		logger.warn('Denied user (current, owner)', req.session.account_id, config['info'].owner.account_id);
+	}
+
+	try {
+		res.sendfile('access-error.html', {'root': getRoot()});
+	} catch (e) {
+		res.write('Access error. <a href="https://accounts.continuuity.com/">Account Home</a>.');
 	}
 
 }
@@ -191,11 +207,20 @@ fs.readFile(configPath, function (error, result) {
 			if (req.session.account_id) {
 
 				if (process.env.NODE_ENV === 'production') {
-					if (req.session.account_id !== config['info'].owner.account_id) {
-						renderAccessError(req, res);
+
+					if (!config['info'].owner || config['info'].owner.account_id) {
+
+						logger.error('Checking SSO. Owner information not found in the configuration!');
+						renderError(req, res);
+
 					} else {
-						next();
+						if (req.session.account_id !== config['info'].owner.account_id) {
+							renderAccessError(req, res);
+						} else {
+							next();
+						}
 					}
+
 				} else {
 					logger.warn('Allowed non-owner access (development only)');
 					next();
@@ -253,13 +278,22 @@ fs.readFile(configPath, function (error, result) {
 					// Perform ownership check.
 					if (process.env.NODE_ENV === 'production') {
 						
-						if (account.account_id !== config['info'].owner.account_id) {
-							renderAccessError(req, res);
+						if (!config['info'].owner || config['info'].owner.account_id) {
+
+							logger.error('Inbound SSO. Owner information not found in the configuration!');
+							renderError(req, res);
+
 						} else {
-							req.session.account_id = account.account_id;
-							req.session.name = account.first_name + ' ' + account.last_name;
-							req.session.api_key = account.api_key;
-							res.redirect('/');
+
+							if (account.account_id !== config['info'].owner.account_id) {
+								renderAccessError(req, res);
+							} else {
+								req.session.account_id = account.account_id;
+								req.session.name = account.first_name + ' ' + account.last_name;
+								req.session.api_key = account.api_key;
+								res.redirect('/');
+							}
+
 						}
 
 					} else {
@@ -478,7 +512,7 @@ fs.readFile(configPath, function (error, result) {
 		accountsRequest('/api/vpc/getUser/' + config['gateway.cluster.name'],
 			function (status, info) {
 
-				if (!info) {
+				if (status !== 200 || !info) {
 					logger.error('No cluster info received from Accounts! Aborting!');
 					process.exit(1);
 					return;
