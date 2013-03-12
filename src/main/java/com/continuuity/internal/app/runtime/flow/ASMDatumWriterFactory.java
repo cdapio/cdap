@@ -7,8 +7,11 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.Type;
+
+import java.util.Map;
 
 /**
  * A factory class for creating {@link DatumWriter} instance for different data type and schema.
@@ -45,15 +48,23 @@ public final class ASMDatumWriterFactory {
    */
   private static final class ASMCacheLoader extends CacheLoader<CacheKey, Class<DatumWriter<?>>> {
 
-    private final ASMDatumWriterClassLoader classLoader = new ASMDatumWriterClassLoader(getClass().getClassLoader());
+    private final Map<ClassLoader, ASMDatumWriterClassLoader> classloaders = Maps.newIdentityHashMap();
 
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
       DatumWriterGenerator.ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
                                                                                           key.getSchema());
 
-      return (Class<DatumWriter<?>>) classLoader.defineClass(Type.getObjectType(classDef.getClassName()).getClassName(),
-                                                             classDef.getBytecode());
+      ClassLoader typeClassloader = key.getType().getRawType().getClassLoader();
+      ASMDatumWriterClassLoader classloader = classloaders.get(typeClassloader);
+      if (classloader == null) {
+        classloader = new ASMDatumWriterClassLoader(typeClassloader);
+        classloaders.put(typeClassloader, classloader);
+      }
+
+      String className = Type.getObjectType(classDef.getClassName()).getClassName();
+      classloader.addClass(className, classDef.getBytecode());
+      return (Class<DatumWriter<?>>) classloader.loadClass(className);
     }
   }
 
@@ -98,12 +109,36 @@ public final class ASMDatumWriterFactory {
    */
   private static final class ASMDatumWriterClassLoader extends ClassLoader {
 
+    private final Map<String, byte[]> bytecodes;
+    private final Map<String, Class<?>> loadedClasses;
+
     private ASMDatumWriterClassLoader(ClassLoader parent) {
       super(parent);
+      bytecodes = Maps.newHashMap();
+      loadedClasses = Maps.newHashMap();
     }
 
-    private Class<?> defineClass(String name, byte[] bytes) {
-      return defineClass(name, bytes, 0, bytes.length);
+    private synchronized void addClass(String name, byte[] bytecode) {
+      bytecodes.put(name, bytecode);
+    }
+
+    @Override
+    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+      if (loadedClasses.containsKey(name)) {
+        return loadedClasses.get(name);
+      }
+      if (bytecodes.containsKey(name)) {
+        byte[] bytecode = bytecodes.remove(name);
+        Class<?> clz = defineClass(name, bytecode, 0, bytecode.length);
+        loadedClasses.put(name, clz);
+        return clz;
+      }
+
+      ClassLoader parent = getParent();
+      if (parent == null) {
+        return super.findSystemClass(name);
+      }
+      return super.loadClass(name, resolve);
     }
   }
 }
