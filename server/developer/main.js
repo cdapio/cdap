@@ -13,18 +13,14 @@ var express = require('express'),
 	https = require('https');
 
 var Api = require('../common/api');
-
-/**
- * Setting the environment to Cloud.
- */
-process.env.NODE_ENV = 'development';
-
 var VERSION;
 try {
 	VERSION = fs.readFileSync(__dirname + '../../../VERSION', 'utf8');
 } catch (e) {
 	VERSION = 'UNKNOWN';
 }
+
+process.env.NODE_ENV = 'development';
 
 /**
  * Configure logger.
@@ -110,8 +106,6 @@ io.sockets.on('connection', function (newSocket) {
 					"startTime": 1,
 					"endTime": 1
 				};
-
-				// Hax. Int64 is not being jsonized nicely.
 				for (var i = 0; i < response.length; i ++) {
 					for (var j in response[i]) {
 						if (j in int64values) {
