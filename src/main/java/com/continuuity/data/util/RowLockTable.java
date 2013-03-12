@@ -55,7 +55,7 @@ public class RowLockTable {
         lock = existing;
       }
     }
-    // now attempt to lock iy
+    // now attempt to lock it
     lock.lock();
     // if the lock was invalidated while we were waiting, release it
     if (!lock.isValid()) {
