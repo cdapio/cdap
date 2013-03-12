@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.dataset;
 
 /**
  * This exception is thrown if - for whatever reason - a data set cannot be
