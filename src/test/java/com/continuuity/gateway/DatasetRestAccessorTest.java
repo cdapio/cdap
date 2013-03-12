@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
