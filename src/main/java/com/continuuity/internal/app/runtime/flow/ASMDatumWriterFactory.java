@@ -11,25 +11,38 @@ import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.Type;
 
 /**
- *
+ * A factory class for creating {@link DatumWriter} instance for different data type and schema.
+ * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
 public final class ASMDatumWriterFactory {
 
-  private final LoadingCache<CacheKey, Class<DatumWriter<?>>> factories;
+  private final LoadingCache<CacheKey, Class<DatumWriter<?>>> datumWriterClasses;
 
   public ASMDatumWriterFactory() {
-    factories = CacheBuilder.newBuilder().build(new ASMCacheLoader());
+    datumWriterClasses = CacheBuilder.newBuilder().build(new ASMCacheLoader());
   }
 
+  /**
+   * Creates a {@link DatumWriter} that is able to encode given data type with the given {@link Schema}.
+   * The instance created is thread safe and reusable.
+   *
+   * @param type Type information of the data type to be encoded.
+   * @param schema Schema of the data type.
+   * @param <T> Type of the data type.
+   * @return A {@link DatumWriter} instance.
+   */
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
-      Class<DatumWriter<?>> writerClass = factories.getUnchecked(new CacheKey(schema, type));
+      Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(new CacheKey(schema, type));
       return (DatumWriter<T>)writerClass.getConstructor(Schema.class).newInstance(schema);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
+  /**
+   * A private {@link CacheLoader} for generating different {@link DatumWriter} {@link Class}.
+   */
   private static final class ASMCacheLoader extends CacheLoader<CacheKey, Class<DatumWriter<?>>> {
 
     private final ASMDatumWriterClassLoader classLoader = new ASMDatumWriterClassLoader(getClass().getClassLoader());
@@ -80,6 +93,9 @@ public final class ASMDatumWriterFactory {
     }
   }
 
+  /**
+   * A private {@link ClassLoader} for loading generated {@link DatumWriter} bytecode.
+   */
   private static final class ASMDatumWriterClassLoader extends ClassLoader {
 
     private ASMDatumWriterClassLoader(ClassLoader parent) {

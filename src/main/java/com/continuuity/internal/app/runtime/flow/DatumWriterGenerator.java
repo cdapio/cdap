@@ -33,15 +33,90 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Class for generating {@link DatumWriter} bytecodes using ASM. The class generated will have a skeleton looks like
+ * the following:
+ * <pre>
+ * {@code
+ *
+ *  public final class generatedClassName implements DatumWriter<OutputType> {
+ *    private static final String SCHEMA_HASH = "schema_hash_as_hex_string";
+ *    private final Schema schema;
+ *
+ *    public generatedClassName(Schema schema) {
+ *      if (!SCHEMA_HASH.equals(schema.getSchemaHash().toString())) {
+ *        throw new IllegalArgumentException("Schema not match.");
+ *      }
+ *      this.schema = schema;
+ *    }
+ *
+ *    @Override
+ *    public void encode(OutputType data, Encoder encoder) throws IOException {
+ *      generatedEncodeMethod(data, encode, Sets.<Object>newIdentityHashSet());
+ *    }
+ *
+ *    private void generatedEncodeMethod(OutputType data, Encoder encoder) {
+ *      // Do actual encoding by calling methods on encoder based on the type.
+ *    }
+ *
+ *    // Could have more generatedEncodeMethods...
+ *  }
+ * }
+ * </pre>
+ *
+ * For example, to encode type int[], a generated {@link DatumWriter} will looks like this after decompile.
+ * <pre>
+ * {@code
+ *
+ *   public final class intArrayDatumWriter07D4F780E3528DB8C539EE5C21FDDEAE implements DatumWriter<int[]> {
+ *     private static final String SCHEMA_HASH = "07D4F780E3528DB8C539EE5C21FDDEAE";
+ *     private final Schema schema;
+ *
+ *     public intArrayDatumWriter07D4F780E3528DB8C539EE5C21FDDEAE(Schema paramSchema) {
+ *       if (!SCHEMA_HASH.equals(paramSchema.getSchemaHash().toString())) {
+ *         throw new IllegalArgumentException("Schema not match.");
+ *       }
+ *       this.schema = paramSchema;
+ *     }
+ *
+ *     public void encode(int[] paramArrayOfInt, Encoder paramEncoder) throws IOException {
+ *       encodeintArray07D4F780E3528DB8C539EE5C21FDDEAE(paramArrayOfInt, paramEncoder, this.schema,
+ *                                                      Sets.newIdentityHashSet());
+ *     }
+ *
+ *     private void encodeintArray07D4F780E3528DB8C539EE5C21FDDEAE(int[] paramArrayOfInt, Encoder paramEncoder,
+ *                                                                 Schema paramSchema, Set<Object> paramSet)
+ *                                                                 throws IOException {
+ *       int i = paramArrayOfInt.length;
+ *       paramEncoder.writeInt(i);
+ *       Schema localSchema = paramSchema.getComponentSchema();
+ *       for (int j = 0; j < i; j++) {
+ *         encodeint9E688C58A5487B8EAF69C9E1005AD0BF(paramArrayOfInt[j], paramEncoder, localSchema, paramSet);
+ *       }
+ *       if (i > 0) {
+ *         paramEncoder.writeInt(0);
+ *       }
+ *     }
+ *
+ *     private void encodeint9E688C58A5487B8EAF69C9E1005AD0BF(int paramInt, Encoder paramEncoder,
+ *                                                            Schema paramSchema, Set<Object> paramSet)
+ *                                                            throws IOException {
+ *       paramEncoder.writeInt(paramInt);
+ *     }
+ *   }
+ * }
+ * </pre>
  *
  */
 @NotThreadSafe
-public final class DatumWriterGenerator {
+final class DatumWriterGenerator {
 
   private final Map<String, Method> encodeMethods = Maps.newHashMap();
   private ClassWriter classWriter;
   private String className;
 
+  /**
+   * Class for carrying information of the generated class.
+   */
   static final class ClassDefinition {
     private final byte[] bytecode;
     private final String className;
@@ -60,7 +135,13 @@ public final class DatumWriterGenerator {
     }
   }
 
-  public ClassDefinition generate(TypeToken<?> outputType, Schema schema) {
+  /**
+   * Generates a {@link DatumWriter} class for encoding data of the given output type with the given schema.
+   * @param outputType Type information of the output data type.
+   * @param schema Schema of the output data type.
+   * @return A {@link ClassDefinition} that contains generated class information.
+   */
+  ClassDefinition generate(TypeToken<?> outputType, Schema schema) {
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     TypeToken<?> interfaceType = getInterfaceType(outputType);
@@ -155,18 +236,28 @@ public final class DatumWriterGenerator {
     }
     mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, encodeMethod, methodSignature,
                               new Type[] {Type.getType(IOException.class)}, classWriter);
+
+    // Delegate to the actual encode method(value, encoder, schema, Sets.newIdentityHashSet());
     mg.loadThis();
     mg.loadArg(0);
     mg.loadArg(1);
     mg.loadThis();
     mg.getField(Type.getType(className), "schema", Type.getType(Schema.class));
-    // seenRefs set
+    // seenRefs Set
     mg.invokeStatic(Type.getType(Sets.class), getMethod(Set.class, "newIdentityHashSet"));
     mg.invokeVirtual(Type.getType(className), getEncodeMethod(outputType, schema));
     mg.returnValue();
     mg.endMethod();
   }
 
+  /**
+   * Returns the encode method for the given type and schema. The same method will be returned if the same
+   * type and schema has been passed to the method before.
+   *
+   * @param outputType
+   * @param schema
+   * @return
+   */
   private Method getEncodeMethod(TypeToken<?> outputType, Schema schema) {
     String key = String.format("%s%s", normalizeTypeName(outputType), schema.getSchemaHash());
 
@@ -175,10 +266,11 @@ public final class DatumWriterGenerator {
       return method;
     }
 
-    // Generate the encode method
+    // Generate the encode method (value, encoder, schema, set)
     String methodName = String.format("encode%s", key);
     method = getMethod(void.class, methodName, outputType.getRawType(), Encoder.class, Schema.class, Set.class);
 
+    // Put the method into map first before generating the body in order to support recursive data type.
     encodeMethods.put(key, method);
 
     String methodSignature = getEncodeMethodSignature(method, new TypeToken[]{outputType, null, null,
@@ -266,7 +358,7 @@ public final class DatumWriterGenerator {
   }
 
   /**
-   * Generates method body for encoding simple schema type.
+   * Generates method body for encoding simple schema type by calling corresponding write method in Encoder.
    * @param mg
    * @param type
    * @param encodeMethod
@@ -288,7 +380,7 @@ public final class DatumWriterGenerator {
   }
 
   /**
-   * Generate method body for encoding enum value.
+   * Generates method body for encoding enum value.
    * @param mg
    * @param outputType
    * @param value
@@ -309,7 +401,20 @@ public final class DatumWriterGenerator {
   }
 
   /**
-   * Generates method body for encoding Collection value.
+   * Generates method body for encoding Collection value. The logic is like this:
+   *
+   * <pre>
+   * {@code
+   *
+   * encoder.writeInt(collection.size());
+   * for (T element : collection) {
+   *   encodeElement(element, encoder, elementSchema, seenRefs);
+   * }
+   * if (collection.size() > 0) {
+   *   encoder.writeInt(0);
+   * }
+   * }
+   * </pre>
    * @param mg
    * @param componentType
    * @param componentSchema
@@ -348,6 +453,7 @@ public final class DatumWriterGenerator {
     mg.invokeInterface(Type.getType(Iterator.class), getMethod(boolean.class, "hasNext"));
     mg.ifZCmp(GeneratorAdapter.EQ, endFor);
 
+    // Call the encode method for encoding the element.
     mg.loadThis();
     mg.loadLocal(iterator);
     mg.invokeInterface(Type.getType(Iterator.class), getMethod(Object.class, "next"));
@@ -368,6 +474,18 @@ public final class DatumWriterGenerator {
     mg.mark(zeroLength);
   }
 
+  /**
+   * Generates method body for encoding array value. The logic is similar to the one in
+   * {@link #encodeCollection}, with collection size replaced with array length.
+   *
+   * @param mg
+   * @param componentType
+   * @param componentSchema
+   * @param value
+   * @param encoder
+   * @param schemaLocal
+   * @param seenRefs
+   */
   private void encodeArray(GeneratorAdapter mg, TypeToken<?> componentType, Schema componentSchema,
                            int value, int encoder, int schemaLocal, int seenRefs) {
     // Encode and store the array length locally
@@ -397,6 +515,7 @@ public final class DatumWriterGenerator {
     mg.loadLocal(length);
     mg.ifICmp(GeneratorAdapter.GE, endFor);
 
+    // Call encode method to encode array[idx]
     mg.loadThis();
     mg.loadArg(value);
     mg.loadLocal(idx);
@@ -418,6 +537,35 @@ public final class DatumWriterGenerator {
     mg.mark(zeroLength);
   }
 
+  /**
+   * Generates method body for encoding map value. The logic is like this:
+   *
+   * <pre>
+   * {@code
+   *
+   * encoder.writeInt(map.size();
+   *
+   * for (Map.Entry<Key, Value> entry : map.entrySet()) {
+   *   encodeKey(entry.getKey(), encoder, keySchema, seenRefs);
+   *   encodeValue(entry.getValue(), encoder, valueSchema, seenRefs);
+   * }
+   *
+   * if (map.size() > 0) {
+   *   encoder.writeInt(0);
+   * }
+   * }
+   * </pre>
+   *
+   * @param mg
+   * @param keyType
+   * @param valueType
+   * @param keySchema
+   * @param valueSchema
+   * @param value
+   * @param encoder
+   * @param schemaLocal
+   * @param seenRefs
+   */
   private void encodeMap(GeneratorAdapter mg, TypeToken<?> keyType, TypeToken<?> valueType, Schema keySchema,
                          Schema valueSchema, int value, int encoder, int schemaLocal, int seenRefs) {
     // Encode and store the map length locally
@@ -497,6 +645,19 @@ public final class DatumWriterGenerator {
     mg.mark(zeroLength);
   }
 
+  /**
+   * Generates method body for encoding java class. If the class given is an interface,
+   * getter method will be used to access the field values, otherwise, it will assumes
+   * fields are public.
+   *
+   * @param mg
+   * @param schema
+   * @param outputType
+   * @param value
+   * @param encoder
+   * @param schemaLocal
+   * @param seenRefs
+   */
   private void encodeRecord(GeneratorAdapter mg, Schema schema, TypeToken<?> outputType,
                             int value, int encoder, int schemaLocal, int seenRefs) {
 
@@ -558,7 +719,17 @@ public final class DatumWriterGenerator {
     }
   }
 
-
+  /**
+   * Generates method body for encoding union schema. Union schema is used for representing object references that
+   * could be {@code null}.
+   * @param mg
+   * @param outputType
+   * @param schema
+   * @param value
+   * @param encoder
+   * @param schemaLocal
+   * @param seenRefs
+   */
   private void encodeUnion(GeneratorAdapter mg, TypeToken<?> outputType, Schema schema,
                            int value, int encoder, int schemaLocal, int seenRefs) {
     Label nullLabel = mg.newLabel();

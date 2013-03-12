@@ -129,6 +129,22 @@ public class ASMDatumCodecTest {
   }
 
   @Test
+  public void testList() throws IOException, UnsupportedTypeException {
+    TypeToken<List<Long>> type = new TypeToken<List<Long>>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+
+    List<Long> writeValue = ImmutableList.of(1L, 10L, 100L, 1000L);
+    DatumWriter<List<Long>> writer = getWriter(type);
+    writer.encode(writeValue, new BinaryEncoder(os));
+
+    ReflectionDatumReader<List<Long>> reader = new ReflectionDatumReader<List<Long>>(getSchema(type), type);
+
+    List<Long> value = reader.read(new BinaryDecoder(is), getSchema(type));
+    Assert.assertEquals(writeValue, value);
+  }
+
+  @Test
   public void testMap() throws IOException, UnsupportedTypeException {
     TypeToken<Map<String, List<String>>> type = new TypeToken<Map<String, List<String>>>() {};
     PipedOutputStream os = new PipedOutputStream();
