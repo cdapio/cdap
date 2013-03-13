@@ -241,11 +241,6 @@ task sandbox_dist (type: Zip) {
   }
 
 
-  //create/include empty data directory
-  doFirst{
-    new File("${buildDir}/tmp/singlenode/data").mkdirs()
-  }
-
   from("${buildDir}/tmp/singlenode/")
 
   //conf
