@@ -84,7 +84,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   // TODO: move this to queue config
-  int batchSize = 20;
+  int batchSize = 100;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
                                 final CConfiguration conf) {
@@ -108,6 +108,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
     List<Long> newEntryIds = new ArrayList<Long>();
 
+    outerLoop:
     while (newEntryIds.isEmpty()) {
       if(entryId >= queueState.getQueueWritePointer()) {
         // Reached the end of queue as per cached QueueWritePointer,
@@ -160,14 +161,20 @@ public class TTQueueNewOnVCTable implements TTQueue {
           if (!headerResult.isEmpty()) {
             Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
             Map<byte[], byte[]> headerMap = headerValue.get(makeRowKey(GLOBAL_DATA_PREFIX, currentEntryId));
-            int hashValue = Bytes.toInt(headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey)));
+            if(headerMap == null) {
+              break outerLoop;
+            }
+            byte[] hashBytes = headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey));
+            if(hashBytes == null) {
+              break outerLoop;
+            }
+            int hashValue = Bytes.toInt(hashBytes);
             if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
               newEntryIds.add(currentEntryId);
             }
           } else {
-            if(partitioner.shouldEmit(consumer, currentEntryId)) {
-              newEntryIds.add(currentEntryId);
-            }
+            // Not able to read header
+            break outerLoop;
           }
         } else {
           if(partitioner.shouldEmit(consumer, currentEntryId)) {
@@ -251,11 +258,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
+    if(consumer instanceof StatefulQueueConsumer) {
+      return dequeue((StatefulQueueConsumer) consumer, readPointer);
+    }
     return dequeueInternal(consumer, config, null, readPointer).getFirst();
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    if(consumer instanceof StatefulQueueConsumer) {
+      return dequeue((StatefulQueueConsumer) consumer, readPointer);
+    }
     return dequeueInternal(consumer, consumer.getQueueConfig(), null, readPointer).getFirst();
   }
 
@@ -368,9 +381,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
       for(int i = 0; i < entryIds.size(); ++i) {
         Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
         if(entryMap == null) {
-          continue;
+          queueState.setCachedEntries(CachedList.EMPTY_LIST);
+          return;
         }
-        EntryMeta entryMeta = EntryMeta.fromBytes(entryMap.get(ENTRY_META));
+        byte[] entryMetaBytes = entryMap.get(ENTRY_META);
+        if(entryMetaBytes == null) {
+          queueState.setCachedEntries(CachedList.EMPTY_LIST);
+          return;
+        }
+        EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
         if (TRACE) log("entryId:" +  entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
 
         // Check if entry has been invalidated or evicted
@@ -411,6 +430,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
+    if(consumer instanceof StatefulQueueConsumer) {
+      ack(entryPointer, (StatefulQueueConsumer) consumer, readPointer);
+      return;
+    }
+    ackInternal(entryPointer, consumer, readPointer);
+  }
+
+  public void ackInternal(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
     // TODO: 3. Use Transaction.getTransactionId instead ReadPointer
@@ -446,7 +474,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   @Override
   public void ack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
-    ack(entryPointer, (QueueConsumer) statefulConsumer, readPointer);
+    ackInternal(entryPointer, statefulConsumer, readPointer);
     statefulConsumer.getQueueState().setActiveEntryId(INVALID_ENTRY_ID);
   }
 

@@ -79,12 +79,12 @@ public interface QueuePartitioner {
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
       int hash = Bytes.hashCode(value);
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, int hash) {
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
     }
 
     @Override
@@ -112,12 +112,12 @@ public interface QueuePartitioner {
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
       int hash = Bytes.hashCode(value);
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, int hash) {
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
     }
 
     @Override
@@ -171,12 +171,12 @@ public interface QueuePartitioner {
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId) {
-      return entryId % consumer.getGroupSize() == consumer.getInstanceId();
+      return entryId % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize();
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
-      return entryId % consumer.getGroupSize() == consumer.getInstanceId();
+      return entryId % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize();
     }
 
     @Override
