@@ -20,7 +20,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.Discoverable;
@@ -121,7 +121,7 @@ public class FlowTest {
       StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
       QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntryImpl(codec.encodePayload(event)));
+                                              new QueueEntry(codec.encodePayload(event)));
       opex.commit(opCtx, enqueue);
     }
 
@@ -257,7 +257,7 @@ public class FlowTest {
       StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of("title", "test"),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
       QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                              new QueueEntryImpl(codec.encodePayload(event)));
+                                              new QueueEntry(codec.encodePayload(event)));
       opex.commit(opCtx, enqueue);
     }
 
