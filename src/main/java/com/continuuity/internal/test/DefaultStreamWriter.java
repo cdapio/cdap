@@ -6,7 +6,7 @@ import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -83,7 +83,7 @@ public final class DefaultStreamWriter implements StreamWriter {
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     StreamEvent event = new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer);
     QueueEnqueue enqueue = new QueueEnqueue(queueProducer, queueName.toBytes(),
-                                            new QueueEntryImpl(codec.encodePayload(event)));
+                                            new QueueEntry(codec.encodePayload(event)));
     try {
       opex.commit(opCtx, enqueue);
     } catch (OperationException e) {
