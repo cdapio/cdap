@@ -208,7 +208,7 @@ fs.readFile(configPath, function (error, result) {
 
 				if (process.env.NODE_ENV === 'production') {
 
-					if (!config['info'].owner || config['info'].owner.account_id) {
+					if (!config['info'].owner || !config['info'].owner.account_id) {
 
 						logger.error('Checking SSO. Owner information not found in the configuration!');
 						renderError(req, res);
@@ -278,7 +278,7 @@ fs.readFile(configPath, function (error, result) {
 					// Perform ownership check.
 					if (process.env.NODE_ENV === 'production') {
 						
-						if (!config['info'].owner || config['info'].owner.account_id) {
+						if (!config['info'].owner || !config['info'].owner.account_id) {
 
 							logger.error('Inbound SSO. Owner information not found in the configuration!');
 							renderError(req, res);
