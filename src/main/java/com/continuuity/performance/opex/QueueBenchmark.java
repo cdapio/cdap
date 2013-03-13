@@ -9,6 +9,7 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
@@ -17,6 +18,7 @@ import com.continuuity.performance.benchmark.BenchmarkRunner;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -81,7 +83,7 @@ public class QueueBenchmark extends OpexBenchmark {
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = null;
     try {
-      enqueue = new QueueEnqueue(queueBytes, value);
+      enqueue = new QueueEnqueue(queueBytes, new QueueEntry(value));
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
