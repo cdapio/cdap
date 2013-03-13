@@ -240,9 +240,6 @@ task sandbox_dist (type: Zip) {
     filter(ReplaceTokens, tokens: [classpath: cp])
   }
 
-
-  from("${buildDir}/tmp/singlenode/")
-
   //conf
   from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
     into "conf"
