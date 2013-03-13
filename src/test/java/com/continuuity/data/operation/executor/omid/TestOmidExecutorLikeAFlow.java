@@ -89,7 +89,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
-    this.executor.commit(context, new QueueEnqueue(queueName, queueName));
+    this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
     this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config));
 
@@ -115,7 +115,6 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("queue://testClearFabric_queue");
     byte [] streamName = Bytes.toBytes("stream://testClearFabric_stream");
     byte [] keyAndValue = Bytes.toBytes("testClearFabric");
-    String outputName = "testGetGroupIdAndGetGroupMeta";
 
     // clear first to catch ENG-375
     this.executor.execute(context, new ClearFabric());
@@ -127,8 +126,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
     // enqueue to queue, stream, and write data
-    this.executor.commit(context, new QueueEnqueue(queueName, queueName));
-    this.executor.commit(context, new QueueEnqueue(streamName, streamName));
+    this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
+    this.executor.commit(context, new QueueEnqueue(streamName, new QueueEntry(streamName)));
     this.executor.commit(context, new Write(keyAndValue, kvcol, keyAndValue));
 
     // verify it can all be read
@@ -175,8 +174,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(result.isEmpty());
 
     // Write to the queue
-    this.executor.commit(context, Collections.singletonList((WriteOperation) new QueueEnqueue(queueName,
-                                                                                              Bytes.toBytes(1L))));
+    this.executor.commit(context, Collections.singletonList(
+      (WriteOperation) new QueueEnqueue(queueName, new QueueEntry(Bytes.toBytes(1L)))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -204,9 +203,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue("Expected dequeue result to be successful but was " + result,
         result.isSuccess());
     assertTrue("Expected value (" + Bytes.toStringBinary(bytes) + ") but got " +
-        "(" + Bytes.toStringBinary(result.getValue()) + ")",
-        Bytes.equals(result.getValue(), bytes));
-    assertEquals("Incorrect length", bytes.length, result.getValue().length);
+        "(" + Bytes.toStringBinary(result.getEntry().getData()) + ")",
+        Bytes.equals(result.getEntry().getData(), bytes));
+    assertEquals("Incorrect length", bytes.length, result.getEntry().getData().length);
   }
 
   @Test
@@ -259,7 +258,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(result.isEmpty());
 
     // Write to the queue
-    this.executor.commit(context, batch(new QueueEnqueue(queueName, Bytes.toBytes(1L))));
+    this.executor.commit(context, batch(new QueueEnqueue(queueName, new QueueEntry(Bytes.toBytes(1L)))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -317,13 +316,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Go!
 
     // Add an entry to source queue
-    this.executor.commit(context, new QueueEnqueue(srcQueueName, srcQueueValue));
+    this.executor.commit(context, new QueueEnqueue(srcQueueName, new QueueEntry(srcQueueValue)));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
         new QueueDequeue(srcQueueName, consumer, config));
     assertTrue(srcDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(srcQueueValue, srcDequeueResult.getValue()));
+    assertTrue(Bytes.equals(srcQueueValue, srcDequeueResult.getEntry().getData()));
 
     // Create batch of writes
     List<WriteOperation> writes = new ArrayList<WriteOperation>();
@@ -407,13 +406,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Go!
 
     // Add an entry to source queue
-    this.executor.commit(context, new QueueEnqueue(srcQueueName, srcQueueValue));
+    this.executor.commit(context, new QueueEnqueue(srcQueueName, new QueueEntry(srcQueueValue)));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
         new QueueDequeue(srcQueueName, consumer, config));
     assertTrue(srcDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(srcQueueValue, srcDequeueResult.getValue()));
+    assertTrue(Bytes.equals(srcQueueValue, srcDequeueResult.getEntry().getData()));
 
     // Create batch of writes
     List<WriteOperation> writes = new ArrayList<WriteOperation>();
@@ -430,8 +429,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, new QueueEntry(destQueueOneVal)));
+    writes.add(new QueueEnqueue(destQueueTwo, new QueueEntry(destQueueTwoVal)));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], kvcol, 3));
@@ -450,14 +449,14 @@ public abstract class TestOmidExecutorLikeAFlow {
     DequeueResult destDequeueResult = this.executor.execute(context,
         new QueueDequeue(destQueueOne, consumer, config));
     assertTrue(destDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(destQueueOneVal, destDequeueResult.getValue()));
+    assertTrue(Bytes.equals(destQueueOneVal, destDequeueResult.getEntry().getData()));
 
     this.executor.commit(context, new QueueAck(destQueueOne, destDequeueResult.getEntryPointer(), consumer));
     destDequeueResult = this.executor.execute(context,
         new QueueDequeue(destQueueTwo, consumer, config));
 
     assertTrue(destDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(destQueueTwoVal, destDequeueResult.getValue()));
+    assertTrue(Bytes.equals(destQueueTwoVal, destDequeueResult.getEntry().getData()));
 
     this.executor.commit(context, new QueueAck(destQueueTwo, destDequeueResult.getEntryPointer(), consumer));
 
@@ -482,8 +481,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, new QueueEntry(destQueueOneVal)));
+    writes.add(new QueueEnqueue(destQueueTwo, new QueueEntry(destQueueTwoVal)));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], kvcol, 3));
@@ -525,7 +524,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     for (int i=1; i<numEntries+1; i++) {
       byte [] entry = Bytes.toBytes(i);
-      this.executor.commit(context, new QueueEnqueue(queueName, entry));
+      this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(entry)));
     }
 
     long enqueueStop = System.currentTimeMillis();
@@ -541,7 +540,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne));
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
       this.executor.commit(context, new QueueAck(queueName, result.getEntryPointer(), consumerOne));
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
@@ -559,8 +558,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerTwo, configTwo));
       assertTrue(result.isSuccess());
-      assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getValue()),
-          Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getEntry().getData()),
+          Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
     }
@@ -607,7 +606,7 @@ public abstract class TestOmidExecutorLikeAFlow {
             return;
           }
           if (result.isSuccess()) {
-            dequeued.add(result.getValue());
+            dequeued.add(result.getEntry().getData());
             try {
               executorFinal.commit(context, new QueueAck(queueName, result.getEntryPointer(), consumer));
               lastSuccess = true;
@@ -645,7 +644,7 @@ public abstract class TestOmidExecutorLikeAFlow {
       public void run() {
         for (int i=0; i<n; i++) {
           try {
-            executorFinal.commit(context, new QueueEnqueue(queueName, Bytes.toBytes(i)));
+            executorFinal.commit(context, new QueueEnqueue(queueName, new QueueEntry(Bytes.toBytes(i))));
           } catch (OperationException e) {
             fail("Exception for QueueEnqueue " + i);
           }
@@ -838,10 +837,10 @@ public abstract class TestOmidExecutorLikeAFlow {
       System.out.println("Producer " + this.instanceid + " running");
       for (int i=0; i<this.numentries; i++) {
         try {
-          byte [] entry = Bytes.add(Bytes.toBytes(this.instanceid),
-              Bytes.toBytes(i));
-          TestOmidExecutorLikeAFlow.this.executor.commit(context, new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, entry));
-          this.enqueuedMap.put(entry, entry);
+          QueueEntry entry = new QueueEntry(Bytes.add(Bytes.toBytes(this.instanceid), Bytes.toBytes(i)));
+          TestOmidExecutorLikeAFlow.this.executor.commit(
+            context, new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, entry));
+          this.enqueuedMap.put(entry.getData(), entry.getData());
         } catch (OperationException e) {
           fail("OperationException for EnqueuePayload");
         }
@@ -888,7 +887,7 @@ public abstract class TestOmidExecutorLikeAFlow {
           }
           if (result.isSuccess()) {
             this.dequeued++;
-            this.dequeuedMap.put(result.getValue(), result.getValue());
+            this.dequeuedMap.put(result.getEntry().getData(), result.getEntry().getData());
           } else if (result.isEmpty() && localProducersDone) {
             System.out.println(this.consumer.toString() + " finished after " +
                 this.dequeued + " dequeues, consumer thread exiting");

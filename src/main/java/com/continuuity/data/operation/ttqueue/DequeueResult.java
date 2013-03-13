@@ -79,8 +79,4 @@ public class DequeueResult {
         .add("entry", this.entry)
         .toString();
   }
-  @Deprecated
-  public byte[] getValue() {
-    return entry.getData();
-  }
 }

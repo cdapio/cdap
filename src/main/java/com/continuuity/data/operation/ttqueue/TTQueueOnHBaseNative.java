@@ -56,11 +56,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntry(data), cleanWriteVersion);
-  }
-
-  @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion)
       throws OperationException {
     if (TRACE)
@@ -99,15 +94,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
       e.printStackTrace();
       throw new OperationException(StatusCode.HBASE_ERROR, e.getMessage());
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException {
-    return dequeueInternal(consumer, config, readPointer);
   }
 
   @Override

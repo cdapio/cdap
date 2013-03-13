@@ -824,7 +824,7 @@ public class OmidTransactionalOperationExecutor
                                                                    transaction.getTransactionId());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
             enqueue.getProducer(), result.getEntryPointer()));
   }
 

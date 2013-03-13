@@ -154,11 +154,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntry(data), cleanWriteVersion);
-  }
-
-  @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data=entry.getData();
     byte[] headerData=null;
@@ -206,14 +201,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Delete data since it's invalidated
     this.table.delete(rowName, ENTRY_DATA, cleanWriteVersion);
     log("Invalidated " + entryPointer);
-  }
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException {
-    return dequeueInternal(consumer, config, readPointer);
   }
 
   @Override

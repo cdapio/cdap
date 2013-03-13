@@ -123,10 +123,6 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntry(data), cleanWriteVersion);
-  }
-  @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data;
     try {
@@ -249,14 +245,6 @@ public class TTQueueOnVCTable implements TTQueue {
     this.table.delete(shardRow,
         makeColumn(entryPointer.getEntryId(), ENTRY_DATA), cleanWriteVersion);
     log("Invalidated " + entryPointer);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException {
-    return dequeueInternal(consumer, config, readPointer);
   }
 
   @Override

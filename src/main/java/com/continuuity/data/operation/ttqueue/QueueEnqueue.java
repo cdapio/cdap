@@ -38,22 +38,8 @@ public class QueueEnqueue extends WriteOperation {
     this.entry = entry;
   }
 
-  /**
-   * @deprecated
-   */
-  public QueueEnqueue(final byte [] queueName, byte[] data) {
-    this(queueName, new QueueEntry(data));
-  }
-
   public QueueEntry getEntry() {
     return this.entry;
-  }
-
-  /**
-   * @deprecated
-   */
-  public byte[] getData() {
-    return this.entry == null ? null : this.entry.getData();
   }
 
   public QueueProducer getProducer() {
