@@ -134,6 +134,7 @@ task z_client_dev(type:Copy, dependsOn: 'asset_patch_dev') {
 task z_client_cloud(type:Copy, dependsOn: 'asset_patch_cloud') {
     from 'client/' + "cloud" + '/index.html'
     from 'client/' + "cloud" + '/access-error.html'
+    from 'client/' + "cloud" + '/internal-error.html'
     into 'build/' + "cloud" + '/client'
 }
 
