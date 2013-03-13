@@ -61,12 +61,17 @@ public class ArchiveBundlerTest {
       Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.PROCESSOR_TYPE).equals("FLOW"));
       Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.SPEC_FILE)
                           .equals("META-INF/specification/application.json"));
+
+      JarResources oldJar = new JarResources(jarfile);
+
       boolean found_app_json = false;
       while(entries.hasMoreElements()) {
         JarEntry entry = entries.nextElement();
+
         if(entry.getName().contains("application.json")){
           found_app_json = true;
-          break;
+        } else if (!entry.isDirectory()) {
+          Assert.assertNotNull(oldJar.getResource(entry.getName()));
         }
       }
       Assert.assertTrue(found_app_json);
