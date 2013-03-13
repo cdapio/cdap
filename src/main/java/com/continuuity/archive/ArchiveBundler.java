@@ -75,7 +75,7 @@ public final class ArchiveBundler {
    */
   public void clone(Location output, Manifest manifest, Iterable<ImmutablePair<String, Location>> files)
     throws IOException {
-    clone(output, manifest, files, Predicates.<JarEntry>alwaysTrue());
+    clone(output, manifest, files, Predicates.<JarEntry>alwaysFalse());
   }
 
   /**
@@ -86,12 +86,12 @@ public final class ArchiveBundler {
    * @param manifest     New manifest file to be added to the cloned archive
    * @param files        Additional files to be added to cloned archive.
    *                     Pairs are: resource_name_in_manifest,file_to_add
-   * @param acceptFilter Filter applied on ZipEntry, if true file is accepted, otherwise will be ignored output.
+   * @param ignoreFilter Filter applied on ZipEntry, if true file is ignored, otherwise will be accepted.
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest,
                     Iterable<ImmutablePair<String, Location>> files,
-                    Predicate<JarEntry> acceptFilter) throws IOException {
+                    Predicate<JarEntry> ignoreFilter) throws IOException {
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
 
@@ -108,8 +108,8 @@ public final class ArchiveBundler {
       JarEntry entry = zin.getNextJarEntry();
       while(entry != null) {
         // Invoke the predicate to see if the entry needs to be filtered.
-        // If the acceptFilter returns false, then it needs to be filtered; true keep it.
-        if(acceptFilter.apply(entry)) {
+        // If the ignoreFilter returns false, then it needs to be filtered; true keep it.
+        if(ignoreFilter.apply(entry)) {
           entry = zin.getNextJarEntry();
           continue;
         }
