@@ -3,13 +3,12 @@ package com.continuuity.data.engine.leveldb;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.memory.Row;
-import com.continuuity.data.engine.memory.RowLock;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data.util.RowLockTable;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -32,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
@@ -63,8 +61,12 @@ implements OrderedVersionedColumnarTable {
 
   private DB db;
 
-  private final ConcurrentHashMap<Row, RowLock> locks =
-    new ConcurrentHashMap<Row, RowLock>();
+  // this will be used for row-level locking. Because the levelDB may grow very large,
+  // and we want to keep the memory footprint small, we will always remove locks from
+  // the table at the time we release them. This can have a slight performance overhead,
+  // because other threads can get an invalid lock (see RowLockTable) and then have to
+  // create a new lock. Therefore we always use validLock() to obtain a lock.
+  private final RowLockTable locks = new RowLockTable();
 
   LevelDBOVCTable(final String basePath, final String tableName,
                   final Integer blockSize, final Long cacheSize) {
@@ -397,7 +399,7 @@ implements OrderedVersionedColumnarTable {
     pos = Bytes.putInt(kvBytes, pos, key.length);
     pos = Bytes.putInt(kvBytes, pos, value.length);
     pos = Bytes.putBytes(kvBytes, pos, key, 0, key.length);
-    pos = Bytes.putBytes(kvBytes, pos, value, 0, value.length);
+    Bytes.putBytes(kvBytes, pos, value, 0, value.length);
     return new KeyValue(kvBytes);
   }
 
@@ -559,6 +561,7 @@ implements OrderedVersionedColumnarTable {
       Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(row, columns, readPointer);
 
       if (map == null || map.isEmpty()) {
+
         return new OperationResult<Map<byte[], byte[]>>(
             StatusCode.COLUMN_NOT_FOUND);
       }
@@ -841,13 +844,13 @@ implements OrderedVersionedColumnarTable {
   @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) throws OperationException {
-    Row r = new Row(row);
-    lockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
     long newAmount;
     try {
       newAmount = internalIncrement(row, column, amount, readPointer, writeVersion);
     } finally {
-      unlockRow(r);
+      this.locks.unlockAndRemove(r);
     }
     return newAmount;
   }
@@ -856,8 +859,8 @@ implements OrderedVersionedColumnarTable {
   public Map<byte[], Long> increment(byte[] row, byte[][] columns,
       long[] amounts, ReadPointer readPointer, long writeVersion)
       throws OperationException {
-    Row r = new Row(row);
-    lockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     try {
       for (int i=0; i<columns.length; i++) {
@@ -865,7 +868,7 @@ implements OrderedVersionedColumnarTable {
             readPointer, writeVersion));
       }
     } finally {
-      unlockRow(r);
+      this.locks.unlockAndRemove(r);
     }
     return ret;
   }
@@ -882,8 +885,8 @@ implements OrderedVersionedColumnarTable {
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) throws OperationException {
 
-    Row r = new Row(row);
-    lockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
     try {
       // Read existing value
       OperationResult<byte[]> readResult = get(row, column, readPointer);
@@ -917,7 +920,7 @@ implements OrderedVersionedColumnarTable {
       // Checks passed, write new value
       performInsert(row, column, writeVersion, Type.Put, newValue);
     } finally {
-      unlockRow(r);
+      this.locks.unlockAndRemove(r);
     }
   }
   
@@ -936,21 +939,5 @@ implements OrderedVersionedColumnarTable {
     LOG.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
-  private RowLock lockRow(Row row) {
-    RowLock lock = this.locks.get(row);
-    if (lock == null) {
-      lock = new RowLock(row);
-      RowLock existing = this.locks.putIfAbsent(row, lock);
-      if (existing != null) lock = existing;
-    }
-    lock.lock();
-    return lock;
-  }
-  private void unlockRow(Row row) {
-    RowLock lock = this.locks.get(row);
-    if (lock == null) {
-      throw new RuntimeException("Attempted to unlock invalid row lock");
-    }
-    lock.unlock();
-  }
+
 }
