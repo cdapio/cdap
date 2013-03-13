@@ -362,7 +362,7 @@ public abstract class TestTTQueue {
 
     QueueEntry[] queueEntries = new QueueEntry[numQueueEntries];
     for(int i=0; i<numQueueEntries; i++) {
-      queueEntries[i]=new QueueEntryImpl(Bytes.toBytes("value"+i%numConsumers));
+      queueEntries[i]=new QueueEntry(Bytes.toBytes("value"+i%numConsumers));
       queueEntries[i].addPartitioningKey("hashKey",i);
       assertTrue(queue.enqueue(queueEntries[i], dirtyVersion).isSuccess());
     }

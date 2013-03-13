@@ -25,7 +25,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
   }
 
   void enqueuOne(TTQueue queue, int i, long version) throws OperationException {
-    Assert.assertTrue("Enqueue failure!", queue.enqueue(new QueueEntryImpl(Bytes.toBytes(i)), version).isSuccess());
+    Assert.assertTrue("Enqueue failure!", queue.enqueue(new QueueEntry(Bytes.toBytes(i)), version).isSuccess());
   }
 
   void dequeueOne(TTQueue queue, QueueConsumer consumer, int numConsumers, int i, ReadPointer pointer)

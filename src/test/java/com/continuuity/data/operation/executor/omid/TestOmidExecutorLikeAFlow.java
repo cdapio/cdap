@@ -1,29 +1,5 @@
 package com.continuuity.data.operation.executor.omid;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
@@ -43,11 +19,34 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class TestOmidExecutorLikeAFlow {
 
@@ -337,14 +336,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add a push to dest queue one
-    writes.add(new QueueEnqueue(destQueueOne, new QueueEntryImpl(destQueueOneVal)));
+    writes.add(new QueueEnqueue(destQueueOne, new QueueEntry(destQueueOneVal)));
 
     // Add a compare-and-swap
     writes.add(new CompareAndSwap(
         dataKey, kvcol, Bytes.toBytes(1L), Bytes.toBytes(10L)));
 
     // Add a push to dest queue two
-    writes.add(new QueueEnqueue(destQueueTwo, new QueueEntryImpl(destQueueTwoVal)));
+    writes.add(new QueueEnqueue(destQueueTwo, new QueueEntry(destQueueTwoVal)));
 
     // Add another user increment operation
     writes.add(new Increment(dataKey, kvcol, 3));

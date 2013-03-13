@@ -155,8 +155,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+    return this.enqueue(new QueueEntry(data), cleanWriteVersion);
   }
+
   @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data=entry.getData();
@@ -260,7 +261,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       byte [] entryData = result.getValue().get(ENTRY_DATA);
       if (TRACE) log("Entry : " + entryId + " is dequeued");
       this.dequeueReturns.incrementAndGet();
-      QueueEntry entry=new QueueEntryImpl(entryData);
+      QueueEntry entry = new QueueEntry(entryData);
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                new QueueEntryPointer(this.queueName, entryId), entry);
     }

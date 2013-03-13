@@ -42,7 +42,7 @@ public class QueueEnqueue extends WriteOperation {
    * @deprecated
    */
   public QueueEnqueue(final byte [] queueName, byte[] data) {
-    this(queueName, new QueueEntryImpl(data));
+    this(queueName, new QueueEntry(data));
   }
 
   public QueueEntry getEntry() {

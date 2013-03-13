@@ -57,7 +57,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
+    return this.enqueue(new QueueEntry(data), cleanWriteVersion);
   }
 
   @Override
