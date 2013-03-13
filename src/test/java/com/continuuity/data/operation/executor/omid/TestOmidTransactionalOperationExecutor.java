@@ -29,6 +29,7 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -64,7 +65,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
   // however, our data fabric modules return singletons.
   //protected abstract OmidTransactionalOperationExecutor getNewExecutor();
 
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
 
   @Before
   public void initialize() {

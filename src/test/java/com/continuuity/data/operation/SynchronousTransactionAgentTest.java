@@ -5,6 +5,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -34,7 +35,7 @@ public class SynchronousTransactionAgentTest {
   }
 
   static TransactionAgent newAgent() throws OperationException {
-    TransactionAgent agent = new SynchronousTransactionAgent(opex, OperationContext.DEFAULT);
+    TransactionAgent agent = new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT);
     agent.start();
     return agent;
   }
@@ -69,9 +70,9 @@ public class SynchronousTransactionAgentTest {
     Assert.assertEquals(6, agent.getSucceededCount());
 
     // sync read all rows without agent and verify
-    Assert.assertArrayEquals(three, opex.execute(OperationContext.DEFAULT, new Read(table, c, x)).getValue().get(x));
-    Assert.assertArrayEquals(two, opex.execute(OperationContext.DEFAULT, new Read(table, b, y)).getValue().get(y));
-    Assert.assertArrayEquals(one, opex.execute(OperationContext.DEFAULT, new Read(table, a, x)).getValue().get(x));
+    Assert.assertArrayEquals(three, opex.execute(OperationUtil.DEFAULT, new Read(table, c, x)).getValue().get(x));
+    Assert.assertArrayEquals(two, opex.execute(OperationUtil.DEFAULT, new Read(table, b, y)).getValue().get(y));
+    Assert.assertArrayEquals(one, opex.execute(OperationUtil.DEFAULT, new Read(table, a, x)).getValue().get(x));
 
     // fail a compare-and-swap and make sure the failed count goes up
     try {
@@ -90,9 +91,9 @@ public class SynchronousTransactionAgentTest {
 
     // sync read all rows without agent and verify writes are still there
     // sync read all rows without agent and verify
-    Assert.assertArrayEquals(three, opex.execute(OperationContext.DEFAULT, new Read(table, c, x)).getValue().get(x));
-    Assert.assertArrayEquals(two, opex.execute(OperationContext.DEFAULT, new Read(table, b, y)).getValue().get(y));
-    Assert.assertArrayEquals(one, opex.execute(OperationContext.DEFAULT, new Read(table, a, x)).getValue().get(x));
+    Assert.assertArrayEquals(three, opex.execute(OperationUtil.DEFAULT, new Read(table, c, x)).getValue().get(x));
+    Assert.assertArrayEquals(two, opex.execute(OperationUtil.DEFAULT, new Read(table, b, y)).getValue().get(y));
+    Assert.assertArrayEquals(one, opex.execute(OperationUtil.DEFAULT, new Read(table, a, x)).getValue().get(x));
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {

@@ -3,7 +3,6 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.*;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncReads;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
@@ -11,6 +10,7 @@ import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLocalModule;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -53,7 +53,7 @@ public class DataSetTestBase {
       Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(opex, OperationContext.DEFAULT);
+    fabric = new DataFabricImpl(opex, OperationUtil.DEFAULT);
   }
 
   /**
@@ -87,9 +87,9 @@ public class DataSetTestBase {
    */
   public static void newTransaction(Mode mode) throws OperationException {
     switch (mode) {
-      case Sync: agent = new SynchronousTransactionAgent(opex, OperationContext.DEFAULT); break;
-      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationContext.DEFAULT); break;
-      case Smart: agent = new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+      case Sync: agent = new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT); break;
+      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationUtil.DEFAULT); break;
+      case Smart: agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
     }
     agent.start();
     proxy.setTransactionAgent(agent);

@@ -10,6 +10,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeoutTest extends OpexServiceTestBase {
 
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
   static final AtomicInteger clearCount = new AtomicInteger(0);
 
 

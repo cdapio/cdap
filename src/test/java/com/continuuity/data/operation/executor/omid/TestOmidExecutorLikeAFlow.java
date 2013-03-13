@@ -24,6 +24,7 @@ import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.util.OperationUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,7 +59,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     return Arrays.asList(ops);
   }
 
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
 
   @BeforeClass
   public static void initializeClass() {

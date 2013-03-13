@@ -22,6 +22,7 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +40,7 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
 
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
 
   /** Tests Write, Read */
   @Test
@@ -495,8 +496,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // verify that the streams are gone, but tables and queues are there
-    Assert.assertArrayEquals(x, remote.execute(
-        context, new Read(a, kvcol)).getValue().get(kvcol));
+    Assert.assertArrayEquals(x, remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());
     Assert.assertTrue(remote.execute(
