@@ -8,11 +8,8 @@ import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.WriteOperation;
-import com.continuuity.data.BatchCollectionClient;
-import com.continuuity.data.BatchCollector;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.TransactionProxy;
 
 import java.util.Map;
@@ -48,22 +45,6 @@ public class ReadWriteTable extends ReadOnlyTable {
    */
   private ReadWriteTable(Table table, DataFabric fabric, TransactionProxy proxy) {
     super(table, fabric, proxy);
-    this.collectionClient = null;
-  }
-
-  // TODO this will go away with the new flow system
-  // the batch collection client for executing asynchronous operations
-  private BatchCollectionClient collectionClient = null;
-
-  /**
-   * helper method to get the batch collector from the collection client
-   * @return the current batch collector
-   *
-   * TODO this method will go away with the new flow system
-   */
-  // @Deprecated
-  private BatchCollector getCollector() {
-    return this.collectionClient.getCollector();
   }
 
   /**
@@ -113,24 +94,12 @@ public class ReadWriteTable extends ReadOnlyTable {
 
   @Override
   public void write(WriteOperation op) throws OperationException {
-    // new style
-    if (this.proxy != null) {
-      this.getTransactionAgent().submit(toOperation(op));
-    } else {
-      // TODO old-style will go away
-      this.getCollector().add(toOperation(op));
-    }
+    this.getTransactionAgent().submit(toOperation(op));
   }
 
   @Override
   public Map<byte[], Long> incrementAndGet(Increment increment) throws OperationException {
-    // new style
-    if (this.proxy != null) {
-      return this.getTransactionAgent().execute(toOperation(increment));
-    } else {
-      // TODO old-style will go away
-      throw new OperationException(StatusCode.ILLEGAL_INCREMENT, "Increment is not supported in old style");
-    }
+    return this.getTransactionAgent().execute(toOperation(increment));
   }
 
 }
