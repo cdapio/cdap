@@ -251,10 +251,10 @@ public final class ReflectionDatumReader<T> {
         decoder.readLong();
         break;
       case FLOAT:
-        decoder.readFloat();
+        decoder.skipFloat();
         break;
       case DOUBLE:
-        decoder.readDouble();
+        decoder.skipDouble();
         break;
       case BYTES:
         decoder.skipBytes();

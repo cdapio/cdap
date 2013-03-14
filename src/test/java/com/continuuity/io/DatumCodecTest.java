@@ -204,14 +204,14 @@ public class DatumCodecTest {
     }
 
     final int i;
-    final long j;
+    final double d;
     final String k;
     final List<String> list;
     final Inner inner;
 
-    public MoreFields(int i, long j, String k, List<String> list) {
+    public MoreFields(int i, double d, String k, List<String> list) {
       this.i = i;
-      this.j = j;
+      this.d = d;
       this.k = k;
       this.list = list;
       inner = new Inner("inner");
@@ -235,7 +235,7 @@ public class DatumCodecTest {
     Schema sourceSchema = new ReflectionSchemaGenerator().generate(MoreFields.class);
     Schema targetSchema = new ReflectionSchemaGenerator().generate(LessFields.class);
 
-    MoreFields moreFields = new MoreFields(10, 20, "30", ImmutableList.of("1", "2"));
+    MoreFields moreFields = new MoreFields(10, 20.2, "30", ImmutableList.of("1", "2"));
     new ReflectionDatumWriter(sourceSchema).encode(moreFields, new BinaryEncoder(output));
     LessFields lessFields = new ReflectionDatumReader<LessFields>(targetSchema, TypeToken.of(LessFields.class))
                                             .read(new BinaryDecoder(input), sourceSchema);
