@@ -8,7 +8,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.util.Helpers;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -261,7 +260,7 @@ public class CounterTable extends DataSet {
    */
   public Map<String,Long> readCounterSet(String counterSet,
       String [] counterNames) throws OperationException {
-    byte [][] columns = Helpers.saToBa(counterNames);
+    byte [][] columns = saToBa(counterNames);
     Read read = new Read(Bytes.toBytes(counterSet), columns);
     OperationResult<Map<byte[],byte[]>> result = counters.read(read);
     Map<String,Long> ret = new TreeMap<String,Long>();
@@ -404,7 +403,7 @@ public class CounterTable extends DataSet {
   public Increment generateCounterSetIncrement(String counterSet,
       String [] counters, long [] amounts) {
     return new Increment(Bytes.toBytes(counterSet),
-        Helpers.saToBa(counters), amounts);
+        saToBa(counters), amounts);
   }
 
   /**
@@ -421,4 +420,18 @@ public class CounterTable extends DataSet {
       byte [][] counters, long [] amounts) {
     return new Increment(counterSet, counters, amounts);
   }
+
+  /**
+   * Converts the specified array of strings to an array of byte arrays.
+   * @param stringArray array of string
+   * @return array of byte arrays
+   */
+  public static byte [][] saToBa(String [] stringArray) {
+    byte [][] byteArrays = new byte[stringArray.length][];
+    for (int i=0; i<stringArray.length; i++) {
+      byteArrays[i] = Bytes.toBytes(stringArray[i]);
+    }
+    return byteArrays;
+  }
+
 }
