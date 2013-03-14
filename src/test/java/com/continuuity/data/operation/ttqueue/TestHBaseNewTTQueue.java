@@ -51,7 +51,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

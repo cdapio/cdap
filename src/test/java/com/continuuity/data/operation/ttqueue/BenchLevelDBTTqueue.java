@@ -45,7 +45,7 @@ public class BenchLevelDBTTqueue extends BenchTTQueue {
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

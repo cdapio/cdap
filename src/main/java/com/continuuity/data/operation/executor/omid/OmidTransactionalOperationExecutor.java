@@ -605,7 +605,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getTransactionId());
+      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -749,7 +749,7 @@ public class OmidTransactionalOperationExecutor
     requestMetric("Write");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
-    table.put(write.getKey(), write.getColumns(), transaction.getTransactionId(), write.getValues());
+    table.put(write.getKey(), write.getColumns(), transaction.getWriteVersion(), write.getValues());
     end("Write", begin);
     dataSetMetric_write(write.getMetricName(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
@@ -763,7 +763,7 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     OrderedVersionedColumnarTable table =
         this.findRandomTable(context, delete.getTable());
-    table.deleteAll(delete.getKey(), delete.getColumns(), transaction.getTransactionId());
+    table.deleteAll(delete.getKey(), delete.getColumns(), transaction.getWriteVersion());
     end("Delete", begin);
     dataSetMetric_write(delete.getMetricName(), delete.getSize());
     return new WriteTransactionResult(
@@ -780,7 +780,7 @@ public class OmidTransactionalOperationExecutor
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, increment.getTable());
       map = table.increment(increment.getKey(), increment.getColumns(), increment.getAmounts(),
-                            transaction.getReadPointer(), transaction.getTransactionId());
+                            transaction.getReadPointer(), transaction.getWriteVersion());
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
@@ -799,7 +799,7 @@ public class OmidTransactionalOperationExecutor
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, write.getTable());
       table.compareAndSwap(write.getKey(), write.getColumn(), write.getExpectedValue(), write.getNewValue(),
-                           transaction.getReadPointer(), transaction.getTransactionId());
+                           transaction.getReadPointer(), transaction.getWriteVersion());
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
@@ -821,10 +821,10 @@ public class OmidTransactionalOperationExecutor
     requestMetric("QueueEnqueue");
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
-                                                                   transaction.getTransactionId());
+                                                                   transaction.getWriteVersion());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
@@ -911,19 +911,19 @@ public class OmidTransactionalOperationExecutor
 
   void addToTransaction(Transaction transaction, List<Undo> undos)
       throws OmidTransactionException {
-    this.oracle.addToTransaction(transaction.getTransactionId(), undos);
+    this.oracle.addToTransaction(transaction, undos);
   }
 
   TransactionResult commitTransaction(Transaction transaction)
     throws OmidTransactionException {
     requestMetric("CommitTransaction");
-    return this.oracle.commitTransaction(transaction.getTransactionId());
+    return this.oracle.commitTransaction(transaction);
   }
 
   TransactionResult abortTransaction(Transaction transaction)
     throws OmidTransactionException {
     requestMetric("CommitTransaction");
-    return this.oracle.abortTransaction(transaction.getTransactionId());
+    return this.oracle.abortTransaction(transaction);
   }
 
 
@@ -943,15 +943,15 @@ public class OmidTransactionalOperationExecutor
         OrderedVersionedColumnarTable table =
             this.findRandomTable(context, tableUndo.getTable());
         if (tableUndo instanceof UndoDelete) {
-          table.undeleteAll(tableUndo.getKey(), tableUndo.getColumns(), transaction.getTransactionId());
+          table.undeleteAll(tableUndo.getKey(), tableUndo.getColumns(), transaction.getWriteVersion());
         } else {
-          table.delete(tableUndo.getKey(), tableUndo.getColumns(), transaction.getTransactionId());
+          table.delete(tableUndo.getKey(), tableUndo.getColumns(), transaction.getWriteVersion());
         }
       }
     }
     // if any of the undos fails, we won't reach this point.
     // That is, the tx will remain in the oracle as invalid
-    oracle.removeTransaction(transaction.getTransactionId());
+    oracle.removeTransaction(transaction);
   }
 
   // Single Write Operations (Wrapped and called in a transaction batch)

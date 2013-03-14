@@ -90,7 +90,7 @@ public final class QueueEntrySerializer {
         }
       }
       byte[] data=Bytes.toBytes(decoder.readBytes());
-      QueueEntry queueEntry=new QueueEntryImpl(data);
+      QueueEntry queueEntry = new QueueEntry(data);
       if (map!=null) {
         for(Map.Entry<String, Integer> e: map.entrySet()) {
           queueEntry.addPartitioningKey(e.getKey(),e.getValue());

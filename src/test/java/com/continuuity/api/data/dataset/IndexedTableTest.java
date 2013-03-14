@@ -1,12 +1,12 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.data.dataset.DataSetTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -56,7 +56,7 @@ public class IndexedTableTest extends DataSetTestBase {
     newTransaction(Mode.Sync);
     // read by key c
     result = table.read(new Read(keyC, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx1, valC });
+    TableTest.verifyColumns(result, colIdxVal, new byte[][]{idx1, valC});
     // read by key b
     result = table.read(new Read(keyB, colIdxVal));
     TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx2, valB });

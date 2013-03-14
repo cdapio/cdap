@@ -3,7 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -15,14 +15,14 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
  */
 public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
 
-  protected final TimestampOracle timeOracle;
+  protected final TransactionOracle oracle;
   protected final CConfiguration conf;
 
   protected final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
-  public TTQueueAbstractTableOnVCTable(TimestampOracle timeOracle, CConfiguration conf) {
-    this.timeOracle = timeOracle;
+  public TTQueueAbstractTableOnVCTable(TransactionOracle oracle, CConfiguration conf) {
+    this.oracle = oracle;
     this.conf = conf;
   }
 

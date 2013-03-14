@@ -27,7 +27,7 @@ public class TestHyperSQLTTQueue extends TestTTQueue {
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("TestMemoryTTQueueTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override
