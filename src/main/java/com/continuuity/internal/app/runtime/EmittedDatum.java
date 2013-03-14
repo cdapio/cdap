@@ -7,7 +7,7 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -46,6 +46,6 @@ public final class EmittedDatum {
 
 
   public QueueEnqueue asEnqueue() {
-    return new QueueEnqueue(queueProducer, queueName.toBytes(), new QueueEntryImpl(header, data));
+    return new QueueEnqueue(queueProducer, queueName.toBytes(), new QueueEntry(header, data));
   }
 }
