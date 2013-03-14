@@ -205,7 +205,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx two
     Transaction pointerTwo = executor.startTransaction();
     // System.out.println("Started transaction two : " + pointerTwo);
-    assertTrue(pointerTwo.getTransactionId() > pointerOne.getTransactionId());
+    assertTrue(pointerTwo.getWriteVersion() > pointerOne.getWriteVersion());
 
     // write value two
     WriteTransactionResult txResult2 =

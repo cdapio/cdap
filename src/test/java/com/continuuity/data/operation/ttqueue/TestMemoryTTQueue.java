@@ -16,7 +16,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
     return new TTQueueOnVCTable(
         new MemoryOVCTable(Bytes.toBytes("TestMemoryTTQueue")),
         Bytes.toBytes("TestTTQueue"),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override
@@ -42,8 +42,8 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testSingleConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     int rounds = 1000;
     int entriesPerRound = 10000;
@@ -93,8 +93,8 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testMultiConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     int rounds = 1000;
     int entriesPerRound = 10000;

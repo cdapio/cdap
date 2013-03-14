@@ -17,7 +17,7 @@ public class Transaction {
     return readPointer;
   }
 
-  public long getTransactionId() {
+  public long getWriteVersion() {
     return transactionId;
   }
 }

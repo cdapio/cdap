@@ -3,8 +3,9 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -22,17 +23,17 @@ import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 public class TTQueueTableOnHBaseNative implements TTQueueTable {
 
   private final HTable table;
-  private final TimestampOracle timeOracle;
+  private final TransactionOracle oracle;
   private final Configuration hbaseConf;
   private final CConfiguration conf;
 
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
-  public TTQueueTableOnHBaseNative(HTable table, TimestampOracle timeOracle, CConfiguration conf,
-                                   Configuration hbaseConf) {
+  public TTQueueTableOnHBaseNative(HTable table, TransactionOracle oracle,
+                                   CConfiguration conf, Configuration hbaseConf) {
     this.table = table;
-    this.timeOracle = timeOracle;
+    this.oracle = oracle;
     this.conf = conf;
     this.hbaseConf = hbaseConf;
   }
@@ -40,7 +41,7 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   private TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueOnHBaseNative(this.table, queueName, this.timeOracle,
+    queue = new TTQueueOnHBaseNative(this.table, queueName, this.oracle,
         this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;

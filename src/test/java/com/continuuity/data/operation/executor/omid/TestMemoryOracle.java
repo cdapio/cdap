@@ -2,7 +2,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -41,25 +41,25 @@ public class TestMemoryOracle {
 
     // start a transaction, should be >0, visible to itself
     Transaction tx1 = oracle.startTransaction();
-    long txid1 = tx1.getTransactionId();
+    long txid1 = tx1.getWriteVersion();
     Assert.assertTrue(txid1 > 0);
     Assert.assertTrue(tx1.getReadPointer().isVisible(txid1));
 
     // start another transaction, should be > first transaction, visible to itself, exclude first one
     Transaction tx2 = oracle.startTransaction();
-    long txid2 = tx2.getTransactionId();
+    long txid2 = tx2.getWriteVersion();
     ReadPointer rp2 = tx2.getReadPointer();
     Assert.assertTrue(txid2 > txid1);
     Assert.assertTrue(rp2.isVisible(txid2));
     Assert.assertFalse(rp2.isVisible(txid1));
 
     // commit the first transaction, should remain invisible to tx2
-    oracle.commitTransaction(txid1);
+    oracle.commitTransaction(tx1);
     Assert.assertFalse(tx2.getReadPointer().isVisible(txid1));
 
     // start another transaction, should be > second transaction, visible to itself, exclude second one
     Transaction tx3 = oracle.startTransaction();
-    long txid3 = tx3.getTransactionId();
+    long txid3 = tx3.getWriteVersion();
     ReadPointer rp3 = tx3.getReadPointer();
     Assert.assertTrue(txid3 > txid2);
     Assert.assertTrue(rp3.isVisible(txid1));
@@ -67,9 +67,9 @@ public class TestMemoryOracle {
     Assert.assertTrue(rp3.isVisible(txid3));
 
     // abort transaction 2, should remain invisible to new transactions
-    oracle.abortTransaction(txid2);
+    oracle.abortTransaction(tx2);
     Transaction tx4 = oracle.startTransaction();
-    long txid4 = tx4.getTransactionId();
+    long txid4 = tx4.getWriteVersion();
     ReadPointer rp4 = tx4.getReadPointer();
     Assert.assertTrue(txid4 > txid3);
     Assert.assertTrue(rp4.isVisible(txid1));
@@ -78,9 +78,9 @@ public class TestMemoryOracle {
     Assert.assertTrue(rp4.isVisible(txid4));
 
     // remove transaction 2, should become visible now
-    oracle.removeTransaction(txid2);
+    oracle.removeTransaction(tx2);
     Transaction tx5 = oracle.startTransaction();
-    long txid5 = tx5.getTransactionId();
+    long txid5 = tx5.getWriteVersion();
     ReadPointer rp5 = tx5.getReadPointer();
     Assert.assertTrue(txid5 > txid3);
     Assert.assertTrue(rp5.isVisible(txid1));
@@ -99,31 +99,27 @@ public class TestMemoryOracle {
 
     // start four transactions with overlapping writes
     Transaction tx1 = oracle.startTransaction();
-    long txid1 = tx1.getTransactionId();
-    oracle.addToTransaction(txid1, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
 
     Transaction tx2 = oracle.startTransaction();
-    long txid2 = tx2.getTransactionId();
-    oracle.addToTransaction(txid2, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
 
     Transaction tx3 = oracle.startTransaction();
-    long txid3 = tx3.getTransactionId();
-    oracle.addToTransaction(txid3, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    oracle.addToTransaction(tx3, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
 
     Transaction tx4 = oracle.startTransaction();
-    long txid4 = tx4.getTransactionId();
-    oracle.addToTransaction(txid4, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
+    oracle.addToTransaction(tx4, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
 
     // now each transaction has started and performed one write
     // each one may now perform another wrote or commit right away
 
     // tx2 writes another one and commits -> success
-    oracle.addToTransaction(txid2, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
-    Assert.assertTrue(oracle.commitTransaction(txid2).isSuccess());
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
+    Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
 
     // now tx1 writes another value and commits -> abort due to conflict on a
-    oracle.addToTransaction(txid1, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
-    TransactionResult txres1 = oracle.commitTransaction(txid1);
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
+    TransactionResult txres1 = oracle.commitTransaction(tx1);
     Assert.assertFalse(txres1.isSuccess());
     List<Undo> undos1 = txres1.getUndos();
     Assert.assertEquals(2, undos1.size());
@@ -131,10 +127,10 @@ public class TestMemoryOracle {
     assertUndo(undos1, new RowSet.Row(table, b));
 
     // now tx3 commits. It has a conflict with tx1 on b, but tx1 failed -> success
-    Assert.assertTrue(oracle.commitTransaction(txid3).isSuccess());
+    Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
 
     // now tx4 commits. It has a conflict with tx2 and must fail
-    TransactionResult txres4 = oracle.commitTransaction(txid4);
+    TransactionResult txres4 = oracle.commitTransaction(tx4);
     Assert.assertFalse(txres4.isSuccess());
     List<Undo> undos4 = txres4.getUndos();
     Assert.assertEquals(1, undos4.size());
@@ -156,112 +152,116 @@ public class TestMemoryOracle {
   @Test(expected = OmidTransactionException.class)
   public void testAddToNonexistent() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    oracle.addToTransaction(new Random().nextInt(1000), noUndos);
+    int txid = new Random().nextInt(1000);
+    oracle.addToTransaction(new Transaction(txid, new MemoryReadPointer(txid)), noUndos);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAddToCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.commitTransaction(txid);
-    oracle.addToTransaction(txid, noUndos);
+    Transaction tx = oracle.startTransaction();
+    oracle.commitTransaction(tx);
+    oracle.addToTransaction(tx, noUndos);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAddToAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.addToTransaction(txid, noUndos);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.addToTransaction(tx, noUndos);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAddToRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.removeTransaction(txid);
-    oracle.addToTransaction(txid, noUndos);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.removeTransaction(tx);
+    oracle.addToTransaction(tx, noUndos);
   }
 
   @Test(expected = OmidTransactionException.class)
   public void testCommitNonexistent() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    oracle.commitTransaction(new Random().nextInt(1000));
+    int txid = new Random().nextInt(1000);
+    oracle.commitTransaction(new Transaction(txid, new MemoryReadPointer(txid)));
   }
   @Test(expected = OmidTransactionException.class)
   public void testCommitCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.commitTransaction(txid);
-    oracle.commitTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.commitTransaction(tx);
+    oracle.commitTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testCommitAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.commitTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.commitTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testCommitRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.removeTransaction(txid);
-    oracle.commitTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.removeTransaction(tx);
+    oracle.commitTransaction(tx);
   }
 
   @Test(expected = OmidTransactionException.class)
   public void testAbortNonexistent() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    oracle.abortTransaction(new Random().nextInt(1000));
+    int txid = new Random().nextInt(1000);
+    oracle.abortTransaction(new Transaction(txid, new MemoryReadPointer(txid)));
   }
   @Test(expected = OmidTransactionException.class)
   public void testAbortCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.commitTransaction(txid);
-    oracle.abortTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.commitTransaction(tx);
+    oracle.abortTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAbortAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.abortTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.abortTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAbortRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.removeTransaction(txid);
-    oracle.abortTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.removeTransaction(tx);
+    oracle.abortTransaction(tx);
   }
 
   @Test(expected = OmidTransactionException.class)
   public void testRemoveNonexistent() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    oracle.removeTransaction(new Random().nextInt(1000));
+    int txid = new Random().nextInt(1000);
+    oracle.removeTransaction(new Transaction(txid, new MemoryReadPointer(txid)));
   }
   @Test(expected = OmidTransactionException.class)
   public void testRemoveInProgress() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.removeTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.removeTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testRemoveCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.commitTransaction(txid);
-    oracle.removeTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.commitTransaction(tx);
+    oracle.removeTransaction(tx);
   }
   @Test(expected = OmidTransactionException.class)
   public void testRemoveRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    long txid = oracle.startTransaction().getTransactionId();
-    oracle.abortTransaction(txid);
-    oracle.removeTransaction(txid);
-    oracle.removeTransaction(txid);
+    Transaction tx = oracle.startTransaction();
+    oracle.abortTransaction(tx);
+    oracle.removeTransaction(tx);
+    oracle.removeTransaction(tx);
   }
 
   // test that conflict detection can distinguish table names
@@ -273,9 +273,9 @@ public class TestMemoryOracle {
 
     // start three transactions
     TransactionOracle oracle = newOracle();
-    long tx1 = oracle.startTransaction().getTransactionId();
-    long tx2 = oracle.startTransaction().getTransactionId();
-    long tx3 = oracle.startTransaction().getTransactionId();
+    Transaction tx1 = oracle.startTransaction();
+    Transaction tx2 = oracle.startTransaction();
+    Transaction tx3 = oracle.startTransaction();
 
     // all transactions write the same row to different tables, one uses default table
     oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(t1, a, new byte[][] { b } )));
@@ -292,7 +292,7 @@ public class TestMemoryOracle {
   public void testInitReadPointer() throws OmidTransactionException {
     TransactionOracle oracle1 = newOracle();
     Transaction transaction = oracle1.startTransaction();
-    oracle1.commitTransaction(transaction.getTransactionId());
+    oracle1.commitTransaction(transaction);
     ReadPointer readPointer1 = oracle1.getReadPointer();
 
     // checking that whenever we start app again after the previous run we get read pointer which is
@@ -301,6 +301,6 @@ public class TestMemoryOracle {
     TransactionOracle oracle2 = newOracle();
     ReadPointer readPointer2 = oracle2.getReadPointer();
     Assert.assertTrue(readPointer1.getMaximum() <= readPointer2.getMaximum());
-    readPointer2.isVisible(transaction.getTransactionId());
+    readPointer2.isVisible(transaction.getWriteVersion());
   }
 }

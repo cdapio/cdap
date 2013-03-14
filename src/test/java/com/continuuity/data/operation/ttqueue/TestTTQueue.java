@@ -2,11 +2,14 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -20,6 +23,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -32,8 +36,9 @@ public abstract class TestTTQueue {
   private static final long MAX_TIMEOUT_MS = 10000;
   private static final long DEQUEUE_BLOCK_TIMEOUT_MS = 1;
 
-  protected static TimestampOracle timeOracle =
-      new MemoryStrictlyMonotonicTimeOracle();
+  private static final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
+  protected static TransactionOracle oracle = injector.getInstance(TransactionOracle.class);
+  protected static TimestampOracle timeOracle = injector.getInstance(TimestampOracle.class);
 
   protected TTQueue createQueue() throws OperationException {
     return createQueue(new CConfiguration());
@@ -44,10 +49,24 @@ public abstract class TestTTQueue {
 
   protected abstract int getNumIterations();
 
+  // this must match the way that TTQueueOnVCTable creates dirty pointers!
+  protected ReadPointer getDirtyPointer() {
+    return oracle.dirtyReadPointer();
+  }
+  protected ReadPointer getCleanPointer() {
+    return oracle.getReadPointer();
+  }
+  protected ReadPointer getCleanPointer(long now) {
+    return oracle.getReadPointer();
+  }
+  protected long getDirtyWriteVersion() {
+    return oracle.dirtyWriteVersion();
+  }
+
   @Test
   public void testLotsOfAsyncDequeueing() throws Exception {
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
 
     long startTime = System.currentTimeMillis();
 
@@ -119,23 +138,9 @@ public abstract class TestTTQueue {
     }
   }
 
-  // this must match the way that TTQueueOnVCTable creates dirty pointers!
-  protected ReadPointer getDirtyPointer() {
-      return new MemoryReadPointer(
-        timeOracle.getTimestamp(), 1, null);
-  }
-  
-  protected ReadPointer getCleanPointer() {
-    return getCleanPointer(timeOracle.getTimestamp());
-  }
-  
-  protected ReadPointer getCleanPointer(long now) {
-    return new MemoryReadPointer(now + 1, now, null);
-  }
-  
   @Test
   public void testEvictOnAck_OneGroup() throws Exception {
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
 //    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
@@ -201,7 +206,7 @@ public abstract class TestTTQueue {
   public void testEvictOnAck_ThreeGroups() throws Exception {
     TTQueue queue = createQueue();
     final boolean singleEntry = true;
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
@@ -306,7 +311,7 @@ public abstract class TestTTQueue {
   public void testSingleConsumerSimple() throws Exception {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     byte [] valueOne = Bytes.toBytes("value1");
@@ -323,7 +328,7 @@ public abstract class TestTTQueue {
 
     // verify we got something and it's the first value
     assertTrue(result.toString(), result.isSuccess());
-    assertTrue(Bytes.equals(result.getEntry().getData(), valueOne));
+    assertArrayEquals(result.getEntry().getData(), valueOne);
 
     // dequeue again without acking, should still get first value
     result = queue.dequeue(consumer, dirtyReadPointer);
@@ -357,7 +362,7 @@ public abstract class TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueEntry[] queueEntries = new QueueEntry[numQueueEntries];
@@ -412,7 +417,7 @@ public abstract class TestTTQueue {
     long semiAckedTimeout = 50L;
     conf.setLong("ttqueue.entry.semiacked.max", semiAckedTimeout);
     TTQueue queue = createQueue(conf);
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     byte [] valueSemiAckedTimeout = Bytes.toBytes("semiAckedTimeout");
@@ -481,8 +486,8 @@ public abstract class TestTTQueue {
   @Test
   public void testSingleConsumerMulti() throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue ten entries
     int n=10;
@@ -557,8 +562,8 @@ public abstract class TestTTQueue {
   public void testMultipleConsumerMultiTimeouts() throws Exception {
     final boolean singleEntry = false;
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue ten entries
     int n=10;
@@ -681,8 +686,8 @@ public abstract class TestTTQueue {
   public void testSingleConsumerMultiEntry_Empty_ChangeToSingleConsumerSingleEntry()
       throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue 3 entries
     int n=3;
@@ -887,10 +892,9 @@ public abstract class TestTTQueue {
 
   @Test
   public void testSingleConsumerSingleGroup_dynamicReconfig() throws Exception {
-    //Todo: Please update test case regarding queue configuration
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue four entries
     int n=4;
@@ -995,8 +999,8 @@ public abstract class TestTTQueue {
   @Test
   public void testMultiConsumerSingleGroup_dynamicReconfig() throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue one hundred entries
     int n=100;
@@ -1025,13 +1029,13 @@ public abstract class TestTTQueue {
       if (result.isEmpty()) break;
       assertTrue(result.isSuccess());
       int value = Bytes.toInt(result.getEntry().getData());
-      System.out.println("Consumer 1 dequeued value = "+ value);
+      // System.out.println("Consumer 1 dequeued value = "+ value);
       if (last > 0 && value != last + 1) ack = false;
       if (ack) {
         queue.ack(result.getEntryPointer(), consumer1, readPointer);
         queue.finalize(result.getEntryPointer(), consumer1, -1, readPointer.getMaximum());
         assertTrue(acked.add(value));
-        System.out.println("Consumer 1 acked value = "+ value);
+        // System.out.println("Consumer 1 acked value = "+ value);
         last = value;
       } else {
         consumer1unacked.put(value, result.getEntryPointer());
@@ -1055,7 +1059,7 @@ public abstract class TestTTQueue {
       queue.ack(entry.getValue(), consumer1, readPointer);
       queue.finalize(entry.getValue(), consumer1, -1, readPointer.getMaximum());
       assertTrue(acked.add(entry.getKey()));
-      System.out.println("Consumer 1 acked value = "+ entry.getKey());
+      // System.out.println("Consumer 1 acked value = "+ entry.getKey());
     }
 
     // now we can reconfigure to 3 consumers
@@ -1098,7 +1102,7 @@ public abstract class TestTTQueue {
       queue.ack(entry.getValue(), consumer2, readPointer);
       queue.finalize(entry.getValue(), consumer2, -1, readPointer.getMaximum());
       assertTrue(acked.add(entry.getKey()));
-      System.out.println("Consumer 2 acked value = "+ entry.getKey());
+      //System.out.println("Consumer 2 acked value = "+ entry.getKey());
     }
 
     // now introduce consumer 4, should be valid but empty
@@ -1112,8 +1116,8 @@ public abstract class TestTTQueue {
   @Test
   public void testSingleConsumerThreaded() throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     byte [] valueOne = Bytes.toBytes("value1");
     byte [] valueTwo = Bytes.toBytes("value2");
@@ -1201,8 +1205,8 @@ public abstract class TestTTQueue {
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
     final TTQueue queue = createQueue();
-    final long version = timeOracle.getTimestamp();
-    final ReadPointer readPointer = getCleanPointer(version);
+    final ReadPointer readPointer = getCleanPointer();
+    final long version = readPointer.getMaximum();
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
@@ -1294,8 +1298,8 @@ public abstract class TestTTQueue {
   @Test @Ignore
   public void testMultiConsumerMultiGroup() throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;

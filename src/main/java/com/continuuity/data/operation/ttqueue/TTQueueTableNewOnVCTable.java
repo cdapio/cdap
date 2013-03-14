@@ -2,7 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.VersionedColumnarTable;
 
 /**
@@ -12,8 +12,8 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
 
   private final VersionedColumnarTable table;
 
-  public TTQueueTableNewOnVCTable(VersionedColumnarTable table, TimestampOracle timeOracle, CConfiguration conf) {
-    super(timeOracle, conf);
+  public TTQueueTableNewOnVCTable(VersionedColumnarTable table, TransactionOracle oracle, CConfiguration conf) {
+    super(oracle, conf);
     this.table = table;
   }
 
@@ -21,7 +21,7 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
   protected TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueNewOnVCTable(this.table, queueName, this.timeOracle, this.conf);
+    queue = new TTQueueNewOnVCTable(this.table, queueName, this.oracle, this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;
   }

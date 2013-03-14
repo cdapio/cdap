@@ -8,8 +8,7 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
@@ -27,7 +26,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   protected final VersionedColumnarTable table;
   private final byte [] queueName;
-  final TimestampOracle timeOracle;
+  final TransactionOracle oracle;
 
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
@@ -82,11 +81,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
   static final byte[] INVALID_ACTIVE_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE);
 
-  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
+  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
-    this.timeOracle = timeOracle;
+    this.oracle = oracle;
   }
 
 //  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
@@ -296,7 +295,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    // TODO: 3. Use Transaction.getTransactionId instead ReadPointer
+    // TODO: 3. Use Transaction.getWriteVersion instead ReadPointer
     QueuePartitioner partitioner=consumer.getQueueConfig().getPartitionerType().getPartitioner();
 
     if (partitioner.isDisjoint()) {
@@ -366,8 +365,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   protected ImmutablePair<ReadPointer, Long> dirtyPointer() {
-    long now = this.timeOracle.getTimestamp();
-    return new ImmutablePair<ReadPointer,Long>(new MemoryReadPointer(now), 1L);
+    return new ImmutablePair<ReadPointer,Long>(oracle.dirtyReadPointer(), oracle.dirtyWriteVersion());
   }
 
   protected byte[] makeRowName(byte[] bytesToAppendToQueueName) {

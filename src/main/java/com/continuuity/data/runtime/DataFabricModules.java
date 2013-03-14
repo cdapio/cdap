@@ -40,7 +40,7 @@ public class DataFabricModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-        bind(TransactionOracle.class).to(MemoryOracle.class);
+        bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
         bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
       }

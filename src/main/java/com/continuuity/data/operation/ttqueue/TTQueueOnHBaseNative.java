@@ -4,10 +4,18 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.hbase.ttqueue.*;
+import com.continuuity.hbase.ttqueue.HBQAck;
+import com.continuuity.hbase.ttqueue.HBQDequeue;
+import com.continuuity.hbase.ttqueue.HBQDequeueResult;
+import com.continuuity.hbase.ttqueue.HBQEnqueue;
+import com.continuuity.hbase.ttqueue.HBQEnqueueResult;
+import com.continuuity.hbase.ttqueue.HBQExpirationConfig;
+import com.continuuity.hbase.ttqueue.HBQFinalize;
+import com.continuuity.hbase.ttqueue.HBQInvalidate;
+import com.continuuity.hbase.ttqueue.HBQMetaOperation;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
 import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.continuuity.hbase.ttqueue.HBQShardConfig;
@@ -28,7 +36,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   private final HTable table;
   private final byte [] queueName;
-  final TimestampOracle timeOracle;
+  final TransactionOracle oracle;
 
   HBQShardConfig shardConfig;
   HBQExpirationConfig expirationConfig;
@@ -43,10 +51,10 @@ public class TTQueueOnHBaseNative implements TTQueue {
    * shard maximums.
    */
   public TTQueueOnHBaseNative(final HTable table, final byte [] queueName,
-      final TimestampOracle timeOracle, final CConfiguration conf) {
+      final TransactionOracle oracle, final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
-    this.timeOracle = timeOracle;
+    this.oracle = oracle;
     this.shardConfig = new HBQShardConfig(
         conf.getLong("ttqueue.shard.max.entries", 1024),
         conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024)); // 1GB
@@ -63,13 +71,13 @@ public class TTQueueOnHBaseNative implements TTQueue {
           cleanWriteVersion + ")");
 
     // Get a read pointer that sees everything (dirty read pointer)
-    long now = this.timeOracle.getTimestamp();
+    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
     // Perform native enqueue operation
     HBQEnqueueResult result;
     try {
       result = this.table.enqueue(
           new HBQEnqueue(this.queueName, entry.getData(),
-              new HBReadPointer(cleanWriteVersion, now), this.shardConfig));
+              new HBReadPointer(cleanWriteVersion, dirtyReadVersion), this.shardConfig));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();
@@ -85,10 +93,10 @@ public class TTQueueOnHBaseNative implements TTQueue {
   public void invalidate(QueueEntryPointer entryPointer,
       long cleanWriteVersion) throws OperationException {
     if (TRACE) log("Invalidating " + entryPointer);
-    long now = this.timeOracle.getTimestamp();
+    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
     try {
       this.table.invalidate(new HBQInvalidate(this.queueName,
-          entryPointer.toHBQ(), new HBReadPointer(cleanWriteVersion, now)));
+          entryPointer.toHBQ(), new HBReadPointer(cleanWriteVersion, dirtyReadVersion)));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();
@@ -136,10 +144,11 @@ public class TTQueueOnHBaseNative implements TTQueue {
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
     if (TRACE) log("Acking " + entryPointer);
-    long now = this.timeOracle.getTimestamp();
+    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
+    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
     try {
       if (!this.table.ack(new HBQAck(this.queueName, consumer.toHBQ(),
-          entryPointer.toHBQ(), new HBReadPointer(now, now)))) {
+          entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion)))) {
         throw new OperationException(StatusCode.ILLEGAL_ACK, "Ack failed");
       }
     } catch (IOException e) {
@@ -154,10 +163,11 @@ public class TTQueueOnHBaseNative implements TTQueue {
       QueueConsumer consumer, int totalNumGroups, long writePoint)
           throws OperationException {
     if (TRACE) log("Finalizing " + entryPointer);
-    long now = this.timeOracle.getTimestamp();
+    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
+    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
     try {
       if (!this.table.finalize(new HBQFinalize(this.queueName, consumer.toHBQ(),
-          entryPointer.toHBQ(), new HBReadPointer(now, now), totalNumGroups))) {
+          entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion), totalNumGroups))) {
         throw new OperationException(StatusCode.ILLEGAL_FINALIZE,
             "Finalize failed");
       }
@@ -171,10 +181,11 @@ public class TTQueueOnHBaseNative implements TTQueue {
   @Override
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     if (TRACE) log("Unacking " + entryPointer);
-    long now = this.timeOracle.getTimestamp();
+    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
+    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
     try {
       if (!this.table.unack(new HBQUnack(this.queueName, consumer.toHBQ(),
-          entryPointer.toHBQ(), new HBReadPointer(now, now)))) {
+          entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion)))) {
         throw new OperationException(StatusCode.ILLEGAL_UNACK, "Unack failed");
       }
     } catch (IOException e) {

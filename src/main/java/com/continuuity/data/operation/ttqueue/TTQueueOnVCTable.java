@@ -7,7 +7,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
@@ -46,7 +46,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   private final VersionedColumnarTable table;
   private final byte [] queueName;
-  final TimestampOracle timeOracle;
+  final TransactionOracle oracle;
 
   long maxEntriesPerShard;
   long maxBytesPerShard;
@@ -88,11 +88,11 @@ public class TTQueueOnVCTable implements TTQueue {
    * shard maximums.
    */
   public TTQueueOnVCTable(final VersionedColumnarTable table,
-      final byte [] queueName, final TimestampOracle timeOracle,
+      final byte [] queueName, final TransactionOracle oracle,
       final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
-    this.timeOracle = timeOracle;
+    this.oracle = oracle;
     this.maxEntriesPerShard = conf.getLong("ttqueue.shard.max.entries", 1024);
     this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max", 120 * 1000); // 120 seconds default
@@ -134,9 +134,9 @@ public class TTQueueOnVCTable implements TTQueue {
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
     // and a write version _only_ for dirty writes
-    long writeDirty = dirtyWriteVersion();
+    long writeDirty = oracle.dirtyWriteVersion();
 
     // Get our unique entry id
     long entryId;
@@ -167,7 +167,10 @@ public class TTQueueOnVCTable implements TTQueue {
           while (depth >= DRAIN_QUEUE_DEPTH) {
             try {
               Thread.sleep(10);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+              // not sure what to do?
+              LOG.info("Sleep received interrupt while throttling.", e);
+            }
             depth = getDepth();
           }
           if (TRACE) log("Drained queue depth to " + depth);
@@ -260,9 +263,9 @@ public class TTQueueOnVCTable implements TTQueue {
           "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
     // and a write version _only_ for dirty writes
-    long writeDirty = dirtyWriteVersion();
+    long writeDirty = oracle.dirtyWriteVersion();
 
     // Loop until we have properly upserted and verified group information
     GroupState groupState;
@@ -604,7 +607,7 @@ public class TTQueueOnVCTable implements TTQueue {
     if (!(this.table instanceof MemoryOVCTable)) return;
     try {
       // Get a read pointer _only_ for dirty reads
-      ReadPointer readDirty = dirtyReadPointer();
+      ReadPointer readDirty = oracle.dirtyReadPointer();
 
       // read all columns of each shard. there may be data entries, meta entries, and group meta entries
       // we only delete if entries are evicted, that is, all data and group meta entries are gone and
@@ -614,7 +617,8 @@ public class TTQueueOnVCTable implements TTQueue {
       for (long shardId = currentShardId; shardId >= 0; --shardId) {
         byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, shardId);
         // read the first entry.
-        OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, 1, this.dirtyReadPointer());
+        OperationResult<Map<byte[], byte[]>> result =
+          this.table.get(shardRow, null, null, 1, oracle.dirtyReadPointer());
         if (result.isEmpty() || result.getValue().isEmpty()) {
           // this shard does not exist. stop
           break;
@@ -717,7 +721,7 @@ public class TTQueueOnVCTable implements TTQueue {
       throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -747,7 +751,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, dirtyWriteVersion());
+        newValue, readDirty, oracle.dirtyWriteVersion());
   }
 
   @Override
@@ -756,7 +760,7 @@ public class TTQueueOnVCTable implements TTQueue {
       throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -781,7 +785,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.
-        getValue(), newValue, readDirty, dirtyWriteVersion());
+        getValue(), newValue, readDirty, oracle.dirtyWriteVersion());
 
     if (enableThrottling) acks.incrementAndGet();
 
@@ -862,7 +866,7 @@ public class TTQueueOnVCTable implements TTQueue {
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -886,7 +890,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, dirtyWriteVersion());
+        newValue, readDirty, oracle.dirtyWriteVersion());
   }
 
   // Private helpers
@@ -1010,13 +1014,6 @@ public class TTQueueOnVCTable implements TTQueue {
     return Bytes.add(Bytes.toBytes(prepend), middle, Bytes.toBytes(append));
   }
 
-  private ReadPointer dirtyReadPointer() {
-    return new MemoryReadPointer(Long.MAX_VALUE);
-  }
-  private long dirtyWriteVersion() {
-    return 1L;
-  }
-
   private long getCounter(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
     OperationResult<byte[]> value = this.table.get(row, column, readPointer);
@@ -1043,7 +1040,7 @@ public class TTQueueOnVCTable implements TTQueue {
   public long getGroupID() throws OperationException {
     // Get our unique entry id
     return this.table.increment(makeRow(GLOBAL_GROUPS_HEADER),
-        GROUP_ID_GEN, 1, dirtyReadPointer(), dirtyWriteVersion());
+        GROUP_ID_GEN, 1, oracle.dirtyReadPointer(), oracle.dirtyWriteVersion());
   }
 
   @Override
@@ -1055,7 +1052,7 @@ public class TTQueueOnVCTable implements TTQueue {
   private QueueMeta getQueueMeta() throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Get global queue state information
     OperationResult<byte[]> result = this.table.get( // the next entry id
@@ -1097,7 +1094,7 @@ public class TTQueueOnVCTable implements TTQueue {
         .append(this.dequeueReturns.get()).append("\n");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = dirtyReadPointer();
+    ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Get global queue state information;
     long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
