@@ -12,7 +12,7 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
 
   OpexProvider opexProvider;
   OperationExecutor opex;
-  OperationContext opContext = OperationContext.DEFAULT;
+  OperationContext opContext = new OperationContext("benchmark");
 
   @Override
   public Map<String, String> usage() {
@@ -62,8 +62,6 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
     }
     this.opexProvider.configure(config);
   }
-
-
 
   @Override
   public void initialize() throws BenchmarkException {
