@@ -5,11 +5,11 @@ import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.collector.RestCollector;
@@ -70,7 +70,7 @@ public class StreamClientTest {
           kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
-    executor.commit(OperationContext.DEFAULT, operations);
+    executor.commit(OperationUtil.DEFAULT, operations);
 
     // configure a gateway
     port = PortDetector.findFreePort();

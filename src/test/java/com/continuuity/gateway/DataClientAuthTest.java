@@ -6,11 +6,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.accessor.DataRestAccessor;
@@ -79,7 +79,7 @@ public class DataClientAuthTest {
           kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
-    executor.commit(OperationContext.DEFAULT, operations);
+    executor.commit(OperationUtil.DEFAULT, operations);
 
     // configure a gateway
     port = PortDetector.findFreePort();
@@ -231,7 +231,7 @@ public class DataClientAuthTest {
         "write", "--key", "mycount", "--counter", "--value", "41" }),
         configuration));
     Increment increment = new Increment("mycount".getBytes(), Operation.KV_COL, 1);
-    this.executor.increment(OperationContext.DEFAULT, increment);
+    this.executor.increment(OperationUtil.DEFAULT, increment);
     Assert.assertEquals("42", new DataClient().disallowSSL().execute(addAuth(new String[] {
         "read", "--key", "mycount", "--counter" }), configuration));
   }

@@ -3,9 +3,9 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
@@ -85,7 +85,7 @@ public class GatewayFlumeCollectorTest {
     MetadataService mds = new MetadataService(this.executor);
     Stream stream = new Stream(destination);
     stream.setName(destination);
-    mds.assertStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
+    mds.assertStream(new Account(OperationUtil.DEFAULT_ACCOUNT_ID), stream);
   } // end of setupGateway
 
   /**
