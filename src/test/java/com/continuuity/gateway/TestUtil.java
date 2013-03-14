@@ -20,7 +20,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
@@ -54,9 +53,13 @@ public class TestUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
 
-  static final OperationContext context = OperationUtil.DEFAULT;
-
   private static String apiKey = null;
+
+  /** defaults to be used everywhere where we don't have authenticated accounts */
+  public static final String DEFAULT_ACCOUNT_ID = "developer";
+  public static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEFAULT_ACCOUNT_ID);
+
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   static void enableAuth(String apiKey) {
     TestUtil.apiKey = apiKey;
@@ -242,10 +245,10 @@ public class TestUtil {
                                      String stream)
     throws OperationException, IOException {
     // get the queue info from opex
-    byte[] queueName = QueueName.fromStream(new Id.Account(OperationUtil.DEFAULT_ACCOUNT_ID), stream)
+    byte[] queueName = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
                                 .toString().getBytes();
     OperationResult<QueueInfo> info = executor.execute(
-        OperationUtil.DEFAULT, new QueueAdmin.GetQueueInfo(queueName));
+        TestUtil.DEFAULT_CONTEXT, new QueueAdmin.GetQueueInfo(queueName));
     String json = info.isEmpty() ? null : info.getValue().getJSONString();
 
     // get the queue info via HTTP
@@ -327,7 +330,7 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = QueueName.fromStream(new Id.Account(OperationUtil.DEFAULT_ACCOUNT_ID), destination)
+    byte[] queueURI = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), destination)
                                .toString().getBytes();
     // one deserializer to reuse
     StreamEventCodec deserializer = new StreamEventCodec();

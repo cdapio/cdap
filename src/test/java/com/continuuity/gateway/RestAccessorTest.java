@@ -22,7 +22,6 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
@@ -50,7 +49,7 @@ import java.util.Map;
 
 public class RestAccessorTest {
 
-  static final OperationContext context = OperationUtil.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   /**
    * this is the executor for all access to the data fabric
@@ -545,7 +544,7 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
 
-    String streamUri = QueueName.fromStream(new Id.Account(OperationUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
                                 .toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
@@ -626,7 +625,7 @@ public class RestAccessorTest {
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = QueueName.fromStream(new Id.Account(OperationUtil.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
       .toString();
     verifyQueueGone(streamUri);
   }

@@ -23,7 +23,6 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.collector.RestCollector;
@@ -64,7 +63,7 @@ import java.util.Map;
 
 public class DatasetRestAccessorTest {
 
-  static final OperationContext context = OperationUtil.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   // this is the executor for all access to the data fabric
   private static OperationExecutor executor;

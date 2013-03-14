@@ -10,7 +10,6 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.accessor.DataRestAccessor;
@@ -73,7 +72,7 @@ public class DataClientTest {
           kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
-    executor.commit(OperationUtil.DEFAULT, operations);
+    executor.commit(TestUtil.DEFAULT_CONTEXT, operations);
 
     // configure a gateway
     port = PortDetector.findFreePort();
@@ -211,7 +210,7 @@ public class DataClientTest {
         "write", "--key", "mycount", "--counter", "--value", "41" },
         configuration));
     Increment increment = new Increment("mycount".getBytes(), Operation.KV_COL, 1);
-    this.executor.increment(OperationUtil.DEFAULT, increment);
+    this.executor.increment(TestUtil.DEFAULT_CONTEXT, increment);
     Assert.assertEquals("42", new DataClient().execute(new String[] {
         "read", "--key", "mycount", "--counter" }, configuration));
   }

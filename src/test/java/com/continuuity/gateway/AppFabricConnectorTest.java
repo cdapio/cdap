@@ -6,7 +6,6 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.filesystem.LocationFactory;
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AppFabricConnectorTest {
   private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
-  static final OperationContext context = OperationUtil.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
   static final String apiKey = "SampleTestApiKey";
   static final String cluster = "SampleTestClusterName";
 
