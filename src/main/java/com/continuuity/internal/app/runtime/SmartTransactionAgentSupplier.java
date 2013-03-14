@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.data.DataSetContext;
+import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.DataFabric;
