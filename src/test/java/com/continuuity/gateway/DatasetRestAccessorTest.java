@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -21,7 +21,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
@@ -64,7 +63,7 @@ import java.util.Map;
 
 public class DatasetRestAccessorTest {
 
-  static final OperationContext context = OperationContext.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   // this is the executor for all access to the data fabric
   private static OperationExecutor executor;
@@ -422,7 +421,7 @@ public class DatasetRestAccessorTest {
     assertCreate(urlPrefix, HttpStatus.SC_BAD_REQUEST, "" + "?op=create"); // empty table name
   }
 
-  final static QueueEntry streamEntry = new QueueEntryImpl("x".getBytes());
+  final static QueueEntry streamEntry = new QueueEntry("x".getBytes());
   static WriteOperation addToStream(String name) {
     return new QueueEnqueue(("stream:" + name).getBytes(), streamEntry);
   }

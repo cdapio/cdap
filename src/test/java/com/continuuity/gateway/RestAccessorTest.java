@@ -19,7 +19,7 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DataRestAccessor;
@@ -49,7 +49,7 @@ import java.util.Map;
 
 public class RestAccessorTest {
 
-  static final OperationContext context = OperationContext.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
 
   /**
    * this is the executor for all access to the data fabric
@@ -544,7 +544,7 @@ public class RestAccessorTest {
 
   void verifyEvent(String stream, int n) throws Exception {
 
-    String streamUri = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
                                 .toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
@@ -597,7 +597,7 @@ public class RestAccessorTest {
 
   void sendInteger(String queueUri, int n) throws OperationException {
     byte[] bytes = Bytes.toBytes(n);
-    QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), new QueueEntryImpl(bytes));
+    QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), new QueueEntry(bytes));
     this.executor.commit(context, enqueue);
   }
 
@@ -625,7 +625,7 @@ public class RestAccessorTest {
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = QueueName.fromStream(new Id.Account(OperationContext.DEFAULT_ACCOUNT_ID), stream)
+    String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
       .toString();
     verifyQueueGone(streamUri);
   }

@@ -4,7 +4,6 @@ import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.DiscoveryService;
@@ -114,7 +113,7 @@ public class GatewayFlumeCollectorAuthTest {
     MetadataService mds = new MetadataService(this.executor);
     Stream stream = new Stream(destination);
     stream.setName(destination);
-    mds.assertStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
+    mds.assertStream(new Account(TestUtil.DEFAULT_ACCOUNT_ID), stream);
   } // end of setupGateway
 
   /**

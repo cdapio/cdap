@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AppFabricConnectorTest {
   private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
-  static final OperationContext context = OperationContext.DEFAULT;
+  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
   static final String apiKey = "SampleTestApiKey";
   static final String cluster = "SampleTestClusterName";
 
