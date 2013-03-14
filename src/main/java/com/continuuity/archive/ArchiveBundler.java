@@ -118,7 +118,7 @@ public final class ArchiveBundler {
 
           final String name = entry.getName();
           // adding entries missing in jar
-          if(files.containsKey(name)) {
+          if(!files.containsKey(name)) {
             zout.putNextEntry(new JarEntry(entry));
             ByteStreams.copy(zin, zout);
           }
