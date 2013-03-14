@@ -56,9 +56,6 @@ public abstract class TestTTQueue {
   protected ReadPointer getCleanPointer() {
     return oracle.getReadPointer();
   }
-  protected ReadPointer getCleanPointer(long now) {
-    return oracle.getReadPointer();
-  }
   protected long getDirtyWriteVersion() {
     return oracle.dirtyWriteVersion();
   }
@@ -747,8 +744,8 @@ public abstract class TestTTQueue {
   @Test
   public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() throws Exception {
     TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = getCleanPointer(version);
+    ReadPointer readPointer = getCleanPointer();
+    long version = readPointer.getMaximum();
 
     // enqueue four entries
     int n=4;
