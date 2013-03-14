@@ -51,6 +51,7 @@ import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -358,7 +359,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                     final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
-      public OutputEmitter<?> create(String outputName, TypeToken<?> type) {
+      public <T> OutputEmitter<T> create(String outputName, TypeToken<T> type) {
         try {
           Schema schema = schemaGenerator.generate(type.getType());
 
@@ -366,7 +367,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
-              return new ReflectionOutputEmitter(queueProducer, queueSpec.getQueueName(), schema, flowletContext);
+              return new DatumOutputEmitter<T>(flowletContext, queueProducer, queueSpec.getQueueName(),
+                                                    schema, new ReflectionDatumWriter<T>(schema));
             }
           }
 
@@ -473,7 +475,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface OutputEmitterFactory {
-    OutputEmitter<?> create(String outputName, TypeToken<?> type);
+    <T> OutputEmitter<T> create(String outputName, TypeToken<T> type);
   }
 
   private static interface ProcessMethodFactory {
