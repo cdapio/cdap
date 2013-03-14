@@ -574,6 +574,12 @@ implements OrderedVersionedColumnarTable {
     throw new InternalError("this point should never be reached.");
   }
 
+  @Override
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+    // TODO:
+    throw new UnsupportedOperationException("Not yet inmplemented");
+  }
+
   // Scan Operations
 
   @Override

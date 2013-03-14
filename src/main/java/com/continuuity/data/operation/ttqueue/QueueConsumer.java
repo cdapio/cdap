@@ -93,6 +93,19 @@ public class QueueConsumer {
   public QueueConfig getQueueConfig() {
     return this.config;
   }
+
+  public boolean isStateful() {
+    return false;
+  }
+
+  public QueueState getQueueState() {
+    return null;
+  }
+
+  public void setQueueState(QueueState queueState) {
+    // Nothing to do
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
