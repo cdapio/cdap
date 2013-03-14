@@ -72,8 +72,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
     
-//    queueTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
-    queueTable = new TTQueueTableNewOnVCTable(table, timeOracle, conf);
+    queueTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
+//    queueTable = new TTQueueTableNewOnVCTable(table, timeOracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
