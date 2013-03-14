@@ -7,7 +7,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -71,7 +71,7 @@ public class StreamEventWritingConsumer extends Consumer {
                                .toString();
     LOG.trace("Sending event to " + queueURI + ", event = " + event);
 
-    return new QueueEnqueue(queueURI.getBytes(), new QueueEntryImpl(bytes));
+    return new QueueEnqueue(queueURI.getBytes(), new QueueEntry(bytes));
   }
 
 
