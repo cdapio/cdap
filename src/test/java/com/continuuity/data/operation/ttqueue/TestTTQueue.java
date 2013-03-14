@@ -311,49 +311,53 @@ public abstract class TestTTQueue {
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-    byte [] valueOne = Bytes.toBytes("value1");
-    byte [] valueTwo = Bytes.toBytes("value2");
-
-    // enqueue two entries
-    assertTrue(queue.enqueue(new QueueEntry(valueOne), dirtyVersion).isSuccess());
-    assertTrue(queue.enqueue(new QueueEntry(valueTwo), dirtyVersion).isSuccess());
-
-    // dequeue it with the single consumer and FIFO partitioner
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    DequeueResult result = queue.dequeue(consumer, dirtyReadPointer);
 
-    // verify we got something and it's the first value
-    assertTrue(result.toString(), result.isSuccess());
-    assertArrayEquals(result.getEntry().getData(), valueOne);
+    for(int i = 0; i < 2; ++i) {
+      byte [] valueOne = Bytes.toBytes("value" + i + "-1");
+      byte [] valueTwo = Bytes.toBytes("value" + i + "-2");
 
-    // dequeue again without acking, should still get first value
-    result = queue.dequeue(consumer, dirtyReadPointer);
-    assertTrue(result.isSuccess());
-    assertTrue("Expected (" + Bytes.toString(valueOne) + ") Got (" +
-        Bytes.toString(result.getEntry().getData()) + ")",
-        Bytes.equals(result.getEntry().getData(), valueOne));
+      // enqueue two entries
+      assertTrue(queue.enqueue(new QueueEntry(valueOne), dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(new QueueEntry(valueTwo), dirtyVersion).isSuccess());
 
-    // ack
-    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
-    queue.finalize(result.getEntryPointer(), consumer, -1, dirtyReadPointer.getMaximum());
+      // dequeue it with the single consumer and FIFO partitioner
+      DequeueResult result = queue.dequeue(consumer, dirtyReadPointer);
 
-    // dequeue, should get second value
-    result = queue.dequeue(consumer, dirtyReadPointer);
-    assertTrue(result.isSuccess());
-    assertTrue(Bytes.equals(result.getEntry().getData(), valueTwo));
+      // verify we got something and it's the first value
+      assertTrue(result.toString(), result.isSuccess());
+  //    assertTrue(Bytes.equals(result.getValue(), valueOne));
+      assertEquals(Bytes.toString(result.getEntry().getData()), Bytes.toString(valueOne));
 
-    // ack
-    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
-    queue.finalize(result.getEntryPointer(), consumer, -1, dirtyReadPointer.getMaximum());
+      // dequeue again without acking, should still get first value
+      result = queue.dequeue(consumer, dirtyReadPointer);
+      assertTrue(result.isSuccess());
+      assertTrue("Expected (" + Bytes.toString(valueOne) + ") Got (" +
+          Bytes.toString(result.getEntry().getData()) + ")",
+          Bytes.equals(result.getEntry().getData(), valueOne));
 
-    // verify queue is empty
-    result = queue.dequeue(consumer, dirtyReadPointer);
-    assertTrue(result.isEmpty());
+      // ack
+      queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumer, -1, dirtyReadPointer.getMaximum());
+
+      // dequeue, should get second value
+      result = queue.dequeue(consumer, dirtyReadPointer);
+      assertTrue(result.isSuccess());
+      assertTrue(Bytes.equals(result.getEntry().getData(), valueTwo));
+
+      // ack
+      queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumer, -1, dirtyReadPointer.getMaximum());
+
+      // verify queue is empty
+      result = queue.dequeue(consumer, dirtyReadPointer);
+      assertTrue(result.isEmpty());
+    }
   }
 
   @Test @Ignore
-  public void testSingleConsumerWithHashPartitioning() throws Exception {
+  public void testSingleConsumerWithHashValuePartitioning() throws Exception {
     final boolean singleEntry = true;
     final int numQueueEntries = 8;
     final int numConsumers = 4;
@@ -381,7 +385,7 @@ public abstract class TestTTQueue {
       DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
       // verify we got something and it's the first value
       assertTrue(result.toString(), result.isSuccess());
-      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value"+i)));
+      assertTrue(Bytes.equals(result.getEntry().getData(), Bytes.toBytes("value" + i)));
       // dequeue again without acking, should still get first value
       result = queue.dequeue(consumers[i], dirtyReadPointer);
       assertTrue(result.isSuccess());
@@ -403,8 +407,8 @@ public abstract class TestTTQueue {
       queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
 
       // verify queue is empty
-//      result = queue.dequeue(consumers[i], dirtyReadPointer);
-//      assertTrue(result.isEmpty());
+// result = queue.dequeue(consumers[i], dirtyReadPointer);
+// assertTrue(result.isEmpty());
     }
   }
 
