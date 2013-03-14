@@ -12,7 +12,6 @@ public class DequeueResult {
   private final DequeueStatus status;
   private final QueueEntryPointer pointer;
   private final QueueEntry entry;
-  private final QueueState queueState;
 
   public DequeueResult(final DequeueStatus status) {
     this(status, null, null);
@@ -23,14 +22,6 @@ public class DequeueResult {
     this.status = status;
     this.pointer = pointer;
     this.entry = entry;
-    this.queueState = null;
-  }
-
-  public DequeueResult(DequeueStatus status, QueueEntryPointer pointer, QueueEntry entry, QueueState queueState) {
-    this.status = status;
-    this.pointer = pointer;
-    this.entry = entry;
-    this.queueState = queueState;
   }
 
   public DequeueResult(final byte [] queueName,
@@ -41,14 +32,12 @@ public class DequeueResult {
 //      this.value = null;
       //TODO: is this correct?
       this.entry = null;
-      this.queueState = null;
     } else if (dequeueResult.getStatus() == HBQDequeueStatus.SUCCESS) {
       this.status = DequeueStatus.SUCCESS;
       this.pointer = new QueueEntryPointer(queueName,
           dequeueResult.getEntryPointer().getEntryId(),
           dequeueResult.getEntryPointer().getShardId());
       this.entry = new QueueEntryImpl(dequeueResult.getData());
-      this.queueState = null;
     } else {
       throw new RuntimeException("Invalid state: " + dequeueResult.toString());
     }
@@ -80,10 +69,6 @@ public class DequeueResult {
 
   public static enum DequeueStatus {
     SUCCESS, EMPTY, RETRY;
-  }
-
-  public QueueState getQueueState() {
-    return queueState;
   }
 
   @Override
