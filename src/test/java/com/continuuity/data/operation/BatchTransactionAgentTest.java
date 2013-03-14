@@ -6,6 +6,7 @@ import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncRead
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -36,7 +37,7 @@ public class BatchTransactionAgentTest {
   }
 
   static TransactionAgent newAgent() throws OperationException {
-    TransactionAgent agent = new BatchTransactionAgentWithSyncReads(opex, OperationContext.DEFAULT);
+    TransactionAgent agent = new BatchTransactionAgentWithSyncReads(opex, OperationUtil.DEFAULT);
     agent.start();
     return agent;
   }
@@ -57,7 +58,7 @@ public class BatchTransactionAgentTest {
     final String table = "tWADBNR";
 
     // write two rows outside the xaction
-    opex.commit(OperationContext.DEFAULT, batch(new Write(table, a, x, one), new Write(table, b, y, two)));
+    opex.commit(OperationUtil.DEFAULT, batch(new Write(table, a, x, one), new Write(table, b, y, two)));
     // start a batch xaction
     TransactionAgent agent = newAgent();
 
@@ -90,9 +91,9 @@ public class BatchTransactionAgentTest {
     Assert.assertEquals(8, agent.getSucceededCount());
 
     // read and verify new values
-    Assert.assertArrayEquals(y, opex.execute(OperationContext.DEFAULT, new Read(table, c, x)).getValue().get(x));
-    Assert.assertArrayEquals(four, opex.execute(OperationContext.DEFAULT, new Read(table, b, y)).getValue().get(y));
-    Assert.assertArrayEquals(x, opex.execute(OperationContext.DEFAULT, new Read(table, a, x)).getValue().get(x));
+    Assert.assertArrayEquals(y, opex.execute(OperationUtil.DEFAULT, new Read(table, c, x)).getValue().get(x));
+    Assert.assertArrayEquals(four, opex.execute(OperationUtil.DEFAULT, new Read(table, b, y)).getValue().get(y));
+    Assert.assertArrayEquals(x, opex.execute(OperationUtil.DEFAULT, new Read(table, a, x)).getValue().get(x));
   }
 
   // test that writes are not executed after abort
@@ -101,7 +102,7 @@ public class BatchTransactionAgentTest {
     final String table = "tWANDWA";
 
     // write a row outside xaction
-    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationUtil.DEFAULT, new Write(table, a, x, one));
 
     // start batch xaction
     TransactionAgent agent = newAgent();
@@ -118,8 +119,8 @@ public class BatchTransactionAgentTest {
     Assert.assertEquals(0, agent.getFailedCount());
 
     // verify no rows changed
-    Assert.assertTrue(opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, x, null, null)).isEmpty());
-    Assert.assertArrayEquals(one, opex.execute(OperationContext.DEFAULT, new Read(table, a, x)).getValue().get(x));
+    Assert.assertTrue(opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, x, null, null)).isEmpty());
+    Assert.assertArrayEquals(one, opex.execute(OperationUtil.DEFAULT, new Read(table, a, x)).getValue().get(x));
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {

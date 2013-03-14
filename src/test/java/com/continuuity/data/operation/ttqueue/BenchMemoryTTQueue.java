@@ -20,7 +20,7 @@ public class BenchMemoryTTQueue extends BenchTTQueue {
     return new TTQueueOnVCTable(
         new MemoryOVCTable(Bytes.toBytes("TestMemoryTTQueue")),
         Bytes.toBytes("TestTTQueue"),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

@@ -1,10 +1,11 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.*;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
 import com.google.common.collect.Lists;
 import org.junit.Assert;

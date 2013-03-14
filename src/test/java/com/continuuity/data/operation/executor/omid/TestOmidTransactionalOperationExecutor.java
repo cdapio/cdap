@@ -27,7 +27,9 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -63,7 +65,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
   // however, our data fabric modules return singletons.
   //protected abstract OmidTransactionalOperationExecutor getNewExecutor();
 
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
 
   @Before
   public void initialize() {
@@ -111,16 +113,16 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // insert to all three types
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
-    executor.commit(context, new QueueEnqueue(queueKey, queueKey));
-    executor.commit(context, new QueueEnqueue(streamKey, streamKey));
+    executor.commit(context, new QueueEnqueue(queueKey, new QueueEntry(queueKey)));
+    executor.commit(context, new QueueEnqueue(streamKey, new QueueEntry(streamKey)));
 
     // read data from all three types
     assertTrue(Bytes.equals(dataKey,
         executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol)));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getValue()));
+        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getValue()));
+        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
 
     // clear data only
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -128,9 +130,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // data is gone, queues still there
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getValue()));
+        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getValue()));
+        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
 
     // clear queues and streams
     executor.execute(context, new ClearFabric(Arrays.asList(
@@ -145,16 +147,15 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // insert data to all three again
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
-    executor.commit(context, new QueueEnqueue(queueKey, queueKey));
-    executor.commit(context, new QueueEnqueue(streamKey, streamKey));
+    executor.commit(context, new QueueEnqueue(queueKey, new QueueEntry(queueKey)));
+    executor.commit(context, new QueueEnqueue(streamKey, new QueueEntry(streamKey)));
 
     // read data from all three types
-    assertArrayEquals(dataKey,
-        executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
+    assertArrayEquals(dataKey, executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getValue()));
+        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getValue()));
+        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
 
     // wipe just the streams
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
@@ -163,7 +164,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(dataKey,
         executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getValue()));
+        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
     assertTrue(executor.execute(context,
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
@@ -204,7 +205,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx two
     Transaction pointerTwo = executor.startTransaction();
     // System.out.println("Started transaction two : " + pointerTwo);
-    assertTrue(pointerTwo.getTransactionId() > pointerOne.getTransactionId());
+    assertTrue(pointerTwo.getWriteVersion() > pointerOne.getWriteVersion());
 
     // write value two
     WriteTransactionResult txResult2 =
@@ -370,11 +371,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
         executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // long running reads should still see their respective values
-    assertArrayEquals(Bytes.toBytes(1), executor.execute(context, pointerReadOne, new Read(key,
-                                                                                           kvcol)).getValue().get
-      (kvcol));
+    assertArrayEquals(Bytes.toBytes(1),
+                      executor.execute(context, pointerReadOne, new Read(key, kvcol)).getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
-        executor.execute(context, pointerReadTwo, new Read(key, kvcol)).getValue().get(kvcol));
+                      executor.execute(context, pointerReadTwo, new Read(key, kvcol)).getValue().get(kvcol));
 
     // commit 5, should be successful
     assertTrue(executor.commitTransaction(pointerWFive).isSuccess());
@@ -412,7 +412,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
     // EnqueuePayload something
-    executor.commit(context, batch(new QueueEnqueue(queueName, queueName)));
+    executor.commit(context, batch(new QueueEnqueue(queueName, new QueueEntry(queueName))));
 
     // DequeuePayload it
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
@@ -1014,14 +1014,14 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte[] value = executor.execute(context, tx1, new Read(table, f, x)).getValue().get(x);
     Assert.assertArrayEquals(eleven, value);
     // enqueue the value and commit
-    executor.commit(context, tx1, batch(new QueueEnqueue(qname, value)));
+    executor.commit(context, tx1, batch(new QueueEnqueue(qname, new QueueEntry(value))));
     // dequeue
     DequeueResult deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
                                 new QueueConfig(PartitionerType.FIFO, true)));
     // verify the value
     Assert.assertFalse(deqres.isEmpty());
-    Assert.assertArrayEquals(value, deqres.getValue());
+    Assert.assertArrayEquals(value, deqres.getEntry().getData());
     // in a new transaction, write the dequeued value and ack the queue entry
     executor.commit(context, batch(new Write(table, g, x, value),
                                    new QueueAck(qname, deqres.getEntryPointer(),

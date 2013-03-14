@@ -1,4 +1,4 @@
-package com.continuuity.data.engine;
+package com.continuuity.data.engine.hypersql;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;

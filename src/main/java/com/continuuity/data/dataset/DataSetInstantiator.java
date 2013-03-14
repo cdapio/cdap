@@ -1,21 +1,10 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.data.DataSetInstantiationException;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The data set instantiator creates instances of data sets at runtime. It

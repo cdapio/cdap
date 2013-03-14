@@ -1,42 +1,60 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+
 import java.util.Map;
 
-/**
- * Interface for queue entries.
- */
-public interface QueueEntry {
+public class QueueEntry {
+  private final Map<String, Integer> header;
+  private byte[] data;
 
+  public QueueEntry(Map<String, Integer> header, byte[] data) {
+    Preconditions.checkNotNull(data);
+    Preconditions.checkNotNull(header);
+    this.data=data;
+    this.header=header;
+  }
 
-  /**
-   * Method to add a partitioning key and a hash value to the queue entry.
-   * @param key the partitioning key
-   * @param hash the hash value
-   */
-  public void addPartitioningKey(String key, int hash);
+  public QueueEntry(byte[] data) {
+    Preconditions.checkNotNull(data);
+    this.header= Maps.newHashMap();
+    this.data=data;
+  }
 
-  /**
-   * Method to get the hash value for a provided key
-   * @param key the partitioning key
-   * @return the hash value of the key or null if key was not found
-   */
-  public Integer getHash(String key);
+  public byte[] getData() {
+    return this.data;
+  }
 
-  /**
-   * Method to get the data from the queue entry
-   * @return the data of the queue entry
-   */
-  public byte[] getData();
+  public void setData(byte[] data) {
+    Preconditions.checkNotNull(data);
+    this.data=data;
+  }
 
-  /**
-   * Method to set the data field of the queue entry
-   * @param data the data byte array
-   */
-  public void setData(byte[] data);
+  public Map<String, Integer> getPartitioningMap() {
+    return header;
+  }
 
-  /**
-   * Method to get all partitioning keys and hash values
-   * @return a map of all keys and values
-   */
-  public Map<String, Integer> getPartitioningMap();
+  protected Map<String, Integer> getHeader() {
+    return this.header;
+  }
+
+  public void addPartitioningKey(String key, int hash) {
+    this.header.put(key, hash);
+  }
+
+  public Integer getHash(String key) {
+    if (header==null) {
+      return null;
+    }
+    return this.header.get(key);
+  }
+
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("data", this.data)
+      .add("header", this.header)
+      .toString();
+  }
 }

@@ -20,22 +20,11 @@ public interface TTQueue {
   /**
    * Inserts an entry into the tail of the queue using the specified write
    * version.
-   * @param data the queue entry to be inserted into the queue
-   * @return return code, and if success, the unique entryId of the queue entry
-   * @throws OperationException if unsuccessful
-   * @deprecated
-   */
-  public EnqueueResult enqueue(byte [] data, long writeVersion) throws OperationException;
-
-  /**
-   * Inserts an entry into the tail of the queue using the specified write
-   * version.
    * @param entry the queue entry to be inserted into the queue
    * @return return code, and if success, the unique entryId of the queue entry
    * @throws OperationException if unsuccessful
    */
   public EnqueueResult enqueue(QueueEntry entry, long writeVersion)
-//  public EnqueueResult enqueue(byte [] data, byte [] mapData, long writeVersion)
       throws OperationException;
 
   /**
@@ -47,18 +36,6 @@ public interface TTQueue {
    * @throws OperationException if unsuccessful
    */
   public void invalidate(QueueEntryPointer entryPointer, long writeVersion) throws OperationException;
-
-  /**
-   * Attempts to mark and return an entry from the queue for the specified
-   * consumer from the specified group, according to the specified configuration
-   * and read pointer.
-   * @param consumer the queue consumer
-   * @return dequeue result object
-   * @throws OperationException if unsuccessful
-   * @deprecated
-   */
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified

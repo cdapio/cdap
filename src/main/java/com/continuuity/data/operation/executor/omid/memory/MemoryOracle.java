@@ -135,7 +135,6 @@ public class MemoryOracle implements TransactionOracle {
     if (readPoint < 0) {
       readPoint = this.timeOracle.getTimestamp();
     }
-
     return new MemoryReadPointer(this.readPoint, this.getExcludes());
   }
 
@@ -149,15 +148,15 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized void addToTransaction(long txid, List<Undo> undos) throws OmidTransactionException {
-    getInProgress(txid).add(undos);
+  public synchronized void addToTransaction(Transaction tx, List<Undo> undos) throws OmidTransactionException {
+    getInProgress(tx.getWriteVersion()).add(undos);
   }
 
   @Override
-  public synchronized TransactionResult abortTransaction(long txid) throws OmidTransactionException {
+  public synchronized TransactionResult abortTransaction(Transaction tx) throws OmidTransactionException {
     // this removes the txid from in-progress. It remains in the exclude
     // list until removed after successful undo of its writes.
-    InProgress existing = this.inProgress.remove(txid);
+    InProgress existing = this.inProgress.remove(tx.getWriteVersion());
     if (null == existing) {
       throw new OmidTransactionException(
         StatusCode.INVALID_TRANSACTION, "Transaction not in progress");
@@ -166,7 +165,8 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized void removeTransaction(long txid) throws OmidTransactionException {
+  public synchronized void removeTransaction(Transaction tx) throws OmidTransactionException {
+    long txid = tx.getWriteVersion();
     // this is called after all writes of a failed transaction have been
     // undone successfully. It removes the txid from the invalid and excluded list.
     if (!this.excludes.remove(txid) || this.inProgress.containsKey(txid)) {
@@ -181,7 +181,8 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized TransactionResult commitTransaction(long txid) throws OmidTransactionException {
+  public synchronized TransactionResult commitTransaction(Transaction tx) throws OmidTransactionException {
+    long txid = tx.getWriteVersion();
     List<Undo> undos = getInProgress(txid).getUndos();
     // determine row set of transaction from undos
     RowSet rows = computeRowSet(undos);
@@ -198,7 +199,7 @@ public class MemoryOracle implements TransactionOracle {
       for (Map.Entry<Long,RowSet> entry : rowsToCheck.entrySet()) {
         if (entry.getValue().conflictsWith(rows)) {
           // we have a conflict -> transaction failed
-          return abortTransaction(txid);
+          return abortTransaction(tx);
         }
       }
       // No conflicts found, add to row sets
@@ -243,7 +244,7 @@ public class MemoryOracle implements TransactionOracle {
   /**
    * Utility to look for a queue unack in the list of undos, and if found,
    * creates a corresponding queue finalize.
-   * @returns the generated queue finalize operation
+   * @return the generated queue finalize operation
    */
   private QueueFinalize computeFinalize(List<Undo> undos) {
     // assume that the unack is the last undo in the list - as the ack is
@@ -259,4 +260,13 @@ public class MemoryOracle implements TransactionOracle {
     return null;
   }
 
+  @Override
+  public ReadPointer dirtyReadPointer() {
+    return new MemoryReadPointer(Long.MAX_VALUE); // this will see everything
+  }
+
+  @Override
+  public long dirtyWriteVersion() {
+    return 1L; // this is visible to any read pointer
+  }
 }

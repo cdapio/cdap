@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.util.OperationUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,7 +22,7 @@ abstract public class MetaDataStoreTest {
 
   static OperationExecutor opex;
   static MetaDataStore mds;
-  static OperationContext context = OperationContext.DEFAULT;
+  static OperationContext context = OperationUtil.DEFAULT;
 
   // test that a write followed by a read returns identity
   void testOneAddGet(boolean update, String account,

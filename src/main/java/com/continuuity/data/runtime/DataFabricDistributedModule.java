@@ -104,7 +104,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // For now, just bind to in-memory omid oracles
     bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-    bind(TransactionOracle.class).to(MemoryOracle.class);
+    bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);

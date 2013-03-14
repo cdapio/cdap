@@ -3,8 +3,8 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 
 import java.util.List;
 
@@ -48,17 +48,22 @@ import java.util.List;
  *     perform the rollback. If this fails, or is skipped for any reason, then step 5 must not be
  *     performed. Otherwise the failed transaction's writes will become visible.</li>
  *   <li>Remove the transaction. This must be called after rollback is complete. Otherwise the set
- *     of invalid transaction (and hance the set of excludes) will grow over time beyond manageability.</li>
+ *     of invalid transaction (and hence the set of excludes) will grow over time beyond manageability.</li>
  * </ol>
+ * In addition, the transaction oracle offers ways to bypass transactions. You can:
+ * <ul>
+ *   <li>Obtain a current read pointer. This is like a transaction, because it represents a snapshot of
+ *     the data fabric at the current point in time, excluding any uncommitted writes. But it does not
+ *     record a transaction and is therefore more light-weight than starting a transaction, and there is
+ *     also no need to commit or abort a transaction.</li>
+ *   <li>Obtain a dirty read pointer. This completely bypasses transactions and will include dirty and
+ *     future writes, that is, writes that are performed after the dirty read pointer was received.</li>
+ *   <li>Obtain a dirty write version. Writes made with this version are visible immediately to everyone,
+ *     even transactions, so you should never use the dirty write version to write values that may be
+ *     read with a non-dirty read pointer or a transaction.</li>
+ * </ul>
  */
 public interface TransactionOracle {
-
-  /**
-   * Get a read pointer relative to the current time. This is used by operations/transaction
-   * that do not write, hence there is no need to start a full transaction.
-   * @return A read pointer that includes all committed transactions.
-   */
-  public ReadPointer getReadPointer();
 
   /**
    * Start a new transaction. This assigns a new transaction id and generates a read pointer
@@ -72,38 +77,60 @@ public interface TransactionOracle {
   /**
    * Add a batch of operations to a transaction. The list of undo operations is saved for that
    * transaction.
-   * @param txid the transction id
+   * @param tx the transction
    * @param undos the list of undo operations required to undo this batch
    * @throws OmidTransactionException if the transaction is not in progress
    */
-  public void addToTransaction(long txid, List<Undo> undos) throws OmidTransactionException;
+  public void addToTransaction(Transaction tx, List<Undo> undos) throws OmidTransactionException;
 
   /**
    * Commit a transaction. This detects write conflicts and possibly aborts the transaction. In
    * that case it returns a list of undo operations to perform the rollback. Otherwise, the
    * transaction is removed from the exclude list and future transactions can see its writes.
-   * @param txid the transction id
+   * @param tx the transction
    * @return a result that indicates whether rollback is needed (if isSuccess() is false), and
    *   if so, a list of undo operations to perform the rollback.
    * @throws OmidTransactionException if the transaction is not in progress
    */
-  public TransactionResult commitTransaction(long txid) throws OmidTransactionException;
+  public TransactionResult commitTransaction(Transaction tx) throws OmidTransactionException;
 
   /**
    * Abort a running transaction. Returns a list of undo operations to perform rollback.
-   * @param txid the transction id
+   * @param tx the transaction
    * @return A result indicating failure (i.e., rollback needed) and the list of undo
    *  operations to perform the rollback
    * @throws OmidTransactionException if the transaction is not in progress
    */
-  public TransactionResult abortTransaction(long txid) throws OmidTransactionException;
+  public TransactionResult abortTransaction(Transaction tx) throws OmidTransactionException;
 
   /**
    * Remove a transaction from the read excludes. This should be called after a transaction
    * was aborted and the rollback has completed.
-   * @param txid the transction id
+   * @param tx the transaction
    * @throws OmidTransactionException if the transaction is not in the list of excludes,
    *   or if the transaction is still in progress.
    */
-  void removeTransaction(long txid) throws OmidTransactionException;
+  void removeTransaction(Transaction tx) throws OmidTransactionException;
+
+  /**
+   * Get a read pointer relative to the current time. This is used by operations/transaction
+   * that do not write, hence there is no need to start a full transaction.
+   * @return A read pointer that includes all committed transactions.
+   */
+  public ReadPointer getReadPointer();
+
+  /**
+   * Get a dirty read pointer. This completely bypasses transactions and will include dirty and
+   * future writes, that is, writes that are performed after the dirty read pointer was received.
+   * @return a dirty read pointer
+   */
+  public ReadPointer dirtyReadPointer();
+
+  /**
+   * Obtain a dirty write version. Writes made with this version are visible immediately to everyone,
+   * even transactions, so you should never use the dirty write version to write values that may be
+   * read with a non-dirty read pointer or a transaction.</li>
+   * @return a dirty write version
+   */
+  public long dirtyWriteVersion();
 }

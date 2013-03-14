@@ -57,7 +57,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     if (queueTable != null) return queueTable;
     HTable table = getHTable(queueOVCTable, HBQConstants.HBQ_FAMILY);
     
-    queueTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf, hConf);
+    queueTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
@@ -69,7 +69,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
     
-    streamTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf, hConf);
+    streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
     return existing != null ? existing : streamTable;
