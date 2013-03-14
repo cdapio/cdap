@@ -31,8 +31,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
       conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(), conf));
       handle = injector.getInstance(OVCTableHandle.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -54,9 +53,9 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
     return new TTQueueNewOnVCTable(
-        handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
-        Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.timeOracle, conf);
+      handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
+      Bytes.toBytes("TestTTQueueName" + rand),
+      TestTTQueue.timeOracle, conf);
   }
 
   @Override
@@ -69,38 +68,68 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   /**
    * Currently not working.  Will be fixed in ENG-???.
    */
-  @Override @Test @Ignore
-  public void testEvictOnAck_OneGroup() {}
+  @Override
+  @Test
+  @Ignore
+  public void testEvictOnAck_OneGroup() {
+  }
 
-  @Override @Test @Ignore
-  public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() {}
+  @Override
+  @Test
+  @Ignore
+  public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() {
+  }
 
-  @Override @Test @Ignore
-  public void testSingleConsumerMultiEntry_Empty_ChangeToSingleConsumerSingleEntry() {}
+  @Override
+  @Test
+  @Ignore
+  public void testSingleConsumerMultiEntry_Empty_ChangeToSingleConsumerSingleEntry() {
+  }
 
-  @Override @Test @Ignore
-  public void testSingleConsumerSingleGroup_dynamicReconfig() {}
+  @Override
+  @Test
+  @Ignore
+  public void testSingleConsumerSingleGroup_dynamicReconfig() {
+  }
 
-  @Override @Test @Ignore
-  public void testLotsOfAsyncDequeueing() {}
+  @Override
+  @Test
+  @Ignore
+  public void testLotsOfAsyncDequeueing() {
+  }
 
-  @Override @Test @Ignore
-  public void testMultiConsumerSingleGroup_dynamicReconfig() {}
+  @Override
+  @Test
+  @Ignore
+  public void testMultiConsumerSingleGroup_dynamicReconfig() {
+  }
 
-  @Override @Test @Ignore
-  public void testSingleConsumerMulti() {}
+  @Override
+  @Test
+  @Ignore
+  public void testSingleConsumerMulti() {
+  }
 
-  @Override @Test @Ignore
-  public void testMultipleConsumerMultiTimeouts() {}
+  @Override
+  @Test
+  @Ignore
+  public void testMultipleConsumerMultiTimeouts() {
+  }
 
 //  @Override @Test @Ignore
 //  public void testMultiConsumerMultiGroup() {}
 
-  @Override @Test @Ignore
-  public void testSingleConsumerAckSemantics() {}
+  @Override
+  @Test
+  @Ignore
+  public void testSingleConsumerAckSemantics() {
+  }
 
-  @Override @Test @Ignore
-  public void testEvictOnAck_ThreeGroups() {}
+  @Override
+  @Test
+  @Ignore
+  public void testEvictOnAck_ThreeGroups() {
+  }
 
   @Test
   public void testSingleConsumerWithHashPartitioning() throws Exception {
@@ -113,8 +142,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     long dirtyVersion = 1;
 
     // enqueue some entries
-    for(int i=0; i<numQueueEntries; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+i%numConsumers));
+    for (int i = 0; i < numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -122,16 +151,16 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
-    for(int i=0; i<numConsumers; i++) {
-      consumers[i]=new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+    for (int i = 0; i < numConsumers; i++) {
+      consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
     // enqueue some more entries
-    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+i%numConsumers));
+    for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -149,8 +178,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     long dirtyVersion = 1;
 
     // enqueue some entries
-    for(int i=0; i<numQueueEntries; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+(i+1)%numConsumers));
+    for (int i = 0; i < numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + (i + 1) % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -158,16 +187,16 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
-    for(int i=0; i<numConsumers; i++) {
-      consumers[i]=new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+    for (int i = 0; i < numConsumers; i++) {
+      consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
     // enqueue some more entries
-    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes("value"+(i+1)%numConsumers));
+    for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + (i + 1) % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -175,19 +204,18 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
   }
 
-  private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers, int totalEnqueues)
-    throws Exception {
+  private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers, int totalEnqueues) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    for(int i=0; i<numConsumers; i++) {
-      for(int j=0; j<totalEnqueues/(2*numConsumers); j++) {
+    for (int i = 0; i < numConsumers; i++) {
+      for (int j = 0; j < totalEnqueues / (2 * numConsumers); j++) {
         DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
-        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+        assertEquals("value" + i, Bytes.toString(result.getEntry().getData()));
         // dequeue again without acking, should still get first value
         result = queue.dequeue(consumers[i], dirtyReadPointer);
         assertTrue(result.isSuccess());
-        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+        assertEquals("value" + i, Bytes.toString(result.getEntry().getData()));
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
@@ -196,7 +224,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
         // dequeue, should get second value
         result = queue.dequeue(consumers[i], dirtyReadPointer);
         assertTrue(result.isSuccess());
-        assertEquals("value"+i, Bytes.toString(result.getEntry().getData()));
+        assertEquals("value" + i, Bytes.toString(result.getEntry().getData()));
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
@@ -220,27 +248,27 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     long dirtyVersion = 1;
 
     // enqueue some entries
-    for(int i=0; i<numQueueEntries; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes(i+1));
-      queueEntry.addPartitioningKey(HASH_KEY, i+1);
+    for (int i = 0; i < numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
 
     // We'll start our consumers with index 1, makes testing easier
-    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers+1];
-    for(int i=1; i<=numConsumers; i++) {
-      consumers[i]=new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers + 1];
+    for (int i = 1; i <= numConsumers; i++) {
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0);
 
     // enqueue some more entries
-    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes(i+1));
-      queueEntry.addPartitioningKey(HASH_KEY, i+1);
+    for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
@@ -257,8 +285,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     long dirtyVersion = 1;
 
     // enqueue some entries
-    for(int i=0; i<numQueueEntries; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes(i+1));
+    for (int i = 0; i < numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -266,17 +294,17 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
 
     // We'll start our consumers with index 1, makes testing easier
-    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers+1];
-    for(int i=1; i<=numConsumers; i++) {
-      consumers[i]=new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers + 1];
+    for (int i = 1; i <= numConsumers; i++) {
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0);
 
     // enqueue some more entries
-    for(int i=numQueueEntries; i<numQueueEntries*2; i++) {
-      QueueEntry queueEntry=new QueueEntryImpl(Bytes.toBytes(i+1));
+    for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
+      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -284,15 +312,14 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries);
   }
 
-  private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
-                                         int numQueueEntries, int startQueueEntry) throws Exception {
+  private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers, int numQueueEntries, int startQueueEntry) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    for(int i=1; i<=numConsumers; i++) {
-      for(int j=0; j<numQueueEntries/(2*numConsumers); j++) {
+    for (int i = 1; i <= numConsumers; i++) {
+      for (int j = 0; j < numQueueEntries / (2 * numConsumers); j++) {
         DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
-        int expectedValue = startQueueEntry+i+(2*j*numConsumers);
+        int expectedValue = startQueueEntry + i + (2 * j * numConsumers);
 //        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
 //                  i, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
