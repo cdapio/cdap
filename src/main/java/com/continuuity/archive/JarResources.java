@@ -7,18 +7,14 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
@@ -32,20 +28,6 @@ public final class JarResources {
   // archive resource mapping tables
   private final Map<String, byte[]> entryContents = Maps.newHashMap();
   private final Manifest manifest;
-
-  /**
-   * creates a JarResources. It extracts all resources from a Jar
-   * into an internal map, keyed by resource names.
-   *
-   * @param jarFileName a local archive or zip file
-   */
-  public JarResources(String jarFileName) throws IOException {
-    this(new File(jarFileName));
-  }
-
-  public JarResources(File jarFile) throws IOException {
-    manifest = init(jarFile);
-  }
 
   /**
    * Creates a JarResources using a {@link Location}. It extracts all resources from
@@ -77,70 +59,48 @@ public final class JarResources {
   }
 
   /**
-   * Makes a copy of JAR and then passes it to retrieve and initialize internal hash tables with Jar file resources.
-   */
-  private Manifest init(final Location jar) throws IOException {
-    File tmpFile = File.createTempFile("archive-", ".jar");
-    try {
-      Files.copy(
-                  new InputSupplier<InputStream>() {
-                    @Override
-                    public InputStream getInput() throws IOException {
-                      return jar.getInputStream();
-                    }
-                  }, tmpFile
-      );
-      return init(tmpFile);
-    } finally {
-      tmpFile.delete();
-    }
-  }
-
-  /**
    * initializes internal hash tables with Jar file resources.
    */
-  private Manifest init(File jarFile) throws IOException {
-    // extracts just sizes only.
-    JarFile zf = new JarFile(jarFile);
+  private Manifest init(Location jarFile) throws IOException {
+    JarInputStream jarInput = new JarInputStream(jarFile.getInputStream());
     try {
-      Enumeration<JarEntry> entries = zf.entries();
-
-      while(entries.hasMoreElements()) {
-        JarEntry ze = entries.nextElement();
+      Manifest manifest = jarInput.getManifest();
+      JarEntry ze;
+      // For each entry in the jar file, read the bytes and stores it in the entryContents map.
+      while((ze = jarInput.getNextJarEntry()) != null) {
         if(LOG.isTraceEnabled()) {
           LOG.trace(dumpJarEntry(ze));
         }
-
         if(ze.isDirectory()) {
           continue;
         }
         if(ze.getSize() > Integer.MAX_VALUE) {
           throw new IOException("Jar entry is too big to fit in memory.");
         }
+        // The JarInputStream only tries to read the MANIFEST file if it is the first entry in the jar
+        // Otherwise, we'll see the manifest file here, hence need to construct it from the current entry.
+        if (ze.getName().equals(JarFile.MANIFEST_NAME)) {
+          manifest = new Manifest(jarInput);
+          continue;
+        }
 
-        InputStream is = zf.getInputStream(ze);
-        try {
-          byte[] bytes;
-          if(ze.getSize() < 0) {
-            bytes = ByteStreams.toByteArray(is);
-          } else {
-            bytes = new byte[(int) ze.getSize()];
-            ByteStreams.readFully(is, bytes);
-          }
-          // add to internal resource hashtable
-          entryContents.put(ze.getName(), bytes);
-          if(LOG.isTraceEnabled()) {
-            LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize=" + ze.getCompressedSize());
-          }
-
-        } finally {
-          is.close();
+        byte[] bytes;
+        if(ze.getSize() < 0) {
+          bytes = ByteStreams.toByteArray(jarInput);
+        } else {
+          bytes = new byte[(int) ze.getSize()];
+          ByteStreams.readFully(jarInput, bytes);
+        }
+        // add to internal resource hashtable
+        entryContents.put(ze.getName(), bytes);
+        if(LOG.isTraceEnabled()) {
+          LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize=" + ze.getCompressedSize());
         }
       }
-      return zf.getManifest();
+      return manifest;
 
     } finally {
-      zf.close();
+      jarInput.close();
     }
   }
 

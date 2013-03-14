@@ -32,7 +32,7 @@ public class ArchiveBundlerTest {
   @Test
   public void testBundler() throws Exception {
     LocationFactory lf = new LocalLocationFactory();
-    Location out = lf.create("/tmp/testBundler." + System.currentTimeMillis() + ".jar");
+    Location out = lf.create(File.createTempFile("testBundler", ".jar").toURI());
 
     try {
       Manifest manifest = new Manifest();
@@ -42,10 +42,10 @@ public class ArchiveBundlerTest {
       manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, "META-INF/specification/application.json");
 
       // Create a JAR file based on the class.
-      String jarfile = JarFinder.getJar(WebCrawlApp.class);
+      Location jarfile = lf.create(JarFinder.getJar(WebCrawlApp.class));
 
       // Create a bundler.
-      ArchiveBundler bundler = new ArchiveBundler(lf.create(jarfile));
+      ArchiveBundler bundler = new ArchiveBundler(jarfile);
 
       // Create a bundle with modified manifest and added application.json.
 
@@ -71,7 +71,7 @@ public class ArchiveBundlerTest {
 
         if(entry.getName().contains("application.json")){
           found_app_json = true;
-        } else if (!entry.isDirectory()) {
+        } else if (!entry.isDirectory() && !entry.getName().equals(JarFile.MANIFEST_NAME)) {
           Assert.assertNotNull(oldJar.getResource(entry.getName()));
         }
       }
