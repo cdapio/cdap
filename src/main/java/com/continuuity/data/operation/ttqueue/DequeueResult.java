@@ -47,7 +47,7 @@ public class DequeueResult {
       this.pointer = new QueueEntryPointer(queueName,
           dequeueResult.getEntryPointer().getEntryId(),
           dequeueResult.getEntryPointer().getShardId());
-      this.entry = new QueueEntry(dequeueResult.getData());
+      this.entry = new QueueEntryImpl(dequeueResult.getData());
       this.queueState = null;
     } else {
       throw new RuntimeException("Invalid state: " + dequeueResult.toString());
@@ -73,7 +73,7 @@ public class DequeueResult {
   public QueueEntryPointer getEntryPointer() {
     return this.pointer;
   }
-
+  
   public QueueEntry getEntry() {
     return this.entry;
   }
@@ -93,5 +93,9 @@ public class DequeueResult {
         .add("entryPointer", this.pointer)
         .add("entry", this.entry)
         .toString();
+  }
+  @Deprecated
+  public byte[] getValue() {
+    return entry.getData();
   }
 }

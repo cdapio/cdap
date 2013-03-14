@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.google.common.base.Objects;
+
 /**
  *
  */
@@ -39,5 +41,13 @@ public class StatefulQueueConsumer extends QueueConsumer {
   @Override
   public void setQueueState(QueueState queueState) {
     this.queueState = queueState;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("super", super.toString())
+      .add("queueState", queueState.toString())
+      .toString();
   }
 }

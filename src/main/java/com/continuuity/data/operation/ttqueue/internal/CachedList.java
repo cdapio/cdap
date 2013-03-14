@@ -1,5 +1,8 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
+import com.google.common.base.Objects;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,5 +44,13 @@ public class CachedList<T> {
 
   public boolean hasNext() {
     return nextIndex < list.size();
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("list", Arrays.toString(list.toArray()))
+      .add("nextIndex", nextIndex)
+      .toString();
   }
 }

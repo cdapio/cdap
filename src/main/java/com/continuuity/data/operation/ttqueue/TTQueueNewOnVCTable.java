@@ -13,6 +13,7 @@ import com.continuuity.data.operation.ttqueue.internal.CachedList;
 import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
+import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
@@ -436,6 +437,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void setCachedEntries(CachedList<QueueStateEntry> cachedEntries) {
       this.cachedEntries = cachedEntries;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("activeEntryId", activeEntryId)
+        .add("consumerReadPointer", consumerReadPointer)
+        .add("queueWritePointer", queueWrtiePointer)
+        .add("cachedEntries", cachedEntries.toString())
+        .toString();
     }
   }
 
