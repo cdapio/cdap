@@ -80,13 +80,28 @@ public final class BinaryDecoder implements Decoder {
   }
 
   @Override
+  public void skipFloat() throws IOException {
+    // Skip 4 bytes
+    skipBytes(4L);
+  }
+
+  @Override
+  public void skipDouble() throws IOException {
+    // Skip 8 bytes
+    skipBytes(8L);
+  }
+
+  @Override
   public void skipString() throws IOException {
     skipBytes();
   }
 
   @Override
   public void skipBytes() throws IOException {
-    int len = readInt();
+    skipBytes(readInt());
+  }
+
+  private void skipBytes(long len) throws IOException {
     long skipped = input.skip(len);
     while (skipped != len) {
       skipped += input.skip(len - skipped);

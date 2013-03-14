@@ -30,6 +30,16 @@ public interface Decoder {
   ByteBuffer readBytes() throws IOException;
 
   /**
+   * Skips a float.
+   */
+  void skipFloat() throws IOException;
+
+  /**
+   * Skips a double.
+   */
+  void skipDouble() throws IOException;
+
+  /**
    * Skips the a string.
    */
   void skipString() throws IOException;
