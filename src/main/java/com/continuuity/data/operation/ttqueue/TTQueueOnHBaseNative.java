@@ -115,13 +115,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
     return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
   }
 
-  @Override
-  public DequeueResult dequeue(StatefulQueueConsumer statefulConsumer, ReadPointer readPointer)
-    throws OperationException {
-    // TODO: Implement
-    throw new UnsupportedOperationException("Not implemented yet");
-  }
-
   private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) throws OperationException {
 
@@ -171,11 +164,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
-    throw new UnsupportedOperationException("Not implemented yet");
-  }
-
-  @Override
   public void finalize(QueueEntryPointer entryPointer,
       QueueConsumer consumer, int totalNumGroups)
           throws OperationException {
@@ -208,11 +196,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
       e.printStackTrace();
       throw new OperationException(StatusCode.HBASE_ERROR, e.getMessage());
     }
-  }
-
-  @Override
-  public void unack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
-    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override

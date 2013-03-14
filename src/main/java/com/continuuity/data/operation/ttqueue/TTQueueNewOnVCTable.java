@@ -166,42 +166,27 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if (TRACE) log("Invalidated " + entryPointer);
   }
 
-  // TODO: consolidate dequeue methods
   /**
    * {@inheritDoc}
    */
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
-    if(consumer instanceof StatefulQueueConsumer) {
-      return dequeue((StatefulQueueConsumer) consumer, readPointer);
-    }
-    return dequeueInternal(consumer, config, null, readPointer).getFirst();
+    return dequeueInternal(consumer, config, readPointer);
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
-    if(consumer instanceof StatefulQueueConsumer) {
-      return dequeue((StatefulQueueConsumer) consumer, readPointer);
-    }
-    return dequeueInternal(consumer, consumer.getQueueConfig(), null, readPointer).getFirst();
+    return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
   }
 
-  @Override
-  public DequeueResult dequeue(StatefulQueueConsumer statefulConsumer, ReadPointer readPointer)
-    throws OperationException {
-    ImmutablePair<DequeueResult, QueueState> result =
-      dequeueInternal(statefulConsumer, statefulConsumer.getQueueConfig(), statefulConsumer.getQueueState(), readPointer);
-    statefulConsumer.setQueueState(result.getSecond());
-    return result.getFirst();
-  }
-
-  private ImmutablePair<DequeueResult, QueueState> dequeueInternal(
-    QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+  private DequeueResult dequeueInternal(
+    QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
+    // Determine what dequeue strategy to use based on the partitioner
     QueuePartitioner queuePartitioner = config.getPartitionerType().getPartitioner();
     DequeueStrategy dequeueStrategy;
     if(queuePartitioner.isDisjoint()) {
@@ -214,15 +199,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       dequeueStrategy = new FifoDequeueStrategy();
     }
 
-    // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
-    // TODO: so that repeated reads to HBase on each dequeue is not required
     // If QueueState is null, read the queue state from underlying storage.
     // ACTIVE_ENTRY contains the entry if any that is dequeued, but not acked
     // CONSUMER_READ_POINTER + 1 points to the next entry that can be read by this queue consuemr
-    //
+    QueueState queueState = consumer.getQueueState();
     if(queueState == null) {
       queueState = new QueueStateImpl();
       dequeueStrategy.constructQueueState(consumer, config, queueState, readPointer);
+      consumer.setQueueState(queueState);
     }
 
     // If active entry present, return it
@@ -234,7 +218,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueEntry entry = new QueueEntryImpl(cachedEntry.getData());
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                                       new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
-      return new ImmutablePair<DequeueResult, QueueState>(dequeueResult, queueState);
+      return dequeueResult;
     }
 
     // If no more cached entries, read entries from storage
@@ -252,13 +236,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
-      return new ImmutablePair<DequeueResult, QueueState>(dequeueResult, queueState);
+      return dequeueResult;
     } else {
       // No queue entries available to dequue, return queue empty
       if (TRACE) log("End of queue reached using " + "read pointer " + readPointer);
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
-      return new ImmutablePair<DequeueResult, QueueState>(dequeueResult, queueState);
+      return dequeueResult;
     }
   }
 
@@ -313,11 +297,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    if(consumer instanceof StatefulQueueConsumer) {
-      ack(entryPointer, (StatefulQueueConsumer) consumer, readPointer);
-      return;
-    }
     ackInternal(entryPointer, consumer, readPointer);
+    if(consumer.isStateful()) {
+      consumer.getQueueState().setActiveEntryId(INVALID_ENTRY_ID);
+    }
   }
 
   public void ackInternal(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
@@ -356,12 +339,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
-    ackInternal(entryPointer, statefulConsumer, readPointer);
-    statefulConsumer.getQueueState().setActiveEntryId(INVALID_ENTRY_ID);
-  }
-
-  @Override
   public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups) throws
     OperationException {
     // TODO: Evict queue entries
@@ -377,14 +354,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
       new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
                                                                         Bytes.toBytes(entryPointer.getEntryId())});
+    if(consumer.isStateful()) {
+      consumer.getQueueState().setActiveEntryId(entryPointer.getEntryId());
+    }
   }
-
-  @Override
-  public void unack(QueueEntryPointer entryPointer, StatefulQueueConsumer statefulConsumer, ReadPointer readPointer) throws OperationException {
-    unack(entryPointer, (QueueConsumer) statefulConsumer, readPointer);
-    statefulConsumer.getQueueState().setActiveEntryId(entryPointer.getEntryId());
-  }
-
   static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
@@ -436,9 +409,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public QueueStateImpl() {
       cachedEntries = CachedList.emptyList();
-    }
-    public QueueStateImpl(CachedList<QueueStateEntry> cachedEntries) {
-      this.cachedEntries = cachedEntries;
     }
 
     @Override

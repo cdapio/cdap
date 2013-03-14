@@ -26,10 +26,17 @@ public class StatefulQueueConsumer extends QueueConsumer {
     super(instanceId, groupId, groupSize, groupName, partitioningKey, config);
   }
 
+  @Override
+  public boolean isStateful() {
+    return true;
+  }
+
+  @Override
   public QueueState getQueueState() {
     return queueState;
   }
 
+  @Override
   public void setQueueState(QueueState queueState) {
     this.queueState = queueState;
   }
