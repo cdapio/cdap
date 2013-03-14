@@ -6,13 +6,18 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.InputSupplier;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -26,10 +31,8 @@ public class ArchiveBundlerTest {
 
   @Test
   public void testBundler() throws Exception {
-    OutputStream of = null;
     LocationFactory lf = new LocalLocationFactory();
-    Location f = lf.create("/tmp/application.json");
-    Location out = lf.create("/tmp/testBundler." + System.currentTimeMillis() + ".jar");
+    Location out = lf.create(File.createTempFile("testBundler", ".jar").toURI());
 
     try {
       Manifest manifest = new Manifest();
@@ -39,17 +42,15 @@ public class ArchiveBundlerTest {
       manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, "META-INF/specification/application.json");
 
       // Create a JAR file based on the class.
-      String jarfile = JarFinder.getJar(WebCrawlApp.class);
-
-      // Create an application json.
-      of = f.getOutputStream();
-      of.write("{}".getBytes(Charset.forName("UTF8")));
+      Location jarfile = lf.create(JarFinder.getJar(WebCrawlApp.class));
 
       // Create a bundler.
-      ArchiveBundler bundler = new ArchiveBundler(lf.create(jarfile));
+      ArchiveBundler bundler = new ArchiveBundler(jarfile);
 
       // Create a bundle with modified manifest and added application.json.
-      bundler.clone(out, manifest, ImmutableList.of(new ImmutablePair<String, Location>("application.json", f)));
+
+      bundler.clone(out, manifest, ImmutableMap.of("application.json",
+                                                   ByteStreams.newInputStreamSupplier("{}".getBytes(Charsets.UTF_8))));
       Assert.assertTrue(out.exists());
       JarFile file = new JarFile(new File(out.toURI()));
       Enumeration<JarEntry> entries = file.entries();
@@ -70,16 +71,12 @@ public class ArchiveBundlerTest {
 
         if(entry.getName().contains("application.json")){
           found_app_json = true;
-        } else if (!entry.isDirectory()) {
+        } else if (!entry.isDirectory() && !entry.getName().equals(JarFile.MANIFEST_NAME)) {
           Assert.assertNotNull(oldJar.getResource(entry.getName()));
         }
       }
       Assert.assertTrue(found_app_json);
     } finally {
-      if(of != null) {
-        of.close();
-        f.delete();
-      }
       out.delete();
     }
   }
