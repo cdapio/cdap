@@ -16,24 +16,40 @@ public class JarClassLoader extends MultiClassLoader {
   private final JarResources jarResources;
 
   /**
-   * Create the JarResource and suck in the archive file.
-   *
-   * @param jarName Name of the archive file.
+   * Creates a ClassLoader that load classes from the given jar file with the system ClassLoader as its parent.
+   * @param jarLocation Location of the jar file
+   * @throws IOException If there is error loading the jar file
    */
-  public JarClassLoader(String jarName) throws IOException {
-    jarResources = new JarResources(jarName);
-  }
-
-  public JarClassLoader(Location jarName) throws IOException {
-    jarResources = new JarResources(jarName);
+  public JarClassLoader(Location jarLocation) throws IOException {
+    this(new JarResources(jarLocation));
   }
 
   /**
-   * Creates an instance of archive with provided archive resources.
+   * Creates a ClassLoader with provided archive resources with the system ClassLoader as its parent.
    *
    * @param jarResources instance of archive resources
    */
   public JarClassLoader(JarResources jarResources) {
+    this.jarResources = jarResources;
+  }
+
+  /**
+   * Creates a ClassLoader that load classes from the given jar file with the given ClassLoader as its parent.
+   * @param jarLocation Location of the jar file.
+   * @param parent Parent ClassLoader.
+   * @throws IOException If there is error loading the jar file.
+   */
+  public JarClassLoader(Location jarLocation, ClassLoader parent) throws IOException {
+    this(new JarResources(jarLocation), parent);
+  }
+
+  /**
+   * Creates a ClassLoader with provided archive resources with the given ClassLoader as its parent.
+   * @param jarResources instance of archive resources
+   * @param parent Parent ClassLoader.
+   */
+  public JarClassLoader(JarResources jarResources, ClassLoader parent) {
+    super(parent);
     this.jarResources = jarResources;
   }
 
@@ -48,7 +64,6 @@ public class JarClassLoader extends MultiClassLoader {
   @Override
   @Nullable
   public byte[] loadClassBytes(String className) {
-    className = formatClassName(className);
-    return ( jarResources.getResource(className) );
+    return jarResources.getResource(formatClassName(className));
   }
 }
