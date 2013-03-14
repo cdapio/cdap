@@ -1,20 +1,27 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.util.Random;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.Random;
 
 public class TestLevelDBTTQueue extends TestTTQueue {
 
+  private static CConfiguration conf;
+
+  static {
+    CConfiguration conf = CConfiguration.create();
+    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    TestLevelDBTTQueue.conf = conf;
+  }
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule());
+      new DataFabricLevelDBModule(conf));
 
   private static final OVCTableHandle handle =
       injector.getInstance(OVCTableHandle.class);
@@ -27,7 +34,7 @@ public class TestLevelDBTTQueue extends TestTTQueue {
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("TestMemoryTTQueueTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

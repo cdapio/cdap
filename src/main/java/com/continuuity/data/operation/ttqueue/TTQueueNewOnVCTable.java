@@ -6,6 +6,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.internal.CachedList;
@@ -28,7 +29,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   protected final VersionedColumnarTable table;
   private final byte [] queueName;
-  final TimestampOracle timeOracle;
+  final TransactionOracle oracle;
 
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
@@ -87,11 +88,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // TODO: move this to queue config?
   int batchSize = 100;
 
-  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
+  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
-    this.timeOracle = timeOracle;
+    this.oracle = oracle;
   }
 
   private long getBatchSize() {
@@ -103,10 +104,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
-    return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
-  }
   @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data = entry.getData();
@@ -167,15 +164,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if (TRACE) log("Invalidated " + entryPointer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException {
-    return dequeueInternal(consumer, config, readPointer);
-  }
-
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
@@ -216,7 +204,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue state error - cannot fetch active entry id from cached entries");
       }
       QueueStateEntry cachedEntry = queueState.getCachedEntries().getCurrent();
-      QueueEntry entry = new QueueEntryImpl(cachedEntry.getData());
+      QueueEntry entry = new QueueEntry(cachedEntry.getData());
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                                       new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
       return dequeueResult;
@@ -233,7 +221,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.dequeueReturns.incrementAndGet();
       queueState.setActiveEntryId(cachedEntry.getEntryId());
       queueState.setConsumerReadPointer(cachedEntry.getEntryId());
-      QueueEntry entry = new QueueEntryImpl(cachedEntry.getData());
+      QueueEntry entry = new QueueEntry(cachedEntry.getData());
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
@@ -308,7 +296,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    // TODO: 3. Use Transaction.getTransactionId instead ReadPointer
+    // TODO: 3. Use Transaction.getWriteVersion instead ReadPointer
     QueuePartitioner partitioner=consumer.getQueueConfig().getPartitionerType().getPartitioner();
 
     if (partitioner.isDisjoint()) {
@@ -340,8 +328,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups) throws
-    OperationException {
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups, long writePoint)
+    throws OperationException {
     // TODO: Evict queue entries
   }
 
@@ -379,8 +367,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   protected ImmutablePair<ReadPointer, Long> dirtyPointer() {
-    long now = this.timeOracle.getTimestamp();
-    return new ImmutablePair<ReadPointer,Long>(new MemoryReadPointer(now), 1L);
+    return new ImmutablePair<ReadPointer,Long>(oracle.dirtyReadPointer(), oracle.dirtyWriteVersion());
   }
 
   protected byte[] makeRowName(byte[] bytesToAppendToQueueName) {

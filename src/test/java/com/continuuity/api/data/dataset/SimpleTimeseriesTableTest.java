@@ -108,7 +108,7 @@ public class SimpleTimeseriesTableTest extends DataSetTestBase {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTimeRangeCondition() throws OperationException {
-    newCollector();
+    newTransaction(Mode.Sync);
     long ts = System.currentTimeMillis();
     table.read(Bytes.toBytes("any"), ts, ts - 100);
   }

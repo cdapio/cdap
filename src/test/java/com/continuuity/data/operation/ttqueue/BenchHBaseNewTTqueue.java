@@ -46,7 +46,7 @@ public class BenchHBaseNewTTqueue extends BenchTTQueue {
     return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   // Configuration for benchmark

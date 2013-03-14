@@ -23,7 +23,7 @@ public class QueueFinalize {
     return queueName;
   }
 
-  public void execute(TTQueueTable queueTable) throws OperationException {
-    queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups);
+  public void execute(TTQueueTable queueTable, long writePoint) throws OperationException {
+    queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups, writePoint);
   }
 }

@@ -43,10 +43,11 @@ public abstract class BenchTTQueue {
     long start = now();
     
     byte [] data = new byte[config.queueEntrySize];
+    QueueEntry entry = new QueueEntry(data);
     long last = start;
     for (int i=0; i<iterations; i++) {
       r.nextBytes(data);
-      assertTrue(queue.enqueue(data, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(entry, timeOracle.getTimestamp()).isSuccess());
       last = printStat(i, last, 1000);
     }
     
@@ -62,10 +63,11 @@ public abstract class BenchTTQueue {
     
     log("Enqueueing " + iterations + " entries");
     byte [] data = new byte[config.queueEntrySize];
+    QueueEntry entry = new QueueEntry(data);
     long last = start;
     for (int i=0; i<iterations; i++) {
       r.nextBytes(data);
-      assertTrue(queue.enqueue(data, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(entry, timeOracle.getTimestamp()).isSuccess());
       last = printStat(i, last, 1000);
     }
     long end = now();
@@ -82,7 +84,7 @@ public abstract class BenchTTQueue {
       DequeueResult result = queue.dequeue(consumer, rp);
       assertTrue(result.isSuccess());
       queue.ack(result.getEntryPointer(), consumer, rp);
-      queue.finalize(result.getEntryPointer(), consumer, -1);
+      queue.finalize(result.getEntryPointer(), consumer, -1, rp.getMaximum());
       last = printStat(i, last, 1000);
     }
     long dend = now();

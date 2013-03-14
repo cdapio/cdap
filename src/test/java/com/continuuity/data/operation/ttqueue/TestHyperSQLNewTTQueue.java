@@ -29,7 +29,7 @@ public class TestHyperSQLNewTTQueue extends TestTTQueue {
     return new TTQueueNewOnVCTable(
         handle.getTable(Bytes.toBytes("HyperSQLTTQueueFifoOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

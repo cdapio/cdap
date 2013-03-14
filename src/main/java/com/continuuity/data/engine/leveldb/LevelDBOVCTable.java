@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data.util.RowLockTable;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -27,9 +28,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -57,11 +58,24 @@ implements OrderedVersionedColumnarTable {
   
   private final String encodedTableName;
 
+  private final Integer blockSize;
+  private final Long cacheSize;
+
   private DB db;
 
-  LevelDBOVCTable(final String basePath, final String tableName) {
+  // this will be used for row-level locking. Because the levelDB may grow very large,
+  // and we want to keep the memory footprint small, we will always remove locks from
+  // the table at the time we release them. This can have a slight performance overhead,
+  // because other threads can get an invalid lock (see RowLockTable) and then have to
+  // create a new lock. Therefore we always use validLock() to obtain a lock.
+  private final RowLockTable locks = new RowLockTable();
+
+  LevelDBOVCTable(final String basePath, final String tableName,
+                  final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.tableName = tableName;
+    this.blockSize = blockSize;
+    this.cacheSize = cacheSize;
     try {
       this.encodedTableName = URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -76,14 +90,13 @@ implements OrderedVersionedColumnarTable {
   }
 
   private Options generateDBOptions(boolean createIfMissing,
-      boolean errorIfExists) {
+                                    boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
     options.comparator(new KeyValueDBComparator());
-    // Disabling optimizations until all tests pass
-    // options.blockSize(1024);
-    // options.cacheSize(1024*1024*32);
+    options.blockSize(blockSize);
+    options.cacheSize(cacheSize);
     return options;
   }
 
@@ -160,23 +173,225 @@ implements OrderedVersionedColumnarTable {
         .getKey();
   }
 
-  private List<KeyValue> readKeyValueRange(byte [] start,
-      byte [] end)
-  throws DBException, IOException {
+  private byte[] appendByte(final byte[] value, byte b) {
+    byte[] newValue = new byte[value.length+1];
+    System.arraycopy(value, 0, newValue, 0, value.length);
+    newValue[value.length] = b;
+    return newValue;
+  }
+
+  private KeyValue readKeyValueRangeAndGetLatest(byte [] row,
+                                                 byte [] column,
+                                                 ReadPointer readPointer)
+    throws DBException, IOException {
     DBIterator iterator = db.iterator();
     try {
-      List<KeyValue> kvs = new ArrayList<KeyValue>();
-      for (iterator.seek(start); iterator.hasNext(); iterator.next()) {
+      byte [] startKey = createStartKey(row, column);
+      byte [] endKey = createEndKey(row, column);
+      long lastDelete = -1;
+      long undeleted = -1;
+      for (iterator.seek(startKey); iterator.hasNext(); iterator.next()) {
         byte [] key = iterator.peekNext().getKey();
         byte [] value = iterator.peekNext().getValue();
-        // If we reach the end, finish
-        if (KeyValue.KEY_COMPARATOR.compare(key, end) >= 0) return kvs;
-        kvs.add(createKeyValue(key, value));
+        // If we have reached past the endKey, nothing was found, return null
+        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+          return null;
+        }
+        KeyValue kv = createKeyValue(key, value);
+        // Determine if this KV is visible
+        long curVersion = kv.getTimestamp();
+        if (!readPointer.isVisible(curVersion)) continue;
+        Type type = Type.codeToType(kv.getType());
+        if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          continue;
+        }
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) continue;
+          else break;
+        }
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+          continue;
+        }
+        if (curVersion == lastDelete) continue;
+        // If we get here, this version is visible
+        return kv;
       }
-      return kvs;
     } finally {
       iterator.close();
     }
+    // Nothing found
+    return null;
+  }
+
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
+                                                            byte[][] columns,
+                                                            ReadPointer readPointer)
+    throws DBException, IOException {
+    Map<byte[],byte[]>  map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
+    byte [][] orderedColumns = Arrays.copyOf(columns, columns.length);
+    Arrays.sort(orderedColumns, new Bytes.ByteArrayComparator());
+    byte [] startKey = createStartKey(row, orderedColumns[0]);
+    byte [] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
+    DBIterator iterator = db.iterator();
+    int colIdx=0;
+    try {
+      long lastDelete = -1;
+      long undeleted = -1;
+      for (iterator.seek(startKey); iterator.hasNext(); ) {
+        byte [] key = iterator.peekNext().getKey();
+        byte [] value = iterator.peekNext().getValue();
+        // If we have reached past the endKey, nothing was found, return null
+        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+          return null;
+        }
+        KeyValue kv = createKeyValue(key, value);
+
+        // Determine if this KV is visible
+        long curVersion = kv.getTimestamp();
+        if (!readPointer.isVisible(curVersion)) {
+          iterator.next();
+          continue;
+        }
+        Type type = Type.codeToType(kv.getType());
+        if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          iterator.next();
+          continue;
+        }
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) {
+            iterator.next();
+            continue;
+          } else {
+            colIdx++;
+            if (colIdx < orderedColumns.length) {
+              iterator.seek(createStartKey(row, orderedColumns[colIdx]));
+              continue;
+            } else {
+              break;
+            }
+          }
+        }
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+          iterator.next();
+          continue;
+        }
+        if (curVersion == lastDelete) {
+          iterator.next();
+          continue;
+        }
+        // If we get here, this version is visible
+        map.put(kv.getQualifier(), kv.getValue());
+        colIdx++;
+        if (colIdx < orderedColumns.length) {
+          iterator.seek(createStartKey(row, orderedColumns[colIdx]));
+        } else {
+          break;
+        }
+
+      }
+    } finally {
+      iterator.close();
+    }
+    return map;
+  }
+
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
+                                                            ReadPointer readPointer)
+    throws DBException, IOException {
+    return readKeyValueRangeAndGetLatest(row, null, null, readPointer, -1);
+
+  }
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
+                                                            byte[] startColumn,
+                                                            byte[] stopColumn,
+                                                            ReadPointer readPointer,
+                                                            int limit)
+    throws DBException, IOException {
+    // negative limit means unlimited results
+    if (limit <= 0) limit = Integer.MAX_VALUE;
+
+    byte [] startKey = startColumn == null ? createStartKey(row) :
+      createStartKey(row, startColumn);
+    byte [] endKey = stopColumn == null ? createEndKey(row) :
+      createEndKey(row, stopColumn);
+
+    Map<byte[], byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
+    DBIterator iterator = db.iterator();
+    byte[] prevKey=null;
+    try {
+      long lastDelete = -1;
+      long undeleted = -1;
+
+      for (iterator.seek(startKey); iterator.hasNext(); ) {
+        byte [] key = iterator.peekNext().getKey();
+        byte [] value = iterator.peekNext().getValue();
+        // If we have reached past the endKey, nothing was found, return null
+        KeyValue kv = createKeyValue(key, value);
+        long curVersion = kv.getTimestamp();
+        byte[] curColumn = kv.getQualifier();
+        if ((Bytes.equals(curColumn, stopColumn)) || (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0)) {
+          return map;
+        }
+        // Determine if this KV is visible
+        if (!readPointer.isVisible(curVersion)) {
+          iterator.next();
+          prevKey = curColumn;
+          continue;
+        }
+        Type type = Type.codeToType(kv.getType());
+        if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          iterator.next();
+          prevKey = null;
+          continue;
+        }
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) {
+            iterator.next();
+            prevKey = null;
+            continue;
+          } else {
+            byte [] nextColumn = appendByte(kv.getQualifier(), (byte) 0x00);
+            iterator.seek(createStartKey(row, nextColumn));
+            prevKey = null;
+            lastDelete = -1;
+            undeleted = -1;
+            continue;
+          }
+        }
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+          iterator.next();
+          prevKey = curColumn;
+          continue;
+        }
+        if ( (curVersion == lastDelete) && (Bytes.equals(prevKey, curColumn)) ) {
+          iterator.next();
+          prevKey = curColumn;
+          continue;
+        }
+        // If we get here, this version is visible
+        map.put(curColumn, kv.getValue());
+        // break out if limit reached
+        if (map.size() == limit) {
+          break;
+        }
+        byte [] nextColumn = appendByte(kv.getQualifier(), (byte) 0x00);
+        iterator.seek(createStartKey(row, nextColumn));
+        prevKey = key;
+        lastDelete = -1;
+        undeleted = -1;
+        continue;
+      }
+    } finally {
+      iterator.close();
+    }
+    // Nothing found
+    return map;
   }
 
   private KeyValue createKeyValue(byte[] key, byte[] value) {
@@ -186,7 +401,7 @@ implements OrderedVersionedColumnarTable {
     pos = Bytes.putInt(kvBytes, pos, key.length);
     pos = Bytes.putInt(kvBytes, pos, value.length);
     pos = Bytes.putBytes(kvBytes, pos, key, 0, key.length);
-    pos = Bytes.putBytes(kvBytes, pos, value, 0, value.length);
+    Bytes.putBytes(kvBytes, pos, value, 0, value.length);
     return new KeyValue(kvBytes);
   }
 
@@ -246,6 +461,12 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version)
+    throws OperationException {
+    deleteAll(row, columns, version);
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version)
       throws OperationException {
     performInsert(row, column, version, Type.UndeleteColumn, NULL_VAL);
@@ -271,16 +492,8 @@ implements OrderedVersionedColumnarTable {
   public OperationResult<Map<byte[], byte[]>>
   get(byte[] row, ReadPointer readPointer) throws OperationException {
     try {
-      List<KeyValue> kvs = readKeyValueRange(
-          createStartKey(row), createEndKey(row));
-      return new OperationResult<Map<byte[], byte[]>>(
-          filteredLatestColumns(kvs, readPointer, new ColumnMatcher() {
-            @Override
-            public boolean includeColumn(byte[] column) {
-              return true;
-            }
-          }));
-      
+      Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, readPointer);
+      return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
       handleIOException(e, "get");
     }
@@ -304,18 +517,16 @@ implements OrderedVersionedColumnarTable {
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
     try {
-      List<KeyValue> kvs = readKeyValueRange(
-          createStartKey(row, column), createEndKey(row, column));
-      
-      ImmutablePair<Long,byte[]> latest = filteredLatest(kvs, readPointer);
-
-      if (latest == null)
+      KeyValue latest = readKeyValueRangeAndGetLatest(row, column,
+                                                      readPointer);
+      if (latest == null) {
         return new OperationResult<ImmutablePair<byte[], Long>>(
-            StatusCode.KEY_NOT_FOUND);
+          StatusCode.COLUMN_NOT_FOUND);
+      }
 
       return new OperationResult<ImmutablePair<byte[], Long>>(
           new ImmutablePair<byte[],Long>(
-              latest.getSecond(), latest.getFirst()));
+              latest.getValue(), latest.getTimestamp()));
 
     } catch (IOException e) {
       handleIOException(e, "get");
@@ -328,73 +539,35 @@ implements OrderedVersionedColumnarTable {
   get(byte[] row, final byte[] startColumn, final byte[] stopColumn, int limit,
       ReadPointer readPointer) throws OperationException {
     try {
-      byte [] startKey = startColumn == null ? createStartKey(row) :
-        createStartKey(row, startColumn);
-      byte [] endKey = stopColumn == null ? createEndKey(row) :
-        createEndKey(row, stopColumn);
-      List<KeyValue> kvs = readKeyValueRange(startKey, endKey);
-    
-      if (kvs == null || kvs.isEmpty()) {
+      Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, startColumn, stopColumn,
+                                                                 readPointer, limit);
+
+      if (latest == null || latest.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.KEY_NOT_FOUND);
+          StatusCode.COLUMN_NOT_FOUND);
       }
-      Map<byte[], byte[]> filtered = filteredLatestColumns(kvs, readPointer,
-          limit, new ColumnMatcher() {
-              @Override
-              public boolean includeColumn(byte[] column) {
-                if (startColumn != null &&
-                    Bytes.compareTo(column, startColumn) < 0) {
-                  return false;
-                }
-                if (stopColumn != null &&
-                    Bytes.compareTo(column, stopColumn) >= 0) {
-                  return false;
-                }
-                return true;
-              }
-            });
-      if (filtered.isEmpty()) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.COLUMN_NOT_FOUND);
-      } else {
-        return new OperationResult<Map<byte[], byte[]>>(filtered);
-      }
+      return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
       handleIOException(e, "get");
     }
     throw new InternalError("this point should never be reached.");
   }
 
+
+
   @Override
   public OperationResult<Map<byte[], byte[]>>
   get(byte[] row, byte[][] columns, ReadPointer readPointer)
-      throws OperationException {
+    throws OperationException {
     try {
-      byte [][] orderedColumns = Arrays.copyOf(columns, columns.length);
-      Arrays.sort(orderedColumns, new Bytes.ByteArrayComparator());
-      byte [] startKey = createStartKey(row, orderedColumns[0]);
-      byte [] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
-      List<KeyValue> kvs = readKeyValueRange(startKey, endKey);
-    
-      if (kvs == null || kvs.isEmpty()) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.KEY_NOT_FOUND);
-      }
-      final Set<byte[]> columnSet = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-      for (byte [] column : columns) columnSet.add(column);
-      Map<byte[], byte[]> filtered =
-          filteredLatestColumns(kvs, readPointer, new ColumnMatcher() {
-              @Override
-              public boolean includeColumn(byte[] column) {
-                return columnSet.contains(column);
-              }
-          });
-      if (filtered.isEmpty()) {
+      Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(row, columns, readPointer);
+
+      if (map == null || map.isEmpty()) {
+
         return new OperationResult<Map<byte[], byte[]>>(
             StatusCode.COLUMN_NOT_FOUND);
-      } else {
-        return new OperationResult<Map<byte[], byte[]>>(filtered);
       }
+      return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
       handleIOException(e, "get");
     }
@@ -539,37 +712,6 @@ implements OrderedVersionedColumnarTable {
   }
 
   /**
-   * Result has (version, kvtype, id, value)
-   * @throws DBException
-   */
-  private ImmutablePair<Long, byte[]> filteredLatest(
-      List<KeyValue> kvs, ReadPointer readPointer) throws DBException {
-    if (kvs == null || kvs.isEmpty()) return null;
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (KeyValue kv : kvs) {
-      long curVersion = kv.getTimestamp();
-      if (!readPointer.isVisible(curVersion)) continue;
-      Type type = Type.codeToType(kv.getType());
-      if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-        continue;
-      }
-      if (type == Type.DeleteColumn) {
-        if (undeleted == curVersion) continue;
-        else break;
-      }
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-        continue;
-      }
-      if (curVersion == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion, kv.getValue());
-    }
-    return null;
-  }
-
-  /**
    * Result has (column, version, kvtype, id, value)
    * @throws DBException
    */
@@ -689,9 +831,8 @@ implements OrderedVersionedColumnarTable {
 
   // Read-Modify-Write Operations
 
-  @Override
-  public synchronized long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) throws OperationException {
+  private long internalIncrement(byte[] row, byte[] column, long amount, ReadPointer readPointer,
+                                 long writeVersion) throws OperationException {
     long newAmount = amount;
     // Read existing value
     OperationResult<byte[]> readResult = get(row, column, readPointer);
@@ -704,18 +845,38 @@ implements OrderedVersionedColumnarTable {
     }
     // Write new value
     performInsert(row, column, writeVersion, Type.Put,
-        Bytes.toBytes(newAmount));
+                  Bytes.toBytes(newAmount));
     return newAmount;
   }
 
   @Override
-  public synchronized Map<byte[], Long> increment(byte[] row, byte[][] columns,
+  public long increment(byte[] row, byte[] column, long amount,
+      ReadPointer readPointer, long writeVersion) throws OperationException {
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
+    long newAmount;
+    try {
+      newAmount = internalIncrement(row, column, amount, readPointer, writeVersion);
+    } finally {
+      this.locks.unlockAndRemove(r);
+    }
+    return newAmount;
+  }
+
+  @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
       long[] amounts, ReadPointer readPointer, long writeVersion)
       throws OperationException {
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-    for (int i=0; i<columns.length; i++) {
-      ret.put(columns[i], increment(row, columns[i], amounts[i],
-          readPointer, writeVersion));
+    try {
+      for (int i=0; i<columns.length; i++) {
+        ret.put(columns[i], internalIncrement(row, columns[i], amounts[i],
+            readPointer, writeVersion));
+      }
+    } finally {
+      this.locks.unlockAndRemove(r);
     }
     return ret;
   }
@@ -728,41 +889,47 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public synchronized void compareAndSwap(byte[] row, byte[] column,
+  public void compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) throws OperationException {
 
-    // Read existing value
-    OperationResult<byte[]> readResult = get(row, column, readPointer);
-    byte [] existingValue = readResult.getValue();
-    
-    // Handle cases regarding non-existent values
-    if (existingValue == null && expectedValue != null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    if (existingValue != null && expectedValue == null)
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-    
-    // if nothing existed, write data
-    if (expectedValue == null) {
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    this.locks.validLock(r);
+    try {
+      // Read existing value
+      OperationResult<byte[]> readResult = get(row, column, readPointer);
+      byte [] existingValue = readResult.getValue();
+
+      // Handle cases regarding non-existent values
+      if (existingValue == null && expectedValue != null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+      if (existingValue != null && expectedValue == null)
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if nothing existed, write data
+      if (expectedValue == null) {
+        performInsert(row, column, writeVersion, Type.Put, newValue);
+        return;
+      }
+
+      // check if expected == existing, fail if not
+      if (!Bytes.equals(expectedValue, existingValue))
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "CompareAndSwap expected value mismatch");
+
+      // if newValue is null, just delete.
+      if (newValue == null) {
+        deleteAll(row, column, writeVersion);
+        return;
+      }
+
+      // Checks passed, write new value
       performInsert(row, column, writeVersion, Type.Put, newValue);
-      return;
+    } finally {
+      this.locks.unlockAndRemove(r);
     }
-
-    // check if expected == existing, fail if not
-    if (!Bytes.equals(expectedValue, existingValue))
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "CompareAndSwap expected value mismatch");
-
-    // if newValue is null, just delete.
-    if (newValue == null) {
-      deleteAll(row, column, writeVersion);
-      return;
-    }
-
-    // Checks passed, write new value
-    performInsert(row, column, writeVersion, Type.Put, newValue);
   }
   
   private void handleIOException(IOException e, String where)
@@ -780,4 +947,5 @@ implements OrderedVersionedColumnarTable {
     LOG.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
+
 }

@@ -7,18 +7,26 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An in-memory implementation of a column-oriented table similar to HBase.
@@ -34,14 +42,14 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final byte[] name;
 
-  private final ConcurrentNavigableMap<Row, // row to
+  private final ConcurrentNavigableMap<RowLockTable.Row, // row to
   NavigableMap<Column, // column to
   NavigableMap<Version, Value>>> map = // version to value
-  new ConcurrentSkipListMap<Row,
+  new ConcurrentSkipListMap<RowLockTable.Row,
       NavigableMap<Column, NavigableMap<Version, Value>>>();
 
-  private final ConcurrentHashMap<Row, RowLock> locks =
-      new ConcurrentHashMap<Row, RowLock>();
+  // this will be use to implement row-level locking
+  private final RowLockTable locks = new RowLockTable();
 
   public MemoryOVCTable(final byte [] tableName) {
     this.name = tableName;
@@ -60,15 +68,16 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public void put(byte[] row, byte[][] columns, long version, byte[][] values) {
     assert (columns.length == values.length);
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockRow(r);
-    for (int i = 0; i < columns.length; i++) {
-      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(),
-          columns[i]);
-      columnMap.put(new Version(version), new Value(values[i]));
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+    try {
+      for (int i = 0; i < columns.length; i++) {
+        NavigableMap<Version, Value> columnMap = getColumn(map, columns[i]);
+        columnMap.put(new Version(version), new Value(values[i]));
+      }
+    } finally {
+      this.locks.unlock(r);
     }
-    unlockRow(r);
   }
 
   @Override
@@ -108,108 +117,142 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private void performDelete(byte [] row, byte [][] columns, long version,
       Version.Type type) {
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockRow(r);
-    for (byte [] column : columns) {
-      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-      columnMap.put(new Version(version, type), Value.delete());
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+    try {
+      for (byte [] column : columns) {
+        NavigableMap<Version, Value> columnMap = getColumn(map, column);
+       columnMap.put(new Version(version, type), Value.delete());
+      }
+    } finally {
+      this.locks.unlock(r);
     }
-    unlockRow(r);
+  }
+
+  @Override
+  public void deleteDirty(byte[] row, byte[][] columns, long version) {
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+    try {
+      for (byte [] column : columns) {
+        NavigableMap<Version, Value> columnMap = getColumn(map, column);
+        while (!columnMap.isEmpty() && columnMap.lastKey().stamp <= version) {
+          columnMap.pollLastEntry();
+        }
+        if (columnMap.isEmpty()) {
+          map.remove(new Column(column));
+        }
+      }
+    } finally {
+      if (map.isEmpty()) {
+        // this row is gone, remove it from the table and also from the lock table
+        this.map.remove(r); // safe to remove because we have the lock
+        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
+      } else {
+        this.locks.unlock(r);
+      }
+    }
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
   get(byte[] row, ReadPointer pointer) {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockExistingRow(r);
-    if (p == null) return new
-        OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
-
-    Map<byte[], byte[]> ret =
-        new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-
-    for (Map.Entry<Column, NavigableMap<Version, Value>> entry :
-        p.getSecond().entrySet()) {
-
-      ImmutablePair<Long, byte[]> latest =
-          filteredLatest(entry.getValue(), pointer);
-      if (latest == null) continue;
-      ret.put(entry.getKey().value, latest.getSecond());
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(r);
+    if (map == null) {
+      return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
     }
-    unlockRow(r);
-    return new OperationResult<Map<byte[], byte[]>>(ret);
+    try {
+      Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+
+      for (Map.Entry<Column, NavigableMap<Version, Value>> entry : map.entrySet()) {
+        ImmutablePair<Long, byte[]> latest = filteredLatest(entry.getValue(), pointer);
+        if (latest == null) {
+          continue;
+        }
+        ret.put(entry.getKey().getValue(), latest.getSecond());
+      }
+      return new OperationResult<Map<byte[], byte[]>>(ret);
+
+    } finally {
+      this.locks.unlock(r);
+    }
   }
 
   @Override
   public OperationResult<byte[]>
   get(byte[] row, byte[] column, ReadPointer readPointer) {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockExistingRow(r);
-    if (p == null)
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(r);
+    if (map == null) {
       return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+      NavigableMap<Version, Value> columnMap = getColumn(map, column);
+      ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
 
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
-    unlockRow(r);
-
-    if (latest == null)
-      return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-    else
-      return new OperationResult<byte[]>(latest.getSecond());
+      if (latest == null) {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<byte[]>(latest.getSecond());
+      }
+    } finally {
+      this.locks.unlock(r);
+    }
   }
 
   @Override
   public OperationResult<ImmutablePair<byte[], Long>>
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer) {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockExistingRow(r);
-    if (p == null) return new
-        OperationResult<ImmutablePair<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(r);
+    if (map == null) {
+      return new OperationResult<ImmutablePair<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+      NavigableMap<Version, Value> columnMap = getColumn(map, column);
+      ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
 
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
-    unlockRow(r);
-
-    if (latest == null) return new OperationResult
-        <ImmutablePair<byte[], Long>>(StatusCode.COLUMN_NOT_FOUND);
-    else
-      return new OperationResult<ImmutablePair<byte[], Long>>(new
-          ImmutablePair<byte[],Long>(latest.getSecond(), latest.getFirst()));
+      if (latest == null) {
+        return new OperationResult<ImmutablePair<byte[], Long>>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<ImmutablePair<byte[], Long>>(
+          new ImmutablePair<byte[], Long>(latest.getSecond(), latest.getFirst()));
+      }
+    } finally {
+      this.locks.unlock(r);
+    }
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>> get(
       byte[] row, byte[][] columns, ReadPointer readPointer) {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockExistingRow(r);
-    if (p == null || p.getSecond() == null) return new
-        OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
-
-    Map<byte[], byte[]> ret =
-        new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-    for (byte[] column : columns) {
-      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-      ImmutablePair<Long, byte[]> latest =
-          filteredLatest(columnMap, readPointer);
-      if (latest != null)
-        ret.put(column, latest.getSecond());
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(r);
+    if (map == null) {
+      return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
     }
-    unlockRow(r);
-
-    if (ret.isEmpty())
-      return new
-          OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
-    else
-      return new OperationResult<Map<byte[], byte[]>>(ret);
+    try {
+      Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+      for (byte[] column : columns) {
+        NavigableMap<Version, Value> columnMap = getColumn(map, column);
+        ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
+        if (latest != null) {
+          ret.put(column, latest.getSecond());
+        }
+      }
+      if (ret.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(ret);
+      }
+    } finally {
+      this.locks.unlock(r);
+    }
   }
 
   @Override
@@ -226,41 +269,43 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     // negative limit means unlimited results
     if (limit <= 0) limit = Integer.MAX_VALUE;
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockExistingRow(r);
-    if (p == null) return new
-        OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
-
-    Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(r);
+    if (map == null) {
+      return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+      Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(
         Bytes.BYTES_COMPARATOR);
 
-    SortedMap<Column, NavigableMap<Version, Value>> sub;
-    if (isEmpty(startColumn) && isEmpty(stopColumn)) sub = p.getSecond();
-    else if (isEmpty(startColumn))
-      sub = p.getSecond().headMap(new Column(stopColumn));
-    else if (isEmpty(stopColumn))
-      sub = p.getSecond().tailMap(new Column(startColumn));
-    else sub = p.getSecond().subMap(
-        new Column(startColumn), new Column(stopColumn));
-
-    for (Map.Entry<Column, NavigableMap<Version, Value>> entry
-        : sub.entrySet()) {
-      NavigableMap<Version, Value> columnMap = entry.getValue();
-      ImmutablePair<Long, byte[]> latest =  filteredLatest(columnMap, readPointer);
-      if (latest != null) {
-        ret.put(entry.getKey().value, latest.getSecond());
-        // break out if limit reached
-        if (ret.size() >= limit) break;
+      SortedMap<Column, NavigableMap<Version, Value>> sub;
+      if (isEmpty(startColumn) && isEmpty(stopColumn)) {
+        sub = map;
+      } else if (isEmpty(startColumn)) {
+        sub = map.headMap(new Column(stopColumn));
+      } else if (isEmpty(stopColumn)) {
+        sub = map.tailMap(new Column(startColumn));
+      } else {
+        sub = map.subMap(new Column(startColumn), new Column(stopColumn));
       }
-    }
-    unlockRow(r);
 
-    if (ret.isEmpty())
-      return new
-          OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
-    else
-      return new OperationResult<Map<byte[], byte[]>>(ret);
+      for (Map.Entry<Column, NavigableMap<Version, Value>> entry : sub.entrySet()) {
+        NavigableMap<Version, Value> columnMap = entry.getValue();
+        ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
+        if (latest != null) {
+          ret.put(entry.getKey().getValue(), latest.getSecond());
+          // break out if limit reached
+          if (ret.size() >= limit) break;
+        }
+      }
+      if (ret.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(ret);
+      }
+    } finally {
+      this.locks.unlock(r);
+    }
   }
 
   private boolean isEmpty(byte[] column) {
@@ -273,7 +318,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     int returned = 0;
     int skipped = 0;
 
-    for (Map.Entry<Row, NavigableMap<Column, NavigableMap<Version, Value>>> entry :
+    for (Map.Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> entry :
       this.map.entrySet()) {
       // Determine if row is visible
       if (hasAnyVisibleColumns(entry.getValue(), readPointer)) {
@@ -281,7 +326,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           skipped++;
         } else if (returned < limit) {
           returned++;
-          keys.add(entry.getKey().value);
+          keys.add(entry.getKey().getValue());
         }
         if (returned == limit) return keys;
       }
@@ -305,7 +350,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   public Scanner scan(byte[] startRow, byte[] stopRow,
       ReadPointer readPointer) {
     return new MemoryScanner(this.map.subMap(
-        new Row(startRow), new Row(stopRow)).entrySet().iterator(),
+        new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet().iterator(),
         readPointer);
   }
 
@@ -313,7 +358,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   public Scanner scan(byte[] startRow, byte[] stopRow,
       byte[][] columns, ReadPointer readPointer) {
     return new MemoryScanner(this.map.subMap(
-        new Row(startRow), new Row(stopRow)).entrySet().iterator(),
+        new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet().iterator(),
         columns, readPointer);
   }
 
@@ -324,20 +369,20 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   public class MemoryScanner implements Scanner {
 
-    private final Iterator<Entry<Row,
+    private final Iterator<Entry<RowLockTable.Row,
     NavigableMap<Column, NavigableMap<Version, Value>>>> rows;
 
     private final ReadPointer readPointer;
 
     private final Set<byte[]> columnSet;
 
-    public MemoryScanner(Iterator<Entry<Row, NavigableMap<Column,
+    public MemoryScanner(Iterator<Entry<RowLockTable.Row, NavigableMap<Column,
         NavigableMap<Version, Value>>>> rows,
         ReadPointer readPointer) {
       this(rows, null, readPointer);
     }
 
-    public MemoryScanner(Iterator<Entry<Row, NavigableMap<Column,
+    public MemoryScanner(Iterator<Entry<RowLockTable.Row, NavigableMap<Column,
         NavigableMap<Version, Value>>>> rows,
         byte [][] columns, ReadPointer readPointer) {
       this.rows = rows;
@@ -350,19 +395,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
       if (!this.rows.hasNext()) return null;
-      Entry<Row,NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry =
+      Entry<RowLockTable.Row,NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry =
           this.rows.next();
       Map<byte[],byte[]> columns = new TreeMap<byte[],byte[]>(
           Bytes.BYTES_COMPARATOR);
       for (Map.Entry<Column, NavigableMap<Version,Value>> colEntry :
         rowEntry.getValue().entrySet()) {
-        if (!this.columnSet.contains(colEntry.getKey().value)) continue;
+        if (!this.columnSet.contains(colEntry.getKey().getValue())) continue;
         byte [] value =
             filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
-        if (value != null) columns.put(colEntry.getKey().value, value);
+        if (value != null) columns.put(colEntry.getKey().getValue(), value);
       }
-      return new ImmutablePair<byte[], Map<byte[],byte[]>>(
-          rowEntry.getKey().value, columns);
+      return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowEntry.getKey().getValue(), columns);
     }
 
     @Override
@@ -382,9 +426,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       long[] amounts, ReadPointer readPointer, long writeVersion)
     throws OperationException {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
 
     long[] newAmounts = new long[amounts.length];
     Map<byte[],Long> newAmountsMap =
@@ -396,7 +439,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       for (int i=0; i<columns.length; i++) {
         byte [] column = columns[i];
         long amount = amounts[i];
-        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        NavigableMap<Version, Value> versions = getColumn(map, column);
         long existingAmount = 0L;
         ImmutablePair<Long, byte[]> latest =
             filteredLatest(versions, readPointer);
@@ -414,30 +457,30 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       // now we know all values are legal, we can apply all increments
       for (int i=0; i<columns.length; i++) {
         byte [] column = columns[i];
-        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        NavigableMap<Version, Value> versions = getColumn(map, column);
         versions.put(new Version(writeVersion),
             new Value(Bytes.toBytes(newAmounts[i])));
         newAmountsMap.put(column, newAmounts[i]);
       }
       return newAmountsMap;
+
     } finally {
-      unlockRow(r);
+      this.locks.unlock(r);
     }
   }
 
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
 
     long newAmount;
-    long writeVersion = 0L;
-    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    long writeVersion;
 
     try {
-      // first determine new values for all columns. This can thrown an
-      // exception if an existing value is not sizeof(long).
-        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        // first determine new values for the column. This can thrown an
+        // exception if an existing value is not sizeof(long).
+        NavigableMap<Version, Value> versions = getColumn(map, column);
         long existingAmount = 0L;
         ImmutablePair<Long, byte[]> latest = latest(versions);
         if (latest != null) {
@@ -454,8 +497,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       // now we know all values are legal, we can apply all increments
         versions.put(new Version(writeVersion), new Value(Bytes.toBytes(newAmount)));
       return newAmount;
+
     } finally {
-      unlockRow(r);
+      this.locks.unlock(r);
     }
   }
 
@@ -465,11 +509,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
                              ReadPointer readPointer, long writeVersion)
       throws OperationException {
 
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
-        p = getAndLockRow(r);
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
     try {
-      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+      NavigableMap<Version, Value> columnMap = getColumn(map, column);
       ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap,
           readPointer);
       if (latest == null && expectedValue != null)
@@ -484,12 +527,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
             "CompareAndSwap expected value mismatch");
       }
       if (newValue == null || newValue.length == 0) {
-        p.getSecond().remove(new Column(column));
+        columnMap.put(new Version(writeVersion, Version.Type.DELETE_ALL), Value.delete());
       } else {
         columnMap.put(new Version(writeVersion), new Value(newValue));
       }
     } finally {
-      unlockRow(r);
+      this.locks.unlock(r);
     }
   }
 
@@ -522,7 +565,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         continue;
       }
       if (curVersion.stamp == lastDelete) continue;
-      ret.put(curVersion.stamp, entry.getValue().value);
+      ret.put(curVersion.stamp, entry.getValue().getValue());
     }
     return ret.descendingMap();
   }
@@ -551,7 +594,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         continue;
       }
       if (curVersion.stamp == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().value);
+      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
     }
     return null;
   }
@@ -582,8 +625,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         continue;
       }
       if (curVersion.stamp == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion.stamp,
-          entry.getValue().value);
+      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
     }
     return null;
   }
@@ -591,54 +633,43 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   /**
    * Locks the specified row and returns the map of the columns of the row.
    */
-  private ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> getAndLockRow(Row row) {
-    // Ensure row entry exists
+  private NavigableMap<Column, NavigableMap<Version, Value>> getAndLockRow(RowLockTable.Row row) {
+
+    // first obtain the row lock
+    while (!this.locks.lock(row).isValid()) {
+      // obtained a lock, but it is invalid, try again
+      // this can happen because we evict locks from the table when a row is empty
+    }
+
+    // Now we have a definitive lock, see if the row exists
     NavigableMap<Column, NavigableMap<Version, Value>> rowMap = this.map.get(row);
 
-    if (rowMap == null) {
+    if (rowMap == null) { // create an empty row
       rowMap = new TreeMap<Column, NavigableMap<Version, Value>>();
-      NavigableMap<Column, NavigableMap<Version, Value>> existingMap = this.map.putIfAbsent(row, rowMap);
-      if (existingMap != null) rowMap = existingMap;
+      this.map.put(row, rowMap);
     }
-    // Now we have the entry, grab a row lock
-    RowLock rowLock = lockRow(row);
-    return new ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>(rowLock, rowMap);
+    return rowMap;
   }
 
   /**
    * Locks the specified row and returns the map of the columns of the row.
    */
-  private ImmutablePair<RowLock, NavigableMap<Column,
-      NavigableMap<Version, Value>>> getAndLockExistingRow(Row row) {
+  private NavigableMap<Column, NavigableMap<Version, Value>> getAndLockExistingRow(RowLockTable.Row row) {
 
-    // Ensure row entry exists
-    NavigableMap<Column, NavigableMap<Version, Value>> rowMap =
-        this.map.get(row);
-    if (rowMap == null) return null;
-
-    // Now we have the entry, grab a row lock
-    RowLock rowLock = lockRow(row);
-    return new ImmutablePair<RowLock,
-        NavigableMap<Column, NavigableMap<Version, Value>>>(rowLock, rowMap);
-  }
-
-  private RowLock lockRow(Row row) {
-    RowLock lock = this.locks.get(row);
-    if (lock == null) {
-      lock = new RowLock(row);
-      RowLock existing = this.locks.putIfAbsent(row, lock);
-      if (existing != null) lock = existing;
+    NavigableMap<Column, NavigableMap<Version, Value>> rowMap;
+    while (true) {
+      // avoid adding new locks to the lock table for rows that do not exists: first check for existence
+      rowMap = this.map.get(row);
+      if (rowMap == null) {
+        return null;
+      }
+      // Now that we found an existing row, grab a row lock, if it is invalid, we have to start over
+      // (the row may just have been deleted)
+      RowLockTable.RowLock lock = this.locks.lock(row);
+      if (lock.isValid()) {
+        return rowMap;
+      }
     }
-    lock.lock();
-    return lock;
-  }
-
-  private void unlockRow(Row row) {
-    RowLock lock = this.locks.get(row);
-    if (lock == null) {
-      throw new RuntimeException("Attempted to unlock invalid row lock");
-    }
-    lock.unlock();
   }
 
   private NavigableMap<Version, Value> getColumn(
@@ -651,36 +682,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     return columnMap;
   }
 
-  static class Row implements Comparable<Row> {
-    final byte[] value;
-
-    Row(final byte[] value) {
-      this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof Row) && Bytes.equals(this.value, ((Row)o).value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Bytes.hashCode(this.value);
-    }
-
-    @Override
-    public int compareTo(Row r) {
-      return Bytes.compareTo(this.value, r.value);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-          .add("rowkey", Bytes.toString(this.value)).toString();
-    }
-  }
-
-  static class Column extends Row {
+  static class Column extends RowLockTable.Row {
     Column(final byte[] key) {
       super(key);
     }
@@ -688,11 +690,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-          .add("column", Bytes.toString(super.value)).toString();
+          .add("column", Bytes.toString(super.getValue())).toString();
     }
   }
 
-  static class Value extends Row {
+  static class Value extends RowLockTable.Row {
     final ValueType type;
 
     Value(final byte[] value) {
@@ -716,58 +718,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     @Override
     public String toString() {
       return Objects.toStringHelper(this).add("type", this.type).toString();
-    }
-  }
-
-  private static final Random lockIdGenerator = new Random();
-
-  static class RowLock {
-    final Row row;
-    final long id;
-    final AtomicBoolean locked;
-
-    RowLock(Row row) {
-      this.row = row;
-      this.id = MemoryOVCTable.lockIdGenerator.nextLong();
-      this.locked = new AtomicBoolean(false);
-    }
-
-    public boolean unlock() {
-      synchronized (this.locked) {
-        boolean ret = this.locked.compareAndSet(true, false);
-        this.locked.notifyAll();
-        return ret;
-      }
-    }
-
-    public void lock() {
-      synchronized (this.locked) {
-        while (this.locked.get()) {
-          try {
-            this.locked.wait();
-          } catch (InterruptedException e) {
-            System.out.println("RowLock.lock() interrupted");
-          }
-        }
-        this.locked.compareAndSet(false, true);
-      }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof RowLock) && this.id == ((RowLock)o).id
-          && Bytes.equals(this.row.value, ((RowLock)o).row.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Bytes.hashCode(this.row.value);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this).add("row", this.row)
-          .add("id", this.id).add("locked", this.locked).toString();
     }
   }
 

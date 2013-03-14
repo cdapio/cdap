@@ -1,18 +1,25 @@
 package com.continuuity.data.operation.ttqueue;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public class BenchLevelDBTTqueue extends BenchTTQueue {
 
+  private static CConfiguration conf;
+
+  static {
+    CConfiguration conf = CConfiguration.create();
+    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    BenchLevelDBTTqueue.conf = conf;
+  }
   private static final DataFabricLevelDBModule module =
-      new DataFabricLevelDBModule();
+      new DataFabricLevelDBModule(conf);
 
   private static final Injector injector = Guice.createInjector(module);
 
@@ -38,7 +45,7 @@ public class BenchLevelDBTTqueue extends BenchTTQueue {
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),
-        TestTTQueue.timeOracle, conf);
+        TestTTQueue.oracle, conf);
   }
 
   @Override

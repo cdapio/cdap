@@ -55,7 +55,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     return new TTQueueNewOnVCTable(
       handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
       Bytes.toBytes("TestTTQueueName" + rand),
-      TestTTQueue.timeOracle, conf);
+      TestTTQueue.oracle, conf);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + i % numConsumers));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -160,7 +160,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + i % numConsumers));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -179,7 +179,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + (i + 1) % numConsumers));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + (i + 1) % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -196,7 +196,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes("value" + (i + 1) % numConsumers));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + (i + 1) % numConsumers));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -219,7 +219,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
 
         // dequeue, should get second value
         result = queue.dequeue(consumers[i], dirtyReadPointer);
@@ -228,7 +228,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
       }
 
       // verify queue is empty
@@ -249,7 +249,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addPartitioningKey(HASH_KEY, i + 1);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -267,7 +267,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addPartitioningKey(HASH_KEY, i + 1);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
@@ -286,7 +286,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -304,7 +304,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntryImpl(Bytes.toBytes(i + 1));
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
 
@@ -330,7 +330,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
 
         // dequeue, should get second value
         result = queue.dequeue(consumers[i], dirtyReadPointer);
@@ -342,7 +342,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
         // ack
         queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1);
+        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
       }
 
       // verify queue is empty

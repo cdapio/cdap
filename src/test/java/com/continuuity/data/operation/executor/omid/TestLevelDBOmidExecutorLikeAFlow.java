@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -8,8 +10,15 @@ import com.google.inject.Injector;
 
 public class TestLevelDBOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
+  private static CConfiguration conf;
+
+  static {
+    CConfiguration conf = CConfiguration.create();
+    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    TestLevelDBOmidExecutorLikeAFlow.conf = conf;
+  }
   private static final Injector injector = Guice.createInjector (
-      new DataFabricLevelDBModule());
+      new DataFabricLevelDBModule(conf));
 
   private static final OmidTransactionalOperationExecutor executor =
       (OmidTransactionalOperationExecutor)injector.getInstance(

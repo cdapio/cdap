@@ -3,13 +3,9 @@
  */
 package com.continuuity.data.runtime;
 
-import java.io.File;
-import java.util.Random;
-
-import org.jruby.util.io.DirectoryAsFileException;
-
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -21,34 +17,43 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import java.io.File;
+
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
 public class DataFabricLevelDBModule extends AbstractModule {
 
   private final String basePath;
-
-  public DataFabricLevelDBModule() {
-    this(CConfiguration.create());
-  }
+  private final Integer blockSize;
+  private final Long cacheSize;
 
   public DataFabricLevelDBModule(CConfiguration configuration) {
-    String path = configuration.get("data.local.leveldb");
+    String path = configuration.get(Constants.CFG_DATA_LEVELDB_DIR);
     if (path == null || path.isEmpty()) {
       path =
         System.getProperty("java.io.tmpdir") +
         System.getProperty("file.separator") +
         "ldb-test-" + Long.toString(System.currentTimeMillis());
-      if (!new File(path).mkdirs()) {
-        throw new RuntimeException("Unable to create directory for ldb");
-      }
+    }
+
+    File p = new File(path);
+    if (!p.exists() && !p.mkdirs()) {
+      throw new RuntimeException("Unable to create directory for ldb");
     }
 
     this.basePath = path;
+    this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
+                                          Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
+    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
+                                           Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
   }
 
-  public DataFabricLevelDBModule(String basePath) {
+  public DataFabricLevelDBModule(String basePath, Integer blockSize,
+      Long cacheSize) {
     this.basePath = basePath;
+    this.blockSize = blockSize;
+    this.cacheSize = cacheSize;
   }
 
   @Override
@@ -57,13 +62,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
     // Bind our implementations
 
     // There is only one timestamp oracle for the whole system
-    bind(TimestampOracle.class).
-        to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-
-    bind(TransactionOracle.class).to(MemoryOracle.class);
+    bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
+    bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
-    bind(OVCTableHandle.class).to(LevelDBOVCTableHandle.class);
+    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
     
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
@@ -73,5 +76,14 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
         .toInstance(basePath);
+    
+    bind(Integer.class)
+        .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
+        .toInstance(blockSize);
+    
+    bind(Long.class)
+        .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
+        .toInstance(cacheSize);
+    
   }
 }
