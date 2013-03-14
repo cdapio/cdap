@@ -52,7 +52,4 @@ public class TestMemoryNewTTQueue extends TestTTQueue {
   @Override @Test @Ignore
   public void testEvictOnAck_ThreeGroups() {}
 
-  @Override @Test @Ignore
-  public void testSingleConsumerWithHashPartitioning() {}
-
 }

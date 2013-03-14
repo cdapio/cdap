@@ -47,7 +47,7 @@ public class DequeueResult {
       this.pointer = new QueueEntryPointer(queueName,
           dequeueResult.getEntryPointer().getEntryId(),
           dequeueResult.getEntryPointer().getShardId());
-      this.entry = new QueueEntryImpl(dequeueResult.getData());
+      this.entry = new QueueEntry(dequeueResult.getData());
       this.queueState = null;
     } else {
       throw new RuntimeException("Invalid state: " + dequeueResult.toString());
