@@ -44,7 +44,6 @@ dependencies {
     compile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guice
-    compile libraries.akka_actor
     compile libraries.netflix_curator_framework
     compile libraries.netflix_curator_client
     compile libraries.netflix_curator_discovery_client
