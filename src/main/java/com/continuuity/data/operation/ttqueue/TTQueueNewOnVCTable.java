@@ -102,93 +102,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  protected List<Long> fetchNextEntryId(QueueConsumer consumer, QueueConfig config, QueueState queueState,
-                                  ReadPointer readPointer) throws OperationException {
-    long entryId = queueState.getConsumerReadPointer();
-    QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
-    List<Long> newEntryIds = new ArrayList<Long>();
-
-    outerLoop:
-    while (newEntryIds.isEmpty()) {
-      if(entryId >= queueState.getQueueWritePointer()) {
-        // Reached the end of queue as per cached QueueWritePointer,
-        // read it again to see if there is any progress made by producers
-        // TODO: use raw Get instead of the workaround of incrementing zero
-        long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
-        queueState.setQueueWritePointer(queueWritePointer);
-        // If still no progress, return empty queue
-        if(entryId >= queueState.getQueueWritePointer()) {
-          return Collections.EMPTY_LIST;
-        }
-      }
-
-      long startEntryId;
-      long endEntryId;
-
-      if (partitioner.isDisjoint()) {
-        startEntryId = entryId + 1;
-        endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
-                          startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
-      } else {
-        // For now non-disjoint partitions use batchSize = 1
-        int tempBatchSize = 1;
-        endEntryId = this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
-                                                    GROUP_READ_POINTER, tempBatchSize);
-        startEntryId = endEntryId;
-        // Note: incrementing GROUP_READ_POINTER, and storing the ActiveEntryId in HBase ideally need to happen atomically.
-        //       HBase doesn't support atomic increment and put.
-        //       Also, for performance reasons we have moved the write to method saveDequeueEntryState where all writes for a dequeue happen
-        queueState.setActiveEntryId(endEntryId);
-      }
-
-      final int cacheSize = (int)(endEntryId - startEntryId + 1);
-      OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult;
-      if (partitioner.usesHeaderData()) {
-        final String partitioningKey = consumer.getPartitioningKey();
-        byte [][] rowKeys = new byte[cacheSize][];
-        for(int id = 0; id < cacheSize; ++id) {
-          rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
-        }
-        byte[][] columnKeys = new byte[1][];
-        columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
-        headerResult = this.table.get(rowKeys, columnKeys, readPointer);
-      } else {
-        headerResult = new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
-      }
-
-      for(int id = 0; id < cacheSize; ++id) {
-        final long currentEntryId = startEntryId + id;
-        if(partitioner.usesHeaderData()) {
-          final String partitioningKey = consumer.getPartitioningKey();
-          if (!headerResult.isEmpty()) {
-            Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
-            Map<byte[], byte[]> headerMap = headerValue.get(makeRowKey(GLOBAL_DATA_PREFIX, currentEntryId));
-            if(headerMap == null) {
-              break outerLoop;
-            }
-            byte[] hashBytes = headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey));
-            if(hashBytes == null) {
-              break outerLoop;
-            }
-            int hashValue = Bytes.toInt(hashBytes);
-            if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
-              newEntryIds.add(currentEntryId);
-            }
-          } else {
-            // Not able to read header
-            break outerLoop;
-          }
-        } else {
-          if(partitioner.shouldEmit(consumer, currentEntryId)) {
-            newEntryIds.add(currentEntryId);
-          }
-        }
-      }
-      entryId = endEntryId;
-    }
-    return newEntryIds;
-  }
-
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
     return this.enqueue(new QueueEntryImpl(data), cleanWriteVersion);
@@ -285,10 +198,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private ImmutablePair<DequeueResult, QueueState> dequeueInternal(
     QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
-    // DO NOT USE THIS CLASS!
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
+
+    QueuePartitioner queuePartitioner = config.getPartitionerType().getPartitioner();
+    DequeueStrategy dequeueStrategy;
+    if(queuePartitioner.isDisjoint()) {
+      if(queuePartitioner.usesHeaderData()) {
+        dequeueStrategy = new HashDequeueStrategy();
+      } else {
+        dequeueStrategy = new RoundRobinDequeueStrategy();
+      }
+    } else {
+      dequeueStrategy = new FifoDequeueStrategy();
+    }
 
     // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
     // TODO: so that repeated reads to HBase on each dequeue is not required
@@ -298,31 +222,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     //
     if(queueState == null) {
       queueState = new QueueStateImpl();
-      OperationResult<Map<byte[], byte[]>> stateBytes =
-        this.table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                       new byte[][] {ACTIVE_ENTRY, CONSUMER_READ_POINTER}, readPointer);
-      if(!stateBytes.isEmpty()) {
-        long activeEntryId = Bytes.toLong(stateBytes.getValue().get(ACTIVE_ENTRY));
-        // TODO: check max tries
-        queueState.setActiveEntryId(activeEntryId);
-
-        byte[] consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
-        if(consumerReadPointerBytes != null) {
-          queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
-        }
-      }
-
-      // Read queue write pointer
-      // TODO: use raw Get instead of the workaround of incrementing zero
-      long queueWritePointer = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
-      queueState.setQueueWritePointer(queueWritePointer);
-
-      // If active entry is present, read that from storage
-      if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
-        readEntries(consumer, config, queueState, readPointer, Collections.singletonList(queueState.getActiveEntryId()));
-        // Set the active entry as the current entry
-        queueState.getCachedEntries().getNext();
-      }
+      dequeueStrategy.constructQueueState(consumer, config, queueState, readPointer);
     }
 
     // If active entry present, return it
@@ -339,7 +239,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // If no more cached entries, read entries from storage
     if(!queueState.getCachedEntries().hasNext()) {
-      List<Long> entryIds = fetchNextEntryId(consumer, config, queueState, readPointer);
+      List<Long> entryIds = dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
       readEntries(consumer, config, queueState, readPointer, entryIds);
     }
 
@@ -349,14 +249,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueState.setActiveEntryId(cachedEntry.getEntryId());
       queueState.setConsumerReadPointer(cachedEntry.getEntryId());
       QueueEntry entry = new QueueEntryImpl(cachedEntry.getData());
-      saveDequeueState(consumer, config, queueState, readPointer);
+      dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                new QueueEntryPointer(this.queueName, cachedEntry.getEntryId()), entry);
       return new ImmutablePair<DequeueResult, QueueState>(dequeueResult, queueState);
     } else {
       // No queue entries available to dequue, return queue empty
       if (TRACE) log("End of queue reached using " + "read pointer " + readPointer);
-      saveDequeueState(consumer, config, queueState, readPointer);
+      dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
       return new ImmutablePair<DequeueResult, QueueState>(dequeueResult, queueState);
     }
@@ -408,27 +308,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       queueState.setCachedEntries(new CachedList<QueueStateEntry>(entries));
     }
-  }
-
-  private void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueState queueState,
-                                ReadPointer readPointer) throws OperationException {
-    // Persist the entryId this consumer will be working on
-    // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
-    long entryId = queueState.getActiveEntryId();
-
-    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                   new byte[][]{
-                     CONSUMER_READ_POINTER,
-                     ACTIVE_ENTRY,
-                     makeColumnName(META_ENTRY_PREFIX, entryId)
-                   },
-                   readPointer.getMaximum(),
-                   new byte[][]{
-                     Bytes.toBytes(queueState.getConsumerReadPointer()),
-                     Bytes.toBytes(queueState.getActiveEntryId()),
-                     new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes()
-                   }
-    );
   }
 
   @Override
@@ -600,6 +479,216 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void setCachedEntries(CachedList<QueueStateEntry> cachedEntries) {
       this.cachedEntries = cachedEntries;
+    }
+  }
+
+  interface DequeueStrategy {
+    void constructQueueState(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                               ReadPointer readPointer) throws OperationException;
+    List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                          ReadPointer readPointer) throws OperationException;
+    void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueState queueState,
+                          ReadPointer readPointer) throws OperationException;
+  }
+
+  abstract class AbstractDisjointDequeueStrategy implements DequeueStrategy {
+    @Override
+    public void constructQueueState(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+      OperationResult<Map<byte[], byte[]>> stateBytes =
+        table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                       new byte[][] {ACTIVE_ENTRY, CONSUMER_READ_POINTER}, readPointer);
+      if(!stateBytes.isEmpty()) {
+        long activeEntryId = Bytes.toLong(stateBytes.getValue().get(ACTIVE_ENTRY));
+        // TODO: check max tries
+        queueState.setActiveEntryId(activeEntryId);
+
+        byte[] consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
+        if(consumerReadPointerBytes != null) {
+          queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
+        }
+      }
+
+      // Read queue write pointer
+      // TODO: use raw Get instead of the workaround of incrementing zero
+      long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+      queueState.setQueueWritePointer(queueWritePointer);
+
+      // If active entry is present, read that from storage
+      if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
+        readEntries(consumer, config, queueState, readPointer, Collections.singletonList(queueState.getActiveEntryId()));
+        // Set the active entry as the current entry
+        queueState.getCachedEntries().getNext();
+      }
+    }
+
+    @Override
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+      // Persist the entryId this consumer will be working on
+      // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
+      long entryId = queueState.getActiveEntryId();
+
+      table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                     new byte[][]{
+                       CONSUMER_READ_POINTER,
+                       ACTIVE_ENTRY,
+                       makeColumnName(META_ENTRY_PREFIX, entryId)
+                     },
+                     readPointer.getMaximum(),
+                     new byte[][]{
+                       Bytes.toBytes(queueState.getConsumerReadPointer()),
+                       Bytes.toBytes(queueState.getActiveEntryId()),
+                       new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes()
+                     }
+      );
+    }
+  }
+
+  class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+    @Override
+    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+      long entryId = queueState.getConsumerReadPointer();
+      QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+      List<Long> newEntryIds = new ArrayList<Long>();
+
+      outerLoop:
+      while (newEntryIds.isEmpty()) {
+        if(entryId >= queueState.getQueueWritePointer()) {
+          // Reached the end of queue as per cached QueueWritePointer,
+          // read it again to see if there is any progress made by producers
+          // TODO: use raw Get instead of the workaround of incrementing zero
+          long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+          queueState.setQueueWritePointer(queueWritePointer);
+          // If still no progress, return empty queue
+          if(entryId >= queueState.getQueueWritePointer()) {
+            return Collections.EMPTY_LIST;
+          }
+        }
+
+        long startEntryId = entryId + 1;
+        long endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+          startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
+
+        // Read  header data from underlying storage, if any
+        final int cacheSize = (int)(endEntryId - startEntryId + 1);
+        final String partitioningKey = consumer.getPartitioningKey();
+        byte [][] rowKeys = new byte[cacheSize][];
+        for(int id = 0; id < cacheSize; ++id) {
+          rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
+        }
+        byte[][] columnKeys = new byte[1][];
+        columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
+        OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult = table.get(rowKeys, columnKeys, readPointer);
+
+        // Determine which entries  need to be read from storage
+        for(int id = 0; id < cacheSize; ++id) {
+          final long currentEntryId = startEntryId + id;
+          if (!headerResult.isEmpty()) {
+            Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
+            Map<byte[], byte[]> headerMap = headerValue.get(makeRowKey(GLOBAL_DATA_PREFIX, currentEntryId));
+            if(headerMap == null) {
+              break outerLoop;
+            }
+            byte[] hashBytes = headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey));
+            if(hashBytes == null) {
+              break outerLoop;
+            }
+            int hashValue = Bytes.toInt(hashBytes);
+            if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
+              newEntryIds.add(currentEntryId);
+            }
+          } else {
+            // Not able to read header
+            break outerLoop;
+          }
+        }
+        entryId = endEntryId;
+      }
+      return newEntryIds;
+    }
+  }
+
+  class RoundRobinDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+    @Override
+    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+      long entryId = queueState.getConsumerReadPointer();
+      QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+      List<Long> newEntryIds = new ArrayList<Long>();
+
+      while (newEntryIds.isEmpty()) {
+        if(entryId >= queueState.getQueueWritePointer()) {
+          // Reached the end of queue as per cached QueueWritePointer,
+          // read it again to see if there is any progress made by producers
+          // TODO: use raw Get instead of the workaround of incrementing zero
+          long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+          queueState.setQueueWritePointer(queueWritePointer);
+          // If still no progress, return empty queue
+          if(entryId >= queueState.getQueueWritePointer()) {
+            return Collections.EMPTY_LIST;
+          }
+        }
+
+        long startEntryId = entryId + 1;
+        long endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+          startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
+
+        final int cacheSize = (int)(endEntryId - startEntryId + 1);
+
+        // Determine which entries  need to be read from storage
+        for(int id = 0; id < cacheSize; ++id) {
+          final long currentEntryId = startEntryId + id;
+          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+            newEntryIds.add(currentEntryId);
+          }
+        }
+        entryId = endEntryId;
+      }
+      return newEntryIds;
+    }
+  }
+
+  class FifoDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+    @Override
+    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+      long entryId = queueState.getConsumerReadPointer();
+      QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+      List<Long> newEntryIds = new ArrayList<Long>();
+
+      while (newEntryIds.isEmpty()) {
+        if(entryId >= queueState.getQueueWritePointer()) {
+          // Reached the end of queue as per cached QueueWritePointer,
+          // read it again to see if there is any progress made by producers
+          // TODO: use raw Get instead of the workaround of incrementing zero
+          long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+          queueState.setQueueWritePointer(queueWritePointer);
+          // If still no progress, return empty queue
+          if(entryId >= queueState.getQueueWritePointer()) {
+            return Collections.EMPTY_LIST;
+          }
+        }
+
+        // For now non-disjoint partitions use batchSize = 1
+        int tempBatchSize = 1;
+        long endEntryId = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
+                                                       GROUP_READ_POINTER, tempBatchSize);
+        long startEntryId = endEntryId;
+        // Note: incrementing GROUP_READ_POINTER, and storing the ActiveEntryId in HBase ideally need to happen atomically.
+        //       HBase doesn't support atomic increment and put.
+        //       Also, for performance reasons we have moved the write to method saveDequeueEntryState where all writes for a dequeue happen
+        queueState.setActiveEntryId(endEntryId);
+
+        // Read  header data from underlying storage, if any
+        final int cacheSize = (int)(endEntryId - startEntryId + 1);
+
+        // Determine which entries  need to be read from storage based on partition type
+        for(int id = 0; id < cacheSize; ++id) {
+          final long currentEntryId = startEntryId + id;
+          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+            newEntryIds.add(currentEntryId);
+          }
+        }
+        entryId = endEntryId;
+      }
+      return newEntryIds;
     }
   }
 }
