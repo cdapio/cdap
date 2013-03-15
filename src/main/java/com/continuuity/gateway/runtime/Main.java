@@ -1,5 +1,6 @@
 package com.continuuity.gateway.runtime;
 
+import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -23,20 +24,21 @@ public class Main {
    * @param args Our command line options
    */
   public static void main(String[] args) {
+    // Load our configuration from our resource files
+    CConfiguration configuration = CConfiguration.create();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
         new GatewayModules().getDistributedModules(),
-        new DataFabricModules().getDistributedModules());
+        new DataFabricModules().getDistributedModules(),
+        new BigMamaModule(configuration)
+        );
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);
 
     // Now, initialize the Gateway
     try {
-
-      // Load our configuration from our resource files
-      CConfiguration configuration = CConfiguration.create();
 
       // enable metrics for this JVM. Note this may only be done once
       // per JVM, hence we do it only in the gateway.Main.
