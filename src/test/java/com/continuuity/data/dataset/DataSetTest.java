@@ -2,7 +2,6 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
@@ -15,6 +14,7 @@ import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -103,20 +103,20 @@ public class DataSetTest extends DataSetTestBase {
     // setup a dummy opex, transaction proxy and instantiator
     OperationExecutor opex = new DummyOpex();
     TransactionProxy proxy = new TransactionProxy();
-    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationContext.DEFAULT), proxy, this.getClass().getClassLoader());
+    DataSetInstantiator inst = new DataSetInstantiator(new DataFabricImpl(opex, OperationUtil.DEFAULT), proxy, this.getClass().getClassLoader());
 
     // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)
     DataSetSpecification spec = new KeyValueTable("testtest").configure();
     inst.setDataSets(Collections.singletonList(spec));
     KeyValueTable kvTable = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationContext.DEFAULT));
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT));
     kvTable.write("a".getBytes(), "b".getBytes());
 
     // test with a double nested table - a dataset that embeds a table and a kv table that in turn embeds another table
     spec = new DoubleNestedTable("testtest").configure();
     inst.setDataSets(Collections.singletonList(spec));
     DoubleNestedTable dn = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationContext.DEFAULT));
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT));
     dn.writeAndInc("a", 17);
   }
 }

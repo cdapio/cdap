@@ -13,7 +13,7 @@ public class TestMemoryNewTTQueue extends TestTTQueue {
     return new TTQueueNewOnVCTable(
       new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
       Bytes.toBytes("TestTTQueue"),
-      TestTTQueue.timeOracle, conf);
+      TestTTQueue.oracle, conf);
   }
 
   @Override
@@ -51,4 +51,5 @@ public class TestMemoryNewTTQueue extends TestTTQueue {
 
   @Override @Test @Ignore
   public void testEvictOnAck_ThreeGroups() {}
+
 }

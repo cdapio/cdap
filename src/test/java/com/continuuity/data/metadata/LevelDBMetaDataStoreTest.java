@@ -3,9 +3,9 @@ package com.continuuity.data.metadata;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data.util.OperationUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -19,7 +19,7 @@ public abstract class LevelDBMetaDataStoreTest extends MetaDataStoreTest {
     Injector injector = Guice.createInjector (
         new DataFabricLevelDBModule(conf));
     opex = injector.getInstance(OperationExecutor.class);
-    opex.execute(OperationContext.DEFAULT,
+    opex.execute(OperationUtil.DEFAULT,
         new ClearFabric(ClearFabric.ToClear.ALL));
   }
 

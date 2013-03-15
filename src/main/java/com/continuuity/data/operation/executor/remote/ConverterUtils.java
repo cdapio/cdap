@@ -49,7 +49,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data.operation.ttqueue.QueueEntryImpl;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
@@ -470,7 +469,7 @@ public class ConverterUtils {
   }
 
   QueueEntry unwrap(TQueueEntry entry) {
-    return new QueueEntryImpl(entry.getHeader(), entry.getData());
+    return new QueueEntry(entry.getHeader(), entry.getData());
   }
 
   TQueueEntry wrap(QueueEntry entry) {

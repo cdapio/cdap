@@ -1,12 +1,8 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.*;
-import com.continuuity.data.BatchCollectionClient;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.SimpleBatchCollectionClient;
-import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncReads;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
@@ -14,6 +10,7 @@ import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLocalModule;
+import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,16 +35,11 @@ public class DataSetTestBase {
   private static OperationExecutor opex;
   private static DataFabric fabric;
 
-  private static SimpleBatchCollector collector = new SimpleBatchCollector();
-  private static BatchCollectionClient collectionClient = new SimpleBatchCollectionClient();
-
   private static TransactionAgent agent;
-  private static TransactionProxy proxy = new TransactionProxy();
+  private static final TransactionProxy proxy = new TransactionProxy();
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
-
-  public static boolean useProxy = false;
 
   protected enum Mode { Sync, Batch, Smart }
   /**
@@ -61,7 +53,7 @@ public class DataSetTestBase {
       Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
-    fabric = new DataFabricImpl(opex, OperationContext.DEFAULT);
+    fabric = new DataFabricImpl(opex, OperationUtil.DEFAULT);
   }
 
   /**
@@ -88,47 +80,27 @@ public class DataSetTestBase {
   }
 
   /**
-   * Start a new batch collection. This is similar to what a flowlet runner
-   * would do before processing each tuple. It creates a new batch collector
-   * and all data sets configured through the instantiator (@see
-   * #setupInstantiator) will start using that collector immediately.
+   * Start a new transaction. This is similar to what a flowlet runner would do before
+   * processing each data object. It creates a new transaction agent, and all data sets
+   * configured through the instantiator (@see #setupInstantiator) will start using that
+   * transaction agent immediately.
    */
-  public static void newCollector() throws OperationException {
-    if (useProxy) {
-      newTransaction(Mode.Batch);
-    } else {
-      collector = new SimpleBatchCollector();
-      collectionClient.setCollector(collector);
-    }
-  }
   public static void newTransaction(Mode mode) throws OperationException {
     switch (mode) {
-      case Sync: agent = new SynchronousTransactionAgent(opex, OperationContext.DEFAULT); break;
-      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationContext.DEFAULT); break;
-      case Smart: agent = new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+      case Sync: agent = new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT); break;
+      case Batch: agent = new BatchTransactionAgentWithSyncReads(opex, OperationUtil.DEFAULT); break;
+      case Smart: agent = new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
     }
     agent.start();
     proxy.setTransactionAgent(agent);
   }
 
   /**
-   * Execute the collected operations in a transaction. This is similar to
-   * what a flowlet runner would do after processing each tuple. After the
-   * transaction finishes - whether successful or unsuccessful - a new
-   * batch collection is started (@see #newCollector).
+   * finish the current transaction. This is similar to what a flowlet runner would do after
+   * processing each data object. After the transaction finishes - whether successful or
+   * unsuccessful - a new transaction agent should be started for subsequent operations.
    * @throws OperationException if the transaction fails for any reason
    */
-  public static void executeCollector() throws OperationException {
-    if (useProxy) {
-      commitTransaction();
-    } else {
-      try {
-        fabric.execute(collector.getWrites());
-      } finally {
-        newCollector();
-      }
-    }
-  }
   public static void commitTransaction() throws OperationException {
     agent.finish();
   }

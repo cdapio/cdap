@@ -62,10 +62,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
     // Bind our implementations
 
     // There is only one timestamp oracle for the whole system
-    bind(TimestampOracle.class).
-        to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-
-    bind(TransactionOracle.class).to(MemoryOracle.class);
+    bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
+    bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
     bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);

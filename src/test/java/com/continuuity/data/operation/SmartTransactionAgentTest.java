@@ -6,6 +6,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.util.OperationUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -36,7 +37,7 @@ public class SmartTransactionAgentTest {
   }
 
   static SmartTransactionAgent newAgent() {
-    return new SmartTransactionAgent(opex, OperationContext.DEFAULT);
+    return new SmartTransactionAgent(opex, OperationUtil.DEFAULT);
   }
 
   static final byte[] a = { 'a' };
@@ -144,7 +145,7 @@ public class SmartTransactionAgentTest {
   public void testStartReadFinish() throws OperationException {
     final String table = "tSRF";
     // write a value outside the smart xaction
-    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationUtil.DEFAULT, new Write(table, a, x, one));
     SmartTransactionAgent agent = newAgent();
     agent.start();
     // read back the value inside the smart xaction
@@ -164,7 +165,7 @@ public class SmartTransactionAgentTest {
   public void testStartReadWriteReadFinish() throws OperationException {
     final String table = "tSRWRF";
     // write a value outside the smart xaction
-    opex.commit(OperationContext.DEFAULT, new Write(table, a, x, one));
+    opex.commit(OperationUtil.DEFAULT, new Write(table, a, x, one));
     SmartTransactionAgent agent = newAgent();
     agent.start();
     // read back the value inside the smart xaction and verify
@@ -178,7 +179,7 @@ public class SmartTransactionAgentTest {
     Assert.assertEquals(1, agent.getSucceededCount());
     Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see old value
-    result = opex.execute(OperationContext.DEFAULT, new Read(table, a, x));
+    result = opex.execute(OperationUtil.DEFAULT, new Read(table, a, x));
     Assert.assertArrayEquals(one, result.getValue().get(x));
     // read back within the smart transaction, must see new value
     result = agent.execute(new Read(table, a, x));
@@ -192,7 +193,7 @@ public class SmartTransactionAgentTest {
     Assert.assertEquals(3, agent.getSucceededCount());
     Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see new value
-    result = opex.execute(OperationContext.DEFAULT, new Read(table, a, x));
+    result = opex.execute(OperationUtil.DEFAULT, new Read(table, a, x));
     Assert.assertArrayEquals(two, result.getValue().get(x));
   }
 
@@ -211,7 +212,7 @@ public class SmartTransactionAgentTest {
 
     // read row a outside the transaction, should return nothing
     OperationResult<Map<byte[], byte[]>> result =
-        opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
+        opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertTrue(result.isEmpty());
 
     // read back row a inside the smart xaction and verify that it sees both x and y
@@ -222,7 +223,7 @@ public class SmartTransactionAgentTest {
     Assert.assertArrayEquals(two, result.getValue().get(y));
 
     // read back in a new transaction, must still see nothing
-    result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
+    result = opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertTrue(result.isEmpty());
 
     // finish/commit
@@ -231,10 +232,10 @@ public class SmartTransactionAgentTest {
     Assert.assertEquals(4, agent.getSucceededCount());
     Assert.assertEquals(0, agent.getFailedCount());
     // read back in a new transaction, must see new values
-    result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
+    result = opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertArrayEquals(one, result.getValue().get(x));
     Assert.assertArrayEquals(two, result.getValue().get(y));
-    result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, b, null, null));
+    result = opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, b, null, null));
     Assert.assertArrayEquals(two, result.getValue().get(x));
   }
 
@@ -263,7 +264,7 @@ public class SmartTransactionAgentTest {
     Assert.assertEquals(0, agent.getFailedCount());
 
     // read back in a new transaction, must see new values
-    result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
+    result = opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertArrayEquals(one, result.getValue().get(x));
     Assert.assertArrayEquals(two, result.getValue().get(y));
   }
@@ -292,7 +293,7 @@ public class SmartTransactionAgentTest {
 
     // ensure the write was rolled back
     OperationResult<Map<byte[], byte[]>> result =
-      opex.execute(OperationContext.DEFAULT, new Read(table, a, x));
+      opex.execute(OperationUtil.DEFAULT, new Read(table, a, x));
     Assert.assertTrue(result.isEmpty());
 
     // attempt to abort the agent, should be ok even though agent is already aborted
@@ -331,7 +332,7 @@ public class SmartTransactionAgentTest {
 
     // ensure both writes were rolled back
     // read back in a new transaction, must still see nothing
-    result = opex.execute(OperationContext.DEFAULT, new ReadColumnRange(table, a, null, null));
+    result = opex.execute(OperationUtil.DEFAULT, new ReadColumnRange(table, a, null, null));
     Assert.assertTrue(result.isEmpty());
   }
 

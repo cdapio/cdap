@@ -256,6 +256,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+    // TODO:
+    throw new UnsupportedOperationException("Not yet implemented.");
+  }
+
+  @Override
   public OperationResult<Map<byte[], byte[]>> get(
       byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
       ReadPointer readPointer) {
