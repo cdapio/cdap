@@ -331,19 +331,6 @@ task cloud_dist (type: Tar) {
     include "*-env.sh"
   }
 
-  //webapp
-  into ("web-app/developer/client"){
-    from project(':web-cloud-app').file('build/developer/client')
-  }
-
-  into("web-app/developer/server"){
-    from project(':web-cloud-app').file('build/developer/server')
-  }
-
-  into("web-app/developer/common"){
-    from project(':web-cloud-app').file('build/developer/common')
-  }
-
   into ("web-app/cloud/client"){
     from project(':web-cloud-app').file('build/cloud/client')
   }
