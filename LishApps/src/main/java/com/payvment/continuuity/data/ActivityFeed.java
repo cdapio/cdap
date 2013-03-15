@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.payvment.continuuity.entity.Product;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.google.gson.Gson;
 

@@ -1,14 +1,16 @@
 package com.payvment.continuuity.entity;
 
 
-import com.continuuity.api.data.lib.SimpleSerializable;
-import com.continuuity.api.data.util.Bytes;
+//import com.continuuity.api.data.lib.SimpleSerializable;
+//import com.continuuity.api.data.util.Bytes;
+
+import com.continuuity.api.common.Bytes;
 
 /**
  * Stores all data for a product feed event, or can be a holder of the metadata
  * of a single product.
  */
-public class ProductFeedEntry implements SimpleSerializable {
+public class ProductFeedEntry /*implements SimpleSerializable*/ {
 
   public Long product_id;
 
@@ -37,7 +39,7 @@ public class ProductFeedEntry implements SimpleSerializable {
     this.score = score;
   }
 
-  @Override
+  //@Override
   public byte [] toBytes() {
     int len = 3 * Bytes.SIZEOF_LONG + Bytes.SIZEOF_DOUBLE +
         3 * Bytes.SIZEOF_INT + this.category.length() + this.name.length();
@@ -63,7 +65,7 @@ public class ProductFeedEntry implements SimpleSerializable {
     return bytes;
   }
 
-  @Override
+  //@Override
   public ProductFeedEntry fromBytes(byte [] bytes) {
     int idx = 0;
     this.product_id = Bytes.toLong(bytes, idx); idx += Bytes.SIZEOF_LONG;

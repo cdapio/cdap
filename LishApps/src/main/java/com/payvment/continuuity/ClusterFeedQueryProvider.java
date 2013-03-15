@@ -6,6 +6,7 @@ import java.util.Map;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Helpers;
+import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.query.QueryProvider;
 import com.continuuity.api.query.QueryProviderContentType;
 import com.continuuity.api.query.QueryProviderResponse;
@@ -18,10 +19,13 @@ import com.payvment.continuuity.data.ClusterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
 
+import com.payvment.continuuity.data.SortedCounterTable;
+import com.continuuity.api.procedure.*;
+
 /**
  * Exposes Payvment Lish feeds as Queries (and then REST calls in the Gateway).
  * <p>
- * Implemented as a {@link QueryProvider} to bridge between external calls and
+ * Implemented as a {@link Procedure} to bridge between external calls and
  * the internal APIs of {@link ClusterFeedReader}.
  * <p>
  * Example queries:
@@ -31,19 +35,26 @@ import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
  *   http://localhost:10003/rest-query/feedreader/readpopular?clusterid=3&numhours=24&limit=10&country=US
  * </pre>
  */
-public class ClusterFeedQueryProvider extends QueryProvider {
+public class ClusterFeedQueryProvider extends Procedure {
 
   private final boolean TRACE = false;
 
   private ClusterFeedReader reader = null;
 
-  @Override
-  public void configure(QuerySpecifier specifier) {
-    specifier.service("feedreader");
-    specifier.timeout(20000);
-    specifier.type(QueryProviderContentType.JSON);
-    specifier.provider(ClusterFeedQueryProvider.class);
-  }
+//  @Override
+//  public void configure(QuerySpecifier specifier) {
+//    specifier.service("feedreader");
+//    specifier.timeout(20000);
+//    specifier.type(QueryProviderContentType.JSON);
+//    specifier.provider(ClusterFeedQueryProvider.class);
+//  }
+
+    @Override
+    public ProcedureSpecification configure() {
+        return null;
+    }
+
+
 
   private ClusterTable clusterTable;
 
@@ -52,7 +63,8 @@ public class ClusterFeedQueryProvider extends QueryProvider {
   private ActivityFeedTable activityFeedTable;
 
   @Override
-  public void initialize() {
+  public void initialize(ProcedureContext procedureContext ) {
+
     this.clusterTable = new ClusterTable();
     getQueryProviderContext().getDataSetRegistry().registerDataSet(
         this.clusterTable);

@@ -22,7 +22,7 @@
           <version>${continuuityVersion}</version>
           <classifier>api</classifier>
           <scope>system</scope>
-          <systemPath>${appFabricHome}/lib/common-${continuuityVersion}-api.jar</systemPath>
+          <systemPath>${appFabricHome}/continuuity-api-${continuuityVersion}.jar</systemPath>
       </dependency>
 
 

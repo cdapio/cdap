@@ -11,17 +11,18 @@ import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
-import com.continuuity.api.data.lib.SortedCounterTable;
-import com.continuuity.api.data.lib.SortedCounterTable.Counter;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.data.*;
+import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.continuuity.api.data.dataset.*;
 
 /**
  * Performs activity feed and popular feed read queries.
  * <p>
  * For more information on activity feeds, see
- * {@link #getActivityFeed(int, int, long, long)} and {@link ActivityFeed}.
+ * {@link #getActivityFeed(String, int, long, long)} and {@link ActivityFeed}.
  * <p>
  * For more information on popular feeds, see
  * {@link #getPopularFeed(int, int, int, int)} and {@link PopularFeed}.
@@ -182,9 +183,9 @@ public class ClusterFeedReader {
       // Iterate hours
       for (Long hour : hours) {
         // Grab top counters for this category and this hour
-        List<Counter> topCounters = this.topScoreTable.readTopCounters(
+        List<SortedCounterTable.Counter> topCounters = this.topScoreTable.readTopCounters(
             PopularFeed.makeRow(hour, country, category), n);
-        for (Counter counter : topCounters) {
+        for (SortedCounterTable.Counter counter : topCounters) {
           // Add each counter to pop feed
           popFeed.addEntry(Bytes.toLong(counter.getName()), counter.getCount());
         }
