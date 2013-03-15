@@ -1,10 +1,7 @@
 package com.payvment.continuuity;
 
 
-//import com.continuuity.api.data.Increment;
-//import com.continuuity.api.data.lib.CounterTable;
-//import com.continuuity.api.data.lib.SortedCounterTable;
-//import com.continuuity.api.data.util.Bytes;
+
 
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.data.OperationException;
@@ -12,19 +9,7 @@ import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
-
-//import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.*;
-//import com.continuuity.api.flow.flowlet.ComputeFlowlet;
-//import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
-
-//import com.continuuity.api.flow.flowlet.OutputCollector;
-//import com.continuuity.api.flow.flowlet.StreamsConfigurator;
-//import com.continuuity.api.flow.flowlet.Tuple;
-//import com.continuuity.api.flow.flowlet.TupleContext;
-//import com.continuuity.api.flow.flowlet.TupleSchema;
-//import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-//import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.google.common.base.Throwables;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ActivityFeedTable;
@@ -54,7 +39,7 @@ import javax.management.OperationsException;
  *   <p>This Flow is made up of four Flowlets.
  *   <p>The first flowlet, {@link SocialActionParserFlowlet}, is responsible
  *   for parsing the social action JSON into the internal representation (as an
- *   instance of a {@link SocialAction} passed through a {@link Tuple}).
+ *   instance of a {@link SocialAction} passed through a {@link ProcessedActionActivity}).
  *   <p>The second Flowlet, {@link SocialActionProcessorFlowlet}, performs the
  *   primary processing and is responsible for the initial counter and score
  *   updates to all of the necessary tables.  Counters are used to determine
@@ -168,6 +153,7 @@ public class SocialActionFlow implements Flow {
   }
 
 
+// Old logic
 //  public static final TupleSchema PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA =
 //      new TupleSchemaBuilder()
 //          .add("action", SocialAction.class)
@@ -192,6 +178,8 @@ public class SocialActionFlow implements Flow {
       public String country;
       public Long hourlyScore;
   }
+
+// Old logic
 //    public static final TupleSchema PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA =
 //            new TupleSchemaBuilder()
 //                    .add("action", SocialAction.class)
@@ -216,105 +204,75 @@ public class SocialActionFlow implements Flow {
                   .setDescription("")
                   .build();
       }
-//    @Override
-//    public void configure(StreamsConfigurator configurator) {
-//      // Input schema is a social action
-//      configurator.getDefaultTupleInputStream()
-//          .setSchema(SOCIAL_ACTION_TUPLE_SCHEMA);
-//      // Output schemas contains action, country, score, Increment pass-thrus
-//      configurator.addTupleOutputStream("activity")
-//          .setSchema(PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA);
-//      configurator.addTupleOutputStream("popular")
-//          .setSchema(PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA);
-//    }
 
     private CounterTable productActionCountTable;
     private CounterTable allTimeScoreTable;
     private SortedCounterTable topScoreTable;
 
-    @Override
-    public void initialize(FlowletContext context) throws FlowletException {
-      this.productActionCountTable = new CounterTable(LishApp.PRODUCT_ACTION_TABLE);
-
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.productActionCountTable);
-
-      this.allTimeScoreTable = new CounterTable(LishApp.ALL_TIME_SCORE_TABLE);
-
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.allTimeScoreTable);
-
-      this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE, new SortedCounterTable.SortedCounterConfig());
-
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.topScoreTable);
-    }
+      @Override
+      public void initialize(FlowletContext context) throws FlowletException {
+          this.productActionCountTable = new CounterTable(LishApp.PRODUCT_ACTION_TABLE);
+          this.allTimeScoreTable = new CounterTable(LishApp.ALL_TIME_SCORE_TABLE);
+          this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE, new SortedCounterTable.SortedCounterConfig());
+      }
 
       OutputEmitter<ProcessedActionActivity> processedActionActivityOutputEmitter;
       OutputEmitter<ProcessedActionPopular> processedActionPopularOutputEmitter;
 
-     @ProcessInput
-     public void process(SocialAction action) {
+      @ProcessInput
+      public void process(SocialAction action) {
 
-         // Determine score increase
-         Long scoreIncrease = 0L;
-         try {
-             scoreIncrease = action.getSocialActionType().getScore();
-         } catch (IllegalArgumentException iae) {
-//        getFlowletContext().getLogger().error(
-//            "SocialActionProcessor Flowet received unknown action type: " +
-//                action.type);
-             Throwables.propagate(iae);
+          // Determine score increase
+          Long scoreIncrease = 0L;
+          try {
+              scoreIncrease = action.getSocialActionType().getScore();
+          } catch (IllegalArgumentException iae) {
+              Throwables.propagate(iae);
+              return;
+          }
 
-             return;
-         }
+          // Update product action count table async
+          this.productActionCountTable.incrementCounterSet(
+                  Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
 
-         // Update product action count table async
-      this.productActionCountTable.incrementCounterSet(
-          Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
+          // Update all-time score, but put increment into tuple for pass-thru
+          Increment allTimeScore = allTimeScoreTable.generateSingleKeyIncrement(
+                  Bytes.toBytes(action.product_id), scoreIncrease);
 
-         // Update all-time score, but put increment into tuple for pass-thru
-      Increment allTimeScore = allTimeScoreTable.generateSingleKeyIncrement(
-              Bytes.toBytes(action.product_id), scoreIncrease);
+          // Outputs
+          ProcessedActionActivity actionActivity = new ProcessedActionActivity();
+          ProcessedActionPopular actionPopular = new ProcessedActionPopular();
 
 
-         ProcessedActionActivity actionActivity = new ProcessedActionActivity();
-         ProcessedActionPopular actionPopular = new ProcessedActionPopular();
+          actionActivity.socialAction = action;
+          actionActivity.scoreIncrease = scoreIncrease;
 
-         // tupleBuilder.set("action", action);
-         actionActivity.socialAction = action;
+          // TODO: check if snapping first value valid
+          actionActivity.allTimeScore = allTimeScore.getValues()[0];
 
-         //      tupleBuilder.set("score-increase", scoreIncrease);
-         actionActivity.scoreIncrease = scoreIncrease;
+          processedActionActivityOutputEmitter.emit(actionActivity);
 
-//      tupleBuilder.set("all-time-score", allTimeScore);
-        actionActivity.allTimeScore = allTimeScore.getValues()[0]; // TODO: check if snapping first value valid
+          // For each country, update time bucketed top-score table, put increment
+          // into tuple and emit a tuple for each country
+          for (String country : action.country) {
+              Increment topScoreHourly =
+                      topScoreTable.generatePrimaryCounterIncrement(
+                              PopularFeed.makeRow(Helpers.hour(action.date),
+                                      country, action.category),
+                              Bytes.toBytes(action.product_id), scoreIncrease);
 
-//      collector.add("activity", tupleBuilder.create());
-        processedActionActivityOutputEmitter.emit(actionActivity);
+              actionPopular.socialAction = action;
+              actionPopular.scoreIncrease = scoreIncrease;
+              actionPopular.country = country;
 
-//      // For each country, update time bucketed top-score table, put increment
-//      // into tuple and emit a tuple for each country
-      for (String country : action.country) {
-        Increment topScoreHourly =
-            topScoreTable.generatePrimaryCounterIncrement(
-                PopularFeed.makeRow(Helpers.hour(action.date),
-                    country, action.category),
-          Bytes.toBytes(action.product_id), scoreIncrease);
+              // TODO: check if snapping first value valid
+              actionPopular.hourlyScore = topScoreHourly.getValues()[0];
 
-//        tupleBuilder = new TupleBuilder();
-//        tupleBuilder.set("action", action);
-//        tupleBuilder.set("score-increase", scoreIncrease);
-//        tupleBuilder.set("country", country);
-//        tupleBuilder.set("hourly-score", topScoreHourly);
-//        collector.add("popular", tupleBuilder.create());
+              processedActionPopularOutputEmitter.emit(actionPopular);
+          }
       }
 
-
-
-
-     }
-
+// Old logic
 //    @Override
 //    public void process(Tuple tuple, TupleContext context,
 //        OutputCollector collector) {
@@ -400,7 +358,7 @@ public class SocialActionFlow implements Flow {
 
       @Override
       public void initialize(FlowletContext context) {
-          activityFeedTable = new ActivityFeedTable();
+          activityFeedTable = new ActivityFeedTable(LishApp.ACTIVITY_FEED_TABLE);
 
       }
 

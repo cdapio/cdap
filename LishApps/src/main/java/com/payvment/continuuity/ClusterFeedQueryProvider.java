@@ -4,15 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
-//import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.procedure.Procedure;
-//import com.continuuity.api.query.QueryProvider;
-//import com.continuuity.api.query.QueryProviderContentType;
-//import com.continuuity.api.query.QueryProviderResponse;
-//import com.continuuity.api.query.QueryProviderResponse.Status;
-//import com.continuuity.api.query.QuerySpecifier;
 import com.google.common.base.Throwables;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeedTable;
@@ -40,48 +35,32 @@ import com.continuuity.api.procedure.*;
  */
 public class ClusterFeedQueryProvider extends AbstractProcedure {
 
-  private final boolean TRACE = false;
+    private final boolean TRACE = false;
 
-  private ClusterFeedReader reader = null;
+    private ClusterFeedReader reader = null;
 
-//  @Override
-//  public void configure(QuerySpecifier specifier) {
-//    specifier.service("feedreader");
-//    specifier.timeout(20000);
-//    specifier.type(QueryProviderContentType.JSON);
-//    specifier.provider(ClusterFeedQueryProvider.class);
-//  }
+    @UseDataSet(LishApp.CLUSTER_TABLE)
+    private ClusterTable clusterTable;
 
-    @Override
-    public ProcedureSpecification configure() {
-        return null;
-    }
+    @UseDataSet(LishApp.TOP_SCORE_TABLE)
+    private SortedCounterTable topScoreTable;
 
-    @Override
-    public void destroy()
-    {}
-
-
-
-  private ClusterTable clusterTable;
-
-  private SortedCounterTable topScoreTable;
-  
-  private ActivityFeedTable activityFeedTable;
+    @UseDataSet(LishApp.ACTIVITY_FEED_TABLE)
+    private ActivityFeedTable activityFeedTable;
 
 
     @Override
     public void initialize(ProcedureContext context) {
 
-    this.clusterTable = new ClusterTable(LishApp.CLUSTER_TABLE);
+        this.clusterTable = new ClusterTable(LishApp.CLUSTER_TABLE);
 
-    this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE,
-          new SortedCounterTable.SortedCounterConfig());
+        this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE,
+                new SortedCounterTable.SortedCounterConfig());
 
-    this.activityFeedTable = new ActivityFeedTable(LishApp.ACTIVITY_FEED_TABLE);
-  }
+        this.activityFeedTable = new ActivityFeedTable(LishApp.ACTIVITY_FEED_TABLE);
+    }
 
-  /**
+    /**
    * Performs the query once the URL has been validated and the inputs have been
    * parsed.  Further validation of arguments required per-method is performed
    * within this method.
@@ -98,13 +77,11 @@ public class ClusterFeedQueryProvider extends AbstractProcedure {
    * Optionally, can also specify an <i>offset</i> and <i>starttime</i>, which
    * is treated as the start time for doing popular queries.
    * @param request method being performed
-   * @param args arguments of method
+   * @param responder arguments of method
    * @return string result
    */
-
-
   @Handle("readactivity")
-  public void readAvtivity(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+  public void readActivity(ProcedureRequest request, ProcedureResponder responder) throws Exception {
 
 
 
@@ -119,8 +96,12 @@ public class ClusterFeedQueryProvider extends AbstractProcedure {
       try {
           clusterid = Integer.valueOf(clusteridStr);
           limit = Integer.valueOf(limitStr);
-          maxts = Long.getLong(request.getArgument("maxts"));
-          mints = Long.getLong(request.getArgument("mints"));
+
+          if (request.getArgument("maxts") != null)
+            maxts = Long.getLong(request.getArgument("maxts"));
+
+          if (request.getArgument("mints") != null)
+            mints = Long.getLong(request.getArgument("mints"));
 
       } catch (NumberFormatException nfe) {
           Throwables.propagate(nfe);
@@ -139,7 +120,7 @@ public class ClusterFeedQueryProvider extends AbstractProcedure {
 
 
   @Handle("readpopular")
-  public void  readPopular(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+  public void readPopular(ProcedureRequest request, ProcedureResponder responder) throws Exception {
 
       String country =  request.getArgument("country");//  args.get("country");
       String clusteridStr = request.getArgument("clusterid"); // args.get("clusterid");
@@ -149,42 +130,34 @@ public class ClusterFeedQueryProvider extends AbstractProcedure {
       Integer numhours = null;
       Integer limit = null;
 
+      // Check for additional arguments (first setting default values)
+      Integer offset = 0;
+      Long starttime = System.currentTimeMillis();
+
+
       try {
           clusterid = Integer.valueOf(clusteridStr);
           numhours = Integer.valueOf(numhoursStr);
           limit = Integer.valueOf(limitStr);
+
+          if (request.getArgument("offset") != null)
+            offset = Integer.valueOf(request.getArgument("offset"));
+
+          if (request.getArgument("starttime") != null)
+            starttime = Long.valueOf(request.getArgument("starttime"));
+
       } catch (NumberFormatException nfe) {
           Throwables.propagate(nfe);
-      }
-
-      // Check for additional arguments (first setting default values)
-      Integer offset = 0;
-      Long starttime = System.currentTimeMillis();
-      try {
-
-
-              offset = Integer.valueOf(request.getArgument("offset"));
-              starttime = Long.valueOf(request.getArgument("starttime"));
-
-      } catch (NumberFormatException nfe) {
-         Throwables.propagate(nfe);
       }
 
       PopularFeed feed = reader.getPopularFeed(country, clusterid,
       Helpers.hour(starttime), numhours, limit, offset);
       List<PopularFeedEntry> entries = feed.getFeed(limit + offset);
 
-
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), entries);
   }
 
-
-
-
-
-
-
-
-
+/// Old logic
 //  @Override
 //  public QueryProviderResponse process(String methodName, Map<String, String> args) {
 //    if (this.reader == null) {
