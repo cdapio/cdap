@@ -11,6 +11,7 @@ import com.continuuity.api.flow.flowlet.*;
 //import com.continuuity.api.flow.flowlet.TupleContext;
 //import com.continuuity.api.flow.flowlet.TupleSchema;
 //import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.payvment.continuuity.entity.SocialAction;
@@ -68,20 +69,17 @@ public class SocialActionParserFlowlet extends AbstractFlowlet {
             action =
                     this.gson.fromJson(jsonEventString, SocialAction.class);
         } catch (JsonParseException jpe) {
-//            getFlowletContext().getLogger().error(
-//                    "Error parsing JSON input string (" + jsonEventString + ")");
-            throw jpe;
+            Throwables.propagate(jpe);
         } finally {
+
+            // Emit tuple
             socialActionOutputEmitter.emit(action);
             numProcessed++;
         }
-
-        // Define and emit output tuple
-//        Tuple outputTuple = new TupleBuilder().set("action", action).create();
-//        collector.add(outputTuple);
-
     }
 
+
+// Old logic
 //  @Override
 //  public void process(Tuple tuple, TupleContext context,
 //      OutputCollector collector) {
@@ -125,5 +123,4 @@ public class SocialActionParserFlowlet extends AbstractFlowlet {
   static String preProcessSocialActionJSON(String jsonEventString) {
     return jsonEventString.replaceFirst("@id", "id");
   }
-
 }

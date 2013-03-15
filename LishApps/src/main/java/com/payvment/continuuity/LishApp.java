@@ -46,8 +46,8 @@ public class LishApp implements Application {
         return ApplicationSpecification.Builder.with()
                 .setName(APP_NAME)
                 .setDescription(APP_DESC)
-				.withStreams()
-					.add(new Stream(inputStream))
+                .withStreams()
+                .add(new Stream(inputStream))
                 .withDataSets()
                 .add(new ActivityFeedTable(ACTIVITY_FEED_TABLE))
                 .add(new ClusterTable(CLUSTER_TABLE))
@@ -57,12 +57,10 @@ public class LishApp implements Application {
                 .add(new CounterTable(PRODUCT_ACTION_TABLE))
                 .add(new CounterTable(ALL_TIME_SCORE_TABLE))
                 .add(new SortedCounterTable(TOP_SCORE_TABLE))
-
-
-                        .withFlows()
-                        .add(new ClusterWriterFlow())
-                        .withProcedures()
-                        .add(new ClusterFeedQueryProvider())
-                        .build();
+                .withFlows()
+                .add(new ClusterWriterFlow())
+                .withProcedures()
+                .add(new ClusterFeedQueryProvider())
+                .build();
     }
 }
