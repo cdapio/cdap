@@ -1,0 +1,96 @@
+#Test1 Generate a single yay action for 10 products from 10 stores, one category, ids and time both increasing with each
+{"@id":"1","product_id":"1","store_id":"201","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125210000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"2","product_id":"2","store_id":"202","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125220000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"3","product_id":"3","store_id":"203","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125230000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"4","product_id":"4","store_id":"204","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125240000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"5","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125250000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"6","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125260000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"7","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125270000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"8","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125280000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"9","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125290000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"10","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"yay-exp-action","date":"1349125300000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+
+#Test2 For each of these 10 items, perform N likes where N is the position (first product N = 1, last product N = 10)
+{"@id":"1001","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1002","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1003","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1004","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1005","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1006","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1007","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1008","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1009","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"1010","product_id":"10","store_id":"210","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US","UK","JP"]}
+{"@id":"101","product_id":"1","store_id":"201","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"201","product_id":"2","store_id":"202","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"202","product_id":"2","store_id":"202","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"301","product_id":"3","store_id":"203","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"302","product_id":"3","store_id":"203","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"303","product_id":"3","store_id":"203","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"401","product_id":"4","store_id":"204","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"402","product_id":"4","store_id":"204","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"403","product_id":"4","store_id":"204","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"404","product_id":"4","store_id":"204","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"501","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"502","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"503","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"504","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"505","product_id":"5","store_id":"205","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"601","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"602","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"603","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"604","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"605","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"606","product_id":"6","store_id":"206","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"701","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"702","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"703","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"704","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"705","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"706","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"707","product_id":"7","store_id":"207","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"801","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"802","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"803","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"804","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"805","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"806","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"807","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"808","product_id":"8","store_id":"208","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"901","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"902","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"903","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"904","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"905","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"906","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"907","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"908","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+{"@id":"909","product_id":"9","store_id":"209","category":"Sports","actor_id":"301","type":"like-action","date":"1349128810000","@view":"SIMPLE","score":"1.0","country":["US"]}
+
+#Test3 Generate yay actions for 4 products across 2 new categories (Home Improvement, Fashion), one with high score one with low score
+{"@id":"2001","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2002","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2003","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2004","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2005","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2006","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2007","product_id":"20","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132432000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2008","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2009","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2010","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2011","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2012","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2013","product_id":"21","store_id":"220","category":"Home Improvement","actor_id":"301","type":"like-action","date":"1349132420000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2101","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2102","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2103","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2104","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2105","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2106","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2107","product_id":"30","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132435000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2108","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2109","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2110","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2111","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2112","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
+{"@id":"2113","product_id":"31","store_id":"230","category":"Fashion","actor_id":"301","type":"like-action","date":"1349132430000","@view":"SIMPLE","score":"1.0","country":["US","JP"]}
