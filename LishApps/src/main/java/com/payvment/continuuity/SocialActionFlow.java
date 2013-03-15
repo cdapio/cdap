@@ -252,23 +252,28 @@ public class SocialActionFlow implements Flow {
 
           processedActionActivityOutputEmitter.emit(actionActivity);
 
-          // For each country, update time bucketed top-score table, put increment
-          // into tuple and emit a tuple for each country
-          for (String country : action.country) {
-              Increment topScoreHourly =
-                      topScoreTable.generatePrimaryCounterIncrement(
-                              PopularFeed.makeRow(Helpers.hour(action.date),
-                                      country, action.category),
-                              Bytes.toBytes(action.product_id), scoreIncrease);
 
-              actionPopular.socialAction = action;
-              actionPopular.scoreIncrease = scoreIncrease;
-              actionPopular.country = country;
+          try {
+              // For each country, update time bucketed top-score table, put increment
+              // into tuple and emit a tuple for each country
+              for (String country : action.country) {
 
-              // TODO: check if snapping first value valid
-              actionPopular.hourlyScore = topScoreHourly.getValues()[0];
+                  topScoreTable.increment(
+                          PopularFeed.makeRow(Helpers.hour(action.date),
+                                  country, action.category),
+                          Bytes.toBytes(action.product_id), scoreIncrease);
 
-              processedActionPopularOutputEmitter.emit(actionPopular);
+                  actionPopular.socialAction = action;
+                  actionPopular.scoreIncrease = scoreIncrease;
+                  actionPopular.country = country;
+
+                  // TODO: Read top Score hourly from table?
+                  actionPopular.hourlyScore++; // = topScoreHourly.getValues()[0];
+
+                  processedActionPopularOutputEmitter.emit(actionPopular);
+              }
+          } catch (OperationException e) {
+              Throwables.propagate(e);
           }
       }
 

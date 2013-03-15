@@ -3,12 +3,14 @@ package com.payvment.continuuity;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.google.common.base.Throwables;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ActivityFeedTable;
 import com.payvment.continuuity.data.ProductTable;
@@ -18,33 +20,31 @@ import com.payvment.continuuity.data.SortedCounterTable;
 import com.continuuity.api.flow.*;
 import com.continuuity.api.common.Bytes;
 
-//import com.continuuity.api.data.Increment;
-
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.annotation.*;
 
 public class ProductFeedFlow implements Flow {
 
-  public static final String inputStream = "product-feed";
+    public static final String inputStream = "product-feed";
 
-  static final String flowName = "ProductFeedProcessor";
-  static final String flow_description = "ProductFeedProcessor";
+    static final String flowName = "ProductFeedProcessor";
+    static final String flow_description = "ProductFeedProcessor";
 
-  @Override
-  public  FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-              .setName(flowName)
-              .setDescription(flow_description)
-              .withFlowlets()
-              .add("product_parser", new ProductFeedParserFlowlet())
-              .add("product_processor", new ProductProcessorFlowlet())
-              .add("activity_feed_updater", new ProductActivityFeedUpdaterFlowlet())
-              .connect()
-              .fromStream(inputStream).to("product_parser")
-              .from("product_parser").to("product_processor")
-              .from("product_processor").to("activity_feed_updater")
-              .build();
-  }
+    @Override
+    public FlowSpecification configure() {
+        return FlowSpecification.Builder.with()
+                .setName(flowName)
+                .setDescription(flow_description)
+                .withFlowlets()
+                .add("product_parser", new ProductFeedParserFlowlet())
+                .add("product_processor", new ProductProcessorFlowlet())
+                .add("activity_feed_updater", new ProductActivityFeedUpdaterFlowlet())
+                .connect()
+                .fromStream(inputStream).to("product_parser")
+                .from("product_parser").to("product_processor")
+                .from("product_processor").to("activity_feed_updater")
+                .build();
+    }
 
 // Old logic
 //    // Set metadata fields
@@ -68,22 +68,21 @@ public class ProductFeedFlow implements Flow {
 //    specifier.connection("product_processor", "activity_feed_updater");
 
 
-
- //   public class PRODUCT_META_TUPLE_SCHEMA {
-  //     public ProductFeedEntry product;
-  //  }
+    //   public class PRODUCT_META_TUPLE_SCHEMA {
+    //     public ProductFeedEntry product;
+    //  }
 //  public static final TupleSchema PRODUCT_META_TUPLE_SCHEMA =
 //      new TupleSchemaBuilder().add("product", ProductFeedEntry.class).create();
 
 
+    public class ProcessedProductStats {
+        public ProductFeedEntry product;
+        public Long update_count;
+        public Long all_time_score;
+        public Long hourly_score;
+    }
 
-   public class ProcessedProductStats {
-       public ProductFeedEntry product;
-       public Long update_count;
-       public Long all_time_score;
-       public Long hourly_score;
-   }
-
+// Old logic
 //  public static final TupleSchema PROCESSED_PRODUCT_TUPLE_SCHEMA =
 //      new TupleSchemaBuilder()
 
@@ -94,106 +93,86 @@ public class ProductFeedFlow implements Flow {
 //          .create();
 
 
-  public class ProductProcessorFlowlet extends AbstractFlowlet {
+    public class ProductProcessorFlowlet extends AbstractFlowlet {
 
-    int numProcessed = 0;
+        int numProcessed = 0;
 
-   @Override
-    public FlowletSpecification configure() {
-        return FlowletSpecification.Builder.with()
-                .setName("product_processor")
-                .setDescription("product processor reset flowlet")
-                .useDataSet("productTable")
-                .useDataSet("productUpdates")
-                .useDataSet("allTimeScores")
-                .build();
+        @Override
+        public FlowletSpecification configure() {
+            return FlowletSpecification.Builder.with()
+                    .setName("product_processor")
+                    .setDescription("product processor reset flowlet")
+                    .useDataSet("productTable")
+                    .useDataSet("productUpdates")
+                    .useDataSet("allTimeScores")
+                    .build();
+        }
 
-//      // Input schema is product meta
-//      configurator.getDefaultTupleInputStream()
-//          .setSchema(PRODUCT_META_TUPLE_SCHEMA);
-//      // Output schema is product meta and update count
-//      configurator.getDefaultTupleOutputStream()
-//          .setSchema(PROCESSED_PRODUCT_TUPLE_SCHEMA);
-    }
+        @UseDataSet("productTable")
+        private ProductTable productTable;
 
-    @UseDataSet("productTable")
-    private ProductTable productTable;
+        @UseDataSet("productUpdateCountTable")
+        private CounterTable productUpdateCountTable;
 
-    @UseDataSet("productUpdateCountTable")
-    private CounterTable productUpdateCountTable;
+        @UseDataSet("allTimeScoreTable")
+        private CounterTable allTimeScoreTable;
 
-    @UseDataSet("allTimeScoreTable")
-    private CounterTable allTimeScoreTable;
+        @UseDataSet("topScoreTable")
+        private SortedCounterTable topScoreTable;
 
-    @UseDataSet("topScoreTable")
-    private SortedCounterTable topScoreTable;
+        @Override
+        public void initialize(FlowletContext context) {
 
-    @Override
-    public void initialize(FlowletContext context) {
+            this.productTable = new ProductTable("productTable");
+            this.productUpdateCountTable = new CounterTable("productUpdates");
+            this.allTimeScoreTable = new CounterTable("allTimeScores");
+            this.topScoreTable = new SortedCounterTable("topScores", new SortedCounterTable.SortedCounterConfig());
+        }
 
-     this.productTable = new ProductTable("productTable");
-
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.productTable);
-//
-      this.productUpdateCountTable = new CounterTable("productUpdates");
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.productUpdateCountTable);
-
-      this.allTimeScoreTable = new CounterTable("allTimeScores");
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.allTimeScoreTable);
-
-        this.topScoreTable = new SortedCounterTable("topScores", new SortedCounterTable.SortedCounterConfig());
-
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.topScoreTable);
-    }
-
-      @Output("processed_product")
-      OutputEmitter<ProcessedProductStats> processProductOutputEmitter;
+        @Output("processed_product")
+        OutputEmitter<ProcessedProductStats> processProductOutputEmitter;
 
 
-    @ProcessInput
-    public void process(ProcessedProductStats prodStats) {
+        @ProcessInput
+        public void process(ProcessedProductStats prodStats) {
 
-        // Write product metadata
-        ProductFeedEntry productMeta = prodStats.product;
-        productTable.updateObject(productMeta.product_id, productMeta);
+            // Write product metadata
+            ProductFeedEntry productMeta = prodStats.product;
+            productTable.updateObject(productMeta.product_id, productMeta);
 
-        // Count number of product updates and pass-thru
-      Increment updateCountInc =
-          this.productUpdateCountTable.generateSingleKeyIncrement(
-              Bytes.toBytes(productMeta.product_id), 1L);
+            // Count number of product updates and pass-thru
+            Increment updateCountInc =
+                    this.productUpdateCountTable.generateSingleKeyIncrement(
+                            Bytes.toBytes(productMeta.product_id), 1L);
 
+            // TODO: Make sure reading first value from increment is legit.
+            prodStats.update_count = updateCountInc.getValues()[0];
 
-//      tupleBuilder.set("update-count", updateCountInc);
-        prodStats.update_count = updateCountInc.getValues()[0];
+            // Add one to item score and pass-thru
+            Increment itemScoreInc =
+                    this.allTimeScoreTable.generateSingleKeyIncrement(
+                            Bytes.toBytes(productMeta.product_id), 1L);
 
-//      // Add one to item score and pass-thru
-      Increment itemScoreInc =
-          this.allTimeScoreTable.generateSingleKeyIncrement(
-                  Bytes.toBytes(productMeta.product_id), 1L);
-
-//      tupleBuilder.set("all-time-score", itemScoreInc);
-        prodStats.all_time_score = itemScoreInc.getValues()[0];
+            prodStats.all_time_score = itemScoreInc.getValues()[0];
 
 
+            // Update time bucketed top-score table, also put increment into tuple
+            try {
 
-      // Update time bucketed top-score table, also put increment into tuple
-      Increment topScoreHourly = topScoreTable.generatePrimaryCounterIncrement(
-          Bytes.add(Bytes.toBytes(Helpers.hour(productMeta.date)),
-              Bytes.toBytes(productMeta.category)),
-          Bytes.toBytes(productMeta.product_id), 1L);
+                topScoreTable.increment(
+                        Bytes.add(Bytes.toBytes(Helpers.hour(productMeta.date)),
+                                Bytes.toBytes(productMeta.category)),
+                        Bytes.toBytes(productMeta.product_id), 1L);
+            } catch (OperationException e) {
+                Throwables.propagate(e);
+            }
 
-      prodStats.hourly_score = topScoreHourly.getValues()[0];
-      //tupleBuilder.set("hourly-score", topScoreHourly);
+            //TODO: read topScoreHourly back from the table OR read from ProductFeedFlowlet
+            //prodStats.hourly_score = topScoreHourly.getValues()[0];
+            //tupleBuilder.set("hourly-score", topScoreHourly);
 
-      processProductOutputEmitter.emit(prodStats);
-
-      //collector.add(tupleBuilder.create());
-
-    }
+            processProductOutputEmitter.emit(prodStats);
+        }
 
 
 // Old logic
@@ -234,11 +213,11 @@ public class ProductFeedFlow implements Flow {
 //    public void onSuccess(Tuple tuple, TupleContext context) {
 //      numProcessed++;
 //    }
-  }
-  
-  public static class ProductActivityFeedUpdaterFlowlet extends AbstractFlowlet {
+    }
 
-    static int numProcessed = 0;
+    public static class ProductActivityFeedUpdaterFlowlet extends AbstractFlowlet {
+
+        static int numProcessed = 0;
 
 //    @Override
 //    public void configure(StreamsConfigurator configurator) {
@@ -248,53 +227,52 @@ public class ProductFeedFlow implements Flow {
 //      // No output
 //    }
 
-      @Override
-      public FlowletSpecification configure() {
-          return FlowletSpecification.Builder.with()
-                  .setName("activity_feed_updater")
-                  .setDescription("Product Activity FeedUpdater Flowlet")
-                  .build();
-      }
+        @Override
+        public FlowletSpecification configure() {
+            return FlowletSpecification.Builder.with()
+                    .setName("activity_feed_updater")
+                    .setDescription("Product Activity FeedUpdater Flowlet")
+                    .build();
+        }
 
 
-     private SortedCounterTable topScoreTable;
+        private SortedCounterTable topScoreTable;
 
-    private ActivityFeedTable activityFeedTable;
-    
-    @Override
-    public void initialize(FlowletContext context) {
-      this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE,
-          new SortedCounterTable.SortedCounterConfig());
+        private ActivityFeedTable activityFeedTable;
 
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.topScoreTable);
+        @Override
+        public void initialize(FlowletContext context) {
+            this.topScoreTable = new SortedCounterTable(LishApp.TOP_SCORE_TABLE,
+                    new SortedCounterTable.SortedCounterConfig());
 
-      this.activityFeedTable = new ActivityFeedTable(LishApp.ACTIVITY_FEED_TABLE);
-//      getFlowletContext().getDataSetRegistry().registerDataSet(
-//          this.activityFeedTable);
-    }
+            this.activityFeedTable = new ActivityFeedTable(LishApp.ACTIVITY_FEED_TABLE);
+        }
 
+        @ProcessInput
+        public void process(ProcessedProductStats productStats) {
 
-      @ProcessInput
-      public void process(ProcessedProductStats productStats) {
+            // Insert feed entry
+            ActivityFeedEntry feedEntry = new ActivityFeedEntry(productStats.product.date,
+                    productStats.product.store_id, productStats.product.product_id, productStats.all_time_score);
 
-          // Insert feed entry
-          ActivityFeedEntry feedEntry = new ActivityFeedEntry(productStats.product.date,
-                  productStats.product.store_id, productStats.product.product_id, productStats.all_time_score);
+            for (String country : productStats.product.country) {
+                activityFeedTable.writeEntry(country, productStats.product.category, feedEntry);
+            }
 
-          for (String country : productStats.product.country) {
-              activityFeedTable.writeEntry(country, productStats.product.category, feedEntry);
-          }
+            // TODO: fix additional indexing increment
+            // Let top score perform any additional indexing increments
+            try {
+            this.topScoreTable.increment(
+                    Bytes.add(Bytes.toBytes(Helpers.hour(productStats.product.date)),
+                            Bytes.toBytes(productStats.product.category)),
+                    Bytes.toBytes(productStats.product.product_id), /*1L*/ productStats.hourly_score);
 
-          // TODO: fix additional indexing increment
-//       Let top score perform any additional indexing increments
-//      this.topScoreTable.performSecondaryCounterIncrements(
-//          Bytes.add(Bytes.toBytes(Helpers.hour(productMeta.date)),
-//              Bytes.toBytes(productMeta.category)),
-//          Bytes.toBytes(productMeta.product_id), 1L, hourlyScore);
-
-          numProcessed++;
-      }
+            numProcessed++;
+            }
+            catch (OperationException e) {
+                Throwables.propagate(e);
+            }
+        }
 
 // Old logic
 //    @Override
@@ -325,9 +303,9 @@ public class ProductFeedFlow implements Flow {
 //    public void onSuccess(Tuple tuple, TupleContext context) {
 //      numProcessed++;
 //    }
-    
-    private static boolean shouldInsertFeedEntry(ProductFeedEntry productMeta, Long updateCount) {
-      return true;
+
+        private static boolean shouldInsertFeedEntry(ProductFeedEntry productMeta, Long updateCount) {
+            return true;
+        }
     }
-  }
 }

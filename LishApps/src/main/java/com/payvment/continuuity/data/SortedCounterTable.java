@@ -63,13 +63,13 @@ public class SortedCounterTable extends DataSet {
   }
 
 
-   public Increment generatePrimaryCounterIncrement(byte[] row, byte[] col, long limit) {
-        return new Increment(row, col, limit);
-   }
-
-    public void performSecondaryCounterIncrements(byte[] row, byte[] col, Long limit) {
-        // TODO: Figure out that shit later
-    }
+//   public Increment generatePrimaryCounterIncrement(byte[] row, byte[] col, long limit) {
+//        return new Increment(row, col, limit);
+//   }
+//
+//    public void performSecondaryCounterIncrements(byte[] row, byte[] col, Long limit) {
+//        // TODO: Figure out that shit later
+//    }
 
 
     /**
