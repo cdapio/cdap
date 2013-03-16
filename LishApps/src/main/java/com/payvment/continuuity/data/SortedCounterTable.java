@@ -1,14 +1,5 @@
 package com.payvment.continuuity.data;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.Table;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -18,6 +9,15 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Table;
 
 /**
  * Table of sets of counters that support reading in descending value order.
@@ -32,20 +32,19 @@ public class SortedCounterTable extends DataSet {
 
   private final SortedCounterConfig config;
 
-  private Table counters;
+  private final Table counters;
 
+  public SortedCounterTable(String name) {
+    super(name);
+    this.counters = new Table("sct_" + name);
+    this.config = new SortedCounterConfig();
+  }
 
-    public SortedCounterTable(String name) {
-        super(name);
-        this.counters = new Table(this.getName());
-        this.config = new SortedCounterConfig();
-    }
-
-    public SortedCounterTable(String name, SortedCounterConfig config) {
-        super(name);
-        this.counters = new Table(this.getName());
-        this.config = config;
-    }
+  public SortedCounterTable(DataSetSpecification spec) {
+    super(spec);
+    this.counters = new Table("sct_" + getName());
+    this.config = new SortedCounterConfig(spec.getProperty("config"));
+  }
 
 
   @Override
@@ -56,23 +55,7 @@ public class SortedCounterTable extends DataSet {
       .create();
   }
 
-  public SortedCounterTable(DataSetSpecification spec) {
-    super(spec);
-    this.config = new SortedCounterConfig(spec.getProperty("config"));
-    this.counters = new Table(spec.getSpecificationFor(this.getName()));
-  }
-
-
-//   public Increment generatePrimaryCounterIncrement(byte[] row, byte[] col, long limit) {
-//        return new Increment(row, col, limit);
-//   }
-//
-//    public void performSecondaryCounterIncrements(byte[] row, byte[] col, Long limit) {
-//        // TODO: Figure out that shit later
-//    }
-
-
-    /**
+  /**
    * Performs the necessary increment operations to enable top-n queries on the
    * specified counter set.
    * <p>
@@ -81,13 +64,13 @@ public class SortedCounterTable extends DataSet {
    * @param amount counter increment amount
    */
   public void increment(byte [] counterSet, byte[] counter, long amount)
-  throws OperationException {
+      throws OperationException {
     // Determine total count
     byte [] row = makeRow(counterSet, 0);
     Map<byte[], Long> result = this.counters.incrementAndGet(
         new Increment(row, counter, amount));
     long value = result.get(counter);
-    
+
     // Perform any necessary bucket updates
     for (long bucket : this.config.buckets) {
       if (value >= bucket) {
@@ -110,7 +93,7 @@ public class SortedCounterTable extends DataSet {
    * @throws com.continuuity.api.data.OperationException
    */
   public List<Counter> readTopCounters(byte [] counterSet, int limit)
-    throws OperationException {
+      throws OperationException {
     CounterBucket counterBucket = new CounterBucket();
     // Build a list of buckets in descending order to be processed
     List<Long> bucketList = new ArrayList<Long>(this.config.buckets.length);
@@ -122,12 +105,9 @@ public class SortedCounterTable extends DataSet {
     for (Long bucket : bucketList) {
       byte [] row = makeRow(counterSet, bucket);
       // Read all counters in bucket
-
-
-
-      // TODO: This uses Read of all columns not key-value!
-      Read bucketRead = new Read(row, null, null);
-      OperationResult< Map<byte[],byte[]> > result = this.counters.read(bucketRead);
+      Read bucketRead = new Read(row);
+      OperationResult< Map<byte[],byte[]> > result =
+          this.counters.read(bucketRead);
       // If nothing in this bucket, go to next bucket
       if (result.isEmpty()) continue;
       // Iterate through all entries in this bucket (these are ordered by name
@@ -152,19 +132,19 @@ public class SortedCounterTable extends DataSet {
      * Set of counters, unique on counter name.
      */
     private final Set<Counter> counterSet = new TreeSet<Counter>(
-      new Comparator<Counter>() {
-        @Override
-        public int compare(Counter left, Counter right) {
-          return Bytes.compareTo(left.name, right.name);
-        }
-      });
+        new Comparator<Counter>() {
+          @Override
+          public int compare(Counter left, Counter right) {
+            return Bytes.compareTo(left.name, right.name);
+          }
+        });
 
     int size() {
       return this.counterSet.size();
     }
 
     void add(Counter counter) {
-      counterSet.add(counter);
+      this.counterSet.add(counter);
     }
 
     /**
@@ -180,16 +160,16 @@ public class SortedCounterTable extends DataSet {
        * count order, and then ascending counter order for tied count.
        */
       NavigableMap<Counter,Counter> topMap = new TreeMap<Counter,Counter>(
-        new Comparator<Counter>() {
-          @Override
-          public int compare(Counter left, Counter right) {
-            if (left.count > right.count) return -1;
-            if (left.count < right.count) return 1;
-            return Bytes.compareTo(left.name, right.name);
-          }
-        });
+          new Comparator<Counter>() {
+            @Override
+            public int compare(Counter left, Counter right) {
+              if (left.count > right.count) return -1;
+              if (left.count < right.count) return 1;
+              return Bytes.compareTo(left.name, right.name);
+            }
+          });
       // Add everything to the map
-      for (Counter counter : counterSet) topMap.put(counter, counter);
+      for (Counter counter : this.counterSet) topMap.put(counter, counter);
       // Grab up to n (min of limit/total found)
       int n = Math.min(limit, topMap.size());
       List<Counter> top = new ArrayList<Counter>(n);
@@ -229,33 +209,32 @@ public class SortedCounterTable extends DataSet {
 
   public static class SortedCounterConfig {
 
-    private long [] buckets;
+    private final long [] buckets;
+
+    public SortedCounterConfig() {
+      this.buckets = new long [] { 10, 100, 1000 };
+    }
+
+    public SortedCounterConfig(String serialized) {
+      String[] strings = serialized.split(" ");
+      this.buckets = new long[strings.length];
+      for (int i = 0; i < strings.length; ++i) {
+        this.buckets[i] = Long.parseLong(strings[i]);
+      }
+    }
 
     public long[] getBuckets() {
-      return buckets;
+      return this.buckets;
     }
 
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      for (long i : buckets) {
+      for (long i : this.buckets) {
         builder.append(i);
         builder.append(" ");
       }
-      return builder.toString();
-    }
-
-    public SortedCounterConfig() {
-      buckets = new long [] { 10, 100, 1000 };
-
-    }
-
-    public SortedCounterConfig(String serialized) {
-      String[] strings = serialized.split(" ");
-      buckets = new long[strings.length];
-      for (int i = 0; i < strings.length; ++i) {
-        buckets[i] = Long.parseLong(strings[i]);
-      }
+      return builder.toString().trim();
     }
   }
 }

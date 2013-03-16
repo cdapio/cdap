@@ -4,47 +4,41 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//import com.continuuity.api.data.DataLib;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-
-//import com.continuuity.api.data.ReadColumnRange;
-
-
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.table.WriteOperation;
-import com.continuuity.api.data.util.Helpers;
-import com.google.common.base.Throwables;
-import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
-
+import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.api.data.dataset.table.Read;
-
-
-
-
+import com.continuuity.api.data.util.Helpers;
+import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 
 /**
  * Activity Feed Table implemented as a DataLib/DataSet.
  */
 public class ActivityFeedTable extends DataSet {
 
-
-    @Override
-    public DataSetSpecification configure() {
-        return null;
-    }
-
   public static final String ACTIVITY_FEED_TABLE = "ActivityFeedTable";
 
-    private final Table table;
+  private final Table table;
 
   public ActivityFeedTable(String name) {
-      super(name);
-      table = new Table("activity_feed_" + this.getName());
+    super(name);
+    this.table = new Table("activity_feed_" + name);
+  }
+
+  public ActivityFeedTable(DataSetSpecification spec) {
+    super(spec);
+    this.table = new Table("activity_feed_" + getName());
+  }
+
+  @Override
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this)
+        .dataset(this.table.configure())
+        .create();
   }
 
   /**
@@ -55,23 +49,14 @@ public class ActivityFeedTable extends DataSet {
    * @param feedEntry
    */
   public void writeEntry(String country, String category,
-      ActivityFeedEntry feedEntry) {
+      ActivityFeedEntry feedEntry) throws OperationException {
+    Write feedEntryWrite =
+        new Write(makeActivityFeedRow(country, category),
+            feedEntry.getColumn(), feedEntry.getValue());
 
-      Write feedEntryWrite = new Write(makeActivityFeedRow(country, category), feedEntry.getColumn(), feedEntry.getValue());
-
-      try {
-          table.write(feedEntryWrite);
-      } catch (OperationException e) {
-          throw Throwables.propagate(e);
-      }
-
-// Old logic
-//    Write feedEntryWrite = new Write(ACTIVITY_FEED_TABLE,
-//        makeActivityFeedRow(country, category), feedEntry.getColumn(),
-//        feedEntry.getValue());
-//    getCollector().add(feedEntryWrite);
+    this.table.write(feedEntryWrite);
   }
-  
+
   /**
    * Reads the activity feed for the specified category, from times between the
    * maximum and minimum stamps, and up to the specified limit.
@@ -81,8 +66,8 @@ public class ActivityFeedTable extends DataSet {
    * @param maxStamp maximum stamp, exclusive
    * @param minStamp minimum stamp, exclusive
    * @return list of feed entries
-   * @throws OperationException 
-   * @throws IllegalStateException 
+   * @throws OperationException
+   * @throws IllegalStateException
    */
   public List<ActivityFeedEntry> readEntries(String country, String category,
       int limit, long maxStamp, long minStamp)
@@ -96,15 +81,9 @@ public class ActivityFeedTable extends DataSet {
     byte [] startColumn = Bytes.toBytes(exclusiveStamp);
     byte [] stopColumn = Bytes.toBytes(Helpers.reverse(minStamp));
 
-   // Old logic
-    // Perform read from startColumn to stopColumn
-    //ReadColumnRange read = new ReadColumnRange(ACTIVITY_FEED_TABLE,
-    //    makeActivityFeedRow(country, category), startColumn, stopColumn, limit);
-    //OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
-
-   Read read = new Read(makeActivityFeedRow(country, category), startColumn, stopColumn, limit);
-   OperationResult<Map<byte[],byte[]>> result = table.read(read);
-
+    Read read = new Read(makeActivityFeedRow(country, category), startColumn,
+        stopColumn, limit);
+    OperationResult<Map<byte[],byte[]>> result = this.table.read(read);
 
     List<ActivityFeedEntry> entries = new ArrayList<ActivityFeedEntry>();
     if (!result.isEmpty()) {

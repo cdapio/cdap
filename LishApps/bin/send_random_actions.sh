@@ -14,7 +14,7 @@ num_actions=$1
 # Set pointers to URL endpoint
 
 GATEWAY_HOSTNAME=${GATEWAY_HOSTNAME:=localhost}
-GATEWAY_REST_BASE_URL=${GATEWAY_REST_BASE_URL:=http://${GATEWAY_HOSTNAME}:10000/rest-stream/}
+GATEWAY_REST_BASE_URL=${GATEWAY_REST_BASE_URL:=http://${GATEWAY_HOSTNAME}:10000/stream/}
 STREAM_NAME=${STREAM_NAME:=social-actions}
 GATEWAY_STREAM_URL=${GATEWAY_STREAM_URL:=$GATEWAY_REST_BASE_URL$STREAM_NAME}
 
@@ -35,6 +35,6 @@ for (( i=0; i<$num_actions; i++ )); do
 	date=$((($(date +%s)*1000) + ($RANDOM % 1000)))
 	json="{\"@id\":\"$action_id\",\"product_id\":\"$product_id\",\"store_id\":\"$store_id\",\"category\":\"Sports\",\"actor_id\":\"301\",\"type\":\"yay-exp-action\",\"date\":\"$date\",\"@view\":\"SIMPLE\",\"score\":\"1.0\"}"
 	echo "Inserting action: $json"
-	curl -v "$GATEWAY_STREAM_URL" --data $json
+	curl -v "$GATEWAY_STREAM_URL" --request PUT --data $json
 	(( action_id ++ ))
 done

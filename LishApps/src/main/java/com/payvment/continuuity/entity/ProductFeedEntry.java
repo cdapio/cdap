@@ -1,16 +1,12 @@
 package com.payvment.continuuity.entity;
 
-
-//import com.continuuity.api.data.lib.SimpleSerializable;
-//import com.continuuity.api.data.util.Bytes;
-
 import com.continuuity.api.common.Bytes;
 
 /**
  * Stores all data for a product feed event, or can be a holder of the metadata
  * of a single product.
  */
-public class ProductFeedEntry /*implements SimpleSerializable*/ {
+public class ProductFeedEntry {
 
   public Long product_id;
 
