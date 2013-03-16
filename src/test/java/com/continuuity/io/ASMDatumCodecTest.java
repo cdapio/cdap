@@ -1,11 +1,11 @@
-package com.continuuity.runtime;
+package com.continuuity.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
-import com.continuuity.internal.app.runtime.flow.ASMDatumWriterFactory;
+import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
@@ -130,6 +130,22 @@ public class ASMDatumCodecTest {
   }
 
   @Test
+  public void testReferenceArray() throws IOException, UnsupportedTypeException {
+    TypeToken<String[]> type = new TypeToken<String[]>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+
+    String[] writeValue = new String[] {"1", "2", null, "3"};
+    DatumWriter<String[]> writer = getWriter(type);
+    writer.encode(writeValue, new BinaryEncoder(os));
+
+    ReflectionDatumReader<String[]> reader = new ReflectionDatumReader<String[]>(getSchema(type), type);
+
+    String[] value = reader.read(new BinaryDecoder(is), getSchema(type));
+    Assert.assertArrayEquals(writeValue, value);
+  }
+
+  @Test
   public void testList() throws IOException, UnsupportedTypeException {
     TypeToken<List<Long>> type = new TypeToken<List<Long>>() {};
     PipedOutputStream os = new PipedOutputStream();
@@ -176,11 +192,11 @@ public class ASMDatumCodecTest {
     Assert.assertEquals(writeValue, reader.read(new BinaryDecoder(is), getSchema(type)));
   }
 
-  public static class Record {
-    public int i;
-    public String s;
-    public List<String> list;
-    public TestEnum e;
+  private static class Record {
+    private int i;
+    private String s;
+    private List<String> list;
+    private TestEnum e;
 
     public Record(int i, String s, List<String> list, TestEnum e) {
       this.i = i;
@@ -223,6 +239,39 @@ public class ASMDatumCodecTest {
     Record value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(writeValue, value);
+  }
+
+  @Test
+  public void testRecordContainer() throws IOException, UnsupportedTypeException {
+    TypeToken<List<Record>> type = new TypeToken<List<Record>>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+
+    DatumWriter<List<Record>> writer = getWriter(type);
+    List<Record> writeValue = ImmutableList.of(
+                                  new Record(10, "testing", ImmutableList.of("a", "b", "c"), TestEnum.VALUE2));
+    writer.encode(writeValue, new BinaryEncoder(os));
+
+    ReflectionDatumReader<List<Record>> reader = new ReflectionDatumReader<List<Record>>(getSchema(type), type);
+    List<Record> value = reader.read(new BinaryDecoder(is), getSchema(type));
+
+    Assert.assertEquals(writeValue, value);
+  }
+
+  @Test
+  public void testRecordArray() throws IOException, UnsupportedTypeException {
+    TypeToken<Record[][]> type = new TypeToken<Record[][]>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+
+    DatumWriter<Record[][]> writer = getWriter(type);
+    Record[][] writeValue = new Record[][] {{ new Record(10, "testing", ImmutableList.of("a", "b", "c"), TestEnum.VALUE2)}};
+    writer.encode(writeValue, new BinaryEncoder(os));
+
+    ReflectionDatumReader<Record[][]> reader = new ReflectionDatumReader<Record[][]>(getSchema(type), type);
+    Record[][] value = reader.read(new BinaryDecoder(is), getSchema(type));
+
+    Assert.assertArrayEquals(writeValue, value);
   }
 
   public static final class Node {
