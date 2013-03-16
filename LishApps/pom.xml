@@ -9,132 +9,43 @@
   <version>1.0-SNAPSHOT</version>
   <name>LishFeeds</name>
   <properties>
-    <main>com.payvment.continuuity.SocialActionFlow</main>
+    <main>com.payvment.continuuity.LishApp</main>
     <continuuityVersion>1.4.0</continuuityVersion>
-    <appFabricHome>/Users/alex/dev/continuuity-developer-suite-1.4.0</appFabricHome>
   </properties>
+  <repositories>
+    <repository>
+      <id>nexus</id>
+      <url>https://repository.continuuity.com/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>releases</id>
+      <url>https://repository.continuuity.com/content/repositories/releases/</url>
+    </repository>
+  </repositories>
   <dependencies>
-
-
-      <dependency>
-          <groupId>com.continuuity</groupId>
-          <artifactId>common</artifactId>
-          <version>${continuuityVersion}</version>
-          <classifier>api</classifier>
-          <scope>system</scope>
-          <systemPath>${appFabricHome}/continuuity-api-${continuuityVersion}.jar</systemPath>
-      </dependency>
-
-
-    <!-- Add internal continuuity jars (until tests refactored)
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>test</artifactId>
+      <artifactId>continuuity-test</artifactId>
       <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/continuuity-test-${continuuityVersion}.jar</systemPath>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>flow</artifactId>
+      <artifactId>continuuity-api</artifactId>
       <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/flow-${continuuityVersion}.jar</systemPath>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>flow</artifactId>
-      <version>${continuuityVersion}</version>
-      <classifier>api</classifier>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/flow-${continuuityVersion}-api.jar</systemPath>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.4</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>gateway</artifactId>
-      <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/gateway-${continuuityVersion}.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>data-fabric</artifactId>
-      <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/data-fabric-${continuuityVersion}.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>data-fabric</artifactId>
-      <version>${continuuityVersion}</version>
-      <classifier>api</classifier>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/data-fabric-${continuuityVersion}-api.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>common</artifactId>
-      <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/common-${continuuityVersion}.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>common</artifactId>
-      <version>${continuuityVersion}</version>
-      <classifier>api</classifier>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/common-${continuuityVersion}-api.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>overlord</artifactId>
-      <version>${continuuityVersion}</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/overlord-${continuuityVersion}.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>overlord</artifactId>
-      <version>${continuuityVersion}</version>
-      <classifier>thrift</classifier>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/overlord-${continuuityVersion}-thrift.jar</systemPath>
-    </dependency>
-      -->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>2.0.0-alpha</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/hadoop-common-2.0.0-alpha.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-auth</artifactId>
-      <version>2.0.0-alpha</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/hadoop-auth-2.0.0-alpha.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
-      <version>2.0.0-alpha</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/hbase-0.94.2.1.4.1.continuuity.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode</groupId>
-      <artifactId>kryo</artifactId>
-      <version>2.12</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/kryo-2.12.jar</systemPath>
-    </dependency>
-    <!-- Add external dependencies -->
-    <dependency>
-      <groupId>org.ow2.asm</groupId>
-      <artifactId>asm</artifactId>
-      <version>4.0</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.4</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -145,6 +56,13 @@
       <groupId>net.sf.opencsv</groupId>
       <artifactId>opencsv</artifactId>
       <version>2.1</version>
+    </dependency>
+
+    <!-- Add external dependencies
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>4.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.inject</groupId>
@@ -252,94 +170,33 @@
       <artifactId>netty</artifactId>
       <version>3.2.7.Final</version>
     </dependency>
+-->
   </dependencies>
   <!-- Set the main class and tell maven to include dependencies in the jar -->
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>${main}</mainClass>
-            </manifest>
-          </archive>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-  <profiles>
-    <profile>
-      <id>social-action</id>
-      <properties>
-        <main>com.payvment.continuuity.SocialActionFlow</main>
-      </properties>
-      <build>
+    <build>
         <plugins>
-          <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-              <classifier>social-action</classifier>
-              <finalName>LishSocialActionFlow-${project.version}</finalName>
-            </configuration>
-          </plugin>
-          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-              <finalName>LishSocialActionFlow-${project.version}</finalName>
-            </configuration>
-          </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main}</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <inherited>true</inherited>
+                <configuration/>
+            </plugin>
         </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>cluster-writer</id>
-      <properties>
-        <main>com.payvment.continuuity.ClusterWriterFlow</main>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-              <classifier>cluster-writer</classifier>
-              <finalName>LishClusterWriterFlow-${project.version}</finalName>
-            </configuration>
-          </plugin>
-          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-              <finalName>LishClusterWriterFlow-${project.version}</finalName>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>feed-reader</id>
-      <properties>
-        <main>com.payvment.continuuity.ClusterFeedQueryProvider</main>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-              <classifier>feed-reader</classifier>
-              <finalName>LishFeedReaderQueryProvider-${project.version}</finalName>
-            </configuration>
-          </plugin>
-          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-              <finalName>LishFeedReaderQueryProvider-${project.version}</finalName>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+    </build>
+
 </project>

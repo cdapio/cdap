@@ -9,14 +9,11 @@ import java.util.PriorityQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
-import com.continuuity.api.data.*;
-import com.continuuity.api.data.dataset.table.*;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
-import com.continuuity.api.data.dataset.*;
 
 /**
  * Performs activity feed and popular feed read queries.
