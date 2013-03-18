@@ -249,8 +249,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
+      queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
@@ -262,16 +262,16 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
-      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
+      queueEntry.addPartitioningKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.HASH);
   }
 
   @Test
@@ -298,7 +298,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
@@ -307,11 +307,11 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.ROUND_ROBIN);
   }
 
   private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
-                                         int numQueueEntries, int startQueueEntry) throws Exception {
+         int numQueueEntries, int startQueueEntry, QueuePartitioner.PartitionerType partitionerType) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
@@ -319,9 +319,11 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
         int expectedValue = startQueueEntry + consumer + (2 * entry * numConsumers);
-        if(consumer == 0) {
-          // Adjust the expected value for consumer 0
-          expectedValue += numConsumers;
+        if(partitionerType == QueuePartitioner.PartitionerType.ROUND_ROBIN) {
+          if(consumer == 0) {
+            // Adjust the expected value for consumer 0
+            expectedValue += numConsumers;
+          }
         }
 //        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
 //                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
