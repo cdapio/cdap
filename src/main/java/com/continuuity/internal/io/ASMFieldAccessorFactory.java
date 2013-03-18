@@ -14,7 +14,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
- *
+ * A {@link FieldAccessorFactory} that uses ASM to generate a specific {@link FieldAccessor} class
+ * for each field. The resulting {@link FieldAccessor} instance will be cached and reused.
  */
 public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
 
@@ -29,12 +30,19 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
     return fieldAccessorCache.getUnchecked(new FieldEntry(type, fieldName));
   }
 
+  /**
+   * The {@link CacheLoader} for generating instance of {@link FieldAccessor} instance.
+   */
   private static final class FieldAccessorLoader extends CacheLoader<FieldEntry, FieldAccessor> {
 
+    /**
+     * Map from ClassLoader of the origin field class to the ClassLoader for loading the generating FieldAccessor class.
+     */
     private final Map<ClassLoader, FieldAccessorClassLoader> classLoaders = Maps.newHashMap();
 
     @Override
     public FieldAccessor load(FieldEntry key) throws Exception {
+      // See if are able to use the "defineClass" method in the ClassLoader of the field class.
       Method defineClass = null;
       try {
         defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class,
@@ -44,6 +52,7 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
         // ok to ignore this exception, it will resort to the slow reflection way.
       }
 
+      // Generate the FieldAccessor class bytecode.
       ClassDefinition classDef = new FieldAccessorGenerator()
                                       .generate(key.getType(),
                                                 Fields.findField(key.getType(), key.getFieldName()),
@@ -60,6 +69,10 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
     }
   }
 
+  /**
+   * The ClassLoader for loading the FieldAccessor class. It will try to define the class from the parent
+   * ClassLoader.
+   */
   private static final class FieldAccessorClassLoader extends ByteCodeClassLoader {
 
     private final Method defineClassMethod;

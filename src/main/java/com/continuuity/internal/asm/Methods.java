@@ -7,7 +7,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 /**
- *
+ * Util class containing helper functions to interact with ASM {@link Method}.
  */
 public final class Methods {
 

@@ -6,10 +6,13 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * A private {@link ClassLoader} for loading generated {@link com.continuuity.internal.io.DatumWriter} bytecode.
+ * A {@link ClassLoader} for loading known bytecode.
  */
 public class ByteCodeClassLoader extends MultiClassLoader {
 
+  /**
+   * Map from class name to bytecode
+   */
   protected final Map<String, byte[]> bytecodes;
 
   public ByteCodeClassLoader(ClassLoader parent) {

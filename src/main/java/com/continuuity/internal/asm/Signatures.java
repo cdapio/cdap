@@ -9,7 +9,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 import java.lang.reflect.ParameterizedType;
 
 /**
- *
+ * Util class for generating class signature.
  */
 public final class Signatures {
 
