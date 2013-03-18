@@ -6,6 +6,13 @@ import com.google.common.reflect.TypeToken;
  *
  */
 public abstract class AbstractFieldAccessor implements FieldAccessor {
+
+  private final TypeToken<?> type;
+
+  protected AbstractFieldAccessor(TypeToken<?> type) {
+    this.type = type;
+  }
+
   @Override
   public <T> void set(Object object, T value) {
     throw new UnsupportedOperationException("Method not supported.");
@@ -97,7 +104,7 @@ public abstract class AbstractFieldAccessor implements FieldAccessor {
   }
 
   @Override
-  public TypeToken<?> getType() {
-    throw new UnsupportedOperationException("Method not supported.");
+  public final TypeToken<?> getType() {
+    return type;
   }
 }
