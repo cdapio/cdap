@@ -25,11 +25,6 @@ public final class Archive {
   private final String mainClassName;
   private final Id.Account id;
 
-  @Deprecated
-  public Archive(Id.Account id, File file) throws IOException {
-    this(id, new JarResources(file));
-  }
-
   public Archive(Id.Account id, Location location) throws IOException {
     this(id, new JarResources(location));
   }

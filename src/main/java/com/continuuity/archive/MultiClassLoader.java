@@ -4,11 +4,8 @@
 
 package com.continuuity.archive;
 
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * A simple test class loader capable of loading from
@@ -20,8 +17,22 @@ import java.util.Map;
  */
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
-  private final Map<String, Class<?>> classes = Maps.newHashMap();
   private char classNameReplacementChar;
+
+  /**
+   * Creates a ClassLoader with system ClassLoader as its parent.
+   */
+  protected MultiClassLoader() {
+    super();
+  }
+
+  /**
+   * Creates a ClassLoader with the given ClassLoader as its parent.
+   * @param parent The parent ClassLoader
+   */
+  protected MultiClassLoader(ClassLoader parent) {
+    super(parent);
+  }
 
   /**
    * This is a simple version for external clients since they
@@ -34,12 +45,10 @@ public abstract class MultiClassLoader extends ClassLoader {
   }
 
   @Override
-  public synchronized Class<?> loadClass(String className,
-                                         boolean resolveIt) throws ClassNotFoundException {
+  public synchronized Class<?> loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
 
-    //Check our local cache of classes
-    Class<?> result = classes.get(className);
-    if(result != null) {
+    Class<?> result = findLoadedClass(className);
+    if (result != null) {
       return result;
     }
 
@@ -49,7 +58,11 @@ public abstract class MultiClassLoader extends ClassLoader {
     if(classBytes == null) {
       //Check with the parent classloader
       try {
-        return super.findSystemClass(className);
+        ClassLoader parent = getParent();
+        if (parent != null) {
+          return parent.loadClass(className);
+        }
+        return ClassLoader.getSystemClassLoader().loadClass(className);
       } catch(ClassNotFoundException e) {
         if(LOG.isTraceEnabled()) {
           LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
@@ -69,8 +82,6 @@ public abstract class MultiClassLoader extends ClassLoader {
       resolveClass(result);
     }
 
-    // Done
-    classes.put(className, result);
     return result;
   }
 

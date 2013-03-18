@@ -4,15 +4,16 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.InputSupplier;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -70,11 +71,11 @@ public final class ArchiveBundler {
    *
    * @param output   Cloned output archive
    * @param manifest New manifest file to be added to the cloned archive
-   * @param files    Additional files to be added to cloned archive. Pairs are: resource_name_in_manifest,file_to_add
+   * @param files    Additional files to be added to cloned archive. Pairs are: entry_name, input supplier
    * @throws IOException thrown when issue with handling of files.
    */
-  public void clone(Location output, Manifest manifest, Iterable<ImmutablePair<String, Location>> files)
-    throws IOException {
+  public void clone(Location output, Manifest manifest,
+                    Map<String, ? extends InputSupplier<? extends InputStream>> files) throws IOException {
     clone(output, manifest, files, Predicates.<JarEntry>alwaysFalse());
   }
 
@@ -85,12 +86,12 @@ public final class ArchiveBundler {
    * @param output       Cloned output archive
    * @param manifest     New manifest file to be added to the cloned archive
    * @param files        Additional files to be added to cloned archive.
-   *                     Pairs are: resource_name_in_manifest,file_to_add
+   *                     Pairs are: entry_name, input supplier
    * @param ignoreFilter Filter applied on ZipEntry, if true file is ignored, otherwise will be accepted.
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest,
-                    Iterable<ImmutablePair<String, Location>> files,
+                    Map<String, ? extends InputSupplier<? extends InputStream>> files,
                     Predicate<JarEntry> ignoreFilter) throws IOException {
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
@@ -102,52 +103,40 @@ public final class ArchiveBundler {
     JarOutputStream zout = new JarOutputStream(output.getOutputStream(), manifest);
 
     try {
-      // Iterates through the input zip entry and make sure, the new files
-      // being added are not already present. If not, they are added to the
-      // output zip.
-      JarEntry entry = zin.getNextJarEntry();
-      while(entry != null) {
-        // Invoke the predicate to see if the entry needs to be filtered.
-        // If the ignoreFilter returns true, then it needs to be filtered; false keep it.
-        if(ignoreFilter.apply(entry)) {
-          entry = zin.getNextJarEntry();
-          continue;
-        }
-
-        String name = entry.getName();
-        boolean absenceInJar = true;
-
-        // adding entries missing in jar
-        for(ImmutablePair<String, Location> toAdd : files) {
-          String entryToAdd = toAdd.getFirst();
-          if(entryToAdd.equals(name)) {
-            absenceInJar = false;
-            break;
+      try {
+        // Iterates through the input zip entry and make sure, the new files
+        // being added are not already present. If not, they are added to the
+        // output zip.
+        JarEntry entry = zin.getNextJarEntry();
+        while(entry != null) {
+          // Invoke the predicate to see if the entry needs to be filtered.
+          // If the ignoreFilter returns true, then it needs to be filtered; false keep it.
+          if(ignoreFilter.apply(entry)) {
+            entry = zin.getNextJarEntry();
+            continue;
           }
-        }
 
-        if(absenceInJar) {
-          zout.putNextEntry(new JarEntry(entry));
-          ByteStreams.copy(zin, zout);
+          final String name = entry.getName();
+          // adding entries missing in jar
+          if(!files.containsKey(name)) {
+            zout.putNextEntry(new JarEntry(entry));
+            ByteStreams.copy(zin, zout);
+          }
+          entry = zin.getNextJarEntry();
         }
-        entry = zin.getNextJarEntry();
+      } finally {
+        // Close the stream
+        zin.close();
       }
-    } finally {
-      // Close the stream
-      zin.close();
-    }
 
-    try {
       // Add the new files.
-      for(ImmutablePair<String, Location> toAdd : files) {
-        Location file = toAdd.getSecond();
-        String entryName = toAdd.getFirst();
-        InputStream in = file.getInputStream();
+      for(Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
+        zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
+        InputStream in = toAdd.getValue().getInput();
         try {
-          zout.putNextEntry(new JarEntry(jarEntryPrefix + entryName));
           ByteStreams.copy(in, zout);
-          zout.closeEntry();
         } finally {
+          zout.closeEntry();
           in.close();
         }
       }

@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.flow;
 
+import com.continuuity.archive.MultiClassLoader;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.io.DatumWriter;
 import com.google.common.base.Objects;
@@ -107,15 +108,13 @@ public final class ASMDatumWriterFactory {
   /**
    * A private {@link ClassLoader} for loading generated {@link DatumWriter} bytecode.
    */
-  private static final class ASMDatumWriterClassLoader extends ClassLoader {
+  private static final class ASMDatumWriterClassLoader extends MultiClassLoader {
 
     private final Map<String, byte[]> bytecodes;
-    private final Map<String, Class<?>> loadedClasses;
 
     private ASMDatumWriterClassLoader(ClassLoader parent) {
       super(parent);
       bytecodes = Maps.newHashMap();
-      loadedClasses = Maps.newHashMap();
     }
 
     private synchronized void addClass(String name, byte[] bytecode) {
@@ -123,22 +122,8 @@ public final class ASMDatumWriterFactory {
     }
 
     @Override
-    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-      if (loadedClasses.containsKey(name)) {
-        return loadedClasses.get(name);
-      }
-      if (bytecodes.containsKey(name)) {
-        byte[] bytecode = bytecodes.remove(name);
-        Class<?> clz = defineClass(name, bytecode, 0, bytecode.length);
-        loadedClasses.put(name, clz);
-        return clz;
-      }
-
-      ClassLoader parent = getParent();
-      if (parent == null) {
-        return super.findSystemClass(name);
-      }
-      return super.loadClass(name, resolve);
+    protected byte[] loadClassBytes(String className) {
+      return bytecodes.get(className);
     }
   }
 }
