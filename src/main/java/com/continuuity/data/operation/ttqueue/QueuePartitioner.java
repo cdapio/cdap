@@ -28,6 +28,7 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(QueueConsumer consumer, long entryId);
 
+  // TODO: Remove HASH_ON_VALUE partition type on switching to the new queue implementation
   public static enum PartitionerType {
     HASH_ON_VALUE, HASH, FIFO, ROUND_ROBIN;
 
@@ -79,12 +80,12 @@ public interface QueuePartitioner {
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
       int hash = Bytes.hashCode(value);
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, int hash) {
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
     }
 
     @Override
@@ -112,12 +113,12 @@ public interface QueuePartitioner {
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
       int hash = Bytes.hashCode(value);
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, int hash) {
-      return (hash % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize());
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
     }
 
     @Override
@@ -171,12 +172,12 @@ public interface QueuePartitioner {
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId) {
-      return entryId % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize();
+      return entryId % consumer.getGroupSize() == consumer.getInstanceId();
     }
 
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
-      return entryId % consumer.getGroupSize() == consumer.getInstanceId() % consumer.getGroupSize();
+      return entryId % consumer.getGroupSize() == consumer.getInstanceId();
     }
 
     @Override

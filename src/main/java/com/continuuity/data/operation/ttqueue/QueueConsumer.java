@@ -43,6 +43,10 @@ public class QueueConsumer {
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
                        QueueConfig config) {
+    if(instanceId >= groupSize) {
+      throw new IllegalArgumentException(String.format(
+        "instanceId should be between 0..groupSize. Given instanceId is %d, groupSize is %d", instanceId, groupSize));
+    }
     this.instanceId = instanceId;
     this.groupId = groupId;
     this.groupSize = groupSize;
@@ -93,7 +97,9 @@ public class QueueConsumer {
         .add("instanceidd", this.instanceId)
         .add("groupid", this.groupId)
         .add("groupsize", this.groupSize)
+        .add("config", this.config)
         .add("name", this.groupName)
+        .add("partitioningKey", this.partitioningKey)
         .toString();
   }
 

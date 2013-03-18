@@ -256,9 +256,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // dequeue it with HASH partitioner
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
 
-    // We'll start our consumers with index 1, makes testing easier
-    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers + 1];
-    for (int i = 1; i <= numConsumers; i++) {
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
+    for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
@@ -293,9 +292,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // dequeue it with ROUND_ROBIN partitioner
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
 
-    // We'll start our consumers with index 1, makes testing easier
-    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers + 1];
-    for (int i = 1; i <= numConsumers; i++) {
+    StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
+    for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
@@ -312,41 +310,46 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries);
   }
 
-  private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers, int numQueueEntries, int startQueueEntry) throws Exception {
+  private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
+                                         int numQueueEntries, int startQueueEntry) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    for (int i = 1; i <= numConsumers; i++) {
-      for (int j = 0; j < numQueueEntries / (2 * numConsumers); j++) {
-        DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
+    for (int consumer = 0; consumer < numConsumers; consumer++) {
+      for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
+        DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
-        int expectedValue = startQueueEntry + i + (2 * j * numConsumers);
+        int expectedValue = startQueueEntry + consumer + (2 * entry * numConsumers);
+        if(consumer == 0) {
+          // Adjust the expected value for consumer 0
+          expectedValue += numConsumers;
+        }
 //        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
-//                  i, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
         // dequeue again without acking, should still get first value
-        result = queue.dequeue(consumers[i], dirtyReadPointer);
+        result = queue.dequeue(consumers[consumer], dirtyReadPointer);
         assertTrue(result.isSuccess());
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
 
         // dequeue, should get second value
-        result = queue.dequeue(consumers[i], dirtyReadPointer);
+        result = queue.dequeue(consumers[consumer], dirtyReadPointer);
         assertTrue(result.isSuccess());
         expectedValue += numConsumers;
 //        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
-//                  i, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
       }
 
       // verify queue is empty
-      DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
+      DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
       assertTrue(result.isEmpty());
     }
   }

@@ -539,6 +539,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Read  header data from underlying storage, if any
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
         final String partitioningKey = consumer.getPartitioningKey();
+        if(partitioningKey == null || partitioningKey.isEmpty()) {
+          throw new IllegalStateException(String.format("Using Hash Partitioning with null/empty partitioningKey!"));
+        }
         final byte [][] rowKeys = new byte[cacheSize][];
         for(int id = 0; id < cacheSize; ++id) {
           rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
