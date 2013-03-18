@@ -3,7 +3,8 @@ package com.continuuity.internal.io;
 import com.google.common.reflect.TypeToken;
 
 /**
- *
+ * A base implementation of {@link FieldAccessor} that throws {@link UnsupportedOperationException}
+ * for all getter/setter methods, which are meant to be overridden by children class.
  */
 public abstract class AbstractFieldAccessor implements FieldAccessor {
 

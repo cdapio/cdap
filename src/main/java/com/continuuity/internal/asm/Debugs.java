@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- *
+ * Util class for debugging ASM bytecode generation.
  */
 public final class Debugs {
 
