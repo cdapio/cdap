@@ -6,6 +6,7 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
+import com.continuuity.internal.io.ASMFieldAccessorFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
@@ -33,7 +34,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ASMDatumCodecTest {
 
-  private static final ASMDatumWriterFactory DATUM_WRITER_FACTORY = new ASMDatumWriterFactory();
+  private static final ASMDatumWriterFactory DATUM_WRITER_FACTORY
+    = new ASMDatumWriterFactory(new ASMFieldAccessorFactory());
 
   public static enum TestEnum {
     VALUE1, VALUE2, VALUE3, VALUE4

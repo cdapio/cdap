@@ -11,19 +11,22 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 /**
  * A factory class for creating {@link DatumWriter} instance for different data type and schema.
  * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
-public final class ASMDatumWriterFactory {
+public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
   private final LoadingCache<CacheKey, Class<DatumWriter<?>>> datumWriterClasses;
-  private final FieldAccessorFactory fieldAccessorFactory = new ASMFieldAccessorFactory();
+  private final FieldAccessorFactory fieldAccessorFactory;
 
-  public ASMDatumWriterFactory() {
-    datumWriterClasses = CacheBuilder.newBuilder().build(new ASMCacheLoader());
+  @Inject
+  public ASMDatumWriterFactory(FieldAccessorFactory fieldAccessorFactory) {
+    this.fieldAccessorFactory = fieldAccessorFactory;
+    this.datumWriterClasses = CacheBuilder.newBuilder().build(new ASMCacheLoader());
   }
 
   /**
@@ -35,6 +38,7 @@ public final class ASMDatumWriterFactory {
    * @param <T> Type of the data type.
    * @return A {@link DatumWriter} instance.
    */
+  @Override
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
       Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(new CacheKey(schema, type));
