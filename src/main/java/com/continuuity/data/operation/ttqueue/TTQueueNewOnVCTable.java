@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -95,9 +96,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data = entry.getData();
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Enqueueing (data.len=" + data.length + ", writeVersion=" +
-            cleanWriteVersion + ")");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
     }
 
     // Get our unique entry id
@@ -108,11 +108,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 1);
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
-        "of global entry id failed with status code " + e.getStatus() +
-        ": " + e.getMessage(), e);
+        "of global entry id failed with status code " + e.getStatus() + ": " + e.getMessage(), e);
     }
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("New enqueue got entry id " + entryId);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("New enqueue got entry id " + entryId);
     }
 
     /*
@@ -146,22 +145,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   @Override
   public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
+    if(LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Invalidating entry ", entryPointer.getEntryId()));
+    }
     final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
     // Change meta data to INVALID
     this.table.put(rowName, ENTRY_META,
                    cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
-    // Delete data since it's invalidated
-    this.table.delete(rowName, ENTRY_DATA, cleanWriteVersion);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Invalidated " + entryPointer);
+    // No need to delete data/headers since they will be cleaned up during eviction later
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Invalidated " + entryPointer);
     }
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     final QueueConfig config = consumer.getQueueConfig();
-    if (LOG.isTraceEnabled())
-      LOG.trace("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
+    if (LOG.isDebugEnabled())
+      LOG.debug("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
                   "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
     // Determine what dequeue strategy to use based on the partitioner
@@ -215,8 +216,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return dequeueResult;
     } else {
       // No queue entries available to dequue, return queue empty
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("End of queue reached using " + "read pointer " + readPointer);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("End of queue reached using " + "read pointer " + readPointer);
       }
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
@@ -226,6 +227,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private void readEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer,
                             List<Long> entryIds) throws OperationException{
+    if(LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Reading entries from storage - ", Arrays.toString(entryIds.toArray())));
+    }
     if(entryIds.isEmpty()) {
       queueState.setCachedEntries(CachedList.EMPTY_LIST);
       return;
@@ -255,14 +259,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
           return;
         }
         EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
         }
 
         // Check if entry has been invalidated or evicted
         if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Found invalidated or evicted entry at " + entryIds.get(i) +
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Found invalidated or evicted entry at " + entryIds.get(i) +
                         " (" + entryMeta.toString() + ")");
           }
         } else {
@@ -478,8 +482,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Set the active entry as the current entry
         queueState.getCachedEntries().getNext();
       }
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(String.format("Constructed new QueueState - %s", queueState));
+      if(LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Constructed new QueueState - %s", queueState));
       }
       return queueState;
     }
@@ -522,8 +526,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
           // TODO: use raw Get instead of the workaround of incrementing zero
           long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
-          if(LOG.isTraceEnabled()) {
-            LOG.trace(String.format("New queueWritePointer = %d", queueWritePointer));
+          if(LOG.isDebugEnabled()) {
+            LOG.debug(String.format("New queueWritePointer = %d", queueWritePointer));
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
