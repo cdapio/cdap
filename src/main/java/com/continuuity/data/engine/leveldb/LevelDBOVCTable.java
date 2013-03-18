@@ -28,11 +28,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
@@ -194,35 +192,46 @@ implements OrderedVersionedColumnarTable {
         byte [] key = iterator.peekNext().getKey();
         byte [] value = iterator.peekNext().getValue();
         // If we have reached past the endKey, nothing was found, return null
+
         if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
           return null;
         }
+
         KeyValue kv = createKeyValue(key, value);
-        // Determine if this KV is visible
         long curVersion = kv.getTimestamp();
-        if (!readPointer.isVisible(curVersion)) continue;
-        Type type = Type.codeToType(kv.getType());
-        if (type == Type.UndeleteColumn) {
-          undeleted = curVersion;
+
+        // Determine if this KV is visible
+        if (!readPointer.isVisible(curVersion)) {
           continue;
         }
-        if (type == Type.DeleteColumn) {
-          if (undeleted == curVersion) continue;
-          else break;
-        }
+        Type type = Type.codeToType(kv.getType());
+
         if (type == Type.Delete) {
           lastDelete = curVersion;
-          continue;
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+        } else if (type == Type.DeleteColumn) {
+          if (undeleted != curVersion) {
+            break;
+          }
+        } else if (type == Type.Put) {
+          if (curVersion != lastDelete) {
+            // If we get here, this version is visible
+            return kv;
+          }
         }
-        if (curVersion == lastDelete) continue;
-        // If we get here, this version is visible
-        return kv;
       }
     } finally {
       iterator.close();
     }
     // Nothing found
     return null;
+  }
+
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
+                                                            ReadPointer readPointer)
+    throws DBException, IOException {
+    return readKeyValueRangeAndGetLatest(row, null, null, readPointer, -1);
   }
 
   private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
@@ -236,62 +245,57 @@ implements OrderedVersionedColumnarTable {
     byte [] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
     DBIterator iterator = db.iterator();
     int colIdx=0;
+    long lastDelete = -1;
+    long undeleted = -1;
+
     try {
-      long lastDelete = -1;
-      long undeleted = -1;
       for (iterator.seek(startKey); iterator.hasNext(); ) {
         byte [] key = iterator.peekNext().getKey();
         byte [] value = iterator.peekNext().getValue();
         // If we have reached past the endKey, nothing was found, return null
-        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
-          return null;
+
+        if ( KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+          return map;
         }
         KeyValue kv = createKeyValue(key, value);
+        long curVersion = kv.getTimestamp();
 
         // Determine if this KV is visible
-        long curVersion = kv.getTimestamp();
         if (!readPointer.isVisible(curVersion)) {
           iterator.next();
           continue;
         }
         Type type = Type.codeToType(kv.getType());
-        if (type == Type.UndeleteColumn) {
-          undeleted = curVersion;
-          iterator.next();
-          continue;
-        }
-        if (type == Type.DeleteColumn) {
-          if (undeleted == curVersion) {
-            iterator.next();
-            continue;
-          } else {
-            colIdx++;
-            if (colIdx < orderedColumns.length) {
-              iterator.seek(createStartKey(row, orderedColumns[colIdx]));
-              continue;
-            } else {
-              break;
-            }
-          }
-        }
+
         if (type == Type.Delete) {
+          //delete of one version
           lastDelete = curVersion;
           iterator.next();
-          continue;
-        }
-        if (curVersion == lastDelete) {
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
           iterator.next();
-          continue;
+        } else if (type == Type.DeleteColumn) {
+          //delete of entire column (all cells)
+          if (undeleted != curVersion) {
+            if (colIdx == orderedColumns.length-1) {
+              break;
+            }
+            iterator.seek(createStartKey(row, orderedColumns[++colIdx]));
+          } else {
+            iterator.next();
+          }
+        } else if (type == Type.Put) {
+          if (curVersion != lastDelete) {
+            // If we get here, this version is visible
+            map.put(kv.getQualifier(), kv.getValue());
+            if (colIdx == orderedColumns.length-1) {
+              break;
+            }
+            iterator.seek(createStartKey(row, orderedColumns[++colIdx]));
+          } else {
+            iterator.next();
+          }
         }
-        // If we get here, this version is visible
-        map.put(kv.getQualifier(), kv.getValue());
-        colIdx++;
-        if (colIdx < orderedColumns.length) {
-          iterator.seek(createStartKey(row, orderedColumns[colIdx]));
-        } else {
-          break;
-        }
-
       }
     } finally {
       iterator.close();
@@ -299,12 +303,11 @@ implements OrderedVersionedColumnarTable {
     return map;
   }
 
-  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
-                                                            ReadPointer readPointer)
-    throws DBException, IOException {
-    return readKeyValueRangeAndGetLatest(row, null, null, readPointer, -1);
-
+  private byte[] getNextLexicographicalQualifier(byte [] qualifier) {
+    //appending 0x00 to current qualifier gives you next possible lexicographical
+    return appendByte(qualifier, (byte) 0x00);
   }
+
   private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
                                                             byte[] startColumn,
                                                             byte[] stopColumn,
@@ -314,18 +317,18 @@ implements OrderedVersionedColumnarTable {
     // negative limit means unlimited results
     if (limit <= 0) limit = Integer.MAX_VALUE;
 
-    byte [] startKey = startColumn == null ? createStartKey(row) :
-      createStartKey(row, startColumn);
-    byte [] endKey = stopColumn == null ? createEndKey(row) :
-      createEndKey(row, stopColumn);
+    byte [] startKey = startColumn == null ?
+      createStartKey(row) : createStartKey(row, startColumn);
+    byte [] endKey = stopColumn == null ?
+      createEndKey(row) : createEndKey(row, stopColumn);
 
     Map<byte[], byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
     DBIterator iterator = db.iterator();
-    byte[] prevKey=null;
-    try {
-      long lastDelete = -1;
-      long undeleted = -1;
+    byte[] prevColumn=null;
+    long lastDelete = -1;
+    long undeleted = -1;
 
+    try {
       for (iterator.seek(startKey); iterator.hasNext(); ) {
         byte [] key = iterator.peekNext().getKey();
         byte [] value = iterator.peekNext().getValue();
@@ -333,64 +336,59 @@ implements OrderedVersionedColumnarTable {
         KeyValue kv = createKeyValue(key, value);
         long curVersion = kv.getTimestamp();
         byte[] curColumn = kv.getQualifier();
+
         if ((Bytes.equals(curColumn, stopColumn)) || (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0)) {
           return map;
         }
+
         // Determine if this KV is visible
         if (!readPointer.isVisible(curVersion)) {
+          prevColumn = curColumn;
           iterator.next();
-          prevKey = curColumn;
           continue;
         }
         Type type = Type.codeToType(kv.getType());
-        if (type == Type.UndeleteColumn) {
-          undeleted = curVersion;
+
+        if (type == Type.Delete) {
+          //delete of one version
+          lastDelete = curVersion;
+          prevColumn = curColumn;
           iterator.next();
-          prevKey = null;
-          continue;
-        }
-        if (type == Type.DeleteColumn) {
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+          prevColumn = null;
+          iterator.next();
+        } else if (type == Type.DeleteColumn) {
+          //delete of entire column (all cells)
           if (undeleted == curVersion) {
             iterator.next();
-            prevKey = null;
-            continue;
           } else {
-            byte [] nextColumn = appendByte(kv.getQualifier(), (byte) 0x00);
-            iterator.seek(createStartKey(row, nextColumn));
-            prevKey = null;
             lastDelete = -1;
             undeleted = -1;
-            continue;
+            iterator.seek(createStartKey(row, getNextLexicographicalQualifier(curColumn)));
+          }
+          prevColumn = null;
+        } else if (type == Type.Put) {
+          if ( (curVersion == lastDelete) && (Bytes.equals(prevColumn, curColumn)) ) {
+            prevColumn = curColumn;
+            iterator.next();
+          } else {
+            // If we get here, this version is visible
+            map.put(curColumn, kv.getValue());
+            // break out if limit reached
+            if (map.size() == limit) {
+              break;
+            }
+            prevColumn = key;
+            lastDelete = -1;
+            undeleted = -1;
+            iterator.seek(createStartKey(row, getNextLexicographicalQualifier(curColumn)));
           }
         }
-        if (type == Type.Delete) {
-          lastDelete = curVersion;
-          iterator.next();
-          prevKey = curColumn;
-          continue;
-        }
-        if ( (curVersion == lastDelete) && (Bytes.equals(prevKey, curColumn)) ) {
-          iterator.next();
-          prevKey = curColumn;
-          continue;
-        }
-        // If we get here, this version is visible
-        map.put(curColumn, kv.getValue());
-        // break out if limit reached
-        if (map.size() == limit) {
-          break;
-        }
-        byte [] nextColumn = appendByte(kv.getQualifier(), (byte) 0x00);
-        iterator.seek(createStartKey(row, nextColumn));
-        prevKey = key;
-        lastDelete = -1;
-        undeleted = -1;
-        continue;
       }
     } finally {
       iterator.close();
     }
-    // Nothing found
     return map;
   }
 
@@ -715,119 +713,6 @@ implements OrderedVersionedColumnarTable {
    * Result has (column, version, kvtype, id, value)
    * @throws DBException
    */
-  private Map<byte[], byte[]> filteredLatestColumns(List<KeyValue> kvs,
-      ReadPointer readPointer, int limit, ColumnMatcher columnMatcher)
-          throws DBException {
-
-    // negative limit means unlimited results
-    if (limit <= 0) limit = Integer.MAX_VALUE;
-
-    Map<byte[],byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
-    if (kvs == null || kvs.isEmpty()) return map;
-    byte [] curCol = new byte [0];
-    byte [] lastCol = new byte [0];
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (KeyValue kv : kvs) {
-      long curVersion = kv.getTimestamp();
-      // Check if this entry is visible, skip if not
-      if (!readPointer.isVisible(curVersion)) continue;
-      byte [] column = kv.getQualifier();
-      // Check if this column should be included
-      if (!columnMatcher.includeColumn(column)) {
-        continue;
-      }
-      // Check if this column has already been included in result, skip if so
-      if (Bytes.equals(lastCol, column)) {
-        continue;
-      }
-      // Check if this is a new column, reset delete pointers if so
-      if (!Bytes.equals(curCol, column)) {
-        curCol = column;
-        lastDelete = -1;
-        undeleted = -1;
-      }
-      // Check if type is a delete and execute accordingly
-      Type type = Type.codeToType(kv.getType());
-      if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-        continue;
-      }
-      if (type == Type.DeleteColumn) {
-        if (undeleted == curVersion) continue;
-        else {
-          // The rest of this column has been deleted, act like we returned it
-          lastCol = column;
-          continue;
-        }
-      }
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-        continue;
-      }
-      if (curVersion == lastDelete) continue;
-      lastCol = column;
-      map.put(column, kv.getValue());
-
-      // break out if limit reached
-      if (map.size() >= limit) break;
-    }
-    return map;
-  }
-
-  private Map<byte[], byte[]> filteredLatestColumns(List<KeyValue> kvs,
-      ReadPointer readPointer, ColumnMatcher columnMatcher) throws DBException {
-
-    Map<byte[],byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
-    if (kvs == null || kvs.isEmpty()) return map;
-    byte [] curCol = new byte [0];
-    byte [] lastCol = new byte [0];
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (KeyValue kv : kvs) {
-      long curVersion = kv.getTimestamp();
-      // Check if this entry is visible, skip if not
-      if (!readPointer.isVisible(curVersion)) continue;
-      byte [] column = kv.getQualifier();
-      // Check if this column is being requested
-      if (!columnMatcher.includeColumn(column)) {
-        continue;
-      }
-      // Check if this column has already been included in result, skip if so
-      if (Bytes.equals(lastCol, column)) {
-        continue;
-      }
-      // Check if this is a new column, reset delete pointers if so
-      if (!Bytes.equals(curCol, column)) {
-        curCol = column;
-        lastDelete = -1;
-        undeleted = -1;
-      }
-      // Check if type is a delete and execute accordingly
-      Type type = Type.codeToType(kv.getType());
-      if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-        continue;
-      }
-      if (type == Type.DeleteColumn) {
-        if (undeleted == curVersion) continue;
-        else {
-          // The rest of this column has been deleted, act like we returned it
-          lastCol = column;
-          continue;
-        }
-      }
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-        continue;
-      }
-      if (curVersion == lastDelete) continue;
-      lastCol = column;
-      map.put(column, kv.getValue());
-
-    }
-    return map;
-  }
 
   // Read-Modify-Write Operations
 
