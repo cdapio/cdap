@@ -328,7 +328,7 @@ public abstract class TestTTQueue {
       // verify we got something and it's the first value
       assertTrue(result.toString(), result.isSuccess());
   //    assertTrue(Bytes.equals(result.getValue(), valueOne));
-      assertEquals(Bytes.toString(result.getEntry().getData()), Bytes.toString(valueOne));
+      assertEquals(Bytes.toString(valueOne), Bytes.toString(result.getEntry().getData()));
 
       // dequeue again without acking, should still get first value
       result = queue.dequeue(consumer, dirtyReadPointer);
@@ -344,7 +344,8 @@ public abstract class TestTTQueue {
       // dequeue, should get second value
       result = queue.dequeue(consumer, dirtyReadPointer);
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(result.getEntry().getData(), valueTwo));
+//      assertTrue(Bytes.equals(result.getEntry().getData(), valueTwo));
+      assertEquals(Bytes.toString(valueTwo), Bytes.toString(result.getEntry().getData()));
 
       // ack
       queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);

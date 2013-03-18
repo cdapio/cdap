@@ -32,7 +32,7 @@ public class CachedList<T> {
 
   public T getCurrent() {
     int currentIndex = nextIndex - 1;
-    if(currentIndex >= list.size()) {
+    if(currentIndex >= list.size() || currentIndex < 0) {
       throw new IllegalStateException(String.format("Out of bounds access(%d) of cached list, size of list = %d", currentIndex, list.size()));
     }
     return list.get(currentIndex);

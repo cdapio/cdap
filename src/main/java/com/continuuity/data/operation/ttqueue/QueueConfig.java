@@ -13,10 +13,23 @@ public class QueueConfig {
 
   private final PartitionerType partitionerType;
   private final boolean singleEntry;
+  private final int batchSize;
 
   public QueueConfig(PartitionerType partitionerType, boolean singleEntry) {
     this.partitionerType = partitionerType;
     this.singleEntry = singleEntry;
+    this.batchSize = 100;
+  }
+
+  public QueueConfig(PartitionerType partitionerType, boolean singleEntry, int batchSize) {
+    this.partitionerType = partitionerType;
+    this.singleEntry = singleEntry;
+
+    if(batchSize <= 0) {
+      throw new IllegalArgumentException(
+        String.format("batchSize has to be greater than zero, given batchSize=%d", batchSize));
+    }
+    this.batchSize = batchSize;
   }
 
   public PartitionerType getPartitionerType() {
@@ -27,8 +40,8 @@ public class QueueConfig {
     return this.singleEntry;
   }
 
-  public boolean isMultiEntry() {
-    return !this.singleEntry;
+  public int getBatchSize() {
+    return this.batchSize;
   }
 
   @Override
@@ -36,6 +49,7 @@ public class QueueConfig {
     return Objects.toStringHelper(this)
         .add("singleEntry", this.singleEntry)
         .add("partitionerType", this.partitionerType)
+        .add("batchSize", this.batchSize)
         .toString();
   }
 

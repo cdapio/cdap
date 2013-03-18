@@ -8,14 +8,6 @@ import com.google.common.base.Objects;
 public class StatefulQueueConsumer extends QueueConsumer {
   private QueueState queueState = null;
 
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize) {
-    super(instanceId, groupId, groupSize);
-  }
-
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName) {
-    super(instanceId, groupId, groupSize, groupName);
-  }
-
   public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     super(instanceId, groupId, groupSize, config);
   }

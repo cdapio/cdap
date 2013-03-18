@@ -18,25 +18,6 @@ public class QueueConsumer {
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
-   * @deprecated
-   */
-  public QueueConsumer(int instanceId, long groupId, int groupSize) {
-    this(instanceId, groupId, groupSize, null, null, null);
-  }
-  /**
-   * @param instanceId id of this consumer instance (starts at 0)
-   * @param groupId id of this consumer group (doesn't matter)
-   * @param groupSize number of consumer instances in this consumer group
-   * @param groupName the name of the consumer group
-   * @deprecated
-   */
-  public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName) {
-    this(instanceId, groupId, groupSize, groupName, null, null);
-  }
-  /**
-   * @param instanceId id of this consumer instance (starts at 0)
-   * @param groupId id of this consumer group (doesn't matter)
-   * @param groupSize number of consumer instances in this consumer group
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     this(instanceId, groupId, groupSize, null, null, config);

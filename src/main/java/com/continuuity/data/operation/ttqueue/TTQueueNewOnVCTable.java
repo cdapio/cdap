@@ -85,23 +85,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte[] INVALID_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ENTRY_ID);
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
-  // TODO: move this to queue config?
-  int batchSize = 100;
-
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
     this.oracle = oracle;
-  }
-
-  private long getBatchSize() {
-    if(batchSize < 1) {
-      // TODO: Log a warning for invalid batchSize
-      return 1;
-    } else {
-      return batchSize;
-    }
   }
 
   @Override
@@ -513,7 +501,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
-    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
+    public List<Long> fetchNextEntries(
+      QueueConsumer consumer, QueueConfig config, QueueState queueState, ReadPointer readPointer) throws OperationException {
       long entryId = queueState.getConsumerReadPointer();
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       List<Long> newEntryIds = new ArrayList<Long>();
@@ -533,17 +522,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
 
         long startEntryId = entryId + 1;
-        long endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
-          startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
+        long endEntryId =
+                startEntryId + (config.getBatchSize() * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+                    startEntryId + (config.getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
 
         // Read  header data from underlying storage, if any
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
         final String partitioningKey = consumer.getPartitioningKey();
-        byte [][] rowKeys = new byte[cacheSize][];
+        final byte [][] rowKeys = new byte[cacheSize][];
         for(int id = 0; id < cacheSize; ++id) {
           rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
         }
-        byte[][] columnKeys = new byte[1][];
+        final byte[][] columnKeys = new byte[1][];
         columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
         OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult = table.get(rowKeys, columnKeys, readPointer);
 
@@ -552,11 +542,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
           final long currentEntryId = startEntryId + id;
           if (!headerResult.isEmpty()) {
             Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
-            Map<byte[], byte[]> headerMap = headerValue.get(makeRowKey(GLOBAL_DATA_PREFIX, currentEntryId));
+            Map<byte[], byte[]> headerMap = headerValue.get(rowKeys[id]);
             if(headerMap == null) {
               break outerLoop;
             }
-            byte[] hashBytes = headerMap.get(makeColumnName(ENTRY_HEADER, partitioningKey));
+            byte[] hashBytes = headerMap.get(columnKeys[0]);
             if(hashBytes == null) {
               break outerLoop;
             }
@@ -596,8 +586,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
 
         long startEntryId = entryId + 1;
-        long endEntryId = startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
-          startEntryId + (getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
+        long endEntryId =
+                  startEntryId + (config.getBatchSize() * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+                  startEntryId + (config.getBatchSize() * consumer.getGroupSize()) : queueState.getQueueWritePointer();
 
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
 
