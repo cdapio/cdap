@@ -1,7 +1,6 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.internal.api.Preconditions;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -13,7 +12,7 @@ import java.lang.reflect.Field;
 /**
  *
  */
-public class ReflectionFieldAccessorFactory implements FieldAccessorFactory {
+public final class ReflectionFieldAccessorFactory implements FieldAccessorFactory {
 
   private final LoadingCache<FieldEntry, FieldAccessor> fieldAccessorCache;
 
@@ -41,7 +40,7 @@ public class ReflectionFieldAccessorFactory implements FieldAccessorFactory {
         final TypeToken<?> fieldType = fieldEntry.getType().resolveType(finalField.getGenericType());
         return new FieldAccessor() {
           @Override
-          public void set(Object object, Object value) {
+          public <T> void set(Object object, T value) {
             try {
               finalField.set(object, value);
             } catch (Exception e) {
@@ -50,12 +49,92 @@ public class ReflectionFieldAccessorFactory implements FieldAccessorFactory {
           }
 
           @Override
-          public Object get(Object object) {
+          public <T> T get(Object object) {
             try {
-              return finalField.get(object);
+              return (T) finalField.get(object);
             } catch (Exception e) {
               throw Throwables.propagate(e);
             }
+          }
+
+          @Override
+          public boolean getBoolean(Object object) {
+            return (Boolean)get(object);
+          }
+
+          @Override
+          public byte getByte(Object object) {
+            return (Byte)get(object);
+          }
+
+          @Override
+          public char getChar(Object object) {
+            return (Character)get(object);
+          }
+
+          @Override
+          public short getShort(Object object) {
+            return (Short)get(object);
+          }
+
+          @Override
+          public int getInt(Object object) {
+            return (Integer)get(object);
+          }
+
+          @Override
+          public long getLong(Object object) {
+            return (Long)get(object);
+          }
+
+          @Override
+          public float getFloat(Object object) {
+            return (Float)get(object);
+          }
+
+          @Override
+          public double getDouble(Object object) {
+            return (Double)get(object);
+          }
+
+          @Override
+          public void setBoolean(Object object, boolean value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setByte(Object object, byte value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setChar(Object object, char value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setShort(Object object, short value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setInt(Object object, int value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setLong(Object object, long value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setFloat(Object object, float value) {
+            set(object, value);
+          }
+
+          @Override
+          public void setDouble(Object object, double value) {
+            set(object, value);
           }
 
           @Override
@@ -67,45 +146,8 @@ public class ReflectionFieldAccessorFactory implements FieldAccessorFactory {
     });
   }
 
-
   @Override
   public FieldAccessor getFieldAccessor(TypeToken<?> type, String fieldName) {
     return fieldAccessorCache.getUnchecked(new FieldEntry(type, fieldName));
-  }
-
-  private static final class FieldEntry {
-    private final TypeToken<?> type;
-    private final String fieldName;
-
-    private FieldEntry(TypeToken<?> type, String fieldName) {
-      this.type = type;
-      this.fieldName = fieldName;
-    }
-
-    public TypeToken<?> getType() {
-      return type;
-    }
-
-    public String getFieldName() {
-      return fieldName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      FieldEntry other = (FieldEntry) o;
-      return type.equals(other.type) && fieldName.equals(other.fieldName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(type, fieldName);
-    }
   }
 }

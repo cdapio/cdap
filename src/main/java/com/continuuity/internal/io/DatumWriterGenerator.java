@@ -1,15 +1,17 @@
-package com.continuuity.internal.app.runtime.flow;
+package com.continuuity.internal.io;
 
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaHash;
-import com.continuuity.internal.io.DatumWriter;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
+import com.continuuity.internal.asm.ClassDefinition;
+import com.continuuity.internal.asm.Methods;
+import com.continuuity.internal.asm.Signatures;
+import com.continuuity.internal.reflect.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeParameter;
@@ -20,8 +22,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.signature.SignatureVisitor;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
@@ -111,35 +111,16 @@ import java.util.Set;
 final class DatumWriterGenerator {
 
   private final Map<String, Method> encodeMethods = Maps.newHashMap();
+  private final Multimap<TypeToken<?>, String> fieldAccessorRequests = HashMultimap.create();
   private ClassWriter classWriter;
-  private String className;
-
-  /**
-   * Class for carrying information of the generated class.
-   */
-  static final class ClassDefinition {
-    private final byte[] bytecode;
-    private final String className;
-
-    public ClassDefinition(byte[] bytecode, String className) {
-      this.bytecode = bytecode;
-      this.className = className;
-    }
-
-    public byte[] getBytecode() {
-      return bytecode;
-    }
-
-    public String getClassName() {
-      return className;
-    }
-  }
+  private Type classType;
+//  private String className;
 
   /**
    * Generates a {@link DatumWriter} class for encoding data of the given output type with the given schema.
    * @param outputType Type information of the output data type.
    * @param schema Schema of the output data type.
-   * @return A {@link ClassDefinition} that contains generated class information.
+   * @return A {@link com.continuuity.internal.asm.ClassDefinition} that contains generated class information.
    */
   ClassDefinition generate(TypeToken<?> outputType, Schema schema) {
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -147,55 +128,49 @@ final class DatumWriterGenerator {
     TypeToken<?> interfaceType = getInterfaceType(outputType);
 
     // Generate the class
-    className = getClassName(interfaceType, schema);
+    String className = getClassName(interfaceType, schema);
+    classType = Type.getObjectType(className);
     classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
-                      className, getClassSignature(interfaceType),
+                      className, Signatures.getClassSignature(interfaceType),
                       Type.getInternalName(Object.class),
-                      new String[]{Type.getInternalName(DatumWriter.class)});
+                      new String[]{Type.getInternalName(interfaceType.getRawType())});
 
     // Static schema hash field, for verification
     classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_FINAL, "SCHEMA_HASH",
                            Type.getDescriptor(String.class), null, schema.getSchemaHash().toString()).visitEnd();
+
     // Schema field
     classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL, "schema",
                            Type.getDescriptor(Schema.class), null, null).visitEnd();
-    // Constructor
-    generateConstructor();
+
     // Encode method
     generateEncode(outputType, schema);
 
-    // DEBUG block. Uncomment for debug
-//    org.objectweb.asm.ClassReader reader = new org.objectweb.asm.ClassReader(classWriter.toByteArray());
-//    reader.accept(new org.objectweb.asm.util.CheckClassAdapter(
-//                    new org.objectweb.asm.util.TraceClassVisitor(new java.io.PrintWriter(System.out))), 0);
-//
-//    java.io.File file = new java.io.File("/tmp/" + className + ".class");
-//    file.getParentFile().mkdirs();
-//    System.out.println(file);
-//    try {
-//      com.google.common.io.ByteStreams.write(classWriter.toByteArray(),
-//                                             com.google.common.io.Files.newOutputStreamSupplier(file));
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
-    // End DEBUG block
+    // Constructor
+    generateConstructor();
 
-    return new ClassDefinition(classWriter.toByteArray(), className);
+    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
+    // DEBUG block. Uncomment for debug
+    //com.continuuity.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    // End DEBUG block
+    return classDefinition;
   }
 
+  /**
+   * Generates the constructor. The constructor generated has signature {@code (Schema, FieldAccessorFactory)}.
+   */
   private void generateConstructor() {
-    Method constructor = getMethod(void.class, "<init>", Schema.class);
+    Method constructor = getMethod(void.class, "<init>", Schema.class, FieldAccessorFactory.class);
 
-    // Constructor(Schema schema)
+    // Constructor(Schema schema, FieldAccessorFactory accessorFactory)
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, null, null, classWriter);
 
     // super(); // Calling Object constructor
     mg.loadThis();
-    mg.dup();
     mg.invokeConstructor(Type.getType(Object.class), getMethod(void.class, "<init>"));
 
     // if (!SCHEMA_HASH.equals(schema.getSchemaHash().toString())) { throw IllegalArgumentException }
-    mg.getStatic(Type.getType(className), "SCHEMA_HASH", Type.getType(String.class));
+    mg.getStatic(classType, "SCHEMA_HASH", Type.getType(String.class));
     mg.loadArg(0);
     mg.invokeVirtual(Type.getType(Schema.class), getMethod(SchemaHash.class, "getSchemaHash"));
     mg.invokeVirtual(Type.getType(SchemaHash.class), getMethod(String.class, "toString"));
@@ -206,35 +181,65 @@ final class DatumWriterGenerator {
     mg.mark(hashEquals);
 
     // this.schema = schema;
+    mg.loadThis();
     mg.loadArg(0);
-    mg.putField(Type.getType(className), "schema", Type.getType(Schema.class));
+    mg.putField(classType, "schema", Type.getType(Schema.class));
+
+    // For each record field that needs an accessor, get the accessor and store it in field.
+    for (Map.Entry<TypeToken<?>, String> entry : fieldAccessorRequests.entries()) {
+      String fieldAccessorName = getFieldAccessorName(entry.getKey(), entry.getValue());
+
+      classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL,
+                             fieldAccessorName,
+                             Type.getDescriptor(FieldAccessor.class), null, null);
+      // this.fieldAccessorName
+      //  = accessorFactory.getFieldAccessor(TypeToken.of(Class.forName("className")), "fieldName");
+      mg.loadThis();
+      mg.loadArg(1);
+      mg.push(entry.getKey().getRawType().getName());
+      mg.invokeStatic(Type.getType(Class.class), getMethod(Class.class, "forName", String.class));
+      mg.invokeStatic(Type.getType(TypeToken.class), getMethod(TypeToken.class, "of", Class.class));
+      mg.push(entry.getValue());
+      mg.invokeInterface(Type.getType(FieldAccessorFactory.class),
+                         getMethod(FieldAccessor.class, "getFieldAccessor", TypeToken.class, String.class));
+      mg.putField(classType, fieldAccessorName, Type.getType(FieldAccessor.class));
+    }
 
     mg.returnValue();
     mg.endMethod();
   }
 
+  /**
+   * Generates the {@link DatumWriter#encode(Object, com.continuuity.common.io.Encoder)} method.
+   * @param outputType Type information of the data type for output
+   * @param schema Schema to use for output.
+   */
   private void generateEncode(TypeToken<?> outputType, Schema schema) {
-    Method encodeMethod = getMethod(void.class, "encode", outputType.getRawType(), Encoder.class);
+    TypeToken<?> callOutputType = getCallTypeToken(outputType, schema);
 
-    // Generate the synthetic method for the bridging
-    Method method = getMethod(void.class, "encode", Object.class, Encoder.class);
-    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC,
-                                               method, null, new Type[] {Type.getType(IOException.class)}, classWriter);
+    Method encodeMethod = getMethod(void.class, "encode", callOutputType.getRawType(), Encoder.class);
 
-    mg.loadThis();
-    mg.loadArg(0);
-    mg.checkCast(Type.getType(outputType.getRawType()));
-    mg.loadArg(1);
-    mg.invokeVirtual(Type.getType(className), encodeMethod);
-    mg.returnValue();
-    mg.endMethod();
+    if (!Object.class.equals(callOutputType.getRawType())) {
+      // Generate the synthetic method for the bridging
+      Method method = getMethod(void.class, "encode", Object.class, Encoder.class);
+      GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC,
+                                                 method, null, new Type[] {Type.getType(IOException.class)}, classWriter);
 
-    // Generate the top level encode method
-    String methodSignature = null;
-    if (outputType.getType() instanceof ParameterizedType) {
-      methodSignature = getEncodeMethodSignature(method, new TypeToken[]{outputType, null});
+      mg.loadThis();
+      mg.loadArg(0);
+      mg.checkCast(Type.getType(callOutputType.getRawType()));
+      mg.loadArg(1);
+      mg.invokeVirtual(classType, encodeMethod);
+      mg.returnValue();
+      mg.endMethod();
     }
-    mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, encodeMethod, methodSignature,
+
+    // Generate the top level public encode method
+    String methodSignature = null;
+    if (callOutputType.getType() instanceof ParameterizedType) {
+      methodSignature = Signatures.getMethodSignature(encodeMethod, new TypeToken[]{callOutputType, null});
+    }
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, encodeMethod, methodSignature,
                               new Type[] {Type.getType(IOException.class)}, classWriter);
 
     // Delegate to the actual encode method(value, encoder, schema, Sets.newIdentityHashSet());
@@ -242,10 +247,10 @@ final class DatumWriterGenerator {
     mg.loadArg(0);
     mg.loadArg(1);
     mg.loadThis();
-    mg.getField(Type.getType(className), "schema", Type.getType(Schema.class));
+    mg.getField(classType, "schema", Type.getType(Schema.class));
     // seenRefs Set
     mg.invokeStatic(Type.getType(Sets.class), getMethod(Set.class, "newIdentityHashSet"));
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(outputType, schema));
+    mg.invokeVirtual(classType, getEncodeMethod(outputType, schema));
     mg.returnValue();
     mg.endMethod();
   }
@@ -254,9 +259,9 @@ final class DatumWriterGenerator {
    * Returns the encode method for the given type and schema. The same method will be returned if the same
    * type and schema has been passed to the method before.
    *
-   * @param outputType
-   * @param schema
-   * @return
+   * @param outputType Type information of the data type for output
+   * @param schema Schema to use for output.
+   * @return A method for encoding the given output type and schema.
    */
   private Method getEncodeMethod(TypeToken<?> outputType, Schema schema) {
     String key = String.format("%s%s", normalizeTypeName(outputType), schema.getSchemaHash());
@@ -267,13 +272,15 @@ final class DatumWriterGenerator {
     }
 
     // Generate the encode method (value, encoder, schema, set)
+    TypeToken<?> callOutputType = getCallTypeToken(outputType, schema);
     String methodName = String.format("encode%s", key);
-    method = getMethod(void.class, methodName, outputType.getRawType(), Encoder.class, Schema.class, Set.class);
+    method = getMethod(void.class, methodName, callOutputType.getRawType(),
+                       Encoder.class, Schema.class, Set.class);
 
     // Put the method into map first before generating the body in order to support recursive data type.
     encodeMethods.put(key, method);
 
-    String methodSignature = getEncodeMethodSignature(method, new TypeToken[]{outputType, null, null,
+    String methodSignature = Signatures.getMethodSignature(method, new TypeToken[]{callOutputType, null, null,
                                                                               new TypeToken<Set<Object>>() {}});
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, methodSignature,
                                                new Type[]{Type.getType(IOException.class)}, classWriter);
@@ -287,8 +294,8 @@ final class DatumWriterGenerator {
 
   /**
    * Generates the encode method body, with the binary encoder given in the local variable.
-   * @param mg
-   * @param schema
+   * @param mg Method generator for generating method code body
+   * @param schema Schema of the data to be encoded.
    */
   private void generateEncodeBody(GeneratorAdapter mg, Schema schema, TypeToken<?> outputType,
                                   int value, int encoder, int schemaLocal, int seenRefs) {
@@ -319,10 +326,12 @@ final class DatumWriterGenerator {
           TypeToken<?> componentType = TypeToken.of(((ParameterizedType) outputType.getType())
                                                       .getActualTypeArguments()[0]);
 
-          encodeCollection(mg, componentType, schema.getComponentSchema(), value, encoder, schemaLocal, seenRefs);
+          encodeCollection(mg, componentType, schema.getComponentSchema(),
+                           value, encoder, schemaLocal, seenRefs);
         } else if (outputType.isArray()) {
           TypeToken<?> componentType = outputType.getComponentType();
-          encodeArray(mg, componentType, schema.getComponentSchema(), value, encoder, schemaLocal, seenRefs);
+          encodeArray(mg, componentType, schema.getComponentSchema(),
+                      value, encoder, schemaLocal, seenRefs);
         }
         break;
       case MAP:
@@ -346,9 +355,9 @@ final class DatumWriterGenerator {
 
   /**
    * Generates method body for encoding an compile time int value.
-   * @param mg
-   * @param intValue
-   * @param encoder
+   * @param mg Method body generator
+   * @param intValue The integer constant value to encode
+   * @param encoder Method argument index of the encoder
    */
   private void encodeInt(GeneratorAdapter mg, int intValue, int encoder) {
     mg.loadArg(encoder);
@@ -359,11 +368,11 @@ final class DatumWriterGenerator {
 
   /**
    * Generates method body for encoding simple schema type by calling corresponding write method in Encoder.
-   * @param mg
-   * @param type
-   * @param encodeMethod
-   * @param value
-   * @param encoder
+   * @param mg Method body generator
+   * @param type Data type to encode
+   * @param encodeMethod Name of the encode method to invoke on the given encoder.
+   * @param value Argument index of the value to encode.
+   * @param encoder Method argument index of the encoder
    */
   private void encodeSimple(GeneratorAdapter mg, TypeToken<?> type, Schema schema,
                             String encodeMethod, int value, int encoder) {
@@ -385,7 +394,7 @@ final class DatumWriterGenerator {
 
   /**
    * Generates method body for encoding enum value.
-   * @param mg
+   * @param mg Method body generator
    * @param outputType
    * @param value
    * @param encoder
@@ -459,13 +468,14 @@ final class DatumWriterGenerator {
 
     // Call the encode method for encoding the element.
     mg.loadThis();
+
     mg.loadLocal(iterator);
     mg.invokeInterface(Type.getType(Iterator.class), getMethod(Object.class, "next"));
-    mg.checkCast(Type.getType(componentType.getRawType()));
+    doCast(mg, componentType, componentSchema);
     mg.loadArg(encoder);
     mg.loadLocal(componentSchemaLocal);
     mg.loadArg(seenRefs);
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(componentType, componentSchema));
+    mg.invokeVirtual(classType, getEncodeMethod(componentType, componentSchema));
     mg.goTo(beginFor);
 
     mg.mark(endFor);
@@ -523,11 +533,12 @@ final class DatumWriterGenerator {
     mg.loadThis();
     mg.loadArg(value);
     mg.loadLocal(idx);
-    mg.arrayLoad(Type.getType(componentType.getRawType()));
+    TypeToken<?> callTypeToken = getCallTypeToken(componentType, componentSchema);
+    mg.arrayLoad(Type.getType(callTypeToken.getRawType()));
     mg.loadArg(encoder);
     mg.loadLocal(componentSchemaLocal);
     mg.loadArg(seenRefs);
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(componentType, componentSchema));
+    mg.invokeVirtual(classType, getEncodeMethod(componentType, componentSchema));
 
     mg.iinc(idx, 1);
     mg.goTo(beginFor);
@@ -570,8 +581,8 @@ final class DatumWriterGenerator {
    * @param schemaLocal
    * @param seenRefs
    */
-  private void encodeMap(GeneratorAdapter mg, TypeToken<?> keyType, TypeToken<?> valueType, Schema keySchema,
-                         Schema valueSchema, int value, int encoder, int schemaLocal, int seenRefs) {
+  private void encodeMap(GeneratorAdapter mg, TypeToken<?> keyType, TypeToken<?> valueType,
+                         Schema keySchema, Schema valueSchema, int value, int encoder, int schemaLocal, int seenRefs) {
     // Encode and store the map length locally
     mg.loadArg(value);
     mg.invokeInterface(Type.getType(Map.class), getMethod(int.class, "size"));
@@ -622,21 +633,21 @@ final class DatumWriterGenerator {
     mg.loadThis();
     mg.loadLocal(entry);
     mg.invokeInterface(Type.getType(Map.Entry.class), getMethod(Object.class, "getKey"));
-    mg.checkCast(Type.getType(keyType.getRawType()));
+    doCast(mg, keyType, keySchema);
     mg.loadArg(encoder);
     mg.loadLocal(keySchemaLocal);
     mg.loadArg(seenRefs);
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(keyType, keySchema));
+    mg.invokeVirtual(classType, getEncodeMethod(keyType, keySchema));
 
     // encode value
     mg.loadThis();
     mg.loadLocal(entry);
     mg.invokeInterface(Type.getType(Map.Entry.class), getMethod(Object.class, "getValue"));
-    mg.checkCast(Type.getType(valueType.getRawType()));
+    doCast(mg, valueType, valueSchema);
     mg.loadArg(encoder);
     mg.loadLocal(valueSchemaLocal);
     mg.loadArg(seenRefs);
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(valueType, valueSchema));
+    mg.invokeVirtual(classType, getEncodeMethod(valueType, valueSchema));
 
     mg.goTo(beginFor);
     mg.mark(endFor);
@@ -666,7 +677,8 @@ final class DatumWriterGenerator {
                             int value, int encoder, int schemaLocal, int seenRefs) {
 
     try {
-      boolean isInterface = outputType.getRawType().isInterface();
+      Class<?> rawType = outputType.getRawType();
+      boolean isInterface = rawType.isInterface();
 
       /*
         Check for circular reference
@@ -698,16 +710,23 @@ final class DatumWriterGenerator {
         TypeToken<?> fieldType;
 
         // this.encodeFieldMethod(value.fieldName, encoder, fieldSchemas.get(i).getSchema());
-        mg.loadThis();
-        mg.loadArg(value);
         if (isInterface) {
+          mg.loadThis();
+          mg.loadArg(value);
           Method getter = getGetter(outputType, field.getName());
-          fieldType = outputType.resolveType(outputType.getRawType()
-                                                       .getMethod(getter.getName()).getGenericReturnType());
-          mg.invokeInterface(Type.getType(outputType.getRawType()), getter);
+          fieldType = outputType.resolveType(rawType.getMethod(getter.getName()).getGenericReturnType());
+          mg.invokeInterface(Type.getType(rawType), getter);
         } else {
-          fieldType = outputType.resolveType(outputType.getRawType().getField(field.getName()).getGenericType());
-          mg.getField(Type.getType(outputType.getRawType()), field.getName(), Type.getType(fieldType.getRawType()));
+          fieldType = outputType.resolveType(Fields.findField(outputType, field.getName()).getGenericType());
+          fieldAccessorRequests.put(outputType, field.getName());
+          mg.loadThis();
+          mg.dup();
+          mg.getField(classType, getFieldAccessorName(outputType, field.getName()), Type.getType(FieldAccessor.class));
+          mg.loadArg(value);
+          mg.invokeInterface(Type.getType(FieldAccessor.class), getAccessorMethod(fieldType));
+          if (!fieldType.getRawType().isPrimitive()) {
+            doCast(mg, fieldType, field.getSchema());
+          }
         }
         mg.loadArg(encoder);
         mg.loadLocal(fieldSchemas);
@@ -716,7 +735,7 @@ final class DatumWriterGenerator {
         mg.checkCast(Type.getType(Schema.Field.class));
         mg.invokeVirtual(Type.getType(Schema.Field.class), getMethod(Schema.class, "getSchema"));
         mg.loadArg(seenRefs);
-        mg.invokeVirtual(Type.getType(className), getEncodeMethod(fieldType, field.getSchema()));
+        mg.invokeVirtual(classType, getEncodeMethod(fieldType, field.getSchema()));
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -746,12 +765,13 @@ final class DatumWriterGenerator {
 
     mg.loadThis();
     mg.loadArg(value);
+    doCast(mg, outputType, schema.getUnionSchema(0));
     mg.loadArg(encoder);
     mg.loadArg(schemaLocal);
     mg.push(0);
     mg.invokeVirtual(Type.getType(Schema.class), getMethod(Schema.class, "getUnionSchema", int.class));
     mg.loadArg(seenRefs);
-    mg.invokeVirtual(Type.getType(className), getEncodeMethod(outputType, schema.getUnionSchema(0)));
+    mg.invokeVirtual(classType, getEncodeMethod(outputType, schema.getUnionSchema(0)));
 
     mg.goTo(endLabel);
 
@@ -763,13 +783,20 @@ final class DatumWriterGenerator {
 
   private <T> TypeToken<DatumWriter<T>> getInterfaceType(TypeToken<T> type) {
     return new TypeToken<DatumWriter<T>>() {
-    }.where(new TypeParameter<T>() {}, type);
+    }.where(new TypeParameter<T>() {
+    }, type);
+  }
+
+  private <T> TypeToken<T[]> getArrayType(TypeToken<T> type) {
+    return new TypeToken<T[]>() {
+    }.where(new TypeParameter<T>() {
+    }, type);
   }
 
   private String getClassName(TypeToken<?> interfaceType, Schema schema) {
     return String.format("%s/%s%s%s",
                          interfaceType.getRawType().getPackage().getName().replace('.', '/'),
-                         normalizeTypeName(TypeToken.of(((ParameterizedType)interfaceType.getType())
+                         normalizeTypeName(TypeToken.of(((ParameterizedType) interfaceType.getType())
                                                           .getActualTypeArguments()[0])),
                          interfaceType.getRawType().getSimpleName(), schema.getSchemaHash());
   }
@@ -784,82 +811,8 @@ final class DatumWriterGenerator {
                           .replace("$", "");
   }
 
-  private String getClassSignature(TypeToken<?> interfaceType) {
-    SignatureWriter signWriter = new SignatureWriter();
-    SignatureVisitor sv = signWriter.visitSuperclass();
-    sv.visitClassType(Type.getInternalName(Object.class));
-    sv.visitEnd();
-
-    SignatureVisitor interfaceVisitor = sv.visitInterface();
-    interfaceVisitor.visitClassType(Type.getInternalName(interfaceType.getRawType()));
-
-    if (interfaceType.getType() instanceof ParameterizedType) {
-      for (java.lang.reflect.Type paramType : ((ParameterizedType)interfaceType.getType()).getActualTypeArguments()) {
-        interfaceVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF);
-        visitTypeSignature(TypeToken.of(paramType), interfaceVisitor);
-      }
-    }
-
-    sv.visitEnd();
-    return signWriter.toString();
-  }
-
-  private String getEncodeMethodSignature(Method method, TypeToken<?>[] types) {
-    SignatureWriter signWriter = new SignatureWriter();
-
-    Type[] argumentTypes = method.getArgumentTypes();
-
-    for (int i = 0; i < argumentTypes.length; i++) {
-      SignatureVisitor sv = signWriter.visitParameterType();
-      if (types[i] != null) {
-        visitTypeSignature(types[i], sv);
-      } else {
-        sv.visitClassType(argumentTypes[i].getInternalName());
-        sv.visitEnd();
-      }
-    }
-
-    signWriter.visitReturnType().visitBaseType('V');
-
-    return signWriter.toString();
-  }
-
-  private void visitTypeSignature(TypeToken<?> type, SignatureVisitor visitor) {
-    Class<?> rawType = type.getRawType();
-    if (rawType.isPrimitive()) {
-      visitor.visitBaseType(Type.getType(rawType).toString().charAt(0));
-      return;
-    } else if (rawType.isArray()) {
-      visitTypeSignature(type.getComponentType(), visitor.visitArrayType());
-      return;
-    } else {
-      visitor.visitClassType(Type.getInternalName(rawType));
-    }
-
-    java.lang.reflect.Type visitType = type.getType();
-    if (visitType instanceof ParameterizedType) {
-      for (java.lang.reflect.Type argType : ((ParameterizedType) visitType).getActualTypeArguments()) {
-        visitTypeSignature(TypeToken.of(argType), visitor.visitTypeArgument(SignatureVisitor.INSTANCEOF));
-      }
-    }
-
-    visitor.visitEnd();
-  }
-
   private Method getMethod(Class<?> returnType, String name, Class<?>...args) {
-    StringBuilder builder = new StringBuilder(returnType.getName())
-      .append(' ').append(name).append(" (");
-    Joiner.on(',').appendTo(builder, Iterators.transform(Iterators.forArray(args), new Function<Class<?>, String>() {
-      @Override
-      public String apply(Class<?> input) {
-        if (input.isArray()) {
-          return Type.getType(input.getName()).getClassName();
-        }
-        return input.getName();
-      }
-    }));
-    builder.append(')');
-    return Method.getMethod(builder.toString());
+    return Methods.getMethod(returnType, name, args);
   }
 
   private Method getGetter(TypeToken<?> outputType, String fieldName) {
@@ -877,5 +830,68 @@ final class DatumWriterGenerator {
         throw new IllegalArgumentException("Getter method not found for field " + fieldName, ex);
       }
     }
+  }
+
+  /**
+   * Returns the type to be used on the encode method. This is needed to work with private classes
+   * that the generated DatumWriter doesn't have access to.
+   *
+   * @param outputType Type information of the data type for output
+   * @param schema Schema to use for output.
+   * @return The type information to be used for encode method.
+   */
+  private TypeToken<?> getCallTypeToken(TypeToken<?> outputType, Schema schema) {
+    Schema.Type schemaType = schema.getType();
+
+    if (schemaType == Schema.Type.RECORD || schemaType == Schema.Type.UNION) {
+      return TypeToken.of(Object.class);
+    }
+    if (schemaType == Schema.Type.ARRAY && outputType.isArray()) {
+      return getArrayType(getCallTypeToken(outputType.getComponentType(), schema.getComponentSchema()));
+    }
+
+    return outputType;
+  }
+
+  /**
+   * Optionally generates a type cast instruction based on the result of
+   * {@link #getCallTypeToken(com.google.common.reflect.TypeToken, com.continuuity.internal.api.io.Schema)}.
+   * @param mg A {@link GeneratorAdapter} for generating instructions
+   * @param outputType
+   * @param schema
+   */
+  private void doCast(GeneratorAdapter mg, TypeToken<?> outputType, Schema schema) {
+    TypeToken<?> callTypeToken = getCallTypeToken(outputType, schema);
+    if (!Object.class.equals(callTypeToken.getRawType()) && !outputType.getRawType().isPrimitive()) {
+      mg.checkCast(Type.getType(callTypeToken.getRawType()));
+    }
+  }
+
+  /**
+   * Returns the method for calling {@link FieldAccessor} based on the data type.
+   * @param type Data type.
+   * @return A {@link Method} for calling {@link FieldAccessor}.
+   */
+  private Method getAccessorMethod(TypeToken<?> type) {
+    Class<?> rawType = type.getRawType();
+    if (rawType.isPrimitive()) {
+      return getMethod(rawType,
+                       String.format("get%c%s",
+                                     Character.toUpperCase(rawType.getName().charAt(0)),
+                                     rawType.getName().substring(1)),
+                       Object.class);
+    } else {
+      return getMethod(Object.class, "get", Object.class);
+    }
+  }
+
+  /**
+   * Generates the name of the class field for storing {@link FieldAccessor} for the given record field.
+   * @param recordType Type of the record.
+   * @param fieldName name of the field.
+   * @return name of the class field.
+   */
+  private String getFieldAccessorName(TypeToken<?> recordType, String fieldName) {
+    return String.format("%s$%s", normalizeTypeName(recordType), fieldName);
   }
 }

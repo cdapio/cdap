@@ -10,7 +10,6 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -36,6 +35,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
+import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.api.io.Schema;
@@ -51,7 +51,7 @@ import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
-import com.continuuity.internal.io.ReflectionDatumWriter;
+import com.continuuity.internal.io.DatumWriterFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -81,14 +81,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
   private final SchemaGenerator schemaGenerator;
+  private final DatumWriterFactory datumWriterFactory;
   private final TransactionAgentSupplierFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
 
   @Inject
-  public FlowletProgramRunner(SchemaGenerator schemaGenerator,
+  public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               TransactionAgentSupplierFactory txAgentSupplierFactory,
                               QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
     this.schemaGenerator = schemaGenerator;
+    this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
     CAppender.logWriter = logWriter;
@@ -362,13 +364,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
       public <T> OutputEmitter<T> create(String outputName, TypeToken<T> type) {
         try {
           Schema schema = schemaGenerator.generate(type.getType());
-
           Node flowlet = Node.flowlet(flowletName);
           for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
               return new DatumOutputEmitter<T>(flowletContext, queueProducer, queueSpec.getQueueName(),
-                                                    schema, new ReflectionDatumWriter<T>(schema));
+                                                    schema, datumWriterFactory.create(type, schema));
             }
           }
 
