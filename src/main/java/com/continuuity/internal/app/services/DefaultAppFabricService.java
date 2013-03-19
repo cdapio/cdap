@@ -178,7 +178,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.authFactory = authFactory;
     this.runtimeService = runtimeService;
     this.store = storeFactory.create();
-    this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp") + "/archive";
+    this.archiveDir = configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"))
+                                          + "/archive";
     this.mds = new MetadataService(opex);
 
     // FIXME: This is hacky to start service like this.

@@ -27,7 +27,7 @@ public class ProgramGenerationStageTest {
 
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
     ApplicationSpecification appSpec = new ToyApp().configure();

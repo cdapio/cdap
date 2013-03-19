@@ -107,7 +107,8 @@ public class MDSBasedStore implements Store {
    * NOTE: fails with RuntimeException if program can't be found
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
-    Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp"));
+    Location allAppsLocation = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
+                                                                        System.getProperty("java.io.tmpdir")));
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
     Location applicationProgramsLocation = accountAppsLocation.append(name);

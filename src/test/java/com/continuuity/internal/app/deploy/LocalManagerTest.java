@@ -36,8 +36,9 @@ public class LocalManagerTest {
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
     configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
+                                                                      + "/" + UUID.randomUUID());
   }
 
   /**
