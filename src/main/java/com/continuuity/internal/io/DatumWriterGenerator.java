@@ -151,7 +151,7 @@ final class DatumWriterGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
     // DEBUG block. Uncomment for debug
-    //com.continuuity.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+//    com.continuuity.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -383,6 +383,10 @@ final class DatumWriterGenerator {
     if (Primitives.isWrapperType(encodeType.getRawType())) {
       encodeType = TypeToken.of(Primitives.unwrap(encodeType.getRawType()));
       mg.unbox(Type.getType(encodeType.getRawType()));
+      // A special case since INT type represents (byte, char, short and int).
+      if (schema.getType() == Schema.Type.INT && !int.class.equals(encodeType.getRawType())) {
+        encodeType = TypeToken.of(int.class);
+      }
     } else if (schema.getType() == Schema.Type.STRING && !String.class.equals(encodeType.getRawType())) {
       // For non-string object that has a String schema, invoke toString().
       mg.invokeVirtual(Type.getType(encodeType.getRawType()), getMethod(String.class, "toString"));
@@ -802,13 +806,24 @@ final class DatumWriterGenerator {
   }
 
   private String normalizeTypeName(TypeToken<?> type) {
-    return type.toString().replace(".", "")
-                          .replace("[]", "Array")
-                          .replace("<", "Of")
-                          .replace(">", "")
-                          .replace(",", "To")
-                          .replace(" ", "")
-                          .replace("$", "");
+    String typeName = type.toString();
+    int dimension = 0;
+    while (type.isArray()) {
+      type = type.getComponentType();
+      typeName = type.toString();
+      dimension++;
+    }
+
+    typeName = typeName.replace(".", "")
+                        .replace("<", "Of")
+                        .replace(">", "")
+                        .replace(",", "To")
+                        .replace(" ", "")
+                        .replace("$", "");
+    if (dimension > 0) {
+      typeName = "Array" + dimension + typeName;
+    }
+    return typeName;
   }
 
   private Method getMethod(Class<?> returnType, String name, Class<?>...args) {

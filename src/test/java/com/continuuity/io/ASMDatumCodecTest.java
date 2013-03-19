@@ -51,6 +51,20 @@ public class ASMDatumCodecTest {
   }
 
   @Test
+  public void testShort() throws UnsupportedTypeException, IOException {
+    TypeToken<Short> type = new TypeToken<Short>() {};
+    PipedOutputStream os = new PipedOutputStream();
+    PipedInputStream is = new PipedInputStream(os);
+    DatumWriter<Short> writer = getWriter(type);
+    writer.encode((short)3000, new BinaryEncoder(os));
+
+    ReflectionDatumReader<Short> reader = new ReflectionDatumReader<Short>(getSchema(type), type);
+    short value = reader.read(new BinaryDecoder(is), getSchema(type));
+
+    Assert.assertEquals((short)3000, value);
+  }
+
+  @Test
   public void testInt() throws UnsupportedTypeException, IOException {
     TypeToken<Integer> type = new TypeToken<Integer>() {};
     PipedOutputStream os = new PipedOutputStream();
