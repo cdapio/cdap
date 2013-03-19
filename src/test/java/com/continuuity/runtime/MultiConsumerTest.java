@@ -131,8 +131,9 @@ public class MultiConsumerTest {
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
     final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
+                                                            + "/app/archive" + UUID.randomUUID());
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));

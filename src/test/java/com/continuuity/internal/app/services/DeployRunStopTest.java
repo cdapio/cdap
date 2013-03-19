@@ -139,8 +139,8 @@ public class DeployRunStopTest {
   @BeforeClass
   public static void before() throws Exception {
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/temp");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
+    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
 
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                                    new BigMamaModule(configuration));
