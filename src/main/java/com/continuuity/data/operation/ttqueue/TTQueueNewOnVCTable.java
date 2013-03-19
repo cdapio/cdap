@@ -38,49 +38,49 @@ public class TTQueueNewOnVCTable implements TTQueue {
   /*
   for each queue (global):
     global entry id counter for newest (highest) entry id, incremented during enqueue
-    row-key       | column | value
-    <queueName>10 | 10     | <entryId>
+    row-key        | column  | value
+    <queueName>10I | 10I     | <entryId>
 
     data and meta data (=entryState) for each entry (together in one row per entry)
     (GLOBAL_DATA_PREFIX)
-    row-key                | column | value
-    <queueName>20<entryId> | 20     | <data>
-                           | 10     | <entryState>
-                           | 30     | <header data>
+    row-key                 | column  | value
+    <queueName>20D<entryId> | 20D     | <data>
+                            | 10M     | <entryState>
+                            | 30H     | <header data>
 
   for each group of consumers (= each group of flowlet instances):
     group read pointer for highest entry id processed by group of consumers
-    row-key                | column | value
-    <queueName>10<groupId> | 10     | <entryId>
+    row-key                 | column  | value
+    <queueName>10I<groupId> | 10I     | <entryId>
 
   for each consumer(=flowlet instance)
     state of entry ids processed by consumer (one column per entry id), current active entry and consumer read pointer
     (CONSUMER_META_PREFIX)
-    row-key                            | column          | value
-    <queueName>30<groupId><consumerId> | 20              | <crash retries for active entry>
-                                       | 10              | <entryId>
-                                       | 30              | <entryId>
+    row-key                             | column           | value
+    <queueName>30C<groupId><consumerId> | 10A              | <entryId>
+                                        | 20C              | <crash retries for active entry>
+                                        | 30I              | <entryId>
    */
 
   // Row prefix names and flags
-  static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10};  //row <queueName>10
-  static final byte [] GLOBAL_DATA_PREFIX = {20};   //row <queueName>20
-  static final byte [] CONSUMER_META_PREFIX = {30}; //row <queueName>30
+  static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
+  static final byte [] GLOBAL_DATA_PREFIX = {20, 'D'};   //row <queueName>20D
+  static final byte [] CONSUMER_META_PREFIX = {30, 'C'}; //row <queueName>30C
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
-  static final byte [] GLOBAL_ENTRYID_COUNTER = {10};  //newest (highest) entry id per queue (global)
+  static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //newest (highest) entry id per queue (global)
 
   // Columns for row = GLOBAL_DATA_PREFIX
-  static final byte [] ENTRY_META = {10}; //row  <queueName>20<entryId>, column 10
-  static final byte [] ENTRY_DATA = {20}; //row  <queueName>20<entryId>, column 20
-  static final byte [] ENTRY_HEADER = {30};  //row  <queueName>20<entryId>, column 30
+  static final byte [] ENTRY_META = {10, 'M'}; //row  <queueName>20D<entryId>, column 10M
+  static final byte [] ENTRY_DATA = {20, 'D'}; //row  <queueName>20D<entryId>, column 20D
+  static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
 
-  static final byte [] GROUP_READ_POINTER = {10}; //row <queueName>10<groupId>, column 10
+  static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
 
   // Columns for row = CONSUMER_META_PREFIX
-  static final byte [] ACTIVE_ENTRY = {10};              //row <queueName>30<groupId><consumerId>, column 10
-  static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {20};  //row <queueName>30<groupId><consumerId>, column 20
-  static final byte [] CONSUMER_READ_POINTER = {30};     //row <queueName>30<groupId><consumerId>, column 30
+  static final byte [] ACTIVE_ENTRY = {10, 'A'};              //row <queueName>30C<groupId><consumerId>, column 10A
+  static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {20, 'C'};  //row <queueName>30C<groupId><consumerId>, column 20C
+  static final byte [] CONSUMER_READ_POINTER = {30, 'I'};     //row <queueName>30C<groupId><consumerId>, column 30I
 
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
@@ -115,7 +115,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     /*
     Insert entry with version=<cleanWriteVersion> and
-    row-key = <queueName>20<entryId> , column/value 20/<data>, 10/EntryState.VALID, 30<partitionKey>/<hashValue>
+    row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H<partitionKey>/<hashValue>
     */
 
     final int size = entry.getPartitioningMap().size() + 2;
