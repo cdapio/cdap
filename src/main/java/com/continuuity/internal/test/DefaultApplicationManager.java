@@ -10,6 +10,7 @@ import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.archive.JarClassLoader;
+import com.continuuity.archive.JarResources;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -67,17 +68,20 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
 
-    try {
-      OperationContext ctx = new OperationContext(accountId, applicationId);
-      DataFabric dataFabric = new DataFabricImpl(opex, ctx);
-      TransactionProxy proxy = new TransactionProxy();
-      proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, ctx));
+    OperationContext ctx = new OperationContext(accountId, applicationId);
+    DataFabric dataFabric = new DataFabricImpl(opex, ctx);
+    TransactionProxy proxy = new TransactionProxy();
+    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, ctx));
 
-      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy, new JarClassLoader(deployedJar));
-      this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+    try {
+      // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
+      // The drawback is we'll not be able to instrument DataSet classes using ASM.
+      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy,
+                                                         new DataSetClassLoader(new JarClassLoader(deployedJar)));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+    this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
   }
 
   @Override
@@ -177,6 +181,20 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     } finally {
       RuntimeStats.clearStats(applicationId);
+    }
+  }
+
+  private static final class DataSetClassLoader extends ClassLoader {
+
+    private final ClassLoader classLoader;
+
+    private DataSetClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      return classLoader.loadClass(name);
     }
   }
 }
