@@ -8,7 +8,6 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.CachedList;
-import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
@@ -58,7 +57,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     state of entry ids processed by consumer (one column per entry id), current active entry and consumer read pointer
     (CONSUMER_META_PREFIX)
     row-key                            | column          | value
-    <queueName>30<groupId><consumerId> | 20<entryId>     | <entryState>
+    <queueName>30<groupId><consumerId> | 20              | <crash retries for active entry>
                                        | 10              | <entryId>
                                        | 30              | <entryId>
    */
@@ -79,13 +78,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] GROUP_READ_POINTER = {10}; //row <queueName>10<groupId>, column 10
 
   // Columns for row = CONSUMER_META_PREFIX
-  static final byte [] ACTIVE_ENTRY = {10};          //row <queueName>30<groupId><consumerId>, column 10
-  static final byte [] META_ENTRY_PREFIX = {20};     //row <queueName>30<groupId><consumerId>, column 20<entryId>
-  static final byte [] CONSUMER_READ_POINTER = {30}; //row <queueName>30<groupId><consumerId>, column 30
-  static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {40};
+  static final byte [] ACTIVE_ENTRY = {10};              //row <queueName>30<groupId><consumerId>, column 10
+  static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {20};  //row <queueName>30<groupId><consumerId>, column 20
+  static final byte [] CONSUMER_READ_POINTER = {30};     //row <queueName>30<groupId><consumerId>, column 30
 
   static final long INVALID_ENTRY_ID = -1;
-  static final byte[] INVALID_ENTRY_ID_BYTES = Bytes.toBytes(INVALID_ENTRY_ID);
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
@@ -118,7 +115,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     /*
     Insert entry with version=<cleanWriteVersion> and
-    row-key = <queueName>20<entryId> , column/value 20/<data> and 10/EntryState.VALID
+    row-key = <queueName>20<entryId> , column/value 20/<data>, 10/EntryState.VALID, 30<partitionKey>/<hashValue>
     */
 
     final int size = entry.getPartitioningMap().size() + 2;
@@ -168,18 +165,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                   "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
     // Determine what dequeue strategy to use based on the partitioner
-    final QueuePartitioner queuePartitioner = config.getPartitionerType().getPartitioner();
-    DequeueStrategy dequeueStrategy;
-    if(queuePartitioner instanceof QueuePartitioner.HashPartitioner) {
-      dequeueStrategy = new HashDequeueStrategy();
-    } else if(queuePartitioner instanceof QueuePartitioner.RoundRobinPartitioner) {
-      dequeueStrategy = new RoundRobinDequeueStrategy();
-    } else if(queuePartitioner instanceof QueuePartitioner.FifoPartitioner) {
-      dequeueStrategy = new FifoDequeueStrategy();
-    } else {
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-        String.format("Cannot figure out the dequeue strategy to use for partitioner %s", queuePartitioner.getClass()));
-    }
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
     // If QueueState is null, read the queue state from underlying storage.
     QueueStateImpl queueState = getQueueStateImpl(consumer.getQueueState());
@@ -226,6 +212,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
       return dequeueResult;
     }
+  }
+
+  private DequeueStrategy getDequeueStrategy(QueuePartitioner queuePartitioner) throws OperationException {
+    DequeueStrategy dequeueStrategy;
+    if(queuePartitioner instanceof QueuePartitioner.HashPartitioner) {
+      dequeueStrategy = new HashDequeueStrategy();
+    } else if(queuePartitioner instanceof QueuePartitioner.RoundRobinPartitioner) {
+      dequeueStrategy = new RoundRobinDequeueStrategy();
+    } else if(queuePartitioner instanceof QueuePartitioner.FifoPartitioner) {
+      dequeueStrategy = new FifoDequeueStrategy();
+    } else {
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                   String.format("Cannot figure out the dequeue strategy to use for partitioner %s", queuePartitioner.getClass()));
+    }
+    return dequeueStrategy;
   }
 
   private void readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer,
@@ -286,47 +287,33 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    ackInternal(entryPointer, consumer, readPointer);
-    if(consumer.isStateful()) {
-      QueueStateImpl queueState = getQueueStateImpl(consumer.getQueueState());
-      queueState.setActiveEntryId(INVALID_ENTRY_ID);
-      queueState.setActiveEntryTries(0);
-    }
-  }
-
-  public void ackInternal(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
-    throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
     // TODO: 3. Use Transaction.getWriteVersion instead ReadPointer
-    QueuePartitioner partitioner=consumer.getQueueConfig().getPartitionerType().getPartitioner();
 
-    if (partitioner.isDisjoint()) {
-      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                     new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY, ACTIVE_ENTRY_CRASH_TRIES},
-                     readPointer.getMaximum(),
-                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(), INVALID_ENTRY_ID_BYTES, Bytes.toBytes(0)});
-    } else {
+    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
-      byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
-      byte[] colKey = makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId());
-      byte[] acked = new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes();
-
-      // verify it is not acked yet
-      OperationResult<byte[]> result = this.table.get(rowKey, colKey, readPointer);
-      if (result.isEmpty()) {
-        throw new OperationException(StatusCode.ILLEGAL_ACK, "Entry has never been claimed. ");
-      }
-      EntryConsumerMeta meta = EntryConsumerMeta.fromBytes(result.getValue());
-      if (!meta.isClaimed()) {
-        throw new OperationException(StatusCode.ILLEGAL_ACK, "Entry is " + meta.getState().name());
-      }
-      // now put the new value
-      this.table.put(rowKey,
-                     new byte[][] { colKey, ACTIVE_ENTRY },
-                     readPointer.getMaximum(),
-                     new byte[][] { acked, INVALID_ENTRY_ID_BYTES} );
+    // Get queue state
+    QueueStateImpl queueState = getQueueStateImpl(consumer.getQueueState());
+    if(queueState == null) {
+      queueState = dequeueStrategy.constructQueueState(consumer, consumer.getQueueConfig(), readPointer);
+      consumer.setQueueState(queueState);
     }
+
+    // Only the entry that has been dequeued (active entry) can be acked
+    if(queueState.getActiveEntryId() != entryPointer.getEntryId()) {
+      throw new OperationException(StatusCode.ILLEGAL_ACK, String.format(
+        "Entry %d is not the active entry. Current active entry is %d",
+        entryPointer.getEntryId(), queueState.getActiveEntryId()));
+    }
+
+    // Set ack state
+    queueState.setActiveEntryId(INVALID_ENTRY_ID);
+    queueState.setActiveEntryTries(0);
+
+    // Write ack state
+    dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
 
   @Override
@@ -341,14 +328,23 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
     // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
-    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY, ACTIVE_ENTRY_CRASH_TRIES},
-      readPointer.getMaximum(),
-      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
-                                                         Bytes.toBytes(entryPointer.getEntryId()), Bytes.toBytes(0)});
-    if(consumer.isStateful()) {
-      getQueueStateImpl(consumer.getQueueState()).setActiveEntryId(entryPointer.getEntryId());
+
+    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
+
+    // Get queue state
+    QueueStateImpl queueState = getQueueStateImpl(consumer.getQueueState());
+    if(queueState == null) {
+      queueState = dequeueStrategy.constructQueueState(consumer, consumer.getQueueConfig(), readPointer);
+      consumer.setQueueState(queueState);
     }
+
+    // Set unack state
+    queueState.setActiveEntryId(entryPointer.getEntryId());
+    queueState.setActiveEntryTries(0);
+
+    // Write unack state
+    dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
   static long groupId = 0;
   @Override
@@ -526,15 +522,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      new byte[][]{
                        CONSUMER_READ_POINTER,
-                       ACTIVE_ENTRY, ACTIVE_ENTRY_CRASH_TRIES,
-                       makeColumnName(META_ENTRY_PREFIX, entryId)
+                       ACTIVE_ENTRY,
+                       ACTIVE_ENTRY_CRASH_TRIES
                      },
                      readPointer.getMaximum(),
                      new byte[][]{
                        Bytes.toBytes(queueState.getConsumerReadPointer()),
                        Bytes.toBytes(queueState.getActiveEntryId()),
-                       Bytes.toBytes(queueState.getActiveEntryTries()),
-                       new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes()
+                       Bytes.toBytes(queueState.getActiveEntryTries())
                      }
       );
     }

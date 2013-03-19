@@ -241,7 +241,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   public void testSingleStatefulConsumerWithHashPartitioning() throws Exception {
     final String HASH_KEY = "hashKey";
     final boolean singleEntry = true;
-    final int numQueueEntries = 88;
+    final int numQueueEntries = 264;
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
@@ -254,7 +254,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
+    // TODO: test with more batch sizes
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry, 29);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -277,7 +278,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Test
   public void testSingleStatefulConsumerWithRoundRobinPartitioning() throws Exception {
     final boolean singleEntry = true;
-    final int numQueueEntries = 88;
+    final int numQueueEntries = 264;
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
@@ -290,7 +291,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     }
 
     // dequeue it with ROUND_ROBIN partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
+    // TODO: test with more batch sizes
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry, 11);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
