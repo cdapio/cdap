@@ -58,7 +58,7 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
                                                 Fields.findField(key.getType(), key.getFieldName()),
                                                 defineClass == null);
 
-      ClassLoader classLoader = key.getType().getClass().getClassLoader();
+      ClassLoader classLoader = key.getType().getRawType().getClassLoader();
       FieldAccessorClassLoader fieldAccessorClassLoader = classLoaders.get(classLoader);
       if (fieldAccessorClassLoader == null) {
         fieldAccessorClassLoader = new FieldAccessorClassLoader(classLoader, defineClass);
