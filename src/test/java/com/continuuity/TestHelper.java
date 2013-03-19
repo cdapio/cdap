@@ -49,8 +49,8 @@ public class TestHelper {
 
   static {
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", "/tmp/app");
-    configuration.set("app.tmp.dir", "/tmp/temp");
+    configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
+    configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
     injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
   }
 

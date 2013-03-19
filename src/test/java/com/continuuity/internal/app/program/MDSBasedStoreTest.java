@@ -61,7 +61,7 @@ public class MDSBasedStoreTest {
 
   static {
     configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app");
+    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
   }
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
