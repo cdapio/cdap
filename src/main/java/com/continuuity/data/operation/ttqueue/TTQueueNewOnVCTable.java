@@ -11,6 +11,7 @@ import com.continuuity.data.operation.ttqueue.internal.CachedList;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -398,6 +399,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private int activeEntryTries = 0;
     private long consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
     private long queueWrtiePointer = FIRST_QUEUE_ENTRY_ID - 1;
+    private long claimedEntryBegin = INVALID_ENTRY_ID;
+    private long claimedEntryEnd = INVALID_ENTRY_ID;
+
     private CachedList<QueueStateEntry> cachedEntries;
 
     public QueueStateImpl() {
@@ -428,6 +432,22 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.consumerReadPointer = consumerReadPointer;
     }
 
+    public long getClaimedEntryBegin() {
+      return claimedEntryBegin;
+    }
+
+    public void setClaimedEntryBegin(long claimedEntryBegin) {
+      this.claimedEntryBegin = claimedEntryBegin;
+    }
+
+    public long getClaimedEntryEnd() {
+      return claimedEntryEnd;
+    }
+
+    public void setClaimedEntryEnd(long claimedEntryEnd) {
+      this.claimedEntryEnd = claimedEntryEnd;
+    }
+
     public long getQueueWritePointer() {
       return queueWrtiePointer;
     }
@@ -456,6 +476,52 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
+  private static class QueueStateStore {
+    private final VersionedColumnarTable table;
+    private byte[] rowKey;
+    private final List<byte[]> columnNames = Lists.newArrayList();
+    private final List<byte[]> columnValues = Lists.newArrayList();
+
+    private OperationResult<Map<byte[], byte[]>> readResult;
+
+    private QueueStateStore(VersionedColumnarTable table) {
+      this.table = table;
+    }
+
+    public byte[] getRowKey() {
+      return rowKey;
+    }
+
+    public void setRowKey(byte[] rowKey) {
+      this.rowKey = rowKey;
+    }
+
+    public void addColumnName(byte[] columnName) {
+      columnNames.add(columnName);
+    }
+
+    public void addColumnValue(byte[] columnValue) {
+      columnValues.add(columnValue);
+    }
+
+    public void read(ReadPointer readPointer)
+      throws OperationException{
+      final byte[][] colNamesByteArray = new byte[columnNames.size()][];
+      readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), readPointer);
+    }
+
+    public OperationResult<Map<byte[], byte[]>> getReadResult() {
+      return this.readResult;
+    }
+
+    public void write(ReadPointer readPointer)
+      throws OperationException {
+      final byte[][] colNamesByteArray = new byte[columnNames.size()][];
+      final byte[][] colValuesByteArray = new byte[columnValues.size()][];
+      table.put(rowKey, columnNames.toArray(colNamesByteArray), readPointer.getMaximum(), columnValues.toArray(colValuesByteArray));
+    }
+  }
+
   interface DequeueStrategy {
     QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
                                ReadPointer readPointer) throws OperationException;
@@ -465,16 +531,23 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
   }
 
-  abstract class AbstractDisjointDequeueStrategy implements DequeueStrategy {
+  abstract class AbstractDequeueStrategy implements DequeueStrategy {
+    private final QueueStateStore readQueueStateStore = new QueueStateStore(table);
+    private final QueueStateStore writeQueueStateStore = new QueueStateStore(table);
+
     @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
                                                        throws OperationException {
       // ACTIVE_ENTRY contains the entry if any that is dequeued, but not acked
       // CONSUMER_READ_POINTER + 1 points to the next entry that can be read by this queue consuemr
+      readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
+      readQueueStateStore.addColumnName(ACTIVE_ENTRY);
+      readQueueStateStore.addColumnName(ACTIVE_ENTRY_CRASH_TRIES);
+      readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
+      readQueueStateStore.read(readPointer);
+
+      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       QueueStateImpl queueState = new QueueStateImpl();
-      OperationResult<Map<byte[], byte[]>> stateBytes =
-        table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                       new byte[][] {ACTIVE_ENTRY, ACTIVE_ENTRY_CRASH_TRIES, CONSUMER_READ_POINTER}, readPointer);
       if(!stateBytes.isEmpty()) {
         queueState.setActiveEntryId(Bytes.toLong(stateBytes.getValue().get(ACTIVE_ENTRY)));
         queueState.setActiveEntryTries(Bytes.toInt(stateBytes.getValue().get(ACTIVE_ENTRY_CRASH_TRIES)));
@@ -514,28 +587,25 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
-      // Persist the entryId this consumer will be working on
-      // TODO: Later when active entry can saved in memory, there is no need to write it into HBase -> (not true for FIFO!)
-      long entryId = queueState.getActiveEntryId();
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                 ReadPointer readPointer) throws OperationException {
+      // Persist the queue state of this consumer
+      writeQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
 
-      table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-                     new byte[][]{
-                       CONSUMER_READ_POINTER,
-                       ACTIVE_ENTRY,
-                       ACTIVE_ENTRY_CRASH_TRIES
-                     },
-                     readPointer.getMaximum(),
-                     new byte[][]{
-                       Bytes.toBytes(queueState.getConsumerReadPointer()),
-                       Bytes.toBytes(queueState.getActiveEntryId()),
-                       Bytes.toBytes(queueState.getActiveEntryTries())
-                     }
-      );
+      writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
+      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getConsumerReadPointer()));
+
+      writeQueueStateStore.addColumnName(ACTIVE_ENTRY);
+      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getActiveEntryId()));
+
+      writeQueueStateStore.addColumnName(ACTIVE_ENTRY_CRASH_TRIES);
+      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getActiveEntryTries()));
+
+      writeQueueStateStore.write(readPointer);
     }
   }
 
-  class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+  class HashDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(
       QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
@@ -607,7 +677,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  class RoundRobinDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+  class RoundRobinDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
       long entryId = queueState.getConsumerReadPointer();
@@ -647,7 +717,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  class FifoDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
+  class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
       long entryId = queueState.getConsumerReadPointer();
