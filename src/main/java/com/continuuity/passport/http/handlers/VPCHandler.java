@@ -5,6 +5,7 @@
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.passport.PassportConstants;
+import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
@@ -141,5 +142,27 @@ public class VPCHandler extends PassportHandler {
     }
   }
 
-
+  @Path("{vpcName}")
+  @DELETE
+  public Response deleteVPCByName(@PathParam("vpcName") String vpcName ) {
+    try{
+      requestSuccess();
+      dataManagementService.deleteVPC(vpcName);
+      return Response.ok().entity(Utils.getJsonOK()).build();
+    } catch (VPCNotFoundException e) {
+      requestFailed(); //Failed request
+      LOG.debug(String.format("VPC not found endpoint: %s %s",
+        "DELETE /passport/v1/vpc/{vpcName}",e.getMessage()));
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJsonError("VPC not found"))
+        .build();
+    } catch (RuntimeException e) {
+      requestFailed(); //Failed request
+      LOG.error(String.format("Internal server error endpoint: %s %s",
+        "DELETE /passport/v1/{vpcName}",e.getMessage()));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("VPC delete Failed", e.getMessage()))
+        .build();
+    }
+  }
 }

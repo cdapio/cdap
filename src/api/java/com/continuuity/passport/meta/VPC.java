@@ -19,14 +19,21 @@ public class VPC {
 
   private final String vpcLabel;
 
+  private final long createdTime;
+
   public VPC(String vpcName, String vpcLabel) {
     this(-1, vpcName, vpcLabel);
   }
 
   public VPC(int vpcId, String vpcName, String vpcLabel) {
+    this(vpcId,vpcName,vpcLabel,-1);
+  }
+
+  public VPC(int vpcId, String vpcName, String vpcLabel, long createdTime) {
     this.vpcId = vpcId;
     this.vpcName = vpcName;
     this.vpcLabel = vpcLabel;
+    this.createdTime = createdTime;
   }
 
   public int getVpcId() {

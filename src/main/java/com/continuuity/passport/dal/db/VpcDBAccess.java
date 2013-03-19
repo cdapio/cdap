@@ -76,6 +76,27 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
+  public void removeVPC(String vpcName) throws VPCNotFoundException{
+    Preconditions.checkNotNull(this.poolManager,"Data source connector cannot be null");
+    Connection connection = null;
+    PreparedStatement ps = null;
+    String SQL = String.format("DELETE FROM %s where %s = ?",DBUtils.VPC.TABLE_NAME,DBUtils.VPC.NAME_COLUMN);
+    try {
+      connection =  this.poolManager.getValidConnection();
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1,vpcName);
+      int count = ps.executeUpdate();
+      if (count == 0 ) {
+        throw new VPCNotFoundException("VPC not found");
+      }
+    } catch (SQLException e){
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection,ps);
+    }
+  }
+
+  @Override
   public void removeVPC(int accountId, int vpcId)
     throws ConfigurationException, VPCNotFoundException {
 
@@ -156,9 +177,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s FROM %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
-        DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.LABEL_COLUMN,
+        DBUtils.VPC.VPC_CREATED_AT,//COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
 
@@ -167,7 +189,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
+        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),DBUtils.timestampToLong(rs.getTimestamp(4)));
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
@@ -189,9 +211,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
-        DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.LABEL_COLUMN,
+        DBUtils.VPC.VPC_CREATED_AT,//COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN, //WHERE
         DBUtils.VPC.VPC_ID_COLUMN);
@@ -202,7 +225,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
+        vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),DBUtils.timestampToLong(rs.getTimestamp(4)));
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
@@ -310,7 +333,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
           rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }

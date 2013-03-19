@@ -256,7 +256,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
           rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -306,7 +306,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         count++;
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
           rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -548,7 +548,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       while (rs.next()) {
         account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
           rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.getDevsuiteDownloadedTime(rs.getTimestamp(8)));
+          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
       }
       return account;
     } catch (SQLException e) {
