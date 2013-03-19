@@ -139,7 +139,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -175,7 +175,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -245,7 +245,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -281,7 +281,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = 1;
+    long dirtyVersion = getDirtyWriteVersion();
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -354,5 +354,39 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
       DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
       assertTrue(result.isEmpty());
     }
+  }
+
+  @Test
+  public void testMaxCrashDequeueTries() throws Exception {
+    TTQueue queue = createQueue();
+
+    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), getDirtyWriteVersion()).isSuccess());
+    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
+
+    // dequeue it with FIFO partitioner
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+
+    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES; ++tries) {
+      // Simulate consumer crashing by sending in empty state every time and not acking the entry
+      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(0, 0, 1, "", config), getDirtyPointer());
+      assertTrue(result.isSuccess());
+      assertEquals(1, Bytes.toInt(result.getEntry().getData()));
+    }
+
+    // After max tries, the entry will be ignored
+    StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(0, 0, 1, "", config);
+    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES + 1; ++tries) {
+      // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
+      DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
+      assertTrue(result.isSuccess());
+      assertEquals(2, Bytes.toInt(result.getEntry().getData()));
+    }
+    DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
+    assertTrue(result.isSuccess());
+    assertEquals(2, Bytes.toInt(result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), statefulQueueConsumer, getDirtyPointer());
+
+    result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
+    assertTrue(result.isEmpty());
   }
 }
