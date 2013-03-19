@@ -219,8 +219,7 @@ final class FieldAccessorGenerator {
     mg.checkCast(Type.getType(field.getDeclaringClass()));
     mg.getField(Type.getType(field.getDeclaringClass()), field.getName(), Type.getType(field.getType()));
     if (field.getType().isPrimitive()) {
-      Class<?> boxType =Primitives.wrap(field.getType());
-      mg.invokeStatic(Type.getType(boxType), getMethod(boxType, "valueOf", field.getType()));
+      mg.valueOf(Type.getType(field.getType()));
     }
     mg.returnValue();
     mg.endMethod();
@@ -291,8 +290,7 @@ final class FieldAccessorGenerator {
       // set the value using the generic void get(Object, Object) method with boxing the value.
       mg.loadThis();
       mg.loadArgs();
-      Class<?> boxType =Primitives.wrap(field.getType());
-      mg.invokeStatic(Type.getType(boxType), getMethod(boxType, "valueOf", field.getType()));
+      mg.valueOf(Type.getType(field.getType()));
       mg.invokeVirtual(Type.getObjectType(className), getMethod(void.class, "set", Object.class, Object.class));
     } else {
       // Simply access the field.

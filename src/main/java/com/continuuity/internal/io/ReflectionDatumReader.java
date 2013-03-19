@@ -317,7 +317,18 @@ public final class ReflectionDatumReader<T> {
       case INT:
         switch(targetType) {
           case INT:
-            return decoder.readInt();
+            Class<?> targetClass = targetTypeToken.getRawType();
+            int value = decoder.readInt();
+            if (targetClass.equals(byte.class) || targetClass.equals(Byte.class)) {
+              return (byte)value;
+            }
+            if (targetClass.equals(char.class) || targetClass.equals(Character.class)) {
+              return (char)value;
+            }
+            if (targetClass.equals(short.class) || targetClass.equals(Short.class)) {
+              return (short)value;
+            }
+            return value;
           case LONG:
             return (long) decoder.readInt();
           case FLOAT:
