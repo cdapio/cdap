@@ -1,7 +1,6 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
@@ -100,7 +99,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
       Assert.assertEquals(100L, result.get("text:testing").longValue());
 
       // Verify by looking into dataset
-      KeyValueTable mydataset = applicationManager.getDataSet("mydataset");
+      MyKeyValueTable mydataset = applicationManager.getDataSet("mydataset");
       Assert.assertEquals(100L, Longs.fromByteArray(mydataset.read("title:title".getBytes(Charsets.UTF_8))));
 
       // check the metrics
