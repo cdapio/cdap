@@ -109,7 +109,7 @@ public class SocialActionFlow implements Flow {
    * counter increment operation performed by the processor.  Specifically, this
    * value is the all-time score of the product in the social action.
    */
-  public class ProcessedSocialAction {
+  public static class ProcessedSocialAction {
     public SocialAction socialAction;
     public Long scoreIncrease;
     public Long allTimeScore;
@@ -121,7 +121,7 @@ public class SocialActionFlow implements Flow {
     }
   }
 
-  public class ProcessedSocialActionAndCountry extends ProcessedSocialAction {
+  public static class ProcessedSocialActionAndCountry extends ProcessedSocialAction {
     public String country;
     public ProcessedSocialActionAndCountry(
         ProcessedSocialAction processedAction, String country) {
@@ -135,9 +135,9 @@ public class SocialActionFlow implements Flow {
    * Flowlet that performs the primary updates to counters that track the
    * all time and hourly scores of products.
    */
-  public  class SocialActionProcessorFlowlet extends AbstractFlowlet {
+  public static class SocialActionProcessorFlowlet extends AbstractFlowlet {
 
-    int numProcessed = 0;
+    public static int numProcessed = 0;
     int numErrors = 0;
 
     @UseDataSet(LishApp.PRODUCT_ACTION_TABLE)
@@ -157,6 +157,7 @@ public class SocialActionFlow implements Flow {
 
       // Determine score increase
       Long scoreIncrease = action.getSocialActionType().getScore();
+
 
       // Update product action count table
       this.productActionCountTable.incrementCounterSet(
@@ -187,7 +188,7 @@ public class SocialActionFlow implements Flow {
    */
   public static class ActivityFeedUpdaterFlowlet extends AbstractFlowlet {
 
-    static int numProcessed = 0;
+    public static int numProcessed = 0;
 
     @UseDataSet(LishApp.ACTIVITY_FEED_TABLE)
     private ActivityFeedTable activityFeedTable;
