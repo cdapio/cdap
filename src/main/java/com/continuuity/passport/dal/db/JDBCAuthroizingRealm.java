@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
@@ -62,7 +63,7 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
   @Inject
   public JDBCAuthroizingRealm(ConnectionPoolDataSource dataSource) {
     Preconditions.checkNotNull(dataSource, "Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
+    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
   }
 
   /**

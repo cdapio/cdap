@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
@@ -35,7 +36,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   @Inject
   public void VpcDBAccess(ConnectionPoolDataSource dataSource) {
     Preconditions.checkNotNull(dataSource,"Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
+    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
   }
 
   @Override
