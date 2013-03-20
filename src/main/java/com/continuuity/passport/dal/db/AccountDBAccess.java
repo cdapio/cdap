@@ -39,7 +39,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
   @Inject
-  public void AccountDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+  public void AccountDBAccess(DBConnectionPoolManager poolManager) {
     Preconditions.checkNotNull(poolManager,"Pool manager should not be null");
     this.poolManager = poolManager;
   }

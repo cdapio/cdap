@@ -32,7 +32,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   private  DBConnectionPoolManager poolManager ;
 
   @Inject
-  public void VpcDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+  public void VpcDBAccess(DBConnectionPoolManager poolManager) {
     Preconditions.checkNotNull(poolManager,"PoolManager should not be null");
     this.poolManager = poolManager;
   }

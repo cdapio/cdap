@@ -62,7 +62,7 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
 
 
   @Inject
-  public JDBCAuthroizingRealm(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+  public JDBCAuthroizingRealm(DBConnectionPoolManager poolManager) {
     Preconditions.checkNotNull(poolManager, "PoolManager  should not be null");
     this.poolManager = poolManager;
   }

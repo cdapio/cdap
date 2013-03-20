@@ -28,7 +28,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
 
   @Inject
-  public NonceDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+  public NonceDBAccess(DBConnectionPoolManager poolManager) {
     Preconditions.checkNotNull(poolManager, "Pool Manager should not be null");
     this.poolManager = poolManager;
   }

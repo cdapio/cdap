@@ -93,7 +93,6 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(NonceDAO.class).to(NonceDBAccess.class);
     bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
     bind(DBConnectionPoolManager.class)
-      .annotatedWith(Names.named(Constants.NAMED_DB_CONNECTION_POOL_BINDING))
       .toInstance(connectionPoolManager);
     bind(GuiceContainer.class).asEagerSingleton();
     bind(DefaultServlet.class).asEagerSingleton();
