@@ -64,6 +64,7 @@ libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"
 
 //Shiro
 libraries.shiro_core = "org.apache.shiro:shiro-core:1.2.1"
+libraries.shiro_guice = "org.apache.shiro:shiro-guice:1.2.1"
 
 // Netflix Curator
 libraries.netflix_curator_framework = "com.netflix.curator:curator-framework:$versions.netflixCuratorVersion"
