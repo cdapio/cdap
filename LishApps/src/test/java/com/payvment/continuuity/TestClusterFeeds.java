@@ -3,6 +3,8 @@ package com.payvment.continuuity;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Test;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,10 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.continuuity.test.FlowManager;
 import com.payvment.continuuity.data.SortedCounterTable;
-import org.junit.Test;
-
 import com.continuuity.api.data.OperationException;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
@@ -23,16 +22,12 @@ import com.payvment.continuuity.data.ClusterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
 import com.payvment.continuuity.entity.SocialAction;
-
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.ProcedureClient;
-import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.StreamWriter;
-import scala.collection.generic.Sorted;
-
+import org.junit.Test;
 
 /**
  * Complete end-to-end testing of Lish Activity and Popular Feeds.
@@ -41,17 +36,17 @@ public class TestClusterFeeds extends AppFabricTestBase {
 
   private static final String US = "US";
 
-  @Test(timeout = 30000)
+  @Test(timeout = 20000)
   public void testStreamsFlowsQueries() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(LishApp.class);
 
     // Start the cluster writer flow
-    FlowManager clusterWriterFlowManager = applicationManager.startFlow(ClusterWriterFlow.FLOW_NAME);
-    Thread.sleep(2000);
+    applicationManager.startFlow(ClusterWriterFlow.FLOW_NAME);
+    Thread.sleep(500);
 
     // Start the social action flow
     applicationManager.startFlow(SocialActionFlow.FLOW_NAME);
-    Thread.sleep(2000);
+    Thread.sleep(500);
 
     // Write sample-clusters.csv to stream for clusters
     StreamWriter s1 = applicationManager.getStreamWriter(LishApp.CLUSTER_STREAM);
@@ -65,13 +60,10 @@ public class TestClusterFeeds extends AppFabricTestBase {
     }
 
     // Get ClusterWriter instance / metrics
-    RuntimeMetrics m1 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
-                                                                   ClusterWriterFlow.FLOW_NAME,
-                                                                   ClusterWriterFlow.WRITER_FLOWLET_NAME);
+    RuntimeMetrics m1 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.WRITER_FLOWLET_NAME);
 
     m1.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
     System.out.println("ClusterWriterFlow.ClusterWriter processed: " + m1.getProcessed());
-
 
     // Write sample-actions.json to stream for social actions
     StreamWriter s2 = applicationManager.getStreamWriter(LishApp.SOCIAL_ACTION_STREAM);
@@ -86,26 +78,21 @@ public class TestClusterFeeds extends AppFabricTestBase {
       System.out.println(e.getLocalizedMessage());
     }
 
-
-    RuntimeMetrics m2 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
-                                                             SocialActionFlow.FLOW_NAME,
-                                                             "popular_feed_updater");
+    RuntimeMetrics m2 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "popular_feed_updater");
 
     System.out.println("Waiting for social action popular updater flowlet");
     m2.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
     System.out.println("SocialActionFlow.PopularFeedUpdaterFlowlet processed: " + m2.getProcessed());
 
     System.out.println("Waiting for social action activity updater flowlet");
-    RuntimeMetrics m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
-                                                       SocialActionFlow.FLOW_NAME,
-                                                       "activity_feed_updater");
+    RuntimeMetrics m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "activity_feed_updater");
 
     System.out.println("Waiting for social action activity updater flowlet");
     m3.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
     System.out.println("SocialActionFlow.PopularFeedUpdaterFlowlet processed: " + m2.getProcessed());
 
     // Verify flow processing results using feed reader queries
-    ClusterTable clusterTable = (ClusterTable)applicationManager.getDataSet(LishApp.CLUSTER_TABLE);
+    ClusterTable clusterTable = (ClusterTable) applicationManager.getDataSet(LishApp.CLUSTER_TABLE);
     SortedCounterTable topScoreTable = applicationManager.getDataSet(LishApp.TOP_SCORE_TABLE);
     ActivityFeedTable activityFeedTable = applicationManager.getDataSet(LishApp.ACTIVITY_FEED_TABLE);
 
@@ -306,6 +293,10 @@ public class TestClusterFeeds extends AppFabricTestBase {
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(3, activityEntries.size());
       assertDescendingTime(activityEntries);
+
+      // Stop all flows
+      applicationManager.stopAll();
+
     } catch (OperationException e) {
       System.out.println(e.getLocalizedMessage());
     }
@@ -327,12 +318,10 @@ public class TestClusterFeeds extends AppFabricTestBase {
     }
   }
 
-  private int writeFileToStream(String inputFile, StreamWriter stream, String streamName, int limit)
-  throws IOException, OperationException {
+  private int writeFileToStream(String inputFile, StreamWriter stream, String streamName, int limit) throws IOException, OperationException {
     System.out.println("Opening file '" + inputFile + "' to write to stream '" +
-        streamName + "'");
-    BufferedReader reader = new BufferedReader(new InputStreamReader(
-        getClass().getClassLoader().getResourceAsStream(inputFile)));
+                         streamName + "'");
+    BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(inputFile)));
     String line = null;
     int i = 0;
     while ((line = reader.readLine()) != null && i < limit) {

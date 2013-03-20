@@ -1,14 +1,11 @@
 package com.payvment.continuuity;
 
 
-
-
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -19,6 +16,8 @@ import com.payvment.continuuity.data.CounterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.SortedCounterTable;
 import com.payvment.continuuity.entity.SocialAction;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Flow application used to process Lish social actions in order to generate
@@ -240,7 +239,7 @@ public class SocialActionFlow implements Flow {
         throws OperationException {
       try {
         this.topScoreTable.increment(
-            PopularFeed.makeRow(Helpers.hour(processedAction.socialAction.date),
+            PopularFeed.makeRow(TimeUnit.MILLISECONDS.toHours(processedAction.socialAction.date),
                 processedAction.country, processedAction.socialAction.category),
                 Bytes.toBytes(processedAction.socialAction.product_id), 1L);
       } finally {

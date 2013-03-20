@@ -1,26 +1,20 @@
 package com.payvment.continuuity;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import com.google.common.base.Throwables;
-import org.junit.Test;
-
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.api.data.OperationException;
 import com.payvment.continuuity.data.ClusterTable;
-
-
+import org.junit.Test;
 
 public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
 
@@ -39,11 +33,9 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     applicationManager.startFlow(ClusterWriterFlow.FLOW_NAME);
 
     // Generate a clear event and wait for it to be processed
-    int numParsed = 0; //ClusterWriterFlow.ClusterSourceParser.numProcessed;
-    int numReset =  0;//ClusterWriterFlow.ClusterReseter.numProcessed;
-    int numWritten = 0; //ClusterWriterFlow.ClusterWriter.numProcessed;
-
-
+    int numParsed = 0;
+    int numReset =  0;
+    int numWritten = 0;
 
     StreamWriter s1 = applicationManager.getStreamWriter(LishApp.CLUSTER_STREAM);
 
@@ -62,7 +54,7 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     RuntimeMetrics m2 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.RESET_FLOWLET_NAME);
       System.out.println("Waiting for reset flowlet to process tuple");
-    m1.waitForProcessed(numParsed, 500, TimeUnit.MILLISECONDS);
+    m1.waitForProcessed(numReset, 500, TimeUnit.MILLISECONDS);
 
     // Writer flowlet should not have received anything
     RuntimeMetrics m3 =
@@ -151,30 +143,21 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
       System.out.println(e.getLocalizedMessage());
     }
 
-
     // Generate a clear event, ensure no clusters in table
-    //writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
     s1.send(CLEAR_CSV.getBytes());
-
-
-
     numParsed++;
     numReset++;
-//    while (ClusterWriterFlow.ClusterSourceParser.numProcessed < numParsed) {
-//      System.out.println("Waiting for parsing flowlet to process tuple");
-//      Thread.sleep(500);
-//    }
 
     RuntimeMetrics m4 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.PARSER_FLOWLET_NAME);
-    System.out.println("Waiting for reset flowlet to process tuple");
-    m4.waitForProcessed(numReset, 500, TimeUnit.MILLISECONDS);
+    System.out.println("Waiting for parsing flowlet to process tuple");
+    m4.waitForProcessed(numParsed, 500, TimeUnit.MILLISECONDS);
 
-//    while (ClusterWriterFlow.ClusterReseter.numProcessed < numReset) {
-//      System.out.println("Waiting for reset flowlet to process tuple");
-//      Thread.sleep(500);
-//    }
-    
+    RuntimeMetrics m5 =
+      RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.RESET_FLOWLET_NAME);
+    System.out.println("Waiting for reset flowlet to process tuple");
+    m5.waitForProcessed(numReset, 500, TimeUnit.MILLISECONDS);
+
     // Try to read clusters, all should be null
     try {
     assertNull(clusterTable.readCluster(1));
@@ -195,7 +178,7 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     try {
       streamWriter.send(new String("" + cluster + ",\"" + category + "\"," + weight).getBytes());
     } catch (IOException e) {
-      Throwables.propagate(e);
+      throw e;
     }
   }
 

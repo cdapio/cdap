@@ -6,13 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import com.payvment.continuuity.Helpers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
-import com.continuuity.api.data.util.Helpers;
+//import com.continuuity.api.data.util.Helpers;
+import com.payvment.continuuity.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 
 /**
@@ -113,6 +115,11 @@ public class ClusterFeedReader {
     for (CachingActivityFeedScanner scanner : scanners) scanner.close();
     return activityFeed;
   }
+
+  public static long reverse(long timestamp) {
+    return Long.MAX_VALUE - timestamp;
+  }
+
 
   /**
    * Reads the popular feed for the specified cluster, determining the most

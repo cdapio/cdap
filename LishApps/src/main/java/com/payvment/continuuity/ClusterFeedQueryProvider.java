@@ -1,18 +1,13 @@
 package com.payvment.continuuity;
 
-import java.util.List;
-import java.util.Map;
-
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeedTable;
 import com.payvment.continuuity.data.ClusterFeedReader;
@@ -20,6 +15,10 @@ import com.payvment.continuuity.data.ClusterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
 import com.payvment.continuuity.data.SortedCounterTable;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -149,7 +148,8 @@ public class ClusterFeedQueryProvider extends AbstractProcedure {
     }
 
     PopularFeed feed = this.reader.getPopularFeed(country, clusterid,
-        Helpers.hour(starttime), numhours, limit, offset);
+        TimeUnit.MILLISECONDS.toHours(starttime),
+        numhours, limit, offset);
     List<PopularFeedEntry> entries = feed.getFeed(limit + offset);
 
     responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), entries);

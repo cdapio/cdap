@@ -4,12 +4,12 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 
-//import com.continuuity.test.FabricTestBase;
+
 import com.payvment.continuuity.entity.ProductFeedEntry;
 import com.payvment.continuuity.entity.SocialAction;
 
 import com.continuuity.test.AppFabricTestBase;
-import com.continuuity.test.ApplicationManager;
+
 
 
 /**
@@ -19,8 +19,9 @@ public class PayvmentBaseFlowTest extends AppFabricTestBase {
 
   @Before
   public void clearFabricBeforeEachTest() throws Exception {
-      // TODO: check clear occurs at the end of previous test run
-      // clearDataFabric();
+
+    System.out.println("Clearing AppFabric...");
+    clearAppFabric();
   }
 
   /**

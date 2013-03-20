@@ -1,23 +1,25 @@
 package com.payvment.continuuity;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
-
-import java.util.List;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import org.junit.Test;
-import com.continuuity.api.data.util.Helpers;
 import com.google.gson.Gson;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ActivityFeedTable;
+import com.payvment.continuuity.data.CounterTable;
 import com.payvment.continuuity.data.PopularFeed;
+import com.payvment.continuuity.data.SortedCounterTable;
 import com.payvment.continuuity.entity.SocialAction;
 import com.payvment.continuuity.entity.SocialAction.SocialActionType;
-import com.payvment.continuuity.data.CounterTable;
-import com.payvment.continuuity.data.SortedCounterTable;
+import org.junit.Test;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TestSocialActionFlow extends PayvmentBaseFlowTest {
 
@@ -53,29 +55,28 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     s1.send(socialActionJson);
 
     // Wait for parsing flowlet to process the tuple
-    while (SocialActionParserFlowlet.numProcessed < 1) {
-      System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(1000);
-    }
-
-
-    // Wait for processor flowlet to process the tuple
-    while (SocialActionFlow.SocialActionProcessorFlowlet.numProcessed < 1) {
-      System.out.println("Waiting for processor flowlet to process tuple");
-      Thread.sleep(100);
-    }
+    RuntimeMetrics m1 =
+      RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "action_parser");
+    System.out.println("Waiting for parsing flowlet to process tuple");
+    m1.waitForProcessed(1, 1000, TimeUnit.MILLISECONDS);
 
     // Wait for processor flowlet to process the tuple
-    while (SocialActionFlow.ActivityFeedUpdaterFlowlet.numProcessed < 1) {
-      System.out.println("Waiting for updater flowlet to process tuple");
-      Thread.sleep(100);
-    }
+    RuntimeMetrics m2 =
+      RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "action_processor");
+    System.out.println("Waiting for processor flowlet to process tuple");
+    m1.waitForProcessed(1, 500, TimeUnit.MILLISECONDS);
 
     // Wait for processor flowlet to process the tuple
-    while (SocialActionFlow.PopularFeedUpdaterFlowlet.numProcessed < 1) {
-      System.out.println("Waiting for updater flowlet to process tuple");
-      Thread.sleep(100);
-    }
+    RuntimeMetrics m3 =
+      RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "activity_feed_updater");
+    System.out.println("Waiting for activity feed updater flowlet to process tuple");
+    m1.waitForProcessed(1, 500, TimeUnit.MILLISECONDS);
+
+    // Wait for processor flowlet to process the tuple
+    RuntimeMetrics m4 =
+      RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "popular_feed_updater");
+    System.out.println("Waiting for popular feed updater flowlet to process tuple");
+    m1.waitForProcessed(1, 500, TimeUnit.MILLISECONDS);
 
     System.out.println("Tuple processed to the end!");
 
@@ -90,7 +91,7 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     assertEquals(typeScoreIncrease, allTimeScoreTable.readSingleKey(Bytes.toBytes(product_id)));
 
     // Verify the hourly score has been incremented to type score increase
-    List<SortedCounterTable.Counter> counters = topScoreTable.readTopCounters(PopularFeed.makeRow(Helpers.hour(now), "US", category), 10);
+    List<SortedCounterTable.Counter> counters = topScoreTable.readTopCounters(PopularFeed.makeRow(TimeUnit.MILLISECONDS.toHours(now), "US", category), 10);
     assertEquals(1, counters.size());
     assertEquals(typeScoreIncrease, counters.get(0).getCount());
 
