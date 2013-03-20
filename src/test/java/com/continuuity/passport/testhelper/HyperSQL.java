@@ -22,10 +22,16 @@ public class HyperSQL {
                                                      "company VARCHAR(50),email_id VARCHAR(50), " +
                                                      "password VARCHAR(100),confirmed INTEGER, " +
                                                      "api_key VARCHAR(100),account_created_at DATETIME," +
-                                                     "dev_suite_downloaded_at DATETIME," +
+                                                     "dev_suite_downloaded_at TIMESTAMP DEFAULT null," +
+                                                     "payment_info_provided_at TIMESTAMP DEFAULT null," +
                                                      "UNIQUE (email_id)" +
                                                      ")";
+  private static final String CREATE_NONCE_TABLE = "CREATE TABLE nonce (nonce_id INTEGER IDENTITY," +
+                                                   "id VARCHAR(100), nonce_expires_at TIMESTAMP, UNIQUE (id)" +
+                                                   ")";
   private static final String DROP_ACCOUNT_TABLE = "DROP TABLE account";
+  private static final String DROP_NONCE_TABLE = "DROP TABLE nonce";
+
 
   public static void startHsqlDB() throws SQLException, ClassNotFoundException {
 
@@ -44,6 +50,7 @@ public class HyperSQL {
 
 
     connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
+    connection.createStatement().execute(CREATE_NONCE_TABLE);
 
 
   }
@@ -53,6 +60,7 @@ public class HyperSQL {
 
     System.out.println("======================================STOP=======================================");
     connection.createStatement().execute(DROP_ACCOUNT_TABLE);
+    connection.createStatement().execute(DROP_NONCE_TABLE);
 
     connection.close();
     server.stop();

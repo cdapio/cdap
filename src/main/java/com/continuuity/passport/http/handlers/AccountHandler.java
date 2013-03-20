@@ -164,6 +164,38 @@ public class AccountHandler extends PassportHandler {
     }
   }
 
+  @Path("{id}/paid")
+  @PUT
+  @Produces("application/json")
+  public Response confirmPaymentInfoProvided(@PathParam("id") int id) {
+    requestReceived();
+
+    try {
+      dataManagementService.confirmPayment(id);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account account = dataManagementService.getAccount(id);
+      if (account != null) {
+        requestSuccess();
+        return Response.ok(account.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
+                                "PUT /passport/v1/account/{id}/downloaded","Failed to fetch updated account"));
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
+    } catch (Exception e) {
+      requestFailed(); // Request failed
+      LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
+                              "PUT /passport/v1/account/{id}/downloaded",e.getMessage()));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
+        .build();
+    }
+  }
+
   @Path("{id}")
   @PUT
   @Produces("application/json")

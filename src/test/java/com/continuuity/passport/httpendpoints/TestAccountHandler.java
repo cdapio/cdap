@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -20,6 +21,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import static org.junit.Assert.assertTrue;
 
@@ -68,20 +70,64 @@ public class TestAccountHandler {
   public void accountCreate() throws IOException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getAccountJson("sree@continuuity.com")));
+    post.setEntity( new StringEntity( getJson("sree@continuuity.com")));
     post.addHeader("Content-Type", "application/json");
 
     String result = request(post);
     assertTrue(result != null);
     Account account =  Account.fromString(result);
     assertTrue("sree@continuuity.com".equals(account.getEmailId()));
+  }
+
+
+  @Test
+  public void testAccounts() throws IOException {
+    String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity( new StringEntity( getJson("john.smith@continuuity.com")));
+    post.addHeader("Content-Type", "application/json");
+
+    String result = request(post);
+    assertTrue(result != null);
+    Account account =  Account.fromString(result);
+    assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
+    int id = account.getAccountId();
+
+    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port,id);
+    HttpPut put = new HttpPut(endPoint);
+    put.setEntity(new StringEntity(getJson("john.smith@continuuity.com","john","smith")));
+    put.setHeader("Content-Type","application/json");
+    result = request(put);
+
+    account = Account.fromString(result);
+    assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
+    assertTrue("john".equals(account.getFirstName()));
+    assertTrue("smith".equals(account.getLastName()));
+
+    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/paid", port,id);
+    put = new HttpPut(endPoint);
+    result = request(put);
+    account = Account.fromString(result);
+    assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
 
   }
 
-  private String getAccountJson(String emailId){
+  private String getJson(String emailId){
     JsonObject object = new JsonObject();
-    object.addProperty("email_id", "sree@continuuity.com");
+    object.addProperty("email_id", emailId);
     return object.toString();
+  }
+
+  private String getJson(String emailId, String firstName, String lastName){
+    JsonObject object = new JsonObject();
+    object.addProperty("email_id", emailId);
+    object.addProperty("first_name", firstName);
+    object.addProperty("last_name", lastName);
+    object.addProperty("password", "123");
+    object.addProperty("company", "foo");
+
+    return object.toString();
+
   }
 
 

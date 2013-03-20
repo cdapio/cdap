@@ -40,6 +40,12 @@ public interface AccountDAO {
    */
   public void confirmDownload(int accountId) throws ConfigurationException;
 
+  /**
+   * @param accountId
+   * @throws ConfigurationException
+   * @throws RuntimeException
+   */
+  public void confirmPayment(int accountId) throws ConfigurationException;
 
   /**
    * Delete Account in the system

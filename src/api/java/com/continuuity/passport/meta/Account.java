@@ -29,6 +29,8 @@ public class Account {
 
   private final long devsuiteDownloadTime;
 
+  private final long paymentInfoProvidedAt;
+
   public static Account fromString(String jsonString) {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(jsonString, Account.class);
@@ -44,6 +46,11 @@ public class Account {
 
   public Account(String firstName, String lastName, String company, String emailId,
                  int accountId, String apiKey, boolean confirmed, long devSuiteDownloadTime) {
+    this(firstName,lastName,company,emailId,accountId,apiKey,confirmed,devSuiteDownloadTime,-1);
+
+  }
+  public Account(String firstName, String lastName, String company, String emailId, int accountId,
+                 String apiKey, boolean confirmed, long devSuiteDownloadTime, long paymentInfoProvidedAt) {
     this.firstName = firstName;
     this.lastName = lastName;
     this.company = company;
@@ -52,6 +59,7 @@ public class Account {
     this.apiKey = apiKey;
     this.confirmed = confirmed;
     this.devsuiteDownloadTime = devSuiteDownloadTime;
+    this.paymentInfoProvidedAt = paymentInfoProvidedAt;
   }
 
   public Account(String firstName, String lastName, String company, int accountId) {

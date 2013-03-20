@@ -89,6 +89,16 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
   }
 
+  @Override
+  public void confirmPayment(int accountId) {
+    Preconditions.checkNotNull(accountDAO, "Account data access objects cannot be null");
+    try {
+      accountDAO.confirmPayment(accountId);
+    } catch (ConfigurationException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
    *
