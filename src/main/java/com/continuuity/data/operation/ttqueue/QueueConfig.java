@@ -18,7 +18,7 @@ public class QueueConfig {
   public QueueConfig(PartitionerType partitionerType, boolean singleEntry) {
     this.partitionerType = partitionerType;
     this.singleEntry = singleEntry;
-    this.batchSize = 100;
+    this.batchSize = -1;
   }
 
   public QueueConfig(PartitionerType partitionerType, boolean singleEntry, int batchSize) {
