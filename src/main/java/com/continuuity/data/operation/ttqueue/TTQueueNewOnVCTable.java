@@ -789,29 +789,37 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Else claim new queue entries to process
-      long prevEntryId = queueState.getConsumerReadPointer();
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
-        if(prevEntryId >= queueState.getQueueWritePointer() + config.getBatchSize()) {
+        // TODO: use raw Get instead of the workaround of incrementing zero
+        // TODO: move counters into oracle
+        long groupReadPointetr = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 0);
+        if(groupReadPointetr + config.getBatchSize() >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers
           // TODO: use raw Get instead of the workaround of incrementing zero
+          // TODO: move counters into oracle
           long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
         }
 
         // End of queue reached
-        if(prevEntryId >= queueState.getQueueWritePointer()) {
+        if(groupReadPointetr >= queueState.getQueueWritePointer()) {
           return Collections.EMPTY_LIST;
         }
 
-        long startEntryId = prevEntryId + 1;
         // If there are enough entries for all consumers to claim, then claim batchSize entries
         // Otherwise divide the entries equally among all consumers
-        long curBatchSize = prevEntryId + (config.getBatchSize() * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
-          config.getBatchSize() : (queueState.getQueueWritePointer() - prevEntryId) / consumer.getGroupSize();
+        long curBatchSize = groupReadPointetr + (config.getBatchSize() * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+          config.getBatchSize() : (queueState.getQueueWritePointer() - groupReadPointetr) / consumer.getGroupSize();
+        // Make sure there is progress
+        if(curBatchSize < 1) {
+          curBatchSize = 1;
+        }
+
         long endEntryId = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
                                                        GROUP_READ_POINTER, curBatchSize);
+        long startEntryId = endEntryId - curBatchSize + 1;
         // Note: incrementing GROUP_READ_POINTER, and storing the claimed entryIds in HBase ideally need to happen atomically.
         //       HBase doesn't support atomic increment and put.
         //       Also, for performance reasons we have moved the write to method saveDequeueEntryState where all writes for a dequeue happen
@@ -827,7 +835,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
             newEntryIds.add(currentEntryId);
           }
         }
-        prevEntryId = endEntryId;
       }
       return newEntryIds;
     }

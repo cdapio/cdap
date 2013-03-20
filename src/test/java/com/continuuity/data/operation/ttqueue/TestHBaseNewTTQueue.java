@@ -359,6 +359,97 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   }
 
   @Test
+  public void testSingleStatefulConsumerWithFifo() throws Exception {
+    final boolean singleEntry = true;
+    final int numQueueEntries = 200;  // Make sure numQueueEntries % batchSize == 0 && numQueueEntries % numConsumers == 0
+    final int numConsumers = 4;
+    final int consumerGroupId = 0;
+    TTQueue queue = createQueue();
+    long dirtyVersion = getDirtyWriteVersion();
+
+    // enqueue some entries
+    for (int i = 0; i < numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+
+    // dequeue it with ROUND_ROBIN partitioner
+    // TODO: test with more batch sizes
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, singleEntry, 10);
+
+    StatefulQueueConsumer[] statefulQueueConsumers = new StatefulQueueConsumer[numConsumers];
+    QueueConsumer[] queueConsumers = new QueueConsumer[numConsumers];
+    for (int i = 0; i < numConsumers; i++) {
+      statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+    }
+
+    // dequeue and verify
+    dequeueFifoEntries(queue, statefulQueueConsumers, numConsumers, numQueueEntries, 0);
+
+    // enqueue some more entries
+    for (int i = numQueueEntries; i < 2 * numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+
+    // dequeue and verify
+    dequeueFifoEntries(queue, statefulQueueConsumers, numConsumers, numQueueEntries, numQueueEntries);
+
+    // Run with stateless QueueConsumer
+    for (int i = 2 * numQueueEntries; i < 3 * numQueueEntries; i++) {
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
+      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+    }
+
+    // dequeue and verify
+    dequeueFifoEntries(queue, queueConsumers, numConsumers, numQueueEntries, 2 * numQueueEntries);
+
+  }
+
+  private void dequeueFifoEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers,
+                                         int numQueueEntries, int startQueueEntry) throws Exception {
+    ReadPointer dirtyReadPointer = getDirtyPointer();
+    int expectedValue = startQueueEntry;
+    for (int consumer = 0; consumer < numConsumers; consumer++) {
+      for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++, ++expectedValue) {
+        DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
+        // verify we got something and it's the first value
+        assertTrue(String.format("Consumer=%d, entry=%d, %s", consumer, entry, result.toString()), result.isSuccess());
+//        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+        assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
+        // dequeue again without acking, should still get first value
+        result = queue.dequeue(consumers[consumer], dirtyReadPointer);
+        assertTrue(result.isSuccess());
+        assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
+
+        // ack
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+
+        // dequeue, should get second value
+        result = queue.dequeue(consumers[consumer], dirtyReadPointer);
+        assertTrue(result.isSuccess());
+        ++expectedValue;
+//        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+        assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
+
+        // ack
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
+        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+      }
+    }
+
+    // verify queue is empty for all consumers
+    for(int consumer = 0; consumer < numConsumers; ++consumer) {
+      DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
+      assertTrue(result.isEmpty());
+    }
+  }
+
+  @Test
   public void testMaxCrashDequeueTries() throws Exception {
     TTQueue queue = createQueue();
 
