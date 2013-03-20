@@ -655,7 +655,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
         }
 
-        long batchSize = getBatchSize(config);
+        final long batchSize = getBatchSize(config);
         long startEntryId = entryId + 1;
         long endEntryId =
                 startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
@@ -724,7 +724,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
         }
 
-        long batchSize = getBatchSize(config);
+        final long batchSize = getBatchSize(config);
         long startEntryId = entryId + 1;
         long endEntryId =
                   startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
@@ -801,13 +801,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return newEntryIds;
       }
 
+      final long batchSize = getBatchSize(config);
+
       // Else claim new queue entries to process
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
         // TODO: use raw Get instead of the workaround of incrementing zero
         // TODO: move counters into oracle
         long groupReadPointetr = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 0);
-        if(groupReadPointetr + config.getBatchSize() >= queueState.getQueueWritePointer()) {
+        if(groupReadPointetr + batchSize >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers
           // TODO: use raw Get instead of the workaround of incrementing zero
@@ -823,8 +825,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // If there are enough entries for all consumers to claim, then claim batchSize entries
         // Otherwise divide the entries equally among all consumers
-        long curBatchSize = groupReadPointetr + (config.getBatchSize() * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
-          config.getBatchSize() : (queueState.getQueueWritePointer() - groupReadPointetr) / consumer.getGroupSize();
+        long curBatchSize = groupReadPointetr + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
+          batchSize : (queueState.getQueueWritePointer() - groupReadPointetr) / consumer.getGroupSize();
         // Make sure there is progress
         if(curBatchSize < 1) {
           curBatchSize = 1;
