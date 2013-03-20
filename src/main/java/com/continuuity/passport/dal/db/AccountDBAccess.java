@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
@@ -39,7 +40,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   @Inject
   public void AccountDBAccess(ConnectionPoolDataSource dataSource) {
     Preconditions.checkNotNull(dataSource,"Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
+    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
   }
 
   /**

@@ -5,6 +5,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.utils.NonceUtils;
 import com.continuuity.passport.dal.NonceDAO;
@@ -28,7 +29,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   @Inject
   public NonceDBAccess(ConnectionPoolDataSource dataSource) {
     Preconditions.checkNotNull(dataSource, "Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
+    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
   }
 
   /**

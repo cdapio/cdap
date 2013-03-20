@@ -19,9 +19,5 @@ public class Constants {
   public static final int DEFAULT_HTTP_MAX_THREADS = 100;
   public static final String CFG_PROFANE_WORDS_FILE_PATH = "passport.profane.words.path";
   public static final String DEFAULT_PROFANE_WORDS_FILE_PATH = "";
-
-
-
-
-
+  public static final int CONNECTION_POOL_SIZE = 20;
 }
