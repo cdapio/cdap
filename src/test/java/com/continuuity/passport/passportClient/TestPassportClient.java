@@ -1,93 +1,94 @@
 package com.continuuity.passport.passportClient;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.passport.Constants;
+import com.continuuity.passport.testhelper.TestPassportServer;
+import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.http.client.AccountProvider;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.passport.server.MockServer;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import static org.junit.Assert.assertTrue;
 
 /**
- *
+ * Testing passport client
  */
 public class TestPassportClient {
 
-  private static MockServer server ;
+  private static TestPassportServer server;
   private static int port;
 
   @BeforeClass
   public static void startServer() throws Exception {
+
     port = PortDetector.findFreePort();
-    server = new MockServer(port);
+
+    //Startup HSQL instance
+    HyperSQL.startHsqlDB();
+
+    CConfiguration configuration = CConfiguration.create();
+    configuration.setInt(Constants.CFG_SERVER_PORT, port);
+
+    String connectionString = "jdbc:hsqldb:mem:test;hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false" +
+      "&user=sa&zeroDateTimeBehavior=convertToNull";
+
+    configuration.set(Constants.CFG_JDBC_CONNECTION_STRING, connectionString);
+    String profanePath = TestPassportClient.class.getResource("/ProfaneWords").getPath();
+
+    configuration.set(Constants.CFG_PROFANE_WORDS_FILE_PATH, profanePath);
+    server = new TestPassportServer(configuration);
+
     System.out.println("Starting server");
     server.start();
     Thread.sleep(1000);
     assertTrue(server.isStarted());
-    Map<String,String> accountHash=  new HashMap<String, String>();
-    accountHash.put("email_id", "john@smith.com");
-    accountHash.put("first_name", "john");
-    accountHash.put("last_name", "smith");
-    accountHash.put("company", "continuuity");
+    addAccount();
+  }
 
-    addAccount(accountHash);
-    System.out.println("Added account");
- }
   @Test
   public void testValidAccount() throws URISyntaxException {
-    PassportClient client = PassportClient.create(String.format("http://localhost:%d",port));
-    System.out.println("Trying to get account");
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d", port));
     AccountProvider accountProvider = client.getAccount("apiKey1");
-    System.out.println("Got an account");
 
-    assert (accountProvider !=null);
-    System.out.println(accountProvider.getAccountId());
-    assert ("1".equals(accountProvider.getAccountId()));
-    System.out.println("Tested");
+    assert (accountProvider != null);
+    assert ("0".equals(accountProvider.getAccountId()));
+    assert ("john".equals(accountProvider.get().getFirstName()));
+    assert ("smith".equals(accountProvider.get().getLastName()));
+    assert ("apiKey1".equals(accountProvider.get().getApiKey()));
+
   }
+
 
   @Test(expected = RuntimeException.class)
   public void testInvalidAccount() throws URISyntaxException {
-    PassportClient client = PassportClient.create(String.format("http://localhost:%d",port));
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d", port));
     AccountProvider accountProvider = client.getAccount("apiKey100");
 
   }
 
   @AfterClass
   public static void stopServer() throws Exception {
-     server.stop();
-     Thread.sleep(1000);
+    server.stop();
+    HyperSQL.stopHsqlDB();
   }
 
-  private static void addAccount(Map<String,String> account) throws IOException {
-    Gson gson =new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+  private static void addAccount() throws IOException, SQLException {
 
-    HttpPost post = new HttpPost(String.format("http://localhost:%d/passport/v1/account",port));
-    StringEntity entity =  new StringEntity(gson.toJson(account));
-    entity.setContentType("application/json");
-    post.setEntity(entity);
+    Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
+      "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(post);
+    String INSERT_ACCOUNT = "INSERT INTO account (first_name,last_name,email_id,company,password,api_key) VALUES " +
+      "('john','smith','john@smith.com','continuuity','johnsecure','apiKey1')";
+    connection.prepareStatement(INSERT_ACCOUNT).execute();
 
-    assert(response.getStatusLine().getStatusCode() == 200);
   }
-
-
 }

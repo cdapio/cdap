@@ -1,8 +1,4 @@
-/*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
- */
-
-package com.continuuity.passport.http.modules;
+package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.passport.Constants;
@@ -25,33 +21,29 @@ import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.common.base.Preconditions;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.mortbay.jetty.servlet.DefaultServlet;
 
 import javax.sql.ConnectionPoolDataSource;
 
 /**
- * Guice bindings for passport services
- * Glue together
- * 1) Service to implementations
- * 2) DAO to Implementations
- * 3) ReST  Handlers
+ *
  */
-public class PassportGuiceBindings extends JerseyServletModule {
+public class MockGuiceBindings extends JerseyServletModule {
 
   private final String jdbcType ;
   private final String connectionString;
   private final String profaneWordsPath;
 
 
-  public PassportGuiceBindings(CConfiguration configuration) {
+  public MockGuiceBindings(CConfiguration configuration) {
     jdbcType =  configuration.get(Constants.CFG_JDBC_TYPE,Constants.DEFAULT_JDBC_TYPE);
     connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING,
-                                         Constants.DEFAULT_JDBC_CONNECTION_STRING);
+      Constants.DEFAULT_JDBC_CONNECTION_STRING);
     profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
-                                         Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
+      Constants.DEFAULT_PROFANE_WORDS_FILE_PATH);
   }
 
   @Override
@@ -61,14 +53,14 @@ public class PassportGuiceBindings extends JerseyServletModule {
   }
 
   private void bindings() {
-    Preconditions.checkNotNull(jdbcType,"JDBC type cannot be null");
+    Preconditions.checkNotNull(jdbcType, "JDBC type cannot be null");
     Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE),"Unsupported JDBC type");
 
     Preconditions.checkNotNull(connectionString,"Connection String cannot be null");
     Preconditions.checkNotNull(profaneWordsPath,"Profane words path cannot be null");
 
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
-                  .to(profaneWordsPath);
+      .to(profaneWordsPath);
 
     //Bind ReST resources
     bind(AccountHandler.class);
@@ -98,9 +90,10 @@ public class PassportGuiceBindings extends JerseyServletModule {
   }
 
   @Provides
-  ConnectionPoolDataSource provider(){
-    MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-    mysqlDataSource.setUrl(connectionString);
-    return mysqlDataSource;
- }
+  ConnectionPoolDataSource provider() {
+    JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
+    System.out.println(connectionString);
+    jdbcDataSource.setUrl(connectionString);
+    return jdbcDataSource;
+  }
 }

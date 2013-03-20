@@ -10,23 +10,13 @@ import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.meta.Account;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
-
-import java.util.Map;
 
 /**
  * Implementation of Authentication Service
  */
 public class AuthenticatorServiceImpl implements AuthenticatorService {
-  private final Map<String, String> configuration;
-
-  @Inject
-  public AuthenticatorServiceImpl(@Named("passport.config") Map<String, String> config) {
-    this.configuration = config;
-  }
 
   /**
    * Authenticates User with the Credentials passed

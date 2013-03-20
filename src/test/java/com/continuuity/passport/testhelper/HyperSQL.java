@@ -1,4 +1,4 @@
-package com.continuuity.passport.dal;
+package com.continuuity.passport.testhelper;
 
 import org.hsqldb.Server;
 
@@ -11,21 +11,21 @@ import java.sql.SQLException;
  * Test Helper for unit/integration tests
  * Uses HSQLDB instance for testing
  */
-public class TestHelper {
+public class HyperSQL {
 
   private static Server server = null;
-//  private static final String CREATE_TABLE_ACCOUNT = "CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
-//    ", company VARCHAR(100))";
-//  private static final String CREATE_TABLE_VPC = "CREATE TABLE vpc (account_name VARCHAR(100), vpc_name VARCHAR(100))";
-//
-//  private static final String DROP_TABLE_ACCOUNT = "DROP TABLE account";
-//  private static final String DROP_TABLE_VPC = "DROP TABLE vpc";
-
-  private static final String CREATE_PROFANITY_TABLE = "CREATE TABLE profane_list (name VARCHAR(100))";
-  private static final String DROP_PROFANITY_TABLE = "DROP TABLE profane_list";
 
   protected static Connection connection;
 
+  private static final String CREATE_ACCOUNT_TABLE = "CREATE TABLE account (id INTEGER IDENTITY , " +
+                                                     "first_name VARCHAR(50),last_name VARCHAR(50), " +
+                                                     "company VARCHAR(50),email_id VARCHAR(50), " +
+                                                     "password VARCHAR(100),confirmed INTEGER, " +
+                                                     "api_key VARCHAR(100),account_created_at DATETIME," +
+                                                     "dev_suite_downloaded_at DATETIME," +
+                                                     "UNIQUE (email_id)" +
+                                                     ")";
+  private static final String DROP_ACCOUNT_TABLE = "DROP TABLE account";
 
   public static void startHsqlDB() throws SQLException, ClassNotFoundException {
 
@@ -41,9 +41,9 @@ public class TestHelper {
     Class.forName("org.hsqldb.jdbcDriver");
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
       "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
-    connection.createStatement().execute(CREATE_PROFANITY_TABLE);
-    connection.prepareStatement("INSERT INTO profane_list (name) VALUES ('fuck')").execute();
-    connection.prepareStatement("INSERT INTO profane_list (name) VALUES ('dick')").execute();
+
+
+    connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
 
 
   }
@@ -52,7 +52,8 @@ public class TestHelper {
   public static void stopHsqlDB() throws SQLException {
 
     System.out.println("======================================STOP=======================================");
-    connection.createStatement().execute(DROP_PROFANITY_TABLE);
+    connection.createStatement().execute(DROP_ACCOUNT_TABLE);
+
     connection.close();
     server.stop();
   }

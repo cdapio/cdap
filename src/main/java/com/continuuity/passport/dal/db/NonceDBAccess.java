@@ -5,17 +5,15 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.utils.NonceUtils;
 import com.continuuity.passport.dal.NonceDAO;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.sql.*;
-import java.util.Map;
 
 /**
  *
@@ -28,15 +26,9 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
 
   @Inject
-  public NonceDBAccess(@Named("passport.config") Map<String, String> configurations) {
-    String connectionString = configurations.get(Constants.CFG_JDBC_CONNECTION_STRING);
-    String jdbcType = configurations.get(Constants.CFG_JDBC_TYPE);
-
-    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
-      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-    }
+  public NonceDBAccess(ConnectionPoolDataSource dataSource) {
+    Preconditions.checkNotNull(dataSource, "Data source should not be null");
+    this.poolManager = new DBConnectionPoolManager(dataSource, 20);
   }
 
   /**
