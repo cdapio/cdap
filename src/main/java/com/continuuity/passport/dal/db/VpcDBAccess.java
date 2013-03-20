@@ -15,6 +15,7 @@ import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import javax.sql.ConnectionPoolDataSource;
 import java.sql.*;
@@ -28,15 +29,12 @@ import java.util.Map;
  */
 public class VpcDBAccess extends DBAccess implements VpcDAO {
 
-  private Map<String, String> configuration;
-
-  private DBConnectionPoolManager poolManager = null;
-
+  private  DBConnectionPoolManager poolManager ;
 
   @Inject
-  public void VpcDBAccess(ConnectionPoolDataSource dataSource) {
-    Preconditions.checkNotNull(dataSource,"Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
+  public void VpcDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+    Preconditions.checkNotNull(poolManager,"PoolManager should not be null");
+    this.poolManager = poolManager;
   }
 
   @Override

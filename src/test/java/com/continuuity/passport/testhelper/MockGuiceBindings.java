@@ -1,6 +1,7 @@
 package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
@@ -58,6 +59,15 @@ public class MockGuiceBindings extends JerseyServletModule {
 
     Preconditions.checkNotNull(connectionString,"Connection String cannot be null");
     Preconditions.checkNotNull(profaneWordsPath,"Profane words path cannot be null");
+
+    JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
+    System.out.println(connectionString);
+    jdbcDataSource.setUrl(connectionString);
+    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource,10);
+
+    bind(DBConnectionPoolManager.class)
+         .annotatedWith(Names.named(Constants.NAMED_DB_CONNECTION_POOL_BINDING))
+         .toInstance(connectionPoolManager);
 
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
       .to(profaneWordsPath);
