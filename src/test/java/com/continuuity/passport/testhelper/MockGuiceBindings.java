@@ -66,7 +66,6 @@ public class MockGuiceBindings extends JerseyServletModule {
     DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource,10);
 
     bind(DBConnectionPoolManager.class)
-         .annotatedWith(Names.named(Constants.NAMED_DB_CONNECTION_POOL_BINDING))
          .toInstance(connectionPoolManager);
 
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
