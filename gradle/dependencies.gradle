@@ -5,7 +5,7 @@ ext {
 
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
-versions.hadoopVersion = '2.0.0-alpha'
+versions.hadoopVersion = '2.0.3-alpha'
 versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
@@ -64,6 +64,7 @@ libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"
 
 //Shiro
 libraries.shiro_core = "org.apache.shiro:shiro-core:1.2.1"
+libraries.shiro_guice = "org.apache.shiro:shiro-guice:1.2.1"
 
 // Netflix Curator
 libraries.netflix_curator_framework = "com.netflix.curator:curator-framework:$versions.netflixCuratorVersion"
