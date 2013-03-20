@@ -98,8 +98,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data = entry.getData();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
+    if (LOG.isTraceEnabled()) {
+      logTrace("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
     }
 
     // Get our unique entry id
@@ -109,11 +109,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // so that it is atomic (Eg. HBase increment operation)
       entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 1);
     } catch (OperationException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
-        "of global entry id failed with status code " + e.getStatus() + ": " + e.getMessage(), e);
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+         String.format("Queue-%s: Increment of global entry id failed with status code %d : %s",
+                       Bytes.toString(queueName), e.getStatus(), e.getMessage()), e);
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("New enqueue got entry id " + entryId);
+    if (LOG.isTraceEnabled()) {
+      logTrace("New enqueue got entry id " + entryId);
     }
 
     /*
@@ -147,25 +148,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   @Override
   public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
-    if(LOG.isDebugEnabled()) {
-      LOG.debug(String.format("Invalidating entry ", entryPointer.getEntryId()));
+    if(LOG.isTraceEnabled()) {
+      logTrace(String.format("Invalidating entry ", entryPointer.getEntryId()));
     }
     final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
     // Change meta data to INVALID
     this.table.put(rowName, ENTRY_META,
                    cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
     // No need to delete data/headers since they will be cleaned up during eviction later
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Invalidated " + entryPointer);
+    if (LOG.isTraceEnabled()) {
+      logTrace("Invalidated " + entryPointer);
     }
   }
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     final QueueConfig config = consumer.getQueueConfig();
-    if (LOG.isDebugEnabled())
-      LOG.debug("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
+    if (LOG.isTraceEnabled()) {
+      logTrace("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
                   "] (" + consumer + ", " + config + ", " + readPointer + ")");
+    }
 
     // Determine what dequeue strategy to use based on the partitioner
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
@@ -180,7 +182,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // If the previous entry was not acked, return the same one (Note: will need to change for async mode)
     if(queueState.getActiveEntryId() != INVALID_ENTRY_ID) {
       if(!queueState.getCachedEntries().hasCurrent()) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue state error - cannot fetch active entry id from cached entries");
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                String.format("Queue-%s: Cannot fetch active entry id from cached entries", Bytes.toString(queueName)));
       }
       QueueStateEntry cachedEntry = queueState.getCachedEntries().getCurrent();
       QueueEntry entry = new QueueEntry(cachedEntry.getData());
@@ -208,8 +211,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return dequeueResult;
     } else {
       // No queue entries available to dequue, return queue empty
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("End of queue reached using " + "read pointer " + readPointer);
+      if (LOG.isTraceEnabled()) {
+        logTrace("End of queue reached using " + "read pointer " + readPointer);
       }
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
@@ -227,15 +230,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
       dequeueStrategy = new FifoDequeueStrategy();
     } else {
       throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                   String.format("Cannot figure out the dequeue strategy to use for partitioner %s", queuePartitioner.getClass()));
+         String.format("Queue-%s: Cannot figure out the dequeue strategy to use for partitioner %s",
+                       Bytes.toString(queueName), queuePartitioner.getClass()));
     }
     return dequeueStrategy;
   }
 
   private void readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer,
                             List<Long> entryIds) throws OperationException{
-    if(LOG.isDebugEnabled()) {
-      LOG.debug(String.format("Reading entries from storage - ", Arrays.toString(entryIds.toArray())));
+    if(LOG.isTraceEnabled()) {
+      logTrace(String.format("Reading entries from storage - ", Arrays.toString(entryIds.toArray())));
     }
     if(entryIds.isEmpty()) {
       queueState.setCachedEntries(CachedList.EMPTY_LIST);
@@ -266,14 +270,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
           return;
         }
         EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
+        if (LOG.isTraceEnabled()) {
+          logTrace("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString());
         }
 
         // Check if entry has been invalidated or evicted
         if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Found invalidated or evicted entry at " + entryIds.get(i) +
+          if (LOG.isTraceEnabled()) {
+            logTrace("Found invalidated or evicted entry at " + entryIds.get(i) +
                         " (" + entryMeta.toString() + ")");
           }
         } else {
@@ -307,7 +311,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Only the entry that has been dequeued (active entry) can be acked
     if(queueState.getActiveEntryId() != entryPointer.getEntryId()) {
       throw new OperationException(StatusCode.ILLEGAL_ACK, String.format(
-        "Entry %d is not the active entry. Current active entry is %d",
+        "Queue-%s: Entry %d is not the active entry. Current active entry is %d", Bytes.toString(queueName),
         entryPointer.getEntryId(), queueState.getActiveEntryId()));
     }
 
@@ -362,13 +366,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return null;
   }
 
-  private static QueueStateImpl getQueueStateImpl(QueueState queueState) throws OperationException {
+  private QueueStateImpl getQueueStateImpl(QueueState queueState) throws OperationException {
     if(queueState == null) {
       return null;
     }
     if(! (queueState instanceof QueueStateImpl)) {
       throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                   String.format("Don't know how to use QueueState class %s", queueState.getClass()));
+       String.format("Queue-%s: Don't know how to use QueueState class %s", Bytes.toString(queueName), queueState.getClass()));
     }
     return (QueueStateImpl) queueState;
   }
@@ -389,11 +393,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return Bytes.add(
       Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)), Bytes.toBytes(id2));
   }
+
   protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
   }
+
   protected byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  protected void logTrace(String message) {
+    LOG.trace(String.format("Queue-%s: %s", Bytes.toString(queueName), message));
   }
 
   public static class QueueStateImpl implements QueueState {
@@ -577,15 +587,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.getCachedEntries().getNext();
         } else {
           // TODO: what do we do with the active entry?
-          if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Ignoring dequeue of entry %d after %d tries", queueState.getActiveEntryId(), MAX_CRASH_DEQUEUE_TRIES));
+          if(LOG.isTraceEnabled()) {
+            logTrace(String.format("Ignoring dequeue of entry %d after %d tries", queueState.getActiveEntryId(), MAX_CRASH_DEQUEUE_TRIES));
           }
           queueState.setActiveEntryId(INVALID_ENTRY_ID);
           queueState.setActiveEntryTries(0);
         }
       }
-      if(LOG.isDebugEnabled()) {
-        LOG.debug(String.format("Constructed new QueueState - %s", queueState));
+      if(LOG.isTraceEnabled()) {
+        logTrace(String.format("Constructed new QueueState - %s", queueState));
       }
       return queueState;
     }
@@ -625,8 +635,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
           // TODO: use raw Get instead of the workaround of incrementing zero
           long queueWritePointer = table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
-          if(LOG.isDebugEnabled()) {
-            LOG.debug(String.format("New queueWritePointer = %d", queueWritePointer));
+          if(LOG.isTraceEnabled()) {
+            logTrace(String.format("New queueWritePointer = %d", queueWritePointer));
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
@@ -643,7 +653,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
         final String partitioningKey = consumer.getPartitioningKey();
         if(partitioningKey == null || partitioningKey.isEmpty()) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR, String.format("Using Hash Partitioning with null/empty partitioningKey!"));
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+            String.format("Queue-%s: Using Hash Partitioning with null/empty partitioningKey.", Bytes.toString(queueName)));
         }
         final byte [][] rowKeys = new byte[cacheSize][];
         for(int id = 0; id < cacheSize; ++id) {
