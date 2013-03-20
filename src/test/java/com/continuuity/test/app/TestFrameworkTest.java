@@ -62,6 +62,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
+      clearAppFabric();
     }
   }
 
@@ -109,6 +110,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
+      clearAppFabric();
     }
   }
 
@@ -134,6 +136,7 @@ public class TestFrameworkTest extends AppFabricTestBase {
 
     } finally {
       applicationManager.stopAll();
+      clearAppFabric();
     }
   }
 }

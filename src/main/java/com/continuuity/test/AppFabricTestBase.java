@@ -9,6 +9,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
@@ -39,6 +40,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.apache.thrift.TException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -128,6 +130,14 @@ public class AppFabricTestBase {
       return injector.getInstance(ApplicationManagerFactory.class).create(token, accountId, applicationId,
                                                                           appFabricServer, deployedJar, appSpec);
 
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected void clearAppFabric() {
+    try {
+      appFabricServer.reset(new AuthToken("appFabricTest"), "developer");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
