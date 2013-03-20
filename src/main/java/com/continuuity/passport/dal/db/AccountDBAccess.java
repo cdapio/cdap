@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import javax.sql.ConnectionPoolDataSource;
 import java.security.NoSuchAlgorithmException;
@@ -38,9 +39,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
   @Inject
-  public void AccountDBAccess(ConnectionPoolDataSource dataSource) {
-    Preconditions.checkNotNull(dataSource,"Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
+  public void AccountDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+    Preconditions.checkNotNull(poolManager,"Pool manager should not be null");
+    this.poolManager = poolManager;
   }
 
   /**

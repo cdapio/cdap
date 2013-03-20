@@ -5,6 +5,7 @@
 package com.continuuity.passport.http.modules;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.service.AuthenticatorService;
 import com.continuuity.passport.core.service.DataManagementService;
@@ -67,6 +68,11 @@ public class PassportGuiceBindings extends JerseyServletModule {
     Preconditions.checkNotNull(connectionString,"Connection String cannot be null");
     Preconditions.checkNotNull(profaneWordsPath,"Profane words path cannot be null");
 
+    MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
+    mysqlDataSource.setUrl(connectionString);
+    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(mysqlDataSource,
+                                                                                Constants.CONNECTION_POOL_SIZE);
+
     bindConstant().annotatedWith(Names.named(Constants.CFG_PROFANE_WORDS_FILE_PATH))
                   .to(profaneWordsPath);
 
@@ -86,7 +92,9 @@ public class PassportGuiceBindings extends JerseyServletModule {
     bind(VpcDAO.class).to(VpcDBAccess.class);
     bind(NonceDAO.class).to(NonceDBAccess.class);
     bind(ProfanityFilter.class).to(ProfanityFilterFileAccess.class);
-
+    bind(DBConnectionPoolManager.class)
+      .annotatedWith(Names.named(Constants.NAMED_DB_CONNECTION_POOL_BINDING))
+      .toInstance(connectionPoolManager);
     bind(GuiceContainer.class).asEagerSingleton();
     bind(DefaultServlet.class).asEagerSingleton();
     serve("/*").with(DefaultServlet.class);
@@ -96,11 +104,4 @@ public class PassportGuiceBindings extends JerseyServletModule {
   private void filters() {
     filter("/passport/*").through(GuiceContainer.class);
   }
-
-  @Provides
-  ConnectionPoolDataSource provider(){
-    MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-    mysqlDataSource.setUrl(connectionString);
-    return mysqlDataSource;
- }
 }

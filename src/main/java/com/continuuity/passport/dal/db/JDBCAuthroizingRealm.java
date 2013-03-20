@@ -11,6 +11,7 @@ import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -61,9 +62,9 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
 
 
   @Inject
-  public JDBCAuthroizingRealm(ConnectionPoolDataSource dataSource) {
-    Preconditions.checkNotNull(dataSource, "Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
+  public JDBCAuthroizingRealm(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+    Preconditions.checkNotNull(poolManager, "PoolManager  should not be null");
+    this.poolManager = poolManager;
   }
 
   /**

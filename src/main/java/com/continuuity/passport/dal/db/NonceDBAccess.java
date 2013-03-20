@@ -12,6 +12,7 @@ import com.continuuity.passport.dal.NonceDAO;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import javax.sql.ConnectionPoolDataSource;
 import java.sql.*;
@@ -27,9 +28,9 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
 
   @Inject
-  public NonceDBAccess(ConnectionPoolDataSource dataSource) {
-    Preconditions.checkNotNull(dataSource, "Data source should not be null");
-    this.poolManager = new DBConnectionPoolManager(dataSource, Constants.CONNECTION_POOL_SIZE);
+  public NonceDBAccess(@Named(Constants.NAMED_DB_CONNECTION_POOL_BINDING) DBConnectionPoolManager poolManager) {
+    Preconditions.checkNotNull(poolManager, "Pool Manager should not be null");
+    this.poolManager = poolManager;
   }
 
   /**
