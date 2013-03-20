@@ -21,8 +21,8 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Map;
@@ -39,15 +39,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
   @Inject
-  public void AccountDBAccess(@Named("passport.config") Map<String, String> config) {
-    String connectionString = config.get(Constants.CFG_JDBC_CONNECTION_STRING);
-    String jdbcType = config.get(Constants.CFG_JDBC_TYPE);
-
-    if (jdbcType.toLowerCase().equals(Constants.DEFAULT_JDBC_TYPE)) {
-      MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
-      mysqlDataSource.setUrl(connectionString);
-      this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
-    }
+  public void AccountDBAccess(DBConnectionPoolManager poolManager) {
+    Preconditions.checkNotNull(poolManager,"Pool manager should not be null");
+    this.poolManager = poolManager;
   }
 
   /**

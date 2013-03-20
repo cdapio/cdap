@@ -32,6 +32,7 @@ dependencies {
     compile libraries.google_guice_assistedinject
 
     compile libraries.shiro_core
+    compile libraries.shiro_guice
 
     compile libraries.yammer_metrics
 
