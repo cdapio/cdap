@@ -46,11 +46,12 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?,?,?,?)",
+      String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?,?,?,?,?)",
         DBUtils.VPC.TABLE_NAME,
         DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
-        DBUtils.VPC.VPC_CREATED_AT);
+        DBUtils.VPC.VPC_CREATED_AT,
+        DBUtils.VPC.VPC_TYPE);
 
       Date date = new Date();
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
@@ -58,6 +59,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.setString(2, vpc.getVpcName());
       ps.setString(3, vpc.getVpcLabel());
       ps.setTimestamp(4, new java.sql.Timestamp(date.getTime()));
+      ps.setString(5,vpc.getVpcType());
 
       ps.executeUpdate();
 
@@ -66,7 +68,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
-      return new VPC(result.getInt(1), vpc.getVpcName(), vpc.getVpcLabel());
+      return new VPC(result.getInt(1), vpc.getVpcName(), vpc.getVpcLabel(),vpc.getVpcType());
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
@@ -176,10 +178,11 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
-        DBUtils.VPC.VPC_CREATED_AT,//COLUMNS
+        DBUtils.VPC.VPC_CREATED_AT,
+        DBUtils.VPC.VPC_TYPE,//COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
 
@@ -188,7 +191,8 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),DBUtils.timestampToLong(rs.getTimestamp(4)));
+        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
+                          DBUtils.timestampToLong(rs.getTimestamp(4)), rs.getString(5));
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
@@ -210,10 +214,11 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
-        DBUtils.VPC.VPC_CREATED_AT,//COLUMNS
+        DBUtils.VPC.VPC_CREATED_AT,
+        DBUtils.VPC.VPC_TYPE,//COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN, //WHERE
         DBUtils.VPC.VPC_ID_COLUMN);
@@ -224,7 +229,8 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),DBUtils.timestampToLong(rs.getTimestamp(4)));
+        vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
+                      DBUtils.timestampToLong(rs.getTimestamp(4)),rs.getString(5));
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
@@ -245,10 +251,12 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
-        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN, //COLUMNS
-        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.LABEL_COLUMN, //COLUMNS
+        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN,
+        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.LABEL_COLUMN,
+        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_CREATED_AT,
+        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_TYPE,   //COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.AccountTable.TABLE_NAME, //JOIN
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.ACCOUNT_ID_COLUMN, //CONDITION
@@ -260,7 +268,8 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3));
+        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
+                          DBUtils.timestampToLong(rs.getTimestamp(4)),rs.getString(5));
         vpcList.add(vpc);
       }
     } catch (SQLException e) {

@@ -27,6 +27,8 @@ public class DBUtils {
     public static final String API_KEY_COLUMN = "api_key";
     public static final String ACCOUNT_CREATED_AT = "account_created_at";
     public static final String DEV_SUITE_DOWNLOADED_AT = "dev_suite_downloaded_at";
+    public static final String PAYMENT_INFO_PROVIDED_AT = "payment_info_provided_at";
+    public static final String PAYMENT_ACCOUNT_ID ="payment_account_id";
     public static final int ACCOUNT_UNCONFIRMED = 0;
     public static final int ACCOUNT_CONFIRMED = 1;
   }
@@ -67,6 +69,7 @@ public class DBUtils {
     public static final String NAME_COLUMN = "vpc_name";
     public static final String LABEL_COLUMN = "vpc_label";
     public static final String VPC_CREATED_AT = "vpc_created_at";
+    public static final String VPC_TYPE = "vpc_type";
   }
 
   /**
