@@ -63,7 +63,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.setString(5,vpc.getVpcType());
 
       ps.executeUpdate();
-
+      connection.commit();
       result = ps.getGeneratedKeys();
       if (result == null) {
         throw new RuntimeException("Failed Insert");
