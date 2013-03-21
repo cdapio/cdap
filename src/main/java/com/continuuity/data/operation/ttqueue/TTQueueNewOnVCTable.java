@@ -346,32 +346,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return;
     }
 
-    // TODO: read last evict time from consumer state
-    // Find the min entry that can be evicted for the group
-    final byte[][] rowKeys = new byte[consumer.getGroupSize()][];
-    for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
-      rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
-    }
-
-    final byte[][] columnNames = new byte[2][];
-    columnNames[0] = CONSUMER_READ_POINTER;
-    columnNames[1] = LAST_EVICT_TIME_IN_SECS;
-
     // TODO: get transaction read pointer
     ReadPointer readPointer = oracle.dirtyReadPointer();
-    OperationResult<Map<byte[], Map<byte[], byte[]>>> stateBytes = table.get(rowKeys, columnNames, readPointer);
-    if(stateBytes.isEmpty()) {
-      if(LOG.isTraceEnabled()) {
-        logTrace(String.format("Not able to fetch state of group %d for eviction", consumer.getGroupId()));
-      }
-      return;
-    }
-
-    final long currentTimeInSecs = System.currentTimeMillis() / 1000;
-    // TODO: check for null
-    final long lastEvictTimeInSecs = Bytes.toLong(stateBytes.getValue().get(
-                              makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), 0)).get(LAST_EVICT_TIME_IN_SECS));
-    if(lastEvictTimeInSecs + EVICT_INTERVAL_IN_SECS < currentTimeInSecs) {
+    final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
+    QueueStateImpl queueState = getQueueState(consumer, readPointer);
+    if(queueState.getLastEvictTimeInSecs() + EVICT_INTERVAL_IN_SECS < evictStartTimeInSecs) {
       return;
     }
 
@@ -379,14 +358,41 @@ public class TTQueueNewOnVCTable implements TTQueue {
       logTrace(String.format("Running eviction for group %d", consumer.getGroupId()));
     }
 
-    // TODO: check for null
+    // Find the min entry that can be evicted for the group
+    final byte[][] rowKeys = new byte[consumer.getGroupSize()][];
+    for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
+      rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
+    }
+
+    OperationResult<Map<byte[], Map<byte[], byte[]>>> stateBytes =
+                                                   table.get(rowKeys, new byte[][]{CONSUMER_READ_POINTER}, readPointer);
+    if(stateBytes.isEmpty()) {
+      if(LOG.isTraceEnabled()) {
+        logTrace(String.format("Not able to fetch state of group %d for eviction", consumer.getGroupId()));
+      }
+      return;
+    }
+
     long minGroupEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
     for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
-      // TODO: check for null
       // As far as consumer consumerId is concerned, all queue entries before CONSUMER_READ_POINTER can be evicted
       // The least of such entry is the minGroupEvictEntry to which all queue entries can be evicted for the group
-      long evictEntry = Bytes.toLong(stateBytes.getValue().get(
-                   makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId)).get(CONSUMER_READ_POINTER)) - 1;
+      Map<byte[], byte[]> readPointerMap = stateBytes.getValue().get(
+                                                  makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId));
+      if(readPointer == null) {
+        if(LOG.isTraceEnabled()) {
+          logTrace(String.format("Not able to fetch readPointer for consumerId %d, groupId %d", consumerId, consumer.getGroupId()));
+          return;
+        }
+      }
+      byte[] evictEntryBytes = readPointerMap.get(CONSUMER_READ_POINTER);
+      if(evictEntryBytes == null) {
+        if(LOG.isTraceEnabled()) {
+          logTrace(String.format("Not able to decode readPointer for consumerId %d, groupId %d", consumerId, consumer.getGroupId()));
+          return;
+        }
+      }
+      long evictEntry = Bytes.toLong(evictEntryBytes) - 1;
       if(minGroupEvictEntry > evictEntry) {
         minGroupEvictEntry = evictEntry;
       }
@@ -402,7 +408,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     writeKeys.add(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
     writeCols.add(LAST_EVICT_TIME_IN_SECS);
-    writeValues.add(Bytes.toBytes(currentTimeInSecs));
+    writeValues.add(Bytes.toBytes(evictStartTimeInSecs));
+    queueState.setLastEvictTimeInSecs(evictStartTimeInSecs);
+
+    if(LOG.isTraceEnabled()) {
+      logTrace(String.format("minGroupEvictEntry=%d, groupId=%d", minGroupEvictEntry, consumer.getGroupId()));
+    }
 
     // Only one consumer per queue will run the below eviction algorithm for the queue
     if(consumer.getGroupId() != 0) {
@@ -411,9 +422,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       byte[][] colArray = new byte[writeCols.size()][];
       byte[][] valArray = new byte[writeValues.size()][];
       table.put(writeKeys.toArray(keyArray), writeCols.toArray(colArray), writePoint, writeValues.toArray(valArray));
-      if(LOG.isTraceEnabled()) {
-        logTrace(String.format("minGroupEvictEntry=%d, groupId=%d", minGroupEvictEntry, consumer.getGroupId()));
-      }
       return;
     }
 
@@ -424,50 +432,49 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Get all the columns for row GLOBAL_EVICT_META_PREFIX, which contains the entry that can be evicted for each group
     // and the last evicted entry.
     OperationResult<Map<byte [], byte []>> evictBytes = table.get(GLOBAL_EVICT_META_PREFIX, readPointer);
-    if(evictBytes.isEmpty()) {
+    if(!evictBytes.isEmpty()) {
+      // Determine the min entry that can be evicted across all groups
+      long lastEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
+      long minEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
+      for(Map.Entry<byte[], byte[]> entry : evictBytes.getValue().entrySet()) {
+        if(Bytes.equals(GLOBAL_LAST_EVICT_ENTRY, entry.getKey())) {
+          lastEvictEntry = Bytes.toLong(entry.getValue());
+        } else {
+          long id = Bytes.toLong(entry.getValue());
+          if(minEvictEntry > id) {
+            minEvictEntry = id;
+          }
+        }
+      }
+
+      if(minEvictEntry > FIRST_QUEUE_ENTRY_ID && minEvictEntry >= lastEvictEntry) {
+        final long startEvictEntry = lastEvictEntry + 1;
+
+        if(LOG.isTraceEnabled()) {
+          logTrace(String.format("Evicting entries from %d to %d", startEvictEntry, minEvictEntry));
+        }
+
+        // Evict entries
+        int i = 0;
+        byte[][] deleteKeys = new byte[(int) (minEvictEntry - startEvictEntry) + 1][];
+        for(long id = startEvictEntry; id <= minEvictEntry; ++id) {
+          deleteKeys[i++] = Bytes.toBytes(id);
+        }
+        this.table.deleteDirty(deleteKeys);
+      } else {
+        if(LOG.isTraceEnabled()) {
+          logTrace(String.format("Nothing to evict. Entry to be evicted = %d, lastEvictEntry = %d", minEvictEntry, lastEvictEntry));
+        }
+      }
+
+      writeKeys.add(GLOBAL_EVICT_META_PREFIX);
+      writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
+      writeValues.add(Bytes.toBytes(minEvictEntry));
+    } else {
       if(LOG.isTraceEnabled()) {
         logTrace("Not able to fetch eviction information");
       }
     }
-
-    // Determine the min entry that can be evicted across all groups
-    long lastEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
-    long minEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
-    for(Map.Entry<byte[], byte[]> entry : evictBytes.getValue().entrySet()) {
-      if(Bytes.equals(GLOBAL_LAST_EVICT_ENTRY, entry.getKey())) {
-        lastEvictEntry = Bytes.toLong(entry.getValue());
-      } else {
-        long id = Bytes.toLong(entry.getValue());
-        if(minEvictEntry > id) {
-          minEvictEntry = id;
-        }
-      }
-    }
-
-    if(minEvictEntry < FIRST_QUEUE_ENTRY_ID || minEvictEntry <= lastEvictEntry) {
-      if(LOG.isTraceEnabled()) {
-        logTrace(String.format("Nothing to evict. Entry to be evicted = %d, lastEvictEntry = %d", minEvictEntry, lastEvictEntry));
-      }
-      return;
-    }
-
-    final long startEvictEntry = lastEvictEntry + 1;
-
-    if(LOG.isTraceEnabled()) {
-      logTrace(String.format("Evicting entries from %d to %d", startEvictEntry, minEvictEntry));
-    }
-
-    // Evict entries
-    int i = 0;
-    byte[][] deleteKeys = new byte[(int) (minEvictEntry - startEvictEntry) + 1][];
-    for(long id = startEvictEntry; id <= minEvictEntry; ++id) {
-      deleteKeys[i++] = Bytes.toBytes(id);
-    }
-    this.table.deleteDirty(deleteKeys);
-
-    writeKeys.add(GLOBAL_EVICT_META_PREFIX);
-    writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
-    writeValues.add(Bytes.toBytes(minEvictEntry));
 
     // Save the last evicted entry, the min entry that can be evicted for the group, and the last evict run time
     byte[][] keyArray = new byte[writeKeys.size()][];
