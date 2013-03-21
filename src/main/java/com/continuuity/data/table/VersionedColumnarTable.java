@@ -41,6 +41,17 @@ public interface VersionedColumnarTable {
       byte [][] values) throws OperationException;
 
   /**
+   * Writes the specified values for the specified columns at the specified
+   * version for the specified rows.
+   * @param rows
+   * @param columns
+   * @param version
+   * @param values
+   */
+  public void put(byte [][] rows, byte [][] columns, long version,
+                  byte [][] values) throws OperationException;
+
+  /**
    * Deletes the specified version of the specified row and column.
    * @param row
    * @param column
@@ -84,6 +95,13 @@ public interface VersionedColumnarTable {
    * @param version
    */
   public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
+
+  /**
+   * Deletes all versions of all columns the specified rows. If the implementation supports it
+   * this delete will affect all readers, and it cannot be undone.
+   * @param rows
+   */
+  public void deleteDirty(byte [][] rows) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed

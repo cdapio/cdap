@@ -10,6 +10,7 @@ import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
 
 import com.google.common.collect.Sets;
+import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -106,6 +107,30 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (columns.length == values.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(byte [] row : rows) {
+        Put put = new Put(row);
+        for (int i = 0; i < columns.length; i++) {
+          put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
+        }
+        puts.add(put);
+      }
+      writeTable.put(puts);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     //point delete (unlike deleteAll) is only used internally for undo-ing operations of i.e. write(?) or delete
@@ -169,6 +194,26 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public void deleteDirty(byte[] row, byte[][] columns, long version)
     throws OperationException {
     deleteAll(row, columns, version);
+  }
+
+  @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Delete> deletes = new ArrayList<Delete>(rows.length);
+      for(byte[] row : rows) {
+        Delete delete = new Delete(row);
+        deletes.add(delete);
+      }
+      writeTable.delete(deletes);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
   }
 
   @Override
