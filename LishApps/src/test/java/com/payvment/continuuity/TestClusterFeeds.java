@@ -3,6 +3,7 @@ package com.payvment.continuuity;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -61,8 +62,9 @@ public class TestClusterFeeds extends AppFabricTestBase {
 
     // Get ClusterWriter instance / metrics
     RuntimeMetrics m1 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.WRITER_FLOWLET_NAME);
-
+    System.out.println("Waiting for Cluster Writer flow to process");
     m1.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, m1.getException());
     System.out.println("ClusterWriterFlow.ClusterWriter processed: " + m1.getProcessed());
 
     // Write sample-actions.json to stream for social actions
@@ -70,26 +72,30 @@ public class TestClusterFeeds extends AppFabricTestBase {
 
     int numActions = 0;
 
+    // Write Sample actions
     try {
       numActions = writeFileToStream("sample-actions.json", s2, LishApp.SOCIAL_ACTION_STREAM, 1000);
       System.out.println("Writing sample-actions.json to stream " + LishApp.SOCIAL_ACTION_STREAM);
-      Thread.sleep(1000);
     } catch (OperationException e) {
       System.out.println(e.getLocalizedMessage());
     }
 
+    RuntimeMetrics  clusterSourceParserMetrics = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "action_parser");
+    clusterSourceParserMetrics.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
+    System.out.println("SoclialActionFlow.ClusterSourceParser processed: " + clusterSourceParserMetrics.getProcessed());
+    assertTrue( clusterSourceParserMetrics.getProcessed() == numActions);
+
     RuntimeMetrics m2 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "popular_feed_updater");
-
     System.out.println("Waiting for social action popular updater flowlet");
-    m2.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
+    m2.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, m2.getException());
     System.out.println("SocialActionFlow.PopularFeedUpdaterFlowlet processed: " + m2.getProcessed());
 
-    System.out.println("Waiting for social action activity updater flowlet");
     RuntimeMetrics m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "activity_feed_updater");
-
     System.out.println("Waiting for social action activity updater flowlet");
-    m3.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
-    System.out.println("SocialActionFlow.PopularFeedUpdaterFlowlet processed: " + m2.getProcessed());
+    m3.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, m3.getException());
+    System.out.println("SocialActionFlow.ActivityFeedUpdaterFlowlet processed: " + m2.getProcessed());
 
     // Verify flow processing results using feed reader queries
     ClusterTable clusterTable = (ClusterTable) applicationManager.getDataSet(LishApp.CLUSTER_TABLE);
@@ -327,8 +333,7 @@ public class TestClusterFeeds extends AppFabricTestBase {
     while ((line = reader.readLine()) != null && i < limit) {
       System.out.println("\t " + line);
       if (line.startsWith("cluster") || line.startsWith("#") || line.equals("")) continue;
-      stream.send(line.getBytes());
-      //writeToStream(streamName, line.getBytes());
+      stream.send(line);
       i++;
     }
     System.out.println("Wrote " + i + " events to stream " + streamName);

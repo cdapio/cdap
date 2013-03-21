@@ -14,6 +14,7 @@ import com.continuuity.test.StreamWriter;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.api.data.OperationException;
 import com.payvment.continuuity.data.ClusterTable;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
@@ -48,18 +49,18 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     RuntimeMetrics m1 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.PARSER_FLOWLET_NAME);
     System.out.println("Waiting for parsing flowlet to process tuple");
-    m1.waitForProcessed(numParsed, 500, TimeUnit.MILLISECONDS);
-
+    m1.waitForProcessed(numParsed, 5, TimeUnit.SECONDS);
 
     RuntimeMetrics m2 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.RESET_FLOWLET_NAME);
       System.out.println("Waiting for reset flowlet to process tuple");
-    m1.waitForProcessed(numReset, 500, TimeUnit.MILLISECONDS);
+    m2.waitForProcessed(numReset, 5, TimeUnit.SECONDS);
 
     // Writer flowlet should not have received anything
     RuntimeMetrics m3 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.WRITER_FLOWLET_NAME);
 
+    // Writer flowlet should not have received anything
     assertEquals(numWritten, m3.getProcessed());
 
     try {
@@ -75,17 +76,17 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     // Generate and insert some clusters
     try {
       writeCluster(s1, 1, "Sports", 0.0001);
-      writeCluster(s1,1, "Kitchen Appliances", 0.321);
-      writeCluster(s1,1, "Televisions", 0.199);
-      writeCluster(s1,2, "Housewares", 0.011);
-      writeCluster(s1,2, "Pottery", 0.0144);
-      writeCluster(s1,3, "Cutlery", 0.011);
-      writeCluster(s1,3, "Knives", 0.0331);
-      writeCluster(s1,3, "Hatchets", 0.041);
-      writeCluster(s1,4, "Swimwear", 0.011);
-      writeCluster(s1,4, "Goggles", 0.41);
-      writeCluster(s1,4, "Surfing Gear", 0.221);
-      writeCluster(s1,4, "Sports", 0.82);
+      writeCluster(s1, 1, "Kitchen Appliances", 0.321);
+      writeCluster(s1, 1, "Televisions", 0.199);
+      writeCluster(s1, 2, "Housewares", 0.011);
+      writeCluster(s1, 2, "Pottery", 0.0144);
+      writeCluster(s1, 3, "Cutlery", 0.011);
+      writeCluster(s1, 3, "Knives", 0.0331);
+      writeCluster(s1, 3, "Hatchets", 0.041);
+      writeCluster(s1, 4, "Swimwear", 0.011);
+      writeCluster(s1, 4, "Goggles", 0.41);
+      writeCluster(s1, 4, "Surfing Gear", 0.221);
+      writeCluster(s1, 4, "Sports", 0.82);
 
       numParsed += 12;
       numWritten += 12;
@@ -97,7 +98,8 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
 
     m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.WRITER_FLOWLET_NAME);
     System.out.println("Waiting for writer flowlet to process tuples");
-    m3.waitForProcessed(numWritten, 500, TimeUnit.MILLISECONDS);
+    m3.waitForProcessed(numWritten, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, m3.getException());
 
     // Verify clusters in table
      System.out.println("Verify clusters in table");
@@ -151,12 +153,14 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     RuntimeMetrics m4 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.PARSER_FLOWLET_NAME);
     System.out.println("Waiting for parsing flowlet to process tuple");
-    m4.waitForProcessed(numParsed, 500, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(0L, m4.getException());
+    m4.waitForProcessed(numParsed, 5, TimeUnit.SECONDS);
 
     RuntimeMetrics m5 =
       RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.RESET_FLOWLET_NAME);
     System.out.println("Waiting for reset flowlet to process tuple");
-    m5.waitForProcessed(numReset, 500, TimeUnit.MILLISECONDS);
+    m5.waitForProcessed(numReset, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, m5.getException());
 
     // Try to read clusters, all should be null
     try {

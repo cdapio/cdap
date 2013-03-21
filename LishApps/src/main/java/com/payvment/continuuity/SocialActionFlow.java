@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  *   <p>This Flow is made up of four Flowlets.
  *   <p>The first flowlet, {@link SocialActionParserFlowlet}, is responsible
  *   for parsing the social action JSON into the internal representation (as an
- *   instance of a {@link SocialAction} passed through a {@link ProcessedActionActivity}).
+ *   instance of a {@link SocialAction} passed through a {@link ProcessedSocialAction}).
  *   <p>The second Flowlet, {@link SocialActionProcessorFlowlet}, performs the
  *   primary processing and is responsible for the initial counter and score
  *   updates to all of the necessary tables.  Counters are used to determine
@@ -90,24 +90,6 @@ public class SocialActionFlow implements Flow {
         .build();
   }
 
-  /**
-   * Tuple schema used between {@link SocialActionParserFlowlet} and
-   * {@link SocialActionProcessorFlowlet}.
-   * <p>
-   * Schema contains only a {@link SocialAction} object.
-   */
-  //  public static final TupleSchema SOCIAL_ACTION_TUPLE_SCHEMA =
-  //      new TupleSchemaBuilder().add("action", SocialAction.class).create();
-
-  /**
-   * Tuple schema used between {@link SocialActionProcessorFlowlet} and the
-   * activity feed Flowlet, {@link ActivityFeedUpdaterFlowlet}.
-   * <p>
-   * Schema contains a {@link SocialAction} object, the score increase for this
-   * event, the country, and the Long value derived from the result of the
-   * counter increment operation performed by the processor.  Specifically, this
-   * value is the all-time score of the product in the social action.
-   */
   public static class ProcessedSocialAction {
     public SocialAction socialAction;
     public Long scoreIncrease;
@@ -157,7 +139,6 @@ public class SocialActionFlow implements Flow {
       // Determine score increase
       Long scoreIncrease = action.getSocialActionType().getScore();
 
-
       // Update product action count table
       this.productActionCountTable.incrementCounterSet(
           Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
@@ -187,8 +168,6 @@ public class SocialActionFlow implements Flow {
    */
   public static class ActivityFeedUpdaterFlowlet extends AbstractFlowlet {
 
-    public static int numProcessed = 0;
-
     @UseDataSet(LishApp.ACTIVITY_FEED_TABLE)
     private ActivityFeedTable activityFeedTable;
 
@@ -212,8 +191,6 @@ public class SocialActionFlow implements Flow {
         this.activityFeedTable.writeEntry(country,
             processedAction.socialAction.category, feedEntry);
       }
-
-      numProcessed++;
     }
 
     private static boolean shouldInsertFeedEntry(Long scoreIncrease,
@@ -229,22 +206,17 @@ public class SocialActionFlow implements Flow {
    */
   public static class PopularFeedUpdaterFlowlet extends AbstractFlowlet {
 
-    static int numProcessed = 0;
-
     @UseDataSet(LishApp.TOP_SCORE_TABLE)
     private SortedCounterTable topScoreTable;
 
     @ProcessInput("popular")
     public void process(ProcessedSocialActionAndCountry processedAction)
         throws OperationException {
-      try {
+
         this.topScoreTable.increment(
-            PopularFeed.makeRow(TimeUnit.MILLISECONDS.toHours(processedAction.socialAction.date),
+            PopularFeed.makeRow(Helpers.hour(processedAction.socialAction.date),
                 processedAction.country, processedAction.socialAction.category),
                 Bytes.toBytes(processedAction.socialAction.product_id), 1L);
-      } finally {
-        numProcessed++;
-      }
     }
   }
 }
