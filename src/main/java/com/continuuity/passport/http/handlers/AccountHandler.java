@@ -164,7 +164,7 @@ public class AccountHandler extends PassportHandler {
     }
   }
 
-  @Path("{id}/paymentsAccountId")
+  @Path("{id}/confirmPayment")
   @PUT
   @Produces("application/json")
   @Consumes("application/json")

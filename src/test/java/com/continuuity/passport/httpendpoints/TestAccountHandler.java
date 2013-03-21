@@ -111,7 +111,7 @@ public class TestAccountHandler {
     assertTrue("john".equals(account.getFirstName()));
     assertTrue("smith".equals(account.getLastName()));
 
-    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/paymentsAccountId", port,id);
+    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmPayment", port,id);
     put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("{\"payments_account_id\":\"12121\"}"));
     put.setHeader("Content-Type","application/json");
