@@ -78,6 +78,7 @@ libraries.hadoop_annotations = "org.apache.hadoop:hadoop-annotations:$versions.h
 libraries.hadoop_hdfs = "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
 libraries.hadoop_yarn_common = "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
 libraries.hadoop_yarn_api = "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
+libraries.hadoop_yarn_client = "org.apache.hadoop:hadoop-yarn-client:$versions.hadoopVersion"
 libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
 
 // Jetty
