@@ -171,7 +171,12 @@ implements OrderedVersionedColumnarTable {
     performInsert(row, columns, version, Type.VALUE, values);
   }
 
-  // Delete Operations
+  @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    // TODO: implement
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+// Delete Operations
 
   @Override
   public void delete(byte[] row, byte[] column, long version)
@@ -203,6 +208,12 @@ implements OrderedVersionedColumnarTable {
   public void deleteDirty(byte[] row, byte[][] columns, long version)
     throws OperationException {
     deleteAll(row, columns, version);
+  }
+
+  @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    // TODO: implement
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   @Override

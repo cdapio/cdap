@@ -81,6 +81,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    // TODO: implement
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
   public void delete(byte[] row, byte[] column, long version) {
     performDelete(row, column, version, Version.Type.DELETE);
   }
@@ -152,6 +158,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         this.locks.unlock(r);
       }
     }
+  }
+
+  @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    // TODO: implement
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   @Override
