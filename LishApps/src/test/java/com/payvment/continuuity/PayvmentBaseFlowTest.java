@@ -4,19 +4,24 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 
-import com.continuuity.test.FabricTestBase;
+
 import com.payvment.continuuity.entity.ProductFeedEntry;
 import com.payvment.continuuity.entity.SocialAction;
+
+import com.continuuity.test.AppFabricTestBase;
+
 
 
 /**
  * Base class for running Payvment Flow tests.
  */
-public class PayvmentBaseFlowTest extends FabricTestBase {
+public class PayvmentBaseFlowTest extends AppFabricTestBase {
 
   @Before
   public void clearFabricBeforeEachTest() throws Exception {
-    clearDataFabric();
+
+    System.out.println("Clearing AppFabric...");
+    clearAppFabric();
   }
 
   /**

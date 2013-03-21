@@ -12,8 +12,9 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.api.data.util.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+
+import com.payvment.continuuity.Helpers;
 
 /**
  * Activity Feed Table implemented as a DataLib/DataSet.
@@ -56,6 +57,7 @@ public class ActivityFeedTable extends DataSet {
 
     this.table.write(feedEntryWrite);
   }
+
 
   /**
    * Reads the activity feed for the specified category, from times between the

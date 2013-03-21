@@ -47,8 +47,8 @@ import com.payvment.continuuity.data.ClusterTable;
  *   for parsing the cluster CSV line into the internal tuple representation and
  *   determining whether the operation is a WRITE or RESET.  The Flowlet will
  *   then send the Tuple to either the ClusterWriter or ClusterReset Flowlets.
- *   See {@link CLUSTER_PARSER_TO_WRITER_SCHEMA} and
- *   {@link CLUSTER_PARSER_TO_RESET_SCHEMA} for tuple schemas.
+ *   See {@link Cluster} and
+ *   {@link ClusterReseter} for tuple schemas.
  *   <p>The Tuple is then passed on to one of the remaining two Flowlets,
  *    {@link ClusterWriter} and {@link ClusterReset}, where a cluster entry
  *    is written or all entries are cleared.

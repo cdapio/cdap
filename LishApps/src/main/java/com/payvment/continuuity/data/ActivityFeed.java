@@ -5,9 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.payvment.continuuity.Helpers;
 import com.payvment.continuuity.entity.Product;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.util.Helpers;
+//import com.continuuity.api.data.util.Helpers;
 import com.google.gson.Gson;
 
 /**
@@ -146,6 +147,7 @@ public class ActivityFeed {
       this.store_id = store_id;
       addEntry(product_id, score);
     }
+
 
     public ActivityFeedEntry(byte [] column, byte [] value) {
       this(Helpers.reverse(Bytes.toLong(column)), Bytes.toLong(value),
