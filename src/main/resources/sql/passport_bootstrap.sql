@@ -22,6 +22,7 @@ CREATE  TABLE IF NOT EXISTS `passport`.`account` (
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
   `account_created_at` DATETIME NOT NULL,
   `dev_suite_downloaded_at` DATETIME NULL DEFAULT NULL,
+  `payment_account_id` VARCHAR(100) NULL DEFAULT NULL,
   `payment_info_provided_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`) ,
   UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
@@ -128,6 +129,7 @@ CREATE  TABLE IF NOT EXISTS `passport`.`vpc_account` (
   `vpc_name` VARCHAR(100) NOT NULL ,
   `vpc_created_at` DATETIME NOT NULL,
   `vpc_label` VARCHAR(100),
+  `vpc_type` VARCHAR(30) DEFAULT NULL,
   PRIMARY KEY (`id`) ,
   INDEX `account_id` (`account_id` ASC),
   UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC),

@@ -92,7 +92,6 @@ public class MockGuiceBindings extends JerseyServletModule {
   @Provides
   ConnectionPoolDataSource provider() {
     JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
-    System.out.println(connectionString);
     jdbcDataSource.setUrl(connectionString);
     return jdbcDataSource;
   }

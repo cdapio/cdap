@@ -23,14 +23,24 @@ public class HyperSQL {
                                                      "password VARCHAR(100),confirmed INTEGER, " +
                                                      "api_key VARCHAR(100),account_created_at DATETIME," +
                                                      "dev_suite_downloaded_at TIMESTAMP DEFAULT null," +
+                                                     "payment_account_id VARCHAR(30) DEFAULT null,"   +
                                                      "payment_info_provided_at TIMESTAMP DEFAULT null," +
                                                      "UNIQUE (email_id)" +
                                                      ")";
+
+  private static final String CREATE_VPC_ACCOUNT_TABLE = "CREATE TABLE vpc_account ( id INTEGER IDENTITY, " +
+                                                         "account_id INTEGER, vpc_name VARCHAR(100), " +
+                                                         "vpc_created_at TIMESTAMP, vpc_label VARCHAR(100), " +
+                                                         "vpc_type VARCHAR(30) " +
+                                                         ")" ;
+
   private static final String CREATE_NONCE_TABLE = "CREATE TABLE nonce (nonce_id INTEGER IDENTITY," +
                                                    "id VARCHAR(100), nonce_expires_at TIMESTAMP, UNIQUE (id)" +
                                                    ")";
   private static final String DROP_ACCOUNT_TABLE = "DROP TABLE account";
   private static final String DROP_NONCE_TABLE = "DROP TABLE nonce";
+  private static final String DROP_VPC_ACCOUNT_TABLE = "DROP TABLE vpc_account";
+
 
 
   public static void startHsqlDB() throws SQLException, ClassNotFoundException {
@@ -41,8 +51,10 @@ public class HyperSQL {
     server.setLogWriter(null);
     server.setPort(1234);
     server.setSilent(true);
+
     server.setDatabaseName(0, "xdb");
     server.setDatabasePath(0, "mem:test");
+
     server.start();
     Class.forName("org.hsqldb.jdbcDriver");
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
@@ -51,6 +63,8 @@ public class HyperSQL {
 
     connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
     connection.createStatement().execute(CREATE_NONCE_TABLE);
+    connection.createStatement().execute(CREATE_VPC_ACCOUNT_TABLE);
+
 
 
   }
@@ -61,6 +75,7 @@ public class HyperSQL {
     System.out.println("======================================STOP=======================================");
     connection.createStatement().execute(DROP_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_NONCE_TABLE);
+    connection.createStatement().execute(DROP_VPC_ACCOUNT_TABLE);
 
     connection.close();
     server.stop();

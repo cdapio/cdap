@@ -21,20 +21,30 @@ public class VPC {
 
   private final long createdTime;
 
-  public VPC(String vpcName, String vpcLabel) {
-    this(-1, vpcName, vpcLabel);
+  private final String vpcType;
+
+
+
+  public VPC(String vpcName, String vpcLabel, String vpcType) {
+    this(-1, vpcName, vpcLabel,-1,vpcType);
   }
 
-  public VPC(int vpcId, String vpcName, String vpcLabel) {
-    this(vpcId,vpcName,vpcLabel,-1);
+  public VPC(int vpcId, String vpcName, String vpcLabel,String vpcType) {
+    this(vpcId,vpcName,vpcLabel,-1,vpcType);
   }
 
   public VPC(int vpcId, String vpcName, String vpcLabel, long createdTime) {
+    this(vpcId,vpcName,vpcLabel,createdTime,"");
+  }
+
+  public VPC(int vpcId, String vpcName, String vpcLabel, long createdTime, String vpcType) {
     this.vpcId = vpcId;
     this.vpcName = vpcName;
     this.vpcLabel = vpcLabel;
     this.createdTime = createdTime;
+    this.vpcType = vpcType;
   }
+
 
   public int getVpcId() {
     return vpcId;
@@ -48,9 +58,19 @@ public class VPC {
     return vpcName;
   }
 
+  public String getVpcType() {
+    return vpcType;
+  }
+
   @Override
   public String toString() {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.toJson(this);
   }
+
+  public static VPC fromString(String jsonString) {
+    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    return gson.fromJson(jsonString, VPC.class);
+  }
+
 }

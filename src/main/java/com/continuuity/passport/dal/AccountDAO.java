@@ -42,10 +42,11 @@ public interface AccountDAO {
 
   /**
    * @param accountId
+   * @param paymentId id in the external system
    * @throws ConfigurationException
    * @throws RuntimeException
    */
-  public void confirmPayment(int accountId) throws ConfigurationException;
+  public void confirmPayment(int accountId, String paymentId) throws ConfigurationException;
 
   /**
    * Delete Account in the system
