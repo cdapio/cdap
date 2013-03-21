@@ -5,13 +5,11 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -20,7 +18,6 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
-import javax.sql.ConnectionPoolDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,7 +29,7 @@ import java.util.Set;
  * and authorizations
  */
 public class JDBCAuthroizingRealm extends AuthorizingRealm {
-  private DBConnectionPoolManager poolManager = null;
+  private final DBConnectionPoolManager poolManager;
 
   private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
     "%s, %s FROM %s WHERE %s = ?",
@@ -209,7 +206,6 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
         devsuiteDownloadedTime = DBUtils.timestampToLong(rs.getTimestamp(8));
         count++;
       }
-
 
       Preconditions.checkArgument(count == 1, "Account not found in DB");
       Preconditions.checkArgument(!password.isEmpty(), "Password not found for %s in the data store", emailId);

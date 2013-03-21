@@ -5,31 +5,30 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.StaleNonceException;
 import com.continuuity.passport.core.utils.NonceUtils;
 import com.continuuity.passport.dal.NonceDAO;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
-import javax.sql.ConnectionPoolDataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 
 /**
  *
  */
 public class NonceDBAccess extends DBAccess implements NonceDAO {
 
-  private DBConnectionPoolManager poolManager = null;
+  private final DBConnectionPoolManager poolManager;
   private static final int SHORT_EXPIRATION_MILLS = 1000 * 60 * 10;
   private static final int LONG_EXPIRATION_MILLIS = 1000 * 60 * 60 * 24 * 3;
 
 
   @Inject
   public NonceDBAccess(DBConnectionPoolManager poolManager) {
-    Preconditions.checkNotNull(poolManager, "Pool Manager should not be null");
     this.poolManager = poolManager;
   }
 

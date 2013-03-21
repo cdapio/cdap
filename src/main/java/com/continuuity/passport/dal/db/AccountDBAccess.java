@@ -5,10 +5,8 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.Constants;
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
-import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.core.utils.PasswordUtils;
 import com.continuuity.passport.dal.AccountDAO;
@@ -20,18 +18,20 @@ import com.google.common.base.Throwables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
-import javax.sql.ConnectionPoolDataSource;
 import java.security.NoSuchAlgorithmException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 
 /**
  * AccountDAO implementation that uses mysql as the persistence store
  */
 public class AccountDBAccess extends DBAccess implements AccountDAO {
-  private DBConnectionPoolManager poolManager = null;
+  private final DBConnectionPoolManager poolManager;
   private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
   private final HashFunction hashFunction = Hashing.sha1();
 
@@ -39,11 +39,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Guice injected AccountDBAccess. The parameters needed for DB will be injected as well.
    */
   @Inject
-  public void AccountDBAccess(DBConnectionPoolManager poolManager) {
-    Preconditions.checkNotNull(poolManager,"Pool manager should not be null");
+  public AccountDBAccess(DBConnectionPoolManager poolManager) {
     this.poolManager = poolManager;
   }
-
   /**
    * Create Account in the system
    *
@@ -52,13 +50,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException {
+  public Account createAccount(Account account) throws AccountAlreadyExistsException {
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet result = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
+
     try {
       connection = this.poolManager.getValidConnection();
       String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (?,?,?,?,?,?)",
@@ -99,14 +95,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     }
   }
 
-  public boolean confirmRegistration(Account account, String password)
-    throws ConfigurationException, RuntimeException {
+  public boolean confirmRegistration(Account account, String password) {
 
     Connection connection = null;
     PreparedStatement updateStatement = null;
     PreparedStatement deleteStatement = null;
-
-    Preconditions.checkNotNull(this.poolManager,"Data connection manager is null. Cannot connect to data source");
 
     String UPDATE_SQL = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
       DBUtils.AccountTable.TABLE_NAME,
@@ -155,15 +148,12 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
   /**
    * @param accountId
-   * @throws ConfigurationException
    */
   @Override
-  public void confirmDownload(int accountId) throws ConfigurationException {
+  public void confirmDownload(int accountId){
     Connection connection = null;
     PreparedStatement ps = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
+
     try {
       connection = this.poolManager.getValidConnection();
       String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s is NULL",
@@ -188,15 +178,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * Confirm payment received and record first time payment is made
    * @param accountId
    * @param paymentId id in the external system for payments
-   * @throws ConfigurationException
    */
   @Override
-  public void confirmPayment(int accountId, String paymentId) throws ConfigurationException {
+  public void confirmPayment(int accountId, String paymentId) {
     Connection connection = null;
     PreparedStatement ps = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
       String SQL = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ?", DBUtils.AccountTable.TABLE_NAME,
@@ -221,17 +207,13 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    *
    * @param accountId AccountId to be deleted
    * @return boolean status of account deletion
-   * @throws {@code RetryException}
+   * @throws {@code AccountNotFoundException}
    */
   @Override
-  public boolean deleteAccount(int accountId)
-    throws ConfigurationException, AccountNotFoundException {
+  public boolean deleteAccount(int accountId) throws AccountNotFoundException {
 
     PreparedStatement ps = null;
     Connection connection = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
       String SQL = String.format("DELETE FROM %s WHERE %s = ?",
@@ -258,18 +240,14 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    *
    * @param accountId id of the account
    * @return null if no entry matches, Instance of {@code Account} otherwise
-   * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(int accountId) throws ConfigurationException {
+  public Account getAccount(int accountId) {
 
     Account account = null;
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
 
@@ -309,18 +287,14 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    *
    * @param emailId emailId requested
    * @return {@code Account}
-   * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(String emailId) throws ConfigurationException {
+  public Account getAccount(String emailId) {
 
     Account account = null;
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
 
@@ -359,14 +333,11 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
 
   @Override
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException {
+  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) {
 
     Connection connection = null;
     PreparedStatement ps = null;
 
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
 
@@ -400,14 +371,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
 
   @Override
-  public boolean addRoleType(int accountId, Role role) throws ConfigurationException {
+  public boolean addRoleType(int accountId, Role role)  {
 
     Connection connection = null;
     PreparedStatement ps = null;
-
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
       connection = this.poolManager.getValidConnection();
       String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
@@ -433,12 +400,9 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   @Override
-  public void updateAccount(int accountId, Map<String, Object> keyValueParams) throws ConfigurationException {
+  public void updateAccount(int accountId, Map<String, Object> keyValueParams) {
     Connection connection = null;
     PreparedStatement ps = null;
-    if (this.poolManager == null) {
-      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
-    }
     try {
 
       connection = this.poolManager.getValidConnection();
@@ -599,7 +563,6 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   public void regenerateApiKey(int accountId) {
     Connection connection = null;
     PreparedStatement ps = null;
-    Preconditions.checkNotNull(this.poolManager, "DBConnection pool is null. DAO is not configured");
 
     try {
       connection = this.poolManager.getValidConnection();

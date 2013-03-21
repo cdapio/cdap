@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Defines account
+ * Defines User account in continuuity
  */
 public class Account {
 
@@ -33,11 +33,22 @@ public class Account {
 
   private final String paymentAccountId;
 
+  /**
+   * Deserialize Account from jsonString
+   * @param jsonString json string containing account info
+   * @return {@code Account}
+   */
   public static Account fromString(String jsonString) {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(jsonString, Account.class);
   }
 
+  /**
+   *
+   * @param firstName
+   * @param lastName
+   * @param emailId
+   */
   public Account(String firstName, String lastName, String emailId) {
     this(firstName, lastName, "", emailId, -1);
   }

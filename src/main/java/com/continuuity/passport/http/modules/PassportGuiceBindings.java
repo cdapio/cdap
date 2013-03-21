@@ -24,14 +24,11 @@ import com.continuuity.passport.http.handlers.VPCHandler;
 import com.continuuity.passport.impl.AuthenticatorServiceImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.common.base.Preconditions;
-import com.google.inject.Provides;
 import com.google.inject.name.Names;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.mortbay.jetty.servlet.DefaultServlet;
-
-import javax.sql.ConnectionPoolDataSource;
 
 /**
  * Guice bindings for passport services
