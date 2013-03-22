@@ -59,7 +59,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
       ps.executeUpdate();
       //TODO: Remove connection.commit(). Tests are failing if this is not enabled. Need to investigate hypersql
-      // configurations. This is not an issue while working in non-test mode (mysql)
+      //configuration This is not an issue while working in non-test mode (mysql)
       connection.commit();
       result = ps.getGeneratedKeys();
       if (result == null) {
@@ -177,8 +177,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
-                          DBUtils.timestampToLong(rs.getTimestamp(4)), rs.getString(5));
+        VPC vpc = new VPC(rs.getInt(DBUtils.VPC.VPC_ID_COLUMN), rs.getString(DBUtils.VPC.NAME_COLUMN),
+                          rs.getString(DBUtils.VPC.LABEL_COLUMN),
+                          DBUtils.timestampToLong(rs.getTimestamp(DBUtils.VPC.VPC_CREATED_AT)),
+                          rs.getString(DBUtils.VPC.VPC_TYPE));
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
@@ -212,8 +214,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
-                      DBUtils.timestampToLong(rs.getTimestamp(4)),rs.getString(5));
+        vpc = new VPC(rs.getInt(DBUtils.VPC.VPC_ID_COLUMN), rs.getString(DBUtils.VPC.NAME_COLUMN),
+                          rs.getString(DBUtils.VPC.LABEL_COLUMN),
+                          DBUtils.timestampToLong(rs.getTimestamp(DBUtils.VPC.VPC_CREATED_AT)),
+                          rs.getString(DBUtils.VPC.VPC_TYPE));
       }
     } catch (SQLException e) {
       throw Throwables.propagate(e);
@@ -248,8 +252,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       rs = ps.executeQuery();
 
       while (rs.next()) {
-        VPC vpc = new VPC(rs.getInt(1), rs.getString(2), rs.getString(3),
-                          DBUtils.timestampToLong(rs.getTimestamp(4)),rs.getString(5));
+        VPC vpc = new VPC(rs.getInt(DBUtils.VPC.VPC_ID_COLUMN), rs.getString(DBUtils.VPC.NAME_COLUMN),
+                          rs.getString(DBUtils.VPC.LABEL_COLUMN),
+                          DBUtils.timestampToLong(rs.getTimestamp(DBUtils.VPC.VPC_CREATED_AT)),
+                          rs.getString(DBUtils.VPC.VPC_TYPE));
         vpcList.add(vpc);
       }
     } catch (SQLException e) {
@@ -315,9 +321,14 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       int count = 0;
       while (rs.next()) {
         count++;
-        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
+        account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
+                              rs.getString( DBUtils.AccountTable.LAST_NAME_COLUMN),
+                              rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
+                              rs.getInt(DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN),
+                              rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
+                              rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }

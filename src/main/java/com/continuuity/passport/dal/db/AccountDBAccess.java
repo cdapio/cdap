@@ -267,9 +267,16 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       int count = 0;
       while (rs.next()) {
         count++;
-        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6), rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)),
-          DBUtils.timestampToLong(rs.getTimestamp(9)),rs.getString(10));
+        account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
+                              rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
+                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
+                              rs.getInt(DBUtils.AccountTable.ID_COLUMN),
+                              rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
+                              rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -313,9 +320,16 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       int count = 0;
       while (rs.next()) {
         count++;
-        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
+        account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
+                              rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
+                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
+                              rs.getInt(DBUtils.AccountTable.ID_COLUMN),
+                              rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
+                              rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
         if (count > 1) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
@@ -506,7 +520,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     );
 
     //Update is successful. now return the account information
-    String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+    String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
       "(SELECT %s FROM %s where %s = ?)",
       DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
       DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
@@ -515,6 +529,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
       DBUtils.AccountTable.TABLE_NAME,
       DBUtils.AccountTable.EMAIL_COLUMN,
+      DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT,
+      DBUtils.AccountTable.PAYMENT_ACCOUNT_ID,
       DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME,
       DBUtils.Nonce.NONCE_ID_COLUMN
     );
@@ -545,9 +561,16 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       connection.commit();
 
       while (rs.next()) {
-        account = new Account(rs.getString(1), rs.getString(2), rs.getString(3),
-          rs.getString(4), rs.getInt(5), rs.getString(6),
-          rs.getBoolean(7), DBUtils.timestampToLong(rs.getTimestamp(8)));
+        account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
+                              rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
+                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
+                              rs.getInt(DBUtils.AccountTable.ID_COLUMN),
+                              rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
+                              rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)),
+                              DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT)),
+                              rs.getString(DBUtils.AccountTable.PAYMENT_ACCOUNT_ID));
       }
       return account;
     } catch (SQLException e) {
