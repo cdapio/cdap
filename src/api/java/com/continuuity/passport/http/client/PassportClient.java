@@ -109,9 +109,8 @@ public class PassportClient {
   /**
    * Get List of VPC for the apiKey
    *
-   * @return Instance of {@AccountProvider}
-   * @throws Exception RunTimeExceptions
-   */
+   * @return Instance of {@code AccountProvider}
+   * */
   public AccountProvider<Account> getAccount(String apiKey) {
     Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
 

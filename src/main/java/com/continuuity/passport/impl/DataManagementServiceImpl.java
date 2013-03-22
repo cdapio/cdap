@@ -199,7 +199,8 @@ public class DataManagementServiceImpl implements DataManagementService {
   /**
    * Returns if VPC is valid
    * @param vpcName
-   * @return
+   * @return True if VPC is valid - doesn't already exist in the system and doesn't contain blacklisted words
+   *         False otherwise
    */
   @Override
   public boolean isValidVPC(String vpcName) {
