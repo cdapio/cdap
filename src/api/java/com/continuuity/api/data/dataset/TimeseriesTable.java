@@ -5,6 +5,7 @@
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.batch.WithKey;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public interface TimeseriesTable {
   /**
    * Timeseries dataset entry.
    */
-  public static final class Entry {
+  public static final class Entry implements WithKey {
     private byte[] key;
     private byte[] value;
     private long timestamp;
