@@ -23,7 +23,13 @@ public class DequeueResult {
     this.pointer = pointer;
     this.entry = entry;
   }
-  
+
+  public DequeueResult(DequeueStatus status, QueueEntryPointer pointer, QueueEntry entry, QueueState queueState) {
+    this.status = status;
+    this.pointer = pointer;
+    this.entry = entry;
+  }
+
   public DequeueResult(final byte [] queueName,
       final HBQDequeueResult dequeueResult) {
     if (dequeueResult.getStatus() == HBQDequeueStatus.EMPTY) {

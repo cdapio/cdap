@@ -893,7 +893,7 @@ public class TTQueueOnVCTable implements TTQueue {
         newValue, readDirty, oracle.dirtyWriteVersion());
   }
 
-  // Private helpers
+// Private helpers
 
   private boolean safeToMoveHead(EntryGroupMeta entryGroupMeta) {
     return entryGroupMeta.isAcked() ||

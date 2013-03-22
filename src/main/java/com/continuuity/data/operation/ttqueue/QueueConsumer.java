@@ -18,25 +18,6 @@ public class QueueConsumer {
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
-   * @deprecated
-   */
-  public QueueConsumer(int instanceId, long groupId, int groupSize) {
-    this(instanceId, groupId, groupSize, null, null, null);
-  }
-  /**
-   * @param instanceId id of this consumer instance (starts at 0)
-   * @param groupId id of this consumer group (doesn't matter)
-   * @param groupSize number of consumer instances in this consumer group
-   * @param groupName the name of the consumer group
-   * @deprecated
-   */
-  public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName) {
-    this(instanceId, groupId, groupSize, groupName, null, null);
-  }
-  /**
-   * @param instanceId id of this consumer instance (starts at 0)
-   * @param groupId id of this consumer group (doesn't matter)
-   * @param groupSize number of consumer instances in this consumer group
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     this(instanceId, groupId, groupSize, null, null, config);
@@ -62,6 +43,10 @@ public class QueueConsumer {
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
                        QueueConfig config) {
+    if(instanceId >= groupSize) {
+      throw new IllegalArgumentException(String.format(
+        "instanceId should be between 0..groupSize. Given instanceId is %d, groupSize is %d", instanceId, groupSize));
+    }
     this.instanceId = instanceId;
     this.groupId = groupId;
     this.groupSize = groupSize;
@@ -93,13 +78,28 @@ public class QueueConsumer {
   public QueueConfig getQueueConfig() {
     return this.config;
   }
+
+  public boolean isStateful() {
+    return false;
+  }
+
+  public QueueState getQueueState() {
+    return null;
+  }
+
+  public void setQueueState(QueueState queueState) {
+    // Nothing to do
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("instanceidd", this.instanceId)
         .add("groupid", this.groupId)
         .add("groupsize", this.groupSize)
+        .add("config", this.config)
         .add("name", this.groupName)
+        .add("partitioningKey", this.partitioningKey)
         .toString();
   }
 

@@ -28,6 +28,7 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(QueueConsumer consumer, long entryId);
 
+  // TODO: Remove HASH_ON_VALUE partition type on switching to the new queue implementation
   public static enum PartitionerType {
     HASH_ON_VALUE, HASH, FIFO, ROUND_ROBIN;
 
