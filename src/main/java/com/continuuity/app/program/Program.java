@@ -11,7 +11,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -25,12 +24,16 @@ public final class Program {
   private final Type processorType;
   private final ApplicationSpecification specification;
   private final Id.Program id;
+  // TODO: should not be exposed at this level of abstraction. Added to support first cut of MapReduce integration
+  private final Location programJarLocation;
 
   public Program(Location location) throws IOException {
-    this(new JarResources(location));
+    this(location, new JarResources(location));
   }
 
-  private Program(JarResources jarResources) throws IOException {
+  private Program(Location location, JarResources jarResources) throws IOException {
+    this.programJarLocation = location;
+
     jarClassLoader = new JarClassLoader(jarResources);
 
     Manifest manifest = jarResources.getManifest();
@@ -62,6 +65,10 @@ public final class Program {
     return processorType;
   }
 
+  public Id.Program getId() {
+    return id;
+  }
+
   public String getProgramName() {
     return id.getId();
   }
@@ -76,6 +83,10 @@ public final class Program {
 
   public ApplicationSpecification getSpecification() {
     return specification;
+  }
+
+  public Location getProgramJarLocation() {
+    return programJarLocation;
   }
 
   private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {

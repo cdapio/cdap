@@ -61,9 +61,7 @@ import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
-import com.continuuity.metrics2.thrift.MetricsServiceException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -85,7 +83,6 @@ import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import net.sf.cglib.core.Local;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +96,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -194,6 +190,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return Type.FLOW;
       case QUERY:
         return Type.PROCEDURE;
+      case MAPREDUCE:
+        return Type.MAPREDUCE;
     }
     // Never hit
     throw new IllegalArgumentException("Type not support: " + identifier.getType());
@@ -205,9 +203,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return EntityType.FLOW;
       case PROCEDURE:
         return EntityType.QUERY;
-      case BATCH:
-        // TODO
-        return null;
+      case MAPREDUCE:
+        return EntityType.MAPREDUCE;
     }
     // Never hit
     throw new IllegalArgumentException("Type not suppport: " + type);
@@ -374,6 +371,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         break;
       case QUERY:
         runtimeInfos = runtimeService.list(Type.PROCEDURE).values();
+        break;
+      case MAPREDUCE:
+        runtimeInfos = runtimeService.list(Type.MAPREDUCE).values();
         break;
     }
     Preconditions.checkNotNull(runtimeInfos, "Cannot find any runtime info.");
