@@ -108,16 +108,15 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (rows.length == columns.length);
     assert (columns.length == values.length);
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       List<Put> puts = new ArrayList<Put>(rows.length);
-      for(byte [] row : rows) {
-        Put put = new Put(row);
-        for (int i = 0; i < columns.length; i++) {
-          put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
-        }
+      for(int i = 0; i < rows.length; i++) {
+        Put put = new Put(rows[i]);
+        put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
         puts.add(put);
       }
       writeTable.put(puts);

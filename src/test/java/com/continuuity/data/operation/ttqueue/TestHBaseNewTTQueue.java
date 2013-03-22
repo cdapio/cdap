@@ -52,6 +52,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
+    conf.setLong("ttqueue.evict.interval.secs", 0);
     return new TTQueueNewOnVCTable(
       handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
       Bytes.toBytes("TestTTQueueName" + rand),
@@ -68,12 +69,6 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   /**
    * Currently not working.  Will be fixed in ENG-???.
    */
-  @Override
-  @Test
-  @Ignore
-  public void testEvictOnAck_OneGroup() {
-  }
-
   @Override
   @Test
   @Ignore
@@ -123,12 +118,6 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Test
   @Ignore
   public void testSingleConsumerAckSemantics() {
-  }
-
-  @Override
-  @Test
-  @Ignore
-  public void testEvictOnAck_ThreeGroups() {
   }
 
   @Test
@@ -241,7 +230,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   public void testSingleStatefulConsumerWithHashPartitioning() throws Exception {
     final String HASH_KEY = "hashKey";
     final boolean singleEntry = true;
-    final int numQueueEntries = 264;
+    final int numQueueEntries = 264; // Choose a number that leaves a reminder when divided by batchSize, and be big enough so that it forms a few batches
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
@@ -278,7 +267,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Test
   public void testSingleStatefulConsumerWithRoundRobinPartitioning() throws Exception {
     final boolean singleEntry = true;
-    final int numQueueEntries = 264;
+    final int numQueueEntries = 264; // Choose a number that doesn't leave a reminder when divided by batchSize, and be big enough so that it forms a few batches
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
