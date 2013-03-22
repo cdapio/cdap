@@ -10,6 +10,7 @@ import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceServletContextListener;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 

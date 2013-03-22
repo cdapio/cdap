@@ -5,10 +5,10 @@
 package com.continuuity.passport.core.service;
 
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
 import com.continuuity.passport.meta.ComponentACL;
-import com.continuuity.passport.core.security.Credentials;
 
 /**
  * Authorize Components and ACLs

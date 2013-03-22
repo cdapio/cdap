@@ -4,8 +4,6 @@
 
 package com.continuuity.passport.core.utils;
 
-import com.google.common.hash.Hasher;
-
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

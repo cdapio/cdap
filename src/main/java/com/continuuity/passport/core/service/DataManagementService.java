@@ -54,6 +54,14 @@ public interface DataManagementService {
    */
   public void confirmDownload(int accountId);
 
+  /**
+   * Register the fact that the user has provided payment info
+   *
+   * @param accountId accountId
+   * @param paymentId id in the external payment system
+   */
+  public void confirmPayment(int accountId, String paymentId);
+
 
   /**
    * GetAccount object
@@ -192,8 +200,7 @@ public interface DataManagementService {
 
   /**
    * Generate Reset Nonce
-   *
-   * @param id
+   * @param id Id
    * @return random nonce
    */
   public int getResetNonce(String id);
@@ -209,7 +216,7 @@ public interface DataManagementService {
   /**
    * GetAccount given a VPC name
    * @param vpcName
-   * @return
+   * @return Instance of {@code Account}
    */
   public Account getAccountForVPC(String vpcName);
 

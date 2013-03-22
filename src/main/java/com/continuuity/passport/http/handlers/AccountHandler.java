@@ -23,7 +23,15 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
@@ -155,6 +163,59 @@ public class AccountHandler extends PassportHandler {
           .build();
       }
     } catch (Exception e) {
+      requestFailed(); // Request failed
+      LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
+                              "PUT /passport/v1/account/{id}/downloaded",e.getMessage()));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
+        .build();
+    }
+  }
+
+  @Path("{id}/confirmPayment")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response confirmPaymentInfoProvided(@PathParam("id") int id, String data) {
+    requestReceived();
+
+    try {
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
+
+      String paymentAccountId = jsonObject.get("payments_account_id") == null
+                                           ? null : jsonObject.get("payments_account_id").getAsString();
+
+      if (paymentAccountId == null) {
+        requestFailed();
+        return Response.status(Response.Status.BAD_REQUEST)
+          .entity(Utils.getJson("FAILED", "Must pass payments_account_id in the input"))
+          .build();
+      }
+
+      dataManagementService.confirmPayment(id,paymentAccountId);
+      //Contract for the api is to return updated account to avoid a second call from the caller to get the
+      // updated account
+      Account account = dataManagementService.getAccount(id);
+      if (account != null) {
+        requestSuccess();
+        return Response.ok(account.toString()).build();
+      } else {
+        requestFailed(); // Request failed
+        LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
+                                "PUT /passport/v1/account/{id}/downloaded","Failed to fetch updated account"));
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(Utils.getJson("FAILED", "Failed to get updated account"))
+          .build();
+      }
+    }catch ( JsonParseException e){
+      requestFailed();
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "Failed to parse Json"))
+        .build();
+    }
+     catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
                               "PUT /passport/v1/account/{id}/downloaded",e.getMessage()));
@@ -352,9 +413,10 @@ public class AccountHandler extends PassportHandler {
 
       String vpcName = jsonObject.get("vpc_name") == null ? null : jsonObject.get("vpc_name").getAsString();
       String vpcLabel = jsonObject.get("vpc_label") == null ? null : jsonObject.get("vpc_label").getAsString();
+      String vpcType = jsonObject.get("vpc_type") == null ? "sandbox" : jsonObject.get("vpc_label").getAsString();
 
       if ((vpcName != null) && (!vpcName.isEmpty()) && (vpcLabel != null) && (!vpcLabel.isEmpty())) {
-        VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel));
+        VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel,vpcType));
         if (vpc !=null ){
           requestSuccess();
           return Response.ok(vpc.toString()).build();

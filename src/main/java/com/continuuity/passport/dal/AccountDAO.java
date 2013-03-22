@@ -6,7 +6,6 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.exceptions.AccountAlreadyExistsException;
 import com.continuuity.passport.core.exceptions.AccountNotFoundException;
-import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.BillingInfo;
 import com.continuuity.passport.meta.Role;
@@ -25,21 +24,26 @@ public interface AccountDAO {
    *
    * @param account Instance of {@code Account}
    * @return int account Id that was generated
-   * @throws {@code RetryException}
+   * @throws {@code AccountAlreadyExistsException}
    */
-  public Account createAccount(Account account) throws ConfigurationException, AccountAlreadyExistsException;
+  public Account createAccount(Account account) throws AccountAlreadyExistsException;
 
 
-  public boolean confirmRegistration(Account account, String password) throws ConfigurationException;
+  public boolean confirmRegistration(Account account, String password);
 
 
   /**
    * @param accountId
-   * @throws ConfigurationException
    * @throws RuntimeException
    */
-  public void confirmDownload(int accountId) throws ConfigurationException;
+  public void confirmDownload(int accountId);
 
+  /**
+   * @param accountId
+   * @param paymentId id in the external system
+   * @throws RuntimeException
+   */
+  public void confirmPayment(int accountId, String paymentId);
 
   /**
    * Delete Account in the system
@@ -48,8 +52,7 @@ public interface AccountDAO {
    * @return boolean status of account deletion
    * @throws {@code RetryException}
    */
-  public boolean deleteAccount(int accountId)
-    throws ConfigurationException, RuntimeException, AccountNotFoundException;
+  public boolean deleteAccount(int accountId) throws  AccountNotFoundException;
 
   /**
    * GetAccount
@@ -58,7 +61,7 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(int accountId) throws ConfigurationException;
+  public Account getAccount(int accountId);
 
   /**
    * GetAccount
@@ -67,17 +70,14 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(String emailId) throws ConfigurationException;
+  public Account getAccount(String emailId) ;
 
 
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)
-    throws ConfigurationException;
+  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo);
 
+  public boolean addRoleType(int accountId, Role role);
 
-  public boolean addRoleType(int accountId, Role role) throws ConfigurationException;
-
-  public void updateAccount(int accountId, Map<String, Object> keyValueParams)
-    throws ConfigurationException;
+  public void updateAccount(int accountId, Map<String, Object> keyValueParams);
 
   public void changePassword(int accountId, String oldPassword, String newPassword);
 
