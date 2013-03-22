@@ -16,6 +16,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.internal.app.runtime.batch.hadoop.MapReduceRuntimeService;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
@@ -51,6 +52,7 @@ public class SingleNodeMain {
   private MetricsFrontendServerInterface overloadFrontend;
   private MetadataServerInterface metaDataServer;
   private AppFabricServer appFabricServer;
+  private MapReduceRuntimeService mapReduceRuntimeService;
   private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
   private final CConfiguration configuration;
   private final ImmutableList<Module> modules;
@@ -67,6 +69,7 @@ public class SingleNodeMain {
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    mapReduceRuntimeService = injector.getInstance(MapReduceRuntimeService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -103,6 +106,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
+    mapReduceRuntimeService.startUp();
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -116,6 +120,7 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stop(true);
+      mapReduceRuntimeService.shutDown();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
