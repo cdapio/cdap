@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
@@ -118,6 +119,126 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Test
   @Ignore
   public void testSingleConsumerAckSemantics() {
+  }
+
+  @Override
+  @Test
+  public void testEvictOnAck_ThreeGroups() throws Exception {
+    TTQueue queue = createQueue();
+    final boolean singleEntry = true;
+    long dirtyVersion = getDirtyWriteVersion();
+    ReadPointer dirtyReadPointer = getDirtyPointer();
+
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, singleEntry);
+    QueueConsumer consumer1 = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
+    QueueConsumer consumer3 = new QueueConsumer(0, 2, 1, config);
+
+    // enable evict-on-ack for 3 groups
+    int numGroups = 3;
+
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), dirtyVersion);
+    }
+
+    // Create consumers for checking if eviction happened
+    QueueConsumer consumerCheck9thPos = new QueueConsumer(0, 3, 1, config);
+    QueueConsumer consumerCheck10thPos = new QueueConsumer(0, 4, 1, config);
+    // Move the consumers to 9th and 10 pos
+    for(int i = 0; i < 8; i++) {
+      DequeueResult result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumerCheck9thPos, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumerCheck9thPos, -1, dirtyReadPointer.getMaximum()); // No evict
+    }
+    for(int i = 0; i < 9; i++) {
+      DequeueResult result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumerCheck10thPos, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumerCheck10thPos, -1, dirtyReadPointer.getMaximum()); // No evict
+    }
+
+
+    // dequeue/ack/finalize 8 things w/ group1 and numGroups=3
+    for (int i=0; i<8; i++) {
+      DequeueResult result =
+        queue.dequeue(consumer1, dirtyReadPointer);
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
+    }
+
+    // dequeue is not empty, as 9th and 10th entries is still available
+    assertFalse(
+      queue.dequeue(consumer1, dirtyReadPointer).isEmpty());
+
+    // dequeue with consumer2 still has entries (expected)
+    assertFalse(
+      queue.dequeue(consumer2, dirtyReadPointer).isEmpty());
+
+    // dequeue everything with consumer2
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+        queue.dequeue(consumer2, dirtyReadPointer);
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer2, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumer2, numGroups, dirtyReadPointer.getMaximum());
+    }
+
+    // dequeue is empty
+    assertTrue(
+      queue.dequeue(consumer2, dirtyReadPointer).isEmpty());
+
+    // dequeue with consumer3 still has entries (expected)
+    assertFalse(
+      queue.dequeue(consumer3, dirtyReadPointer).isEmpty());
+
+    // dequeue everything consumer3
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+        queue.dequeue(consumer3, dirtyReadPointer);
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer3, dirtyReadPointer);
+      queue.finalize(result.getEntryPointer(), consumer3, numGroups, dirtyReadPointer.getMaximum());
+    }
+
+    // dequeue with consumer3 is empty
+    assertTrue(
+      queue.dequeue(consumer3, dirtyReadPointer).isEmpty());
+
+    // Verify 9th and 10th entries are still present
+    DequeueResult result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
+    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
+    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
+
+    // dequeue with consumer 1, should get 8 (9th entry)
+    result = queue.dequeue(consumer1, dirtyReadPointer);
+    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
+    queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
+
+    // now the first 9 entries should have been physically evicted!
+    result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
+    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
+    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
+
+    // dequeue with consumer 1, should get 9 (10th entry)
+    result = queue.dequeue(consumer1, dirtyReadPointer);
+    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
+    queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
+
+    // Consumer 1 should be empty now
+    assertTrue(queue.dequeue(consumer1, dirtyReadPointer).isEmpty());
+
+    // Now 10th entry should be evicted too!
+    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
+
+    assertFalse(true); // TODO: fix this test case after Mario's fix
   }
 
   @Test
