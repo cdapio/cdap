@@ -200,8 +200,7 @@ public interface DataManagementService {
 
   /**
    * Generate Reset Nonce
-   *
-   * @param id
+   * @param id Id
    * @return random nonce
    */
   public int getResetNonce(String id);
@@ -217,7 +216,7 @@ public interface DataManagementService {
   /**
    * GetAccount given a VPC name
    * @param vpcName
-   * @return
+   * @return Instance of {@code Account}
    */
   public Account getAccountForVPC(String vpcName);
 

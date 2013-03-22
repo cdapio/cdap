@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Defines account
+ * Defines User account in continuuity
  */
 public class Account {
 
@@ -33,24 +33,70 @@ public class Account {
 
   private final String paymentAccountId;
 
+  /**
+   * Deserialize Account from jsonString
+   * @param jsonString json string containing account info
+   * @return {@code Account}
+   */
   public static Account fromString(String jsonString) {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(jsonString, Account.class);
   }
 
+  /**
+   * Construct account object with firstName, lastName, emailId
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param emailId  EmailId
+   */
   public Account(String firstName, String lastName, String emailId) {
     this(firstName, lastName, "", emailId, -1);
   }
 
+  /**
+   * Construct account object with firstName, lastName, emailId , company, accountId
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param emailId  EmailId
+   * @param company Company
+   * @param accountId  AccountID
+   */
   public Account(String firstName, String lastName, String company, String emailId, int accountId) {
     this(firstName, lastName, company, emailId, accountId, "", false, -1);
   }
 
+  /**
+   * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag
+   * and dev suite downloaded time
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param emailId  EmailId
+   * @param company Company
+   * @param accountId  AccountID
+   * @param apiKey  apikey
+   * @param confirmed boolean flag that shows if user has confirmed registration
+   * @param devSuiteDownloadTime DevSuite downloaded time
+   */
   public Account(String firstName, String lastName, String company, String emailId,
                  int accountId, String apiKey, boolean confirmed, long devSuiteDownloadTime) {
     this(firstName,lastName,company,emailId,accountId,apiKey,confirmed,devSuiteDownloadTime,-1,"");
 
   }
+
+  /**
+   * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag,
+   * dev suite downloaded time, external payment Id and payment info provided time
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param emailId  EmailId
+   * @param company Company
+   * @param accountId  AccountID
+   * @param apiKey  apikey
+   * @param confirmed boolean flag that shows if user has confirmed registration
+   * @param devSuiteDownloadTime DevSuite downloaded time
+   * @param paymentInfoProvidedAt time when payment info was provided
+   * @param paymentAccountId external payment id
+   */
   public Account(String firstName, String lastName, String company, String emailId, int accountId,  String apiKey,
                  boolean confirmed, long devSuiteDownloadTime, long paymentInfoProvidedAt, String paymentAccountId) {
     this.firstName = firstName;
@@ -65,44 +111,88 @@ public class Account {
     this.paymentAccountId = paymentAccountId;
   }
 
+  /**
+   * Construct account object with firstName, lastName, emailId, company, accountId
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param company Company
+   * @param accountId  AccountID
+   */
   public Account(String firstName, String lastName, String company, int accountId) {
     this(firstName, lastName, company, "", accountId);
   }
 
-
+  /**
+   * Construct account object with firstName, lastName, emailId, company
+   * @param firstName firstName
+   * @param lastName lastName
+   * @param emailId  EmailId
+   * @param company Company
+   */
   public Account(String firstName, String lastName, String company, String emailId) {
     this(firstName, lastName, company, emailId, -1);
   }
 
-
+  /**
+   * Get first name of the account holder
+   * @return String firstName
+   */
   public String getFirstName() {
     return firstName;
   }
 
+  /**
+   * Get last name of the account holder
+   * @return String lastName
+   */
   public String getLastName() {
     return lastName;
   }
 
+  /**
+   * Get Company of the account holder
+   * @return String company
+   */
   public String getCompany() {
     return company;
   }
 
+  /**
+   * Get EmailId of the account holder
+   * @return String emailId
+   */
   public String getEmailId() {
     return emailId;
   }
 
+  /**
+   * Get Account ID
+   * @return account id
+   */
   public int getAccountId() {
     return accountId;
   }
 
+  /**
+   * Get APIKey of the account
+   * @return  apiKey
+   */
   public String getApiKey() {
     return apiKey;
   }
 
+  /**
+   * Get Id in the external payment system
+   * @return payment ID
+   */
   public String getPaymentAccountId() {
     return paymentAccountId;
   }
 
+  /**
+   * Serialize account into json object. The field names will be lowercase with underscores where captialized
+   * @return Json serialized String representing account
+   */
   @Override
   public String toString() {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
