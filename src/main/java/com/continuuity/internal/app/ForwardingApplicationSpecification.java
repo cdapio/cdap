@@ -4,6 +4,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 
 import java.util.Map;
@@ -47,5 +48,10 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, ProcedureSpecification> getProcedures() {
     return delegate.getProcedures();
+  }
+
+  @Override
+  public Map<String, HadoopMapReduceJobSpecification> getMapReduceJobs() {
+    return delegate.getMapReduceJobs();
   }
 }

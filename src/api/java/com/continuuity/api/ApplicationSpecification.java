@@ -10,11 +10,14 @@ import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
+import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.api.DefaultApplicationSpecification;
 import com.continuuity.internal.api.Preconditions;
 import com.continuuity.internal.api.flow.DefaultFlowSpecification;
+import com.continuuity.internal.api.batch.hadoop.DefaultHadoopMapReduceJobSpecification;
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 
 import java.util.HashMap;
@@ -60,6 +63,12 @@ public interface ApplicationSpecification {
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
+   * @return An immutable {@link Map} from {@link HadoopMapReduceJobSpecification} name to
+   *         {@link HadoopMapReduceJobSpecification}
+   */
+  Map<String, HadoopMapReduceJobSpecification> getMapReduceJobs();
+
+  /**
    * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link ApplicationSpecification}.
@@ -95,6 +104,13 @@ public interface ApplicationSpecification {
      * Map from procedure name to {@link ProcedureSpecification} for all procedures defined in this application.
      */
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
+
+    /**
+     * Map from {@link HadoopMapReduceJobSpecification} name to {@link HadoopMapReduceJobSpecification} for all
+     * Hadoop mapreduce jobs defined in this application
+     */
+    private final Map<String, HadoopMapReduceJobSpecification> mapReduceJobs =
+      new HashMap<String, HadoopMapReduceJobSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -391,13 +407,25 @@ public interface ApplicationSpecification {
      * Class for proceeding to next configuration step after {@link Procedure} configuration is completed.
      */
     public interface AfterProcedure {
-
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
        *
        * @return A new {@link ApplicationSpecification}.
        */
+      @Deprecated
       ApplicationSpecification build();
+
+      /**
+       * After {@link Procedure}s were added the next step is to add batch jobs
+       * @return an instance of {@link BatchAdder}
+       */
+      BatchAdder withBatch();
+
+      /**
+       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added
+       * @return an instance of {@link AfterBatch}
+       */
+      AfterBatch noBatch();
     }
 
     /**
@@ -422,9 +450,84 @@ public interface ApplicationSpecification {
        * Defines a builder for {@link FlowSpecification}
        * @return An instance of {@link FlowSpecification}
        */
+      @Deprecated
       @Override
       public ApplicationSpecification build() {
-        return new DefaultApplicationSpecification(name, description, streams, dataSets, flows, procedures);
+        return new DefaultApplicationSpecification(name, description, streams, dataSets,
+                                                   flows, procedures, mapReduceJobs);
+      }
+
+      /**
+       * After {@link Procedure}s were added the next step is to add batch jobs
+       * @return an instance of {@link BatchAdder}
+       */
+      @Override
+      public BatchAdder withBatch() {
+        return new MoreBatch();
+      }
+
+      /**
+       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added
+       * @return an instance of {@link AfterBatch}
+       */
+      @Override
+      public AfterBatch noBatch() {
+        return new MoreBatch();
+      }
+    }
+
+    /**
+     * Defines interface for adding batch jobs to the application
+     */
+    public interface BatchAdder {
+      /**
+       * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
+       * Hadoop mapreduce APIs.
+       * @param hadoopMapReduceJob job to add
+       * @return an instance of {@link MoreBatch}
+       */
+      MoreBatch add(HadoopMapReduceJob hadoopMapReduceJob);
+    }
+
+    /**
+     * Defines interface for proceeding to the next step after adding batch jobs to the application
+     */
+    public interface AfterBatch {
+      /**
+       * Builds the {@link ApplicationSpecification} based on what is being configured.
+       *
+       * @return A new {@link ApplicationSpecification}.
+       */
+      ApplicationSpecification build();
+    }
+
+    /**
+     * Class for adding more batch jobs to the application
+     */
+    public final class MoreBatch implements BatchAdder, AfterBatch {
+      /**
+       * Builds the {@link ApplicationSpecification} based on what is being configured.
+       *
+       * @return A new {@link ApplicationSpecification}.
+       */
+      @Override
+      public ApplicationSpecification build() {
+        return new DefaultApplicationSpecification(name, description, streams, dataSets,
+                                                   flows, procedures, mapReduceJobs);
+      }
+
+      /**
+       * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
+       * Hadoop mapreduce APIs.
+       * @param hadoopMapReduceJob job to add
+       * @return an instance of {@link MoreBatch}
+       */
+      @Override
+      public MoreBatch add(HadoopMapReduceJob hadoopMapReduceJob) {
+        Preconditions.checkArgument(hadoopMapReduceJob != null, "HadoopMapReduceJob cannot be null.");
+        HadoopMapReduceJobSpecification spec = new DefaultHadoopMapReduceJobSpecification(hadoopMapReduceJob);
+        mapReduceJobs.put(spec.getName(), spec);
+        return this;
       }
     }
 

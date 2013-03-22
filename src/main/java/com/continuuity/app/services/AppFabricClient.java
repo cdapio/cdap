@@ -44,6 +44,7 @@ public class AppFabricClient {
   private final String APPLICATION_LONG_OPT_ARG = "application";
   private final String PROCEDURE_LONG_OPT_ARG = "procedure";
   private final String FLOW_LONG_OPT_ARG = "flow";
+  private final String MAPREDUCE_LONG_OPT_ARG = "mapreduce";
   private final String HOSTNAME_LONG_OPT_ARG = "host";
   private final String APIKEY_LONG_OPT_ARG = "apikey";
 
@@ -51,6 +52,7 @@ public class AppFabricClient {
   private String application = null;
   private String procedure = null;
   private String flow = null;
+  private String mapReduceJob = null;
   private String hostname = null;
   private String authToken = null;
 
@@ -94,8 +96,11 @@ public class AppFabricClient {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
-        }
-        else {
+        } else if (this.mapReduceJob != null) {
+          identifier = new FlowIdentifier("developer", application, this.mapReduceJob, 1);
+          identifier.setType(EntityType.MAPREDUCE);
+          System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduceJob, this.application));
+        } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Starting procedure %s for application %s ",
@@ -114,8 +119,12 @@ public class AppFabricClient {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Stopping flow %s for application %s ",this.flow, this.application));
-        }
-        else {
+        } else if (this.mapReduceJob != null) {
+          identifier = new FlowIdentifier("developer", application, this.mapReduceJob, 1);
+          identifier.setType(EntityType.MAPREDUCE);
+          System.out.println(String.format("Stopping mapreduce job %s for application %s ",
+            this.mapReduceJob, this.application));
+        } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
           System.out.println(String.format("Stopping procedure %s for application %s ",
@@ -189,7 +198,8 @@ public class AppFabricClient {
     options.addOption("p",PROCEDURE_LONG_OPT_ARG, true, "Procedure Id.");
     options.addOption("h",HOSTNAME_LONG_OPT_ARG, true, "Hostname to push the application to.");
     options.addOption("k",APIKEY_LONG_OPT_ARG, true, "Apikey of the account.");
-    options.addOption("f",FLOW_LONG_OPT_ARG, true, "Procedure Id.");
+    options.addOption("f",FLOW_LONG_OPT_ARG, true, "Flow Id.");
+    options.addOption("m",MAPREDUCE_LONG_OPT_ARG, true, "MapReduce job Id.");
 
     CommandLine commandLine = null;
 
@@ -209,33 +219,42 @@ public class AppFabricClient {
       if ("start".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) || commandLine.hasOption(FLOW_LONG_OPT_ARG) ,
-          "start command should have procedure or flow argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+          "start command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
+        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
       }
       if ("stop".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) || commandLine.hasOption(FLOW_LONG_OPT_ARG) ,
-          "stop command should have procedure or flow argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+          "stop command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
+        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
       }
       if ("status".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
           "application argument");
-        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) || commandLine.hasOption(FLOW_LONG_OPT_ARG) ,
-                                    "status command should have procedure or flow argument");
+        Preconditions.checkArgument(commandLine.hasOption(PROCEDURE_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(FLOW_LONG_OPT_ARG) ||
+                                    commandLine.hasOption(MAPREDUCE_LONG_OPT_ARG),
+                                    "status command should have procedure or flow or mapreduce argument");
 
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
+        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
       }
       if ("promote".equals(sentCommand)) {
@@ -269,9 +288,9 @@ public class AppFabricClient {
 
     out.println("Usage:");
     out.println("  app-fabric-client deploy  --archive <filename>");
-    out.println("  app-fabric-client start   --application <id> ( --flow <id> | --procedure <id>)");
-    out.println("  app-fabric-client stop    --application <id> ( --flow <id> | --procedure <id>)");
-    out.println("  app-fabric-client status  --application <id> ( --flow <id> | --procedure <id>)");
+    out.println("  app-fabric-client start   --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  app-fabric-client stop    --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
+    out.println("  app-fabric-client status  --application <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)");
     out.println("  app-fabric-client promote --application <id> --host <hostname> --apikey <key>");
 
     out.println("Options:");
@@ -279,6 +298,7 @@ public class AppFabricClient {
     out.println("  --application <id> \t Application Id.");
     out.println("  --flow <id> \t\t Flow id of the application.");
     out.println("  --procedure <id> \t Procedure of in the application.");
+    out.println("  --mapreduce <id> \t MapReduce job of in the application.");
     out.println("  --host <hostname> \t Hostname to push the application to.");
     out.println("  --apikey <key> \t Apikey of the account.");
   }

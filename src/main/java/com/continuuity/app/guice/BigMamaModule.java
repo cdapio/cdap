@@ -4,6 +4,7 @@
 
 package com.continuuity.app.guice;
 
+import com.continuuity.internal.app.runtime.batch.hadoop.MapReduceRuntimeService;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -28,8 +29,10 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SmartTransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.app.runtime.batch.hadoop.inmemory.MiniYarnMapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
+import com.continuuity.internal.app.runtime.batch.hadoop.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
@@ -86,11 +89,15 @@ public class BigMamaModule extends AbstractModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
     // Bind runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
+
+    // Bind MapReduce runtime service
+    bind(MapReduceRuntimeService.class).to(MiniYarnMapReduceRuntimeService.class).in(Scopes.SINGLETON);
 
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
 

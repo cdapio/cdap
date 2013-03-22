@@ -15,7 +15,7 @@ public interface ProgramRunnerFactory {
     FLOW,
     FLOWLET,
     PROCEDURE,
-    BATCH
+    MAPREDUCE
   }
 
   ProgramRunner create(Type programType);
