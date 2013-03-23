@@ -5,7 +5,7 @@ import com.continuuity.app.runtime.ProgramController;
 /**
  * Base implementation of ProgramController.Listener that does nothing on any its method invocation.
  */
-public abstract class ListenerBase implements ProgramController.Listener {
+public abstract class AbstractListener implements ProgramController.Listener {
 
   @Override
   public void init(ProgramController.State currentState) {

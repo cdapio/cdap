@@ -41,13 +41,13 @@ public interface HadoopMapReduceJobSpecification {
   Map<String, String> getArguments();
 
   /**
-   * @return name of the dataset to be used as output of mapreduce job or <tt>null</tt> if no dataset is used as output
+   * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output
    *         destination
    */
   String getOutputDataSet();
 
   /**
-   * @return name of the dataset to be used as input of mapreduce job or <tt>null</tt> if no dataset is used as input
+   * @return name of the dataset to be used as input of mapreduce job or {@code null} if no dataset is used as input
    *         source
    */
   String getInputDataSet();
@@ -124,7 +124,8 @@ public interface HadoopMapReduceJobSpecification {
       }
 
       /**
-       * Specifies which dataset to use as an input source for mapreduce job.
+       * Specifies which dataset to use as an input source for mapreduce job. Automatically adds dataset to the list of
+       * datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.
        * <p>
        *   Usually, in this case whole dataset will be fed into mapreduce job. Alternatively, you can specify the
        *   dataset (and its data selection) to be fed into mapreduce job using
@@ -141,7 +142,8 @@ public interface HadoopMapReduceJobSpecification {
       }
 
       /**
-       * Specifies which dataset to use as an output destination of mapreduce job.
+       * Specifies which dataset to use as an output destination of mapreduce job. Automatically adds dataset to the
+       * list of datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.
        * @param dataSet name of the dataset
        * @return an instance of {@link AfterDescription}
        */
