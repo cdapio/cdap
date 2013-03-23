@@ -106,7 +106,7 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    mapReduceRuntimeService.startUp();
+    mapReduceRuntimeService.startAndWait();
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -120,11 +120,11 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stop(true);
-      mapReduceRuntimeService.shutDown();
+      mapReduceRuntimeService.startAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
-      appFabricServer.startAndWait();
+      appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
       overlordCollection.stop(true);
     } catch (Exception e) {
