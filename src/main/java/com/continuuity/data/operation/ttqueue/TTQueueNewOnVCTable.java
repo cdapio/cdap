@@ -831,7 +831,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setActiveEntryTries(queueState.getActiveEntryTries() + 1);
           readEntries(consumer, config, queueState, readPointer, Collections.singletonList(queueState.getActiveEntryId()));
           // Set the active entry as the current entry
-          queueState.getCachedEntries().getNext();
+          if(queueState.getCachedEntries().hasNext()) {
+            queueState.getCachedEntries().getNext();
+          }
         } else {
           // TODO: what do we do with the active entry?
           if(LOG.isTraceEnabled()) {

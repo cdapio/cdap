@@ -3,6 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -18,6 +19,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
@@ -220,8 +222,14 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
 
     // now the first 9 entries should have been physically evicted!
+    // since the 9th entry does not exist anymore, exception will be thrown
+    try {
     result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
-    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
+    } catch (OperationException e) {
+      assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
+      result = null;
+    }
+    assertNull(result);
     result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
     assertEquals(9, Bytes.toInt(result.getEntry().getData()));
 
@@ -235,10 +243,13 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     assertTrue(queue.dequeue(consumer1, dirtyReadPointer).isEmpty());
 
     // Now 10th entry should be evicted too!
+    try {
     result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
-    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
-
-    assertFalse(true); // TODO: fix this test case after Mario's fix
+    } catch (OperationException e) {
+      assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
+      result = null;
+    }
+    assertNull(result);
   }
 
   @Test

@@ -10,7 +10,6 @@ import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
 
 import com.google.common.collect.Sets;
-import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -254,6 +253,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         byte typePrefix=value[0];
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
+          fastForwardToNextRow=true;
           map.put(column, trueValue);
           deleted.clear(); // necessary?
         }
