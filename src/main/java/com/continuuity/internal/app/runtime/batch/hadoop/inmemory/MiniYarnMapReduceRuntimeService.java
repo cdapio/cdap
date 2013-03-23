@@ -14,6 +14,7 @@ import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputFor
 import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputOutputFormatHelper;
 import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetOutputFormat;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -25,12 +26,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Runs mapreduce job using {@link MiniMRYarnCluster}
  */
-public class MiniYarnMapReduceRuntimeService implements MapReduceRuntimeService {
+public class MiniYarnMapReduceRuntimeService extends AbstractIdleService implements MapReduceRuntimeService {
   private static final Logger LOG = LoggerFactory.getLogger(MiniYarnMapReduceRuntimeService.class);
 
   private final MiniMRYarnCluster mrCluster;
   private final org.apache.hadoop.conf.Configuration conf;
-  private boolean started = false;
 
   @Inject
   public MiniYarnMapReduceRuntimeService() {
@@ -42,24 +42,18 @@ public class MiniYarnMapReduceRuntimeService implements MapReduceRuntimeService 
   public void startUp() {
     mrCluster.init(conf);
     mrCluster.start();
-    started = true;
   }
 
   @Override
   public void shutDown() {
     mrCluster.stop();
-    started = false;
   }
 
   @Override
   public Cancellable submit(final HadoopMapReduceJob job, HadoopMapReduceJobSpecification spec,
                      Location jobJarLocation, BasicBatchContext context, final JobFinishCallback callback)
     throws Exception {
-    // todo
-//    if (!started) {
-//      throw new IllegalStateException("MiniYarnMapReduceRuntimeService is not running. Start it first by invoking" +
-//                                        " startUp() before submitting jobs.");
-//    }
+    // note: we don't check if mrCluster is started because we don't start it in unit-tests...
 
     final Job jobConf = Job.getInstance(conf);
     final BasicHadoopMapReduceJobContext hadoopMapReduceJobContext =

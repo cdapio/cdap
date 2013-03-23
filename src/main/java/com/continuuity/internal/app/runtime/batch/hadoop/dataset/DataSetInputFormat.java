@@ -19,12 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataSetInputFormat extends InputFormat<byte[], Object> {
-  public static final String INPUT_DATASET_CLASS = "input.dataset.class";
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 
   public static void setInput(Job job, DataSet dataSet) {
     job.setInputFormatClass(DataSetInputFormat.class);
-    job.getConfiguration().set(INPUT_DATASET_CLASS, dataSet.getClass().getCanonicalName());
     job.getConfiguration().set(DataSetInputFormat.INPUT_DATASET_SPEC, new Gson().toJson(dataSet.configure()));
   }
 

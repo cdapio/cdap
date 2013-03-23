@@ -23,26 +23,20 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
-import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.runtime.DefaultProgramOptions;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.runtime.FlowTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -59,7 +53,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-  private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
   private static Injector injector;
   private static CConfiguration configuration;
 
@@ -71,20 +64,6 @@ public class MapReduceProgramRunnerTest {
 
     injector = Guice.createInjector(new DataFabricLevelDBModule(configuration),
                                              new BigMamaModule(configuration));
-  }
-
-  @Before
-  public void before() throws Exception {
-    injector.getInstance(DiscoveryService.class).startAndWait();
-    // todo
-//    injector.getInstance(MapReduceRuntimeService.class).startUp();
-  }
-
-  @After
-  public void after() {
-    // todo
-//    injector.getInstance(MapReduceRuntimeService.class).shutDown();
-    injector.getInstance(DiscoveryService.class).stop();
   }
 
   @Test
@@ -184,7 +163,7 @@ public class MapReduceProgramRunnerTest {
     final Program program = getProgram(app, programClass);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
 
-    ProgramController controller = runner.run(program, new DefaultProgramOptions(program));
+    ProgramController controller = runner.run(program, new SimpleProgramOptions(program));
     while (controller.getState() == ProgramController.State.ALIVE) {
       TimeUnit.SECONDS.sleep(1);
     }

@@ -15,23 +15,25 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 
 public class DataSetOutputFormat extends OutputFormat {
-  public static final String OUTPUT_DATASET_CLASS = "output.dataset.class";
   public static final String OUTPUT_DATASET_SPEC = "output.dataset.spec";
 
   public static void setOutput(Job job, DataSet dataSet) {
     job.setOutputFormatClass(DataSetOutputFormat.class);
-    job.getConfiguration().set(OUTPUT_DATASET_CLASS, dataSet.getClass().getCanonicalName());
     job.getConfiguration().set(OUTPUT_DATASET_SPEC, new Gson().toJson(dataSet.configure()));
   }
 
   @Override
   public RecordWriter getRecordWriter(final TaskAttemptContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    DataSetSpecification spec = new Gson().fromJson(conf.get(OUTPUT_DATASET_SPEC), DataSetSpecification.class);
+    DataSetSpecification spec = getOutputDataSetSpec(conf);
     BatchWritable dataset =
       (BatchWritable) DataSetInputOutputFormatHelper.getDataSet(conf, spec);
 
     return new DataSetRecordWriter(dataset);
+  }
+
+  private DataSetSpecification getOutputDataSetSpec(Configuration conf) {
+    return new Gson().fromJson(conf.get(OUTPUT_DATASET_SPEC), DataSetSpecification.class);
   }
 
   @Override

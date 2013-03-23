@@ -50,13 +50,8 @@ public class BasicHadoopMapReduceJobContext implements HadoopMapReduceJobContext
   }
 
   @Override
-  public String getJobRunId() {
-    return runId.getId();
-  }
-
-  @Override
-  public Object getHadoopJobConf() {
-    return job;
+  public <T> T getHadoopJobConf() {
+    return (T) job;
   }
 
   @Override

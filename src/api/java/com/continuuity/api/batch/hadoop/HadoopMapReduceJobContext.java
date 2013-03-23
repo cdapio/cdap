@@ -41,9 +41,4 @@ public interface HadoopMapReduceJobContext {
    * @param dataset output dataset
    */
   void setOutput(BatchWritable dataset);
-
-  /**
-   * @return unique id of this mapreduce job run.
-   */
-  String getJobRunId();
 }

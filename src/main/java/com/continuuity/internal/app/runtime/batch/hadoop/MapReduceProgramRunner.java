@@ -16,9 +16,9 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.base.Cancellable;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.ListenerBase;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.continuuity.internal.app.runtime.batch.BasicBatchContext;
@@ -89,13 +89,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // using callback to stop controller when mapreduce job is finished
           // (also to finish transaction, but that might change after integration with "long running transactions")
                                        new MapReduceRuntimeService.JobFinishCallback() {
-          private MapReduceProgramController programController = controller;
-
           @Override
           public void onFinished(boolean success) {
-            if (programController != null) {
-              programController.stop();
-            }
+            controller.stop();
             try {
               if (success) {
                 txAgent.finish();
@@ -109,7 +105,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         });
 
       // adding listener which stops mapreduce job when controller stops.
-      controller.addListener(new ListenerBase() {
+      controller.addListener(new AbstractListener() {
         @Override
         public void stopping() {
           LOG.info("Stopping mapreduce job: " + context);
