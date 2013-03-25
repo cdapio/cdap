@@ -36,33 +36,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
 
-  /*
-  for each queue (global):
-    global entry id counter for newest (highest) entry id, incremented during enqueue
-    row-key        | column  | value
-    <queueName>10I | 10I     | <entryId>
-
-    data and meta data (=entryState) for each entry (together in one row per entry)
-    (GLOBAL_DATA_PREFIX)
-    row-key                 | column  | value
-    <queueName>20D<entryId> | 20D     | <data>
-                            | 10M     | <entryState>
-                            | 30H     | <header data>
-
-  for each group of consumers (= each group of flowlet instances):
-    group read pointer for highest entry id processed by group of consumers
-    row-key                 | column  | value
-    <queueName>10I<groupId> | 10I     | <entryId>
-
-  for each consumer(=flowlet instance)
-    state of entry ids processed by consumer (one column per entry id), current active entry and consumer read pointer
-    (CONSUMER_META_PREFIX)
-    row-key                             | column           | value
-    <queueName>40C<groupId><consumerId> | 10A              | <entryId>
-                                        | 20C              | <crash retries for active entry>
-                                        | 30I              | <entryId>
-   */
-
   // Row prefix names
   // Row prefix for column GLOBAL_ENTRYID_COUNTER
   static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
@@ -75,9 +48,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
   // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. This is a unique for a queue.
+  // GLOBAL_ENTRYID_COUNTER contains the highest valid entryId for the queue
   static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //row <queueName>10I, column 10I
 
   // GROUP_READ_POINTER is a group counter used by consumers of a FifoDequeueStrategy group to claim queue entries.
+  // GROUP_READ_POINTER contains the higest entryId claimed by consumers of a FifoDequeueStrategy group
   static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
 
   // Columns for row = GLOBAL_DATA_PREFIX
