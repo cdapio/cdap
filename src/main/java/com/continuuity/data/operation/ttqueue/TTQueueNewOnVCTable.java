@@ -63,7 +63,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                         | 30I              | <entryId>
    */
 
-  // Row prefix names and flags
+  // Row prefix names
   static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
   static final byte [] GLOBAL_DATA_PREFIX = {20, 'D'};   //row <queueName>20D
   static final byte [] GLOBAL_EVICT_META_PREFIX = {30, 'M'};   //row <queueName>30M
@@ -343,12 +343,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // We are assuming here that for a given consumer all entries up to min(ACTIVE_ENTRY-1, CONSUMER_READ_POINTER-1) can be evicted.
     // The min of such evict entry is determined across all consumers across all groups, and entries till the min evict entry are removed.
 
+    // One consumer per consumer group will do the determination of min group evict entry for each group.
+    // Finally, one consumer across all groups will get the least of min group evict entries for all groups and does eviction.
+
     // NOTE: Using min(ACTIVE_ENTRY-1, CONSUMER_READ_POINTER-1) to determine evict entry removes the need of
     // storing/reading the finalized entry for each consumer.
     // However in this approach the last entry of each consumer may not get evicted.
     // This limitation should be okay since the number of such entries will be small (less than or equal to the number of consumers).
 
-    // A simple leader election for selecting consumer to run eviction - only consumers with id 0 (one per group)
+    // A simple leader election for selecting consumer to run eviction for group - only consumers with id 0 (one per group)
     if(consumer.getInstanceId() != 0) {
       return;
     }
@@ -985,13 +988,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
+  /**
+   *  In FifoDequeueStrategy, the next entries are claimed by a consumer by incrementing a group-shared counter (group read pointer) atomically.
+   *  The entries are claimed in batches, the claimed range is recorded in CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END columns
+   */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
+      // Read CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END, and store them in queueState
       readQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
       readQueueStateStore.addColumnName(CLAIMED_ENTRY_END);
 
-      // Read claimed entry Ids
       QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
@@ -1006,7 +1013,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                 ReadPointer readPointer) throws OperationException {
       // If a claimed entry is now being dequeued then increment CLAIMED_ENTRY_BEGIN
       if(queueState.getActiveEntryId() == queueState.getClaimedEntryBegin()) {
         // If reached end of claimed entries, then reset the claimed ids
@@ -1017,6 +1025,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setClaimedEntryBegin(queueState.getClaimedEntryBegin() + 1);
         }
       }
+
+      // Add CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END to writeQueueStateStore so that they can be written to underlying storage by base class saveDequeueState
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
       writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getClaimedEntryBegin()));
 
@@ -1027,10 +1037,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
+    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                       ReadPointer readPointer) throws OperationException {
+      // Determine the next batch of entries that can be dequeued by this consumer
       List<Long> newEntryIds = new ArrayList<Long>();
 
-      // If claimed entries exist, return them
+      // If claimed entries exist, return them. This can happen when the queue cache is lost due to consumer crash or other reasons
       long claimedEntryIdBegin = queueState.getClaimedEntryBegin();
       long claimedEntryIdEnd = queueState.getClaimedEntryEnd();
       if(claimedEntryIdBegin != INVALID_ENTRY_ID && claimedEntryIdEnd != INVALID_ENTRY_ID &&
@@ -1041,13 +1053,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return newEntryIds;
       }
 
+      // Else claim new queue entries
       final long batchSize = getBatchSize(config);
-
-      // Else claim new queue entries to process
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
         // TODO: use raw Get instead of the workaround of incrementing zero
         // TODO: move counters into oracle
+        // Fetch the group read pointer
         long groupReadPointetr = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 0);
         if(groupReadPointetr + batchSize >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
@@ -1072,6 +1084,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           curBatchSize = 1;
         }
 
+        // Claim the entries by incrementing GROUP_READ_POINTER
         long endEntryId = table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
                                                        GROUP_READ_POINTER, curBatchSize);
         long startEntryId = endEntryId - curBatchSize + 1;
