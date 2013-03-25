@@ -55,7 +55,7 @@ public class QueueEnqueue extends WriteOperation {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("queueName", Bytes.toString(this.queueName))
-        .add("entryh", this.entry)
+        .add("entry", this.entry)
         .toString();
   }
 
