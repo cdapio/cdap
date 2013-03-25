@@ -64,31 +64,52 @@ public class TTQueueNewOnVCTable implements TTQueue {
    */
 
   // Row prefix names
+  // Row prefix for column GLOBAL_ENTRYID_COUNTER
   static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
+  // Row prefix for columns containing queue entry
   static final byte [] GLOBAL_DATA_PREFIX = {20, 'D'};   //row <queueName>20D
+  // Row prefix for columns containing global eviction data
   static final byte [] GLOBAL_EVICT_META_PREFIX = {30, 'M'};   //row <queueName>30M
+  // Row prefix for columns containing consumer specific information
   static final byte [] CONSUMER_META_PREFIX = {40, 'C'}; //row <queueName>40C
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
-  static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //newest (highest) entry id per queue (global)
+  // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. This is a unique for a queue.
+  static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //row <queueName>10I, column 10I
+
+  // GROUP_READ_POINTER is a group counter used by consumers of a FifoDequeueStrategy group to claim queue entries.
+  static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
 
   // Columns for row = GLOBAL_DATA_PREFIX
+  // ENTRY_META contains the meta data for a queue entry, whether the entry is invalid or not.
   static final byte [] ENTRY_META = {10, 'M'}; //row  <queueName>20D<entryId>, column 10M
+  // ENTRY_DATA contains the queue entry.
   static final byte [] ENTRY_DATA = {20, 'D'}; //row  <queueName>20D<entryId>, column 20D
+  // ENTRY_HEADER contains the partitioning keys of a queue entry.
   static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
 
   // Columns for row = GLOBAL_EVICT_META_PREFIX
+  // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
+  // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
   static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
+  // GROUP_EVICT_ENTRY contains the entryId upto which the queue entries can be evicted for a group.
+  // It means all consumers in the group have acked until GROUP_EVICT_ENTRY
   static final byte [] GROUP_EVICT_ENTRY = {20, 'E'};     //row  <queueName>30M<groupId>, column 20E
 
-  static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
-
   // Columns for row = CONSUMER_META_PREFIX
+  // ACTIVE_ENTRY points to the entryId that is dequeued by a consumer, but not yet acked.
+  // Once the consumer acks the entry, ACTIVE_ENTRY is set to INVALID_ENTRY_ID until the consumer dequeues another entry.
   static final byte [] ACTIVE_ENTRY = {10, 'A'};              //row <queueName>40C<groupId><consumerId>, column 10A
+  // ACTIVE_ENTRY_CRASH_TRIES is used to keep track of the number of times the consumer crashed when processing the ACTIVE_ENTRY.
+  // A consumer is considered to have crashed every time it loses its cached state information, and the state has to be read from underlying storage.
   static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {20, 'C'};  //row <queueName>40C<groupId><consumerId>, column 20C
+  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the entry that the consumer is processing, or has processed.
   static final byte [] CONSUMER_READ_POINTER = {30, 'R'};     //row <queueName>40C<groupId><consumerId>, column 30R
+  // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
   static final byte [] CLAIMED_ENTRY_BEGIN = {40, 'B'};       //row <queueName>40C<groupId><consumerId>, column 40B
+  // CLAIMED_ENTRY_END is used by a consumer of FifoDequeueStrategy to specify the end entryId of the batch of entries claimed by it.
   static final byte [] CLAIMED_ENTRY_END = {50, 'E'};         //row <queueName>40C<groupId><consumerId>, column 50E
+  // LAST_EVICT_TIME_IN_SECS is the time when the last eviction was run by the consumer
   static final byte [] LAST_EVICT_TIME_IN_SECS = {60, 'T'};           //row <queueName>40C<groupId><consumerId>, column 60T
 
   static final long INVALID_ENTRY_ID = -1;
