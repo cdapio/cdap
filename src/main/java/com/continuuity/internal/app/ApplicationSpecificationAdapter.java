@@ -5,10 +5,10 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.SchemaTypeAdapter;
@@ -54,7 +54,7 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
                   .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
                   .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
-                  .registerTypeAdapter(HadoopMapReduceJobSpecification.class, new MapReduceJobSpecificationCodec())
+                  .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);

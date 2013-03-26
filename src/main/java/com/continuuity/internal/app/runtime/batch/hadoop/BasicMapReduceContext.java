@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.batch.hadoop;
 
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobContext;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduceContext;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
@@ -15,8 +15,8 @@ import java.util.List;
 /**
  *
  */
-public class BasicHadoopMapReduceJobContext implements HadoopMapReduceJobContext {
-  private final HadoopMapReduceJobSpecification spec;
+public class BasicMapReduceContext implements MapReduceContext {
+  private final MapReduceSpecification spec;
   private final BasicBatchContext batchContext;
   private final Job job;
   private final RunId runId;
@@ -25,8 +25,7 @@ public class BasicHadoopMapReduceJobContext implements HadoopMapReduceJobContext
   private List<Split> inputDataSelection;
   private BatchWritable outputDataset;
 
-  public BasicHadoopMapReduceJobContext(HadoopMapReduceJobSpecification spec, BasicBatchContext batchContext,
-                                        Job job, RunId runId) {
+  public BasicMapReduceContext(MapReduceSpecification spec, BasicBatchContext batchContext, Job job, RunId runId) {
     this.spec = spec;
     this.batchContext = batchContext;
     this.job = job;
@@ -45,7 +44,7 @@ public class BasicHadoopMapReduceJobContext implements HadoopMapReduceJobContext
   }
 
   @Override
-  public HadoopMapReduceJobSpecification getSpecification() {
+  public MapReduceSpecification getSpecification() {
     return spec;
   }
 

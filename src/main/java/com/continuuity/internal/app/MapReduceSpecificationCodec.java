@@ -4,8 +4,8 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
-import com.continuuity.internal.api.batch.hadoop.DefaultHadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
+import com.continuuity.internal.api.batch.hadoop.DefaultMapReduceSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -23,11 +23,11 @@ import java.util.Set;
 /**
  *
  */
-final class MapReduceJobSpecificationCodec implements JsonSerializer<HadoopMapReduceJobSpecification>,
-                                                     JsonDeserializer<HadoopMapReduceJobSpecification> {
+final class MapReduceSpecificationCodec implements JsonSerializer<MapReduceSpecification>,
+                                                     JsonDeserializer<MapReduceSpecification> {
 
   @Override
-  public JsonElement serialize(HadoopMapReduceJobSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
@@ -46,7 +46,7 @@ final class MapReduceJobSpecificationCodec implements JsonSerializer<HadoopMapRe
   }
 
   @Override
-  public HadoopMapReduceJobSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+  public MapReduceSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
@@ -61,7 +61,7 @@ final class MapReduceJobSpecificationCodec implements JsonSerializer<HadoopMapRe
     Map<String, String> arguments = context.deserialize(jsonObj.get("arguments"),
                                                         new TypeToken<Map<String, String>>(){}.getType());
 
-    return new DefaultHadoopMapReduceJobSpecification(className, name, description,
+    return new DefaultMapReduceSpecification(className, name, description,
                                                 inputDataSet, outputDataSet,
                                                 dataSets, arguments);
   }

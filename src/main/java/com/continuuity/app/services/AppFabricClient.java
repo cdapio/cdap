@@ -52,7 +52,7 @@ public class AppFabricClient {
   private String application = null;
   private String procedure = null;
   private String flow = null;
-  private String mapReduceJob = null;
+  private String mapReduce = null;
   private String hostname = null;
   private String authToken = null;
 
@@ -96,10 +96,10 @@ public class AppFabricClient {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Starting flow %s for application %s ",this.flow, this.application));
-        } else if (this.mapReduceJob != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduceJob, 1);
+        } else if (this.mapReduce != null) {
+          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
-          System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduceJob, this.application));
+          System.out.println(String.format("Starting mapreduce job %s for application %s ",this.mapReduce, this.application));
         } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
@@ -119,11 +119,11 @@ public class AppFabricClient {
           identifier = new FlowIdentifier("developer", application, this.flow, 1);
           identifier.setType(EntityType.FLOW);
           System.out.println(String.format("Stopping flow %s for application %s ",this.flow, this.application));
-        } else if (this.mapReduceJob != null) {
-          identifier = new FlowIdentifier("developer", application, this.mapReduceJob, 1);
+        } else if (this.mapReduce != null) {
+          identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
           System.out.println(String.format("Stopping mapreduce job %s for application %s ",
-            this.mapReduceJob, this.application));
+            this.mapReduce, this.application));
         } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);
           identifier.setType(EntityType.QUERY);
@@ -227,7 +227,7 @@ public class AppFabricClient {
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
-        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
+        this.mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
       }
       if ("stop".equals(sentCommand)) {
         Preconditions.checkArgument(commandLine.hasOption(APPLICATION_LONG_OPT_ARG), "status command should have " +
@@ -240,7 +240,7 @@ public class AppFabricClient {
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
-        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
+        this.mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
       }
       if ("status".equals(sentCommand)) {
@@ -254,7 +254,7 @@ public class AppFabricClient {
         this.application = commandLine.getOptionValue(APPLICATION_LONG_OPT_ARG);
         this.procedure = commandLine.getOptionValue(PROCEDURE_LONG_OPT_ARG);
         this.flow = commandLine.getOptionValue(FLOW_LONG_OPT_ARG);
-        this.mapReduceJob = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
+        this.mapReduce = commandLine.getOptionValue(MAPREDUCE_LONG_OPT_ARG);
 
       }
       if ("promote".equals(sentCommand)) {

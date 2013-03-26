@@ -4,20 +4,20 @@
 
 package com.continuuity.api;
 
+import com.continuuity.api.batch.hadoop.MapReduce;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.api.DefaultApplicationSpecification;
 import com.continuuity.internal.api.Preconditions;
+import com.continuuity.internal.api.batch.hadoop.DefaultMapReduceSpecification;
 import com.continuuity.internal.api.flow.DefaultFlowSpecification;
-import com.continuuity.internal.api.batch.hadoop.DefaultHadoopMapReduceJobSpecification;
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 
 import java.util.HashMap;
@@ -63,10 +63,10 @@ public interface ApplicationSpecification {
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
-   * @return An immutable {@link Map} from {@link HadoopMapReduceJobSpecification} name to
-   *         {@link HadoopMapReduceJobSpecification}
+   * @return An immutable {@link Map} from {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} name to
+   *         {@link com.continuuity.api.batch.hadoop.MapReduceSpecification}
    */
-  Map<String, HadoopMapReduceJobSpecification> getMapReduceJobs();
+  Map<String, MapReduceSpecification> getMapReduces();
 
   /**
    * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
@@ -106,11 +106,11 @@ public interface ApplicationSpecification {
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
-     * Map from {@link HadoopMapReduceJobSpecification} name to {@link HadoopMapReduceJobSpecification} for all
+     * Map from {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} name to {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} for all
      * Hadoop mapreduce jobs defined in this application
      */
-    private final Map<String, HadoopMapReduceJobSpecification> mapReduceJobs =
-      new HashMap<String, HadoopMapReduceJobSpecification>();
+    private final Map<String, MapReduceSpecification> mapReduces =
+      new HashMap<String, MapReduceSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -454,7 +454,7 @@ public interface ApplicationSpecification {
       @Override
       public ApplicationSpecification build() {
         return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                                   flows, procedures, mapReduceJobs);
+                                                   flows, procedures, mapReduces);
       }
 
       /**
@@ -483,10 +483,10 @@ public interface ApplicationSpecification {
       /**
        * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
        * Hadoop mapreduce APIs.
-       * @param hadoopMapReduceJob job to add
+       * @param mapReduce job to add
        * @return an instance of {@link MoreBatch}
        */
-      MoreBatch add(HadoopMapReduceJob hadoopMapReduceJob);
+      MoreBatch add(MapReduce mapReduce);
     }
 
     /**
@@ -513,20 +513,20 @@ public interface ApplicationSpecification {
       @Override
       public ApplicationSpecification build() {
         return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                                   flows, procedures, mapReduceJobs);
+                                                   flows, procedures, mapReduces);
       }
 
       /**
        * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
        * Hadoop mapreduce APIs.
-       * @param hadoopMapReduceJob job to add
+       * @param mapReduce job to add
        * @return an instance of {@link MoreBatch}
        */
       @Override
-      public MoreBatch add(HadoopMapReduceJob hadoopMapReduceJob) {
-        Preconditions.checkArgument(hadoopMapReduceJob != null, "HadoopMapReduceJob cannot be null.");
-        HadoopMapReduceJobSpecification spec = new DefaultHadoopMapReduceJobSpecification(hadoopMapReduceJob);
-        mapReduceJobs.put(spec.getName(), spec);
+      public MoreBatch add(MapReduce mapReduce) {
+        Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
+        MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
+        mapReduces.put(spec.getName(), spec);
         return this;
       }
     }

@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -64,11 +65,18 @@ public class MapReduceProgramRunnerTest {
 
     injector = Guice.createInjector(new DataFabricLevelDBModule(configuration),
                                              new BigMamaModule(configuration));
+
+    injector.getInstance(MapReduceRuntimeService.class).startAndWait();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    injector.getInstance(MapReduceRuntimeService.class).stopAndWait();
   }
 
   @Test
   public void testWordCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduceJob.class);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -82,7 +90,7 @@ public class MapReduceProgramRunnerTest {
     jobConfigTable.write(tb("inputPath"), tb(inputPath));
     jobConfigTable.write(tb("outputPath"), tb(outputDir.getPath()));
 
-    runProgram(app, AppWithMapReduceJob.ClassicWordCountJob.class);
+    runProgram(app, AppWithMapReduce.ClassicWordCount.class);
 
     File outputFile = outputDir.listFiles()[0];
     int lines = 0;
@@ -104,7 +112,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testTimeSeriesRecordsCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduceJob.class);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -117,7 +125,7 @@ public class MapReduceProgramRunnerTest {
     Thread.sleep(2);
 
     long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduceJob.AggregateTimeseriesByTagJob.class);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class);
     long stop = System.currentTimeMillis();
 
     Map<String, Long> expected = Maps.newHashMap();
@@ -159,14 +167,21 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass) throws Exception {
+    waitForCompletion(submit(app, programClass));
+  }
+
+  private void waitForCompletion(ProgramController controller) throws InterruptedException {
+    while (controller.getState() == ProgramController.State.ALIVE) {
+      TimeUnit.SECONDS.sleep(1);
+    }
+  }
+
+  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     final Program program = getProgram(app, programClass);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
 
-    ProgramController controller = runner.run(program, new SimpleProgramOptions(program));
-    while (controller.getState() == ProgramController.State.ALIVE) {
-      TimeUnit.SECONDS.sleep(1);
-    }
+    return runner.run(program, new SimpleProgramOptions(program));
   }
 
   private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
@@ -218,7 +233,7 @@ public class MapReduceProgramRunnerTest {
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opCtx));
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(new DataFabricImpl(opex, opCtx), proxy,
                                                                       getClass().getClassLoader());
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduceJob().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
 
     return dataSetInstantiator.getDataSet(tableName);
   }

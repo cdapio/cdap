@@ -5,14 +5,14 @@ import com.continuuity.common.metrics.AbstractCMetrcisBasedMetrics;
 /**
  * Metrics collector for MapReduce job
  */
-public class MapReduceJobMetrics extends AbstractCMetrcisBasedMetrics {
+public class MapReduceMetrics extends AbstractCMetrcisBasedMetrics {
 
-  public MapReduceJobMetrics(final String accountId, final String applicationId, final String mapReduceJobId,
-                             final String pid, final int instanceId) {
+  public MapReduceMetrics(final String accountId, final String applicationId, final String mapReduceId,
+                          final String pid, final int instanceId) {
     super(String.format("%s.%s.%s.%s.%d",
                         accountId,
                         applicationId,
-                        mapReduceJobId,
+                        mapReduceId,
                         pid,
                         instanceId));
   }

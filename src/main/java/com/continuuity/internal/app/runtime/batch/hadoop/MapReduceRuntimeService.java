@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.batch.hadoop;
 
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduce;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.base.Cancellable;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.runtime.batch.BasicBatchContext;
@@ -19,7 +19,7 @@ public interface MapReduceRuntimeService extends Service {
    * @param context runtime context
    * @throws Exception
    */
-  Cancellable submit(HadoopMapReduceJob job, HadoopMapReduceJobSpecification spec,
+  Cancellable submit(MapReduce job, MapReduceSpecification spec,
               Location jobJarLocation, BasicBatchContext context, JobFinishCallback callback) throws Exception;
 
   public static interface JobFinishCallback {

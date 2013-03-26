@@ -3,6 +3,10 @@
 
 <configuration>
     <property>
+        <name>mapreduce.framework.name</name>
+        <value>local</value>
+    </property>
+    <property>
         <name>mapreduce.jobtracker.address</name>
         <value>clocal</value>
         <description>

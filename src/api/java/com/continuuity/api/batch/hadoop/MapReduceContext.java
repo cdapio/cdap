@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Mapreduce job execution context.
  */
-public interface HadoopMapReduceJobContext {
+public interface MapReduceContext {
   /**
    * Given a name of dataset, returns an instance of {@link com.continuuity.api.data.DataSet}.
    * @param name of the {@link com.continuuity.api.data.DataSet}.
@@ -20,9 +20,9 @@ public interface HadoopMapReduceJobContext {
   <T extends DataSet> T getDataSet(String name);
 
   /**
-   * @return The specification used to configure this {@link HadoopMapReduceJob} instance.
+   * @return The specification used to configure this {@link MapReduce} instance.
    */
-  HadoopMapReduceJobSpecification getSpecification();
+  MapReduceSpecification getSpecification();
 
   /**
    * @return an instance of {@link org.apache.hadoop.mapreduce.Job} that used to submit the job to Hadoop cluster.

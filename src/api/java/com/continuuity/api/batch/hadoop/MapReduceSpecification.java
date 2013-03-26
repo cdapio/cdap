@@ -1,6 +1,6 @@
 package com.continuuity.api.batch.hadoop;
 
-import com.continuuity.internal.api.batch.hadoop.DefaultHadoopMapReduceJobSpecification;
+import com.continuuity.internal.api.batch.hadoop.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -9,34 +9,49 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * This class provides a specification of a mapreduce job. Instances of this class should be created via {@link Builder}
+ * class by invoking the {@link Builder#with()} method.
+ * <p>
+ *   Example:
+ * <pre>
+ * {@code
+ * MapReduceSpecification spec =
+ *     new MapReduceSpecification.Builder.with()
+ *                               .setName("AggregateMetricsByTag")
+ *                               .setDescription("Aggregates metrics values by tag")
+ *                               .useInputDataSet("metricsTable")
+ *                               .useOutputDataSet("aggregatesTable")
+ *                               .build();
+ * }
+ * </pre>
+ * </p>
  */
-public interface HadoopMapReduceJobSpecification {
+public interface MapReduceSpecification {
 
   /**
-   * @return Class name of the {@link HadoopMapReduceJob} class.
+   * @return Class name of the {@link MapReduce} class.
    */
   String getClassName();
 
   /**
-   * @return Name of the {@link HadoopMapReduceJob}
+   * @return Name of the {@link MapReduce}
    */
   String getName();
 
   /**
-   * @return Description to be associated with {@link HadoopMapReduceJob}
+   * @return Description to be associated with {@link MapReduce}
    */
   String getDescription();
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
-   *         are used by the {@link HadoopMapReduceJob}.
+   *         are used by the {@link MapReduce}.
    */
   Set<String> getDataSets();
 
   /**
    * @return An immutable map of arguments that was passed in when constructing the
-   *         {@link HadoopMapReduceJobSpecification}.
+   *         {@link MapReduceSpecification}.
    */
   Map<String, String> getArguments();
 
@@ -53,7 +68,7 @@ public interface HadoopMapReduceJobSpecification {
   String getInputDataSet();
 
   /**
-   * Builder for building {@link HadoopMapReduceJobSpecification}
+   * Builder for building {@link MapReduceSpecification}
    */
   static final class Builder {
     private String name;
@@ -64,7 +79,7 @@ public interface HadoopMapReduceJobSpecification {
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     /**
-     * Starts defining {@link HadoopMapReduceJobSpecification}
+     * Starts defining {@link MapReduceSpecification}
      * @return an instance of {@link NameSetter}
      */
     public static NameSetter with() {
@@ -77,7 +92,7 @@ public interface HadoopMapReduceJobSpecification {
     public final class NameSetter {
 
       /**
-       * Sets the name of the {@link HadoopMapReduceJob}
+       * Sets the name of the {@link MapReduce}
        * @param name of the mapreduce job.
        * @return instance of this {@link Builder}
        */
@@ -95,8 +110,8 @@ public interface HadoopMapReduceJobSpecification {
     public final class DescriptionSetter {
 
       /**
-       * Sets the description for this {@link HadoopMapReduceJob}
-       * @param description of the {@link HadoopMapReduceJob}
+       * Sets the description for this {@link MapReduce}
+       * @param description of the {@link MapReduce}
        * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
@@ -129,8 +144,8 @@ public interface HadoopMapReduceJobSpecification {
        * <p>
        *   Usually, in this case whole dataset will be fed into mapreduce job. Alternatively, you can specify the
        *   dataset (and its data selection) to be fed into mapreduce job using
-       *   {@link HadoopMapReduceJobContext#setInput(com.continuuity.api.data.batch.BatchReadable, java.util.List)} in
-       *   {@link HadoopMapReduceJob#beforeSubmit(HadoopMapReduceJobContext)}.
+       *   {@link MapReduceContext#setInput(com.continuuity.api.data.batch.BatchReadable, java.util.List)} in
+       *   {@link MapReduce#beforeSubmit(MapReduceContext)}.
        * </p>
        * @param dataSet name of the dataset
        * @return an instance of {@link AfterDescription}
@@ -155,7 +170,7 @@ public interface HadoopMapReduceJobSpecification {
 
       /**
        * Adds a map of arguments that would be available to the mapreduce job
-       * through the {@link HadoopMapReduceJobContext} at runtime.
+       * through the {@link MapReduceContext} at runtime.
        *
        * @param args The map of arguments.
        * @return An instance of {@link AfterDescription}.
@@ -166,10 +181,10 @@ public interface HadoopMapReduceJobSpecification {
       }
 
       /**
-       * @return build a {@link HadoopMapReduceJobSpecification}
+       * @return build a {@link MapReduceSpecification}
        */
-      public HadoopMapReduceJobSpecification build() {
-        return new DefaultHadoopMapReduceJobSpecification(name, description, inputDataSet, outputDataSet,
+      public MapReduceSpecification build() {
+        return new DefaultMapReduceSpecification(name, description, inputDataSet, outputDataSet,
                                                     dataSets.build(), arguments);
       }
     }

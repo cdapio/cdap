@@ -2,7 +2,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -77,7 +77,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     }
 
     // Iterate through MapReduceSpecification and generate program
-    for(HadoopMapReduceJobSpecification job : appSpec.getMapReduceJobs().values()) {
+    for(MapReduceSpecification job : appSpec.getMapReduces().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.MAPREDUCE.toString(), applicationName);
       Location jobAppDir = newOutputDir.append(name);
       if(! jobAppDir.exists()) {
