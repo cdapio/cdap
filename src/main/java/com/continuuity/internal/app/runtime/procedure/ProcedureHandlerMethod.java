@@ -58,7 +58,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
     procedure = new InstantiatorFactory(false).get(procedureType).create();
-    injectFields(procedure, procedureType, context);
+    context.injectFields(procedure);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
     // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
@@ -104,32 +104,6 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     } catch (Throwable t) {
       context.getSystemMetrics().counter("query.failed", 1);
       throw Throwables.propagate(t);
-    }
-  }
-
-  private void injectFields(Procedure procedure, TypeToken<? extends Procedure> procedureType,
-                            BasicProcedureContext context) {
-
-    // Walk up the hierarchy of procedure class.
-    for (TypeToken<?> type : procedureType.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Inject DataSet and Metrics fields.
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject DataSet
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset != null && !dataset.value().isEmpty()) {
-            setField(procedure, field, context.getDataSet(dataset.value()));
-          }
-          continue;
-        }
-        if (Metrics.class.equals(field.getType())) {
-          setField(procedure, field, context.getMetrics());
-        }
-      }
     }
   }
 

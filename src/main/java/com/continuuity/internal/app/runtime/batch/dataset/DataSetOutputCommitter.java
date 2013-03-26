@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop.dataset;
+package com.continuuity.internal.app.runtime.batch.dataset;
 
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;

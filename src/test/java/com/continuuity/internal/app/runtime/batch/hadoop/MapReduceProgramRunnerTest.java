@@ -27,6 +27,7 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;

@@ -62,7 +62,7 @@ public final class FlowletDefinition {
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
     try {
-      inspectFlowlet(flowlet.getClass(),datasets, inputTypes, outputTypes);
+      inspectFlowlet(flowlet.getClass(), datasets, inputTypes, outputTypes);
     } catch (UnsupportedTypeException e) {
       throw new IllegalArgumentException(e);
     }

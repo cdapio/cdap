@@ -4,8 +4,8 @@
 
 package com.continuuity.api;
 
-import com.continuuity.api.batch.hadoop.MapReduce;
-import com.continuuity.api.batch.hadoop.MapReduceSpecification;
+import com.continuuity.api.batch.MapReduce;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.Stream;
@@ -16,7 +16,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.internal.api.DefaultApplicationSpecification;
 import com.continuuity.internal.api.Preconditions;
-import com.continuuity.internal.api.batch.hadoop.DefaultMapReduceSpecification;
+import com.continuuity.internal.api.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.api.flow.DefaultFlowSpecification;
 import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 
@@ -63,8 +63,8 @@ public interface ApplicationSpecification {
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} name to
-   *         {@link com.continuuity.api.batch.hadoop.MapReduceSpecification}
+   * @return An immutable {@link Map} from {@link com.continuuity.api.batch.MapReduceSpecification} name to
+   *         {@link com.continuuity.api.batch.MapReduceSpecification}
    */
   Map<String, MapReduceSpecification> getMapReduces();
 
@@ -106,7 +106,7 @@ public interface ApplicationSpecification {
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
-     * Map from {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} name to {@link com.continuuity.api.batch.hadoop.MapReduceSpecification} for all
+     * Map from {@link com.continuuity.api.batch.MapReduceSpecification} name to {@link com.continuuity.api.batch.MapReduceSpecification} for all
      * Hadoop mapreduce jobs defined in this application
      */
     private final Map<String, MapReduceSpecification> mapReduces =

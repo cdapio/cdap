@@ -8,7 +8,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -21,7 +20,6 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -154,7 +152,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
       // Inject DataSet, OutputEmitter, Metric fields
-      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType, flowletContext,
+      flowletContext.injectFields(flowlet);
+      OutputSubmitter outputSubmitter = injectFields(flowlet, flowletType,
                                                      outputEmitterFactory(flowletName, flowletContext,
                                                                           flowletContext.getQueueProducer(),
                                                                           queueSpecs));
@@ -233,7 +232,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
    */
   private OutputSubmitter injectFields(Flowlet flowlet,
                                        TypeToken<? extends Flowlet> flowletType,
-                                       BasicFlowletContext flowletContext,
                                        OutputEmitterFactory outputEmitterFactory) {
 
     ImmutableList.Builder<OutputSubmitter> outputSubmitters = ImmutableList.builder();
@@ -244,16 +242,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
         break;
       }
 
-      // Inject DataSet, OutputEmitter and Metrics fields.
+      // Inject OutputEmitter fields.
       for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject DataSet
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset != null && !dataset.value().isEmpty()) {
-            setField(flowlet, field, flowletContext.getDataSet(dataset.value()));
-          }
-          continue;
-        }
         // Inject OutputEmitter
         if (OutputEmitter.class.equals(field.getType())) {
           TypeToken<?> outputType = TypeToken.of(((ParameterizedType)field.getGenericType())
@@ -266,10 +256,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
           if (outputEmitter instanceof OutputSubmitter) {
             outputSubmitters.add((OutputSubmitter)outputEmitter);
           }
-          continue;
-        }
-        if (Metrics.class.equals(field.getType())) {
-          setField(flowlet, field, flowletContext.getMetrics());
         }
       }
     }

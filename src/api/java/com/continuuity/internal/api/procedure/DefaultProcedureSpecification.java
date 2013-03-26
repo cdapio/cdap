@@ -1,14 +1,11 @@
 package com.continuuity.internal.api.procedure;
 
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.internal.api.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +31,8 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
 
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
-    this.dataSets = inspectDataSets(procedure, ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.dataSets = ProgramSpecificationHelper.inspectDataSets(procedure.getClass(),
+                                    ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
   }
 
@@ -70,29 +68,5 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   @Override
   public Map<String, String> getArguments() {
     return arguments;
-  }
-
-  private Set<String> inspectDataSets(Procedure procedure, ImmutableSet.Builder<String> datasets) {
-    TypeToken<?> procedureType = TypeToken.of(procedure.getClass());
-
-    // Walk up the hierarchy of procedure class.
-    for (TypeToken<?> type : procedureType.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Grab all the DataSet
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset == null || dataset.value().isEmpty()) {
-            continue;
-          }
-          datasets.add(dataset.value());
-        }
-      }
-    }
-
-    return datasets.build();
   }
 }

@@ -1,6 +1,6 @@
-package com.continuuity.api.batch.hadoop;
+package com.continuuity.api.batch;
 
-import com.continuuity.internal.api.batch.hadoop.DefaultMapReduceSpecification;
+import com.continuuity.internal.api.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

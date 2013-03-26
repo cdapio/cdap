@@ -1,4 +1,4 @@
-package com.continuuity.api.batch.hadoop;
+package com.continuuity.api.batch;
 
 /**
  * Defines an interface for the mapreduce job. Use it for easy integration (re-use) of the existing mapreduce jobs
