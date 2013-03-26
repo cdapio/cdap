@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -240,7 +241,7 @@ implements OrderedVersionedColumnarTable {
     throws DBException, IOException {
     Map<byte[],byte[]>  map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
     byte [][] orderedColumns = Arrays.copyOf(columns, columns.length);
-    Arrays.sort(orderedColumns, new Bytes.ByteArrayComparator());
+    Arrays.sort(orderedColumns, Bytes.BYTES_COMPARATOR);
     byte [] startKey = createStartKey(row, orderedColumns[0]);
     byte [] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
     DBIterator iterator = db.iterator();
@@ -432,9 +433,14 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
-    // TODO: implement
-    throw new UnsupportedOperationException("Not yet implemented");
+    assert(rows.length == columns.length);
+    assert(rows.length == values.length);
+
+    for(int i = 0; i < rows.length; ++i) {
+      performInsert(rows[i], columns[i], version, Type.Put, values[i]);
+    }
   }
+
 // Delete Operations
 
   @Override
@@ -471,8 +477,13 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteDirty(byte[][] rows) throws OperationException {
-    // TODO: implement
-    throw new UnsupportedOperationException("Not yet implemented");
+    try {
+      for(int i = 0; i < rows.length; ++i) {
+        this.db.delete(rows[i]);
+      }
+    } catch (DBException dbe) {
+      handleDBException(dbe, "delete");
+    }
   }
 
   @Override
@@ -502,6 +513,9 @@ implements OrderedVersionedColumnarTable {
   get(byte[] row, ReadPointer readPointer) throws OperationException {
     try {
       Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, readPointer);
+      if(latest.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
+      }
       return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
       handleIOException(e, "get");
@@ -585,8 +599,37 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
-    // TODO:
-    throw new UnsupportedOperationException("Not yet inmplemented");
+    assert(rows.length == columns.length);
+
+    // TODO: can the below algorithm be improved by doing something like a scan of rows instead of a point lookup?
+    Map<byte[], Map<byte[], byte[]>> retMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
+    try {
+      for(int i = 0; i < rows.length; ++i) {
+        KeyValue keyValue = readKeyValueRangeAndGetLatest(rows[i], columns[i], readPointer);
+        if(keyValue != null) {
+          Map<byte[], byte[]> colMap = retMap.get(rows[i]);
+          if(colMap == null) {
+            colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+            retMap.put(rows[i], colMap);
+          }
+          colMap.put(keyValue.getQualifier(), keyValue.getValue());
+        }
+      }
+      // Remove empty rows
+      for(Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> iterator = retMap.entrySet().iterator(); iterator.hasNext();) {
+        if(iterator.next().getValue().isEmpty()) {
+          iterator.remove();
+        }
+      }
+      if (retMap.isEmpty()) {
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(retMap);
+      }
+    } catch (IOException e) {
+      handleIOException(e, "get");
+    }
+    throw new InternalError("this point should never be reached.");
   }
 
   // Scan Operations

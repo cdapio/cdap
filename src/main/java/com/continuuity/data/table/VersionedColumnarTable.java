@@ -41,7 +41,7 @@ public interface VersionedColumnarTable {
       byte [][] values) throws OperationException;
 
   /**
-   * Writes the specified values for the specified columns at the specified
+   * Writes values[i] at (rows[i], columns[i]) using the specified version
    * version for the specified rows.
    * @param rows
    * @param columns
@@ -97,7 +97,7 @@ public interface VersionedColumnarTable {
   public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
-   * Deletes all versions of all columns the specified rows. If the implementation supports it
+   * Deletes all versions of all columns of the specified rows. If the implementation supports it
    * this delete will affect all readers, and it cannot be undone.
    * @param rows
    */
@@ -188,7 +188,7 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer) throws OperationException;
 
   /**
-   * Reads the latest versions of the specified columns in the specified row,
+   * Reads the latest versions of the cells specified by (rows[i], columns[i]),
    * utilizing the specified read pointer to enforce visibility constraints.
    * @param rows
    * @param columns

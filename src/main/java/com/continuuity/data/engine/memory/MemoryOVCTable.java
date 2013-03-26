@@ -82,8 +82,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
-    // TODO: implement
-    throw new UnsupportedOperationException("Not yet implemented");
+    assert (columns.length == values.length);
+    assert (rows.length == columns.length);
+    for (int i = 0; i < rows.length; i++) {
+      RowLockTable.Row r = new RowLockTable.Row(rows[i]);
+      NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+      try {
+        NavigableMap<Version, Value> columnMap = getColumn(map, columns[i]);
+        columnMap.put(new Version(version), new Value(values[i]));
+      } finally {
+        this.locks.unlock(r);
+      }
+    }
   }
 
   @Override
@@ -162,8 +172,17 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteDirty(byte[][] rows) throws OperationException {
-    // TODO: implement
-    throw new UnsupportedOperationException("Not yet implemented");
+    for(int i = 0; i < rows.length; ++i) {
+      RowLockTable.Row r = new RowLockTable.Row(rows[i]);
+      NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+      try {
+        // this row is gone, remove it from the table and also from the lock table
+        this.map.remove(r); // safe to remove because we have the lock
+        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
+      } finally {
+        this.locks.unlock(r);
+      }
+    }
   }
 
   @Override
@@ -184,6 +203,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           continue;
         }
         ret.put(entry.getKey().getValue(), latest.getSecond());
+      }
+
+      if(ret.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(ret);
 
@@ -269,8 +292,41 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
-    // TODO:
-    throw new UnsupportedOperationException("Not yet implemented.");
+    assert (rows.length == columns.length);
+
+    Map<byte[], Map<byte[], byte[]>> ret = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
+    for (int i = 0; i < rows.length; ++i) {
+      Map<byte[], byte[]> writeColumnMap = ret.get(rows[i]);
+      if(writeColumnMap == null) {
+        writeColumnMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+        ret.put(rows[i], writeColumnMap);
+      }
+      RowLockTable.Row r = new RowLockTable.Row(rows[i]);
+      NavigableMap<Column, NavigableMap<Version, Value>> readRowMap = getAndLockExistingRow(r);
+      if (readRowMap == null) {
+        continue;
+      }
+      try {
+        NavigableMap<Version, Value> readColumnMap = getColumn(readRowMap, columns[i]);
+        ImmutablePair<Long, byte[]> latest = filteredLatest(readColumnMap, readPointer);
+        if (latest != null) {
+          writeColumnMap.put(columns[i], latest.getSecond());
+        }
+      } finally {
+        this.locks.unlock(r);
+      }
+    }
+    // Remove empty rows
+    for(Iterator<Entry<byte[], Map<byte[], byte[]>>> iterator = ret.entrySet().iterator(); iterator.hasNext();) {
+      if(iterator.next().getValue().isEmpty()) {
+        iterator.remove();
+      }
+    }
+    if (ret.isEmpty()) {
+      return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
+    } else {
+      return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(ret);
+    }
   }
 
   @Override

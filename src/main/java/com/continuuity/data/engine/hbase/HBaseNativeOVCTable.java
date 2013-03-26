@@ -60,6 +60,29 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (rows.length == columns.length);
+    assert (columns.length == values.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        Put put = new Put(rows[i]);
+        put.add(this.family, columns[i], version, values[i]);
+        puts.add(put);
+      }
+      writeTable.put(puts);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
     put(row, new byte[][]{column}, version, new byte[][]{value});
   }
@@ -148,6 +171,9 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
         if (Bytes.equals(last, column)) continue;
         map.put(column, kv.getValue());
         last = column;
+      }
+      if(map.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -275,17 +301,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.readTable.get(get);
-      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
-        Bytes.BYTES_COMPARATOR);
-      byte[] last = null;
-      for (KeyValue kv : result.raw()) {
-        long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
-        byte [] column = kv.getQualifier();
-        if (Bytes.equals(last, column)) continue;
-        map.put(column, kv.getValue());
-        last = column;
-      }
+      Map<byte[], byte[]> map = parseRowResult(result, readPointer);
       if (map.isEmpty()) {
         return new
           OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
@@ -298,6 +314,56 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     // as fall-back return "not found".
     return new OperationResult<Map<byte[], byte[]>>(
       StatusCode.COLUMN_NOT_FOUND);
+  }
+
+  private Map<byte[], byte[]> parseRowResult(Result result, ReadPointer readPointer) {
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
+      Bytes.BYTES_COMPARATOR);
+    byte[] last = null;
+    for (KeyValue kv : result.raw()) {
+      long version = kv.getTimestamp();
+      if (!readPointer.isVisible(version)) {
+        continue;
+      }
+      byte [] column = kv.getQualifier();
+      if (Bytes.equals(last, column)) {
+        continue;
+      }
+      map.put(column, kv.getValue());
+      last = column;
+    }
+    return map;
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+    try {
+      List<Get> gets = new ArrayList<Get>(rows.length);
+      for(int i = 0; i < rows.length; ++i) {
+        Get get = new Get(rows[i]);
+        get.addColumn(this.family, columns[i]);
+        get.setTimeRange(0, getMaxStamp(readPointer));
+        get.setMaxVersions();
+        gets.add(get);
+      }
+      Result[] results = this.readTable.get(gets);
+      Map<byte[], Map<byte[], byte[]>> resultMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
+      for (Result result : results) {
+        if(!result.isEmpty()) {
+          Map<byte[], byte[]> map = parseRowResult(result, readPointer);
+          resultMap.put(result.getRow(), map);
+        }
+      }
+      if (resultMap.isEmpty()) {
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    // as fall-back return "not found".
+    return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override

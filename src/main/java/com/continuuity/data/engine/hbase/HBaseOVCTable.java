@@ -266,6 +266,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
         previousColumn=column;
       }
+
+      if(map.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
+      }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -336,6 +340,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
+    assert(rows.length == columns.length);
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
@@ -354,7 +359,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
       }
       if (resultMap.isEmpty()) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
       }
       else {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);
