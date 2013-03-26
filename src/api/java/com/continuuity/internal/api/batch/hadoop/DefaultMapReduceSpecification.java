@@ -1,8 +1,8 @@
 package com.continuuity.internal.api.batch.hadoop;
 
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduce;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  *
  */
-public class DefaultHadoopMapReduceJobSpecification implements HadoopMapReduceJobSpecification {
+public class DefaultMapReduceSpecification implements MapReduceSpecification {
 
   private final String className;
   private final String name;
@@ -25,23 +25,23 @@ public class DefaultHadoopMapReduceJobSpecification implements HadoopMapReduceJo
   private final String inputDataSet;
   private final String outputDataSet;
 
-  public DefaultHadoopMapReduceJobSpecification(String name, String description, String inputDataSet, String outputDataSet, Set<String> dataSets, Map<String, String> arguments) {
+  public DefaultMapReduceSpecification(String name, String description, String inputDataSet, String outputDataSet, Set<String> dataSets, Map<String, String> arguments) {
     this(null, name, description, inputDataSet, outputDataSet, dataSets, arguments);
   }
 
-  public DefaultHadoopMapReduceJobSpecification(HadoopMapReduceJob hadoopMapReduceJob) {
-    this.className = hadoopMapReduceJob.getClass().getName();
-    HadoopMapReduceJobSpecification configureSpec = hadoopMapReduceJob.configure();
+  public DefaultMapReduceSpecification(MapReduce mapReduce) {
+    this.className = mapReduce.getClass().getName();
+    MapReduceSpecification configureSpec = mapReduce.configure();
 
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
     this.inputDataSet = configureSpec.getInputDataSet();
     this.outputDataSet = configureSpec.getOutputDataSet();
-    this.dataSets = inspectDataSets(hadoopMapReduceJob.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
+    this.dataSets = inspectDataSets(mapReduce.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
     this.arguments = configureSpec.getArguments();
   }
 
-  public DefaultHadoopMapReduceJobSpecification(String className, String name, String description, String inputDataSet, String outputDataSet, Set<String> dataSets, Map<String, String> arguments) {
+  public DefaultMapReduceSpecification(String className, String name, String description, String inputDataSet, String outputDataSet, Set<String> dataSets, Map<String, String> arguments) {
     this.className = className;
     this.name = name;
     this.description = description;

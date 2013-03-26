@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch.hadoop.inmemory;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.LocalJobRunnerWithFix;
 import org.apache.hadoop.mapreduce.MRConfig;
@@ -17,7 +16,6 @@ import java.net.InetSocketAddress;
  * This is the copy of {@link org.apache.hadoop.mapred.LocalClientProtocolProvider} which provides the version of
  * LocalJobRunner with fix.
  */
-@InterfaceAudience.Private
 public class LocalClientProtocolProvider extends ClientProtocolProvider {
   private static final Logger LOG = LoggerFactory.getLogger(MiniYarnMapReduceRuntimeService.class);
 

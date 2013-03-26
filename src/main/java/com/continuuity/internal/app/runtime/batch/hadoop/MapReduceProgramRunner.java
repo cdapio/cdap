@@ -2,8 +2,8 @@ package com.continuuity.internal.app.runtime.batch.hadoop;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduce;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.dataset.DataSetContext;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 
 /**
- * Runs {@link HadoopMapReduceJob} programs
+ * Runs {@link com.continuuity.api.batch.hadoop.MapReduce} programs
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
@@ -58,8 +58,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    HadoopMapReduceJobSpecification spec = appSpec.getMapReduceJobs().get(program.getProgramName());
-    Preconditions.checkNotNull(spec, "Missing HadoopMapReduceJobSpecification for %s", program.getProgramName());
+    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
+    Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
 
     TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
@@ -77,7 +77,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       final BasicBatchContext context = new BasicBatchContext(program, runId,
                                                         DataSets.createDataSets(dataSetContext, spec.getDataSets()));
 
-      HadoopMapReduceJob job = (HadoopMapReduceJob) program.getMainClass().newInstance();
+      MapReduce job = (MapReduce) program.getMainClass().newInstance();
       injectFields(job, TypeToken.of(job.getClass()), context);
 
       final MapReduceProgramController controller = new MapReduceProgramController(context);

@@ -1,15 +1,15 @@
 package com.continuuity.internal.app.runtime.batch.hadoop.inmemory;
 
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJobSpecification;
+import com.continuuity.api.batch.hadoop.MapReduce;
+import com.continuuity.api.batch.hadoop.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.batch.hadoop.HadoopMapReduceJob;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.base.Cancellable;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.runtime.batch.BasicBatchContext;
+import com.continuuity.internal.app.runtime.batch.hadoop.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.hadoop.MapReduceRuntimeService;
-import com.continuuity.internal.app.runtime.batch.hadoop.BasicHadoopMapReduceJobContext;
 import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputOutputFormatHelper;
 import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetOutputFormat;
@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.v2.MiniMRYarnCluster;
-import org.apache.hadoop.mapreduce.v2.TestMRJobs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,47 +28,42 @@ import org.slf4j.LoggerFactory;
 public class MiniYarnMapReduceRuntimeService extends AbstractIdleService implements MapReduceRuntimeService {
   private static final Logger LOG = LoggerFactory.getLogger(MiniYarnMapReduceRuntimeService.class);
 
-  private final MiniMRYarnCluster mrCluster;
   private final org.apache.hadoop.conf.Configuration conf;
 
   @Inject
   public MiniYarnMapReduceRuntimeService() {
-    mrCluster = new MiniMRYarnCluster(TestMRJobs.class.getName(), 1);
     conf = new org.apache.hadoop.conf.Configuration();
   }
 
   @Override
   public void startUp() {
-    mrCluster.init(conf);
-    mrCluster.start();
+    // DO NOTHING
   }
 
   @Override
   public void shutDown() {
-    mrCluster.stop();
+    // DO NOTHING
   }
 
   @Override
-  public Cancellable submit(final HadoopMapReduceJob job, HadoopMapReduceJobSpecification spec,
+  public Cancellable submit(final MapReduce job, MapReduceSpecification spec,
                      Location jobJarLocation, BasicBatchContext context, final JobFinishCallback callback)
     throws Exception {
-    // note: we don't check if mrCluster is started because we don't start it in unit-tests...
-
     final Job jobConf = Job.getInstance(conf);
-    final BasicHadoopMapReduceJobContext hadoopMapReduceJobContext =
-      new BasicHadoopMapReduceJobContext(spec, context, jobConf, context.getRunId());
+    final BasicMapReduceContext mapReduceContext =
+      new BasicMapReduceContext(spec, context, jobConf, context.getRunId());
 
     // additional mapreduce job initialization at run-time
-    job.beforeSubmit(hadoopMapReduceJobContext);
+    job.beforeSubmit(mapReduceContext);
 
-    DataSet inputDataset = setInputDataSetIfNeeded(jobConf, hadoopMapReduceJobContext);
+    DataSet inputDataset = setInputDataSetIfNeeded(jobConf, mapReduceContext);
 
-    DataSet outputDataset = setOutputDataSetIfNeeded(jobConf, hadoopMapReduceJobContext);
+    DataSet outputDataset = setOutputDataSetIfNeeded(jobConf, mapReduceContext);
 
     boolean useDataSetAsInputOrOutput = inputDataset != null || outputDataset != null;
     if (useDataSetAsInputOrOutput) {
       DataSetInputOutputFormatHelper.writeRunId(jobConf.getConfiguration(), context.getRunId().getId());
-      DataSetInputOutputFormatHelper.add(context.getRunId().getId(), hadoopMapReduceJobContext);
+      DataSetInputOutputFormatHelper.add(context.getRunId().getId(), mapReduceContext);
     }
 
     // adding job jar to classpath
@@ -89,7 +83,7 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
             throw Throwables.propagate(e);
           }
 
-          job.onFinish(success, hadoopMapReduceJobContext);
+          job.onFinish(success, mapReduceContext);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         } finally {
@@ -110,18 +104,18 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
     };
   }
 
-  private DataSet setOutputDataSetIfNeeded(Job jobConf, BasicHadoopMapReduceJobContext hadoopMapReduceJobContext) {
+  private DataSet setOutputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
     DataSet outputDataset = null;
-    // whatever was set into hadoopMapReduceJobContext e.g. during beforeSubmit(..) takes precedence
-    if (hadoopMapReduceJobContext.getOutputDataset() != null) {
+    // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
+    if (mapReduceContext.getOutputDataset() != null) {
 
     } else {
       // trying to init output dataset from spec
-      String outputDataSetName = hadoopMapReduceJobContext.getSpecification().getOutputDataSet();
+      String outputDataSetName = mapReduceContext.getSpecification().getOutputDataSet();
       if (outputDataSetName != null) {
         // We checked on validation phase that it implements BatchWritable
-        outputDataset = hadoopMapReduceJobContext.getDataSet(outputDataSetName);
-        hadoopMapReduceJobContext.setOutput((BatchWritable) outputDataset);
+        outputDataset = mapReduceContext.getDataSet(outputDataSetName);
+        mapReduceContext.setOutput((BatchWritable) outputDataset);
       }
     }
 
@@ -132,18 +126,18 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicHadoopMapReduceJobContext hadoopMapReduceJobContext) {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
     DataSet inputDataset = null;
-    // whatever was set into hadoopMapReduceJobContext e.g. during beforeSubmit(..) takes precedence
-    if (hadoopMapReduceJobContext.getInputDataset() != null) {
-      inputDataset = (DataSet) hadoopMapReduceJobContext.getInputDataset();
+    // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
+    if (mapReduceContext.getInputDataset() != null) {
+      inputDataset = (DataSet) mapReduceContext.getInputDataset();
     } else  {
       // trying to init input dataset from spec
-      String inputDataSetName = hadoopMapReduceJobContext.getSpecification().getInputDataSet();
+      String inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
       if (inputDataSetName != null) {
-        inputDataset = hadoopMapReduceJobContext.getDataSet(inputDataSetName);
+        inputDataset = mapReduceContext.getDataSet(inputDataSetName);
         // We checked on validation phase that it implements BatchReadable
-        hadoopMapReduceJobContext.setInput((BatchReadable) inputDataset, ((BatchReadable) inputDataset).getSplits());
+        mapReduceContext.setInput((BatchReadable) inputDataset, ((BatchReadable) inputDataset).getSplits());
       }
     }
 
