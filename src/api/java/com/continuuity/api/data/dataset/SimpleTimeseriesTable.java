@@ -403,7 +403,7 @@ public class SimpleTimeseriesTable extends DataSet
 
   /////// Methods for using DataSet as input for MapReduce job
 
-  private static class InputSplit extends Split {
+  private static final class InputSplit extends Split {
     private byte key[];
     private long startTime;
     private long endTime;
