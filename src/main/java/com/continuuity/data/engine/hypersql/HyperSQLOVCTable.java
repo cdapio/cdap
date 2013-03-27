@@ -652,25 +652,34 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
-    assert(rows.length == columns.length);
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     PreparedStatement ps = null;
     try {
-      String [] conditions = new String[columns.length];
-      String conditionStr = " rowKey = ? AND column = ?";
-      for (int i=0; i<conditions.length; i++) {
-        conditions[i] = conditionStr;
+      final String [] rowConditions = new String[rows.length];
+      String rowConditionStr = " rowKey = ? ";
+      for (int i=0; i<rows.length; ++i) {
+        rowConditions[i] = rowConditionStr;
       }
-      conditionStr = StringUtils.join(conditions, " ) OR ( ");
+      rowConditionStr = StringUtils.join(rowConditions, " OR ");
+
+      final String [] colConditions = new String[columns.length];
+      String colConditionStr = " column = ? ";
+      for (int i=0; i<columns.length; ++i) {
+        colConditions[i] = colConditionStr;
+      }
+      colConditionStr = StringUtils.join(colConditions, " OR ");
 
       ps = this.connection.prepareStatement(
         "SELECT rowkey, column, version, kvtype, id, value " +
           "FROM " + this.quotedTableName + " " +
-          "WHERE (" + conditionStr + ") " +
+          "WHERE (" + rowConditionStr + ") AND ( " + colConditionStr + " ) " +
           "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
 
-      for(int i = 0, idx = 1; i < rows.length; ++i) {
+      int  idx = 1;
+      for(int i = 0; i < rows.length; ++i) {
         ps.setBytes(idx++, rows[i]);
+      }
+      for(int i = 0; i < columns.length; ++i) {
         ps.setBytes(idx++, columns[i]);
       }
       ResultSet result = ps.executeQuery();

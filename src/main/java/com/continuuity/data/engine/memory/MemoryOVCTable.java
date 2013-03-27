@@ -291,9 +291,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
-    assert (rows.length == columns.length);
-
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     Map<byte[], Map<byte[], byte[]>> ret = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < rows.length; ++i) {
       Map<byte[], byte[]> writeColumnMap = ret.get(rows[i]);
@@ -307,10 +305,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         continue;
       }
       try {
-        NavigableMap<Version, Value> readColumnMap = getColumn(readRowMap, columns[i]);
-        ImmutablePair<Long, byte[]> latest = filteredLatest(readColumnMap, readPointer);
-        if (latest != null) {
-          writeColumnMap.put(columns[i], latest.getSecond());
+        for (byte[] column : columns) {
+          NavigableMap<Version, Value> readColumnMap = getColumn(readRowMap, column);
+          ImmutablePair<Long, byte[]> latest = filteredLatest(readColumnMap, readPointer);
+          if (latest != null) {
+            writeColumnMap.put(column, latest.getSecond());
+          }
         }
       } finally {
         this.locks.unlock(r);

@@ -264,7 +264,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
     OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
-                                                          this.table.get(entryRowKeys, entryColKeys, readPointer);
+                                                          this.table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
     if(entriesResult.isEmpty()) {
       queueState.setCachedEntries(CachedList.EMPTY_LIST);
     } else {
@@ -421,7 +421,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
     }
     OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult =
-      table.get(rowKeys, new byte[][]{CONSUMER_READ_POINTER, ACTIVE_ENTRY}, readPointer);
+      table.getAllColumns(rowKeys, new byte[][]{CONSUMER_READ_POINTER, ACTIVE_ENTRY}, readPointer);
     if(operationResult.isEmpty()) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format("Not able to fetch state of group %d for eviction", consumer.getGroupId())));
@@ -911,7 +911,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
         final byte[][] columnKeys = new byte[1][];
         columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
-        OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult = table.get(rowKeys, columnKeys, readPointer);
+        OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult = table.getAllColumns(rowKeys, columnKeys, readPointer);
 
         // Determine which entries  need to be read from storage
         for(int id = 0; id < cacheSize; ++id) {

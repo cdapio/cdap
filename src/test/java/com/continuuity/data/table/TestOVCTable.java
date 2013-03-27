@@ -894,29 +894,29 @@ public abstract class TestOVCTable {
 
   @Test
   public void testDeleteDirty() throws OperationException {
-    final int MAX_ROWS = 10;
+    final int MAX = 10;
 
     // Generate row keys
-    byte [] [] rows = new byte[MAX_ROWS][];
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    byte [] [] rows = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testDeleteDirty." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
     }
 
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    for(int i = 0; i < MAX; ++i) {
       // Write values 1, 2, 3 @ ts 1, 2, 3
       this.table.put(rows[i], Bytes.toBytes("col1_" + i), 1L, Bytes.toBytes(1L));
-      this.table.put(rows[i], Bytes.toBytes("col2_" + i), 3L, Bytes.toBytes(MAX_ROWS * 2 + 3L));
-      this.table.put(rows[i], Bytes.toBytes("col3_" + i), 2L, Bytes.toBytes(MAX_ROWS * 3 + 2L));
+      this.table.put(rows[i], Bytes.toBytes("col2_" + i), 3L, Bytes.toBytes(MAX * 2 + 3L));
+      this.table.put(rows[i], Bytes.toBytes("col3_" + i), 2L, Bytes.toBytes(MAX * 3 + 2L));
     }
 
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    for(int i = 0; i < MAX; ++i) {
       // Check written values
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
-      assertEquals(MAX_ROWS * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
-      assertEquals(MAX_ROWS * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
     // Delete 1st, 2nd row
@@ -925,33 +925,33 @@ public abstract class TestOVCTable {
     assertTrue(this.table.get(rows[0], RP_MAX).isEmpty());
     assertTrue(this.table.get(rows[1], RP_MAX).isEmpty());
     // Assert other rows still exist
-    for(int i = 2; i < MAX_ROWS; ++i) {
+    for(int i = 2; i < MAX; ++i) {
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
-      assertEquals(MAX_ROWS * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
-      assertEquals(MAX_ROWS * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
     // Delete all other rows
-    for(int i = 2; i < MAX_ROWS; ++i) {
+    for(int i = 2; i < MAX; ++i) {
       this.table.deleteDirty(new byte[][]{rows[i]});
     }
 
     // Assert all rows are deleted
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    for(int i = 0; i < MAX; ++i) {
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
     }
   }
 
   @Test
   public void testMultiRowPut() throws OperationException {
-    final int MAX_ROWS = 10;
+    final int MAX = 10;
 
     // Generate row keys, cols, values
-    byte [] [] rows = new byte[MAX_ROWS][];
-    byte [] [] cols = new byte[MAX_ROWS][];
-    byte [] [] values = new byte[MAX_ROWS][];
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols = new byte[MAX][];
+    byte [] [] values = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
       rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowPut." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
@@ -964,7 +964,7 @@ public abstract class TestOVCTable {
     this.table.put(rows, cols, 1L, values);
 
     // Verify data
-    for(int i = 0; i < MAX_ROWS; ++i) {
+    for(int i = 0; i < MAX; ++i) {
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       // Assert only one col per row is read
       assertEquals(1, colMap.size());
@@ -973,38 +973,48 @@ public abstract class TestOVCTable {
   }
 
   @Test
-  public void testMultiRowGet() throws OperationException {
-    final int MAX_ROWS = 10;
+  public void testGetAllColumns() throws OperationException {
+    final int MAX = 10;
+    final byte[] COL1 = Bytes.toBytes("col1");
+    final byte[] COL2 = Bytes.toBytes("col2");
 
     // Generate row keys, cols, values
-    byte [] [] rows = new byte[MAX_ROWS][];
-    byte [] [] cols = new byte[MAX_ROWS][];
-    byte [] [] values = new byte[MAX_ROWS][];
-    for(int i = 0; i < MAX_ROWS; ++i) {
-      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowGet." + i);
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols1 = new byte[MAX][];
+    byte [] [] cols2 = new byte[MAX][];
+    byte [] [] values1 = new byte[MAX][];
+    byte [] [] values2 = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
+      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns." + i);
       // Verify row[i] dne
       assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
 
-      cols[i] = Bytes.toBytes("col" + i);
-      values[i] = Bytes.toBytes(i);
+      cols1[i] = COL1;
+      cols2[i] = COL2;
+      values1[i] = Bytes.toBytes(i);
+      values2[i] = Bytes.toBytes(MAX + i);
     }
 
     // Put data
-    this.table.put(rows, cols, 1L, values);
+    this.table.put(rows, cols1, 1L, values1);
+    this.table.put(rows, cols2, 1L, values2);
 
     // Add some extraneous values
-    this.table.put(rows[0], Bytes.toBytes("col2"), 1L, Bytes.toBytes(-1));
+    this.table.put(rows[0], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
+    this.table.put(rows[1], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
+    this.table.put(rows[2], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
 
 
     // Get data
-    Map<byte[], Map<byte[], byte[]>> valuesMap = this.table.get(rows, cols, RP_MAX).getValue();
+    Map<byte[], Map<byte[], byte[]>> valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1, COL2}, RP_MAX).getValue();
     assertFalse(valuesMap.isEmpty());
 
     // Verify data
-    for(int i = 0; i < MAX_ROWS; ++i) {
-      // Assert only one col per row is read
-      assertEquals(1, valuesMap.get(rows[i]).size());
-      assertEquals(i, Bytes.toInt(valuesMap.get(rows[i]).get(cols[i])));
+    for(int i = 0; i < MAX; ++i) {
+      // Assert two cols per row is read
+      assertEquals(2, valuesMap.get(rows[i]).size());
+      assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
+      assertEquals(Bytes.toInt(values2[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols2[i])));
     }
   }
 

@@ -336,12 +336,12 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
-      for(int i = 0; i < rows.length; ++i) {
-        Get get = new Get(rows[i]);
-        get.addColumn(this.family, columns[i]);
+      for (byte[] row : rows) {
+        Get get = new Get(row);
+        for (byte [] column : columns) get.addColumn(this.family, column);
         get.setTimeRange(0, getMaxStamp(readPointer));
         get.setMaxVersions();
         gets.add(get);

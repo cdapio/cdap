@@ -598,21 +598,14 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
-    assert(rows.length == columns.length);
-
-    // TODO: can the below algorithm be improved by doing something like a scan of rows instead of a point lookup?
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+    // TODO: can the below algorithm be improved by doing something like a scan of rows instead of point lookups?
     Map<byte[], Map<byte[], byte[]>> retMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     try {
       for(int i = 0; i < rows.length; ++i) {
-        KeyValue keyValue = readKeyValueRangeAndGetLatest(rows[i], columns[i], readPointer);
-        if(keyValue != null) {
-          Map<byte[], byte[]> colMap = retMap.get(rows[i]);
-          if(colMap == null) {
-            colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-            retMap.put(rows[i], colMap);
-          }
-          colMap.put(keyValue.getQualifier(), keyValue.getValue());
+        Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(rows[i], columns, readPointer);
+        if(map != null) {
+          retMap.put(rows[i], map);
         }
       }
       // Remove empty rows
