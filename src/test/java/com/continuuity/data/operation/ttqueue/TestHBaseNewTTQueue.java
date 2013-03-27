@@ -55,7 +55,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    conf.setLong("ttqueue.evict.interval.secs", 0);
+    conf.setLong("ttqueue.evict.interval.secs", 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
     return new TTQueueNewOnVCTable(
       handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
       Bytes.toBytes("TestTTQueueName" + rand),
@@ -126,6 +126,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   @Test
   public void testEvictOnAck_ThreeGroups() throws Exception {
+    // Note: for now only consumer with consumerId 0 and groupId 0 can run the evict.
     TTQueue queue = createQueue();
     final boolean singleEntry = true;
     long dirtyVersion = getDirtyWriteVersion();
