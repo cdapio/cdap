@@ -12,6 +12,7 @@ versions.googleGuice = '3.0'
 versions.netflixCuratorVersion = '1.1.18'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '1.5'
+versions.zookeeperVersion = '3.4.3'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -42,6 +43,9 @@ libraries.asm = "org.ow2.asm:asm-all:4.0"
 // AVRO
 libraries.avro = "org.apache.avro:avro:$versions.avroVersion"
 libraries.avro_ipc = "org.apache.avro:avro-ipc:$versions.avroVersion"
+
+// Zookeeper
+libraries.zookeeper = "org.apache.zookeeper:zookeeper:$versions.zookeeperVersion"
 
 // Flume NG
 libraries.flume_ng_sdk = "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
