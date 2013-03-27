@@ -2,6 +2,9 @@ package com.continuuity.api.data.batch;
 
 import com.continuuity.api.data.OperationException;
 
+/**
+ * Defines a reader of dataset {@link Split}
+ */
 public abstract class SplitReader<KEY, VALUE> {
 
   /**

@@ -6,8 +6,27 @@ package com.continuuity.api.data.batch;
 
 import java.util.List;
 
+/**
+ * Defines interface for dataset that can be input to a batch job.
+ * <p>
+ *   To feed dataset into batch job it should be splittable in chunks, so that it is possible to process every part in
+ *   parallel. Every chunk should be readable as a collection of {key,value} records.
+ * </p>
+ */
 public interface BatchReadable<KEY, VALUE> {
+  /**
+   * Returns all splits of the dataset.
+   * <p>
+   *   Used to feed whole dataset into batch job.
+   * </p>
+   * @return list of {@link Split}
+   */
   List<Split> getSplits();
 
+  /**
+   * Creates reader for the split of dataset.
+   * @param split split to create reader for.
+   * @return instance of a {@link SplitReader}
+   */
   SplitReader<KEY, VALUE> createSplitReader(Split split);
 }

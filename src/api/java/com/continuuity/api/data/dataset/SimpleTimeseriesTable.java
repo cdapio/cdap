@@ -459,13 +459,13 @@ public class SimpleTimeseriesTable extends DataSet
   public static final class TimeseriesTableRecordsReader
     extends IteratorBasedSplitReader<byte[], Entry> {
     @Override
-    public Iterator<Entry> createIterator(final BatchReadable table,
+    public Iterator<Entry> createIterator(final BatchReadable dataset,
                                           final Split split) throws OperationException {
 
       InputSplit s = (InputSplit) split;
 
       // TODO: avoid reading all data at once :)
-      List<TimeseriesTable.Entry> data = ((TimeseriesTable) table).read(s.key, s.startTime, s.endTime, s.tags);
+      List<TimeseriesTable.Entry> data = ((TimeseriesTable) dataset).read(s.key, s.startTime, s.endTime, s.tags);
       return data.iterator();
     }
   }

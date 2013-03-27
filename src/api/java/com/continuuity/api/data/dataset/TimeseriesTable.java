@@ -42,7 +42,7 @@ public interface TimeseriesTable {
   /**
    * Timeseries dataset entry.
    */
-  public static final class Entry implements WithKey {
+  public static final class Entry implements WithKey<byte[]> {
     private byte[] key;
     private byte[] value;
     private long timestamp;
@@ -62,6 +62,7 @@ public interface TimeseriesTable {
       this.tags = tags;
     }
 
+    @Override
     public byte[] getKey() {
       return key;
     }
