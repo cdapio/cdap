@@ -5,10 +5,21 @@ import com.continuuity.api.data.OperationException;
 
 import java.util.Iterator;
 
-public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey> extends SplitReaderBase<KEY, VALUE> {
+/**
+ * Handy implementation of {@link SplitReader} backed by {@link Iterator}
+ */
+public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey<? extends KEY>>
+  extends SplitReaderBase<KEY, VALUE> {
   private Iterator<VALUE> iterator;
 
-  protected abstract Iterator<VALUE> createIterator(final BatchReadable table,
+  /**
+   * Creates iterator to iterate through all records of a given split
+   * @param dataset dataset that owns a split
+   * @param split split to iterate through
+   * @return an instance of {@link Iterator}
+   * @throws OperationException if there's an error during reading the split
+   */
+  protected abstract Iterator<VALUE> createIterator(final BatchReadable dataset,
                                  final Split split) throws OperationException;
 
   @Override
@@ -25,8 +36,7 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey> exten
     } else {
       VALUE next = iterator.next();
       // TODO: is there a way to enforce VALUE to be "extends <WithKey<KEY>>"?
-      @SuppressWarnings("unchecked")
-      KEY key = (KEY) next.getKey();
+      KEY key = next.getKey();
       setCurrentKeyValue(key, next);
       return true;
     }
