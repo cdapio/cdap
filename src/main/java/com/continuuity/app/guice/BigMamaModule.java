@@ -119,6 +119,9 @@ public class BigMamaModule extends AbstractModule {
     install(new FactoryModuleBuilder()
             .implement(QueueReader.class, SingleQueueReader.class)
             .build(QueueReaderFactory.class));
+
+    // For binding IO stuff
+    install(new IOModule());
   }
 
 

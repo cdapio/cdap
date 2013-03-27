@@ -1,8 +1,8 @@
-package com.continuuity.internal.app.runtime.flow;
+package com.continuuity.internal.io;
 
-import com.continuuity.archive.MultiClassLoader;
 import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.io.DatumWriter;
+import com.continuuity.internal.asm.ByteCodeClassLoader;
+import com.continuuity.internal.asm.ClassDefinition;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -10,20 +10,23 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import org.objectweb.asm.Type;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 /**
  * A factory class for creating {@link DatumWriter} instance for different data type and schema.
  * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
-public final class ASMDatumWriterFactory {
+public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
   private final LoadingCache<CacheKey, Class<DatumWriter<?>>> datumWriterClasses;
+  private final FieldAccessorFactory fieldAccessorFactory;
 
-  public ASMDatumWriterFactory() {
-    datumWriterClasses = CacheBuilder.newBuilder().build(new ASMCacheLoader());
+  @Inject
+  public ASMDatumWriterFactory(FieldAccessorFactory fieldAccessorFactory) {
+    this.fieldAccessorFactory = fieldAccessorFactory;
+    this.datumWriterClasses = CacheBuilder.newBuilder().build(new ASMCacheLoader());
   }
 
   /**
@@ -35,10 +38,12 @@ public final class ASMDatumWriterFactory {
    * @param <T> Type of the data type.
    * @return A {@link DatumWriter} instance.
    */
+  @Override
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
       Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(new CacheKey(schema, type));
-      return (DatumWriter<T>)writerClass.getConstructor(Schema.class).newInstance(schema);
+      return (DatumWriter<T>)writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
+                                        .newInstance(schema, fieldAccessorFactory);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -49,23 +54,21 @@ public final class ASMDatumWriterFactory {
    */
   private static final class ASMCacheLoader extends CacheLoader<CacheKey, Class<DatumWriter<?>>> {
 
-    private final Map<ClassLoader, ASMDatumWriterClassLoader> classloaders = Maps.newIdentityHashMap();
+    private final Map<ClassLoader, ByteCodeClassLoader> classloaders = Maps.newIdentityHashMap();
 
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
-      DatumWriterGenerator.ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
+      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
                                                                                           key.getSchema());
 
       ClassLoader typeClassloader = key.getType().getRawType().getClassLoader();
-      ASMDatumWriterClassLoader classloader = classloaders.get(typeClassloader);
+      ByteCodeClassLoader classloader = classloaders.get(typeClassloader);
       if (classloader == null) {
-        classloader = new ASMDatumWriterClassLoader(typeClassloader);
+        classloader = new ByteCodeClassLoader(typeClassloader);
         classloaders.put(typeClassloader, classloader);
       }
 
-      String className = Type.getObjectType(classDef.getClassName()).getClassName();
-      classloader.addClass(className, classDef.getBytecode());
-      return (Class<DatumWriter<?>>) classloader.loadClass(className);
+      return (Class<DatumWriter<?>>) classloader.addClass(classDef).loadClass(classDef.getClassName());
     }
   }
 
@@ -102,28 +105,6 @@ public final class ASMDatumWriterFactory {
     @Override
     public int hashCode() {
       return Objects.hashCode(schema, type);
-    }
-  }
-
-  /**
-   * A private {@link ClassLoader} for loading generated {@link DatumWriter} bytecode.
-   */
-  private static final class ASMDatumWriterClassLoader extends MultiClassLoader {
-
-    private final Map<String, byte[]> bytecodes;
-
-    private ASMDatumWriterClassLoader(ClassLoader parent) {
-      super(parent);
-      bytecodes = Maps.newHashMap();
-    }
-
-    private synchronized void addClass(String name, byte[] bytecode) {
-      bytecodes.put(name, bytecode);
-    }
-
-    @Override
-    protected byte[] loadClassBytes(String className) {
-      return bytecodes.get(className);
     }
   }
 }
