@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ */
+
 package com.continuuity.api.data.batch;
 
 import java.util.HashMap;
@@ -6,7 +10,7 @@ import java.util.Map;
 /**
  * Handy implementation of the {@link Split}. Acts as a map of attributes.
  */
-public class SimpleSplit extends Split {
+public final class SimpleSplit extends Split {
   private Map<String, String> attributes = new HashMap<String, String>();
 
   /**
