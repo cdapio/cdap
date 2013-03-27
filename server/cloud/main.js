@@ -29,6 +29,13 @@ var sockets = {};
 process.env.NODE_ENV = 'development';
 
 /**
+ * Catch anything uncaught.
+ */
+process.on('uncaughtException', function (err) {
+  logger.error('Uncaught Exception', err);
+});
+
+/**
 * Configure logger.
 */
 log4js.configure({
@@ -184,6 +191,16 @@ fs.readFile(configPath, function (error, result) {
 		 */
 		var app = express();
 		app.use(express.bodyParser());
+
+		/**
+		 * Log HTTP requests
+		 */
+		app.use(function (req, res, next) {
+
+			logger.trace(req.method + ' ' + req.url + (req.account ? '(' + req.account.account_id + ')' : ''));
+			next();
+
+		});
 
 		/**
 		 * Express cookie sessions.
@@ -534,10 +551,17 @@ fs.readFile(configPath, function (error, result) {
 						 */
 						http.createServer(function (request, response) {
 
-							var host = request.headers.host.split(':')[0];
+							var host;
+							if (request.headers.host) {
+								host = request.headers.host.split(':')[0];
+							} else {
+								host = config['gateway.cluster.name'] + '.continuuity.net';
+							}
 
 							var path = 'https://' + host + ':' +
 								config['cloud-ui-ssl-port'] + request.url;
+
+							logger.trace('Redirected HTTP to HTTPS');
 
 							response.writeHead(302, {'Location': path});
 							response.end();
