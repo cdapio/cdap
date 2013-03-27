@@ -11,7 +11,6 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -59,7 +58,7 @@ public class WordCountApp2 implements Application {
       .setName("WordCountApp")
       .setDescription("Application for counting words")
       .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable("mydataset"))
+      .withDataSets().add(new MyKeyValueTable("mydataset"))
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency()).build();
   }
@@ -163,7 +162,7 @@ public class WordCountApp2 implements Application {
 //  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
-    private KeyValueTable counters;
+    private MyKeyValueTable counters;
 
     @ProcessInput("field")
     public void process(Map<String, String> fieldToken) throws OperationException {
@@ -196,7 +195,7 @@ public class WordCountApp2 implements Application {
 
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
-    private KeyValueTable counters;
+    private MyKeyValueTable counters;
 
     @Handle("wordfreq")
     private void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
@@ -206,4 +205,5 @@ public class WordCountApp2 implements Application {
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
   }
+
 }
