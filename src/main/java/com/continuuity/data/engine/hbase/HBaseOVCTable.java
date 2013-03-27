@@ -340,6 +340,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
+    // TODO: this can probably be improved by doing a scan instead of get.
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {

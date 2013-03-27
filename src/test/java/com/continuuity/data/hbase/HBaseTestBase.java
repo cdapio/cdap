@@ -114,7 +114,6 @@ public abstract class HBaseTestBase {
     createHBaseRootDir(conf);
     conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
     conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
-    conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for debugging
     Configuration c = new Configuration(conf);
     System.err.println("Instantiating HBase cluster in 1 sec...");
     Thread.sleep(1000);

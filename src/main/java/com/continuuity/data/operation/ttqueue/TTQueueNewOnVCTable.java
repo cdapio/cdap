@@ -47,7 +47,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] CONSUMER_META_PREFIX = {40, 'C'}; //row <queueName>40C
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
-  // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. This is a unique for a queue.
+  // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
   // GLOBAL_ENTRYID_COUNTER contains the highest valid entryId for the queue
   static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //row <queueName>10I, column 10I
 
@@ -55,7 +55,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // GROUP_READ_POINTER contains the higest entryId claimed by consumers of a FifoDequeueStrategy group
   static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
 
-  // Columns for row = GLOBAL_DATA_PREFIX
+  // Columns for row = GLOBAL_DATA_PREFIX (Global data, shared by all consumer groups)
   // ENTRY_META contains the meta data for a queue entry, whether the entry is invalid or not.
   static final byte [] ENTRY_META = {10, 'M'}; //row  <queueName>20D<entryId>, column 10M
   // ENTRY_DATA contains the queue entry.
@@ -63,7 +63,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // ENTRY_HEADER contains the partitioning keys of a queue entry.
   static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
 
-  // Columns for row = GLOBAL_EVICT_META_PREFIX
+  // Columns for row = GLOBAL_EVICT_META_PREFIX (Global data, shared by all consumers)
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
   // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
   static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
@@ -71,14 +71,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // It means all consumers in the group have acked until GROUP_EVICT_ENTRY
   static final byte [] GROUP_EVICT_ENTRY = {20, 'E'};     //row  <queueName>30M<groupId>, column 20E
 
-  // Columns for row = CONSUMER_META_PREFIX
+  // Columns for row = CONSUMER_META_PREFIX (consumer specific information)
   // ACTIVE_ENTRY points to the entryId that is dequeued by a consumer, but not yet acked.
   // Once the consumer acks the entry, ACTIVE_ENTRY is set to INVALID_ENTRY_ID until the consumer dequeues another entry.
   static final byte [] ACTIVE_ENTRY = {10, 'A'};              //row <queueName>40C<groupId><consumerId>, column 10A
   // ACTIVE_ENTRY_CRASH_TRIES is used to keep track of the number of times the consumer crashed when processing the ACTIVE_ENTRY.
   // A consumer is considered to have crashed every time it loses its cached state information, and the state has to be read from underlying storage.
   static final byte [] ACTIVE_ENTRY_CRASH_TRIES = {20, 'C'};  //row <queueName>40C<groupId><consumerId>, column 20C
-  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the entry that the consumer is processing, or has processed.
+  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the highest entryId that the consumer has read
+  // (the consumer may not have completed processing the entry).
+  // CONSUMER_READ_POINTER + 1 points to the next entry that the consumer can dequeue.
   static final byte [] CONSUMER_READ_POINTER = {30, 'R'};     //row <queueName>40C<groupId><consumerId>, column 30R
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
   static final byte [] CLAIMED_ENTRY_BEGIN = {40, 'B'};       //row <queueName>40C<groupId><consumerId>, column 40B
@@ -350,7 +352,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return;
     }
 
-    // TODO: get transaction read pointer
+    // TODO: get transaction read pointer?
     ReadPointer readPointer = oracle.dirtyReadPointer();
 
     // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
