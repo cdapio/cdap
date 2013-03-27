@@ -5,7 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.hadoop.MapReduceSpecification;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;

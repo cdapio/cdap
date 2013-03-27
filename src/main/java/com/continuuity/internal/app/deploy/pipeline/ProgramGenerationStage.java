@@ -2,7 +2,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.batch.hadoop.MapReduceSpecification;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;

@@ -1,37 +1,34 @@
-package com.continuuity.internal.app.runtime.batch.hadoop.inmemory;
+package com.continuuity.internal.app.runtime.batch.inmemory;
 
-import com.continuuity.api.batch.hadoop.MapReduce;
-import com.continuuity.api.batch.hadoop.MapReduceSpecification;
+import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.base.Cancellable;
 import com.continuuity.filesystem.Location;
-import com.continuuity.internal.app.runtime.batch.BasicBatchContext;
-import com.continuuity.internal.app.runtime.batch.hadoop.BasicMapReduceContext;
-import com.continuuity.internal.app.runtime.batch.hadoop.MapReduceRuntimeService;
-import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputFormat;
-import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetInputOutputFormatHelper;
-import com.continuuity.internal.app.runtime.batch.hadoop.dataset.DataSetOutputFormat;
+import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
+import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputOutputFormatHelper;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.v2.MiniMRYarnCluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Runs mapreduce job using {@link MiniMRYarnCluster}
+ * Runs mapreduce job using {@link org.apache.hadoop.mapred.LocalJobRunner}
  */
-public class MiniYarnMapReduceRuntimeService extends AbstractIdleService implements MapReduceRuntimeService {
-  private static final Logger LOG = LoggerFactory.getLogger(MiniYarnMapReduceRuntimeService.class);
+public class InMemoryMapReduceRuntimeService extends AbstractIdleService implements MapReduceRuntimeService {
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryMapReduceRuntimeService.class);
 
   private final org.apache.hadoop.conf.Configuration conf;
 
   @Inject
-  public MiniYarnMapReduceRuntimeService() {
+  public InMemoryMapReduceRuntimeService() {
     conf = new org.apache.hadoop.conf.Configuration();
   }
 
@@ -46,24 +43,21 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
   }
 
   @Override
-  public Cancellable submit(final MapReduce job, MapReduceSpecification spec,
-                     Location jobJarLocation, BasicBatchContext context, final JobFinishCallback callback)
+  public Cancellable submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context,
+                            final JobFinishCallback callback)
     throws Exception {
     final Job jobConf = Job.getInstance(conf);
-    final BasicMapReduceContext mapReduceContext =
-      new BasicMapReduceContext(spec, context, jobConf, context.getRunId());
-
+    context.setJob(jobConf);
     // additional mapreduce job initialization at run-time
-    job.beforeSubmit(mapReduceContext);
+    job.beforeSubmit(context);
 
-    DataSet inputDataset = setInputDataSetIfNeeded(jobConf, mapReduceContext);
-
-    DataSet outputDataset = setOutputDataSetIfNeeded(jobConf, mapReduceContext);
+    DataSet inputDataset = setInputDataSetIfNeeded(jobConf, context);
+    DataSet outputDataset = setOutputDataSetIfNeeded(jobConf, context);
 
     boolean useDataSetAsInputOrOutput = inputDataset != null || outputDataset != null;
     if (useDataSetAsInputOrOutput) {
       DataSetInputOutputFormatHelper.writeRunId(jobConf.getConfiguration(), context.getRunId().getId());
-      DataSetInputOutputFormatHelper.add(context.getRunId().getId(), mapReduceContext);
+      DataSetInputOutputFormatHelper.add(context.getRunId().getId(), context);
     }
 
     // adding job jar to classpath
@@ -75,7 +69,8 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
         try {
           boolean success;
           try {
-           success = jobConf.waitForCompletion(true);
+            LOG.info("Submitting mapreduce job %s", context.toString());
+            success = jobConf.waitForCompletion(true);
           } catch (InterruptedException e) {
             // nothing we can do now: we simply stopped watching for job completion...
             throw Throwables.propagate(e);
@@ -83,7 +78,7 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
             throw Throwables.propagate(e);
           }
 
-          job.onFinish(success, mapReduceContext);
+          job.onFinish(success, context);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         } finally {
@@ -120,7 +115,7 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
     }
 
     if (outputDataset != null) {
-      // Setting dataset input format for the jobConf. User can override it if needed.
+      LOG.debug("Using dataset %s as output for mapreduce job", outputDataset.getName());
       DataSetOutputFormat.setOutput(jobConf, outputDataset);
     }
     return outputDataset;
@@ -142,6 +137,7 @@ public class MiniYarnMapReduceRuntimeService extends AbstractIdleService impleme
     }
 
     if (inputDataset != null) {
+      LOG.debug("Using dataset %s as input for mapreduce job", inputDataset.getName());
       DataSetInputFormat.setInput(jobConf, inputDataset);
     }
     return inputDataset;

@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop.inmemory;
+package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.LocalJobRunnerWithFix;
@@ -17,7 +17,7 @@ import java.net.InetSocketAddress;
  * LocalJobRunner with fix.
  */
 public class LocalClientProtocolProvider extends ClientProtocolProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(MiniYarnMapReduceRuntimeService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryMapReduceRuntimeService.class);
 
   @Override
   public ClientProtocol create(Configuration conf) throws IOException {

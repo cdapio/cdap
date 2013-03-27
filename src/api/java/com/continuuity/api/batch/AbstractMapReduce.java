@@ -1,4 +1,4 @@
-package com.continuuity.api.batch.hadoop;
+package com.continuuity.api.batch;
 
 /**
  * This abstract class provides default implementation of {@link MapReduce} methods for easy extension.

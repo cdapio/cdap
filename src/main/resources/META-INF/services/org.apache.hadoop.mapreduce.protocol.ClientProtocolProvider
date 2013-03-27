@@ -1,1 +1,1 @@
-com.continuuity.internal.app.runtime.batch.hadoop.inmemory.LocalClientProtocolProvider
+com.continuuity.internal.app.runtime.batch.inmemory.LocalClientProtocolProvider

@@ -1,4 +1,4 @@
-package com.continuuity.internal.app.runtime.batch.hadoop.dataset;
+package com.continuuity.internal.app.runtime.batch.dataset;
 
 
 import com.continuuity.api.data.OperationException;

@@ -1,4 +1,4 @@
-package com.continuuity.api.batch.hadoop;
+package com.continuuity.api.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
