@@ -27,8 +27,7 @@ class DataSetInputSplit extends InputSplit implements Writable {
 
   @Override
   public long getLength() throws IOException, InterruptedException {
-    // By default all splits are of equal size
-    return 0;
+    return split.getLength();
   }
 
   @Override

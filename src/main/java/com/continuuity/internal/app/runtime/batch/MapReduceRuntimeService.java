@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.base.Cancellable;
 import com.continuuity.filesystem.Location;
 import com.google.common.util.concurrent.Service;
