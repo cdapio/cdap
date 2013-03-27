@@ -51,7 +51,7 @@ javadoc {
 }
 
 test {
-    jvmArgs '-Xmx512m'
+    jvmArgs '-Xmx1024m'
 }
 
 /**
