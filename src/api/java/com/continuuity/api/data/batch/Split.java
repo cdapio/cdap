@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ */
+
 package com.continuuity.api.data.batch;
 
 /**

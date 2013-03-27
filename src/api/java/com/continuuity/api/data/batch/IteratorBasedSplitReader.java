@@ -1,5 +1,8 @@
-package com.continuuity.api.data.batch;
+/*
+ * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ */
 
+package com.continuuity.api.data.batch;
 
 import com.continuuity.api.data.OperationException;
 
@@ -8,7 +11,7 @@ import java.util.Iterator;
 /**
  * Handy implementation of {@link SplitReader} backed by {@link Iterator}
  */
-public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey<? extends KEY>>
+public abstract class IteratorBasedSplitReader<KEY, VALUE>
   extends SplitReaderBase<KEY, VALUE> {
   private Iterator<VALUE> iterator;
 
@@ -21,6 +24,13 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey<? exte
    */
   protected abstract Iterator<VALUE> createIterator(final BatchReadable dataset,
                                  final Split split) throws OperationException;
+
+  /**
+   * Gets key from the given value provided by iterator
+   * @param value value to get key from
+   * @return key
+   */
+  protected abstract KEY getKey(VALUE value);
 
   @Override
   public void initialize(final BatchReadable table,
@@ -36,10 +46,9 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE extends WithKey<? exte
     } else {
       VALUE next = iterator.next();
       // TODO: is there a way to enforce VALUE to be "extends <WithKey<KEY>>"?
-      KEY key = next.getKey();
+      KEY key = getKey(next);
       setCurrentKeyValue(key, next);
       return true;
     }
   }
-
 }

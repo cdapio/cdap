@@ -468,6 +468,11 @@ public class SimpleTimeseriesTable extends DataSet
       List<TimeseriesTable.Entry> data = ((TimeseriesTable) dataset).read(s.key, s.startTime, s.endTime, s.tags);
       return data.iterator();
     }
+
+    @Override
+    protected byte[] getKey(Entry entry) {
+      return entry.getKey();
+    }
   }
 
   /////// Methods for using DataSet as output of MapReduce job
