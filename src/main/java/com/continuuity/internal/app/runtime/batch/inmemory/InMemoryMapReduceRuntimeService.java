@@ -5,6 +5,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.base.Cancellable;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
@@ -69,9 +70,10 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
       @Override
       public void run() {
         try {
+          LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
           boolean success;
           try {
-            LOG.info("Submitting mapreduce job %s", context.toString());
+            LOG.info("Submitting mapreduce job {}", context.toString());
             success = jobConf.waitForCompletion(true);
           } catch (InterruptedException e) {
             // nothing we can do now: we simply stopped watching for job completion...
@@ -117,7 +119,7 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
     }
 
     if (outputDataset != null) {
-      LOG.debug("Using dataset %s as output for mapreduce job", outputDataset.getName());
+      LOG.debug("Using dataset {} as output for mapreduce job", outputDataset.getName());
       DataSetOutputFormat.setOutput(jobConf, outputDataset);
     }
     return outputDataset;
@@ -139,7 +141,7 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
     }
 
     if (inputDataset != null) {
-      LOG.debug("Using dataset %s as input for mapreduce job", inputDataset.getName());
+      LOG.debug("Using dataset {} as input for mapreduce job", inputDataset.getName());
       DataSetInputFormat.setInput(jobConf, inputDataset);
     }
     return inputDataset;
