@@ -9,7 +9,6 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
-import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
