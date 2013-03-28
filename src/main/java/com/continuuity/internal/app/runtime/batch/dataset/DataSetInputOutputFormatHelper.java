@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.batch.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -15,6 +16,8 @@ public final class DataSetInputOutputFormatHelper {
 
   public static DataSet getDataSet(final Configuration conf, DataSetSpecification spec) {
     BasicMapReduceContext context = getContext(getRunId(conf));
+    // hack: making sure logging context is set for the thread that accesses the runtime context
+    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
     return context.getDataSet(spec.getName());
   }
 
