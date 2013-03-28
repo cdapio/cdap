@@ -104,8 +104,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long defaultBatchSize = conf.getLong("ttqueue.batch.size.default", 100);
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
-    final long evictIntervalInSecs = conf.getLong("ttqueue.evict.interval.secs", 10 * 60 * 60);
-    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 10 * 60 * 60;
+    final long evictIntervalInSecs = conf.getLong("ttqueue.evict.interval.secs", 10 * 60);  // default value 10 mins
+    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 10 * 60;
   }
 
   private long getBatchSize(QueueConfig queueConfig) {
@@ -168,7 +168,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
     if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Invalidating entry ", entryPointer.getEntryId())));
+      LOG.trace(getLogMessage(String.format("Invalidating entry %d", entryPointer.getEntryId())));
     }
     final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
     // Change meta data to INVALID
@@ -252,10 +252,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   private void readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer,
                             List<Long> entryIds) throws OperationException{
     if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Reading entries from storage - ", Arrays.toString(entryIds.toArray()))));
+      LOG.trace(getLogMessage(String.format("Reading entries from storage - %s", Arrays.toString(entryIds.toArray()))));
     }
     if(entryIds.isEmpty()) {
-      queueState.setCachedEntries(CachedList.EMPTY_LIST);
+      queueState.setCachedEntries(CachedList.<QueueStateEntry>emptyList());
       return;
     }
 
@@ -268,18 +268,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
                                                           this.table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
     if(entriesResult.isEmpty()) {
-      queueState.setCachedEntries(CachedList.EMPTY_LIST);
+      queueState.setCachedEntries(CachedList.<QueueStateEntry>emptyList());
     } else {
       List<QueueStateEntry> entries = new ArrayList<QueueStateEntry>(entryIds.size());
       for(int i = 0; i < entryIds.size(); ++i) {
         Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
         if(entryMap == null) {
-          queueState.setCachedEntries(CachedList.EMPTY_LIST);
+          queueState.setCachedEntries(CachedList.<QueueStateEntry>emptyList());
           return;
         }
         byte[] entryMetaBytes = entryMap.get(ENTRY_META);
         if(entryMetaBytes == null) {
-          queueState.setCachedEntries(CachedList.EMPTY_LIST);
+          queueState.setCachedEntries(CachedList.<QueueStateEntry>emptyList());
           return;
         }
         EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
@@ -739,10 +739,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.table = table;
     }
 
-    public byte[] getRowKey() {
-      return rowKey;
-    }
-
     public void setRowKey(byte[] rowKey) {
       this.rowKey = rowKey;
     }
@@ -890,7 +886,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
         }
 
@@ -959,7 +955,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setQueueWritePointer(queueWritePointer);
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
         }
 
@@ -1068,7 +1064,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // End of queue reached
         if(groupReadPointetr >= queueState.getQueueWritePointer()) {
-          return Collections.EMPTY_LIST;
+          return Collections.emptyList();
         }
 
         // If there are enough entries for all consumers to claim, then claim batchSize entries
