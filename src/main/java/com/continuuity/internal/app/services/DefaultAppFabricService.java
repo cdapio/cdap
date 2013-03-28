@@ -5,9 +5,13 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
@@ -45,6 +49,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -60,6 +65,7 @@ import com.continuuity.internal.app.services.legacy.MetaDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.google.common.base.Preconditions;
@@ -223,7 +229,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     FlowIdentifier id = descriptor.getIdentifier();
     Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
     try {
-      Program program = store.loadProgram(programId, entityTypeToType(id));
+      Program program;
+      try {
+        program = store.loadProgram(programId, entityTypeToType(id));
+      } catch (Throwable th) {
+        // hack: in that case the flow is mapreduce ;)
+        id.setType(EntityType.MAPREDUCE);
+        program = store.loadProgram(programId, entityTypeToType(id));
+      }
       // TODO: User arguments
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
@@ -251,6 +264,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
+      // hack: this might be a mapreduce job ;)
+      if (runtimeInfo == null && id.getType() == EntityType.FLOW) {
+        id.setType(EntityType.MAPREDUCE);
+        runtimeInfo = findRuntimeInfo(id);
+      }
 
       int version = 1;  // FIXME, how to get version?
       if (runtimeInfo == null) {
@@ -434,7 +452,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private FlowDefinitionImpl getFlowDef(final FlowIdentifier id)
-    throws AppFabricServiceException {
+    throws AppFabricServiceException, UnsupportedTypeException {
     ApplicationSpecification appSpec = null;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
@@ -447,6 +465,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     Preconditions.checkArgument(appSpec != null, "Not application specification found.");
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
+    if (flowSpec == null) {
+      // this is hack for a mapreduce job ;)
+      return getFlowDef4MapReduce(id, appSpec.getMapReduces().get(id.getFlowId()));
+    } else {
+      return getFlowDef4Flow(id, flowSpec);
+    }
+  }
+
+  private FlowDefinitionImpl getFlowDef4Flow(FlowIdentifier id, FlowSpecification flowSpec) {
     FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
     MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
     metaDefinition.setApp(id.getApplicationId());
@@ -455,6 +482,30 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     fillFlowletsAndDataSets(flowSpec, flowDef);
     fillConnectionsAndStreams(id, flowSpec, flowDef);
     return flowDef;
+  }
+
+  private FlowDefinitionImpl getFlowDef4MapReduce(FlowIdentifier id, MapReduceSpecification spec)
+    throws UnsupportedTypeException {
+    FlowSpecification flowSpec = FlowSpecification.Builder.with()
+      .setName(spec.getName())
+      .setDescription(spec.getDescription())
+      .withFlowlets()
+      .add("Mapper", new AbstractFlowlet() {
+        private OutputEmitter<String> output;
+      })
+      .add("Reducer", new AbstractFlowlet() {
+        @ProcessInput
+        public void process(String item) {}
+      })
+      .connect()
+      .from("Mapper").to("Reducer")
+      .build();
+
+    for (FlowletDefinition def : flowSpec.getFlowlets().values()) {
+      def.generateSchema(new ReflectionSchemaGenerator());
+    }
+
+    return getFlowDef4Flow(id, flowSpec);
   }
 
   private void fillConnectionsAndStreams(final FlowIdentifier id, final FlowSpecification spec,
