@@ -4,16 +4,22 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
-
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -23,7 +29,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 //we need to create another class with old HBaseOVCTable code and call it PatchedHBaseOVCTable
 public class HBaseOVCTable implements OrderedVersionedColumnarTable {
@@ -255,6 +268,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           byte[] trueValue=removeTypePrefix(value);
           fastForwardToNextRow=true;
           map.put(column, trueValue);
+          fastForwardToNextRow=true;
           deleted.clear(); // necessary?
         }
         if (typePrefix==DELETE_ALL) {
@@ -744,6 +758,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              long writeVersion) throws OperationException {
     byte[] expectedPrependedValue=null;
     KeyValue latestVisibleKV=null;
+    HTable writeTable=null;
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);
@@ -780,14 +795,15 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         } else {
           newPrependedValue=prependWithTypePrefix(DATA, newValue);
         }
-        if (this.readTable.checkAndPut(row, this.family, column, expectedPrependedValue, readPointer.getMaximum(),
-                                   new Put(row).add(this.family, column, writeVersion, newPrependedValue))) {
-          return;
-        }
+        writeTable=getWriteTable();
+        writeTable.put(new Put(row).add(this.family, column, writeVersion, newPrependedValue));
+      } else {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
       }
-      throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
