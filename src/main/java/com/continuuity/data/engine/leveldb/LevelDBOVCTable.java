@@ -479,12 +479,11 @@ implements OrderedVersionedColumnarTable {
   public void deleteDirty(byte[][] rows) throws OperationException {
     try {
       for(int i = 0; i < rows.length; ++i) {
-        final byte [] startKey = createStartKey(rows[i]);
-        final byte [] endKey = createEndKey(rows[i]);
+        byte [] startKey = createStartKey(rows[i]);
+        byte [] endKey = createEndKey(rows[i]);
         DBIterator iterator = db.iterator();
         for(iterator.seek(startKey); iterator.hasNext() && KeyValue.KEY_COMPARATOR.compare(iterator.peekNext().getKey(), endKey) <= 0;) {
-          final byte [] currentKey = iterator.next().getKey();
-          db.delete(currentKey);
+          db.delete(iterator.next().getKey());
         }
       }
     } catch (DBException dbe) {

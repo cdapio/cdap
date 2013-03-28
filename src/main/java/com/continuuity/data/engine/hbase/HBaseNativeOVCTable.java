@@ -6,10 +6,16 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.common.collect.Lists;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -19,7 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 //public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
 public class HBaseNativeOVCTable extends HBaseOVCTable {
@@ -341,7 +350,9 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
         Get get = new Get(row);
-        for (byte [] column : columns) get.addColumn(this.family, column);
+        for (byte [] column : columns) {
+          get.addColumn(this.family, column);
+        }
         get.setTimeRange(0, getMaxStamp(readPointer));
         get.setMaxVersions();
         gets.add(get);
