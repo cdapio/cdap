@@ -26,12 +26,4 @@ public class TestLevelDBOVCTable extends TestOVCTable {
     return injector.getInstance(OVCTableHandle.class);
   }
 
-  @Ignore
-  @Test
-  @Override
-  // Ignoring testDeleteDirty for now as delete on levelDb is failing.
-  // TODO: fix levelDb delete
-  public void testDeleteDirty() throws OperationException {
-
-  }
 }

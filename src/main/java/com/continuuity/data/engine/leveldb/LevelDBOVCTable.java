@@ -9,6 +9,7 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
+import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -479,7 +480,13 @@ implements OrderedVersionedColumnarTable {
   public void deleteDirty(byte[][] rows) throws OperationException {
     try {
       for(int i = 0; i < rows.length; ++i) {
-        this.db.delete(rows[i]);
+        final byte [] startKey = createStartKey(rows[i]);
+        final byte [] endKey = createEndKey(rows[i]);
+        DBIterator iterator = db.iterator();
+        for(iterator.seek(startKey); iterator.hasNext() && KeyValue.KEY_COMPARATOR.compare(iterator.peekNext().getKey(), endKey) <= 0;) {
+          final byte [] currentKey = iterator.next().getKey();
+          db.delete(currentKey);
+        }
       }
     } catch (DBException dbe) {
       handleDBException(dbe, "delete");

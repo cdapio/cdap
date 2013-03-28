@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -919,21 +920,27 @@ public abstract class TestOVCTable {
       assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
-    // Delete 1st, 2nd row
-    this.table.deleteDirty(new byte[][]{rows[0], rows[1]});
-    // Assert rows 1st and 2nd are deleted
-    assertTrue(this.table.get(rows[0], RP_MAX).isEmpty());
-    assertTrue(this.table.get(rows[1], RP_MAX).isEmpty());
+    // Delete 3rd, 6th row
+    Set<Integer> deletedRows = ImmutableSet.of(3, 6);
+    final byte [][] deletedArray = new byte[][] {Bytes.toBytes(3), Bytes.toBytes(6)};
+    this.table.deleteDirty(deletedArray);
+    // Assert deleted rows are really deleted
+    for(Integer i : deletedRows) {
+      assertTrue(this.table.get(Bytes.toBytes(i), RP_MAX).isEmpty());
+    }
     // Assert other rows still exist
-    for(int i = 2; i < MAX; ++i) {
+    for(int i = 0; i < MAX; ++i) {
+      if(deletedRows.contains(i)) {
+        continue;
+      }
       Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
       assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
       assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
       assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
     }
 
-    // Delete all other rows
-    for(int i = 2; i < MAX; ++i) {
+    // Delete all rows
+    for(int i = 0; i < MAX; ++i) {
       this.table.deleteDirty(new byte[][]{rows[i]});
     }
 
