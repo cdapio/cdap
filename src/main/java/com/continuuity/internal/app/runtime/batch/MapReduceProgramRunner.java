@@ -11,6 +11,8 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.base.Cancellable;
+import com.continuuity.common.logging.common.LogWriter;
+import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -36,9 +38,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   @Inject
   public MapReduceProgramRunner(MapReduceRuntimeService mapReduceRuntimeService,
-                                TransactionAgentSupplierFactory txAgentSupplierFactory) {
+                                TransactionAgentSupplierFactory txAgentSupplierFactory,
+                                LogWriter logWriter) {
     this.mapReduceRuntimeService = mapReduceRuntimeService;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
+    CAppender.logWriter = logWriter;
   }
 
   @Override

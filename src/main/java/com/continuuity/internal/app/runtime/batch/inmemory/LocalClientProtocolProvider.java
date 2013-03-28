@@ -23,7 +23,7 @@ public class LocalClientProtocolProvider extends ClientProtocolProvider {
   public ClientProtocol create(Configuration conf) throws IOException {
     String framework =
       conf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
-    LOG.info("For mini-MR cluster using framework: " + framework);
+    LOG.info("Using framework: " + framework);
     if (!MRConfig.LOCAL_FRAMEWORK_NAME.equals(framework)) {
       return null;
     }
@@ -31,7 +31,7 @@ public class LocalClientProtocolProvider extends ClientProtocolProvider {
     // We have to use something unique like "clocal" to make sure Hadoop's LocalClientProtocolProvider will fail to
     // provide the ClientProtocol
     String tracker = conf.get(JTConfig.JT_IPC_ADDRESS, "clocal");
-    LOG.info("For mini-MR cluster using tracker: " + tracker);
+    LOG.info("Using tracker: " + tracker);
 
     if ("clocal".equals(tracker)) {
       conf.setInt("mapreduce.job.maps", 1);
