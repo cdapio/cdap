@@ -118,6 +118,29 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (rows.length == columns.length);
+    assert (columns.length == values.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        Put put = new Put(rows[i]);
+        put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
+        puts.add(put);
+      }
+      writeTable.put(puts);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     //point delete (unlike deleteAll) is only used internally for undo-ing operations of i.e. write(?) or delete
@@ -184,6 +207,26 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Delete> deletes = new ArrayList<Delete>(rows.length);
+      for(byte[] row : rows) {
+        Delete delete = new Delete(row);
+        deletes.add(delete);
+      }
+      writeTable.delete(deletes);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     undeleteAll(row, new byte[][]{column}, version);
   }
@@ -222,6 +265,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         byte typePrefix=value[0];
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
+          fastForwardToNextRow=true;
           map.put(column, trueValue);
           fastForwardToNextRow=true;
           deleted.clear(); // necessary?
@@ -234,6 +278,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           deleted.add(version);
         }
         previousColumn=column;
+      }
+
+      if(map.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -303,8 +351,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer)
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
+    // TODO: this can probably be improved by doing a scan instead of get.
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
@@ -323,7 +372,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
       }
       if (resultMap.isEmpty()) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
       }
       else {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);

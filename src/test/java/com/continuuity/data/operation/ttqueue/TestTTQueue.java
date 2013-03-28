@@ -193,8 +193,8 @@ public abstract class TestTTQueue {
         queueEvict.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // dequeue with new consumer IS NOW EMPTY!
-    assertTrue(
-        queueEvict.dequeue(consumer2, dirtyReadPointer).isEmpty());
+    DequeueResult result = queueEvict.dequeue(consumer2, dirtyReadPointer);
+    assertTrue(result.toString(), result.isEmpty());
 
 
   }
@@ -267,6 +267,7 @@ public abstract class TestTTQueue {
     // create a new consumer and dequeue, should get the 10th entry!
     QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1,config);
     DequeueResult result = queue.dequeue(consumer4, dirtyReadPointer);
+    assertFalse(result.isEmpty());
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),
         Bytes.equals(Bytes.toBytes(9), result.getEntry().getData()));
     queue.ack(result.getEntryPointer(), consumer4, dirtyReadPointer);

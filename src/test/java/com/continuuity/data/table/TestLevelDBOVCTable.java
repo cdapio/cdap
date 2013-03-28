@@ -1,10 +1,13 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class TestLevelDBOVCTable extends TestOVCTable {
 

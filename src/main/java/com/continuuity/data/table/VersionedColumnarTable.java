@@ -41,6 +41,17 @@ public interface VersionedColumnarTable {
       byte [][] values) throws OperationException;
 
   /**
+   * Writes values[i] at (rows[i], columns[i]) using the specified version
+   * version for the specified rows.
+   * @param rows
+   * @param columns
+   * @param version
+   * @param values
+   */
+  public void put(byte [][] rows, byte [][] columns, long version,
+                  byte [][] values) throws OperationException;
+
+  /**
    * Deletes the specified version of the specified row and column.
    * @param row
    * @param column
@@ -84,6 +95,13 @@ public interface VersionedColumnarTable {
    * @param version
    */
   public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
+
+  /**
+   * Deletes all versions of all columns of the specified rows. If the implementation supports it
+   * this delete will affect all readers, and it cannot be undone.
+   * @param rows
+   */
+  public void deleteDirty(byte [][] rows) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
@@ -170,16 +188,14 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer) throws OperationException;
 
   /**
-   * Reads the latest versions of the specified columns in the specified row,
+   * Reads the latest versions of all specified columns for each row,
    * utilizing the specified read pointer to enforce visibility constraints.
    * @param rows
    * @param columns
    * @param readPointer
    * @return map of columns to values, never null
    */
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(
-    byte [][] rows, byte[][] columns,
-    ReadPointer readPointer) throws OperationException;
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException;
 
   /**
    * Increments (atomically) the specified row and column by the specified
