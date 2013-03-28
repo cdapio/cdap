@@ -30,6 +30,8 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
   @Inject
   public InMemoryMapReduceRuntimeService() {
     conf = new org.apache.hadoop.conf.Configuration();
+    conf.addResource("mapred-site-local.xml");
+    conf.reloadConfiguration();
   }
 
   @Override
