@@ -12,6 +12,8 @@ import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 import org.apache.hadoop.mapreduce.Job;
 
@@ -31,10 +33,14 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
   private BatchWritable outputDataset;
+  private final CMetrics systemMapperMetrics;
+  private final CMetrics systemReducerMetrics;
 
   public BasicMapReduceContext(Program program, RunId runId,
                                Map<String, DataSet> datasets, MapReduceSpecification spec) {
     super(program, runId, datasets);
+    this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));
+    this.systemReducerMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Reducer"));
     this.metrics = new MapReduceMetrics(getAccountId(), getApplicationId(),
                                         getProgramName(), getRunId().toString(), getInstanceId());
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
@@ -77,13 +83,13 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
     return 0;
   }
 
-  @Override
-  protected String getMetricName() {
-    return String.format("%s.%s.%s.%s.foo.%d",
+  private String getMetricName(String task) {
+    return String.format("%s.%s.%s.%s.%s.%d",
                          getAccountId(),
                          getApplicationId(),
                          getProgramName(),
                          getRunId(),
+                         task,
                          getInstanceId());
   }
 
@@ -92,6 +98,13 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
     return metrics;
   }
 
+  public CMetrics getSystemMapperMetrics() {
+    return systemMapperMetrics;
+  }
+
+  public CMetrics getSystemReducerMetrics() {
+    return systemReducerMetrics;
+  }
 
   public LoggingContext getLoggingContext() {
     return loggingContext;

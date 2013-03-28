@@ -9,6 +9,8 @@ import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
@@ -32,7 +34,8 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
   private final QueueProducer queueProducer;
   private volatile QueueConsumer queueConsumer;
   private final boolean asyncMode;
-  private FlowletMetrics flowletMetrics;
+  private final CMetrics systemMetrics;
+  private final FlowletMetrics flowletMetrics;
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId,
                       Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
@@ -47,6 +50,7 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
     this.queueProducer = new QueueProducer(getMetricName());
     this.queueConsumer = createQueueConsumer();
 
+    this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
     this.flowletMetrics = new FlowletMetrics(getAccountId(), getApplicationId(),
                                              flowId, flowletId, runId.toString(), instanceId);
   }
@@ -70,6 +74,10 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
   @Override
   public FlowletSpecification getSpecification() {
     return flowletSpec;
+  }
+
+  public CMetrics getSystemMetrics() {
+    return systemMetrics;
   }
 
   public void setInstanceCount(int count) {
@@ -118,8 +126,7 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
     return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
   }
 
-  @Override
-  protected String getMetricName() {
+  private String getMetricName() {
     return String.format("%s.%s.%s.%s.%s.%d",
                          getAccountId(),
                          getApplicationId(),
