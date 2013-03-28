@@ -12,6 +12,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
@@ -491,6 +492,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       .setDescription(spec.getDescription())
       .withFlowlets()
       .add("Mapper", new AbstractFlowlet() {
+        public void process(StreamEvent event) {}
         private OutputEmitter<String> output;
       })
       .add("Reducer", new AbstractFlowlet() {
@@ -498,6 +500,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         public void process(String item) {}
       })
       .connect()
+      .fromStream("Input").to("Mapper")
       .from("Mapper").to("Reducer")
       .build();
 

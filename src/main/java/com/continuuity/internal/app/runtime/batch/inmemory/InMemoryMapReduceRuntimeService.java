@@ -10,7 +10,6 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputOutputFormatHelper;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -59,8 +58,8 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
 
     boolean useDataSetAsInputOrOutput = inputDataset != null || outputDataset != null;
     if (useDataSetAsInputOrOutput) {
-      DataSetInputOutputFormatHelper.writeRunId(jobConf.getConfiguration(), context.getRunId().getId());
-      DataSetInputOutputFormatHelper.add(context.getRunId().getId(), context);
+      MapReduceContextAccessor.setRunId(jobConf.getConfiguration(), context.getRunId().getId());
+      MapReduceContextAccessor.put(context.getRunId().getId(), context);
     }
 
     // adding job jar to classpath

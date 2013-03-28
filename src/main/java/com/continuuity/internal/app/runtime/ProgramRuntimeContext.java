@@ -24,7 +24,6 @@ public abstract class ProgramRuntimeContext {
   private final String programName;
   private final RunId runId;
   private final Map<String, DataSet> datasets;
-  private final CMetrics systemMetrics;
 
   public ProgramRuntimeContext(Program program, RunId runId, Map<String, DataSet> datasets) {
     this.accountId = program.getAccountId();
@@ -32,10 +31,7 @@ public abstract class ProgramRuntimeContext {
     this.programName = program.getProgramName();
     this.runId = runId;
     this.datasets = ImmutableMap.copyOf(datasets);
-    this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
   }
-
-  protected abstract String getMetricName();
 
   public abstract Metrics getMetrics();
 
@@ -50,10 +46,6 @@ public abstract class ProgramRuntimeContext {
     Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
     return dataSet;
 
-  }
-
-  public CMetrics getSystemMetrics() {
-    return systemMetrics;
   }
 
   public String getAccountId() {

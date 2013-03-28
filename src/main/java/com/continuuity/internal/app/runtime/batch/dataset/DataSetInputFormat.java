@@ -5,6 +5,8 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
+import com.continuuity.internal.app.runtime.batch.inmemory.MapReduceContextAccessor;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -18,7 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataSetInputFormat extends InputFormat<byte[], Object> {
+public class DataSetInputFormat extends InputFormat<Object, Object> {
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 
   public static void setInput(Job job, DataSet dataSet) {
@@ -29,7 +31,7 @@ public class DataSetInputFormat extends InputFormat<byte[], Object> {
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    List<Split> splits = DataSetInputOutputFormatHelper.getInput(conf);
+    List<Split> splits = MapReduceContextAccessor.getContext(conf).getInputDataSelection();
 
     List<InputSplit> list = new ArrayList<InputSplit>();
     for (Split split : splits) {
@@ -40,18 +42,18 @@ public class DataSetInputFormat extends InputFormat<byte[], Object> {
   }
 
   @Override
-  public RecordReader<byte[], Object> createRecordReader(final InputSplit split,
+  public RecordReader<Object, Object> createRecordReader(final InputSplit split,
                                                                 final TaskAttemptContext context)
     throws IOException, InterruptedException {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
-    BatchReadable dataset =
-      (BatchReadable) DataSetInputOutputFormatHelper.getDataSet(conf, getInputDataSetSpec(conf));
+    BasicMapReduceContext mrContext = MapReduceContextAccessor.getContext(conf);
+    BatchReadable dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
     SplitReader splitReader = dataset.createSplitReader(inputSplit.getSplit());
 
-    return new DataSetRecordReader(dataset, splitReader);
+    return new DataSetRecordReader(dataset, splitReader, mrContext);
   }
 
   private DataSetSpecification getInputDataSetSpec(Configuration conf) {

@@ -9,6 +9,8 @@ import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 
 import java.util.Map;
@@ -24,6 +26,7 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
   private final ProcedureSpecification procedureSpec;
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
+  private final CMetrics systemMetrics;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
                         ProcedureSpecification procedureSpec) {
@@ -34,6 +37,7 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
     this.procedureMetrics = new ProcedureMetrics(getAccountId(), getApplicationId(),
                                                  getProcedureId(), getRunId().toString(), getInstanceId());
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
+    this.systemMetrics = new CMetrics(MetricType.ProcedureSystem, getMetricName());
   }
 
   @Override
@@ -51,6 +55,10 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
     return procedureMetrics;
   }
 
+  public CMetrics getSystemMetrics() {
+    return systemMetrics;
+  }
+
   public String getProcedureId() {
     return procedureId;
   }
@@ -63,8 +71,7 @@ final class BasicProcedureContext extends ProgramRuntimeContext implements Proce
     return procedureLoggingContext;
   }
 
-  @Override
-  protected String getMetricName() {
+  private String getMetricName() {
     return String.format("%s.%s.%s.%s.foo.%d",
                          getAccountId(),
                          getApplicationId(),
