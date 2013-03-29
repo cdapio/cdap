@@ -76,7 +76,7 @@ public class CPUStatsTable extends DataSet {
 
       for (Entry entry : entries) {
         // convert to CPU stats
-        cpuStatList.add(new CPUStat(entry.getTimestamp(), Bytes.toInt(entry.getValue()), new String(entry.getKey())));
+        cpuStatList.add(new CPUStat(entry.getTimestamp(), Bytes.toString(entry.getValue()), Bytes.toString(entry.getKey())));
       }
     } catch (OperationException e) {
     }

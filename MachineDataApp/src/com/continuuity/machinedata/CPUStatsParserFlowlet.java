@@ -48,7 +48,7 @@ public class CPUStatsParserFlowlet extends AbstractFlowlet {
           //throw new IOException();
         }
         else {
-          parserOutput.emit(new CPUStat(/*ts*/ Long.parseLong(parsed[0]),/*cpu*/ Integer.getInteger(parsed[1]),/*hostname*/ parsed[2]));
+          parserOutput.emit(new CPUStat(/*ts*/ Long.parseLong(parsed[0]),/*cpu*/ parsed[1],/*hostname*/ parsed[2]));
         }
       } catch (IOException e) {
         LOG.error("Error parsing log line: " + eventString + "expect 3 params, got:" + parsed.length);

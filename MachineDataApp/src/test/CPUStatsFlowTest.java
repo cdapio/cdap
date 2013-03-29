@@ -65,8 +65,8 @@ public class CPUStatsFlowTest extends AppFabricTestBase {
     // Read values back from Dataset
     CPUStatsTable cpuStatsTable = (CPUStatsTable)applicationManager.getDataSet(MachineDataApp.CPU_STATS_TABLE);
 
-    CPUStat stat = new CPUStat(System.currentTimeMillis(), 10, "hostname");
-
+    // Write live from the test, this actually get written; doesn't from the flowlet?? --> Test fails
+    CPUStat stat = new CPUStat(System.currentTimeMillis(), "10", "hostname");
     cpuStatsTable.write(stat);
 
 
