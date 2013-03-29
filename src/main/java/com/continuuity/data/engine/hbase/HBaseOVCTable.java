@@ -706,7 +706,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer,
                              long writeVersion) throws OperationException {
-    byte[] expectedPrependedValue=null;
     KeyValue latestVisibleKV=null;
     HTable writeTable=null;
     try {
@@ -718,7 +717,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Result result = this.readTable.get(get);
       KeyValue[] rawResults=result.raw();
       if (rawResults!=null && rawResults.length!=0) {
-        expectedPrependedValue=rawResults[0].getValue();
         Set<Long> deleted = Sets.newHashSet();
         for (KeyValue kv : result.raw()) {
           long version = kv.getTimestamp();
@@ -753,7 +751,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
