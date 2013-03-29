@@ -3,12 +3,11 @@ package com.continuuity.internal.app.runtime.batch;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.base.Cancellable;
 import com.continuuity.filesystem.Location;
-import com.google.common.util.concurrent.Service;
 
 /**
  * Performs the actual execution of mapreduce job.
  */
-public interface MapReduceRuntimeService extends Service {
+public interface MapReduceRuntimeService {
   /**
    * Submits the mapreduce job for execution.
    * @param job job to run
