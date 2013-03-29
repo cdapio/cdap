@@ -19,14 +19,14 @@ GATEWAY_STREAM_URL=${GATEWAY_STREAM_URL:=$GATEWAY_REST_BASE_URL$STREAM_NAME}
 
 # Initialize variables
 timestamp=`date +%s` # Initial action id (increments from here)
-cpu=0 # Initial product id (randomly increments from here)
 
 
-# Generate random id
-
+# Generate random cpu spikes
 for (( i=0; i<$num_metrics; i++ )); do
-	cpu=10
+    cpu=$RANDOM
+    cpu=$((cpu%=100)) 
 	metric=$timestamp", "$cpu", "$HOSTNAME
     echo "Inserting action: $metric to $GATEWAY_STREAM_URL"
-	curl -v "$GATEWAY_STREAM_URL" --request PUT --data $metric
+	curl  "$GATEWAY_STREAM_URL" --data "$metric"
+	sleep 1s
 done

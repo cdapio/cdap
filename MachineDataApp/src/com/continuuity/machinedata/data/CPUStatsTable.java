@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +51,8 @@ public class CPUStatsTable extends DataSet {
   public void write(CPUStat stat) {
 
     // create time series entry
-    Entry entry = new Entry(Bytes.toBytes("cpu"), Bytes.toBytes(stat.cpuUsage), stat.timesStamp, /*tag=hostname*/Bytes.toBytes(stat.hostname));
-    LOG.info("Writing to dataset: " + stat.hostname + ", " + stat.cpuUsage + ", " + stat.timesStamp);
+    Entry entry = new Entry(Bytes.toBytes("cpu"), Bytes.toBytes(stat.cpuUsage), stat.timesStamp.getTime(), Bytes.toBytes(stat.hostname));
+    LOG.info("Writing to dataset: " + stat.timesStamp + ", " + stat.cpuUsage + ", " + stat.hostname);
 
     // Write to time series table
     try {
@@ -76,7 +77,8 @@ public class CPUStatsTable extends DataSet {
 
       for (Entry entry : entries) {
         // convert to CPU stats
-        cpuStatList.add(new CPUStat(entry.getTimestamp(), Bytes.toString(entry.getValue()), Bytes.toString(entry.getKey())));
+
+        cpuStatList.add(new CPUStat( new Date(entry.getTimestamp()), Bytes.toInt(entry.getValue()), Bytes.toString(entry.getKey())));
       }
     } catch (OperationException e) {
     }

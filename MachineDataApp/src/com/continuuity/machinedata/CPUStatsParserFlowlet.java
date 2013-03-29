@@ -13,6 +13,8 @@ import com.continuuity.machinedata.data.CPUStat;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.Long;
+import java.util.Date;
 
 public class CPUStatsParserFlowlet extends AbstractFlowlet {
 
@@ -37,7 +39,7 @@ public class CPUStatsParserFlowlet extends AbstractFlowlet {
       String eventString = new String(Bytes.toBytes(event.getBody()));
 
       if (eventString == null ) {
-        //throw new OperationException(StatusCode.INTERNAL_ERROR, "Unable to parse Stream data");
+        LOG.error("Unable to parse stream for message: " + eventString);
       }
 
       // Parse as CSV
@@ -45,10 +47,20 @@ public class CPUStatsParserFlowlet extends AbstractFlowlet {
       try {
         parsed = this.csvParser.parseLine(eventString);
         if (parsed.length != 3) {
-          //throw new IOException();
+          LOG.error("Wrong format, expecting <timestamp, cpu, hostname>: " + eventString);
         }
         else {
-          parserOutput.emit(new CPUStat(/*ts*/ Long.parseLong(parsed[0]),/*cpu*/ parsed[1],/*hostname*/ parsed[2]));
+
+          /*Convert back to epoc millisecond format*/
+          Long timestamp = Long.parseLong(parsed[0]);
+          Date dateTs = new Date(timestamp);
+          int cpu = Integer.parseInt(parsed[1]);
+          String hostname = parsed[2];
+
+          // Validate metric
+
+
+          parserOutput.emit(new CPUStat(dateTs, cpu, hostname));
         }
       } catch (IOException e) {
         LOG.error("Error parsing log line: " + eventString + "expect 3 params, got:" + parsed.length);
