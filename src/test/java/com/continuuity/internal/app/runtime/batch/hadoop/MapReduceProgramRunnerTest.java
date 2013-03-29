@@ -27,7 +27,6 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -35,7 +34,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,13 +64,6 @@ public class MapReduceProgramRunnerTest {
 
     injector = Guice.createInjector(new DataFabricLevelDBModule(configuration),
                                              new BigMamaModule(configuration));
-
-    injector.getInstance(MapReduceRuntimeService.class).startAndWait();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    injector.getInstance(MapReduceRuntimeService.class).stopAndWait();
   }
 
   @Test

@@ -12,7 +12,6 @@ import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Runs mapreduce job using {@link org.apache.hadoop.mapred.LocalJobRunner}
  */
-public class InMemoryMapReduceRuntimeService extends AbstractIdleService implements MapReduceRuntimeService {
+public class InMemoryMapReduceRuntimeService implements MapReduceRuntimeService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryMapReduceRuntimeService.class);
 
   private final org.apache.hadoop.conf.Configuration conf;
@@ -32,16 +31,6 @@ public class InMemoryMapReduceRuntimeService extends AbstractIdleService impleme
     conf = new org.apache.hadoop.conf.Configuration();
     conf.addResource("mapred-site-local.xml");
     conf.reloadConfiguration();
-  }
-
-  @Override
-  public void startUp() {
-    // DO NOTHING
-  }
-
-  @Override
-  public void shutDown() {
-    // DO NOTHING
   }
 
   @Override
