@@ -52,7 +52,6 @@ public class SingleNodeMain {
   private MetricsFrontendServerInterface overloadFrontend;
   private MetadataServerInterface metaDataServer;
   private AppFabricServer appFabricServer;
-  private MapReduceRuntimeService mapReduceRuntimeService;
   private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
   private final CConfiguration configuration;
   private final ImmutableList<Module> modules;
@@ -69,7 +68,6 @@ public class SingleNodeMain {
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    mapReduceRuntimeService = injector.getInstance(MapReduceRuntimeService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -106,7 +104,6 @@ public class SingleNodeMain {
     metaDataServer.start(args, configuration);
     overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
-    mapReduceRuntimeService.startAndWait();
     webCloudAppService.start(args, configuration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -120,7 +117,6 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stop(true);
-      mapReduceRuntimeService.startAndWait();
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
