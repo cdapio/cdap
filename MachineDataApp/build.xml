@@ -6,7 +6,7 @@
   <!-- set global properties for this build -->
   <property name="appname" value="MachineDataApp"/>
   <property name="appfabric.home" value="/Users/alex/dev/continuuity-developer-suite-1.4.0-SNAPSHOT"/>
-  <property name="src" location="src"/>
+  <property name="src" location="src/com"/>
   <property name="build" location="build"/>
   <property name="manifest.file" value="${basedir}/MANIFEST.MF"/>
   <property name="jar.file" value="${basedir}/${appname}.jar"/>
@@ -15,6 +15,7 @@
         <pathelement location="${appfabric.home}/continuuity-api-1.4.0-SNAPSHOT.jar"/>
         <pathelement location="${appfabric.home}/lib/guava-13.0.1.jar"/>
         <pathelement location="${appfabric.home}/lib/slf4j-api-1.7.2.jar"/>
+        <pathelement location="${appfabric.home}/lib/gson-2.1.jar"/>
         <pathelement location="./lib/opencsv-2.1.jar"/>  
     </path>
   <target name="init">

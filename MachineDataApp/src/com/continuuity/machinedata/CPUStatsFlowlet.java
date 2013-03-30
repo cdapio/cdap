@@ -1,10 +1,8 @@
 package com.continuuity.machinedata;
 
-//import au.com.bytecode.opencsv.CSVParser;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable.Entry;
-import com.esotericsoftware.minlog.Log;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Splitter;
 import java.lang.Long;
@@ -20,8 +18,6 @@ public class CPUStatsFlowlet extends MetricsCollector {
 
   private static final Splitter TAG_SPLITTER
     = Splitter.on(",").trimResults().omitEmptyStrings();
-
-  //private final CSVParser csvParser = new CSVParser(',', '"', '\\', false);
 
   @Override
   public TimeseriesTable.Entry generateEntry(String metric) {
@@ -57,7 +53,7 @@ public class CPUStatsFlowlet extends MetricsCollector {
         entry = new Entry(Bytes.toBytes("cpu"), Bytes.toBytes(cpu), timestamp.getTime(), Bytes.toBytes(hostname));
       }
       else {
-        Log.error("Unable to process metric:" + metric);
+        LOG.error("Unable to process metric:" + metric);
       }
     }
 

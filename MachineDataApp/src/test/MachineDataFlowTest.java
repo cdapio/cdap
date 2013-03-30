@@ -61,8 +61,6 @@ public class MachineDataFlowTest extends AppFabricTestBase {
     System.out.println("Waiting on: " + MachineDataApp.CPU_STATS_STREAM);
     //m1.waitForProcessed(numMetrics, 10, TimeUnit.SECONDS);
 
-
-
     // Read values back from Dataset
     SimpleTimeseriesTable cpuStatsTable = (SimpleTimeseriesTable)applicationManager.getDataSet(MachineDataApp.CPU_STATS_TABLE);
 
