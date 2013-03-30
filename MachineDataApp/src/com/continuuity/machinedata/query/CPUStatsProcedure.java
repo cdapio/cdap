@@ -32,8 +32,16 @@ public class CPUStatsProcedure extends AbstractProcedure {
     }
   };
 
+  public static final String NAME = "CPUStatsProcedure";
+
   @UseDataSet(MachineDataApp.CPU_STATS_TABLE)
   SimpleTimeseriesTable timeSeriesTable;
+
+  @Handle("echo")
+  public void echo(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), "CPUStatsProcedure up and running.");
+  }
+
 
   @Handle("getStats")
   public void getStats(ProcedureRequest request, ProcedureResponder responder) throws Exception {
@@ -44,19 +52,24 @@ public class CPUStatsProcedure extends AbstractProcedure {
       responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Wrong parameters. Please Provide <hostname>, <timestamp_from>, <timestamp_to>");
     }
 
-    String hostname = request.getArgument("hostname");
-    long ts_from = Long.getLong(request.getArgument("timestamp_from"));
-    long ts_to = Long.getLong(request.getArgument("timestamp_to"));
+    try {
+      String hostname = request.getArgument("hostname");
+      Long l_ts_from = Long.parseLong(request.getArgument("timestamp_from"));
+      Long l_ts_to = Long.parseLong(request.getArgument("timestamp_to"));
 
-    List<TimeseriesTable.Entry> entries =
-      this.timeSeriesTable.read(Bytes.toBytes("cpu"), ts_from, ts_to, /*tag*/Bytes.toBytes(hostname));
-    LOG.info("Entries returned: " + entries.size());
+      List<TimeseriesTable.Entry> entries = this.timeSeriesTable.read(Bytes.toBytes("cpu"), l_ts_from, l_ts_to, /*tag*/Bytes.toBytes(hostname));
+      LOG.info("Entries returned: " + entries.size());
 
-    ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+      ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
 
-    for (Entry entry : entries) {
-      // Convert object to Json and stream
-      writer.write(this.gson.get().toJson( new CpuStat(entry)));
+      for (Entry entry : entries) {
+        // Convert object to Json and stream
+        writer.write(this.gson.get().toJson(new CpuStat(entry)));
+      }
+
+    } catch (NumberFormatException ex) {
+      responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Bad parameters: " + request.getArgument("hostname") + ", "
+        + request.getArgument("timestamp_from") + ", " + request.getArgument("timestamp_to"));
     }
   }
 

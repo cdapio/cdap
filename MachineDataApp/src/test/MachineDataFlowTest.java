@@ -53,13 +53,13 @@ public class MachineDataFlowTest extends AppFabricTestBase {
       this.writeMetric(s1, System.currentTimeMillis(), cpu, hostname);
     }
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     // Wait for all tuples to be processed.
     RuntimeMetrics m1 =
       RuntimeStats.getFlowletMetrics(MachineDataApp.NAME, MachineDataFlow.NAME, CPUStatsFlowlet.NAME);
     System.out.println("Waiting on: " + MachineDataApp.CPU_STATS_STREAM);
-    //m1.waitForProcessed(numMetrics, 10, TimeUnit.SECONDS);
+    //m1.waitForProcessed(numMetrics, 10, TimeUnit.SECONDS); //TODO: Check with Terence, wait doesn't work synchronously
 
     // Read values back from Dataset
     SimpleTimeseriesTable cpuStatsTable = (SimpleTimeseriesTable)applicationManager.getDataSet(MachineDataApp.CPU_STATS_TABLE);
@@ -71,6 +71,11 @@ public class MachineDataFlowTest extends AppFabricTestBase {
 
     // test Procedure
     ProcedureManager procedureManager = applicationManager.startProcedure("CPUStatsProcedure");
+
+    HashMap<String, String> argEcho = new HashMap<String, String>();
+    String queryEcho = procedureManager.getClient().query("echo", argEcho);
+
+    // getStats
     HashMap<String, String> args = new HashMap<String, String>();
     args.put("hostname", "hostname");
     args.put("timestamp_from", String.valueOf(ts_from));

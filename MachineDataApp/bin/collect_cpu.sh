@@ -28,5 +28,5 @@ for (( i=0; i<$num_metrics; i++ )); do
 	metric=$timestamp", "$cpu", "$HOSTNAME
     echo "Inserting action: $metric to $GATEWAY_STREAM_URL"
 	curl  "$GATEWAY_STREAM_URL" --data "$metric"
-	sleep 1s
+#	sleep 0.5
 done
