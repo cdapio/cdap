@@ -2,8 +2,8 @@ package com.continuuity.machinedata;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.stream.Stream;
-import com.continuuity.machinedata.data.CPUStatsTable;
 import com.continuuity.machinedata.query.CPUStatsProcedure;
 
 /**
@@ -29,9 +29,9 @@ public class MachineDataApp implements Application {
       .withStreams()
       .add(new Stream(CPU_STATS_STREAM))
       .withDataSets()
-      .add(new CPUStatsTable(CPU_STATS_TABLE))
+      .add(new SimpleTimeseriesTable(CPU_STATS_TABLE))
       .withFlows()
-      .add(new CPUStatsFlow())
+      .add(new MachineDataFlow())
       .withProcedures()
       .add(new CPUStatsProcedure())
       .build();

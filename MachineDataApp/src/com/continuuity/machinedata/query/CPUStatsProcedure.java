@@ -2,17 +2,20 @@ package com.continuuity.machinedata.query;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
+import com.continuuity.api.data.dataset.TimeseriesTable.Entry;
+import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.machinedata.CPUStatsParserFlowlet;
 import com.continuuity.machinedata.MachineDataApp;
-import com.continuuity.machinedata.data.CPUStat;
-import com.continuuity.machinedata.data.CPUStatsTable;
+import com.google.gson.Gson;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +25,15 @@ import java.util.Map;
 public class CPUStatsProcedure extends AbstractProcedure {
   private org.slf4j.Logger LOG = LoggerFactory.getLogger(CPUStatsProcedure.class);
 
-  @UseDataSet(MachineDataApp.NAME)
-  CPUStatsTable statsTable;
+  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
+    @Override
+    protected Gson initialValue() {
+      return new Gson();
+    }
+  };
+
+  @UseDataSet(MachineDataApp.CPU_STATS_TABLE)
+  SimpleTimeseriesTable timeSeriesTable;
 
   @Handle("getStats")
   public void getStats(ProcedureRequest request, ProcedureResponder responder) throws Exception {
@@ -35,21 +45,33 @@ public class CPUStatsProcedure extends AbstractProcedure {
     }
 
     String hostname = request.getArgument("hostname");
-
     long ts_from = Long.getLong(request.getArgument("timestamp_from"));
     long ts_to = Long.getLong(request.getArgument("timestamp_to"));
 
-    List<CPUStat> stats = statsTable.read(hostname, ts_from, ts_to);
-    LOG.info("Number of stats found: " + stats.size());
+    List<TimeseriesTable.Entry> entries =
+      this.timeSeriesTable.read(Bytes.toBytes("cpu"), ts_from, ts_to, /*tag*/Bytes.toBytes(hostname));
+    LOG.info("Entries returned: " + entries.size());
 
-    if (stats.size() != 0)      {
-      for (CPUStat stat  : stats) {
-        LOG.warn("Stats found: " + stat.hostname + ", " + stat.cpuUsage + ", " + stat.timesStamp );
-        responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), stat);
-      }
+    ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
+
+    for (Entry entry : entries) {
+      // Convert object to Json and stream
+      writer.write(this.gson.get().toJson( new CpuStat(entry)));
     }
-    else {
-      responder.error(ProcedureResponse.Code.NOT_FOUND,"No entries found");
+  }
+
+  /**
+   * Serializer
+   */
+  private class CpuStat {
+    public long timestamp;
+    public int cpu;
+    public String hostname;
+
+    CpuStat(Entry entry) {
+      this.timestamp = entry.getTimestamp();
+      this.cpu = Bytes.toInt(entry.getValue());
+      this.hostname = Bytes.toString(entry.getTags()[0]);
     }
   }
 }
