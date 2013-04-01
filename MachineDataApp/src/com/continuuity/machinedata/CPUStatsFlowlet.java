@@ -24,7 +24,7 @@ public class CPUStatsFlowlet extends MetricsCollector {
 
     Entry entry = null;
     Date timestamp = new Date();
-    int cpu = 0;
+    long cpu = 0;
     String hostname = "";
 
     // Extract tags, expecting "timestamp, cpu, hostname"
@@ -38,7 +38,7 @@ public class CPUStatsFlowlet extends MetricsCollector {
             timestamp = new Date(Long.parseLong(tag));
             break;
           case 1:
-            cpu = Integer.parseInt(tag);
+            cpu = Long.parseLong(tag);
             break;
           case 2:
             hostname = tag;
@@ -47,7 +47,7 @@ public class CPUStatsFlowlet extends MetricsCollector {
         idx++;
       }
 
-      // create time series entry, if and only if all 3 entrires have been parsed correctly
+      // create time series entry, if and only if all 3 entries have been parsed correctly
       if (idx == 3) {
         LOG.info("generating entry, timestamp: " + timestamp.getTime() + ",cpu: " + cpu + "hostname: " + hostname);
         entry = new Entry(Bytes.toBytes("cpu"), Bytes.toBytes(cpu), timestamp.getTime(), Bytes.toBytes(hostname));

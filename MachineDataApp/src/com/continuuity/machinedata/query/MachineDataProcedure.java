@@ -96,7 +96,7 @@ public class MachineDataProcedure extends AbstractProcedure {
     Map<String, String> args = request.getArguments();
 
     if (args.size() < 2) {
-      responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Wrong parameters. Please Provide <hostname>, <timestamp_from>, <timestamp_to>");
+      responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Wrong parameters. Please Provide <hostname>, <type: cpu, memory, disk>.");
     }
 
     try {
@@ -146,7 +146,7 @@ public class MachineDataProcedure extends AbstractProcedure {
 
     Metric(Entry entry) {
       this.timestamp = entry.getTimestamp();
-      this.value = Bytes.toInt(entry.getValue());
+      this.value = Bytes.toLong(entry.getValue());
     }
   }
 }

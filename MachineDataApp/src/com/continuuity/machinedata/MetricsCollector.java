@@ -8,6 +8,7 @@ import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.data.dataset.TimeseriesTable.Entry;
+import java.util.Date;
 
 /**
  *

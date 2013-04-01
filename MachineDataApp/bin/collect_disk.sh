@@ -17,14 +17,12 @@ GATEWAY_REST_BASE_URL=${GATEWAY_REST_BASE_URL:=http://${GATEWAY_HOSTNAME}:10000/
 STREAM_NAME=${STREAM_NAME:=diskStatsStream}
 GATEWAY_STREAM_URL=${GATEWAY_STREAM_URL:=$GATEWAY_REST_BASE_URL$STREAM_NAME}
 
-# Initialize variables
-timestamp=`date +%s` # Initial action id (increments from here)
-
-
 # Generate random cpu spikes
 for (( i=0; i<$num_metrics; i++ )); do
     disk=$RANDOM
-    disk=$((disk*100000)) 
+    disk=$((disk*1000))
+	timestamp=`date +%s`
+    timestamp=$((timestamp*1000)) # normalize to milliseconds 
 	metric=$timestamp", "$disk", "$HOSTNAME
     echo "Inserting action: $metric to $GATEWAY_STREAM_URL"
 	curl  "$GATEWAY_STREAM_URL" --data "$metric"
