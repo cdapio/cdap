@@ -95,8 +95,6 @@ public class MachineDataFlowTest extends AppFabricTestBase {
     assertTrue(entries.size() == numMetrics);
     entries.clear();
 
-
-
     // test Procedure
     ProcedureManager procedureManager = applicationManager.startProcedure("MachineDataProcedure");
 
