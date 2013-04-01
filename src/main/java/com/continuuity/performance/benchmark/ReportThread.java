@@ -1,21 +1,44 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.performance.util.MetricsHBaseUploader;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class ReportThread extends Thread {
+  private static final int UPLOAD_TIMEOUT = 10*60*1000; // 10 min
 
   int reportInterval = 60;
   AgentGroup[] groups;
+  String[] groupBenchmarkRunIds;
   BenchmarkMetric[] groupMetrics;
+  String reportURL;
 
   public ReportThread(AgentGroup[] groups, BenchmarkMetric[] metrics,
                       CConfiguration config) {
     this.groupMetrics = metrics;
     this.groups = groups;
     this.reportInterval = config.getInt("report", reportInterval);
+    this.reportURL = config.get("reporturl");
+    String benchmarkName = config.get("bench");
+    String buildName = config.get("build");
+    if (buildName == null || buildName.length() == 0) {
+      buildName = "nobuild";
+    }
+    this.groupBenchmarkRunIds = new String[groups.length];
+    DateTimeZone zone = DateTimeZone.forID("US/Pacific");
+    DateTime dt = new DateTime(zone);
+    String prefix = dt.toLocalDate().toString("yyyy-MM-dd")
+      +"_"+dt.toLocalTime().toString("HH:mm:ss")
+      +"_"+buildName
+      +"_"+benchmarkName;
+    for (int i=0; i<groups.length; i++) {
+      this.groupBenchmarkRunIds[i] = prefix + "_" + groups[i].getName()+ "_x" + groups[i].getNumAgents();
+    }
   }
 
   String time2String(long millis) {
@@ -75,12 +98,27 @@ public class ReportThread extends Thread {
         for (Map.Entry<String, Long> kv : metrics.entrySet()) {
           String key = kv.getKey();
           long value = kv.getValue();
+          double perSecRuns = value * 1000.0d / millis;
+          double perSecPerThreadRuns = value * 1000.0d / millis / numThreads;
+          if (!interrupt) {
+            int minutes = (int) Math.round(millis / 1000.0d / 60.0d);
+            if (this.reportURL != null) {
+              try {
+                MetricsHBaseUploader.uploadMetric(this.reportURL, this.groupBenchmarkRunIds[i],
+                                                  "totalPerSec", minutes, perSecRuns);
+                MetricsHBaseUploader.uploadMetric(this.reportURL, this.groupBenchmarkRunIds[i],
+                                                  "totalPerSecPerThread", minutes, perSecPerThreadRuns);
+              } catch (IOException e) {
+                System.err.println("Could not upload benchmark metrics to HBase!");
+              }
+            }
+          }
           builder.append(sep); sep = ", ";
           builder.append(String.format(
               "%d %s (%1.1f/sec, %1.1f/sec/thread)",
               value, key,
-              value * 1000.0 / millis,
-              value * 1000.0 / millis / numThreads
+              perSecRuns,
+              perSecPerThreadRuns
           ));
           if (!interrupt && prev != null) {
             Long previousValue = prev.get(key);
@@ -101,5 +139,4 @@ public class ReportThread extends Thread {
       }
     }
   }
-
 }

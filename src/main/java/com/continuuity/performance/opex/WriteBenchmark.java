@@ -1,10 +1,14 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
-import com.continuuity.performance.benchmark.*;
-import com.continuuity.common.utils.Bytes;
+import com.continuuity.performance.benchmark.Agent;
+import com.continuuity.performance.benchmark.AgentGroup;
+import com.continuuity.performance.benchmark.BenchmarkException;
+import com.continuuity.performance.benchmark.BenchmarkRunner;
+import com.continuuity.performance.benchmark.SimpleAgentGroup;
 
 import java.util.Arrays;
 

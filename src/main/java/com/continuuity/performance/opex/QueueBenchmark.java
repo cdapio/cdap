@@ -75,7 +75,7 @@ public class QueueBenchmark extends OpexBenchmark {
   }
 
   LinkedList<QueueAck> getPending(int agentId) {
-    return pendingAcks.get(agentId - 1);
+    return pendingAcks.get(agentId);
   }
 
   void doEnqueue(long iteration) throws BenchmarkException {
@@ -169,7 +169,7 @@ public class QueueBenchmark extends OpexBenchmark {
         new SimpleAgentGroup(super.simpleConfig) {
           @Override
           public String getName() {
-            return "producer";
+            return "enqueue";
           }
           @Override
           public int getNumAgents() {
@@ -190,7 +190,7 @@ public class QueueBenchmark extends OpexBenchmark {
         new SimpleAgentGroup(super.simpleConfig) {
           @Override
           public String getName() {
-            return "consumer";
+            return "dequeue";
           }
           @Override
           public int getNumAgents() {

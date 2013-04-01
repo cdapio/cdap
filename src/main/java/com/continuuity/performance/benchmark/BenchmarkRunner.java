@@ -110,7 +110,7 @@ public class BenchmarkRunner {
           (group.getRunsPerSecond() > 0 ? "max " + Integer.toString(group
               .getRunsPerSecond()) : "unlimited") + " runs per second).");
       groupMetrics[j] = new BenchmarkMetric();
-      for (int i = 1; i <= group.getNumAgents(); ++i) {
+      for (int i = 0; i < group.getNumAgents(); ++i) {
         threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
       }
     }
