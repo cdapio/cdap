@@ -62,7 +62,7 @@ public class MachineDataFlowTest extends AppFabricTestBase {
     //m1.waitForProcessed(numMetrics, 10, TimeUnit.SECONDS); //TODO: Check with Terence, wait doesn't work synchronously
 
     // Read values back from Dataset
-    SimpleTimeseriesTable cpuStatsTable = (SimpleTimeseriesTable)applicationManager.getDataSet(MachineDataApp.CPU_STATS_TABLE);
+    SimpleTimeseriesTable cpuStatsTable = (SimpleTimeseriesTable)applicationManager.getDataSet(MachineDataApp.MACHINE_STATS_TABLE);
 
     // Read entries for the last hours
     List<TimeseriesTable.Entry> entries = cpuStatsTable.read(Bytes.toBytes("cpu"), ts_from, System.currentTimeMillis() + 1000 * 60 * 60, Bytes.toBytes(hostname));
@@ -70,19 +70,30 @@ public class MachineDataFlowTest extends AppFabricTestBase {
     assertTrue(entries.size() == numMetrics);
 
     // test Procedure
-    ProcedureManager procedureManager = applicationManager.startProcedure("CPUStatsProcedure");
+    ProcedureManager procedureManager = applicationManager.startProcedure("MachineDataProcedure");
 
     HashMap<String, String> argEcho = new HashMap<String, String>();
     String queryEcho = procedureManager.getClient().query("echo", argEcho);
 
-    // getStats
+    // getRange type = <cpu, memory, disk>
     HashMap<String, String> args = new HashMap<String, String>();
+    args.put("type", "cpu");
     args.put("hostname", "hostname");
     args.put("timestamp_from", String.valueOf(ts_from));
     args.put("timestamp_to", String.valueOf(System.currentTimeMillis() + 1000 * 60 * 60));
-    String  query = procedureManager.getClient().query("getStats", args);
-
+    String  query = procedureManager.getClient().query("getRange", args);
     assertTrue(!query.isEmpty());
+    query = "";
+
+    // getLastHour
+    args.clear();
+    args.put("type", "cpu");
+    args.put("hostname", hostname);
+    query = procedureManager.getClient().query("getLastHour", args);
+    assertTrue(!query.isEmpty());
+
+
+
   }
 
   public void writeMetric(StreamWriter stream, long ts, int cpu, String hostname) {

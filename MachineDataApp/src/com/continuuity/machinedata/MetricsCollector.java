@@ -14,7 +14,7 @@ import com.continuuity.api.data.dataset.TimeseriesTable.Entry;
  */
 public class MetricsCollector extends AbstractFlowlet {
 
-  @UseDataSet(MachineDataApp.CPU_STATS_TABLE)
+  @UseDataSet(MachineDataApp.MACHINE_STATS_TABLE)
   SimpleTimeseriesTable timeSeriesTable;
 
   @ProcessInput

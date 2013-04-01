@@ -4,7 +4,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.stream.Stream;
-import com.continuuity.machinedata.query.CPUStatsProcedure;
+import com.continuuity.machinedata.query.MachineDataProcedure;
 
 /**
  *
@@ -17,9 +17,12 @@ public class MachineDataApp implements Application {
    * Name of the input stream carrying JSON formatted Lish social actions.
    */
   public static final String CPU_STATS_STREAM = "cpuStatsStream";
+  public static final String MEM_STATS_STREAM = "memStatsStream";
+  public static final String DISK_STATS_STREAM = "diskStatsStream";
+
 
   /* Tables */
-  public static final String CPU_STATS_TABLE = "cpu_stats_table";
+  public static final String MACHINE_STATS_TABLE = "machine_stats_table";
 
   @Override
   public ApplicationSpecification configure() {
@@ -28,12 +31,14 @@ public class MachineDataApp implements Application {
       .setDescription(DESC)
       .withStreams()
       .add(new Stream(CPU_STATS_STREAM))
+      .add(new Stream(MEM_STATS_STREAM))
+      .add(new Stream(DISK_STATS_STREAM))
       .withDataSets()
-      .add(new SimpleTimeseriesTable(CPU_STATS_TABLE))
+      .add(new SimpleTimeseriesTable(MACHINE_STATS_TABLE))
       .withFlows()
       .add(new MachineDataFlow())
       .withProcedures()
-      .add(new CPUStatsProcedure())
+      .add(new MachineDataProcedure())
       .build();
   }
 }
