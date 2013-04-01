@@ -27,7 +27,9 @@ public class HBaseOpexProvider extends OpexProvider {
     if (zkQuorum != null)
       hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
     hbaseConf.set("hbase.defaults.for.version.skip", "true");
-    Module module = new DataFabricDistributedModule(hbaseConf);
+    CConfiguration conf = CConfiguration.create();
+    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+    Module module = new DataFabricDistributedModule(hbaseConf, conf);
     Injector injector = Guice.createInjector(module);
     return injector.getInstance(Key.get(OperationExecutor.class,
         Names.named("DataFabricOperationExecutor")));
