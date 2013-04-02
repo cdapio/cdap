@@ -169,7 +169,7 @@ public class QueueBenchmark extends OpexBenchmark {
         new SimpleAgentGroup(super.simpleConfig) {
           @Override
           public String getName() {
-            return "enqueue";
+            return "producer";
           }
           @Override
           public int getNumAgents() {
@@ -190,7 +190,7 @@ public class QueueBenchmark extends OpexBenchmark {
         new SimpleAgentGroup(super.simpleConfig) {
           @Override
           public String getName() {
-            return "dequeue";
+            return "consumer";
           }
           @Override
           public int getNumAgents() {
