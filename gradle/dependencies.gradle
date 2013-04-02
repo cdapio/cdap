@@ -127,4 +127,5 @@ libraries.continuuity_eclipse_plugin  = "com.continuuity:continuuity-eclipse-plu
 // LevelDB
 libraries.leveldb = "org.fusesource.leveldbjni:leveldbjni-all:$versions.leveldbVersion"
 
+libraries.jsonsimple = "com.googlecode.json-simple:json-simple:1.1"
 //--------------------------------------------------------------------------
