@@ -28,6 +28,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
   private static OVCTableHandle handle;
 
+  private static final int MAX_CRASH_DEQUEUE_TRIES = 10;
+
   @BeforeClass
   public static void startEmbeddedHBase() {
     try {
@@ -55,11 +57,19 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    conf.setLong("ttqueue.evict.interval.secs", 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
+    conf.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
+    conf.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, MAX_CRASH_DEQUEUE_TRIES);
+
     return new TTQueueNewOnVCTable(
       handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
       Bytes.toBytes("TestTTQueueName" + rand),
       TestTTQueue.oracle, conf);
+
+/*    return new TTQueueNewOnVCTable(
+      new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
+      Bytes.toBytes("TestTTQueue"),
+      TestTTQueue.oracle, conf);
+      */
   }
 
   @Override
@@ -578,10 +588,10 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), getDirtyWriteVersion()).isSuccess());
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
 
-    // dequeue it with FIFO partitioner
+    // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
 
-    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES; ++tries) {
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
       DequeueResult result = queue.dequeue(new StatefulQueueConsumer(0, 0, 1, "", config), getDirtyPointer());
       assertTrue(result.isSuccess());
@@ -590,7 +600,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // After max tries, the entry will be ignored
     StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(0, 0, 1, "", config);
-    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES + 1; ++tries) {
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 1; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
       assertTrue(result.isSuccess());

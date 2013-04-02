@@ -178,9 +178,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       try {
         // this row is gone, remove it from the table and also from the lock table
         this.map.remove(r); // safe to remove because we have the lock
-        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
       } finally {
-        this.locks.unlock(r);
+        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
       }
     }
   }
