@@ -9,9 +9,11 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.TTQueueOnHBaseNative;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
+import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -25,7 +27,9 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   private final ConcurrentSkipListMap<byte[], HTable> htables =
       new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
-  
+
+  private byte [] streamMetaSuffix = "meta".getBytes(Charsets.UTF_8);
+
   @Inject
   public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
                                    @Named("HBaseOVCTableHandleHConfig")Configuration hConf) throws IOException {
@@ -71,8 +75,12 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
 
-    TTQueueOnHBaseNative queue = new TTQueueOnHBaseNative(table,streamTableName,oracle,conf);
-    streamTable = new StreamTable(streamTableName,queue, null);
+    TTQueueTableOnHBaseNative queue = new TTQueueTableOnHBaseNative(table,oracle,conf,hConf);
+
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaSuffix);
+    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
+
+    streamTable = new StreamTable(streamTableName,queue, metaTable);
     StreamTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;

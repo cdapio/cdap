@@ -7,6 +7,7 @@ import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.stream.StreamTable;
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -37,6 +38,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * A configuration object. Not currently used (for real)
    */
   private CConfiguration conf = new CConfiguration();
+
+  private byte [] streamMetaSuffix = "meta".getBytes(Charsets.UTF_8);
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
@@ -85,9 +88,12 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     StreamTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
 
-    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
-    TTQueueOnVCTable queue = new TTQueueOnVCTable(table,streamTableName,oracle,conf);
-    streamTable = new StreamTable(streamTableName,queue,table);
+    OrderedVersionedColumnarTable table = getTable(streamTableName);
+    TTQueueTableOnVCTable queue = new TTQueueTableOnVCTable(table,oracle,conf);
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaSuffix);
+    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
+
+    streamTable = new StreamTable(streamTableName,queue,metaTable);
     StreamTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;

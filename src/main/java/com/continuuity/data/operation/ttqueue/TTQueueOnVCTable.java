@@ -1174,4 +1174,8 @@ public class TTQueueOnVCTable implements TTQueue {
       }
     }
   }
+
+  public void clear() throws OperationException {
+    table.clear();
+  }
 }

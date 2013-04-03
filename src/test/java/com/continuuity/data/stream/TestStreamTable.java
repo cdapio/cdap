@@ -9,9 +9,11 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.inject.Guice;
@@ -45,8 +47,8 @@ public class TestStreamTable {
     StreamQueueConsumer consumer = new StreamQueueConsumer(0, 0, 1,
                                                       new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
 
-    TTQueueOnVCTable table = new TTQueueOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
-                                                   Bytes.toBytes("TestStream"),oracle,conf);
+    TTQueueTableOnVCTable table = new TTQueueTableOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
+                                                             oracle,conf);
 
     OrderedVersionedColumnarTable metaTable = new MemoryOVCTable(Bytes.toBytes("StreamMeta"));
     StreamTable streamTable = new StreamTable(Bytes.toBytes("StreamTest"),table, metaTable, -1);
@@ -75,8 +77,8 @@ public class TestStreamTable {
     StreamQueueConsumer consumer = new StreamQueueConsumer(0, 0, 1,
                                                           new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
 
-    TTQueueOnVCTable table = new TTQueueOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
-                                                   Bytes.toBytes("TestStream"),oracle,conf);
+    TTQueueTableOnVCTable table = new TTQueueTableOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
+                                                             oracle,conf);
     OrderedVersionedColumnarTable metaTable = new MemoryOVCTable(Bytes.toBytes("StreamMeta"));
     StreamTable streamTable = new StreamTable(Bytes.toBytes("StreamTest"),table, metaTable, -1);
 
@@ -110,8 +112,9 @@ public class TestStreamTable {
     StreamQueueConsumer consumer = new StreamQueueConsumer(0, 0, 1,
                                                           new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
 
-    TTQueueOnVCTable table = new TTQueueOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
-                                                   Bytes.toBytes("TestStream"),oracle,conf);
+
+    TTQueueTableOnVCTable table = new TTQueueTableOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
+                                                             oracle,conf);
 
     OrderedVersionedColumnarTable metaTable = new MemoryOVCTable(Bytes.toBytes("StreamMeta"));
     StreamTable streamTable = new StreamTable(Bytes.toBytes("StreamTest"),table, metaTable, -1);
@@ -135,6 +138,35 @@ public class TestStreamTable {
     int countEntriesReadAgain = readAllEntriesFromStream(streamTable, consumer, readPointer);
     assertTrue(0==countEntriesReadAgain);
 
+  }
+
+  /**
+   * Scenario: Clear Streams. a) Enqueue n items b) Clear Stream c) Dequeue All
+   * Expected Result: Dequeue Count should be 0
+   * @throws OperationException
+   */
+  @Test
+  public void testClear() throws OperationException{
+    CConfiguration conf = new CConfiguration();
+
+    StreamQueueConsumer consumer = new StreamQueueConsumer(0, 0, 1,
+                                                           new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
+
+    TTQueueTableOnVCTable table = new TTQueueTableOnVCTable( new MemoryOVCTable(Bytes.toBytes("TestStreamMemoryQueue")),
+                                                             oracle,conf);
+
+    OrderedVersionedColumnarTable metaTable = new MemoryOVCTable(Bytes.toBytes("StreamMeta"));
+    StreamTable streamTable = new StreamTable(Bytes.toBytes("StreamTest"),table, metaTable, -1);
+
+    MemoryReadPointer readPointer = new MemoryReadPointer(timeOracle.getTimestamp());
+
+    int countEntriesWritten = writeNTimesToStream(10, streamTable);
+    assertTrue(10==countEntriesWritten);
+
+    streamTable.clear();
+
+    int countDequeueAll = readAllEntriesFromStream(streamTable,consumer,readPointer);
+    assertTrue(0==countDequeueAll);
   }
 
   private int writeNTimesToStream(int n, StreamTable table) throws OperationException {

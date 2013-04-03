@@ -39,4 +39,8 @@ public class StreamEntry {
     return new QueueEntry(header,data);
   }
 
+  public static StreamEntry fromQueueEntry(QueueEntry entry) {
+    return new StreamEntry(entry.getHeader(), entry.getData());
+  }
+
 }

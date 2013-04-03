@@ -7,6 +7,8 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.common.base.Charsets;
@@ -18,7 +20,7 @@ import com.google.inject.Inject;
 public class StreamTable {
 
   private final byte[] name;
-  private final TTQueue queue;
+  private final TTQueueTable queue;
   private boolean partitionSeeked = false;
   private long startPartition ;
   private OrderedVersionedColumnarTable metaTable;
@@ -35,7 +37,7 @@ public class StreamTable {
    * @param metaTable Table to store time-based offsets to be used for addressing streams by partitions
    */
   @Inject
-  public StreamTable(byte[] name, TTQueue queue, OrderedVersionedColumnarTable metaTable) {
+  public StreamTable(byte[] name, TTQueueTable queue, OrderedVersionedColumnarTable metaTable) {
    this(name,queue,metaTable, DEFAULT_METADATA_WRITE_INTERVAL_SECONDS);
  }
 
@@ -47,7 +49,7 @@ public class StreamTable {
    * @param metaDataWriteIntervalSeconds Interval to write Stream Meta data
    */
   @Inject
-  public StreamTable(byte[] name, TTQueue queue, OrderedVersionedColumnarTable metaTable,
+  public StreamTable(byte[] name, TTQueueTable queue, OrderedVersionedColumnarTable metaTable,
                      long metaDataWriteIntervalSeconds) {
     this.name = name;
     this.queue = queue;
@@ -74,7 +76,7 @@ public class StreamTable {
    * @throws OperationException
    */
   public StreamWriteResult write(StreamEntry entry, long writeVersion) throws OperationException{
-    EnqueueResult result = queue.enqueue(entry.toQueueEntry(),writeVersion);
+    EnqueueResult result = queue.enqueue(name,entry.toQueueEntry(),writeVersion);
     if (result.isSuccess() && writeStreamMeta())  {
       Long timeOffset = System.currentTimeMillis()/1000;
       byte [] partitionKey = generatePartitionKey(timeOffset);
@@ -96,7 +98,7 @@ public class StreamTable {
    */
   public StreamReadResult read(StreamQueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     if ( this.startPartition == -1 || this.partitionSeeked )  {
-      return StreamReadResult.fromDequeueResult(this.queue.dequeue(consumer,readPointer));
+      return StreamReadResult.fromDequeueResult(this.queue.dequeue(name,consumer,readPointer));
     } else {
       return skipToStreamResult(consumer,readPointer);
     }
@@ -111,7 +113,7 @@ public class StreamTable {
    */
   public void ack(StreamEntryPointer entryPointer, StreamQueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    queue.ack(entryPointer,consumer,readPointer);
+    queue.ack(name,entryPointer,consumer,readPointer);
   }
 
   /**
@@ -123,7 +125,16 @@ public class StreamTable {
    */
   public void unack(StreamEntryPointer entryPointer, StreamQueueConsumer consumer, ReadPointer readPointer)
     throws  OperationException {
-    queue.unack(entryPointer,consumer,readPointer);
+    queue.unack(name,entryPointer,consumer,readPointer);
+  }
+
+  /**
+   * Clears the stream - removes all the data in streams and associated meta data. This operation is not reversable.
+   * @throws OperationException
+   */
+  public void clear() throws OperationException {
+    this.queue.clear();
+    this.metaTable.clear();
   }
 
   /**
@@ -150,13 +161,13 @@ public class StreamTable {
 
     if (startPointer != null) {
       EntryPointer pointer = EntryPointer.fromBytes(startPointer);
-      DequeueResult dequeueResult = queue.dequeue(consumer,readPointer);
+      DequeueResult dequeueResult = queue.dequeue(name,consumer,readPointer);
 
       while (dequeueResult.isSuccess() &&
         dequeueResult.getEntryPointer().getEntryId() <= pointer.getEntryId() &&
         dequeueResult.getEntryPointer().getShardId() <= pointer.getShardId() ) {
-        queue.ack(dequeueResult.getEntryPointer(),consumer,readPointer);
-        dequeueResult = queue.dequeue(consumer,readPointer);
+        queue.ack(name,dequeueResult.getEntryPointer(),consumer,readPointer);
+        dequeueResult = queue.dequeue(name,consumer,readPointer);
       }
 
       if (dequeueResult.isSuccess()) {
