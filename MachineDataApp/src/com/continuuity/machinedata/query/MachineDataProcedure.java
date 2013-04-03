@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import org.slf4j.LoggerFactory;
 import sun.security.provider.SystemSigner;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -73,10 +74,15 @@ public class MachineDataProcedure extends AbstractProcedure {
 
       ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
 
+      // build json array
+      ArrayList<Metric> metricList = new ArrayList<Metric>();
+
       for (Entry entry : entries) {
-        // Convert object to Json and stream
-        writer.write(this.gson.get().toJson(new Metric(entry)));
+        metricList.add(new Metric(entry));
       }
+
+      // Convert object to Json and stream
+      writer.write(this.gson.get().toJson(metricList));
 
     } catch (NumberFormatException ex) {
       responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Bad parameters: " + request.getArgument("hostname") + ", "
@@ -110,10 +116,15 @@ public class MachineDataProcedure extends AbstractProcedure {
 
       ProcedureResponse.Writer writer = responder.stream(new ProcedureResponse(ProcedureResponse.Code.SUCCESS));
 
+      // build array for json serialization
+      ArrayList<Metric> metricList = new ArrayList<Metric>();
+
       for (Entry entry : entries) {
-        // Convert object to Json and stream
-        writer.write(this.gson.get().toJson(new Metric(entry)));
+        metricList.add(new Metric(entry));
       }
+
+      // Convert object to Json and stream
+      writer.write(this.gson.get().toJson(metricList));
 
     } catch (NumberFormatException ex) {
       responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Bad parameters: " + request.getArgument("hostname") + ", "
@@ -134,8 +145,6 @@ public class MachineDataProcedure extends AbstractProcedure {
     // TODO: Use plain table instead? P
 
   }
-
-
 
   /**
    * Used to serialize metric

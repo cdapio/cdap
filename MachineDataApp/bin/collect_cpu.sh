@@ -4,8 +4,8 @@
 # Sends random CPU metrics
 #
 
-if [ $# -ne 1 ]; then
-	echo "Required argument: <num_metrics>"
+if [ $# -ne 2 ]; then
+	echo "Required argument: <num_metrics> <rate in seconds>"
 	exit
 fi
 
@@ -27,5 +27,5 @@ for (( i=0; i<$num_metrics; i++ )); do
 	metric=$timestamp", "$cpu", "$HOSTNAME
     echo "Inserting action: $metric to $GATEWAY_STREAM_URL"
 	curl  "$GATEWAY_STREAM_URL" --data "$metric"
-	sleep 1
+	sleep $2
 done
