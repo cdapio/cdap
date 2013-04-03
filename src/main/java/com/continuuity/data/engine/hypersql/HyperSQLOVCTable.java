@@ -106,7 +106,8 @@ implements OrderedVersionedColumnarTable {
         "version " + VERSION_TYPE + " NOT NULL, " +
         "kvtype " + TYPE_TYPE + " NOT NULL, " +
         "id BIGINT IDENTITY, " +
-        "value " + VALUE_TYPE + " NOT NULL)";
+        "value " + VALUE_TYPE + " NOT NULL," +
+        "UNIQUE (rowkey, column, version, kvtype, id)) ";
     String indexStatement = "CREATE INDEX \"theBigIndex" +
       this.tableName + "\" ON " +
         this.quotedTableName + " (rowkey, column, version DESC, kvtype, id DESC)";
@@ -817,6 +818,48 @@ implements OrderedVersionedColumnarTable {
   @Override
   public Scanner scan(ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
+  }
+
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement(
+        "SELECT  version, kvtype, rowKey, value " +
+          "FROM " + this.quotedTableName + " " +
+          "WHERE rowkey >= ? AND column = ? " +
+          "ORDER BY rowKey ASC LIMIT 1");
+     ps.setBytes(1, row);
+      ps.setBytes(2, column);
+      ResultSet result = ps.executeQuery();
+
+      ImmutablePair<Long,byte[]> latest = filteredLatest(result, readPointer);
+
+      if (latest == null) {
+        return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+      } else {
+        return new OperationResult<byte[]>(latest.getSecond());
+      }
+    } catch (SQLException e) {
+      handleSQLException(e, "select", ps);
+      throw new OperationException(StatusCode.SQL_ERROR,"Opex",e); //TODO: fix this
+
+    } catch (Exception e) {
+      e.printStackTrace();;
+      throw new OperationException(StatusCode.SQL_ERROR,"Opex",e); //TODO: fix this
+
+    }
+    finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          handleSQLException(e, "close");
+        }
+      }
+    }
+   // return null;
   }
 
   // Private Helper Methods

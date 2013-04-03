@@ -20,6 +20,10 @@ public class EnqueueResult {
     return this.status == EnqueueStatus.SUCCESS;
   }
 
+  public EnqueueStatus getStatus() {
+    return status;
+  }
+
   public QueueEntryPointer getEntryPointer() {
     return this.entryPointer;
   }

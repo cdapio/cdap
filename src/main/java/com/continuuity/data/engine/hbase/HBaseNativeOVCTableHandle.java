@@ -6,8 +6,10 @@ package com.continuuity.data.engine.hbase;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.ttqueue.TTQueueOnHBaseNative;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
+import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
 import com.google.inject.Inject;
@@ -72,6 +74,19 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
+    return existing != null ? existing : streamTable;
+  }
+
+  @Override
+  public StreamTable getStreamTableNew(byte[] streamTableName) throws OperationException {
+    StreamTable streamTable = this.streamTablesNew.get(streamTableName);
+    if (streamTable != null) return streamTable;
+    HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
+
+    TTQueueOnHBaseNative queue = new TTQueueOnHBaseNative(table,streamTableName,oracle,conf);
+    streamTable = new StreamTable(streamTableName,queue, null);
+    StreamTable existing = this.streamTablesNew.putIfAbsent(
+      streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 

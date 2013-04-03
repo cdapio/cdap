@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
@@ -1023,6 +1024,33 @@ public abstract class TestOVCTable {
       assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
       assertEquals(Bytes.toInt(values2[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols2[i])));
     }
+  }
+
+  @Test
+  public void testCeilValue() throws OperationException {
+    final byte[] col = Bytes.toBytes("c");
+    final int MAX = 10;
+
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols = new byte[MAX][];
+    byte [] [] values = new byte[MAX][];
+
+    for ( int i = 0; i<MAX;i++) {
+      rows[i] = Bytes.toBytes(100*i);
+      cols[i] = col;
+      values[i] = Bytes.toBytes(100*i);
+    }
+    this.table.put(rows, cols, 1L, values);
+
+    byte [] testRow = Bytes.toBytes(90);
+    OperationResult<byte []> result = this.table.getCeilValue(testRow,col,RP_MAX);
+    assertFalse(result.isEmpty());
+    assertEquals(100, Bytes.toInt(result.getValue()) );
+
+    byte [] testNonExistingRow = Bytes.toBytes(1000);
+    result = this.table.getCeilValue(testNonExistingRow,col,RP_MAX);
+    assertTrue(result.isEmpty());
+
   }
 
 }
