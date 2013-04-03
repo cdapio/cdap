@@ -66,26 +66,14 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   }
   
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName) throws OperationException {
-    TTQueueTable streamTable = this.streamTables.get(streamTableName);
-    if (streamTable != null) return streamTable;
-    HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
-    
-    streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-        streamTableName, streamTable);
-    return existing != null ? existing : streamTable;
-  }
-
-  @Override
-  public StreamTable getStreamTableNew(byte[] streamTableName) throws OperationException {
-    StreamTable streamTable = this.streamTablesNew.get(streamTableName);
+  public StreamTable getStreamTable(byte[] streamTableName) throws OperationException {
+    StreamTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
 
     TTQueueOnHBaseNative queue = new TTQueueOnHBaseNative(table,streamTableName,oracle,conf);
     streamTable = new StreamTable(streamTableName,queue, null);
-    StreamTable existing = this.streamTablesNew.putIfAbsent(
+    StreamTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }

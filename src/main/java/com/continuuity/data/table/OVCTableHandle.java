@@ -15,14 +15,12 @@ public interface OVCTableHandle {
 
   public TTQueueTable getQueueTable(byte [] queueTableName) throws OperationException;
 
-  public TTQueueTable getStreamTable(byte [] streamTableName) throws OperationException;
-
   /**
-   * gets Stream table. Deprecates getStreamTable function
+   * Gets Stream table
    * @param streamTableName name of the stream
-   * @return instace of {@code StreamTable}
+   * @return instance of {@code StreamTable}
    * @throws OperationException
    */
-  public StreamTable getStreamTableNew(byte [] streamTableName) throws OperationException;
+  public StreamTable getStreamTable(byte [] streamTableName) throws OperationException;
 
 }

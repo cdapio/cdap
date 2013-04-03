@@ -23,12 +23,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
 
-  //TODO: Delete this after review!
-  protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
-      new ConcurrentSkipListMap<byte[],TTQueueTable>(
-          Bytes.BYTES_COMPARATOR);
-
-  protected final ConcurrentSkipListMap<byte[], StreamTable> streamTablesNew =
+  protected final ConcurrentSkipListMap<byte[], StreamTable> streamTables =
     new ConcurrentSkipListMap<byte[],StreamTable>(
       Bytes.BYTES_COMPARATOR);
 
@@ -85,28 +80,15 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   }
 
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName)
-      throws OperationException {
-    TTQueueTable streamTable = this.streamTables.get(streamTableName);
-    if (streamTable != null) return streamTable;
-    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
-    
-    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-        streamTableName, streamTable);
-    return existing != null ? existing : streamTable;
-  }
-
-  @Override
-  public StreamTable getStreamTableNew(byte[] streamTableName)
+  public StreamTable getStreamTable(byte[] streamTableName)
     throws OperationException {
-    StreamTable streamTable = this.streamTablesNew.get(streamTableName);
+    StreamTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
 
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
     TTQueueOnVCTable queue = new TTQueueOnVCTable(table,streamTableName,oracle,conf);
     streamTable = new StreamTable(streamTableName,queue,table);
-    StreamTable existing = this.streamTablesNew.putIfAbsent(
+    StreamTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
