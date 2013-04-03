@@ -36,7 +36,7 @@ public class QueueEntry {
     return header;
   }
 
-  protected Map<String, Integer> getHeader() {
+  public Map<String, Integer> getHeader() {
     return this.header;
   }
 

@@ -114,7 +114,7 @@ implements OrderedVersionedColumnarTable {
       this.db = factory.open(new File(generateDBPath()),
           generateDBOptions(true, false));
     } catch (IOException e) {
-      handleIOException(e, "create");
+      throw createOperationException(e, "create");
     }
   }
 
@@ -412,7 +412,7 @@ implements OrderedVersionedColumnarTable {
       db.close();
       factory.destroy(new File(generateDBPath()), new Options());
     } catch (IOException e) {
-      handleIOException(e, "clearing");
+      throw createOperationException(e, "clearing");
     }
     initializeTable();
   }
@@ -487,7 +487,7 @@ implements OrderedVersionedColumnarTable {
         }
       }
     } catch (DBException dbe) {
-      handleDBException(dbe, "delete");
+      throw createOperationException(dbe, "delete");
     }
   }
 
@@ -523,9 +523,8 @@ implements OrderedVersionedColumnarTable {
       }
       return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
-      handleIOException(e, "get");
+      throw createOperationException(e, "get");
     }
-    throw new InternalError("this point should never be reached.");
   }
 
   @Override
@@ -557,9 +556,8 @@ implements OrderedVersionedColumnarTable {
               latest.getValue(), latest.getTimestamp()));
 
     } catch (IOException e) {
-      handleIOException(e, "get");
+      throw createOperationException(e, "get");
     }
-    throw new InternalError("this point should never be reached.");
   }
 
   @Override
@@ -576,12 +574,9 @@ implements OrderedVersionedColumnarTable {
       }
       return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
-      handleIOException(e, "get");
+      throw createOperationException(e, "get");
     }
-    throw new InternalError("this point should never be reached.");
   }
-
-
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
@@ -597,9 +592,8 @@ implements OrderedVersionedColumnarTable {
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
-      handleIOException(e, "get");
+      throw createOperationException(e, "get");
     }
-    throw new InternalError("this point should never be reached.");
   }
 
   @Override
@@ -625,9 +619,8 @@ implements OrderedVersionedColumnarTable {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(retMap);
       }
     } catch (IOException e) {
-      handleIOException(e, "get");
+      throw createOperationException(e, "get");
     }
-    throw new InternalError("this point should never be reached.");
   }
 
   // Scan Operations
@@ -637,6 +630,7 @@ implements OrderedVersionedColumnarTable {
       ReadPointer readPointer)
       throws OperationException {
     DBIterator iterator = db.iterator();
+
     try {
       List<KeyValue> kvs = new ArrayList<KeyValue>();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
@@ -719,7 +713,7 @@ implements OrderedVersionedColumnarTable {
       try {
         iterator.close();
       } catch (IOException e) {
-        handleIOException(e, "closing iterator");
+        throw createOperationException(e, "closing iterator");
       }
     }
   }
@@ -740,6 +734,44 @@ implements OrderedVersionedColumnarTable {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
+                                                                      throws OperationException {
+    DBIterator iterator = db.iterator();
+    iterator.seek(createStartKey(row,column));
+    long lastDelete = -1;
+    long undeleted = -1;
+
+    while( iterator.hasNext()) {
+        byte[] key = iterator.peekNext().getKey();
+        byte [] value = iterator.peekNext().getValue();
+
+        KeyValue kv = createKeyValue(key, value);
+        long curVersion = kv.getTimestamp();
+
+        if (!readPointer.isVisible(curVersion)) {
+          continue;
+        }
+        Type type = Type.codeToType(kv.getType());
+
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+        } else if (type == Type.DeleteColumn) {
+          if (undeleted != curVersion) {
+            break;
+          }
+        } else if (type == Type.Put) {
+          if (curVersion != lastDelete) {
+            // If we get here, this version is visible
+            return new OperationResult<byte[]>(value);
+          }
+       }
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
   // Private Helper Methods
 
   private void performInsert(byte [] row, byte [] column,
@@ -750,7 +782,7 @@ implements OrderedVersionedColumnarTable {
       // options.sync(true); We can enable fsync() on every write, off for now
       db.put(kv.getKey(), kv.getValue(), options);
     } catch (DBException dbe) {
-      handleDBException(dbe, "insert");
+      throw createOperationException(dbe, "insert");
     }
   }
 
@@ -868,21 +900,11 @@ implements OrderedVersionedColumnarTable {
       this.locks.unlockAndRemove(r);
     }
   }
-  
-  private void handleIOException(IOException e, String where)
-      throws OperationException {
-    String msg = "LevelDB exception on " + where + "(error code = " +
-        e.getMessage() + ")";
-    LOG.error(msg, e);
-    throw new OperationException(StatusCode.SQL_ERROR, msg, e);
-  }
-  
-  private void handleDBException(DBException e, String where)
-      throws OperationException {
-    String msg = "LevelDB exception on " + where + "(error code = " +
-        e.getMessage() + ")";
-    LOG.error(msg, e);
-    throw new OperationException(StatusCode.SQL_ERROR, msg, e);
-  }
 
+  private OperationException createOperationException(Exception e,  String where) {
+    String msg =  "LevelDB exception on " + where + "(error code = " +
+      e.getMessage() + ")";
+    LOG.error(msg, e);
+    return new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
 }

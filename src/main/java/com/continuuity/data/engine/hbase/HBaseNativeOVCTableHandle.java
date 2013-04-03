@@ -8,8 +8,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
+import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -23,7 +25,9 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   private final ConcurrentSkipListMap<byte[], HTable> htables =
       new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
-  
+
+  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
+
   @Inject
   public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
                                    @Named("HBaseOVCTableHandleHConfig")Configuration hConf) throws IOException {
@@ -64,14 +68,19 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   }
   
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName) throws OperationException {
-    TTQueueTable streamTable = this.streamTables.get(streamTableName);
+  public StreamTable getStreamTable(byte[] streamTableName) throws OperationException {
+    StreamTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
-    
-    streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-        streamTableName, streamTable);
+
+    TTQueueTableOnHBaseNative queue = new TTQueueTableOnHBaseNative(table,oracle,conf,hConf);
+
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
+    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
+
+    streamTable = new StreamTable(streamTableName,queue, metaTable);
+    StreamTable existing = this.streamTables.putIfAbsent(
+      streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 

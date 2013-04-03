@@ -376,6 +376,41 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    RowLockTable.Row r = new RowLockTable.Row(row);
+
+    Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
+
+    if ( ceilEntry == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+
+    RowLockTable.Row lockedRow = ceilEntry.getKey();
+
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
+    if (map == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+        byte[] ret =null;
+        NavigableMap<Version, Value> columnMap = getColumn(map, column);
+        ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
+        if (latest != null) {
+          ret = latest.getSecond();
+        }
+      if (ret == null) {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<byte[]>(ret);
+      }
+    } finally {
+      this.locks.unlock(lockedRow);
+    }
+  }
+
   private boolean isEmpty(byte[] column) {
     return column == null || column.length == 0;
   }
@@ -434,6 +469,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   public Scanner scan(ReadPointer readPointer) {
     return new MemoryScanner(this.map.entrySet().iterator(), readPointer);
   }
+
 
   public class MemoryScanner implements Scanner {
 

@@ -479,4 +479,26 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     }
   }
 
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    Scan scan = new Scan(row);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          if (!readPointer.isVisible(kv.getTimestamp())) continue;
+          return new OperationResult<byte[]>(kv.getValue());
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+
+  }
+
+
 }

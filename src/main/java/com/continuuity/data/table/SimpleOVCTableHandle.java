@@ -4,8 +4,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
+import com.continuuity.data.stream.StreamTable;
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -22,9 +23,9 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
 
-  protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
-      new ConcurrentSkipListMap<byte[],TTQueueTable>(
-          Bytes.BYTES_COMPARATOR);
+  protected final ConcurrentSkipListMap<byte[], StreamTable> streamTables =
+    new ConcurrentSkipListMap<byte[],StreamTable>(
+      Bytes.BYTES_COMPARATOR);
 
   /**
    * This is the timestamp generator that we will use
@@ -36,6 +37,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * A configuration object. Not currently used (for real)
    */
   private CConfiguration conf = new CConfiguration();
+
+  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
@@ -77,17 +80,21 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
-  
+
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName)
-      throws OperationException {
-    TTQueueTable streamTable = this.streamTables.get(streamTableName);
+  public StreamTable getStreamTable(byte[] streamTableName)
+    throws OperationException {
+    StreamTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
-    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
-    
-    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-        streamTableName, streamTable);
+
+    OrderedVersionedColumnarTable table = getTable(streamTableName);
+    TTQueueTableOnVCTable queue = new TTQueueTableOnVCTable(table,oracle,conf);
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
+    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
+
+    streamTable = new StreamTable(streamTableName,queue,metaTable);
+    StreamTable existing = this.streamTables.putIfAbsent(
+      streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 
