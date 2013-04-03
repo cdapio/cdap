@@ -6,10 +6,8 @@ package com.continuuity.data.engine.hbase;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.ttqueue.TTQueueOnHBaseNative;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
-import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
@@ -28,7 +26,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   private final ConcurrentSkipListMap<byte[], HTable> htables =
       new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
 
-  private byte [] streamMetaSuffix = "meta".getBytes(Charsets.UTF_8);
+  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
 
   @Inject
   public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
@@ -77,7 +75,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
     TTQueueTableOnHBaseNative queue = new TTQueueTableOnHBaseNative(table,oracle,conf,hConf);
 
-    byte [] metaTableName = Bytes.add(streamTableName, streamMetaSuffix);
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
     OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
 
     streamTable = new StreamTable(streamTableName,queue, metaTable);

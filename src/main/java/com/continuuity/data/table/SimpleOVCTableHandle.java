@@ -3,7 +3,6 @@ package com.continuuity.data.table;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.stream.StreamTable;
@@ -39,7 +38,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    */
   private CConfiguration conf = new CConfiguration();
 
-  private byte [] streamMetaSuffix = "meta".getBytes(Charsets.UTF_8);
+  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
@@ -90,7 +89,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
     OrderedVersionedColumnarTable table = getTable(streamTableName);
     TTQueueTableOnVCTable queue = new TTQueueTableOnVCTable(table,oracle,conf);
-    byte [] metaTableName = Bytes.add(streamTableName, streamMetaSuffix);
+    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
     OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
 
     streamTable = new StreamTable(streamTableName,queue,metaTable);
