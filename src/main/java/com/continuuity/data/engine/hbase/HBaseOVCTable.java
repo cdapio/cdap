@@ -73,7 +73,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler = exceptionHandler;
     } catch (IOException e) {
       exceptionHandler.handle(e);
-      throw new InternalError("this point should never be reached.");
+      //Note: exceptionHandler.handle already throws a RuntimeException. However IntelliJ doesn't recognize it and
+      //marks all private members as un-initialized if the the throw statement below is commented out.
+      throw new RuntimeException("this point should never be reached.");
     }
   }
 
