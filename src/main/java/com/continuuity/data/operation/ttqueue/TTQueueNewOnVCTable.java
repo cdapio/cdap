@@ -211,18 +211,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
     if(config.isSingleEntry()) {
-      final QueueEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
-      final ClaimedEntryList claimedEntryList = queueState.getClaimedEntryList();
+      final DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
+      final WorkingEntryList workingEntryList = queueState.getWorkingEntryList();
       final Map<Long, byte[]> cachedEntries = queueState.getCachedEntries();
 
       Preconditions.checkState(dequeueEntrySet.size() <= 1,
                                "More than 1 entry dequeued in single entry mode - %s", dequeueEntrySet);
       if(!dequeueEntrySet.isEmpty()) {
         long returnEntryId = dequeueEntrySet.min().getEntryId();
-        if(claimedEntryList.hasNext() && claimedEntryList.peekNext().getEntryId() == returnEntryId) {
+        if(workingEntryList.hasNext() && workingEntryList.peekNext().getEntryId() == returnEntryId) {
           // Crash recovery case.
-          // The claimed entry list would not have been incremented for the first time in single entry mode
-          claimedEntryList.next();
+          // The cached entry list would not have been incremented for the first time in single entry mode
+          workingEntryList.next();
         }
 
         byte[] entryBytes = cachedEntries.get(returnEntryId);
@@ -239,14 +239,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // If no more cached entries, read entries from storage
-    if(!queueState.getClaimedEntryList().hasNext()) {
+    if(!queueState.getWorkingEntryList().hasNext()) {
       // TODO: return a list of DequeueEntry instead of list of Long
       List<Long> entryIds = dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
       readEntries(consumer, config, queueState, readPointer, entryIds);
     }
 
-    if(queueState.getClaimedEntryList().hasNext()) {
-      DequeueEntry dequeueEntry = queueState.getClaimedEntryList().next();
+    if(queueState.getWorkingEntryList().hasNext()) {
+      DequeueEntry dequeueEntry = queueState.getWorkingEntryList().next();
       this.dequeueReturns.incrementAndGet();
       queueState.getDequeueEntrySet().add(dequeueEntry);
       QueueEntry entry = new QueueEntry(queueState.getCachedEntries().get(dequeueEntry.getEntryId()));
@@ -527,9 +527,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return INVALID_ENTRY_ID;
     }
     long evictEntry;
-    QueueEntrySet dequeueEntrySet;
+    DequeuedEntrySet dequeueEntrySet;
     try {
-       dequeueEntrySet = QueueEntrySet.decode(new BinaryDecoder(new ByteArrayInputStream(activeEntryBytes)));
+       dequeueEntrySet = DequeuedEntrySet.decode(new BinaryDecoder(new ByteArrayInputStream(activeEntryBytes)));
     } catch (IOException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage("Exception while deserializing dequeue entry list during finalize"), e);
     }
@@ -627,7 +627,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // Set unack state
-    queueState.getClaimedEntryList().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
+    queueState.getWorkingEntryList().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
 
     // Write unack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
@@ -765,10 +765,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  static class QueueEntrySet {
+  static class DequeuedEntrySet {
     private final SortedSet<DequeueEntry> entrySet;
 
-    QueueEntrySet() {
+    DequeuedEntrySet() {
       this.entrySet = new TreeSet<DequeueEntry>();
     }
 
@@ -843,30 +843,30 @@ public class TTQueueNewOnVCTable implements TTQueue {
       encoder.writeInt(0); // zero denotes end of list as per AVRO spec
     }
 
-    public static QueueEntrySet decode(Decoder decoder) throws IOException {
-      QueueEntrySet queueEntrySet = new QueueEntrySet();
+    public static DequeuedEntrySet decode(Decoder decoder) throws IOException {
+      DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       int size = decoder.readInt();
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
-          queueEntrySet.add(DequeueEntry.decode(decoder));
+          dequeuedEntrySet.add(DequeueEntry.decode(decoder));
         }
         size = decoder.readInt();
       }
-      return queueEntrySet;
+      return dequeuedEntrySet;
     }
   }
 
-  public static class ClaimedEntryList {
+  public static class WorkingEntryList {
     private final List<DequeueEntry> entryList;
     private int curPtr = -1;
 
-    private static ClaimedEntryList EMPTY_LIST = new ClaimedEntryList(Collections.<DequeueEntry>emptyList());
+    private static WorkingEntryList EMPTY_LIST = new WorkingEntryList(Collections.<DequeueEntry>emptyList());
 
-    public static ClaimedEntryList emptyList() {
+    public static WorkingEntryList emptyList() {
       return EMPTY_LIST;
     }
 
-    public ClaimedEntryList(List<DequeueEntry> entryList) {
+    public WorkingEntryList(List<DequeueEntry> entryList) {
       this.entryList = entryList;
     }
 
@@ -903,8 +903,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   public static class QueueStateImpl implements QueueState {
-    private ClaimedEntryList claimedEntryList = ClaimedEntryList.EMPTY_LIST;
-    private QueueEntrySet dequeueEntrySet;
+    private WorkingEntryList workingEntryList = WorkingEntryList.EMPTY_LIST;
+    private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
     private long queueWrtiePointer = FIRST_QUEUE_ENTRY_ID - 1;
     private long claimedEntryBegin = INVALID_ENTRY_ID;
@@ -914,12 +914,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private Map<Long, byte[]> cachedEntries;
 
     public QueueStateImpl() {
-      dequeueEntrySet = new QueueEntrySet();
+      dequeueEntrySet = new DequeuedEntrySet();
       cachedEntries = Collections.emptyMap();
     }
 
-    public ClaimedEntryList getClaimedEntryList() {
-      return claimedEntryList;
+    public WorkingEntryList getWorkingEntryList() {
+      return workingEntryList;
     }
 
     public void setClaimedEntriesById(List<Long> entryIds) {
@@ -927,18 +927,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       for(long id : entryIds) {
         entries.add(new DequeueEntry(id, 0));
       }
-      this.claimedEntryList = new ClaimedEntryList(entries);
+      this.workingEntryList = new WorkingEntryList(entries);
     }
 
-    public void setClaimedEntryList(List<DequeueEntry> entries) {
-      this.claimedEntryList = new ClaimedEntryList(entries);
-    }
-
-    public QueueEntrySet getDequeueEntrySet() {
+    public DequeuedEntrySet getDequeueEntrySet() {
       return dequeueEntrySet;
     }
 
-    public void setDequeueEntrySet(QueueEntrySet dequeueEntrySet) {
+    public void setDequeueEntrySet(DequeuedEntrySet dequeueEntrySet) {
       this.dequeueEntrySet = dequeueEntrySet;
     }
 
@@ -993,6 +989,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
+        .add("workingEntryList", workingEntryList)
         .add("dequeueEntrySet", dequeueEntrySet)
         .add("consumerReadPointer", consumerReadPointer)
         .add("claimedEntryBegin", claimedEntryBegin)
@@ -1081,7 +1078,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         BinaryDecoder decoder = new BinaryDecoder(bin);
         // TODO: Read and check schema
         try {
-          queueState.setDequeueEntrySet(QueueEntrySet.decode(decoder));
+          queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
         } catch (IOException e) {
           throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage("Exception while deserializing dequeue entry list"), e);
         }

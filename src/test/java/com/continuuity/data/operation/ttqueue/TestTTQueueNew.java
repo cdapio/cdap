@@ -2,9 +2,9 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.ClaimedEntryList;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.QueueEntrySet;
+import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
+import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.WorkingEntryList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Test;
@@ -74,7 +74,7 @@ public class TestTTQueueNew {
   @Test
   public void testQueueEntrySetEncode() throws Exception {
     final int MAX = 10;
-    QueueEntrySet expectedEntrySet = new QueueEntrySet();
+    DequeuedEntrySet expectedEntrySet = new DequeuedEntrySet();
     for(int i = 0; i < MAX; ++i) {
       expectedEntrySet.add(new DequeueEntry(i, i % 2));
     }
@@ -85,7 +85,7 @@ public class TestTTQueueNew {
     expectedEntrySet.encode(new BinaryEncoder(bos));
     byte[] encodedValue = bos.toByteArray();
 
-    QueueEntrySet actualEntrySet = QueueEntrySet.decode(new BinaryDecoder(new ByteArrayInputStream(encodedValue)));
+    DequeuedEntrySet actualEntrySet = DequeuedEntrySet.decode(new BinaryDecoder(new ByteArrayInputStream(encodedValue)));
     assertEquals(expectedEntrySet.size(), actualEntrySet.size());
     for(int i = 0; i < MAX; ++i) {
       DequeueEntry expectedEntry = expectedEntrySet.min();
@@ -102,7 +102,7 @@ public class TestTTQueueNew {
   @Test
   public void testQueueEntrySet() throws Exception {
     final int MAX = 10;
-    QueueEntrySet entrySet = new QueueEntrySet();
+    DequeuedEntrySet entrySet = new DequeuedEntrySet();
     List<Long> expectedEntryIds = Lists.newArrayListWithCapacity(MAX);
     List<DequeueEntry> expectedEntryList = Lists.newArrayListWithCapacity(MAX);
     Set<Long> expectedDroppedEntries = Sets.newHashSetWithExpectedSize(MAX);
@@ -140,31 +140,31 @@ public class TestTTQueueNew {
   }
 
   @Test
-  public void testClaimedEntryList() {
+  public void testWorkingEntryList() {
     final int MAX = 10;
-    ClaimedEntryList claimedEntryList = new ClaimedEntryList(Lists.<DequeueEntry>newArrayList());
-    assertFalse(claimedEntryList.hasNext());
+    WorkingEntryList workingEntryList = new WorkingEntryList(Lists.<DequeueEntry>newArrayList());
+    assertFalse(workingEntryList.hasNext());
 
     for(int i = 0; i < MAX; ++i) {
-      claimedEntryList.add(new DequeueEntry(i));
+      workingEntryList.add(new DequeueEntry(i));
     }
 
     for(int i = 0; i < MAX; ++i) {
-      assertTrue(claimedEntryList.hasNext());
-      assertEquals(new DequeueEntry(i), claimedEntryList.peekNext());
-      assertEquals(new DequeueEntry(i), claimedEntryList.next());
+      assertTrue(workingEntryList.hasNext());
+      assertEquals(new DequeueEntry(i), workingEntryList.peekNext());
+      assertEquals(new DequeueEntry(i), workingEntryList.next());
     }
-    assertFalse(claimedEntryList.hasNext());
+    assertFalse(workingEntryList.hasNext());
 
     for(int i = 0; i < MAX; ++i) {
-      claimedEntryList.add(new DequeueEntry(i));
+      workingEntryList.add(new DequeueEntry(i));
     }
 
     for(int i = 0; i < MAX; ++i) {
-      assertTrue(claimedEntryList.hasNext());
-      assertEquals(new DequeueEntry(i), claimedEntryList.peekNext());
-      assertEquals(new DequeueEntry(i), claimedEntryList.next());
+      assertTrue(workingEntryList.hasNext());
+      assertEquals(new DequeueEntry(i), workingEntryList.peekNext());
+      assertEquals(new DequeueEntry(i), workingEntryList.next());
     }
-    assertFalse(claimedEntryList.hasNext());
+    assertFalse(workingEntryList.hasNext());
   }
 }
