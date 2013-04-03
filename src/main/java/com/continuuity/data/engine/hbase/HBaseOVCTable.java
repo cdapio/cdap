@@ -843,8 +843,8 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
     Scan scan = new Scan(row);
     try {
-    ResultScanner scanner = this.readTable.getScanner(scan);
-    Result result;
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
       boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
       boolean fastForwardToNextRow=false;
       byte[] previousRow=null;
@@ -853,46 +853,45 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       int skippedRow = 0;
 
       while ((result = scanner.next()) != null) {
-      for (KeyValue kv : result.raw()) {
-        byte[] rowKey=kv.getRow();
-        if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
-          continue;
+        for (KeyValue kv : result.raw()) {
+          byte[] rowKey=kv.getRow();
+          if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
+            continue;
+          }
+          fastForwardToNextRow=false;
+          if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
+            continue;
+          }
+          fastForwardToNextColumn=false;
+          long version=kv.getTimestamp();
+          if (!readPointer.isVisible(version)) {
+            continue;
+          }
+          if (deletedCellsWithinRow.contains(version))  {
+            deletedCellsWithinRow.remove(version);
+            continue;
+          }
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            //found row with at least one cell with DATA
+            return new OperationResult<byte[]>(removeTypePrefix(value)) ;
+          }
+          if (typePrefix==DELETE_ALL) {
+            fastForwardToNextColumn=true;
+            deletedCellsWithinRow.clear();
+          }
+          if (typePrefix==DELETE_VERSION) {
+            deletedCellsWithinRow.add(version);
+          }
+          previousColumn=column;
+          previousRow=row;
         }
-        fastForwardToNextRow=false;
-        if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
-          continue;
-        }
-        fastForwardToNextColumn=false;
-        long version=kv.getTimestamp();
-        if (!readPointer.isVisible(version)) {
-          continue;
-        }
-        if (deletedCellsWithinRow.contains(version))  {
-          deletedCellsWithinRow.remove(version);
-          continue;
-        }
-        byte [] value = kv.getValue();
-        byte typePrefix=value[0];
-        if (typePrefix==DATA) {
-          //found row with at least one cell with DATA
-          return new OperationResult<byte[]>(removeTypePrefix(value)) ;
-        }
-        if (typePrefix==DELETE_ALL) {
-          fastForwardToNextColumn=true;
-          deletedCellsWithinRow.clear();
-        }
-        if (typePrefix==DELETE_VERSION) {
-          deletedCellsWithinRow.add(version);
-        }
-        previousColumn=column;
-        previousRow=row;
       }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
     }
-  } catch (IOException e) {
-    this.exceptionHandler.handle(e);
-  }
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-
   }
 
   public static interface IOExceptionHandler {
