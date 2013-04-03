@@ -65,11 +65,10 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
       Bytes.toBytes("TestTTQueueName" + rand),
       TestTTQueue.oracle, conf);
 
-/*    return new TTQueueNewOnVCTable(
-      new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
-      Bytes.toBytes("TestTTQueue"),
-      TestTTQueue.oracle, conf);
-      */
+//    return new TTQueueNewOnVCTable(
+//      new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
+//      Bytes.toBytes("TestTTQueue"),
+//      TestTTQueue.oracle, conf);
   }
 
   @Override
@@ -103,19 +102,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   @Test
   @Ignore
-  public void testLotsOfAsyncDequeueing() {
-  }
-
-  @Override
-  @Test
-  @Ignore
   public void testMultiConsumerSingleGroup_dynamicReconfig() {
-  }
-
-  @Override
-  @Test
-  @Ignore
-  public void testSingleConsumerMulti() {
   }
 
   @Override

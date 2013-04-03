@@ -23,7 +23,6 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -80,7 +79,7 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
-    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
+    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
@@ -101,7 +100,7 @@ public abstract class TestTTQueue {
     // Async
 
     QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
-    QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1, configAsync);
+    StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, new MemoryReadPointer(timeOracle.getTimestamp()));
@@ -499,7 +498,7 @@ public abstract class TestTTQueue {
     }
 
     // dequeue it with the single consumer and FIFO partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
+    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);
