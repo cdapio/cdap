@@ -224,11 +224,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
           // The claimed entry list would not have been incremented for the first time in single entry mode
           claimedEntryList.next();
         }
-        if(!cachedEntries.containsKey(returnEntryId)) {
+
+        byte[] entryBytes = cachedEntries.get(returnEntryId);
+        if(entryBytes == null) {
           throw new OperationException(StatusCode.INTERNAL_ERROR,
                   getLogMessage(String.format("Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
         }
-        QueueEntry entry = new QueueEntry(cachedEntries.get(returnEntryId));
+        QueueEntry entry = new QueueEntry(entryBytes);
         dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
         DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                                         new QueueEntryPointer(this.queueName, returnEntryId), entry);
@@ -240,7 +242,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if(!queueState.getClaimedEntryList().hasNext()) {
       // TODO: return a list of DequeueEntry instead of list of Long
       List<Long> entryIds = dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
-      queueState.setClaimedEntriesById(entryIds);
       readEntries(consumer, config, queueState, readPointer, entryIds);
     }
 
@@ -289,57 +290,69 @@ public class TTQueueNewOnVCTable implements TTQueue {
     Map<Long, byte[]> currentCachedEntries = queueState.getCachedEntries();
     Map<Long, byte[]> newCachedEntries = Maps.newHashMap();
     for(long entryId : queueState.getDequeueEntrySet().getEntryIds()) {
-      newCachedEntries.put(entryId, currentCachedEntries.get(entryId));
-    }
-    queueState.setCachedEntries(newCachedEntries);
-
-    if(entryIds.isEmpty()) {
-      return;
+      byte[] entry = currentCachedEntries.get(entryId);
+      if(entry != null) {
+        newCachedEntries.put(entryId, entry);
+      }
     }
 
-    final byte[][] entryRowKeys = new byte[entryIds.size()][];
-    for(int i = 0; i < entryIds.size(); ++i) {
-      entryRowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryIds.get(i));
-    }
+    List<Long> readEntryIds = Lists.newArrayListWithCapacity(entryIds.size());
 
-    final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
-    OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
-                                                          this.table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
-    if(entriesResult.isEmpty()) {
-    } else {
+    try {
+      if(entryIds.isEmpty()) {
+        return;
+      }
+
+      final byte[][] entryRowKeys = new byte[entryIds.size()][];
       for(int i = 0; i < entryIds.size(); ++i) {
-        Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
-        if(entryMap == null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format("Not able to read entry with entryId %d. Returning empty cached list.")));
-          }
-          return;
-        }
-        byte[] entryMetaBytes = entryMap.get(ENTRY_META);
-        if(entryMetaBytes == null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format("Not able to decode entry with entryId %d. Returning empty cached list.")));
-          }
-          return;
-        }
-        EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace(getLogMessage("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString()));
-        }
+        entryRowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryIds.get(i));
+      }
 
-        // Check if entry has been invalidated or evicted
-        if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage("Found invalidated or evicted entry at " + entryIds.get(i) +
-                        " (" + entryMeta.toString() + ")"));
+      final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
+      OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
+                                                            this.table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
+      if(entriesResult.isEmpty()) {
+      } else {
+        for(int i = 0; i < entryIds.size(); ++i) {
+          Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
+          if(entryMap == null) {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(getLogMessage(String.format("Not able to read entry with entryId %d. Returning empty cached list.")));
+            }
+            return;
           }
-        } else {
-          // Entry is visible and valid!
-          assert(entryMeta.isValid());
-          byte [] entryData = entryMap.get(ENTRY_DATA);
-          newCachedEntries.put(entryIds.get(i), entryData);
+          byte[] entryMetaBytes = entryMap.get(ENTRY_META);
+          if(entryMetaBytes == null) {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(getLogMessage(String.format("Not able to decode entry with entryId %d. Returning empty cached list.")));
+            }
+            return;
+          }
+          EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(getLogMessage("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString()));
+          }
+
+          // Check if entry has been invalidated or evicted
+          if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(getLogMessage("Found invalidated or evicted entry at " + entryIds.get(i) +
+                          " (" + entryMeta.toString() + ")"));
+            }
+          } else {
+            // Entry is visible and valid!
+            assert(entryMeta.isValid());
+            long entryId = entryIds.get(i);
+            byte [] entryData = entryMap.get(ENTRY_DATA);
+            newCachedEntries.put(entryId, entryData);
+            readEntryIds.add(entryId);
+          }
         }
       }
+    } finally {
+      // Update queue state
+      queueState.setCachedEntries(newCachedEntries);
+      queueState.setClaimedEntriesById(readEntryIds);
     }
   }
 
@@ -1101,8 +1114,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
 
         // TODO: Do we still need the entries to be in dequeue list? If not, what happens if the consumer crashes again before the claimed entries are processed?
-        // Any previously dequeued entries will now need to be dequeued again, add them to the claimed entries
-        queueState.setClaimedEntryList(queueState.getDequeueEntrySet().getEntryList());
+        // Any previously dequeued entries will now need to be dequeued again
         readEntries(consumer, config, queueState, readPointer, queueState.getDequeueEntrySet().getEntryIds());
       }
       if(LOG.isTraceEnabled()) {
