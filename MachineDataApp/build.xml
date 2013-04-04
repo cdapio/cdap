@@ -1,48 +1,13 @@
-<project name="${MachineDataApp}" default="dist" basedir=".">
-    <description>
-        Simple example build file to Create a Continuuity Application jar
-    </description>
-     
-  <!-- set global properties for this build -->
-  <property name="appname" value="MachineDataApp"/>
-  <property name="appfabric.home" value="/Users/alex/dev/continuuity-developer-suite-1.4.0-SNAPSHOT"/>
-  <property name="src" location="src/com"/>
-  <property name="build" location="build"/>
-  <property name="manifest.file" value="${basedir}/MANIFEST.MF"/>
-  <property name="jar.file" value="${basedir}/${appname}.jar"/>
-   
-  <path id="appfabric.classpath">
-        <pathelement location="${appfabric.home}/continuuity-api-1.4.0-SNAPSHOT.jar"/>
-        <pathelement location="${appfabric.home}/lib/guava-13.0.1.jar"/>
-        <pathelement location="${appfabric.home}/lib/slf4j-api-1.7.2.jar"/>
-        <pathelement location="${appfabric.home}/lib/gson-2.1.jar"/>
-        <pathelement location="./lib/opencsv-2.1.jar"/>  
-    </path>
-  <target name="init">
-    <mkdir dir="${build}"/>
-  </target>
-  <target name="compile" depends="init" description="compile the source ">
-    <javac srcdir="${src}" destdir="${build}" classpathref="appfabric.classpath" includeantruntime="false" />
-  </target>
-  <target name="dist" depends="compile" description="generate the distribution" >
-     <manifest file="MANIFEST.MF">
-        <attribute name="Manifest-Version" value="1.0" />
-        <attribute name="Main-Class" value="com.continuuity.machinedata.MachineDataApp" />
-    </manifest>
-    <!-- Put everything in jar file -->
-    <jar jarfile="${jar.file}" basedir="${build}" manifest="${manifest.file}" />
-  </target>
-  <target name="clean" description="clean up" >
-    <delete dir="${build}"/>
-    <delete file="${jar.file}"/>
-    <delete file="manifest.file"/>
-  </target>
-   
-  <target name="deploy" depends="dist">
-    <exec executable="${appfabric.home}/bin/app-fabric-client">
+<?xml version="1.0" ?> 
+<project name="MachineDataApp" default="jar">
+    <property name="example.package" value="com.continuuity.machinedata.MachineDataApp"/>
+    <import file="../ant-common.xml"/>
+    
+    <target name="deploy" depends="jar">
+    <exec executable="${env.APP_FABRIC_HOME}/bin/app-fabric-client">
      <arg value="deploy"/>
      <arg value="--archive"/>
      <arg value="${jar.file}"/>
-  </exec>  
+    </exec>  
   </target>
 </project>
