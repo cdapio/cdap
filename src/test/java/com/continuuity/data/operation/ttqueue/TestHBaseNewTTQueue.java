@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
 
@@ -73,7 +74,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
   @Override
   protected int getNumIterations() {
-    return 100;
+    return 2001;
   }
 
   // Tests that do not work on HBaseNewTTQueue
@@ -223,6 +224,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // since the 9th entry does not exist anymore, exception will be thrown
     try {
     result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
+    fail("Dequeue should fail");
     } catch (OperationException e) {
       assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
       result = null;
@@ -243,6 +245,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // Now 10th entry should be evicted too!
     try {
     result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+    fail("Dequeue should fail");
     } catch (OperationException e) {
       assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
       result = null;
