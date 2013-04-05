@@ -5,7 +5,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -822,8 +822,7 @@ implements OrderedVersionedColumnarTable {
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
       throws OperationException {
-    return increment(row, column, amount,
-        new MemoryReadPointer(Long.MAX_VALUE), 1L);
+    return increment(row, column, amount, TransactionOracle.DIRTY_READ_POINTER, TransactionOracle.DIRTY_WRITE_VERSION);
   }
 
   @Override
@@ -869,7 +868,35 @@ implements OrderedVersionedColumnarTable {
       this.locks.unlockAndRemove(r);
     }
   }
-  
+
+  @Override
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException {
+      RowLockTable.Row r = new RowLockTable.Row(row);
+      this.locks.validLock(r);
+      try {
+        // Read existing value
+        OperationResult<byte[]> readResult = get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+        byte [] oldValue = readResult.getValue();
+
+        if((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
+          // if newValue is null, just delete.
+          if (newValue == null) {
+            KeyValue kv = new KeyValue(row, FAMILY, column, TransactionOracle.DIRTY_WRITE_VERSION, new byte[0]);
+            // This deletes only TransactionOracle.DIRTY_WRITE_VERSION
+            db.delete(kv.getKey());
+          } else {
+            performInsert(row, column, TransactionOracle.DIRTY_WRITE_VERSION, Type.Put, newValue);
+          }
+          return true;
+        }
+
+        return false;
+      } finally {
+        this.locks.unlockAndRemove(r);
+      }
+  }
+
   private void handleIOException(IOException e, String where)
       throws OperationException {
     String msg = "LevelDB exception on " + where + "(error code = " +

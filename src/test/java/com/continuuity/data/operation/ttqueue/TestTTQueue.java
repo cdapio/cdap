@@ -50,13 +50,13 @@ public abstract class TestTTQueue {
 
   // this must match the way that TTQueueOnVCTable creates dirty pointers!
   protected ReadPointer getDirtyPointer() {
-    return oracle.dirtyReadPointer();
+    return TransactionOracle.DIRTY_READ_POINTER;
   }
   protected ReadPointer getCleanPointer() {
     return oracle.getReadPointer();
   }
   protected long getDirtyWriteVersion() {
-    return oracle.dirtyWriteVersion();
+    return TransactionOracle.DIRTY_WRITE_VERSION;
   }
 
   @Test
@@ -206,9 +206,9 @@ public abstract class TestTTQueue {
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
-    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1, config);
-    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1, config);
-    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1, config);
+    QueueConsumer consumer1 = new QueueConsumer(0, 2, 1, config);
+    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
+    QueueConsumer consumer3 = new QueueConsumer(0, 0, 1, config);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
@@ -264,7 +264,7 @@ public abstract class TestTTQueue {
     // now the first 9 entries should have been physically evicted!
 
     // create a new consumer and dequeue, should get the 10th entry!
-    QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1,config);
+    QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
     DequeueResult result = queue.dequeue(consumer4, dirtyReadPointer);
     assertFalse(result.isEmpty());
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),

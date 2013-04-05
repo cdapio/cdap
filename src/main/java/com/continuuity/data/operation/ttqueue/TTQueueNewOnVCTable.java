@@ -416,8 +416,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // TODO: can finalize throw exceptions?
 
-    // TODO: get transaction read pointer?
-    ReadPointer readPointer = oracle.dirtyReadPointer();
+    ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
     // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
     final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
@@ -479,21 +478,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // TODO: move all queue state manipulation into a single class
     table.put(writeKeys.toArray(keyArray), writeCols.toArray(colArray),
-              oracle.dirtyWriteVersion(), writeValues.toArray(valArray));
+              TransactionOracle.DIRTY_WRITE_VERSION, writeValues.toArray(valArray));
   }
 
   private long getMinGroupEvictEntry(QueueConsumer consumer, long currentConsumerFinalizeEntry,
                                      ReadPointer readPointer) throws OperationException {
     // Find out the min entry that can be evicted across all consumers in the consumer's group
 
-    // Read CONSUMER_READ_POINTER and ACTIVE_ENTRY for all consumers in the group to determine evict entry
+    // Read CONSUMER_READ_POINTER and DEQUEUE_ENTRY_SET for all consumers in the group to determine evict entry
     final byte[][] rowKeys = new byte[consumer.getGroupSize()][];
     for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
       rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
     }
     // TODO: move all queue state manipulation methods into single class
     OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult =
-      table.getAllColumns(rowKeys, new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, oracle.dirtyReadPointer());
+      table.getAllColumns(rowKeys, new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, TransactionOracle.DIRTY_READ_POINTER);
     if(operationResult.isEmpty()) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
@@ -579,7 +578,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Get all the columns for row GLOBAL_EVICT_META_PREFIX, which contains the entry that can be evicted for
     // each group and the last evicted entry.
     // TODO: move all queue state reads to a single class
-    OperationResult<Map<byte [], byte []>> evictBytes = table.get(GLOBAL_EVICT_META_PREFIX, oracle.dirtyReadPointer());
+    OperationResult<Map<byte [], byte []>> evictBytes = table.get(GLOBAL_EVICT_META_PREFIX, TransactionOracle.DIRTY_READ_POINTER);
     if(evictBytes.isEmpty() || evictBytes.getValue() == null) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage("Not able to fetch eviction information"));
@@ -940,8 +939,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   public static class QueueStateImpl implements QueueState {
     private WorkingEntryList workingEntryList = WorkingEntryList.EMPTY_LIST;
     private DequeuedEntrySet dequeueEntrySet;
-    private long consumerReadPointer = FIRST_QUEUE_ENTRY_ID - 1;
-    private long queueWrtiePointer = FIRST_QUEUE_ENTRY_ID - 1;
+    private long consumerReadPointer = INVALID_ENTRY_ID;
+    private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
     private long claimedEntryBegin = INVALID_ENTRY_ID;
     private long claimedEntryEnd = INVALID_ENTRY_ID;
     private long lastEvictTimeInSecs = 0;
@@ -998,7 +997,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public long getQueueWritePointer() {
-      return queueWrtiePointer;
+      return queueWritePointer;
     }
 
     public long getLastEvictTimeInSecs() {
@@ -1010,7 +1009,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void setQueueWritePointer(long queueWritePointer) {
-      this.queueWrtiePointer = queueWritePointer;
+      this.queueWritePointer = queueWritePointer;
     }
 
     public Map<Long, byte[]> getCachedEntries() {
@@ -1029,7 +1028,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("consumerReadPointer", consumerReadPointer)
         .add("claimedEntryBegin", claimedEntryBegin)
         .add("claimedEntryEnd", claimedEntryEnd)
-        .add("queueWritePointer", queueWrtiePointer)
+        .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
         .add("cachedEntries", cachedEntries)
         .toString();
@@ -1069,7 +1068,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     public void read()
       throws OperationException{
       final byte[][] colNamesByteArray = new byte[columnNames.size()][];
-      readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), oracle.dirtyReadPointer());
+      readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), TransactionOracle.DIRTY_READ_POINTER);
     }
 
     public OperationResult<Map<byte[], byte[]>> getReadResult() {
@@ -1081,7 +1080,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final byte[][] colNamesByteArray = new byte[columnNames.size()][];
       final byte[][] colValuesByteArray = new byte[columnValues.size()][];
       table.put(rowKey, columnNames.toArray(colNamesByteArray),
-                oracle.dirtyWriteVersion(), columnValues.toArray(colValuesByteArray));
+                TransactionOracle.DIRTY_WRITE_VERSION, columnValues.toArray(colValuesByteArray));
     }
   }
 
@@ -1098,6 +1097,32 @@ public class TTQueueNewOnVCTable implements TTQueue {
     protected final QueueStateStore readQueueStateStore = new QueueStateStore(table, oracle);
     protected final QueueStateStore writeQueueStateStore = new QueueStateStore(table, oracle);
     protected SortedSet<Long> droppedEntries = ImmutableSortedSet.of();
+
+    /**
+     * This function is used to initialize the read pointer when a consumer first runs.
+     * Initial value for the read pointer is max(lastEvictEntry, FIRST_QUEUE_ENTRY_ID - 1)
+     * @return read pointer initial value
+     * @throws OperationException
+     */
+    protected long getReadPointerIntialValue() throws OperationException {
+      QueueStateStore readEvictState = new QueueStateStore(table, oracle);
+      readEvictState.setRowKey(GLOBAL_EVICT_META_PREFIX);
+      readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
+      readEvictState.read();
+      OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
+
+      final long defaultInitialValue = FIRST_QUEUE_ENTRY_ID - 1;
+      if(!evictStateBytes.isEmpty()) {
+        byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
+        if(lastEvictEntryBytes != null) {
+          long lastEvictEntry = Bytes.toLong(lastEvictEntryBytes);
+          if(lastEvictEntry > defaultInitialValue) {
+            return lastEvictEntry;
+          }
+        }
+      }
+      return defaultInitialValue;
+    }
 
     @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
@@ -1133,6 +1158,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
         if(lastEvictTimeInSecsBytes != null) {
           queueState.setLastEvictTimeInSecs(Bytes.toLong(lastEvictTimeInSecsBytes));
         }
+      }
+
+      // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
+      if(queueState.getConsumerReadPointer() == INVALID_ENTRY_ID) {
+        queueState.setConsumerReadPointer(getReadPointerIntialValue());
       }
 
       // Read queue write pointer
@@ -1384,6 +1414,31 @@ public class TTQueueNewOnVCTable implements TTQueue {
       super.saveDequeueState(consumer, config, queueState, readPointer);
     }
 
+    /**
+     * Returns the group read pointer for the consumer. This also initializes the group read pointer
+     * when the consumer group is starting for the first time.
+     * @param consumer
+     * @return group read pointer
+     * @throws OperationException
+     */
+    private long getGroupReadPointer(QueueConsumer consumer) throws OperationException {
+      // Fetch the group read pointer
+      final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
+      // TODO: use raw Get instead of the workaround of incrementing zero
+      // TODO: move counters into oracle
+      long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
+
+      // If read pointer is zero then this the first time the consumer group is running, initialize the read pointer
+      if(groupReadPointer == 0) {
+        long groupReadPointerInitialValue = getReadPointerIntialValue();
+        table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
+                                  Bytes.toBytes(groupReadPointerInitialValue));
+        // No need to read the group read pointer again, since we are looking for an approximate value anyway.
+        return groupReadPointerInitialValue;
+      }
+      return groupReadPointer;
+    }
+
     @Override
     public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                        ReadPointer readPointer) throws OperationException {
@@ -1406,11 +1461,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final long batchSize = getBatchSize(config);
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
-        // TODO: use raw Get instead of the workaround of incrementing zero
-        // TODO: move counters into oracle
         // Fetch the group read pointer
-        long groupReadPointer = table.incrementAtomicDirtily(
-          makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 0);
+        long groupReadPointer = getGroupReadPointer(consumer);
         if(groupReadPointer + batchSize >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers

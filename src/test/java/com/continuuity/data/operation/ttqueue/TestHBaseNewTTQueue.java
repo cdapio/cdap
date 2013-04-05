@@ -3,7 +3,6 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -18,10 +17,7 @@ import org.junit.Test;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
 
@@ -121,7 +117,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   public void testSingleConsumerAckSemantics() {
   }
 
-  @Override
+/*  @Override
   @Test
   public void testEvictOnAck_ThreeGroups() throws Exception {
     // Note: for now only consumer with consumerId 0 and groupId 0 can run the evict.
@@ -251,7 +247,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
       result = null;
     }
     assertNull(result);
-  }
+  } */
 
   @Test
   public void testSingleConsumerWithHashPartitioning() throws Exception {
@@ -590,7 +586,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // After max tries, the entry will be ignored
     StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(0, 0, 1, "", config);
-    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 1; ++tries) {
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
       assertTrue(result.isSuccess());

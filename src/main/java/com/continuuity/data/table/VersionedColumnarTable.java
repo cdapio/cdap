@@ -216,7 +216,7 @@ public interface VersionedColumnarTable {
 
   /**
    * Increments (atomically and dirtily) the specified row and column by the specified
-   * amount.
+   * amount. It does the increment using dirty read and dirty write pointers.
    * @param row
    * @param column
    * @param amount amount to increment column by
@@ -257,12 +257,29 @@ public interface VersionedColumnarTable {
    * @param newValue
    * @param readPointer
    * @param writeVersion
-   * @throws OperationException if anything goes wrong.
+   * @throws OperationException when there is a write conflict, i.e., expectedValue does not match existingValue.
    */
   public void compareAndSwap(byte[] row, byte[] column,
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer, long writeVersion)
       throws OperationException;
+
+  /**
+   * Compares-and-swaps (atomically) the value of the specified row and column
+   * by looking for the specified expected value and if found, replacing with
+   * the specified new value. If the newValue is null, then the cell is deleted.
+   * It does the compare and swap using dirty read and dirty write pointers.
+   * It also assumes the values do not have tombstones.
+   *
+   * @param row
+   * @param column
+   * @param expectedValue
+   * @param newValue
+   * @return true if swap was executed, false otherwise
+   * @throws OperationException, Note: this does not throw exception when expectedValue does not match existingValue.
+   */
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException;
 
   /**
    * Clears this table, completely wiping all data irrecoverably.
