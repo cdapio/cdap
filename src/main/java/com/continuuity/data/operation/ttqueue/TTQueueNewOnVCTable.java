@@ -219,7 +219,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       Preconditions.checkState(dequeueEntrySet.size() <= 1,
                                "More than 1 entry dequeued in single entry mode - %s", dequeueEntrySet);
       if(!dequeueEntrySet.isEmpty()) {
-        long returnEntryId = dequeueEntrySet.min().getEntryId();
+        DequeueEntry returnEntry = dequeueEntrySet.min();
+        long returnEntryId = returnEntry.getEntryId();
         if(workingEntryList.hasNext() && workingEntryList.peekNext().getEntryId() == returnEntryId) {
           // Crash recovery case.
           // The cached entry list would not have been incremented for the first time in single entry mode
@@ -234,7 +235,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         QueueEntry entry = new QueueEntry(entryBytes);
         dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
         DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                                                        new QueueEntryPointer(this.queueName, returnEntryId), entry);
+                                  new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()), entry);
         return dequeueResult;
       }
     }
@@ -253,7 +254,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueEntry entry = new QueueEntry(queueState.getCachedEntries().get(dequeueEntry.getEntryId()));
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                               new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId()), entry);
+                     new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
       return dequeueResult;
     } else {
       // No queue entries available to dequue, return queue empty
@@ -365,10 +366,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
-    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    // TODO: 3. Use Transaction.getWriteVersion instead ReadPointer
-
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
@@ -392,10 +389,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
-    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
-
+    // TODO: add tests for unack
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
@@ -403,9 +397,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // Set unack state
-    //queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
-    // TODO: What happens to the dequeue state of the entry on unack? Check if it needs to be dequeued again
-    queueState.getWorkingEntryList().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
+    queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
 
     // Write unack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
