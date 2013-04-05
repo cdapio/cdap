@@ -4,16 +4,22 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
-
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -23,7 +29,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 //we need to create another class with old HBaseOVCTable code and call it PatchedHBaseOVCTable
 public class HBaseOVCTable implements OrderedVersionedColumnarTable {
@@ -60,7 +73,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler = exceptionHandler;
     } catch (IOException e) {
       exceptionHandler.handle(e);
-      throw new InternalError("this point should never be reached.");
+      //Note: exceptionHandler.handle already throws a RuntimeException. However IntelliJ doesn't recognize it and
+      //marks all private members as un-initialized if the the throw statement below is commented out.
+      throw new RuntimeException("this point should never be reached.");
     }
   }
 
@@ -96,6 +111,29 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
       }
       writeTable.put(put);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (rows.length == columns.length);
+    assert (columns.length == values.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        Put put = new Put(rows[i]);
+        put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
+        puts.add(put);
+      }
+      writeTable.put(puts);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
@@ -172,6 +210,26 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Delete> deletes = new ArrayList<Delete>(rows.length);
+      for(byte[] row : rows) {
+        Delete delete = new Delete(row);
+        deletes.add(delete);
+      }
+      writeTable.delete(deletes);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     undeleteAll(row, new byte[][]{column}, version);
   }
@@ -210,7 +268,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         byte typePrefix=value[0];
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
+          fastForwardToNextRow=true;
           map.put(column, trueValue);
+          fastForwardToNextRow=true;
           deleted.clear(); // necessary?
         }
         if (typePrefix==DELETE_ALL) {
@@ -221,6 +281,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           deleted.add(version);
         }
         previousColumn=column;
+      }
+
+      if(map.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -290,8 +354,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer)
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
+    // TODO: this can probably be improved by doing a scan instead of get.
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
@@ -310,7 +375,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
       }
       if (resultMap.isEmpty()) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
       }
       else {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);
@@ -695,6 +760,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              long writeVersion) throws OperationException {
     byte[] expectedPrependedValue=null;
     KeyValue latestVisibleKV=null;
+    HTable writeTable=null;
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);
@@ -731,14 +797,15 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         } else {
           newPrependedValue=prependWithTypePrefix(DATA, newValue);
         }
-        if (this.readTable.checkAndPut(row, this.family, column, expectedPrependedValue, readPointer.getMaximum(),
-                                   new Put(row).add(this.family, column, writeVersion, newPrependedValue))) {
-          return;
-        }
+        writeTable=getWriteTable();
+        writeTable.put(new Put(row).add(this.family, column, writeVersion, newPrependedValue));
+      } else {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
       }
-      throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
@@ -768,6 +835,63 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public Scanner scan(ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
+  }
+
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    Scan scan = new Scan(row);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
+      boolean fastForwardToNextRow=false;
+      byte[] previousRow=null;
+      byte[] previousColumn=null;
+      Set<Long> deletedCellsWithinRow = Sets.newHashSet();
+      int skippedRow = 0;
+
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          byte[] rowKey=kv.getRow();
+          if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
+            continue;
+          }
+          fastForwardToNextRow=false;
+          if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
+            continue;
+          }
+          fastForwardToNextColumn=false;
+          long version=kv.getTimestamp();
+          if (!readPointer.isVisible(version)) {
+            continue;
+          }
+          if (deletedCellsWithinRow.contains(version))  {
+            deletedCellsWithinRow.remove(version);
+            continue;
+          }
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            //found row with at least one cell with DATA
+            return new OperationResult<byte[]>(removeTypePrefix(value)) ;
+          }
+          if (typePrefix==DELETE_ALL) {
+            fastForwardToNextColumn=true;
+            deletedCellsWithinRow.clear();
+          }
+          if (typePrefix==DELETE_VERSION) {
+            deletedCellsWithinRow.add(version);
+          }
+          previousColumn=column;
+          previousRow=row;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
   public static interface IOExceptionHandler {

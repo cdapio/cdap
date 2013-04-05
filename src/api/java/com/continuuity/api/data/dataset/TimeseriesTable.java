@@ -77,5 +77,4 @@ public interface TimeseriesTable {
       return tags;
     }
   }
-
 }

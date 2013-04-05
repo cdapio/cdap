@@ -141,7 +141,8 @@ public class TTQueueOnVCTable implements TTQueue {
     // Get our unique entry id
     long entryId;
     try {
-      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 1, readDirty, writeDirty);
+      // this must be an atomic dirty increment - regular increment is not atomic in all implementations
+      entryId = this.table.incrementAtomicDirtily(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 1);
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
           "of global entry id failed with status code " + e.getStatus() +
@@ -225,12 +226,9 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Insert entry at active shard
     this.table.put(makeRow(GLOBAL_DATA_HEADER, shardMeta.getShardId()),
-        new byte [][] {
-      makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META)
-    }, cleanWriteVersion,
-    new byte [][] {
-      data, new EntryMeta(EntryState.VALID).getBytes()
-    });
+                   new byte [][] { makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META) },
+                   cleanWriteVersion,
+                   new byte [][] { data, new EntryMeta(EntryState.VALID).getBytes() });
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueStatus.SUCCESS,
@@ -1060,7 +1058,10 @@ public class TTQueueOnVCTable implements TTQueue {
     if (result.isEmpty()) return null;
 
     QueueMeta meta = new QueueMeta();
-    meta.globalHeadPointer = Bytes.toLong(result.getValue());
+    // because we increment this dirtily im enqueue(), we can only read it the same way!
+    // TODO implement a readDirtyCounter() in OVCTable and use that instead
+    meta.globalHeadPointer =
+      this.table.incrementAtomicDirtily(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 0L);
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
     meta.currentWritePointer = // the current entty lock
@@ -1097,8 +1098,9 @@ public class TTQueueOnVCTable implements TTQueue {
     ReadPointer readDirty = oracle.dirtyReadPointer();
 
     // Get global queue state information;
-    long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
-        GLOBAL_ENTRYID_COUNTER, readDirty).getValue());
+    // because we increment this dirtily im enqueue(), we can only read it the same way!
+    // TODO implement a readDirtyCounter() in OVCTable and use that instead
+    long nextEntryId = this.table.incrementAtomicDirtily(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 0L);
     sb.append("Next available entryId: ").append(nextEntryId).append("\n");
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
@@ -1173,5 +1175,9 @@ public class TTQueueOnVCTable implements TTQueue {
         curShard++;
       }
     }
+  }
+
+  public void clear() throws OperationException {
+    table.clear();
   }
 }

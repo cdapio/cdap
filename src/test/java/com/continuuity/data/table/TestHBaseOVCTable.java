@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class  TestHBaseOVCTable extends TestOVCTable {
@@ -149,8 +150,7 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     }
 
     // get(row,RP=9) = 0 cols
-    colMap = this.table.get(row, new MemoryReadPointer(9)).getValue();
-    assertEquals(0, colMap.size());
+    assertTrue(this.table.get(row, new MemoryReadPointer(9)).isEmpty());
 
     // delete the first 5 as point deletes
     subCols = Arrays.copyOfRange(columns, 0, 5);

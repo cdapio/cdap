@@ -12,10 +12,16 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.IteratorBasedSplitReader;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -95,7 +101,10 @@ import java.util.Map;
  * </ul>
  * </p>
  */
-public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
+public class SimpleTimeseriesTable extends DataSet
+  implements TimeseriesTable,
+             BatchReadable<byte[], TimeseriesTable.Entry>,
+             BatchWritable<byte[], TimeseriesTable.Entry> {
   /**
    * 1 hour. See class javadoc for description. Can be overridden by client code.
     */
@@ -391,4 +400,86 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
 
     return tags.toArray(new byte[tags.size()][]);
   }
+
+  /////// Methods for using DataSet as input for MapReduce job
+
+  private static final class InputSplit extends Split {
+    private byte key[];
+    private long startTime;
+    private long endTime;
+    private byte[][] tags;
+
+    private InputSplit(byte[] key, long startTime, long endTime, byte[][] tags) {
+      this.key = key;
+      this.startTime = startTime;
+      this.endTime = endTime;
+      this.tags = tags;
+    }
+  }
+
+  /**
+   * Defines input selection for Batch job
+   * @param splitsCount number of parts to split the data selection into. Each piece
+   * @param key
+   * @param startTime
+   * @param endTime
+   * @param tags
+   * @return
+   */
+  public List<Split> getInput(int splitsCount, byte key[], long startTime, long endTime, byte[]... tags) {
+    long timeIntervalPerSplit = (endTime - startTime) / splitsCount;
+    // we don't want splits to be empty
+    timeIntervalPerSplit = timeIntervalPerSplit > 0 ? timeIntervalPerSplit : 1;
+
+    List<Split> splits = new ArrayList<Split>();
+    long start;
+    for (start = startTime; start + timeIntervalPerSplit <= endTime; start += timeIntervalPerSplit) {
+      splits.add(new InputSplit(key, start, start + timeIntervalPerSplit, tags));
+    }
+
+    // last interval should cover all up to the endTime
+    if (start + timeIntervalPerSplit < endTime) {
+      splits.add(new InputSplit(key, start + timeIntervalPerSplit, endTime, tags));
+    }
+
+    return splits;
+  }
+
+  @Override
+  public List<Split> getSplits() {
+    throw new UnsupportedOperationException("Cannot use SimpleTimeseriesTable as input for Batch," +
+                                              " use getInput(...) to configure data selection.");
+  }
+
+  @Override
+  public SplitReader<byte[], Entry> createSplitReader(final Split split) {
+    return new TimeseriesTableRecordsReader();
+  }
+
+  public static final class TimeseriesTableRecordsReader
+    extends IteratorBasedSplitReader<byte[], Entry> {
+    @Override
+    public Iterator<Entry> createIterator(final BatchReadable dataset,
+                                          final Split split) throws OperationException {
+
+      InputSplit s = (InputSplit) split;
+
+      // TODO: avoid reading all data at once :)
+      List<TimeseriesTable.Entry> data = ((TimeseriesTable) dataset).read(s.key, s.startTime, s.endTime, s.tags);
+      return data.iterator();
+    }
+
+    @Override
+    protected byte[] getKey(Entry entry) {
+      return entry.getKey();
+    }
+  }
+
+  /////// Methods for using DataSet as output of MapReduce job
+
+  @Override
+  public void write(final byte[] key, final Entry value) throws OperationException {
+    write(value);
+  }
+
 }
