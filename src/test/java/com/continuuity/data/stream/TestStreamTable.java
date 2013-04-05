@@ -32,7 +32,7 @@ public class TestStreamTable {
   protected static TimestampOracle timeOracle = injector.getInstance(TimestampOracle.class);
 
   protected long getDirtyWriteVersion(){
-    return oracle.dirtyWriteVersion();
+    return TransactionOracle.DIRTY_WRITE_VERSION;
   }
 
   /**

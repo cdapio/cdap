@@ -8,6 +8,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -150,15 +151,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     RowLockTable.Row r = new RowLockTable.Row(row);
     NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
     try {
-      for (byte [] column : columns) {
-        NavigableMap<Version, Value> columnMap = getColumn(map, column);
-        while (!columnMap.isEmpty() && columnMap.lastKey().stamp <= version) {
-          columnMap.pollLastEntry();
-        }
-        if (columnMap.isEmpty()) {
-          map.remove(new Column(column));
-        }
-      }
+      deleteDirtyNoLock(map, columns, version);
     } finally {
       if (map.isEmpty()) {
         // this row is gone, remove it from the table and also from the lock table
@@ -166,6 +159,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
       } else {
         this.locks.unlock(r);
+      }
+    }
+  }
+
+  private void deleteDirtyNoLock(NavigableMap<Column, NavigableMap<Version, Value>> rowMap, byte[][] columns, long version) {
+    for (byte [] column : columns) {
+      NavigableMap<Version, Value> columnMap = getColumn(rowMap, column);
+      while (!columnMap.isEmpty() && columnMap.lastKey().stamp <= version) {
+        columnMap.pollLastEntry();
+      }
+      if (columnMap.isEmpty()) {
+        rowMap.remove(new Column(column));
       }
     }
   }
@@ -178,9 +183,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       try {
         // this row is gone, remove it from the table and also from the lock table
         this.map.remove(r); // safe to remove because we have the lock
-        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
       } finally {
-        this.locks.unlock(r);
+        this.locks.unlockAndRemove(r); // now remove, invalidate and unlock the lock
       }
     }
   }
@@ -579,8 +583,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
 
     long newAmount;
-    long writeVersion;
-
     try {
         // first determine new values for the column. This can thrown an
         // exception if an existing value is not sizeof(long).
@@ -589,17 +591,14 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         ImmutablePair<Long, byte[]> latest = latest(versions);
         if (latest != null) {
           try {
-            writeVersion = latest.getFirst();
             existingAmount = Bytes.toLong(latest.getSecond());
           } catch(IllegalArgumentException e) {
             throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
           }
-        } else {
-          writeVersion = System.currentTimeMillis();
         }
         newAmount = existingAmount + amount;
       // now we know all values are legal, we can apply all increments
-        versions.put(new Version(writeVersion), new Value(Bytes.toBytes(newAmount)));
+        versions.put(new Version(TransactionOracle.DIRTY_WRITE_VERSION), new Value(Bytes.toBytes(newAmount)));
       return newAmount;
 
     } finally {
@@ -635,6 +634,38 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       } else {
         columnMap.put(new Version(writeVersion), new Value(newValue));
       }
+    } finally {
+      this.locks.unlock(r);
+    }
+  }
+
+  @Override
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException {
+    RowLockTable.Row r = new RowLockTable.Row(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+
+    try {
+      // Read the exising value at the row, col. Note: we are assuming there is no tombstone!
+      NavigableMap<Version, Value> columnMap = getColumn(map, column);
+      byte[] oldValue = null;
+      ImmutablePair<Long, byte[]> latest = latest(columnMap);
+      if (latest != null) {
+        oldValue = latest.getSecond();
+      }
+
+      // expectedValue is equal to oldValue, do the swap
+      if((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
+        // if newValue is null, delete
+        if(newValue == null || newValue.length == 0) {
+          deleteDirtyNoLock(map, new byte[][]{column}, TransactionOracle.DIRTY_WRITE_VERSION);
+        } else {
+          columnMap.put(new Version(TransactionOracle.DIRTY_WRITE_VERSION), new Value(newValue));
+        }
+        return true;
+      }
+
+      return false;
     } finally {
       this.locks.unlock(r);
     }

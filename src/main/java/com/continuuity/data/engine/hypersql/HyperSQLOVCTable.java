@@ -4,8 +4,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 import org.apache.commons.lang.StringUtils;
@@ -13,7 +14,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -326,7 +332,6 @@ implements OrderedVersionedColumnarTable {
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
     PreparedStatement ps = null;
     long newAmount = amount;
-    long writeVersion = 0L;
       try {
 //        try {
 //          ps = this.connection.prepareStatement(
@@ -360,7 +365,6 @@ implements OrderedVersionedColumnarTable {
         if (latest != null) {
           try {
             newAmount += Bytes.toLong(latest.getSecond());
-            writeVersion = latest.getFirst() + 1L;
           } catch(IllegalArgumentException e) {
             throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
           }
@@ -375,7 +379,7 @@ implements OrderedVersionedColumnarTable {
             "VALUES ( ? , ? , ? , ? , ?)");
         ps.setBytes(1, row);
         ps.setBytes(2, column);
-        ps.setLong(3, writeVersion);
+        ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
         ps.setInt(4, Type.VALUE.i);
         ps.setBytes(5, Bytes.toBytes(newAmount));
         ps.executeUpdate();
@@ -463,7 +467,93 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  // Read Operations
+  @Override
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException {
+    PreparedStatement ps = null;
+    Boolean oldAutoCommitValue = null;
+    Integer oldTransactionIsolation = null;
+    try {
+      // Obtain read lock on the row that we are interested in
+      oldAutoCommitValue = this.connection.getAutoCommit();
+      oldTransactionIsolation = this.connection.getTransactionIsolation();
+      this.connection.setAutoCommit(false);
+      this.connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+
+      ps = this.connection.prepareStatement(
+        "SELECT version, kvtype, id, value " +
+          "FROM " + this.quotedTableName + " " +
+          "WHERE rowkey = ? AND column = ? " +
+          "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps.setBytes(1, row);
+      ps.setBytes(2, column);
+      ResultSet result = ps.executeQuery();
+      ImmutablePair<Long, byte[]> latest = latest(result);
+      byte [] existingValue = latest == null ? null : latest.getSecond();
+      ps.close(); ps = null;
+
+      if((existingValue == null && expectedValue == null) || Bytes.equals(existingValue, expectedValue)) {
+        // if newValue is null, just delete.
+        if(newValue == null || newValue.length == 0) {
+          deleteAll(row, column, latest.getFirst());
+          ps = this.connection.prepareStatement(
+            "DELETE from " + this.quotedTableName + " " +
+              "WHERE rowkey = ? AND column = ? AND version = ? "
+          );
+          ps.setBytes(1, row);
+          ps.setBytes(2, column);
+          ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
+          ps.executeUpdate();
+        } else {
+          // Perform update!
+          if(existingValue == null) {
+            ps = this.connection.prepareStatement(
+              "INSERT INTO " + this.quotedTableName +
+                " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
+            ps.setBytes(1, row);
+            ps.setBytes(2, column);
+            ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
+            ps.setInt(4, Type.VALUE.i);
+            ps.setBytes(5, newValue);
+            ps.executeUpdate();
+          } else {
+            ps = this.connection.prepareStatement(
+              "UPDATE " + this.quotedTableName +
+                " SET value = ? " +
+                " WHERE rowkey = ? AND column = ? AND version = ? "
+            );
+            ps.setBytes(1, newValue);
+            ps.setBytes(2, row);
+            ps.setBytes(3, column);
+            ps.setLong(4, TransactionOracle.DIRTY_WRITE_VERSION);
+            ps.executeUpdate();
+          }
+        }
+        this.connection.commit();
+        return true;
+      }
+
+      return false;
+    } catch (SQLException e) {
+      throw createOperationException(e, "compareAndSwap");
+    } finally {
+      try {
+        // Release the read lock
+        if(oldAutoCommitValue != null) {
+          this.connection.setAutoCommit(oldAutoCommitValue);
+        }
+        if(oldTransactionIsolation != null) {
+          this.connection.setTransactionIsolation(oldTransactionIsolation);
+        }
+        if (ps != null) {
+            ps.close();
+        }
+      } catch (SQLException e) {
+        throw createOperationException(e, "close");
+      }
+    }
+  }
+// Read Operations
 
   @Override
   public OperationResult<Map<byte[], byte[]>>

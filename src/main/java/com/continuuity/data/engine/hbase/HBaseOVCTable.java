@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
@@ -268,7 +269,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         byte typePrefix=value[0];
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
-          fastForwardToNextRow=true;
           map.put(column, trueValue);
           fastForwardToNextRow=true;
           deleted.clear(); // necessary?
@@ -701,11 +701,19 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
     throws OperationException {
+    // Note: HBase increment does not take a write version, to keep compareAndSwapDirty compatible with increments
+    // compareAndSwapDirty too does not use an explicit write version.
+    HTable writeTable = null;
     try {
-      return this.readTable.incrementColumnValue(row, this.family, column, amount);
+      writeTable = getWriteTable();
+      return writeTable.incrementColumnValue(row, this.family, column, amount);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return -1L;
+    } finally {
+      if(writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -807,6 +815,30 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     } finally {
       if (writeTable != null) returnWriteTable(writeTable);
     }
+  }
+
+  @Override
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException {
+    // Note: HBase increment does not take a write version, to keep compareAndSwapDirty compatible with increments
+    // compareAndSwapDirty too does not use an explicit write version (true for vanilla HBase, right now an explicit
+    // version is used since the patched HBase only has checkAndPut with version).
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      Put put = new Put(row);
+      put.add(this.family, column, newValue);
+      // TODO: need to use checkAndPut without version (vanilla HBase)
+      return writeTable.checkAndPut(row, this.family, column, expectedValue,
+                                    TransactionOracle.DIRTY_READ_POINTER.getMaximum(), put);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if(writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+    throw new OperationException(StatusCode.INTERNAL_ERROR, "This point should not be reached");
   }
 
   @Override

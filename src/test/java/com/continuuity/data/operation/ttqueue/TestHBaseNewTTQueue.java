@@ -3,7 +3,6 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -18,8 +17,6 @@ import org.junit.Test;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestHBaseNewTTQueue extends TestTTQueue {
@@ -27,6 +24,8 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   private static Injector injector;
 
   private static OVCTableHandle handle;
+
+  private static final int MAX_CRASH_DEQUEUE_TRIES = 10;
 
   @BeforeClass
   public static void startEmbeddedHBase() {
@@ -55,16 +54,23 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    conf.setLong("ttqueue.evict.interval.secs", 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
+    conf.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
+    conf.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, MAX_CRASH_DEQUEUE_TRIES);
+
     return new TTQueueNewOnVCTable(
       handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
       Bytes.toBytes("TestTTQueueName" + rand),
       TestTTQueue.oracle, conf);
+
+//    return new TTQueueNewOnVCTable(
+//      new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
+//      Bytes.toBytes("TestTTQueue"),
+//      TestTTQueue.oracle, conf);
   }
 
   @Override
   protected int getNumIterations() {
-    return 100;
+    return 2001;
   }
 
   // Tests that do not work on HBaseNewTTQueue
@@ -93,19 +99,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   @Override
   @Test
   @Ignore
-  public void testLotsOfAsyncDequeueing() {
-  }
-
-  @Override
-  @Test
-  @Ignore
   public void testMultiConsumerSingleGroup_dynamicReconfig() {
-  }
-
-  @Override
-  @Test
-  @Ignore
-  public void testSingleConsumerMulti() {
   }
 
   @Override
@@ -123,7 +117,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
   public void testSingleConsumerAckSemantics() {
   }
 
-  @Override
+/*  @Override
   @Test
   public void testEvictOnAck_ThreeGroups() throws Exception {
     // Note: for now only consumer with consumerId 0 and groupId 0 can run the evict.
@@ -226,6 +220,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // since the 9th entry does not exist anymore, exception will be thrown
     try {
     result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
+    fail("Dequeue should fail");
     } catch (OperationException e) {
       assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
       result = null;
@@ -246,12 +241,13 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     // Now 10th entry should be evicted too!
     try {
     result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
+    fail("Dequeue should fail");
     } catch (OperationException e) {
       assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
       result = null;
     }
     assertNull(result);
-  }
+  } */
 
   @Test
   public void testSingleConsumerWithHashPartitioning() throws Exception {
@@ -578,10 +574,10 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), getDirtyWriteVersion()).isSuccess());
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
 
-    // dequeue it with FIFO partitioner
+    // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
 
-    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES; ++tries) {
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
       DequeueResult result = queue.dequeue(new StatefulQueueConsumer(0, 0, 1, "", config), getDirtyPointer());
       assertTrue(result.isSuccess());
@@ -590,7 +586,7 @@ public class TestHBaseNewTTQueue extends TestTTQueue {
 
     // After max tries, the entry will be ignored
     StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(0, 0, 1, "", config);
-    for(int tries = 0; tries <= TTQueueNewOnVCTable.MAX_CRASH_DEQUEUE_TRIES + 1; ++tries) {
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
       assertTrue(result.isSuccess());

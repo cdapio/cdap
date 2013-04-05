@@ -23,7 +23,6 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -51,13 +50,13 @@ public abstract class TestTTQueue {
 
   // this must match the way that TTQueueOnVCTable creates dirty pointers!
   protected ReadPointer getDirtyPointer() {
-    return oracle.dirtyReadPointer();
+    return TransactionOracle.DIRTY_READ_POINTER;
   }
   protected ReadPointer getCleanPointer() {
     return oracle.getReadPointer();
   }
   protected long getDirtyWriteVersion() {
-    return oracle.dirtyWriteVersion();
+    return TransactionOracle.DIRTY_WRITE_VERSION;
   }
 
   @Test
@@ -80,12 +79,13 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
-    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
+    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      //assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
       queue.ack(result.getEntryPointer(), consumerSync, rp);
       queue.finalize(result.getEntryPointer(), consumerSync, -1, rp.getWritePointer());
       if (i % 100 == 0) System.out.print(".");
@@ -101,7 +101,7 @@ public abstract class TestTTQueue {
     // Async
 
     QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
-    QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1, configAsync);
+    StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, new MemoryReadPointer(timeOracle.getTimestamp()));
@@ -207,9 +207,9 @@ public abstract class TestTTQueue {
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
-    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1, config);
-    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1, config);
-    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1, config);
+    QueueConsumer consumer1 = new QueueConsumer(0, 2, 1, config);
+    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
+    QueueConsumer consumer3 = new QueueConsumer(0, 0, 1, config);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
@@ -265,7 +265,7 @@ public abstract class TestTTQueue {
     // now the first 9 entries should have been physically evicted!
 
     // create a new consumer and dequeue, should get the 10th entry!
-    QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1,config);
+    QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
     DequeueResult result = queue.dequeue(consumer4, dirtyReadPointer);
     assertFalse(result.isEmpty());
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),
@@ -499,7 +499,7 @@ public abstract class TestTTQueue {
     }
 
     // dequeue it with the single consumer and FIFO partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
+    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);

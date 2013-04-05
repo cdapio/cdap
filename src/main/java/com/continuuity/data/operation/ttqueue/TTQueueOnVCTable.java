@@ -134,9 +134,9 @@ public class TTQueueOnVCTable implements TTQueue {
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
     // and a write version _only_ for dirty writes
-    long writeDirty = oracle.dirtyWriteVersion();
+    long writeDirty = TransactionOracle.DIRTY_WRITE_VERSION;
 
     // Get our unique entry id
     long entryId;
@@ -261,9 +261,9 @@ public class TTQueueOnVCTable implements TTQueue {
           "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
     // and a write version _only_ for dirty writes
-    long writeDirty = oracle.dirtyWriteVersion();
+    long writeDirty = TransactionOracle.DIRTY_WRITE_VERSION;
 
     // Loop until we have properly upserted and verified group information
     GroupState groupState;
@@ -605,7 +605,7 @@ public class TTQueueOnVCTable implements TTQueue {
     if (!(this.table instanceof MemoryOVCTable)) return;
     try {
       // Get a read pointer _only_ for dirty reads
-      ReadPointer readDirty = oracle.dirtyReadPointer();
+      ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
       // read all columns of each shard. there may be data entries, meta entries, and group meta entries
       // we only delete if entries are evicted, that is, all data and group meta entries are gone and
@@ -616,7 +616,7 @@ public class TTQueueOnVCTable implements TTQueue {
         byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, shardId);
         // read the first entry.
         OperationResult<Map<byte[], byte[]>> result =
-          this.table.get(shardRow, null, null, 1, oracle.dirtyReadPointer());
+          this.table.get(shardRow, null, null, 1, TransactionOracle.DIRTY_READ_POINTER);
         if (result.isEmpty() || result.getValue().isEmpty()) {
           // this shard does not exist. stop
           break;
@@ -719,7 +719,7 @@ public class TTQueueOnVCTable implements TTQueue {
       throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -749,7 +749,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, oracle.dirtyWriteVersion());
+        newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
   }
 
   @Override
@@ -758,7 +758,7 @@ public class TTQueueOnVCTable implements TTQueue {
       throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -783,7 +783,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.
-        getValue(), newValue, readDirty, oracle.dirtyWriteVersion());
+        getValue(), newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
 
     if (enableThrottling) acks.incrementAndGet();
 
@@ -864,7 +864,7 @@ public class TTQueueOnVCTable implements TTQueue {
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -888,7 +888,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, oracle.dirtyWriteVersion());
+        newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
   }
 
 // Private helpers
@@ -1038,7 +1038,7 @@ public class TTQueueOnVCTable implements TTQueue {
   public long getGroupID() throws OperationException {
     // Get our unique entry id
     return this.table.increment(makeRow(GLOBAL_GROUPS_HEADER),
-        GROUP_ID_GEN, 1, oracle.dirtyReadPointer(), oracle.dirtyWriteVersion());
+        GROUP_ID_GEN, 1, TransactionOracle.DIRTY_READ_POINTER, TransactionOracle.DIRTY_WRITE_VERSION);
   }
 
   @Override
@@ -1050,7 +1050,7 @@ public class TTQueueOnVCTable implements TTQueue {
   private QueueMeta getQueueMeta() throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Get global queue state information
     OperationResult<byte[]> result = this.table.get( // the next entry id
@@ -1095,7 +1095,7 @@ public class TTQueueOnVCTable implements TTQueue {
         .append(this.dequeueReturns.get()).append("\n");
 
     // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = oracle.dirtyReadPointer();
+    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Get global queue state information;
     // because we increment this dirtily im enqueue(), we can only read it the same way!
