@@ -217,6 +217,10 @@ public interface VersionedColumnarTable {
   /**
    * Increments (atomically and dirtily) the specified row and column by the specified
    * amount.
+   *
+   * Important: Counters written with this method cannot be read with a regular get(), they
+   * can only be read using this same method with an increment of 0.
+   *
    * @param row
    * @param column
    * @param amount amount to increment column by
@@ -226,6 +230,7 @@ public interface VersionedColumnarTable {
     byte [] row, byte[] column, long amount)
     throws OperationException;
 
+  // TODO implement a readDirtyCounter()
 
   /**
    * Increments (atomically) the specified row and columns by the specified
