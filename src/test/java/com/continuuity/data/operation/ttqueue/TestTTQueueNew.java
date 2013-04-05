@@ -4,15 +4,19 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.WorkingEntryList;
+import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -142,29 +146,22 @@ public class TestTTQueueNew {
   @Test
   public void testWorkingEntryList() {
     final int MAX = 10;
-    WorkingEntryList workingEntryList = new WorkingEntryList(Lists.<DequeueEntry>newArrayList());
-    assertFalse(workingEntryList.hasNext());
+    TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet = new TransientWorkingSet(Lists.<Long>newArrayList(), Collections.EMPTY_MAP);
+    assertFalse(transientWorkingSet.hasNext());
+
+    List<Long> workingSet = Lists.newArrayList();
+    Map<Long, byte[]> cache = Maps.newHashMap();
+    for(long i = 0; i < MAX; ++i) {
+      workingSet.add(i);
+      cache.put(i, Bytes.toBytes(i));
+    }
+    transientWorkingSet = new TransientWorkingSet(workingSet, cache);
 
     for(int i = 0; i < MAX; ++i) {
-      workingEntryList.add(new DequeueEntry(i));
+      assertTrue(transientWorkingSet.hasNext());
+      assertEquals(new DequeueEntry(i), transientWorkingSet.peekNext());
+      assertEquals(new DequeueEntry(i), transientWorkingSet.next());
     }
-
-    for(int i = 0; i < MAX; ++i) {
-      assertTrue(workingEntryList.hasNext());
-      assertEquals(new DequeueEntry(i), workingEntryList.peekNext());
-      assertEquals(new DequeueEntry(i), workingEntryList.next());
-    }
-    assertFalse(workingEntryList.hasNext());
-
-    for(int i = 0; i < MAX; ++i) {
-      workingEntryList.add(new DequeueEntry(i));
-    }
-
-    for(int i = 0; i < MAX; ++i) {
-      assertTrue(workingEntryList.hasNext());
-      assertEquals(new DequeueEntry(i), workingEntryList.peekNext());
-      assertEquals(new DequeueEntry(i), workingEntryList.next());
-    }
-    assertFalse(workingEntryList.hasNext());
+    assertFalse(transientWorkingSet.hasNext());
   }
 }

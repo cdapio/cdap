@@ -213,18 +213,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
     if(config.isSingleEntry()) {
       final DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
-      final WorkingEntryList workingEntryList = queueState.getWorkingEntryList();
-      final Map<Long, byte[]> cachedEntries = queueState.getCachedEntries();
+      final TransientWorkingSet transientWorkingSet = queueState.getTransientWorkingSet();
+      final Map<Long, byte[]> cachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
 
       Preconditions.checkState(dequeueEntrySet.size() <= 1,
                                "More than 1 entry dequeued in single entry mode - %s", dequeueEntrySet);
       if(!dequeueEntrySet.isEmpty()) {
         DequeueEntry returnEntry = dequeueEntrySet.min();
         long returnEntryId = returnEntry.getEntryId();
-        if(workingEntryList.hasNext() && workingEntryList.peekNext().getEntryId() == returnEntryId) {
+        if(transientWorkingSet.hasNext() && transientWorkingSet.peekNext().getEntryId() == returnEntryId) {
           // Crash recovery case.
           // The cached entry list would not have been incremented for the first time in single entry mode
-          workingEntryList.next();
+          transientWorkingSet.next();
         }
 
         byte[] entryBytes = cachedEntries.get(returnEntryId);
@@ -241,17 +241,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // If no more cached entries, read entries from storage
-    if(!queueState.getWorkingEntryList().hasNext()) {
+    if(!queueState.getTransientWorkingSet().hasNext()) {
       // TODO: return a list of DequeueEntry instead of list of Long
       List<Long> entryIds = dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
       readEntries(consumer, config, queueState, readPointer, entryIds);
     }
 
-    if(queueState.getWorkingEntryList().hasNext()) {
-      DequeueEntry dequeueEntry = queueState.getWorkingEntryList().next();
+    if(queueState.getTransientWorkingSet().hasNext()) {
+      DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
       this.dequeueReturns.incrementAndGet();
       queueState.getDequeueEntrySet().add(dequeueEntry);
-      QueueEntry entry = new QueueEntry(queueState.getCachedEntries().get(dequeueEntry.getEntryId()));
+      QueueEntry entry = new QueueEntry(queueState.getTransientWorkingSet()
+                                          .getCachedEntries().get(dequeueEntry.getEntryId()));
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                      new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
@@ -290,7 +291,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Copy over the entries that are dequeued, but not yet acked
-    Map<Long, byte[]> currentCachedEntries = queueState.getCachedEntries();
+    Map<Long, byte[]> currentCachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
     Map<Long, byte[]> newCachedEntries = Maps.newHashMap();
     for(long entryId : queueState.getDequeueEntrySet().getEntryIds()) {
       byte[] entry = currentCachedEntries.get(entryId);
@@ -358,8 +359,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     } finally {
       // Update queue state
-      queueState.setCachedEntries(newCachedEntries);
-      queueState.setClaimedEntriesById(readEntryIds);
+      queueState.setTransientWorkingSet(new TransientWorkingSet(readEntryIds, newCachedEntries));
     }
   }
 
@@ -506,7 +506,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
     // TODO: move all queue state manipulation methods into single class
     OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult =
-      table.getAllColumns(rowKeys, new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, TransactionOracle.DIRTY_READ_POINTER);
+      table.getAllColumns(rowKeys,
+                          new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, TransactionOracle.DIRTY_READ_POINTER);
     if(operationResult.isEmpty()) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
@@ -592,7 +593,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Get all the columns for row GLOBAL_EVICT_META_PREFIX, which contains the entry that can be evicted for
     // each group and the last evicted entry.
     // TODO: move all queue state reads to a single class
-    OperationResult<Map<byte [], byte []>> evictBytes = table.get(GLOBAL_EVICT_META_PREFIX, TransactionOracle.DIRTY_READ_POINTER);
+    OperationResult<Map<byte [], byte []>> evictBytes =
+      table.get(GLOBAL_EVICT_META_PREFIX, TransactionOracle.DIRTY_READ_POINTER);
     if(evictBytes.isEmpty() || evictBytes.getValue() == null) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage("Not able to fetch eviction information"));
@@ -883,18 +885,29 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  public static class WorkingEntryList {
+  public static class TransientWorkingSet {
     private final List<DequeueEntry> entryList;
     private int curPtr = -1;
+    private final Map<Long, byte[]> cachedEntries;
 
-    private static final WorkingEntryList EMPTY_LIST = new WorkingEntryList(Collections.<DequeueEntry>emptyList());
+    private static final TransientWorkingSet EMPTY_LIST =
+      new TransientWorkingSet(Collections.<Long>emptyList(), Collections.<Long, byte[]>emptyMap());
 
-    public static WorkingEntryList emptyList() {
+    public static TransientWorkingSet emptyList() {
       return EMPTY_LIST;
     }
 
-    public WorkingEntryList(List<DequeueEntry> entryList) {
-      this.entryList = entryList;
+    public TransientWorkingSet(List<Long> entryIds, Map<Long, byte[]> cachedEntries) {
+      List<DequeueEntry> entries = Lists.newArrayListWithCapacity(entryIds.size());
+      for(long id : entryIds) {
+        if(!cachedEntries.containsKey(id)) {
+          // TODO: catch Runtime exception and translate it into OperationException
+          throw new IllegalArgumentException(String.format("Cached entries does not contain entry %d", id));
+        }
+        entries.add(new DequeueEntry(id, 0));
+      }
+      this.entryList = entries;
+      this.cachedEntries = cachedEntries;
     }
 
     public boolean hasNext() {
@@ -917,8 +930,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return entryList.get(ptr);
     }
 
-    public void add(DequeueEntry entry) {
-      entryList.add(entry);
+    public Map<Long, byte[]> getCachedEntries() {
+      return cachedEntries;
     }
 
     @Override
@@ -926,12 +939,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return Objects.toStringHelper(this)
         .add("entryList", entryList)
         .add("curPtr", curPtr)
+        .add("cachedEntries", cachedEntries)
         .toString();
     }
   }
 
   public static class QueueStateImpl implements QueueState {
-    private WorkingEntryList workingEntryList = WorkingEntryList.EMPTY_LIST;
+    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.EMPTY_LIST;
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
     private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
@@ -939,23 +953,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private long claimedEntryEnd = INVALID_ENTRY_ID;
     private long lastEvictTimeInSecs = 0;
 
-    private Map<Long, byte[]> cachedEntries;
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
-      cachedEntries = Collections.emptyMap();
     }
 
-    public WorkingEntryList getWorkingEntryList() {
-      return workingEntryList;
+    public TransientWorkingSet getTransientWorkingSet() {
+      return transientWorkingSet;
     }
 
-    public void setClaimedEntriesById(List<Long> entryIds) {
-      List<DequeueEntry> entries = Lists.newArrayList();
-      for(long id : entryIds) {
-        entries.add(new DequeueEntry(id, 0));
-      }
-      this.workingEntryList = new WorkingEntryList(entries);
+    public void setTransientWorkingSet(TransientWorkingSet transientWorkingSet) {
+      this.transientWorkingSet = transientWorkingSet;
     }
 
     public DequeuedEntrySet getDequeueEntrySet() {
@@ -1006,25 +1014,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.queueWritePointer = queueWritePointer;
     }
 
-    public Map<Long, byte[]> getCachedEntries() {
-      return cachedEntries;
-    }
-
-    public void setCachedEntries(Map<Long, byte[]> cachedEntries) {
-      this.cachedEntries = cachedEntries;
-    }
-
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("workingEntryList", workingEntryList)
+        .add("transientWorkingSet", transientWorkingSet)
         .add("dequeueEntrySet", dequeueEntrySet)
         .add("consumerReadPointer", consumerReadPointer)
         .add("claimedEntryBegin", claimedEntryBegin)
         .add("claimedEntryEnd", claimedEntryEnd)
         .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
-        .add("cachedEntries", cachedEntries)
         .toString();
     }
   }
