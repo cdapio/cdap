@@ -84,7 +84,8 @@ public abstract class TestTTQueue {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      //assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
       queue.ack(result.getEntryPointer(), consumerSync, rp);
       queue.finalize(result.getEntryPointer(), consumerSync, -1, rp.getWritePointer());
       if (i % 100 == 0) System.out.print(".");

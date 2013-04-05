@@ -819,12 +819,14 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
     throws OperationException {
     // Note: HBase increment does not take a write version, to keep compareAndSwapDirty compatible with increments
-    // compareAndSwapDirty too does not use an explicit write version.
+    // compareAndSwapDirty too does not use an explicit write version (true for vanilla HBase, right now an explicit
+    // version is used since the patched HBase only has checkAndPut with version).
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       Put put = new Put(row);
       put.add(this.family, column, newValue);
+      // TODO: need to use checkAndPut without version (vanilla HBase)
       return writeTable.checkAndPut(row, this.family, column, expectedValue,
                                     TransactionOracle.DIRTY_READ_POINTER.getMaximum(), put);
     } catch (IOException e) {

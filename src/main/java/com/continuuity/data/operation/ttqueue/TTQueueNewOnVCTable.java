@@ -390,6 +390,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
+    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
+    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
+    // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
+
+    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
+
+    // Get queue state
+    QueueStateImpl queueState = getQueueState(consumer, readPointer);
+
+    // Set unack state
+    //queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
+    // TODO: What happens to the dequeue state of the entry on unack? Check if it needs to be dequeued again
+    queueState.getWorkingEntryList().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
+
+    // Write unack state
+    dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
+  }
+
+  @Override
   public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups, long writePoint)
     throws OperationException {
     // Figure out queue entries that can be evicted, and evict them.
@@ -642,26 +664,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return maxEntryToEvict;
   }
 
-  @Override
-  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
-    throws OperationException {
-    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
-    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
-
-    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
-    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
-
-    // Get queue state
-    QueueStateImpl queueState = getQueueState(consumer, readPointer);
-
-    // Set unack state
-    // TODO: What happens to the dequeue state of the entry on unack? Check if it needs to be dequeued again
-    queueState.getWorkingEntryList().add(new DequeueEntry(entryPointer.getEntryId(), 0)); // TODO: add tries
-
-    // Write unack state
-    dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
-  }
   static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
@@ -1105,23 +1107,29 @@ public class TTQueueNewOnVCTable implements TTQueue {
      * @throws OperationException
      */
     protected long getReadPointerIntialValue() throws OperationException {
+      final long defaultInitialValue = FIRST_QUEUE_ENTRY_ID - 1;
+        long lastEvictEntry = getLastEvictEntry();
+        if(lastEvictEntry != INVALID_ENTRY_ID && lastEvictEntry > defaultInitialValue) {
+          return lastEvictEntry;
+        }
+      return defaultInitialValue;
+    }
+
+    protected long getLastEvictEntry() throws OperationException {
       QueueStateStore readEvictState = new QueueStateStore(table, oracle);
       readEvictState.setRowKey(GLOBAL_EVICT_META_PREFIX);
       readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.read();
       OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
 
-      final long defaultInitialValue = FIRST_QUEUE_ENTRY_ID - 1;
       if(!evictStateBytes.isEmpty()) {
         byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
         if(lastEvictEntryBytes != null) {
           long lastEvictEntry = Bytes.toLong(lastEvictEntryBytes);
-          if(lastEvictEntry > defaultInitialValue) {
-            return lastEvictEntry;
-          }
+          return lastEvictEntry;
         }
       }
-      return defaultInitialValue;
+      return INVALID_ENTRY_ID;
     }
 
     @Override
@@ -1430,11 +1438,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If read pointer is zero then this the first time the consumer group is running, initialize the read pointer
       if(groupReadPointer == 0) {
-        long groupReadPointerInitialValue = getReadPointerIntialValue();
-        table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
-                                  Bytes.toBytes(groupReadPointerInitialValue));
-        // No need to read the group read pointer again, since we are looking for an approximate value anyway.
-        return groupReadPointerInitialValue;
+        long lastEvictEntry = getLastEvictEntry();
+        if(lastEvictEntry != INVALID_ENTRY_ID) {
+          table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
+                                    Bytes.toBytes(lastEvictEntry));
+          // No need to read the group read pointer again, since we are looking for an approximate value anyway.
+          return lastEvictEntry;
+        }
       }
       return groupReadPointer;
     }
