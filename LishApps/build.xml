@@ -5,4 +5,22 @@
             <arg line="assembly:assembly -Dmaven.test.skip=true"/>
         </exec>
     </target>
+
+    <target name="clean" description="clean">
+        <exec dir="." executable="mvn">
+            <arg line="clean"/>
+        </exec>
+    </target>
+
+  <target name="init">  
+  </target>
+
+  <target name="manifest">
+  </target>
+
+   <target name="compile">
+      <exec dir="." executable="mvn">
+            <arg line="compile"/>
+        </exec>
+   </target>
 </project>
