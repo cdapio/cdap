@@ -674,135 +674,135 @@ public abstract class TestOmidExecutorLikeAFlow {
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
-    
+
     long MAX_TIMEOUT = 30000;
     //    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     //    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
     ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
-        new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-        ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
-            new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-            ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo = new
-                ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+      new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
+      new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo = new
+      ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
 
-                AtomicBoolean producersDone = new AtomicBoolean(false);
+    AtomicBoolean producersDone = new AtomicBoolean(false);
 
-                long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-                // Create P producer threads, each inserts N queue entries
-                int p = 5;
-                int n = getNumIterations();
-                Producer [] producers = new Producer[p];
-                for (int i=0;i<p;i++) {
-                  producers[i] = new Producer(i, n, enqueuedMap);
-                }
+    // Create P producer threads, each inserts N queue entries
+    int p = 5;
+    int n = getNumIterations();
+    Producer [] producers = new Producer[p];
+    for (int i=0;i<p;i++) {
+      producers[i] = new Producer(i, n, enqueuedMap);
+    }
 
-                // Create (P*2) consumer threads, two groups of (P)
-                // Use synchronous execution first
-                Consumer [] consumerGroupOne = new Consumer[p];
-                Consumer [] consumerGroupTwo = new Consumer[p];
-                QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
-                for (int i=0;i<p;i++) {
-                  consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
-                                                   config, dequeuedMapOne, producersDone);
-                }
-                for (int i=0;i<p;i++) {
-                  consumerGroupTwo[i]=new Consumer(new QueueConsumer(i, 1, p, config),
-                                                   config, dequeuedMapTwo, producersDone);
-                }
+    // Create (P*2) consumer threads, two groups of (P)
+    // Use synchronous execution first
+    Consumer [] consumerGroupOne = new Consumer[p];
+    Consumer [] consumerGroupTwo = new Consumer[p];
+    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
+    for (int i=0;i<p;i++) {
+      consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
+                                       config, dequeuedMapOne, producersDone);
+    }
+    for (int i=0;i<p;i++) {
+      consumerGroupTwo[i]=new Consumer(new QueueConsumer(i, 1, p, config),
+                                       config, dequeuedMapTwo, producersDone);
+    }
 
-                // Let the producing begin!
-                System.out.println("Starting producers");
-                for (int i=0; i<p; i++) producers[i].start();
-                long expectedDequeues = p * n;
+    // Let the producing begin!
+    System.out.println("Starting producers");
+    for (int i=0; i<p; i++) producers[i].start();
+    long expectedDequeues = p * n;
 
-                long startConsumers = System.currentTimeMillis();
+    long startConsumers = System.currentTimeMillis();
 
-                // Start consumers!
-                System.out.println("Starting consumers");
-                for (int i=0; i<p; i++) consumerGroupOne[i].start();
-                for (int i=0; i<p; i++) consumerGroupTwo[i].start();
+    // Start consumers!
+    System.out.println("Starting consumers");
+    for (int i=0; i<p; i++) consumerGroupOne[i].start();
+    for (int i=0; i<p; i++) consumerGroupTwo[i].start();
 
-                // Wait for producers to finish
-                System.out.println("Waiting for producers to finish");
-                long start = System.currentTimeMillis();
-                for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
-                long stop = System.currentTimeMillis();
-                System.out.println("Producers done");
-                if (stop - start >= MAX_TIMEOUT)
-                  fail("Timed out waiting for producers");
-                producersDone.set(true);
+    // Wait for producers to finish
+    System.out.println("Waiting for producers to finish");
+    long start = System.currentTimeMillis();
+    for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
+    long stop = System.currentTimeMillis();
+    System.out.println("Producers done");
+    if (stop - start >= MAX_TIMEOUT)
+      fail("Timed out waiting for producers");
+    producersDone.set(true);
 
-                // Verify producers produced correct number
-                assertEquals(p * n , enqueuedMap.size());
-                System.out.println("Producers correctly enqueued " +
-                    enqueuedMap.size() + " entries");
+    // Verify producers produced correct number
+    assertEquals(p * n , enqueuedMap.size());
+    System.out.println("Producers correctly enqueued " +
+                         enqueuedMap.size() + " entries");
 
     long producerTime = System.currentTimeMillis();
-                System.out.println("" + p + " producers generated " + (n*p) +
-                    " total queue entries in " + (producerTime - startTime) +
-                    " millis (" + ((producerTime - startTime)/((float)(n*p))) +
-                    " ms/enqueue)");
+    System.out.println("" + p + " producers generated " + (n*p) +
+                         " total queue entries in " + (producerTime - startTime) +
+                         " millis (" + ((producerTime - startTime)/((float)(n*p))) +
+                         " ms/enqueue)");
 
-                // Wait for consumers to finish
-                System.out.println("Waiting for consumers to finish");
-                start = System.currentTimeMillis();
-                for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
-                for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
-                stop = System.currentTimeMillis();
-                System.out.println("Consumers done!");
-                if (stop - start >= MAX_TIMEOUT)
-                  fail("Timed out waiting for consumers");
+    // Wait for consumers to finish
+    System.out.println("Waiting for consumers to finish");
+    start = System.currentTimeMillis();
+    for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
+    for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
+    stop = System.currentTimeMillis();
+    System.out.println("Consumers done!");
+    if (stop - start >= MAX_TIMEOUT)
+      fail("Timed out waiting for consumers");
 
-                long stopTime = System.currentTimeMillis();
-                System.out.println("" + (p*2) + " consumers dequeued " +
-                    (expectedDequeues*2) +
-                    " total queue entries in " + (stopTime - startConsumers) +
-                    " millis (" + ((stopTime - startConsumers)/((float)
-                    (expectedDequeues*2))) + " ms/dequeue)");
+    long stopTime = System.currentTimeMillis();
+    System.out.println("" + (p*2) + " consumers dequeued " +
+                         (expectedDequeues*2) +
+                         " total queue entries in " + (stopTime - startConsumers) +
+                         " millis (" + ((stopTime - startConsumers)/((float)
+      (expectedDequeues*2))) + " ms/dequeue)");
 
-                // Each group should total <expectedDequeues>
+    // Each group should total <expectedDequeues>
 
-                long groupOneTotal = 0;
-                long groupTwoTotal = 0;
-                for (int i=0; i<p; i++) {
-                  groupOneTotal += consumerGroupOne[i].dequeued;
-                  groupTwoTotal += consumerGroupTwo[i].dequeued;
-                }
-                if (expectedDequeues != groupOneTotal) {
-                  System.out.println("Group One: totalDequeues=" + groupOneTotal
-                      + ", DequeuedMap.size=" + dequeuedMapOne.size());
-                  for (byte [] dequeuedValue : dequeuedMapOne.values()) {
-                    enqueuedMap.remove(dequeuedValue);
-                  }
-                  System.out.println("After removing dequeued entries, there" +
-                      " are " + enqueuedMap.size() + " remaining entries " +
-                      "produced");
-                  for (byte [] enqueuedValue : enqueuedMap.values()) {
-                    System.out.println("EnqueuedNotDequeued: instanceid=" +
-                        Bytes.toInt(enqueuedValue) + ", entrynum=" +
-                        Bytes.toInt(enqueuedValue, 4));
-                  }
-                  printQueueInfo(this.threadedQueueName, 0);
-                }
-                assertEquals(expectedDequeues, groupOneTotal);
-                if (expectedDequeues != groupTwoTotal) {
-                  System.out.println("Group Two: totalDequeues=" + groupTwoTotal
-                      + ", DequeuedMap.size=" + dequeuedMapTwo.size());
-                  for (byte [] dequeuedValue : dequeuedMapTwo.values()) {
-                    enqueuedMap.remove(dequeuedValue);
-                  }
-                  System.out.println("After removing dequeued entries, there " +
-                      "are " + enqueuedMap.size() + " remaining entries " +
-                      "produced");
-                  for (byte [] enqueuedValue : enqueuedMap.values()) {
-                    System.out.println("EnqueuedNotDequeued: instanceid=" +
-                        Bytes.toInt(enqueuedValue) + ", entrynum=" +
-                        Bytes.toInt(enqueuedValue, 4));
-                  }
-                  printQueueInfo(this.threadedQueueName, 1);
-                }
-                assertEquals(expectedDequeues, groupTwoTotal);
+    long groupOneTotal = 0;
+    long groupTwoTotal = 0;
+    for (int i=0; i<p; i++) {
+      groupOneTotal += consumerGroupOne[i].dequeued;
+      groupTwoTotal += consumerGroupTwo[i].dequeued;
+    }
+    if (expectedDequeues != groupOneTotal) {
+      System.out.println("Group One: totalDequeues=" + groupOneTotal
+                           + ", DequeuedMap.size=" + dequeuedMapOne.size());
+      for (byte [] dequeuedValue : dequeuedMapOne.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there" +
+                           " are " + enqueuedMap.size() + " remaining entries " +
+                           "produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+                             Bytes.toInt(enqueuedValue) + ", entrynum=" +
+                             Bytes.toInt(enqueuedValue, 4));
+      }
+      printQueueInfo(this.threadedQueueName, 0);
+    }
+    assertEquals(expectedDequeues, groupOneTotal);
+    if (expectedDequeues != groupTwoTotal) {
+      System.out.println("Group Two: totalDequeues=" + groupTwoTotal
+                           + ", DequeuedMap.size=" + dequeuedMapTwo.size());
+      for (byte [] dequeuedValue : dequeuedMapTwo.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there " +
+                           "are " + enqueuedMap.size() + " remaining entries " +
+                           "produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+                             Bytes.toInt(enqueuedValue) + ", entrynum=" +
+                             Bytes.toInt(enqueuedValue, 4));
+      }
+      printQueueInfo(this.threadedQueueName, 1);
+    }
+    assertEquals(expectedDequeues, groupTwoTotal);
 
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
