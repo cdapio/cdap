@@ -1033,6 +1033,17 @@ public abstract class TestOVCTable {
       assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
       assertEquals(Bytes.toInt(values2[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols2[i])));
     }
+
+    // Get data (single column)
+    valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1}, RP_MAX).getValue();
+    assertFalse(valuesMap.isEmpty());
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      // Assert one col per row is read
+      assertEquals(1, valuesMap.get(rows[i]).size());
+      assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
+    }
   }
 
   @Test

@@ -143,7 +143,6 @@ public abstract class TestTTQueue {
 //    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
 
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
@@ -168,12 +167,14 @@ public abstract class TestTTQueue {
         queueNormal.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // dequeue with new consumer still has entries (expected)
-    assertFalse(
-        queueNormal.dequeue(consumer2, dirtyReadPointer).isEmpty());
+    DequeueResult result = queueNormal.dequeue(new QueueConsumer(0, 1, 1, config), dirtyReadPointer);
+    assertFalse(result.isEmpty());
+    assertEquals(0, Bytes.toInt(result.getEntry().getData()));
 
     // now do it again with evict-on-ack turned on
     TTQueue queueEvict = createQueue();
     numGroups = 1;
+    consumer = new QueueConsumer(0, 0, 1, config);
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
@@ -182,8 +183,7 @@ public abstract class TestTTQueue {
 
     // dequeue/ack/finalize 10 things w/ numGroups=1
     for (int i=0; i<10; i++) {
-      DequeueResult result =
-          queueEvict.dequeue(consumer, dirtyReadPointer);
+      result = queueEvict.dequeue(consumer, dirtyReadPointer);
       queueEvict.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
       queueEvict.finalize(result.getEntryPointer(), consumer, numGroups, dirtyReadPointer.getMaximum());
     }
@@ -193,7 +193,7 @@ public abstract class TestTTQueue {
         queueEvict.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // dequeue with new consumer IS NOW EMPTY!
-    DequeueResult result = queueEvict.dequeue(consumer2, dirtyReadPointer);
+    result = queueEvict.dequeue(new QueueConsumer(0, 2, 1, config), dirtyReadPointer);
     assertTrue(result.toString(), result.isEmpty());
 
 
