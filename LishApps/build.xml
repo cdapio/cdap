@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<project name="LishApp" default="jar">
+    <target name="jar" description="Building LishApps">
+        <exec dir="." executable="mvn">
+            <arg line="assembly:assembly -Dmaven.test.skip=true"/>
+        </exec>
+    </target>
+</project>

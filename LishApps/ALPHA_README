@@ -1,0 +1,25 @@
+---
+Payvment Alpha Cluster of the Continuuity AppFabric
+---
+
+The alpha cluster is a single node, but running in distributed mode,
+instance of the Continuuity App Fabric.
+
+AppFabric Hostname
+alpha.payvment.continuuity.com
+
+AppFabric UI
+http://alpha.payvment.continuuity.com
+
+payvment/pvrealtime123!
+
+
+USING EXISTING TOOLS
+--------------------
+
+The write_clusters, write_actions, and send_actions scripts can be used both
+for your local developer instance as well as cloud instances.  All you need
+to do is point it to the proper hostname, for example:
+
+	export GATEWAY_HOSTNAME=alpha.payvment.continuuity.com
+	$LISH_APP_HOME/bin/write_clusters_to_stream.sh src/test/resources/sample-clusters.csv
