@@ -100,6 +100,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] CLAIMED_ENTRY_END = {40, 'E'};         //row <queueName>40C<groupId><consumerId>, column 40E
   // LAST_EVICT_TIME_IN_SECS is the time when the last eviction was run by the consumer
   static final byte [] LAST_EVICT_TIME_IN_SECS = {50, 'T'};           //row <queueName>40C<groupId><consumerId>, column 50T
+  // RECONFIG_PARTITIONER stores the partition information for prior configurations
+  static final byte [] RECONFIG_PARTITIONER = {60, 'P'};     //row <queueName>40C<groupId><consumerId>, column 60P
 
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
@@ -401,6 +403,33 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // Write unack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
+  }
+
+  public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+                          ReadPointer readPointer) throws OperationException {
+    // TODO: handle empty consumers list
+    if(currentConsumerCount == newConsumerCount) {
+      return consumers;
+    }
+
+    // TODO: make sure partitioner type is the same
+
+    // TODO: use a better way to get config
+    QueueConfig config = consumers.get(0).getQueueConfig();
+    // Determine what dequeue strategy to use based on the partitioner
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
+    // Read queue state for all consumers
+    for(QueueConsumer consumer : consumers) {
+      final QueueStateImpl queueState = getQueueState(consumer, readPointer);
+      // Verify there are no inflight entries
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+                     getLogMessage(String.format("Consumer %d still has inflight entries", consumer.getInstanceId())));
+      }
+    }
+
+    return dequeueStrategy.reconfigure(consumers, currentConsumerCount, newConsumerCount, readPointer);
   }
 
   @Override
@@ -890,11 +919,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private int curPtr = -1;
     private final Map<Long, byte[]> cachedEntries;
 
-    private static final TransientWorkingSet EMPTY_LIST =
+    private static final TransientWorkingSet EMPTY_SET =
       new TransientWorkingSet(Collections.<Long>emptyList(), Collections.<Long, byte[]>emptyMap());
 
-    public static TransientWorkingSet emptyList() {
-      return EMPTY_LIST;
+    public static TransientWorkingSet emptySet() {
+      return EMPTY_SET;
     }
 
     public TransientWorkingSet(List<Long> entryIds, Map<Long, byte[]> cachedEntries) {
@@ -944,8 +973,185 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
+  static class ReconfigPartitionInfo {
+    private final int instanceId;
+    private final long maxAckEntryId;
+
+    ReconfigPartitionInfo(int instanceId, long maxAckEntryId) {
+      this.instanceId = instanceId;
+      this.maxAckEntryId = maxAckEntryId;
+    }
+
+    public long getMaxAckEntryId() {
+      return maxAckEntryId;
+    }
+
+    public int getInstanceId() {
+      return instanceId;
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      encoder.writeInt(instanceId)
+        .writeLong(maxAckEntryId);
+    }
+
+    public static ReconfigPartitionInfo decode(Decoder decoder) throws IOException {
+      int instanceId = decoder.readInt();
+      long maxAckEntryId = decoder.readLong();
+      return new ReconfigPartitionInfo(instanceId, maxAckEntryId);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("instanceId", instanceId)
+        .add("maxAckEntryId", maxAckEntryId)
+        .toString();
+    }
+  }
+
+  static class ReconfigPartitioner implements QueuePartitioner {
+    private final int groupSize;
+    private final QueuePartitioner.PartitionerType partitionerType;
+    private final List<ReconfigPartitionInfo> reconfigPartitionInfos;
+
+    private static final ReconfigPartitioner EMPTY_RECONFIG_PARTITIONER = new ReconfigPartitioner();
+    public static ReconfigPartitioner getEmptyReconfigPartitioner() {
+      return EMPTY_RECONFIG_PARTITIONER;
+    }
+
+    // TODO: remove unneeded config info during saving
+    private ReconfigPartitioner() {
+      groupSize = 0;
+      partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
+      reconfigPartitionInfos = Collections.emptyList();
+    }
+
+    public ReconfigPartitioner(int groupSize, PartitionerType partitionerType) {
+      this.groupSize = groupSize;
+      this.partitionerType = partitionerType;
+      this.reconfigPartitionInfos = Lists.newArrayListWithCapacity(groupSize);
+    }
+
+    public void add(int consumerId, long maxAckEntryId) {
+      reconfigPartitionInfos.add(new ReconfigPartitionInfo(consumerId, maxAckEntryId));
+    }
+
+    private void add(ReconfigPartitionInfo info) {
+      reconfigPartitionInfos.add(info);
+    }
+
+    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
+    @Override
+    public boolean isDisjoint() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean usesHeaderData() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, value)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, hash)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public void compact(long consumerReadPointer) {
+      // TODO:
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      if(groupSize != reconfigPartitionInfos.size()) {
+        throw new IllegalStateException(String.format(
+          "Groupsize: %d is not equal to partition information objects %d", groupSize, reconfigPartitionInfos.size()));
+      }
+
+      // TODO: use common code to decode/encode lists
+      if(!reconfigPartitionInfos.isEmpty()) {
+        encoder.writeInt(groupSize)
+          .writeString(partitionerType.name());
+        for(ReconfigPartitionInfo info : reconfigPartitionInfos) {
+          info.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ReconfigPartitioner decode(Decoder decoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      int size = decoder.readInt();
+      if(size == 0) {
+        return ReconfigPartitioner.getEmptyReconfigPartitioner();
+      }
+
+      int groupSize = decoder.readInt();
+      PartitionerType partitionerType = PartitionerType.valueOf(decoder.readString());
+      ReconfigPartitioner partitioner = new ReconfigPartitioner(groupSize, partitionerType);
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          partitioner.add(ReconfigPartitionInfo.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+
+      if(groupSize != partitioner.reconfigPartitionInfos.size()) {
+        throw new IllegalStateException(String.format(
+          "Groupsize: %d is not equal to partition information objects %d", groupSize,
+          partitioner.reconfigPartitionInfos.size()));
+      }
+      return partitioner;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("groupSize", groupSize)
+        .add("partitionerType", partitionerType)
+        .add("reconfigPartitionInfos", reconfigPartitionInfos)
+        .toString();
+    }
+  }
+
   public static class QueueStateImpl implements QueueState {
-    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.EMPTY_LIST;
+    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
     private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
@@ -953,9 +1159,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private long claimedEntryEnd = INVALID_ENTRY_ID;
     private long lastEvictTimeInSecs = 0;
 
+    private ReconfigPartitioner reconfigPartitioner;
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
+      reconfigPartitioner = ReconfigPartitioner.getEmptyReconfigPartitioner();
     }
 
     public TransientWorkingSet getTransientWorkingSet() {
@@ -1014,6 +1222,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.queueWritePointer = queueWritePointer;
     }
 
+    public ReconfigPartitioner getReconfigPartitioner() {
+      return reconfigPartitioner;
+    }
+
+    public void setReconfigPartitioner(ReconfigPartitioner reconfigPartitioner) {
+      this.reconfigPartitioner = reconfigPartitioner;
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
@@ -1024,6 +1240,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("claimedEntryEnd", claimedEntryEnd)
         .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
+        .add("reconfigPartitioner", reconfigPartitioner)
         .toString();
     }
   }
@@ -1084,6 +1301,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
+    List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+                     ReadPointer readPointer) throws OperationException;
+    void deleteDequeueState(QueueConsumer consumer) throws OperationException;
+
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
@@ -1225,9 +1446,117 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       writeQueueStateStore.write();
     }
+
+    @Override
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      // Delete queue state for the consumer
+      table.deleteDirty(
+        new byte[][]{makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId())});
+      // TODO: delete evict information for the consumer
+    }
   }
 
-  class HashDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+  abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
+      // Read reconfig partition information
+      readQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+
+      QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
+      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
+      if(!stateBytes.isEmpty()) {
+        try {
+          ReconfigPartitioner partitioner = ReconfigPartitioner.decode(new BinaryDecoder(
+            new ByteArrayInputStream(stateBytes.getValue().get(RECONFIG_PARTITIONER))));
+          queueState.setReconfigPartitioner(partitioner);
+        } catch (IOException e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                       getLogMessage("Exception while deserializing reconfig partitioner"), e);
+        }
+      }
+      return queueState;
+    }
+
+    @Override
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
+      // Write reconfig partition information
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Encoder encoder = new BinaryEncoder(bos);
+      try {
+        queueState.getReconfigPartitioner().encode(encoder);
+      } catch(IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing reconfig partitioner"), e);
+      }
+      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+      writeQueueStateStore.addColumnValue(bos.toByteArray());
+      super.saveDequeueState(consumer, config, queueState, readPointer);
+    }
+
+    @Override
+    public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, final int currentConsumerCount, final int newConsumerCount,
+                            ReadPointer readPointer) throws OperationException {
+      // TODO: use better groupId, groupName, config and partitioning key determination
+      // TODO: does consumers list need to be sorted on instanceId?
+      final long groupId = consumers.get(0).getGroupId();
+      final String groupName = consumers.get(0).getGroupName();
+      final String partitioningKey = consumers.get(0).getPartitioningKey();
+      final QueueConfig config = consumers.get(0).getQueueConfig();
+
+      long minAckedEntryId = Long.MAX_VALUE;
+      ReconfigPartitioner reconfigPartitioner = new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
+      for(QueueConsumer consumer : consumers) {
+        QueueStateImpl queueState = (QueueStateImpl) consumer.getQueueState();
+        // Since there are no inflight entries, all entries till and including consumer read pointer are acked
+        long ackedEntryId = queueState.getConsumerReadPointer();
+        if(ackedEntryId < minAckedEntryId) {
+          minAckedEntryId = ackedEntryId;
+        }
+        reconfigPartitioner.add(consumer.getInstanceId(), ackedEntryId);
+      }
+
+      if(minAckedEntryId == Long.MAX_VALUE) {
+        // Nothing has been dequeued, nothing has been acked
+        // TODO: nothing to be done
+        minAckedEntryId = INVALID_ENTRY_ID;
+      }
+
+      List<QueueConsumer> newConsumers = Lists.newArrayListWithCapacity(newConsumerCount);
+
+      for(int j = 0; j < newConsumerCount; ++j) {
+        QueueConsumer consumer;
+        QueueStateImpl queueState;
+        if(j < currentConsumerCount) {
+          consumer = consumers.get(j);
+          queueState = (QueueStateImpl) consumer.getQueueState();
+          queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
+        } else {
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, groupName, partitioningKey, config);
+          queueState = new QueueStateImpl();
+          consumer.setQueueState(queueState);
+        }
+        newConsumers.add(consumer);
+        // Modify queue state for all consumers
+        queueState.setReconfigPartitioner(reconfigPartitioner);
+        // Move consumer read pointer to the min acked entry for all consumers
+        queueState.setConsumerReadPointer(minAckedEntryId);
+        // TODO: save queue states for all consumers in a single call
+        // TODO: save reconfig info in queue state
+        saveDequeueState(consumer, config, queueState, readPointer);
+      }
+
+      // Delete queue state for any extra consumers, if any
+      for(int j = newConsumerCount - currentConsumerCount; j < currentConsumerCount; ++j) {
+        QueueConsumer consumer = consumers.get(j);
+        // TODO: save and delete queue states for all consumers in a single call
+        deleteDequeueState(consumer);
+      }
+
+      return newConsumers;
+    }
+  }
+
+  class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(
       QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer)
@@ -1290,7 +1619,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
               break outerLoop;
             }
             int hashValue = Bytes.toInt(hashBytes);
-            if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
+            if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
+              queueState.getReconfigPartitioner().shouldEmit(
+                consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue)
+              ) {
               newEntryIds.add(currentEntryId);
             }
           } else {
@@ -1304,7 +1636,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  class RoundRobinDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+  class RoundRobinDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                        ReadPointer readPointer) throws OperationException {
@@ -1337,7 +1669,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Determine which entries  need to be read from storage
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
+            queueState.getReconfigPartitioner().shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            ) {
             newEntryIds.add(currentEntryId);
           }
         }
@@ -1505,12 +1839,22 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Determine which entries  need to be read from storage based on partition type
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+          // TODO: No need for partitioner in FIFO
+          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
+            queueState.getReconfigPartitioner().shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            ) {
             newEntryIds.add(currentEntryId);
           }
         }
       }
       return newEntryIds;
+    }
+
+    @Override
+    public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+                            ReadPointer readPointer) throws OperationException {
+      // TODO: implement reconfigure
+      return Collections.emptyList();
     }
   }
 }
