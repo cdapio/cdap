@@ -10,7 +10,6 @@
      <echo message="maven location: ${mvn.path}" />
 	</target>
 
-
     <target name="jar" description="Building LishApps" depends="locate_mvn">
         <exec dir="." executable="${mvn.path}">
             <arg line="assembly:assembly -Dmaven.test.skip=true"/>

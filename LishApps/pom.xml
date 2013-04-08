@@ -10,7 +10,7 @@
   <name>LishFeeds</name>
   <properties>
     <main>com.payvment.continuuity.LishApp</main>
-    <continuuityVersion>1.4.1-SNAPSHOT</continuuityVersion>
+    <continuuityVersion>1.4.1</continuuityVersion>
   </properties>
   <repositories>
     <repository>
@@ -26,15 +26,14 @@
           <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
       </repository>
   </repositories>
-  <dependencies>
   
+  <dependencies>
       <dependency>
           <groupId>com.continuuity</groupId>
           <artifactId>continuuity-test</artifactId>
           <version>${continuuityVersion}</version>
           <scope>test</scope>
       </dependency>
-
       <dependency>
           <groupId>com.continuuity</groupId>
           <artifactId>continuuity-api</artifactId>
@@ -57,6 +56,7 @@
           <groupId>com.google.code.gson</groupId>
           <artifactId>gson</artifactId>
           <version>2.2.2</version>
+          <scope>provided</scope>
       </dependency>
       <dependency>
           <groupId>net.sf.opencsv</groupId>
@@ -67,9 +67,10 @@
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
           <version>13.0.1</version>
+          <scope>provided</scope>
       </dependency>
-
   </dependencies>
+  
   <!-- Set the main class and tell maven to include dependencies in the jar -->
     <build>
         <plugins>
