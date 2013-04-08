@@ -2,7 +2,7 @@
 <project name="LishApp" default="jar">
 
      <target name="locate_mvn">
-     <exec executable="whereis"
+     <exec executable="which"
            outputproperty="mvn.path"
            failonerror="true">
            <arg line="mvn"/>
