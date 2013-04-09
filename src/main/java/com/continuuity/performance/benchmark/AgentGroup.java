@@ -45,4 +45,12 @@ public abstract class AgentGroup {
    * @return a new agent
    */
   public abstract Agent newAgent();
+
+  public long getGroupMillisDelay() {
+    return 0L;
+  }
+
+  public long getNextAgentMillisDelay() {
+    return 0L;
+  }
 }
