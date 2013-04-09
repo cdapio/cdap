@@ -902,8 +902,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public static DequeuedEntrySet decode(Decoder decoder) throws IOException {
-      DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       int size = decoder.readInt();
+      // TODO: return empty set if size == 0
+      DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
           dequeuedEntrySet.add(DequeueEntry.decode(decoder));
@@ -973,11 +974,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  static class ReconfigPartitionInfo {
+  static class ReconfigPartitionInstance {
     private final int instanceId;
     private final long maxAckEntryId;
 
-    ReconfigPartitionInfo(int instanceId, long maxAckEntryId) {
+    ReconfigPartitionInstance(int instanceId, long maxAckEntryId) {
       this.instanceId = instanceId;
       this.maxAckEntryId = maxAckEntryId;
     }
@@ -995,10 +996,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .writeLong(maxAckEntryId);
     }
 
-    public static ReconfigPartitionInfo decode(Decoder decoder) throws IOException {
+    public static ReconfigPartitionInstance decode(Decoder decoder) throws IOException {
       int instanceId = decoder.readInt();
       long maxAckEntryId = decoder.readLong();
-      return new ReconfigPartitionInfo(instanceId, maxAckEntryId);
+      return new ReconfigPartitionInstance(instanceId, maxAckEntryId);
     }
 
     @Override
@@ -1013,7 +1014,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static class ReconfigPartitioner implements QueuePartitioner {
     private final int groupSize;
     private final QueuePartitioner.PartitionerType partitionerType;
-    private final List<ReconfigPartitionInfo> reconfigPartitionInfos;
+    private final List<ReconfigPartitionInstance> reconfigPartitionInstances;
 
     private static final ReconfigPartitioner EMPTY_RECONFIG_PARTITIONER = new ReconfigPartitioner();
     public static ReconfigPartitioner getEmptyReconfigPartitioner() {
@@ -1024,21 +1025,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private ReconfigPartitioner() {
       groupSize = 0;
       partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
-      reconfigPartitionInfos = Collections.emptyList();
+      reconfigPartitionInstances = Collections.emptyList();
     }
 
     public ReconfigPartitioner(int groupSize, PartitionerType partitionerType) {
       this.groupSize = groupSize;
       this.partitionerType = partitionerType;
-      this.reconfigPartitionInfos = Lists.newArrayListWithCapacity(groupSize);
+      this.reconfigPartitionInstances = Lists.newArrayListWithCapacity(groupSize);
     }
 
     public void add(int consumerId, long maxAckEntryId) {
-      reconfigPartitionInfos.add(new ReconfigPartitionInfo(consumerId, maxAckEntryId));
+      reconfigPartitionInstances.add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
     }
 
-    private void add(ReconfigPartitionInfo info) {
-      reconfigPartitionInfos.add(info);
+    private void add(ReconfigPartitionInstance info) {
+      reconfigPartitionInstances.add(info);
     }
 
     // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
@@ -1055,7 +1056,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
         // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
         if(entryId <= reconfigInfo.getMaxAckEntryId() &&
@@ -1069,7 +1070,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
         // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
         if(entryId <= reconfigInfo.getMaxAckEntryId() &&
@@ -1083,7 +1084,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInfo reconfigInfo : reconfigPartitionInfos) {
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
         // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
         if(entryId <= reconfigInfo.getMaxAckEntryId() &&
@@ -1099,16 +1100,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void encode(Encoder encoder) throws IOException {
-      if(groupSize != reconfigPartitionInfos.size()) {
+      if(groupSize != reconfigPartitionInstances.size()) {
         throw new IllegalStateException(String.format(
-          "Groupsize: %d is not equal to partition information objects %d", groupSize, reconfigPartitionInfos.size()));
+          "Groupsize: %d is not equal to partition information objects %d", groupSize, reconfigPartitionInstances.size()));
       }
 
       // TODO: use common code to decode/encode lists
-      if(!reconfigPartitionInfos.isEmpty()) {
+      if(!reconfigPartitionInstances.isEmpty()) {
         encoder.writeInt(groupSize)
           .writeString(partitionerType.name());
-        for(ReconfigPartitionInfo info : reconfigPartitionInfos) {
+        for(ReconfigPartitionInstance info : reconfigPartitionInstances) {
           info.encode(encoder);
         }
       }
@@ -1127,15 +1128,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
       ReconfigPartitioner partitioner = new ReconfigPartitioner(groupSize, partitionerType);
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
-          partitioner.add(ReconfigPartitionInfo.decode(decoder));
+          partitioner.add(ReconfigPartitionInstance.decode(decoder));
         }
         size = decoder.readInt();
       }
 
-      if(groupSize != partitioner.reconfigPartitionInfos.size()) {
+      if(groupSize != partitioner.reconfigPartitionInstances.size()) {
         throw new IllegalStateException(String.format(
           "Groupsize: %d is not equal to partition information objects %d", groupSize,
-          partitioner.reconfigPartitionInfos.size()));
+          partitioner.reconfigPartitionInstances.size()));
       }
       return partitioner;
     }
@@ -1145,8 +1146,112 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return Objects.toStringHelper(this)
         .add("groupSize", groupSize)
         .add("partitionerType", partitionerType)
-        .add("reconfigPartitionInfos", reconfigPartitionInfos)
+        .add("reconfigPartitionInstances", reconfigPartitionInstances)
         .toString();
+    }
+  }
+
+  public static class ReconfigPartitionersList implements QueuePartitioner {
+    private List<ReconfigPartitioner> reconfigPartitionerList;
+
+    private static final ReconfigPartitionersList EMPTY_LIST =
+      new ReconfigPartitionersList(Collections.<ReconfigPartitioner>emptyList());
+    public static ReconfigPartitionersList getEmptyList() {
+      return EMPTY_LIST;
+    }
+
+    public ReconfigPartitionersList(List<ReconfigPartitioner> reconfigPartitionerList) {
+      this.reconfigPartitionerList = reconfigPartitionerList;
+    }
+
+    public void add(ReconfigPartitioner partitioner) {
+      if(reconfigPartitionerList == EMPTY_LIST) {
+        reconfigPartitionerList = Lists.newArrayList();
+      }
+      reconfigPartitionerList.add(partitioner);
+    }
+
+    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
+    @Override
+    public boolean isDisjoint() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean usesHeaderData() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitionerList) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, value)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitionerList) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, hash)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitionerList) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // TODO: implement
+    public void compact(long consumerReadPointer) {
+
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("reconfigPartitionerList", reconfigPartitionerList)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      if(!reconfigPartitionerList.isEmpty()) {
+        encoder.writeInt(reconfigPartitionerList.size());
+        for(ReconfigPartitioner partitioner : reconfigPartitionerList) {
+          partitioner.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ReconfigPartitionersList decode(Decoder decoder) throws IOException {
+      int size = decoder.readInt();
+      if(size == 0) {
+        return ReconfigPartitionersList.getEmptyList();
+      }
+
+      List<ReconfigPartitioner> reconfigPartitioners = Lists.newArrayList();
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          reconfigPartitioners.add(ReconfigPartitioner.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+      return new ReconfigPartitionersList(reconfigPartitioners);
     }
   }
 
@@ -1159,11 +1264,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private long claimedEntryEnd = INVALID_ENTRY_ID;
     private long lastEvictTimeInSecs = 0;
 
-    private ReconfigPartitioner reconfigPartitioner;
+    private ReconfigPartitionersList reconfigPartitionersList;
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
-      reconfigPartitioner = ReconfigPartitioner.getEmptyReconfigPartitioner();
+      reconfigPartitionersList = ReconfigPartitionersList.getEmptyList();
     }
 
     public TransientWorkingSet getTransientWorkingSet() {
@@ -1222,12 +1327,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.queueWritePointer = queueWritePointer;
     }
 
-    public ReconfigPartitioner getReconfigPartitioner() {
-      return reconfigPartitioner;
+    public ReconfigPartitionersList getReconfigPartitionersList() {
+      return reconfigPartitionersList;
     }
 
-    public void setReconfigPartitioner(ReconfigPartitioner reconfigPartitioner) {
-      this.reconfigPartitioner = reconfigPartitioner;
+    public void setReconfigPartitionersList(ReconfigPartitionersList reconfigPartitionersList) {
+      this.reconfigPartitionersList = reconfigPartitionersList;
     }
 
     @Override
@@ -1240,7 +1345,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("claimedEntryEnd", claimedEntryEnd)
         .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
-        .add("reconfigPartitioner", reconfigPartitioner)
+        .add("reconfigPartitionersList", reconfigPartitionersList)
         .toString();
     }
   }
@@ -1466,12 +1571,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
         try {
-          ReconfigPartitioner partitioner = ReconfigPartitioner.decode(new BinaryDecoder(
+          ReconfigPartitionersList partitioners = ReconfigPartitionersList.decode(new BinaryDecoder(
             new ByteArrayInputStream(stateBytes.getValue().get(RECONFIG_PARTITIONER))));
-          queueState.setReconfigPartitioner(partitioner);
+          queueState.setReconfigPartitionersList(partitioners);
         } catch (IOException e) {
           throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                       getLogMessage("Exception while deserializing reconfig partitioner"), e);
+                                       getLogMessage("Exception while deserializing reconfig partitioners"), e);
         }
       }
       return queueState;
@@ -1483,10 +1588,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
       try {
-        queueState.getReconfigPartitioner().encode(encoder);
+        queueState.getReconfigPartitionersList().encode(encoder);
       } catch(IOException e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                     getLogMessage("Exception while serializing reconfig partitioner"), e);
+                                     getLogMessage("Exception while serializing reconfig partitioners"), e);
       }
       writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
       writeQueueStateStore.addColumnValue(bos.toByteArray());
@@ -1537,7 +1642,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
         newConsumers.add(consumer);
         // Modify queue state for all consumers
-        queueState.setReconfigPartitioner(reconfigPartitioner);
+        // Add reconfigPartitioner
+        queueState.getReconfigPartitionersList().add(reconfigPartitioner);
         // Move consumer read pointer to the min acked entry for all consumers
         queueState.setConsumerReadPointer(minAckedEntryId);
         // TODO: save queue states for all consumers in a single call
@@ -1620,7 +1726,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
             }
             int hashValue = Bytes.toInt(hashBytes);
             if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
-              queueState.getReconfigPartitioner().shouldEmit(
+              queueState.getReconfigPartitionersList().shouldEmit(
                 consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue)
               ) {
               newEntryIds.add(currentEntryId);
@@ -1670,7 +1776,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
           if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitioner().shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            queueState.getReconfigPartitionersList()
+              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
             ) {
             newEntryIds.add(currentEntryId);
           }
@@ -1841,7 +1948,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
           final long currentEntryId = startEntryId + id;
           // TODO: No need for partitioner in FIFO
           if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitioner().shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            queueState.getReconfigPartitionersList().
+              shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
             ) {
             newEntryIds.add(currentEntryId);
           }
