@@ -57,7 +57,7 @@ final class BasicFlowletContext implements FlowletContext {
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
     this.queueProducer = new QueueProducer(getMetricName());
-    this.queueConsumer = createQueueConsumer();
+//    this.queueConsumer = createQueueConsumer();
 
     this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
     this.flowletMetrics = new FlowletMetrics(accountId, applicationId, flowId, flowletId, runId.toString(), instanceId);

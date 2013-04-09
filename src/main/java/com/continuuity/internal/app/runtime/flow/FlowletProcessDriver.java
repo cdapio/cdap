@@ -258,8 +258,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
           flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
 
-          inflight.getAndIncrement();
-
           try {
             // Call the process method and commit the transaction
             processMethod.invoke(input)
