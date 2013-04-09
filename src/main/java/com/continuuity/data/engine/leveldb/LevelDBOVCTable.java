@@ -540,6 +540,12 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    throw new UnsupportedOperationException("dirty read is not yet supported");
+  }
+
+  @Override
   public OperationResult<ImmutablePair<byte[], Long>>
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
