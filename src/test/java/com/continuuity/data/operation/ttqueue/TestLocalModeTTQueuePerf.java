@@ -4,10 +4,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricLocalModule;
-import com.continuuity.data.stream.StreamEntry;
-import com.continuuity.data.stream.StreamEntryPointer;
-import com.continuuity.data.stream.StreamQueueConsumer;
-import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.inject.Guice;
@@ -72,14 +68,14 @@ public class TestLocalModeTTQueuePerf {
     byte [] data = new byte[1024];
     long version = 10L;
 
-    StreamQueueConsumer consumer = new StreamQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     ReadPointer readPointer = new MemoryReadPointer(version);
 
     // first test it with the intra-flow queues
     TTQueueTable queueTable = handle.getQueueTable(queueName);
 
     // second test it with the stream queues
-    StreamTable streamTable = handle.getStreamTable(streamName);
+    TTQueueTable streamTable = handle.getStreamTable(streamName);
 
     log("Enqueueing to queue table");
     long start = now();
@@ -107,7 +103,7 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      streamTable.write(new StreamEntry(data), version);
+      streamTable.enqueue(queueName, new QueueEntry(data), version);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -118,8 +114,9 @@ public class TestLocalModeTTQueuePerf {
     last = start;
     for (int i=0; i<n; i++) {
       DequeueResult result =
-          streamTable.read(consumer, readPointer);
-      streamTable.ack(StreamEntryPointer.fromQueueEntryPointer(result.getEntryPointer()), consumer,readPointer);
+          streamTable.dequeue(queueName, consumer, readPointer);
+      streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
+      streamTable.finalize(queueName, result.getEntryPointer(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
