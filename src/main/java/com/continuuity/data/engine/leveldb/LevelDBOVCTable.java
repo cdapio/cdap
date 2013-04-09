@@ -540,6 +540,12 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+  }
+
+  @Override
   public OperationResult<ImmutablePair<byte[], Long>>
   getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
       throws OperationException {
