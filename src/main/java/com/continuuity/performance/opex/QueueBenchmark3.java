@@ -53,7 +53,6 @@ public class QueueBenchmark3 extends OpexBenchmark {
   AtomicLong enqueuedCount = new AtomicLong(0L);
   AtomicLong dequeuedCount = new AtomicLong(0L);
   AtomicLong ackedCount = new AtomicLong(0L);
-  AtomicBoolean firstConsumerSlept = new AtomicBoolean(false);
 
   @Override
   public Map<String, String> usage() {
@@ -112,13 +111,10 @@ public class QueueBenchmark3 extends OpexBenchmark {
       pauseThread();
     }
 
-//    byte[] value = Bytes.toBytes(iteration);
     byte[] value = new byte[12];
     Bytes.putInt(value,0,agentId);
     Bytes.putLong(value, 4, iteration);
     BytesWrapper valueBytes = new BytesWrapper(value);
-//    System.err.println("value="+Bytes.toStringBinary(value));
-//    System.err.println("enqueuing agentId/iteration="+agentId+"/"+iteration);
     QueueEnqueue enqueue = null;
     try {
       enqueue = new QueueEnqueue(queueBytes, new QueueEntry(value));
@@ -151,20 +147,13 @@ public class QueueBenchmark3 extends OpexBenchmark {
     try {
       result = opex.execute(opContext, dequeue);
       dequeuedCount.incrementAndGet();
-//      System.err.println("Good operation " + dequeue + "returned result " + result);
       if (result.isEmpty()) {
-//        System.err.println("Bad operation " + dequeue + "returned empty result" + "(Ignoring this error)");
-//        if (emptyCount.incrementAndGet() > 0) {
-//          pauseAllAgents();
-//        }
         return 0L;
       } else {
         byte[] value = result.getEntry().getData();
-//        System.err.println("value="+Bytes.toStringBinary(value));
         int enqueueAgentId = Bytes.toInt(value,0,4);
         long enqueueIteration  = Bytes.toLong(value,4,8);
         BytesWrapper valueBytes = new BytesWrapper(value);
-//    System.err.println("deqeued agentId/iteration="+enqueueAgentId+"/"+enqueueIteration);
         if (nqd.replace(valueBytes, Boolean.TRUE, Boolean.FALSE) != true) {
           System.err.println("ERROR: Dequeued entry has either been dequeued before or never been enqueued!" + dequeue);
           pauseAllAgents();
@@ -190,17 +179,9 @@ public class QueueBenchmark3 extends OpexBenchmark {
       try {
         opex.commit(opContext, ackToExecute);
         ackedCount.incrementAndGet();
-//        System.err.println("Good operation " + ackToExecute + "returned.");
       } catch (OperationException e) {
         Log.error("Operation " + ackToExecute + " failed: " + e.getMessage() + "(Ignoring this error)", e);
         System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() + "(Ignoring this error)");
-//        if (failedAck.incrementAndGet() > 0) {
-//          try {
-//            pauseAllAgents.compareAndSet(false,true);
-//            Thread.sleep(60000);
-//          } catch (InterruptedException e2) {
-//          }
-//        }
         return 0L;
       }
       pending.removeFirst();
@@ -216,21 +197,6 @@ public class QueueBenchmark3 extends OpexBenchmark {
 
   @Override
   public void warmup() throws BenchmarkException {
-//    int numEnqueues = Math.min(100, simpleConfig.numRuns);
-//    numEnqueues = 5000;
-//    System.out.println("Warmup: Performing " + numEnqueues + " enqueues.");
-//    for (int i = 0; i < numEnqueues; i++) {
-//      try {
-////        doEnqueue(i, -1);
-//        doEnqueue(i, 0);
-//        if ((i+1) % 1000 == 0) {
-//          System.out.println("Enqueued "+i);
-//        }
-//      } catch (BenchmarkException e) {
-//        throw new BenchmarkException(
-//            "Failure after " + i + " enqueues: " + e.getMessage() , e);
-//      }
-//    }
     System.out.println("Warmup: Done.");
   }
 
@@ -289,7 +255,7 @@ public class QueueBenchmark3 extends OpexBenchmark {
               @Override
               public long warmup(int agentId, int numAgents) throws BenchmarkException {
                 try {
-                  Thread.sleep(12000*1000); // 2 min
+                  Thread.sleep(120*1000); // 2 min
                 } catch (InterruptedException e) {
                   throw new BenchmarkException(e.getMessage(), e);
                 }
@@ -316,18 +282,6 @@ public class QueueBenchmark3 extends OpexBenchmark {
   private final class BytesWrapper {
     private final byte[] bytes;
     private final int hash;
-
-    private BytesWrapper() {
-      this(null);
-    }
-
-//    public BytesWrapper(byte[] bytes) {
-//      if (bytes == null) {
-//        throw new NullPointerException();
-//      }
-//      this.bytes = bytes;
-//      this.hash = Arrays.hashCode(bytes);
-//    }
 
     public BytesWrapper(final byte[]... bytes) {
       if (bytes == null) {
