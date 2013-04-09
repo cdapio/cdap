@@ -1003,6 +1003,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ReconfigPartitionInstance that = (ReconfigPartitionInstance) o;
+
+      if (instanceId != that.instanceId) return false;
+      if (maxAckEntryId != that.maxAckEntryId) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = instanceId;
+      result = 31 * result + (int) (maxAckEntryId ^ (maxAckEntryId >>> 32));
+      return result;
+    }
+
+    @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("instanceId", instanceId)
@@ -1040,6 +1060,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     private void add(ReconfigPartitionInstance info) {
       reconfigPartitionInstances.add(info);
+    }
+
+    public int getGroupSize() {
+      return groupSize;
+    }
+
+    public PartitionerType getPartitionerType() {
+      return partitionerType;
+    }
+
+    public List<ReconfigPartitionInstance> getReconfigPartitionInstances() {
+      return reconfigPartitionInstances;
     }
 
     // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
@@ -1086,7 +1118,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
       for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
-        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        // No consumer with reconfigInfo.getInstanceId() should have already acked entryId
         if(entryId <= reconfigInfo.getMaxAckEntryId() &&
           partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId)) {
           return false;
@@ -1107,6 +1139,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // TODO: use common code to decode/encode lists
       if(!reconfigPartitionInstances.isEmpty()) {
+        // Note: we are not writing reconfigPartitionInstances.size() again, we use groupSize as the size of the list
         encoder.writeInt(groupSize)
           .writeString(partitionerType.name());
         for(ReconfigPartitionInstance info : reconfigPartitionInstances) {
@@ -1118,14 +1151,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public static ReconfigPartitioner decode(Decoder decoder) throws IOException {
       // TODO: use common code to decode/encode lists
-      int size = decoder.readInt();
-      if(size == 0) {
+      // Note: we are not reading reconfigPartitionInstances.size() again, we use groupSize as the size of the list
+      int groupSize = decoder.readInt();
+      if(groupSize == 0) {
         return ReconfigPartitioner.getEmptyReconfigPartitioner();
       }
 
-      int groupSize = decoder.readInt();
       PartitionerType partitionerType = PartitionerType.valueOf(decoder.readString());
       ReconfigPartitioner partitioner = new ReconfigPartitioner(groupSize, partitionerType);
+      int size = groupSize;
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
           partitioner.add(ReconfigPartitionInstance.decode(decoder));
@@ -1139,6 +1173,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
           partitioner.reconfigPartitionInstances.size()));
       }
       return partitioner;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ReconfigPartitioner that = (ReconfigPartitioner) o;
+
+      if (groupSize != that.groupSize) return false;
+      if (partitionerType != that.partitionerType) return false;
+      if (!reconfigPartitionInstances.equals(that.reconfigPartitionInstances)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = groupSize;
+      result = 31 * result + partitionerType.hashCode();
+      result = 31 * result + reconfigPartitionInstances.hashCode();
+      return result;
     }
 
     @Override

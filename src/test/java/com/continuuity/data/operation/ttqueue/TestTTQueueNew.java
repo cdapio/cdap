@@ -7,6 +7,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -173,6 +174,221 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertEquals(new DequeueEntry(i), transientWorkingSet.next());
     }
     assertFalse(transientWorkingSet.hasNext());
+  }
+
+  @Test
+  public void testReconfigPartitionInstance() throws Exception {
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance1 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(3, 100L);
+
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance2 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(2, 100L);
+
+    // Verify equals
+    assertEquals(reconfigPartitionInstance1, reconfigPartitionInstance1);
+    assertNotEquals(reconfigPartitionInstance1, reconfigPartitionInstance2);
+
+    // Encode to bytes
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    reconfigPartitionInstance1.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    // Decode from bytes
+    TTQueueNewOnVCTable.ReconfigPartitionInstance actual =
+      TTQueueNewOnVCTable.ReconfigPartitionInstance.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+
+    // Verify
+    assertEquals(reconfigPartitionInstance1, actual);
+  }
+
+  @Test
+  public void testReconfigPartitionerEncode() throws Exception {
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner1 =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+    partitioner1.add(0, 5);
+    partitioner1.add(1, 10);
+    partitioner1.add(2, 12);
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner2 =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+    partitioner2.add(0, 5);
+    partitioner2.add(1, 15);
+    partitioner2.add(2, 12);
+
+    // Verify equals
+    assertEquals(partitioner1, partitioner1);
+    assertNotEquals(partitioner1, partitioner2);
+
+    // Encode to bytes
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    partitioner1.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    // Decode from bytes
+    TTQueueNewOnVCTable.ReconfigPartitioner actual =
+      TTQueueNewOnVCTable.ReconfigPartitioner.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+
+    // Verify
+    assertEquals(partitioner1, actual);
+  }
+
+  @Test
+  public void testReconfigPartitionerEmit1() throws Exception {
+    // Partition
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12
+    // Consumers Ack  :      0           1  2
+    // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
+
+    int groupSize = 3;
+    int lastEntry = 12;
+
+    long zeroAck = 3L;
+    long oneAck = 7L;
+    long twoAck = 8L;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+
+    verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 7L, 8L), partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionerEmit2() throws Exception {
+    // Partition
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12
+    // Consumers Ack  :1  2  0
+    // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
+
+    int groupSize = 3;
+    int lastEntry = 12;
+
+    long zeroAck = 3L;
+    long oneAck = 1L;
+    long twoAck = 2L;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+
+    verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L), partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionerEmit3() throws Exception {
+    // Partition
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12
+    // Consumers Ack  :1  2                               0
+    // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
+
+    int groupSize = 3;
+    int lastEntry = 12;
+
+    long zeroAck = 12L;
+    long oneAck = 1L;
+    long twoAck = 2L;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+
+    verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L, 6L, 9L, 12L), partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionerEmit4() throws Exception {
+    // Partition
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12
+    // Consumers Ack  :                           1   2   0
+    // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
+
+    int groupSize = 3;
+    int lastEntry = 12;
+
+    long zeroAck = 12L;
+    long oneAck = 10L;
+    long twoAck = 11L;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+
+    verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L),
+                                      partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionersListEmit1() throws Exception {
+    List<TTQueueNewOnVCTable.ReconfigPartitioner> partitionerList = Lists.newArrayList();
+    // Partition 1
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12
+    // Consumers Ack  :      0           1  2
+    // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
+
+    int groupSize = 3;
+    int lastEntry = 12;
+
+    long zeroAck = 3L;
+    long oneAck = 7L;
+    long twoAck = 8L;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+
+    partitionerList.add(partitioner);
+    Set<Long> expectedAckedEntries1 = ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 7L, 8L);
+
+    // Partition 2
+    // Entries        :1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18
+    // Consumers Ack  :            1     3        2       0
+    // Partition      :1  2  3  0  1  2  3  0  1  2   3   0   1   2   3   0   1   2
+
+    groupSize = 4;
+    lastEntry = 18;
+
+    zeroAck = 12L;
+    oneAck = 5L;
+    twoAck = 10L;
+    long threeAck = 7L;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, zeroAck);
+    partitioner.add(1, oneAck);
+    partitioner.add(2, twoAck);
+    partitioner.add(3, threeAck);
+
+    partitionerList.add(partitioner);
+    Set<Long> expectedAckedEntries2 = ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 10L, 12L);
+
+    verifyTestReconfigPartitionerEmit(lastEntry, Sets.union(expectedAckedEntries1, expectedAckedEntries2),
+                                      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList));
+  }
+
+  private void verifyTestReconfigPartitionerEmit(long queueSize, Set<Long> ackedEntries,
+                                                 QueuePartitioner partitioner) {
+    int groupSize = -1; // will be ignored
+    int instanceId = -2; // will be ignored
+    for(long entryId = 1; entryId <= queueSize; ++entryId) {
+      if(ackedEntries.contains(entryId)) {
+//        System.out.println("Not Emit:" + entryId);
+        assertFalse("Not Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId));
+      } else {
+//        System.out.println("Emit:" + entryId);
+        assertTrue("Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId));
+      }
+    }
   }
 
 /*  @Override
@@ -505,8 +721,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             expectedValue += numConsumers;
           }
         }
-        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
-                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+//        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
         // dequeue again without acking, should still get first value
         result = queue.dequeue(consumers[consumer], dirtyReadPointer);
@@ -521,8 +737,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         result = queue.dequeue(consumers[consumer], dirtyReadPointer);
         assertTrue("Consumer:" + consumer + " Entry:" + entry, result.isSuccess());
         expectedValue += numConsumers;
-        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
-                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
+//        System.out.println(String.format("Consumer-%d entryid=%d value=%s expectedValue=%s",
+//                  consumer, result.getEntryPointer().getEntryId(), Bytes.toInt(result.getEntry().getData()), expectedValue));
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
