@@ -35,16 +35,10 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
-import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.stream.StreamEntry;
-import com.continuuity.data.stream.StreamEntryPointer;
-import com.continuuity.data.stream.StreamQueueConsumer;
-import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.common.base.Objects;
@@ -99,7 +93,7 @@ public class OmidTransactionalOperationExecutor
   private MetaDataStore metaStore;
 
   private TTQueueTable queueTable;
-  private StreamTable streamTable;
+  private TTQueueTable streamTable;
 
   public static boolean DISABLE_QUEUE_PAYLOADS = false;
 
@@ -826,7 +820,8 @@ public class OmidTransactionalOperationExecutor
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result =  enqueueFromQueueOrStream(enqueue.getKey(),enqueue.getEntry(),transaction.getWriteVersion());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
+                                                                   transaction.getWriteVersion());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
@@ -840,7 +835,8 @@ public class OmidTransactionalOperationExecutor
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      ackQueueOrStream(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), transaction.getReadPointer());
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
+                                      transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -858,10 +854,11 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     int retries = 0;
     long start = System.currentTimeMillis();
+    TTQueueTable queueTable = getQueueTable(dequeue.getKey());
     while (retries < MAX_DEQUEUE_RETRIES) {
-      DequeueResult result = dequeueFromQueueOrStream(dequeue.getKey(), dequeue.getConsumer(),
-                                                      this.oracle.getReadPointer());
-     if (result.shouldRetry()) {
+      DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
+          this.oracle.getReadPointer());
+      if (result.shouldRetry()) {
         retries++;
         try {
           if (DEQUEUE_RETRY_SLEEP > 0) Thread.sleep(DEQUEUE_RETRY_SLEEP);
@@ -969,50 +966,14 @@ public class OmidTransactionalOperationExecutor
     commit(context, Collections.singletonList(write));
   }
 
-  private TTQueueTable getQueueTable(byte [] queueName) {
+  private TTQueueTable getQueueTable(byte[] queueName) {
+    if (Bytes.startsWith(queueName, TTQueue.QUEUE_NAME_PREFIX))
       return this.queueTable;
+    if (Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX))
+      return this.streamTable;
+    // by default, use queue table
+    return this.queueTable;
   }
-
-  private DequeueResult dequeueFromQueueOrStream(byte [] key, QueueConsumer consumer, ReadPointer readPointer)
-                                                                                throws OperationException {
-    if(Bytes.startsWith(key, TTQueue.QUEUE_NAME_PREFIX)){
-      return this.queueTable.dequeue(key,consumer,readPointer);
-    } else if (Bytes.startsWith(key, TTQueue.STREAM_NAME_PREFIX)) {
-      return this.streamTable.read(StreamQueueConsumer.fromQueueConsumer(consumer),readPointer);
-    } else {
-      //By default use from queuetable
-      return this.queueTable.dequeue(key,consumer,readPointer);
-    }
-  }
-
-  private EnqueueResult enqueueFromQueueOrStream(byte [] key, QueueEntry entry, long writeVersion )
-                                                                                 throws OperationException  {
-    if ( Bytes.startsWith(key, TTQueue.QUEUE_NAME_PREFIX)) {
-      return this.queueTable.enqueue(key,entry,writeVersion);
-    }  else if ( Bytes.startsWith(key,TTQueue.STREAM_NAME_PREFIX)){
-      return this.streamTable.write(StreamEntry.fromQueueEntry(entry), writeVersion);
-    } else {
-      //By default use queue table
-      return this.queueTable.enqueue(key,entry,writeVersion);
-    }
-  }
-
-
-  private void ackQueueOrStream(byte[] key, QueueEntryPointer entryPointer,
-                                QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
-    if ( Bytes.startsWith(key, TTQueue.QUEUE_NAME_PREFIX)) {
-       this.queueTable.ack(key, entryPointer, consumer, readPointer);
-    }  else if ( Bytes.startsWith(key,TTQueue.STREAM_NAME_PREFIX)){
-       this.streamTable.ack(StreamEntryPointer.fromQueueEntryPointer(entryPointer),
-                                  StreamQueueConsumer.fromQueueConsumer(consumer),readPointer);
-    } else {
-      //By default use queue table
-      this.queueTable.ack(key, entryPointer, consumer, readPointer);
-    }
-
-  }
-
-
 
   /**
    * A utility method that ensures this class is properly initialized before
