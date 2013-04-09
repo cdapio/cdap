@@ -5,8 +5,13 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public abstract class OpexBenchmark extends SimpleBenchmark {
 
@@ -73,5 +78,14 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   public void shutdown() throws BenchmarkException {
     this.opexProvider.shutdown(this.opex);
   }
-
+  public static void dropAllTables(Configuration config) throws IOException {
+    HBaseAdmin hba = new HBaseAdmin(config);
+    for (HTableDescriptor hTableDescriptor : hba.disableTables(Pattern.compile(".*"))) {
+      System.out.println("Disabled table "+hTableDescriptor);
+    }
+    for (HTableDescriptor hTableDescriptor : hba.deleteTables(Pattern.compile(".*"))) {
+      System.out.println("Deleted table "+hTableDescriptor);
+    }
+    ;
+  }
 }
