@@ -412,6 +412,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         "Running reconfigure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
         config, groupId, currentConsumerCount, newConsumerCount, readPointer)));
     }
+
     // Nothing to do if newConsumerCount == currentConsumerCount
     if(currentConsumerCount == newConsumerCount) {
       if(LOG.isTraceEnabled()) {
@@ -419,6 +420,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
          "Nothing to reconfigure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
       }
       return;
+    }
+
+    if(newConsumerCount < 1) {
+      throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+                        getLogMessage(String.format("New consumer count (%d) should atleast be 1", newConsumerCount)));
     }
 
     // Determine what dequeue strategy to use based on the partitioner
@@ -437,6 +443,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
                      getLogMessage(String.format("Consumer %d still has inflight entries", consumer.getInstanceId())));
       }
+      consumer.setQueueState(queueState);
       consumers.add(consumer);
       queueStates.add(queueState);
     }
