@@ -8,10 +8,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
-import com.continuuity.data.stream.StreamTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
-import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -24,9 +22,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   private final ConcurrentSkipListMap<byte[], HTable> htables =
-      new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
-
-  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
+    new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
 
   @Inject
   public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
@@ -60,26 +56,21 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     HTable table = getHTable(queueOVCTable, HBQConstants.HBQ_FAMILY);
-    
+
     queueTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
-        queueTableName, queueTable);
+      queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
-  
+
   @Override
-  public StreamTable getStreamTable(byte[] streamTableName) throws OperationException {
-    StreamTable streamTable = this.streamTables.get(streamTableName);
+  public TTQueueTable getStreamTable(byte[] streamTableName) throws OperationException {
+    TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
 
-    TTQueueTableOnHBaseNative queue = new TTQueueTableOnHBaseNative(table,oracle,conf,hConf);
-
-    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
-    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
-
-    streamTable = new StreamTable(streamTableName,queue, metaTable);
-    StreamTable existing = this.streamTables.putIfAbsent(
+    streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
+    TTQueueTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
@@ -91,7 +82,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
       table = createTable(tableName, family);
     } catch (IOException e) {
       throw new OperationException(StatusCode.HBASE_ERROR,
-          "Error creating table", e);
+                                   "Error creating table", e);
     }
     HTable existing = this.htables.putIfAbsent(tableName, table);
     return existing != null ? existing : table;

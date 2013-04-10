@@ -4,9 +4,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
-import com.continuuity.data.stream.StreamTable;
-import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -15,16 +14,16 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
   protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable>
-      openTables =
-        new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
-            Bytes.BYTES_COMPARATOR);
+    openTables =
+    new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
+      Bytes.BYTES_COMPARATOR);
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
-      new ConcurrentSkipListMap<byte[],TTQueueTable>(
-          Bytes.BYTES_COMPARATOR);
+    new ConcurrentSkipListMap<byte[],TTQueueTable>(
+      Bytes.BYTES_COMPARATOR);
 
-  protected final ConcurrentSkipListMap<byte[], StreamTable> streamTables =
-    new ConcurrentSkipListMap<byte[],StreamTable>(
+  protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
+    new ConcurrentSkipListMap<byte[],TTQueueTable>(
       Bytes.BYTES_COMPARATOR);
 
   /**
@@ -38,11 +37,9 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    */
   private CConfiguration conf = new CConfiguration();
 
-  private byte [] streamMetaTableNameSuffix = "meta".getBytes(Charsets.UTF_8);
-
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
-      throws OperationException {
+    throws OperationException {
     OrderedVersionedColumnarTable table = this.openTables.get(tableName);
 
     // we currently have an open table for this name
@@ -59,7 +56,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
     // some other thread may have created/found and added it already
     OrderedVersionedColumnarTable existing =
-        this.openTables.putIfAbsent(tableName, table);
+      this.openTables.putIfAbsent(tableName, table);
 
     return existing != null ? existing : table;
   }
@@ -69,7 +66,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName)
-      throws OperationException {
+    throws OperationException {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
@@ -77,23 +74,19 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
 //    queueTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
-        queueTableName, queueTable);
+      queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
 
   @Override
-  public StreamTable getStreamTable(byte[] streamTableName)
+  public TTQueueTable getStreamTable(byte[] streamTableName)
     throws OperationException {
-    StreamTable streamTable = this.streamTables.get(streamTableName);
+    TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
+    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
 
-    OrderedVersionedColumnarTable table = getTable(streamTableName);
-    TTQueueTableOnVCTable queue = new TTQueueTableOnVCTable(table,oracle,conf);
-    byte [] metaTableName = Bytes.add(streamTableName, streamMetaTableNameSuffix);
-    OrderedVersionedColumnarTable metaTable = getTable(metaTableName);
-
-    streamTable = new StreamTable(streamTableName,queue,metaTable);
-    StreamTable existing = this.streamTables.putIfAbsent(
+    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
+    TTQueueTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
@@ -106,7 +99,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * @throws OperationException if an operation fails
    */
   public abstract OrderedVersionedColumnarTable createNewTable(
-      byte [] tableName) throws OperationException;
+    byte [] tableName) throws OperationException;
 
   /**
    * attempts to open an existing table.
@@ -115,6 +108,6 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * @throws OperationException
    */
   public abstract OrderedVersionedColumnarTable openTable(
-      byte [] tableName) throws OperationException;
+    byte [] tableName) throws OperationException;
 
 }
