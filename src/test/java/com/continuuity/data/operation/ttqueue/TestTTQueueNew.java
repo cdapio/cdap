@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -389,6 +390,164 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertTrue("Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId));
       }
     }
+  }
+
+  @Test
+  public void testClaimedEntry() {
+    TTQueueNewOnVCTable.ClaimedEntry claimedEntry = TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY;
+    for(int i = 0; i < 10; ++i) {
+      assertFalse(claimedEntry.isValid());
+      claimedEntry = claimedEntry.move(1);
+    }
+    assertFalse(claimedEntry.isValid());
+
+    claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(0, 5);
+    for(int i = 0; i < 6; ++i) {
+      assertTrue(claimedEntry.isValid());
+      claimedEntry = claimedEntry.move(claimedEntry.getBegin() + 1);
+    }
+    assertFalse(claimedEntry.isValid());
+
+    try {
+      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(4, 2);
+      fail("Should throw exception");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    try {
+      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(TTQueueNewOnVCTable.INVALID_ENTRY_ID, 2);
+      fail("Should throw exception");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    try {
+      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(3, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+      fail("Should throw exception");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+  }
+
+  @Test
+  public void testClaimedEntryListMove() {
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
+    for(int i = 0; i < 10; ++i) {
+      assertFalse(claimedEntryList.getClaimedEntry().isValid());
+      claimedEntryList.moveForwardTo(1);
+    }
+    assertFalse(claimedEntryList.getClaimedEntry().isValid());
+
+    claimedEntryList.add(1, 5);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 1, 5);
+    assertFalse(claimedEntryList.getClaimedEntry().isValid());
+
+    claimedEntryList.add(2, 9);
+    claimedEntryList.add(0, 20);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 9);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 0, 20);
+    assertFalse(claimedEntryList.getClaimedEntry().isValid());
+
+    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(6, 6);
+    claimedEntryList.add(2, 30);
+    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(3, 10);
+    claimedEntryList.add(4, 20);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 6, 6);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 30);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 3, 10);
+    verifyClaimedEntryListIncrementMove(claimedEntryList, 4, 20);
+    assertFalse(claimedEntryList.getClaimedEntry().isValid());
+
+    claimedEntryList.add(5, 10);
+    claimedEntryList.add(1, 3);
+    assertTrue(claimedEntryList.getClaimedEntry().isValid());
+    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
+    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
+
+    claimedEntryList.moveForwardTo(5);
+    assertTrue(claimedEntryList.getClaimedEntry().isValid());
+    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
+    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
+
+    claimedEntryList.moveForwardTo(8);
+    assertTrue(claimedEntryList.getClaimedEntry().isValid());
+    assertEquals(8, claimedEntryList.getClaimedEntry().getBegin());
+    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
+
+    claimedEntryList.moveForwardTo(20);
+    assertTrue(claimedEntryList.getClaimedEntry().isValid());
+    assertEquals(1, claimedEntryList.getClaimedEntry().getBegin());
+    assertEquals(3, claimedEntryList.getClaimedEntry().getEnd());
+
+    try {
+      claimedEntryList.moveForwardTo(0);
+      fail("Exception should be thrown here");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    claimedEntryList.moveForwardTo(4);
+    assertFalse(claimedEntryList.getClaimedEntry().isValid());
+  }
+
+  private void verifyClaimedEntryListIncrementMove(TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList, long begin, long end) {
+    assertTrue(claimedEntryList.getClaimedEntry().isValid());
+    assertEquals(begin, claimedEntryList.getClaimedEntry().getBegin());
+    assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
+
+    for(long i = begin; i <= end; ++i, claimedEntryList.moveForwardTo(claimedEntryList.getClaimedEntry().getBegin() + 1)) {
+      assertTrue(claimedEntryList.getClaimedEntry().isValid());
+      assertEquals(i, claimedEntryList.getClaimedEntry().getBegin());
+      assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
+    }
+  }
+
+  @Test
+  public void testClaimedEntryListEncode() throws Exception {
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
+    verifyClaimedEntryListEncode(claimedEntryList);
+
+    claimedEntryList.add(1, 5);
+    verifyClaimedEntryListEncode(claimedEntryList);
+
+    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(6, 6);
+    claimedEntryList.add(2, 30);
+    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
+    claimedEntryList.add(3, 10);
+    claimedEntryList.add(4, 20);
+    verifyClaimedEntryListEncode(claimedEntryList);
+  }
+
+  private void verifyClaimedEntryListEncode(TTQueueNewOnVCTable.ClaimedEntryList expected) throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    expected.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    TTQueueNewOnVCTable.ClaimedEntryList actual = TTQueueNewOnVCTable.ClaimedEntryList.decode(
+      new BinaryDecoder(new ByteArrayInputStream(bytes)));
+
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testClaimedEntryEncode() throws Exception{
+    verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY);
+    verifyClaimedEntryEncode(new TTQueueNewOnVCTable.ClaimedEntry(2, 15));
+  }
+
+  private void verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry expected) throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    expected.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    TTQueueNewOnVCTable.ClaimedEntry actual =
+      TTQueueNewOnVCTable.ClaimedEntry.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+
+    assertEquals(expected, actual);
   }
 
 /*  @Override
@@ -866,7 +1025,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
       assertTrue(result.isSuccess());
-      assertEquals(2, Bytes.toInt(result.getEntry().getData()));
+      assertEquals("Tries=" + tries, 2, Bytes.toInt(result.getEntry().getData()));
     }
     DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isSuccess());

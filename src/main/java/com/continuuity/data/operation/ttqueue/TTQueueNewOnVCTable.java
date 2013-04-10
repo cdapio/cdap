@@ -95,13 +95,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // CONSUMER_READ_POINTER + 1 points to the next entry that the consumer can dequeue.
   static final byte [] CONSUMER_READ_POINTER = {20, 'R'};     //row <queueName>40C<groupId><consumerId>, column 20R
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
-  static final byte [] CLAIMED_ENTRY_BEGIN = {30, 'B'};       //row <queueName>40C<groupId><consumerId>, column 30B
-  // CLAIMED_ENTRY_END is used by a consumer of FifoDequeueStrategy to specify the end entryId of the batch of entries claimed by it.
-  static final byte [] CLAIMED_ENTRY_END = {40, 'E'};         //row <queueName>40C<groupId><consumerId>, column 40E
+  static final byte [] CLAIMED_ENTRY_LIST = {30, 'C'};       //row <queueName>40C<groupId><consumerId>, column 30C
   // LAST_EVICT_TIME_IN_SECS is the time when the last eviction was run by the consumer
-  static final byte [] LAST_EVICT_TIME_IN_SECS = {50, 'T'};           //row <queueName>40C<groupId><consumerId>, column 50T
+  static final byte [] LAST_EVICT_TIME_IN_SECS = {40, 'T'};           //row <queueName>40C<groupId><consumerId>, column 40T
   // RECONFIG_PARTITIONER stores the partition information for prior configurations
-  static final byte [] RECONFIG_PARTITIONER = {60, 'P'};     //row <queueName>40C<groupId><consumerId>, column 60P
+  static final byte [] RECONFIG_PARTITIONER = {50, 'P'};     //row <queueName>40C<groupId><consumerId>, column 50P
 
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
@@ -382,6 +380,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Set ack state
+    // TODO: what happens when you ack and crash?
     queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
 
     // Write ack state
@@ -872,6 +871,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public SortedSet<Long> startNewTry(final long maxCrashDequeueTries) {
       SortedSet<Long> droppedEntries = new TreeSet<Long>();
+      // TODO: Right now we increment tries and remove all dequeueed entries no matter which entry caused the crash.
       for(Iterator<DequeueEntry> it = entrySet.iterator(); it.hasNext();) {
         DequeueEntry entry = it.next();
         entry.incrementTries();
@@ -1311,20 +1311,206 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
+  static class ClaimedEntryList {
+    private ClaimedEntry current;
+    private List<ClaimedEntry> otherClaimedEntries;
+
+    public ClaimedEntryList() {
+      this.current = ClaimedEntry.getInvalidClaimedEntry();
+      // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
+      this.otherClaimedEntries = Collections.EMPTY_LIST;
+    }
+
+    private ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
+      this.current = claimedEntry;
+      this.otherClaimedEntries = otherClaimedEntries;
+    }
+
+    public void add(long begin, long end) {
+      ClaimedEntry claimedEntry = new ClaimedEntry(begin, end);
+      if(!claimedEntry.isValid()) {
+        return;
+      }
+      if(!current.isValid()) {
+        current = claimedEntry;
+      } else {
+        if(otherClaimedEntries == Collections.EMPTY_LIST) {
+          otherClaimedEntries = Lists.newArrayList();
+        }
+        otherClaimedEntries.add(claimedEntry);
+      }
+    }
+
+    public void moveForwardTo(long entryId) {
+      if(entryId < current.getBegin()) {
+        throw new IllegalArgumentException(String.format
+          ("entryId (%d) shoudl not be less than begin (%d)", entryId, current.getBegin()));
+      }
+      current = current.move(entryId);
+      while(!current.isValid() && !otherClaimedEntries.isEmpty()) {
+        current = otherClaimedEntries.remove(0);
+      }
+    }
+
+    public ClaimedEntry getClaimedEntry() {
+      return current;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("current", current)
+        .add("otherClaimedEntries", otherClaimedEntries)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      current.encode(encoder);
+      if(!otherClaimedEntries.isEmpty()) {
+        encoder.writeInt(otherClaimedEntries.size());
+        for(ClaimedEntry claimedEntry : otherClaimedEntries) {
+          claimedEntry.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ClaimedEntryList decode(Decoder decoder) throws IOException {
+      ClaimedEntry current = ClaimedEntry.decode(decoder);
+
+      int size = decoder.readInt();
+      List<ClaimedEntry> otherClaimedEntries;
+      if(size == 0) {
+        // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
+        otherClaimedEntries = Collections.EMPTY_LIST;
+      } else {
+        otherClaimedEntries = Lists.newArrayList();
+      }
+
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          otherClaimedEntries.add(ClaimedEntry.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+      return new ClaimedEntryList(current, otherClaimedEntries);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClaimedEntryList that = (ClaimedEntryList) o;
+
+      if (!current.equals(that.current)) return false;
+      if (!otherClaimedEntries.equals(that.otherClaimedEntries)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = current.hashCode();
+      result = 31 * result + otherClaimedEntries.hashCode();
+      return result;
+    }
+  }
+
+  static class ClaimedEntry {
+    private final long begin;
+    private final long end;
+
+    static final ClaimedEntry INVALID_CLAIMED_ENTRY = new ClaimedEntry(INVALID_ENTRY_ID, INVALID_ENTRY_ID);
+    public static ClaimedEntry getInvalidClaimedEntry() {
+      return INVALID_CLAIMED_ENTRY;
+    }
+
+    public ClaimedEntry(long begin, long end) {
+      if(begin > end) {
+        throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
+      } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
+        // Both begin and end can be INVALID_ENTRY_ID
+        throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
+      }
+      this.begin = begin;
+      this.end = end;
+    }
+
+    public long getBegin() {
+      return begin;
+    }
+
+    public long getEnd() {
+      return end;
+    }
+
+    public ClaimedEntry move(long entryId) {
+      if(!isValid()) {
+        return this;
+      }
+      if(entryId > end) {
+        return getInvalidClaimedEntry();
+      }
+      return new ClaimedEntry(entryId, end);
+    }
+
+    public boolean isValid() {
+      return begin != INVALID_ENTRY_ID;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("begin", begin)
+        .add("end", end)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      encoder.writeLong(begin);
+      encoder.writeLong(end);
+    }
+
+    public static ClaimedEntry decode(Decoder decoder) throws IOException {
+      return new ClaimedEntry(decoder.readLong(), decoder.readLong());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClaimedEntry that = (ClaimedEntry) o;
+
+      if (begin != that.begin) return false;
+      if (end != that.end) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (begin ^ (begin >>> 32));
+      result = 31 * result + (int) (end ^ (end >>> 32));
+      return result;
+    }
+  }
+
   public static class QueueStateImpl implements QueueState {
     private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
     private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
-    private long claimedEntryBegin = INVALID_ENTRY_ID;
-    private long claimedEntryEnd = INVALID_ENTRY_ID;
+    private ClaimedEntryList claimedEntryList;
     private long lastEvictTimeInSecs = 0;
 
-    private ReconfigPartitionersList reconfigPartitionersList;
+    private ReconfigPartitionersList reconfigPartitionersList = ReconfigPartitionersList.getEmptyList();
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
-      reconfigPartitionersList = ReconfigPartitionersList.getEmptyList();
+      claimedEntryList = new ClaimedEntryList();
     }
 
     public TransientWorkingSet getTransientWorkingSet() {
@@ -1351,20 +1537,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.consumerReadPointer = consumerReadPointer;
     }
 
-    public long getClaimedEntryBegin() {
-      return claimedEntryBegin;
+    public ClaimedEntryList getClaimedEntryList() {
+      return claimedEntryList;
     }
 
-    public void setClaimedEntryBegin(long claimedEntryBegin) {
-      this.claimedEntryBegin = claimedEntryBegin;
-    }
-
-    public long getClaimedEntryEnd() {
-      return claimedEntryEnd;
-    }
-
-    public void setClaimedEntryEnd(long claimedEntryEnd) {
-      this.claimedEntryEnd = claimedEntryEnd;
+    public void setClaimedEntryList(ClaimedEntryList claimedEntryList) {
+      this.claimedEntryList = claimedEntryList;
     }
 
     public long getQueueWritePointer() {
@@ -1397,8 +1575,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("transientWorkingSet", transientWorkingSet)
         .add("dequeueEntrySet", dequeueEntrySet)
         .add("consumerReadPointer", consumerReadPointer)
-        .add("claimedEntryBegin", claimedEntryBegin)
-        .add("claimedEntryEnd", claimedEntryEnd)
+        .add("claimedEntryList", claimedEntryList)
         .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
         .add("reconfigPartitionersList", reconfigPartitionersList)
@@ -1854,31 +2031,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
                                               ReadPointer readPointer) throws OperationException {
-      // Read CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END, and store them in queueState
-      readQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
-      readQueueStateStore.addColumnName(CLAIMED_ENTRY_END);
+      // Read CLAIMED_ENTRY_LIST and store it in queueState
+      readQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
 
       QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
-        long claimedEntryIdBegin = Bytes.toLong(stateBytes.getValue().get(CLAIMED_ENTRY_BEGIN));
-        long claimedEntryIdEnd = Bytes.toLong(stateBytes.getValue().get(CLAIMED_ENTRY_END));
-        if(droppedEntries.contains(claimedEntryIdBegin)) {
-          // Some entries were dropped, move claimed entry begin to reflect that
-          if(claimedEntryIdEnd <= droppedEntries.last()) {
-            // All claimed entries are dropped
-            claimedEntryIdBegin = claimedEntryIdEnd = INVALID_ENTRY_ID;
-          } else {
-            final long newClaimedEntryIdBegin = droppedEntries.last() + 1;
-            if(newClaimedEntryIdBegin > claimedEntryIdEnd) {
-              claimedEntryIdBegin = claimedEntryIdEnd = INVALID_ENTRY_ID;
-            } else {
-              claimedEntryIdBegin = newClaimedEntryIdBegin;
-            }
-          }
+        ClaimedEntryList claimedEntryList;
+        try {
+          claimedEntryList = ClaimedEntryList.decode(
+            new BinaryDecoder(new ByteArrayInputStream(stateBytes.getValue().get(CLAIMED_ENTRY_LIST))));
+        } catch (IOException e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                       getLogMessage("Exception while deserializing CLAIMED_ENTRY_LIST"), e);
         }
-        queueState.setClaimedEntryBegin(claimedEntryIdBegin);
-        queueState.setClaimedEntryEnd(claimedEntryIdEnd);
+        queueState.setClaimedEntryList(claimedEntryList);
       }
       return queueState;
     }
@@ -1886,26 +2053,25 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                  ReadPointer readPointer) throws OperationException {
-      // If a claimed entry is now being dequeued then update CLAIMED_ENTRY_BEGIN
-      if(queueState.getDequeueEntrySet().contains(queueState.getClaimedEntryBegin())) {
-        long claimedEntryIdBegin = queueState.getClaimedEntryBegin();
-        final long newClaimedEntryBegin = claimedEntryIdBegin + 1;
-        // If reached end of claimed entries, then reset the claimed ids
-        if(newClaimedEntryBegin > queueState.getClaimedEntryEnd()) {
-          queueState.setClaimedEntryBegin(INVALID_ENTRY_ID);
-          queueState.setClaimedEntryEnd(INVALID_ENTRY_ID);
-        } else {
-          queueState.setClaimedEntryBegin(newClaimedEntryBegin);
+      // We can now move the claimed entry begin pointer to dequeueEntrySet.max() + 1
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        long maxDequeuedEntry = queueState.getDequeueEntrySet().max().getEntryId();
+        if(maxDequeuedEntry >= queueState.getClaimedEntryList().getClaimedEntry().getBegin()) {
+          queueState.getClaimedEntryList().moveForwardTo(maxDequeuedEntry + 1);
         }
       }
 
-      // Add CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END to writeQueueStateStore so that they can be written
+      // Add CLAIMED_ENTRY_LIST writeQueueStateStore so that they can be written
       // to underlying storage by base class saveDequeueState
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
-      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getClaimedEntryBegin()));
-
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_END);
-      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getClaimedEntryEnd()));
+      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      try {
+        queueState.getClaimedEntryList().encode(new BinaryEncoder(bos));
+      } catch (IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing CLAIMED_ENTRY_LIST"), e);
+      }
+      writeQueueStateStore.addColumnValue(bos.toByteArray());
 
       super.saveDequeueState(consumer, config, queueState, readPointer);
     }
@@ -1945,11 +2111,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If claimed entries exist, return them. This can happen when the queue cache is lost due to consumer
       // crash or other reasons
-      long claimedEntryIdBegin = queueState.getClaimedEntryBegin();
-      long claimedEntryIdEnd = queueState.getClaimedEntryEnd();
-      if(claimedEntryIdBegin != INVALID_ENTRY_ID && claimedEntryIdEnd != INVALID_ENTRY_ID &&
-        claimedEntryIdEnd >= claimedEntryIdBegin) {
-        for(long i = claimedEntryIdBegin; i <= claimedEntryIdEnd; ++i) {
+      ClaimedEntry claimedEntry = queueState.getClaimedEntryList().getClaimedEntry();
+      if(claimedEntry.isValid()) {
+        for(long i = claimedEntry.getBegin(); i <= claimedEntry.getEnd(); ++i) {
           newEntryIds.add(i);
         }
         return newEntryIds;
@@ -1994,8 +2158,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // happen atomically. HBase doesn't support atomic increment and put.
         // Also, for performance reasons we have moved the write to method saveDequeueEntryState where
         // all writes for a dequeue happen
-        queueState.setClaimedEntryBegin(startEntryId);
-        queueState.setClaimedEntryEnd(endEntryId);
+        queueState.getClaimedEntryList().add(startEntryId, endEntryId);
 
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
 
