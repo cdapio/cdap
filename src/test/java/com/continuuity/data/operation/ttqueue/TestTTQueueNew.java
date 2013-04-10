@@ -493,6 +493,29 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertFalse(claimedEntryList.getClaimedEntry().isValid());
   }
 
+  @Test
+  public void testClaimedEntryListAddAll() throws Exception {
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
+    claimedEntryList1.add(3, 5);
+    claimedEntryList1.add(15, 20);
+    claimedEntryList1.add(36, 41);
+
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
+    claimedEntryList2.add(1, 2);
+    claimedEntryList2.add(10, 14);
+    claimedEntryList2.add(45, 50);
+
+    claimedEntryList1.addAll(claimedEntryList2);
+
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 3, 5);
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 15, 20);
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 36, 41);
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 1, 2);
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 10, 14);
+    verifyClaimedEntryListIncrementMove(claimedEntryList1, 45, 50);
+    assertFalse(claimedEntryList1.getClaimedEntry().isValid());
+  }
+
   private void verifyClaimedEntryListIncrementMove(TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList, long begin, long end) {
     assertTrue(claimedEntryList.getClaimedEntry().isValid());
     assertEquals(begin, claimedEntryList.getClaimedEntry().getBegin());
@@ -531,6 +554,38 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       new BinaryDecoder(new ByteArrayInputStream(bytes)));
 
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testClaimedEntryListCompare() {
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
+    claimedEntryList1.add(2, 7);
+    claimedEntryList1.add(8, 16);
+    claimedEntryList1.add(25, 30);
+
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
+    claimedEntryList2.add(3, 4);
+    claimedEntryList2.add(7, 15);
+
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList3 = new TTQueueNewOnVCTable.ClaimedEntryList();
+    claimedEntryList3.add(3, 8);
+    claimedEntryList3.add(15, 20);
+    claimedEntryList3.add(22, 30);
+    claimedEntryList3.add(10, 12);
+    claimedEntryList3.add(31, 35);
+
+    SortedSet<TTQueueNewOnVCTable.ClaimedEntryList> sortedSet = new TreeSet<TTQueueNewOnVCTable.ClaimedEntryList>();
+    sortedSet.add(claimedEntryList1);
+    sortedSet.add(claimedEntryList2);
+    sortedSet.add(claimedEntryList3);
+
+    assertEquals(claimedEntryList2, sortedSet.first());
+    sortedSet.remove(claimedEntryList2);
+    assertEquals(claimedEntryList1, sortedSet.first());
+    sortedSet.remove(claimedEntryList1);
+    assertEquals(claimedEntryList3, sortedSet.first());
+    sortedSet.remove(claimedEntryList3);
+    assertTrue(sortedSet.isEmpty());
   }
 
   @Test
@@ -1034,6 +1089,87 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testFifoReconfig() throws Exception {
+    testFifoReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6);
+    testFifoReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9);
+    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9);
+    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9);
+    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5);
+    // TODO: What should happen when 0 consumers is sent as newConsumerCount?
+  }
+
+  private void testFifoReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
+                                final int perConsumerDequeueBatchSize) throws Exception {
+    TTQueue q = createQueue();
+    // TODO: add reconfig to TTQueue interface
+    TTQueueNewOnVCTable queue = (TTQueueNewOnVCTable) q;
+
+    List<Integer> expectedEntries = Lists.newArrayList();
+    // Enqueue numEntries
+    for(int i = 0; i < numEntries; ++i) {
+      expectedEntries.add(i + 1);
+      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), getDirtyWriteVersion()).isSuccess());
+    }
+
+    List<Integer> actualEntries = Lists.newArrayList();
+    List<Integer> sortedActualEntries = Lists.newArrayList();
+    List<StatefulQueueConsumer> consumers = Collections.emptyList();
+    // dequeue it with FIFO partitioner, single entry mode
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, queueBatchSize);
+    long groupId = queue.getGroupID();
+
+    int currentConsumerCount = consumerCounts.remove(0);
+
+    loop:
+    while(true) {
+      for(Integer newConsumerCount : consumerCounts) {
+//        System.out.println(String.format("Current consumer count = %d, new consumer count = %s",
+//                                         currentConsumerCount, newConsumerCount));
+        queue.reconfigure(config, groupId, currentConsumerCount, newConsumerCount, getDirtyPointer());
+        // Create new consumers
+        consumers = Lists.newArrayListWithCapacity(newConsumerCount);
+        for(int i = 0; i < newConsumerCount; ++i) {
+          consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config));
+        }
+
+      // Dequeue entries
+        int numDequeuesThisRun = 0;
+        for(QueueConsumer consumer : consumers) {
+          for(int i = 0; i < perConsumerDequeueBatchSize; ++i) {
+            DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
+            if(result.isEmpty()) {
+              break;
+            }
+            ++numDequeuesThisRun;
+            actualEntries.add(Bytes.toInt(result.getEntry().getData()));
+            queue.ack(result.getEntryPointer(),consumer, getDirtyPointer());
+          }
+          actualEntries.add(-1);
+        }
+//        System.out.println(actualEntries);
+        sortedActualEntries = Lists.newArrayList(actualEntries);
+        Collections.sort(sortedActualEntries);
+//        System.out.println(sortedActualEntries);
+        currentConsumerCount = newConsumerCount;
+
+        // If all consumers report queue empty then stop
+        if(numDequeuesThisRun == 0) {
+          break loop;
+        }
+      }
+    }
+
+    // Make sure the queue is empty
+    for(QueueConsumer consumer : consumers) {
+      DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
+      assertTrue(result.isEmpty());
+    }
+
+    sortedActualEntries.removeAll(Lists.newArrayList(-1));
+    assertEquals(expectedEntries, sortedActualEntries);
   }
 
   // Tests that do not work on NewTTQueue

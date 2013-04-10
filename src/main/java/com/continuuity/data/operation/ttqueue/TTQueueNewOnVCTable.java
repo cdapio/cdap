@@ -405,10 +405,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
 
-  public void reconfigure(QueueConfig config, int groupId, int currentConsumerCount, int newConsumerCount,
+  public void reconfigure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount,
                           ReadPointer readPointer) throws OperationException {
+    if(LOG.isDebugEnabled()) {
+      LOG.trace(getLogMessage(String.format(
+        "Running reconfigure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
+        config, groupId, currentConsumerCount, newConsumerCount, readPointer)));
+    }
     // Nothing to do if newConsumerCount == currentConsumerCount
     if(currentConsumerCount == newConsumerCount) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format(
+         "Nothing to reconfigure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
+      }
       return;
     }
 
@@ -428,6 +437,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
                      getLogMessage(String.format("Consumer %d still has inflight entries", consumer.getInstanceId())));
       }
+      consumers.add(consumer);
+      queueStates.add(queueState);
     }
 
     dequeueStrategy.reconfigure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount,
@@ -1345,8 +1356,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
 
-    public void add(ClaimedEntryList claimedEntryList) {
-      otherClaimedEntries.add(claimedEntryList.getClaimedEntry());
+    public void addAll(ClaimedEntryList claimedEntryList) {
+      // Note: otherClaimedEntries can be EMPTY_LIST, add() makes sure to create a list if so
+      ClaimedEntry otherCurrent = claimedEntryList.getClaimedEntry();
+      add(otherCurrent.getBegin(), otherCurrent.getEnd());
       otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
     }
 
@@ -1670,7 +1683,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
     void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
-                     final long groupId, final int currentConsumerCount, final int newConsumerCount,
+                     long groupId, int currentConsumerCount, int newConsumerCount,
                      ReadPointer readPointer) throws OperationException;
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
@@ -2229,8 +2242,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       PriorityQueue<ClaimedEntryList> priorityQueue = new PriorityQueue<ClaimedEntryList>(currentConsumerCount);
-      for(QueueStateImpl queueState : queueStates) {
-        ClaimedEntryList claimedEntryList = queueState.getClaimedEntryList();
+      for(int i = 0; i < newConsumerCount; ++i) {
+        ClaimedEntryList claimedEntryList = queueStates.get(i).getClaimedEntryList();
         priorityQueue.add(claimedEntryList);
       }
 
@@ -2238,7 +2251,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
         ClaimedEntryList claimedEntryList = queueStates.get(i).getClaimedEntryList();
         ClaimedEntryList transferEntryList = priorityQueue.poll();
-        transferEntryList.add(claimedEntryList);
+        transferEntryList.addAll(claimedEntryList);
         priorityQueue.add(transferEntryList);
       }
 
