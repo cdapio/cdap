@@ -7,6 +7,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -1093,16 +1094,72 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   @Test
   public void testFifoReconfig() throws Exception {
-    testFifoReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6);
-    testFifoReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9);
-    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9);
-    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9);
-    testFifoReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5);
-    // TODO: What should happen when 0 consumers is sent as newConsumerCount?
+    Condition condition = new Condition() {
+      @Override
+      public boolean check(long entryId, int groupSize, long instanceId, int hash) {
+        return true;
+      }
+    };
+
+    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.FIFO;
+
+    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
   }
 
-  private void testFifoReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
-                                final int perConsumerDequeueBatchSize) throws Exception {
+  @Test
+  public void testRoundRobinReconfig() throws Exception {
+    Condition condition = new Condition() {
+      @Override
+      public boolean check(long entryId, int groupSize, long instanceId, int hash) {
+        return entryId % groupSize == instanceId;
+      }
+    };
+
+    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.ROUND_ROBIN;
+
+    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+  }
+
+  @Test
+  public void testHashReconfig() throws Exception {
+    Condition condition = new Condition() {
+      @Override
+      public boolean check(long entryId, int groupSize, long instanceId, int hash) {
+        return hash % groupSize == instanceId;
+      }
+    };
+
+    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.HASH;
+
+    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+  }
+
+  private static final String HASH_KEY = "HashKey";
+  interface Condition {
+    boolean check(long entryId, int groupSize, long instanceId, int hash);
+  }
+
+  private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
+                            final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
+                            Condition condition) throws Exception {
     TTQueue q = createQueue();
     // TODO: add reconfig to TTQueue interface
     TTQueueNewOnVCTable queue = (TTQueueNewOnVCTable) q;
@@ -1111,14 +1168,19 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Enqueue numEntries
     for(int i = 0; i < numEntries; ++i) {
       expectedEntries.add(i + 1);
-      assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i + 1)), getDirtyWriteVersion()).isSuccess());
+      QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
+      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
+      assertTrue(queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
     }
+
+    expectedEntries = ImmutableList.copyOf(expectedEntries);
+    assertEquals(numEntries, expectedEntries.size());
 
     List<Integer> actualEntries = Lists.newArrayList();
     List<Integer> sortedActualEntries = Lists.newArrayList();
     List<StatefulQueueConsumer> consumers = Collections.emptyList();
     // dequeue it with FIFO partitioner, single entry mode
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, queueBatchSize);
+    QueueConfig config = new QueueConfig(partitionerType, true, queueBatchSize);
     long groupId = queue.getGroupID();
 
     int currentConsumerCount = consumerCounts.remove(0);
@@ -1132,7 +1194,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         // Create new consumers
         consumers = Lists.newArrayListWithCapacity(newConsumerCount);
         for(int i = 0; i < newConsumerCount; ++i) {
-          consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config));
+          if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
+            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config));
+          } else {
+            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config));
+          }
         }
 
       // Dequeue entries
@@ -1145,7 +1211,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             }
             ++numDequeuesThisRun;
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
-            queue.ack(result.getEntryPointer(),consumer, getDirtyPointer());
+            queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
+            assertTrue(
+              condition.check(
+                result.getEntryPointer().getEntryId(),
+                newConsumerCount, consumer.getInstanceId(),
+                (int) result.getEntryPointer().getEntryId()
+              )
+            );
           }
           actualEntries.add(-1);
         }
@@ -1169,6 +1242,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     sortedActualEntries.removeAll(Lists.newArrayList(-1));
+    //System.out.println(sortedActualEntries);
     assertEquals(expectedEntries, sortedActualEntries);
   }
 

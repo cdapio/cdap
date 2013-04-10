@@ -1887,12 +1887,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
                             ReadPointer readPointer) throws OperationException {
       // Note: the consumers list passed here does not contain QueueConsumer.partitioningKey
 
+      if(consumers.size() != currentConsumerCount) {
+        throw new OperationException(
+          StatusCode.INTERNAL_ERROR,
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
+                                      consumers.size(), currentConsumerCount)));
+      }
+
       if(consumers.isEmpty()) {
-        if(currentConsumerCount != 0) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-                getLogMessage(String.format("Consumer list is empty even though currentConsumerCount (%d) is not",
-                                            currentConsumerCount)));
-        }
+        // Nothing to do
         return;
       }
 
@@ -1946,7 +1949,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Delete queue state for removed consumers, if any
-      for(int j = newConsumerCount - currentConsumerCount; j < currentConsumerCount; ++j) {
+      for(int j = newConsumerCount; j < currentConsumerCount; ++j) {
         QueueConsumer consumer = consumers.get(j);
         // TODO: save and delete queue states for all consumers in a single call
         deleteDequeueState(consumer);
@@ -2245,12 +2248,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return;
       }
 
+      if(consumers.size() != currentConsumerCount) {
+        throw new OperationException(
+          StatusCode.INTERNAL_ERROR,
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
+                                      consumers.size(), currentConsumerCount)));
+      }
+
       if(consumers.isEmpty()) {
-        if(currentConsumerCount != 0) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-                     getLogMessage(String.format("Consumer list is empty even though currentConsumerCount (%d) is not",
-                                                                   currentConsumerCount)));
-        }
+        // Nothing to do
         return;
       }
 
