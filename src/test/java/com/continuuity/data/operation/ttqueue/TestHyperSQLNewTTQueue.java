@@ -11,6 +11,7 @@ import org.junit.Ignore;
 
 import java.util.Random;
 
+// TODO: fix HyperSQL functions and enable test
 @Ignore
 public class TestHyperSQLNewTTQueue extends TestTTQueueNew {
 

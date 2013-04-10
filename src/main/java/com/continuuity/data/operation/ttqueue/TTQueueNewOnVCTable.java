@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -404,23 +405,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
 
-  public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+  public void reconfigure(QueueConfig config, int groupId, int currentConsumerCount, int newConsumerCount,
                           ReadPointer readPointer) throws OperationException {
-    // TODO: handle empty consumers list
+    // Nothing to do if newConsumerCount == currentConsumerCount
     if(currentConsumerCount == newConsumerCount) {
-      return consumers;
+      return;
     }
 
-    // TODO: make sure partitioner type is the same
-
-    // TODO: use a better way to get config
-    QueueConfig config = consumers.get(0).getQueueConfig();
     // Determine what dequeue strategy to use based on the partitioner
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
     // Read queue state for all consumers
-    for(QueueConsumer consumer : consumers) {
-      final QueueStateImpl queueState = getQueueState(consumer, readPointer);
+    List<QueueConsumer> consumers = Lists.newArrayListWithCapacity(currentConsumerCount);
+    List<QueueStateImpl> queueStates = Lists.newArrayListWithCapacity(currentConsumerCount);
+    // TODO: read queue state without relying on currentConsumerCount, and then verify if they match
+    for(int i = 0; i < currentConsumerCount; ++i) {
+      // Note: the consumers created here do not contain QueueConsumer.partitioningKey
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, currentConsumerCount, config);
+      final QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
       // Verify there are no inflight entries
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
@@ -428,7 +430,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
 
-    return dequeueStrategy.reconfigure(consumers, currentConsumerCount, newConsumerCount, readPointer);
+    dequeueStrategy.reconfigure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount,
+                                readPointer);
   }
 
   @Override
@@ -1311,7 +1314,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  static class ClaimedEntryList {
+  static class ClaimedEntryList implements Comparable<ClaimedEntryList> {
     private ClaimedEntry current;
     private List<ClaimedEntry> otherClaimedEntries;
 
@@ -1331,6 +1334,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(!claimedEntry.isValid()) {
         return;
       }
+      makeCurrentValid();
       if(!current.isValid()) {
         current = claimedEntry;
       } else {
@@ -1341,19 +1345,45 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
 
+    public void add(ClaimedEntryList claimedEntryList) {
+      otherClaimedEntries.add(claimedEntryList.getClaimedEntry());
+      otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
+    }
+
     public void moveForwardTo(long entryId) {
       if(entryId < current.getBegin()) {
         throw new IllegalArgumentException(String.format
           ("entryId (%d) shoudl not be less than begin (%d)", entryId, current.getBegin()));
       }
       current = current.move(entryId);
+      makeCurrentValid();
+    }
+
+    private void makeCurrentValid() {
       while(!current.isValid() && !otherClaimedEntries.isEmpty()) {
         current = otherClaimedEntries.remove(0);
       }
     }
 
     public ClaimedEntry getClaimedEntry() {
+      makeCurrentValid();
       return current;
+    }
+
+    public int size() {
+      // TODO: use the claimed entry range to determine size
+      return (current.isValid() ? 1 : 0) + otherClaimedEntries.size();
+    }
+
+    @Override
+    public int compareTo(ClaimedEntryList claimedEntryList) {
+      if(this.size() > claimedEntryList.size()) {
+        return 1;
+      }
+      if(this.size() < claimedEntryList.size()) {
+        return -1;
+      }
+      return 0;
     }
 
     @Override
@@ -1639,7 +1669,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
-    List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+    void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                     final long groupId, final int currentConsumerCount, final int newConsumerCount,
                      ReadPointer readPointer) throws OperationException;
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
@@ -1832,17 +1863,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, final int currentConsumerCount, final int newConsumerCount,
+    public void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                            final long groupId, final int currentConsumerCount, final int newConsumerCount,
                             ReadPointer readPointer) throws OperationException {
-      // TODO: use better groupId, groupName, config and partitioning key determination
-      // TODO: does consumers list need to be sorted on instanceId?
-      final long groupId = consumers.get(0).getGroupId();
-      final String groupName = consumers.get(0).getGroupName();
-      final String partitioningKey = consumers.get(0).getPartitioningKey();
-      final QueueConfig config = consumers.get(0).getQueueConfig();
+      // Note: the consumers list passed here does not contain QueueConsumer.partitioningKey
 
+      if(consumers.isEmpty()) {
+        if(currentConsumerCount != 0) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+                getLogMessage(String.format("Consumer list is empty even though currentConsumerCount (%d) is not",
+                                            currentConsumerCount)));
+        }
+        return;
+      }
+
+      // TODO: does consumers list need to be sorted on instanceId?
       long minAckedEntryId = Long.MAX_VALUE;
-      ReconfigPartitioner reconfigPartitioner = new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
+      ReconfigPartitioner reconfigPartitioner =
+        new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
       for(QueueConsumer consumer : consumers) {
         QueueStateImpl queueState = (QueueStateImpl) consumer.getQueueState();
         // Since there are no inflight entries, all entries till and including consumer read pointer are acked
@@ -1854,12 +1892,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       if(minAckedEntryId == Long.MAX_VALUE) {
-        // Nothing has been dequeued, nothing has been acked
+        // Nothing has been dequeued from the queue, nothing has been acked in the queue
         // TODO: nothing to be done
-        minAckedEntryId = INVALID_ENTRY_ID;
+        return;
       }
-
-      List<QueueConsumer> newConsumers = Lists.newArrayListWithCapacity(newConsumerCount);
 
       for(int j = 0; j < newConsumerCount; ++j) {
         QueueConsumer consumer;
@@ -1869,29 +1905,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState = (QueueStateImpl) consumer.getQueueState();
           queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
         } else {
-          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, groupName, partitioningKey, config);
+          // Note: the consumer created here does not contain QueueConsumer.partitioningKey
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
           queueState = new QueueStateImpl();
           consumer.setQueueState(queueState);
         }
-        newConsumers.add(consumer);
-        // Modify queue state for all consumers
+        // Modify queue state for active consumers
         // Add reconfigPartitioner
         queueState.getReconfigPartitionersList().add(reconfigPartitioner);
         // Move consumer read pointer to the min acked entry for all consumers
         queueState.setConsumerReadPointer(minAckedEntryId);
         // TODO: save queue states for all consumers in a single call
-        // TODO: save reconfig info in queue state
         saveDequeueState(consumer, config, queueState, readPointer);
       }
 
-      // Delete queue state for any extra consumers, if any
+      // Delete queue state for removed consumers, if any
       for(int j = newConsumerCount - currentConsumerCount; j < currentConsumerCount; ++j) {
         QueueConsumer consumer = consumers.get(j);
         // TODO: save and delete queue states for all consumers in a single call
         deleteDequeueState(consumer);
       }
-
-      return newConsumers;
     }
   }
 
@@ -2178,10 +2211,49 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public List<QueueConsumer> reconfigure(List<QueueConsumer> consumers, int currentConsumerCount, int newConsumerCount,
+    public void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                            final long groupId, final int currentConsumerCount, final int newConsumerCount,
                             ReadPointer readPointer) throws OperationException {
-      // TODO: implement reconfigure
-      return Collections.emptyList();
+      if(newConsumerCount >= currentConsumerCount) {
+        // TODO: noting to be done?
+        return;
+      }
+
+      if(consumers.isEmpty()) {
+        if(currentConsumerCount != 0) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+                     getLogMessage(String.format("Consumer list is empty even though currentConsumerCount (%d) is not",
+                                                                   currentConsumerCount)));
+        }
+        return;
+      }
+
+      PriorityQueue<ClaimedEntryList> priorityQueue = new PriorityQueue<ClaimedEntryList>(currentConsumerCount);
+      for(QueueStateImpl queueState : queueStates) {
+        ClaimedEntryList claimedEntryList = queueState.getClaimedEntryList();
+        priorityQueue.add(claimedEntryList);
+      }
+
+      // Transfer the claimed entries of to be removed consumers to other consumers
+      for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
+        ClaimedEntryList claimedEntryList = queueStates.get(i).getClaimedEntryList();
+        ClaimedEntryList transferEntryList = priorityQueue.poll();
+        transferEntryList.add(claimedEntryList);
+        priorityQueue.add(transferEntryList);
+      }
+
+      // Save dequeue state of consumers that won't be removed
+      for(int i = 0; i < newConsumerCount; ++i) {
+        // TODO: save queue states for all consumers in a single call
+        saveDequeueState(consumers.get(i), consumers.get(i).getQueueConfig(), queueStates.get(i), readPointer);
+      }
+
+      // Delete the state of removed consumers
+      for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
+        // TODO: save and delete queue states for all consumers in a single call
+        deleteDequeueState(consumers.get(i));
+      }
+      return;
     }
   }
 }
