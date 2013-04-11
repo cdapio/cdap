@@ -119,8 +119,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long defaultBatchSize = conf.getLong(TTQUEUE_BATCH_SIZE_DEFAULT, 100);
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
-    final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 10 * 60 * 60);
-    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 10 * 60 * 60;
+    final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
+    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 60;
 
     final int maxCrashDequeueTries = conf.getInt(TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 15);
     this.MAX_CRASH_DEQUEUE_TRIES = maxCrashDequeueTries > 0 ? maxCrashDequeueTries : 15;
@@ -438,7 +438,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     List<QueueStateImpl> queueStates = Lists.newArrayList();
     for(int i = 0; i < MAX_CONSUMER_COUNT; ++i) {
       // Note: the consumers created here do not contain QueueConsumer.partitioningKey or QueueConsumer.groupSize
-      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config, false);
       QueueStateImpl queueState = null;
       try {
         // TODO: read queue state in one call
@@ -496,8 +496,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // (less than or equal to the number of consumers).
 
     // A simple leader election for selecting consumer to run eviction for group
-    // Only consumers with id 0 (one per group)
-    if(consumer.getInstanceId() != 0) {
+    // Only one consumer per group should have canEvict true
+    if(!consumer.canEvict()) {
       return;
     }
 
@@ -2008,7 +2008,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
         } else {
           // Note: the consumer created here does not contain QueueConsumer.partitioningKey
-          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config, false);
           queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
         }
@@ -2342,7 +2342,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(newConsumerCount >= currentConsumerCount) {
         DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
-          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
+          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config, false);
           QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
           // TODO: save queue states for all consumers in a single call

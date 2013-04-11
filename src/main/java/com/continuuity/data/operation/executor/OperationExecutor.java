@@ -9,6 +9,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
+
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
@@ -290,4 +291,6 @@ public interface OperationExecutor
                                                       @Nullable Transaction transaction,
                                                       ReadColumnRange readColumnRange)
     throws OperationException;
+
+//  void execute(OperationContext context, QueueAdmin.QueueConfigure configure) throws OperationException;
 }

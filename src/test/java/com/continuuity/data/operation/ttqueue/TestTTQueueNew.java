@@ -869,7 +869,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config, false);
     }
 
     queue.configure(config, consumerGroupId, numConsumers);
@@ -910,7 +910,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config, false);
     }
 
     queue.configure(config, consumerGroupId, numConsumers);
@@ -996,7 +996,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     StatefulQueueConsumer[] statefulQueueConsumers = new StatefulQueueConsumer[numConsumers];
     QueueConsumer[] queueConsumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config, false);
       queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
@@ -1084,14 +1084,15 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
-      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config),
+      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config, false),
                                            getDirtyPointer());
       assertTrue(result.isSuccess());
       assertEquals(1, Bytes.toInt(result.getEntry().getData()));
     }
 
     // After max tries, the entry will be ignored
-    StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config);
+    StatefulQueueConsumer statefulQueueConsumer =
+      new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config, false);
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
@@ -1201,16 +1202,16 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     while(true) {
       for(Integer newConsumerCount : consumerCounts) {
         int actualOldConsumerCount = queue.configure(config, groupId, newConsumerCount);
-        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
-                                         actualOldConsumerCount, newConsumerCount));
+//        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
+//                                         actualOldConsumerCount, newConsumerCount));
         assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
         // Create new consumers
         consumers = Lists.newArrayListWithCapacity(newConsumerCount);
         for(int i = 0; i < newConsumerCount; ++i) {
           if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
-            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config));
+            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config, false));
           } else {
-            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config));
+            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config, false));
           }
         }
 

@@ -81,7 +81,7 @@ public abstract class TestTTQueue {
 
     QueueConfig configSync = new QueueConfig(PartitionerType.FIFO, true);
     queue.configure(configSync, 0, 1);
-    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, configSync);
+    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, configSync, false);
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
@@ -104,7 +104,7 @@ public abstract class TestTTQueue {
 
     QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
     queue.configure(configAsync, 2, 1);
-    StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync);
+    StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync, false);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, new MemoryReadPointer(timeOracle.getTimestamp()));
@@ -145,11 +145,12 @@ public abstract class TestTTQueue {
 
 //    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config, false);
 
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
     queueNormal.configure(config, 0, 1);
+    // TODO: eviction is now controlled by canEvict flag in consumer in the new queues
     int numGroups = -1;
 
     // enqueue 10 things
@@ -180,7 +181,7 @@ public abstract class TestTTQueue {
     TTQueue queueEvict = createQueue();
     queueEvict.configure(config, 0, 1);
     numGroups = 1;
-    consumer = new QueueConsumer(0, 0, 1, config);
+    consumer = new StatefulQueueConsumer(0, 0, 1, config, true);
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
@@ -215,11 +216,11 @@ public abstract class TestTTQueue {
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     queue.configure(config, 2, 1);
-    QueueConsumer consumer1 = new QueueConsumer(0, 2, 1, config);
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 2, 1, config, true);
     queue.configure(config, 1, 1);
-    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
+    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1, 1, config, true);
     queue.configure(config, 0, 1);
-    QueueConsumer consumer3 = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer consumer3 = new StatefulQueueConsumer(0, 0, 1, config, true);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
@@ -513,7 +514,7 @@ public abstract class TestTTQueue {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
     queue.configure(config, 0, 1);
     // dequeue it with the single consumer and FIFO partitioner
-    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config);
+    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config, false);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);
