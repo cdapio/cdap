@@ -909,8 +909,9 @@ public class OmidTransactionalOperationExecutor
         new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
   }
 
-  //@Override
-  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure) throws OperationException
+  @Override
+  public void execute(OperationContext context, Transaction transaction, QueueAdmin.QueueConfigure configure)
+    throws OperationException
   {
     initialize();
     requestMetric("QueueConfigure");
