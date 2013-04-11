@@ -216,9 +216,9 @@ public abstract class TestTTQueue {
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     queue.configure(config, 2, 1);
-    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 2, 1, config, true);
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 2, 1, config, false);
     queue.configure(config, 1, 1);
-    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1, 1, config, true);
+    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1, 1, config, false);
     queue.configure(config, 0, 1);
     QueueConsumer consumer3 = new StatefulQueueConsumer(0, 0, 1, config, true);
 

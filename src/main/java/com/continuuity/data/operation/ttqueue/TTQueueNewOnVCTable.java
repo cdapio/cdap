@@ -496,8 +496,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // (less than or equal to the number of consumers).
 
     // A simple leader election for selecting consumer to run eviction for group
-    // Only one consumer per group should have canEvict true
-    if(!consumer.canEvict()) {
+    // Only consumers with id 0 (one per group)
+    if(consumer.getInstanceId() != 0) {
       return;
     }
 
@@ -543,8 +543,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // Only one consumer per queue will run the below eviction algorithm for the queue,
     // all others will save minGroupEvictEntry and return
-    // Again simple leader election
-    if(consumer.getGroupId() == 0) {
+    // Again simple leader election - only one consumer across all groups should have canEvict true
+    if(consumer.canEvict()) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage("Running global eviction..."));
       }
