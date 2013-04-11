@@ -72,7 +72,7 @@ public interface TTQueue {
    */
   void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
-  void reconfigure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
+  void configure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
     throws OperationException;
 
   /**

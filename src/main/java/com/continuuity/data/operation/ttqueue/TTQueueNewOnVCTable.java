@@ -407,13 +407,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void reconfigure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
+  public void configure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
     throws OperationException {
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
     if(LOG.isDebugEnabled()) {
       LOG.trace(getLogMessage(String.format(
-        "Running reconfigure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
+        "Running configure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
         config, groupId, currentConsumerCount, newConsumerCount, readPointer)));
     }
 
@@ -421,7 +421,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if(currentConsumerCount == newConsumerCount) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
-         "Nothing to reconfigure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
+         "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
       }
       return;
     }
@@ -452,8 +452,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueStates.add(queueState);
     }
 
-    dequeueStrategy.reconfigure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount,
-                                readPointer);
+    dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
   }
 
   @Override
@@ -1701,9 +1700,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
-    void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
-                     long groupId, int currentConsumerCount, int newConsumerCount,
-                     ReadPointer readPointer) throws OperationException;
+    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer) throws OperationException;
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
   }
@@ -1748,7 +1745,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException {
-      return constructQueueStateInternal(consumer, config, readPointer, true); // TODO: change to false
+      return constructQueueStateInternal(consumer, config, readPointer, false); // TODO: change to false
     }
 
     @Override
@@ -1795,7 +1792,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
       }
 
-      if(!construct && (stateBytes.isEmpty() || consumerReadPointerBytes == null || lastEvictTimeInSecsBytes == null)) {
+      if(!construct && (stateBytes.isEmpty() || consumerReadPointerBytes == null)) {
         throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
           "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
       }
@@ -1915,28 +1912,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
-                            final long groupId, final int currentConsumerCount, final int newConsumerCount,
-                            ReadPointer readPointer) throws OperationException {
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config, final long groupId, final int currentConsumerCount, final int newConsumerCount, ReadPointer readPointer) throws OperationException {
       // Note: the consumers list passed here does not contain QueueConsumer.partitioningKey
 
-      if(consumers.size() != currentConsumerCount) {
+      if(currentConsumers.size() != currentConsumerCount) {
         throw new OperationException(
           StatusCode.INTERNAL_ERROR,
           getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
-                                      consumers.size(), currentConsumerCount)));
-      }
-
-      if(consumers.isEmpty()) {
-        // Nothing to do
-        return;
+                                      currentConsumers.size(), currentConsumerCount)));
       }
 
       // TODO: does consumers list need to be sorted on instanceId?
       long minAckedEntryId = Long.MAX_VALUE;
       ReconfigPartitioner reconfigPartitioner =
         new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
-      for(QueueConsumer consumer : consumers) {
+      for(QueueConsumer consumer : currentConsumers) {
         QueueStateImpl queueState = (QueueStateImpl) consumer.getQueueState();
         // Since there are no inflight entries, all entries till and including consumer read pointer are acked
         long ackedEntryId = queueState.getConsumerReadPointer();
@@ -1946,19 +1936,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
         reconfigPartitioner.add(consumer.getInstanceId(), ackedEntryId);
       }
 
-      if(minAckedEntryId == Long.MAX_VALUE) {
-        // Nothing has been dequeued from the queue, nothing has been acked in the queue
-        // TODO: nothing to be done
-        return;
-      }
-
       DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
       for(int j = 0; j < newConsumerCount; ++j) {
         QueueConsumer consumer;
         QueueStateImpl queueState;
         if(j < currentConsumerCount) {
-          consumer = consumers.get(j);
+          consumer = currentConsumers.get(j);
           queueState = (QueueStateImpl) consumer.getQueueState();
           queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
         } else {
@@ -1967,25 +1951,30 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
         }
-        // Modify queue state for active consumers
-        // Add reconfigPartitioner
-        queueState.setReconfigPartitionersList(
-          new ReconfigPartitionersList(
-            Lists.newArrayList(Iterables.concat(
-              queueState.getReconfigPartitionersList().getReconfigPartitioners(),
-              Collections.singleton(reconfigPartitioner))
-            )
-          ));
 
-        // Move consumer read pointer to the min acked entry for all consumers
-        queueState.setConsumerReadPointer(minAckedEntryId);
+        if(!currentConsumers.isEmpty()) {
+          // Modify queue state for active consumers
+          // Add reconfigPartitioner
+          queueState.setReconfigPartitionersList(
+            new ReconfigPartitionersList(
+              Lists.newArrayList(Iterables.concat(
+                queueState.getReconfigPartitionersList().getReconfigPartitioners(),
+                Collections.singleton(reconfigPartitioner))
+              )
+            ));
+
+          // Move consumer read pointer to the min acked entry for all consumers
+          if(minAckedEntryId != Long.MAX_VALUE) {
+            queueState.setConsumerReadPointer(minAckedEntryId);
+          }
+        }
         // TODO: save queue states for all consumers in a single call
         saveDequeueState(consumer, config, queueState, readPointer);
       }
 
       // Delete queue state for removed consumers, if any
       for(int j = newConsumerCount; j < currentConsumerCount; ++j) {
-        QueueConsumer consumer = consumers.get(j);
+        QueueConsumer consumer = currentConsumers.get(j);
         // TODO: save and delete queue states for all consumers in a single call
         deleteDequeueState(consumer);
       }
@@ -2275,9 +2264,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void reconfigure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
-                            final long groupId, final int currentConsumerCount, final int newConsumerCount,
-                            ReadPointer readPointer) throws OperationException {
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config, final long groupId, final int currentConsumerCount, final int newConsumerCount, ReadPointer readPointer) throws OperationException {
       if(newConsumerCount >= currentConsumerCount) {
         DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
@@ -2290,14 +2277,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return;
       }
 
-      if(consumers.size() != currentConsumerCount) {
+      if(currentConsumers.size() != currentConsumerCount) {
         throw new OperationException(
           StatusCode.INTERNAL_ERROR,
-          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
-                                      consumers.size(), currentConsumerCount)));
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)", currentConsumers.size(), currentConsumerCount)));
       }
 
-      if(consumers.isEmpty()) {
+      if(currentConsumers.isEmpty()) {
         // Nothing to do
         return;
       }
@@ -2319,13 +2305,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Save dequeue state of consumers that won't be removed
       for(int i = 0; i < newConsumerCount; ++i) {
         // TODO: save queue states for all consumers in a single call
-        saveDequeueState(consumers.get(i), config, queueStates.get(i), readPointer);
+        saveDequeueState(currentConsumers.get(i), config, queueStates.get(i), readPointer);
       }
 
       // Delete the state of removed consumers
       for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
         // TODO: save and delete queue states for all consumers in a single call
-        deleteDequeueState(consumers.get(i));
+        deleteDequeueState(currentConsumers.get(i));
       }
       return;
     }

@@ -79,7 +79,9 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
-    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
+    QueueConfig configSync = new QueueConfig(PartitionerType.FIFO, true);
+    queue.configure(configSync, 0, 0, 1);
+    StatefulQueueConsumer consumerSync = new StatefulQueueConsumer(0, 0, 1, configSync);
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result = queue.dequeue(consumerSync, rp);
@@ -101,6 +103,7 @@ public abstract class TestTTQueue {
     // Async
 
     QueueConfig configAsync = new QueueConfig(PartitionerType.FIFO, false);
+    queue.configure(configAsync, 2, 0, 1);
     StatefulQueueConsumer consumerAsync = new StatefulQueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
@@ -146,6 +149,7 @@ public abstract class TestTTQueue {
 
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
+    queueNormal.configure(config, 0, 0, 1);
     int numGroups = -1;
 
     // enqueue 10 things
@@ -167,12 +171,14 @@ public abstract class TestTTQueue {
         queueNormal.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // dequeue with new consumer still has entries (expected)
+    queueNormal.configure(config, 1, 0, 1);
     DequeueResult result = queueNormal.dequeue(new QueueConsumer(0, 1, 1, config), dirtyReadPointer);
     assertFalse(result.isEmpty());
     assertEquals(0, Bytes.toInt(result.getEntry().getData()));
 
     // now do it again with evict-on-ack turned on
     TTQueue queueEvict = createQueue();
+    queueEvict.configure(config, 0, 0, 1);
     numGroups = 1;
     consumer = new QueueConsumer(0, 0, 1, config);
 
@@ -193,6 +199,7 @@ public abstract class TestTTQueue {
         queueEvict.dequeue(consumer, dirtyReadPointer).isEmpty());
 
     // dequeue with new consumer IS NOW EMPTY!
+    queueEvict.configure(config, 2, 0, 1);
     result = queueEvict.dequeue(new QueueConsumer(0, 2, 1, config), dirtyReadPointer);
     assertTrue(result.toString(), result.isEmpty());
 
@@ -207,8 +214,11 @@ public abstract class TestTTQueue {
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
+    queue.configure(config, 2, 0, 1);
     QueueConsumer consumer1 = new QueueConsumer(0, 2, 1, config);
+    queue.configure(config, 1, 0, 1);
     QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
+    queue.configure(config, 0, 0, 1);
     QueueConsumer consumer3 = new QueueConsumer(0, 0, 1, config);
 
     // enable evict-on-ack for 3 groups
@@ -265,6 +275,7 @@ public abstract class TestTTQueue {
     // now the first 9 entries should have been physically evicted!
 
     // create a new consumer and dequeue, should get the 10th entry!
+    queue.configure(config, 3, 0, 1);
     QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
     DequeueResult result = queue.dequeue(consumer4, dirtyReadPointer);
     assertFalse(result.isEmpty());
@@ -313,6 +324,7 @@ public abstract class TestTTQueue {
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
+    queue.configure(config, 0, 0, 1);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     for(int i = 0; i < 2; ++i) {
@@ -498,8 +510,10 @@ public abstract class TestTTQueue {
       assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), version).isSuccess());
     }
 
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, false);
+    queue.configure(config, 0, 0, 1);
     // dequeue it with the single consumer and FIFO partitioner
-    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, false));
+    StatefulQueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, readPointer);
@@ -1127,7 +1141,9 @@ public abstract class TestTTQueue {
 
 
     // dequeue it with the single consumer and FIFO partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    queue.configure(config, 0, 0, 1);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // spawn a thread to dequeue
     QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, readPointer);
@@ -1225,6 +1241,7 @@ public abstract class TestTTQueue {
 
     // Create and start a thread that dequeues in a loop
     final QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    queue.configure(config, 0, 0, 1);
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);

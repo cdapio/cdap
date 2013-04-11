@@ -762,6 +762,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
+    queue.configure(config, consumerGroupId, 0, numConsumers);
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
@@ -797,6 +798,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
+
+    queue.configure(config, consumerGroupId, 0, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
@@ -869,6 +872,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
+    queue.configure(config, consumerGroupId, 0, numConsumers);
+
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
     System.out.println("Round 1 dequeue done");
@@ -907,6 +912,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
+
+    queue.configure(config, consumerGroupId, 0, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
@@ -993,6 +1000,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
+    queue.configure(config, consumerGroupId, 0, numConsumers);
+
     // dequeue and verify
     dequeueFifoEntries(queue, statefulQueueConsumers, numConsumers, numQueueEntries, 0);
 
@@ -1061,6 +1070,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testMaxCrashDequeueTries() throws Exception {
     TTQueue queue = createQueue();
+    final long groupId = 0;
+    final int instanceId = 0;
+    final int groupSize = 1;
 
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), getDirtyWriteVersion()).isSuccess());
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
@@ -1068,15 +1080,18 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
 
+    queue.configure(config, groupId, 0, 1);
+
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
-      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(0, 0, 1, "", config), getDirtyPointer());
+      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config),
+                                           getDirtyPointer());
       assertTrue(result.isSuccess());
       assertEquals(1, Bytes.toInt(result.getEntry().getData()));
     }
 
     // After max tries, the entry will be ignored
-    StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(0, 0, 1, "", config);
+    StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config);
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
@@ -1160,9 +1175,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
                             final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
                             Condition condition) throws Exception {
-    TTQueue q = createQueue();
-    // TODO: add reconfig to TTQueue interface
-    TTQueueNewOnVCTable queue = (TTQueueNewOnVCTable) q;
+    TTQueue queue = createQueue();
 
     List<Integer> expectedEntries = Lists.newArrayList();
     // Enqueue numEntries
@@ -1190,7 +1203,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       for(Integer newConsumerCount : consumerCounts) {
 //        System.out.println(String.format("Current consumer count = %d, new consumer count = %s",
 //                                         currentConsumerCount, newConsumerCount));
-        queue.reconfigure(config, groupId, currentConsumerCount, newConsumerCount, getDirtyPointer());
+        queue.configure(config, groupId, currentConsumerCount, newConsumerCount);
         // Create new consumers
         consumers = Lists.newArrayListWithCapacity(newConsumerCount);
         for(int i = 0; i < newConsumerCount; ++i) {

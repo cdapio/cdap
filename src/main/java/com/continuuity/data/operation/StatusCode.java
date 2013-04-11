@@ -9,6 +9,7 @@ public class StatusCode extends com.continuuity.api.data.StatusCode {
   public static final int ILLEGAL_GROUP_CONFIG_CHANGE = 1004;
   public static final int ILLEGAL_FINALIZE = 1005;
   public static final int ILLEGAL_UNACK = 1006;
+  public static final int NOT_CONFIGURED = 1007;
 
   public static final int INVALID_TRANSACTION = 1009;
 
