@@ -1089,8 +1089,9 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void configure(QueueConfig config, long groupId, int newConsumerCount) throws OperationException {
+  public int configure(QueueConfig config, long groupId, int newConsumerCount) throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return -1;
   }
 
   public String getInfo(int groupId) throws OperationException {

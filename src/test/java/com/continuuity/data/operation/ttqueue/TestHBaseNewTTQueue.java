@@ -61,7 +61,7 @@ public class TestHBaseNewTTQueue extends TestTTQueueNew {
 
   @Override
   protected int getNumIterations() {
-    return 2001;
+    return 100;
   }
 
 }

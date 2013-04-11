@@ -404,6 +404,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // Set unack state
+    // TODO: 1. Check if entry was really acked
+    // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
+    // TODO: 2. queue cache.
     queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
 
     // Write unack state
@@ -411,7 +414,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void configure(QueueConfig config, long groupId, int newConsumerCount)
+  public int configure(QueueConfig config, long groupId, int newConsumerCount)
     throws OperationException {
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
@@ -466,10 +469,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
         LOG.trace(getLogMessage(String.format(
           "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
       }
-      return;
+      return currentConsumerCount;
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
+    return currentConsumerCount;
   }
 
   @Override
@@ -1751,7 +1755,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       if(!evictStateBytes.isEmpty()) {
         byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
-        if(lastEvictEntryBytes != null) {
+        if(!isNullOrEmpty(lastEvictEntryBytes)) {
           long lastEvictEntry = Bytes.toLong(lastEvictEntryBytes);
           return lastEvictEntry;
         }
@@ -1773,9 +1777,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return constructQueueStateInternal(consumer, config, readPointer, true);
     }
 
+    protected boolean isNullOrEmpty(byte[] bytes) {
+      return bytes == null || bytes.length == 0;
+    }
+
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                              ReadPointer readPointer, boolean construct) throws OperationException {
-      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+      // Note: 1. QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+
+      // Note: 2. We define a deleted cell as no bytes or no zero length bytes.
+      //          This is to do with limitation of deleteDiry on HBase
+
+      // Note: 3. We define deleted queue state as empty bytes or zero length consumerReadPointerBytes
+
       readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
       readQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
       readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
@@ -1783,36 +1797,38 @@ public class TTQueueNewOnVCTable implements TTQueue {
       readQueueStateStore.read();
 
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
-      byte[] lastEvictTimeInSecsBytes = null;
       byte[] consumerReadPointerBytes = null;
 
       QueueStateImpl queueState = new QueueStateImpl();
       if(!stateBytes.isEmpty()) {
-        // Read active entry
-        ByteArrayInputStream bin = new ByteArrayInputStream(stateBytes.getValue().get(DEQUEUE_ENTRY_SET));
-        BinaryDecoder decoder = new BinaryDecoder(bin);
-        // TODO: Read and check schema
-        try {
-          queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
-        } catch (IOException e) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-            "Exception while deserializing dequeue entry list"), e);
+        // Read dequeued entries
+        byte[] dequeueEntrySetBytes = stateBytes.getValue().get(DEQUEUE_ENTRY_SET);
+        if(!isNullOrEmpty(dequeueEntrySetBytes)) {
+          ByteArrayInputStream bin = new ByteArrayInputStream(dequeueEntrySetBytes);
+          BinaryDecoder decoder = new BinaryDecoder(bin);
+          // TODO: Read and check schema
+          try {
+            queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
+              "Exception while deserializing dequeue entry list"), e);
+          }
         }
 
         // Read consumer read pointer
         consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
-        if(consumerReadPointerBytes != null) {
+        if(!isNullOrEmpty(consumerReadPointerBytes)) {
           queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
         }
 
         // Note: last evict time is read while constructing state, but it is only saved after finalize
-        lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
-        if(lastEvictTimeInSecsBytes != null) {
+        byte[] lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
+        if(!isNullOrEmpty(lastEvictTimeInSecsBytes)) {
           queueState.setLastEvictTimeInSecs(Bytes.toLong(lastEvictTimeInSecsBytes));
         }
       }
 
-      if(!construct && (stateBytes.isEmpty() || consumerReadPointerBytes == null)) {
+      if(!construct && (stateBytes.isEmpty() || isNullOrEmpty(consumerReadPointerBytes))) {
         throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
           "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
       }
@@ -1886,9 +1902,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
-      // Delete queue state for the consumer
-      table.deleteDirty(
-        new byte[][]{makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId())});
+      // Delete queue state for the consumer, see notes in constructQueueStateInternal
+
+      // TODO: make delete automatically detect the columns that needs to be empty
+      writeQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
+
+      writeQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
+      writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
+      writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
+
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.write();
       // TODO: delete evict information for the consumer
     }
   }
@@ -1905,13 +1931,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
-        try {
-          ReconfigPartitionersList partitioners = ReconfigPartitionersList.decode(new BinaryDecoder(
-            new ByteArrayInputStream(stateBytes.getValue().get(RECONFIG_PARTITIONER))));
-          queueState.setReconfigPartitionersList(partitioners);
-        } catch (IOException e) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                       getLogMessage("Exception while deserializing reconfig partitioners"), e);
+        byte[] configPartitionerBytes = stateBytes.getValue().get(RECONFIG_PARTITIONER);
+        if(!isNullOrEmpty(configPartitionerBytes)) {
+          try {
+            // TODO: Read and check schema
+            ReconfigPartitionersList partitioners = ReconfigPartitionersList.decode(new BinaryDecoder(
+              new ByteArrayInputStream(configPartitionerBytes)));
+            queueState.setReconfigPartitionersList(partitioners);
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                         getLogMessage("Exception while deserializing reconfig partitioners"), e);
+          }
         }
       }
       return queueState;
@@ -1934,7 +1964,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config, final long groupId, final int currentConsumerCount, final int newConsumerCount, ReadPointer readPointer) throws OperationException {
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      super.deleteDequeueState(consumer);
+    }
+
+    @Override
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                          final long groupId, final int currentConsumerCount, final int newConsumerCount,
+                          ReadPointer readPointer) throws OperationException {
       // Note: the consumers list passed here does not contain QueueConsumer.partitioningKey
 
       if(currentConsumers.size() != currentConsumerCount) {
@@ -2147,15 +2186,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
-        ClaimedEntryList claimedEntryList;
-        try {
-          claimedEntryList = ClaimedEntryList.decode(
-            new BinaryDecoder(new ByteArrayInputStream(stateBytes.getValue().get(CLAIMED_ENTRY_LIST))));
-        } catch (IOException e) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                       getLogMessage("Exception while deserializing CLAIMED_ENTRY_LIST"), e);
+        byte[] claimedEntryListBytes = stateBytes.getValue().get(CLAIMED_ENTRY_LIST);
+        if(!isNullOrEmpty(claimedEntryListBytes)) {
+          ClaimedEntryList claimedEntryList;
+          try {
+            // TODO: Read and check schema
+            claimedEntryList = ClaimedEntryList.decode(
+              new BinaryDecoder(new ByteArrayInputStream(claimedEntryListBytes)));
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                         getLogMessage("Exception while deserializing CLAIMED_ENTRY_LIST"), e);
+          }
+          queueState.setClaimedEntryList(claimedEntryList);
         }
-        queueState.setClaimedEntryList(claimedEntryList);
       }
       return queueState;
     }
@@ -2184,6 +2227,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       writeQueueStateStore.addColumnValue(bos.toByteArray());
 
       super.saveDequeueState(consumer, config, queueState, readPointer);
+    }
+
+    @Override
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      super.deleteDequeueState(consumer);
     }
 
     /**

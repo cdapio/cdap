@@ -36,6 +36,6 @@ public class TestHyperSQLNewTTQueue extends TestTTQueueNew {
 
   @Override
   protected int getNumIterations() {
-    return 100;
+    return 201;
   }
 }

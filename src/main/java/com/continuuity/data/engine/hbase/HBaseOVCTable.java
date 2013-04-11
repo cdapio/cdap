@@ -212,6 +212,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteDirty(byte[][] rows) throws OperationException {
+    // TODO: When a put dirty is done after deleteDirty, the put does not stick
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();

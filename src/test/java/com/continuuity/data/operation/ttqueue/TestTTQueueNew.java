@@ -1195,13 +1195,15 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(partitionerType, true, queueBatchSize);
     long groupId = queue.getGroupID();
+    int expectedOldConsumerCount = 0;
 
     loop:
     while(true) {
       for(Integer newConsumerCount : consumerCounts) {
-//        System.out.println(String.format("Current consumer count = %d, new consumer count = %s",
-//                                         currentConsumerCount, newConsumerCount));
-        queue.configure(config, groupId, newConsumerCount);
+        int actualOldConsumerCount = queue.configure(config, groupId, newConsumerCount);
+        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
+                                         actualOldConsumerCount, newConsumerCount));
+        assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
         // Create new consumers
         consumers = Lists.newArrayListWithCapacity(newConsumerCount);
         for(int i = 0; i < newConsumerCount; ++i) {
@@ -1242,6 +1244,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         if(numDequeuesThisRun == 0) {
           break loop;
         }
+        expectedOldConsumerCount = newConsumerCount;
       }
     }
 
@@ -1252,7 +1255,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     sortedActualEntries.removeAll(Lists.newArrayList(-1));
-    //System.out.println(sortedActualEntries);
+//    System.out.println(sortedActualEntries);
     assertEquals(expectedEntries, sortedActualEntries);
   }
 
