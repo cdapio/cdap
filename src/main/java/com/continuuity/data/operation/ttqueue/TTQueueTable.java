@@ -83,6 +83,9 @@ public interface TTQueueTable {
   void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
              throws OperationException;
 
+  void configure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount)
+    throws OperationException;
+
   /**
    * Generates and returns a unique group id for the specified queue.
    *

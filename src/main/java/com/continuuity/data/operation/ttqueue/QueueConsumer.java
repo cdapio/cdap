@@ -91,6 +91,10 @@ public class QueueConsumer {
     // Nothing to do
   }
 
+  public boolean canEvict() {
+    return false;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)

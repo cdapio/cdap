@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
@@ -36,6 +37,50 @@ public class QueueAdmin {
       return Objects.toStringHelper(this)
           .add("queuename", Bytes.toString(this.queueName))
           .toString();
+    }
+  }
+
+  /**
+   * Generates and returns a unique group id for the speicified queue.
+   */
+  public static class QueueConfigure extends Operation {
+
+    private final byte [] queueName;
+    private final QueueConfig config;
+    private final long groupId;
+    private final int newConsumerCount;
+
+    public QueueConfigure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount) {
+      this.queueName = queueName;
+      this.config = config;
+      this.groupId = groupId;
+      this.newConsumerCount = newConsumerCount;
+    }
+
+    public byte [] getQueueName() {
+      return this.queueName;
+    }
+
+    public QueueConfig getConfig() {
+      return config;
+    }
+
+    public long getGroupId() {
+      return groupId;
+    }
+
+    public int getNewConsumerCount() {
+      return newConsumerCount;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("queuename", Bytes.toString(this.queueName))
+        .add("config", this.config)
+        .add("groupId", this.groupId)
+        .add("newConsumerCount", this.newConsumerCount)
+        .toString();
     }
   }
 

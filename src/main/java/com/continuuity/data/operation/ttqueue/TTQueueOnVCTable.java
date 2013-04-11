@@ -562,10 +562,11 @@ public class TTQueueOnVCTable implements TTQueue {
         QueueEntry entry = QueueEntrySerializer.deserialize(headerPlusData.getValue());
         QueuePartitioner partitioner = config.getPartitionerType().getPartitioner();
         if (config.getPartitionerType() == QueuePartitioner.PartitionerType.HASH
-            && !partitioner.shouldEmit(consumer, entryPointer.getEntryId(),
+            && !partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), entryPointer.getEntryId(),
                                        entry.getHash(consumer.getPartitioningKey())) ||
           config.getPartitionerType() != QueuePartitioner.PartitionerType.HASH
-            && !partitioner.shouldEmit(consumer, entryPointer.getEntryId(), entry.getData())) {
+            && !partitioner.shouldEmit(
+            consumer.getGroupSize(), consumer.getInstanceId(), entryPointer.getEntryId(), entry.getData())) {
           // Partitioner says skip, flag as available, move to next entry in shard
 
           if (TRACE) log("Partitioner rejected this entry, skip");
@@ -1086,6 +1087,12 @@ public class TTQueueOnVCTable implements TTQueue {
       meta.groups[i++] = GroupState.fromBytes(entry.getValue());
     }
     return meta;
+  }
+
+  @Override
+  public int configure(QueueConfig config, long groupId, int newConsumerCount) throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return -1;
   }
 
   public String getInfo(int groupId) throws OperationException {

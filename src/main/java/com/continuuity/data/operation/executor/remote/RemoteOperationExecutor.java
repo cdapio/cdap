@@ -23,6 +23,7 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -424,6 +425,13 @@ public class RemoteOperationExecutor
     throws OperationException {
     // TODO implement this properly
     return execute(context, readColumnRange);
+  }
+
+  @Override
+  public void execute(OperationContext context, @Nullable Transaction transaction, QueueAdmin.QueueConfigure configure)
+    throws OperationException {
+    // TODO: implement this
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   @Override

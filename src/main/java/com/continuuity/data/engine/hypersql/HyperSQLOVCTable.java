@@ -1146,11 +1146,20 @@ implements OrderedVersionedColumnarTable {
       return map;
     }
 
+    boolean newRow = true;
+    byte [] lastRow = new byte[0];
+
     byte [] curCol = new byte [0];
     byte [] lastCol = new byte [0];
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
+      byte [] rowKey = result.getBytes(1);
+      if(!Bytes.equals(lastRow, rowKey)) {
+        newRow = true;
+        lastRow = rowKey;
+      }
+
       long curVersion = result.getLong(3);
       // Check if this entry is visible, skip if not
       if (!readPointer.isVisible(curVersion)) {
@@ -1158,11 +1167,11 @@ implements OrderedVersionedColumnarTable {
       }
       byte [] column = result.getBytes(2);
       // Check if this column has already been included in result, skip if so
-      if (Bytes.equals(lastCol, column)) {
+      if (!newRow && Bytes.equals(lastCol, column)) {
         continue;
       }
       // Check if this is a new column, reset delete pointers if so
-      if (!Bytes.equals(curCol, column)) {
+      if (newRow || !Bytes.equals(curCol, column)) {
         curCol = column;
         lastDelete = -1;
         undeleted = -1;
@@ -1192,7 +1201,6 @@ implements OrderedVersionedColumnarTable {
       }
       lastCol = column;
 
-      byte [] rowKey = result.getBytes(1);
       Map<byte[], byte[]> colMap = map.get(rowKey);
       if(colMap == null) {
         colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);

@@ -41,6 +41,12 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
+  public void configure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount)
+    throws OperationException {
+    getQueue(queueName).configure(config, groupId, newConsumerCount);
+  }
+
+  @Override
   public void clear() throws OperationException {
     table.clear();
   }
