@@ -740,7 +740,7 @@ implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
     throws OperationException {
-    throw new UnsupportedOperationException("dirty read is not yet supported");
+    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
   }
 
   @Override
