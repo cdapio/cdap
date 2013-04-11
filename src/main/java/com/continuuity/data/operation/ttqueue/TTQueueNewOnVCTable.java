@@ -48,8 +48,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   public static final String TTQUEUE_BATCH_SIZE_DEFAULT = "ttqueue.batch.size.default";
   public static final String TTQUEUE_EVICT_INTERVAL_SECS = "ttqueue.evict.interval.secs";
   public static final String TTQUEUE_MAX_CRASH_DEQUEUE_TRIES = "ttqueue.max.crash.dequeue.tries";
-
-  private final int MAX_CRASH_DEQUEUE_TRIES;
+  public static final String TTQUEUE_MAX_CONSUMER_COUNT = "ttqueue.max.consumer.count";
 
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
@@ -106,8 +105,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
-  final long DEFAULT_BATCH_SIZE;
-  final long EVICT_INTERVAL_IN_SECS;
+  private final long DEFAULT_BATCH_SIZE;
+  private final long EVICT_INTERVAL_IN_SECS;
+  private final int MAX_CRASH_DEQUEUE_TRIES;
+  private final int MAX_CONSUMER_COUNT;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
@@ -123,6 +124,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     final int maxCrashDequeueTries = conf.getInt(TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 15);
     this.MAX_CRASH_DEQUEUE_TRIES = maxCrashDequeueTries > 0 ? maxCrashDequeueTries : 15;
+
+    final int maxConsumerCount = conf.getInt(TTQUEUE_MAX_CONSUMER_COUNT, 1000);
+    this.MAX_CONSUMER_COUNT = maxConsumerCount > 0 ? maxConsumerCount : 1000;
   }
 
   private long getBatchSize(QueueConfig queueConfig) {
@@ -407,23 +411,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void configure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
+  public void configure(QueueConfig config, long groupId, int newConsumerCount)
     throws OperationException {
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
     if(LOG.isDebugEnabled()) {
       LOG.trace(getLogMessage(String.format(
-        "Running configure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
-        config, groupId, currentConsumerCount, newConsumerCount, readPointer)));
-    }
-
-    // Nothing to do if newConsumerCount == currentConsumerCount
-    if(currentConsumerCount == newConsumerCount) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format(
-         "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
-      }
-      return;
+        "Running configure with config=%s, groupId=%d, newConsumerCount=%d, readPointer= %s",
+        config, groupId, newConsumerCount, readPointer)));
     }
 
     if(newConsumerCount < 1) {
@@ -435,13 +430,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
     // Read queue state for all consumers
-    List<QueueConsumer> consumers = Lists.newArrayListWithCapacity(currentConsumerCount);
-    List<QueueStateImpl> queueStates = Lists.newArrayListWithCapacity(currentConsumerCount);
-    // TODO: read queue state without relying on currentConsumerCount, and then verify if they match
-    for(int i = 0; i < currentConsumerCount; ++i) {
-      // Note: the consumers created here do not contain QueueConsumer.partitioningKey
-      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, currentConsumerCount, config);
-      final QueueStateImpl queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
+    int currentConsumerCount = 0;
+    List<QueueConsumer> consumers = Lists.newArrayList();
+    List<QueueStateImpl> queueStates = Lists.newArrayList();
+    for(int i = 0; i < MAX_CONSUMER_COUNT; ++i) {
+      // Note: the consumers created here do not contain QueueConsumer.partitioningKey or QueueConsumer.groupSize
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
+      QueueStateImpl queueState = null;
+      try {
+        // TODO: read queue state in one call
+        queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
+      } catch(OperationException e) {
+        if(e.getStatus() != StatusCode.NOT_CONFIGURED) {
+          throw e;
+        }
+      }
+      if(queueState == null) {
+        break;
+      }
+
+      ++currentConsumerCount;
       // Verify there are no inflight entries
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
@@ -450,6 +458,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
       consumer.setQueueState(queueState);
       consumers.add(consumer);
       queueStates.add(queueState);
+    }
+
+    // Nothing to do if newConsumerCount == currentConsumerCount
+    if(currentConsumerCount == newConsumerCount) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format(
+          "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
+      }
+      return;
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
@@ -1745,17 +1762,20 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
       return constructQueueStateInternal(consumer, config, readPointer, false); // TODO: change to false
     }
 
     @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
       return constructQueueStateInternal(consumer, config, readPointer, true);
     }
 
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                              ReadPointer readPointer, boolean construct) throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
       readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
       readQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
       readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
@@ -1877,6 +1897,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                               ReadPointer readPointer, boolean construct) throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+
       // Read reconfig partition information
       readQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
 
@@ -2117,6 +2139,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                               ReadPointer readPointer, boolean construct) throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+
       // Read CLAIMED_ENTRY_LIST and store it in queueState
       readQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
 

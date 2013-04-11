@@ -54,6 +54,7 @@ import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +62,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -905,6 +907,18 @@ public class OmidTransactionalOperationExecutor
     return queueInfo == null ?
         new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND) :
         new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
+  }
+
+  //@Override
+  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure) throws OperationException
+  {
+    initialize();
+    requestMetric("QueueConfigure");
+    long begin = begin();
+    TTQueueTable table = getQueueTable(configure.getQueueName());
+    table.configure(configure.getQueueName(), configure.getConfig(), configure.getGroupId(),
+                    configure.getNewConsumerCount());
+    end("QueueConfigure", begin);
   }
 
   Transaction startTransaction() {

@@ -72,8 +72,7 @@ public interface TTQueue {
    */
   void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
-  void configure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
-    throws OperationException;
+  void configure(QueueConfig config, long groupId, int newConsumerCount) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.

@@ -223,7 +223,12 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
   }
 
-  // Private helpers
+  @Override
+  public void configure(QueueConfig config, long groupId, int newConsumerCount)
+    throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+  }
+// Private helpers
 
   public static boolean TRACE = false;
 

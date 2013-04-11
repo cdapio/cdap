@@ -762,7 +762,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
-    queue.configure(config, consumerGroupId, 0, numConsumers);
+    queue.configure(config, consumerGroupId, numConsumers);
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
@@ -799,7 +799,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
-    queue.configure(config, consumerGroupId, 0, numConsumers);
+    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
@@ -872,7 +872,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
     }
 
-    queue.configure(config, consumerGroupId, 0, numConsumers);
+    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
@@ -913,7 +913,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
-    queue.configure(config, consumerGroupId, 0, numConsumers);
+    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
@@ -1000,7 +1000,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
     }
 
-    queue.configure(config, consumerGroupId, 0, numConsumers);
+    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeueFifoEntries(queue, statefulQueueConsumers, numConsumers, numQueueEntries, 0);
@@ -1080,7 +1080,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
 
-    queue.configure(config, groupId, 0, 1);
+    queue.configure(config, groupId, 1);
 
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
@@ -1118,13 +1118,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.FIFO;
 
-    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
   }
 
   @Test
@@ -1138,13 +1138,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.ROUND_ROBIN;
 
-    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
   }
 
   @Test
@@ -1158,13 +1158,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.HASH;
 
-    testReconfig(Lists.newArrayList(0, 3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(0, 1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
+    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
   }
 
   private static final String HASH_KEY = "HashKey";
@@ -1196,14 +1196,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConfig config = new QueueConfig(partitionerType, true, queueBatchSize);
     long groupId = queue.getGroupID();
 
-    int currentConsumerCount = consumerCounts.remove(0);
-
     loop:
     while(true) {
       for(Integer newConsumerCount : consumerCounts) {
 //        System.out.println(String.format("Current consumer count = %d, new consumer count = %s",
 //                                         currentConsumerCount, newConsumerCount));
-        queue.configure(config, groupId, currentConsumerCount, newConsumerCount);
+        queue.configure(config, groupId, newConsumerCount);
         // Create new consumers
         consumers = Lists.newArrayListWithCapacity(newConsumerCount);
         for(int i = 0; i < newConsumerCount; ++i) {
@@ -1239,7 +1237,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         sortedActualEntries = Lists.newArrayList(actualEntries);
         Collections.sort(sortedActualEntries);
 //        System.out.println(sortedActualEntries);
-        currentConsumerCount = newConsumerCount;
 
         // If all consumers report queue empty then stop
         if(numDequeuesThisRun == 0) {
