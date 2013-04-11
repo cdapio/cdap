@@ -406,8 +406,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
 
-  public void reconfigure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount,
-                          ReadPointer readPointer) throws OperationException {
+  @Override
+  public void reconfigure(QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount)
+    throws OperationException {
+    ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+
     if(LOG.isDebugEnabled()) {
       LOG.trace(getLogMessage(String.format(
         "Running reconfigure with config=%s, groupId=%d, currentConsumerCount=%d, newConsumerCount=%d, readPointer= %s",
@@ -438,7 +441,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     for(int i = 0; i < currentConsumerCount; ++i) {
       // Note: the consumers created here do not contain QueueConsumer.partitioningKey
       StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, currentConsumerCount, config);
-      final QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
+      final QueueStateImpl queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
       // Verify there are no inflight entries
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
@@ -729,7 +732,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState;
     // If QueueState is null, read the queue state from underlying storage.
     if(consumer.getQueueState() == null) {
-      queueState = dequeueStrategy.constructQueueState(consumer, consumer.getQueueConfig(), readPointer);
+      queueState = dequeueStrategy.readQueueState(consumer, consumer.getQueueConfig(), readPointer);
     } else {
       if(! (consumer.getQueueState() instanceof QueueStateImpl)) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
@@ -1666,6 +1669,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       throws OperationException{
       final byte[][] colNamesByteArray = new byte[columnNames.size()][];
       readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), TransactionOracle.DIRTY_READ_POINTER);
+      clearParameters();
     }
 
     public OperationResult<Map<byte[], byte[]>> getReadResult() {
@@ -1678,12 +1682,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final byte[][] colValuesByteArray = new byte[columnValues.size()][];
       table.put(rowKey, columnNames.toArray(colNamesByteArray),
                 TransactionOracle.DIRTY_WRITE_VERSION, columnValues.toArray(colValuesByteArray));
+      clearParameters();
+    }
+
+    public void clearParameters() {
+      rowKey = null;
+      columnNames.clear();
+      columnValues.clear();
     }
   }
 
   interface DequeueStrategy {
-    QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
-                               ReadPointer readPointer) throws OperationException;
+    QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException;
+    QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException;
     List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
@@ -1733,8 +1746,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException {
+      return constructQueueStateInternal(consumer, config, readPointer, true); // TODO: change to false
+    }
+
+    @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-                                                       throws OperationException {
+      throws OperationException {
+      return constructQueueStateInternal(consumer, config, readPointer, true);
+    }
+
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                             ReadPointer readPointer, boolean construct) throws OperationException {
       readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
       readQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
       readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
@@ -1742,6 +1766,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       readQueueStateStore.read();
 
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
+      byte[] lastEvictTimeInSecsBytes = null;
+      byte[] consumerReadPointerBytes = null;
+
       QueueStateImpl queueState = new QueueStateImpl();
       if(!stateBytes.isEmpty()) {
         // Read active entry
@@ -1756,16 +1783,21 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
 
         // Read consumer read pointer
-        byte[] consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
+        consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
         if(consumerReadPointerBytes != null) {
           queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
         }
 
         // Note: last evict time is read while constructing state, but it is only saved after finalize
-        byte[] lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
+        lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
         if(lastEvictTimeInSecsBytes != null) {
           queueState.setLastEvictTimeInSecs(Bytes.toLong(lastEvictTimeInSecsBytes));
         }
+      }
+
+      if(!construct && (stateBytes.isEmpty() || consumerReadPointerBytes == null || lastEvictTimeInSecsBytes == null)) {
+        throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
+          "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
       }
 
       // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
@@ -1846,11 +1878,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
-    public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                              ReadPointer readPointer, boolean construct) throws OperationException {
       // Read reconfig partition information
       readQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
 
-      QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
         try {
@@ -1919,6 +1952,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return;
       }
 
+      DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
       for(int j = 0; j < newConsumerCount; ++j) {
         QueueConsumer consumer;
         QueueStateImpl queueState;
@@ -1929,7 +1964,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         } else {
           // Note: the consumer created here does not contain QueueConsumer.partitioningKey
           consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
-          queueState = new QueueStateImpl();
+          queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
         }
         // Modify queue state for active consumers
@@ -2091,12 +2126,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
    */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
-    public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
-                                              ReadPointer readPointer) throws OperationException {
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                              ReadPointer readPointer, boolean construct) throws OperationException {
       // Read CLAIMED_ENTRY_LIST and store it in queueState
       readQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
 
-      QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
         ClaimedEntryList claimedEntryList;
@@ -2244,7 +2279,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
                             final long groupId, final int currentConsumerCount, final int newConsumerCount,
                             ReadPointer readPointer) throws OperationException {
       if(newConsumerCount >= currentConsumerCount) {
-        // TODO: noting to be done?
+        DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+        for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
+          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
+          QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
+          consumer.setQueueState(queueState);
+          // TODO: save queue states for all consumers in a single call
+          saveDequeueState(consumer, config, queueState, readPointer);
+        }
         return;
       }
 
@@ -2277,7 +2319,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Save dequeue state of consumers that won't be removed
       for(int i = 0; i < newConsumerCount; ++i) {
         // TODO: save queue states for all consumers in a single call
-        saveDequeueState(consumers.get(i), consumers.get(i).getQueueConfig(), queueStates.get(i), readPointer);
+        saveDequeueState(consumers.get(i), config, queueStates.get(i), readPointer);
       }
 
       // Delete the state of removed consumers
