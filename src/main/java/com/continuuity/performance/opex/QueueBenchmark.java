@@ -5,6 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -98,9 +99,10 @@ public class QueueBenchmark extends OpexBenchmark {
     return 1L;
   }
 
+  QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, numPendingAcks == 0);
+
   long doDequeue(int consumerId) throws BenchmarkException {
     // create a dequeue operation
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, numPendingAcks == 0);
     QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, config);
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
@@ -149,7 +151,11 @@ public class QueueBenchmark extends OpexBenchmark {
   @Override
   public void initialize() throws BenchmarkException {
     super.initialize();
-
+    try {
+      opex.execute(opContext, null, new QueueAdmin.QueueConfigure(queueBytes, config, 0, numConsumers));
+    } catch (OperationException e) {
+      throw new BenchmarkException("Exception while configuring queue", e);
+    }
   }
 
   @Override
