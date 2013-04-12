@@ -544,10 +544,10 @@ public abstract class OperationExecutorServiceTest extends
     QueueConfig conf2 = new QueueConfig(PartitionerType.FIFO, true, 1);
 
     // create 2 consumers for each groupId
-    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "", HASH_KEY, conf1, false);
-    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "", HASH_KEY, conf1, false);
-    QueueConsumer cons21 = new QueueConsumer(0, id2, 2, conf2);
-    QueueConsumer cons22 = new QueueConsumer(1, id2, 2, conf2);
+    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "group1", HASH_KEY, conf1, false);
+    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "group1", HASH_KEY, conf1, false);
+    QueueConsumer cons21 = new QueueConsumer(0, id2, 2, "group2", conf2);
+    QueueConsumer cons22 = new QueueConsumer(1, id2, 2, "group2", conf2);
 
     // configure queues
     remote.execute(context, null, new QueueAdmin.QueueConfigure(q, conf1, id1, 2));

@@ -149,6 +149,7 @@ struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
   3: optional TQueueEntry entry,
+  4: optional TQueueConsumer consumer,
 }
 
 struct TGetGroupId {

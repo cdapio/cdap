@@ -185,7 +185,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
   }
 
   public TQueueEntryPointer setQueueName(byte[] queueName) {
-    setQueueName(queueName == null ? (ByteBuffer) null : ByteBuffer.wrap(queueName));
+    setQueueName(queueName == null ? (ByteBuffer)null : ByteBuffer.wrap(queueName));
     return this;
   }
 
@@ -292,7 +292,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (value == null) {
         unsetEntryId();
       } else {
-        setEntryId((Long) value);
+        setEntryId((Long)value);
       }
       break;
 
@@ -300,7 +300,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (value == null) {
         unsetShardId();
       } else {
-        setShardId((Long) value);
+        setShardId((Long)value);
       }
       break;
 
@@ -308,7 +308,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (value == null) {
         unsetTries();
       } else {
-        setTries((Integer) value);
+        setTries((Integer)value);
       }
       break;
 

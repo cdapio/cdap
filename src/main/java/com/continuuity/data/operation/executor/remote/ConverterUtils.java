@@ -785,7 +785,7 @@ public class ConverterUtils {
    * wrap a dequeue result.
    * If the status is unknown, return failure status and appropriate message.
    */
-  TDequeueResult wrap(DequeueResult result) throws TOperationException {
+  TDequeueResult wrap(DequeueResult result, QueueConsumer consumer) throws TOperationException {
     TDequeueStatus status;
     if (DequeueResult.DequeueStatus.EMPTY.equals(result.getStatus()))
       status = TDequeueStatus.EMPTY;
@@ -805,14 +805,23 @@ public class ConverterUtils {
       TQueueEntry tQueueEntry=wrap(entry);
       tQueueResult.setEntry(tQueueEntry);
     }
+    if(consumer != null) {
+      tQueueResult.setConsumer(wrap(consumer));
+    }
     return tQueueResult;
   }
   /**
    * unwrap a dequeue result
    * If the status is unknown, return failure status and appropriate message.
    */
-  DequeueResult unwrap(TDequeueResult tDequeueResult)
-      throws OperationException {
+  DequeueResult unwrap(TDequeueResult tDequeueResult, QueueConsumer consumer)
+      throws OperationException, TOperationException {
+    if(tDequeueResult.getConsumer() != null) {
+      QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
+      if(retConsumer != null) {
+        consumer.setQueueState(retConsumer.getQueueState());
+      }
+    }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
           unwrap(tDequeueResult.getPointer()),
@@ -843,6 +852,9 @@ public class ConverterUtils {
                           wrap(configure.getConfig()),
                           configure.getGroupId(),
                           configure.getNewConsumerCount());
+    if (configure.getMetricName() != null) {
+      tQueueConfigure.setMetric(configure.getMetricName());
+    }
     return tQueueConfigure;
   }
 
@@ -855,6 +867,9 @@ public class ConverterUtils {
                                     unwrap(tQueueConfigure.getConfig()),
                                     tQueueConfigure.getGroupId(),
                                     tQueueConfigure.getNewConsumerCount());
+    if (queueConfigure.getMetricName() != null) {
+      tQueueConfigure.setMetric(queueConfigure.getMetricName());
+    }
     return queueConfigure;
   }
 

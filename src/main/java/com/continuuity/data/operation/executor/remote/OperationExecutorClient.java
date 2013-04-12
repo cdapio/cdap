@@ -180,7 +180,7 @@ public class OperationExecutorClient extends ConverterUtils {
       if (Log.isTraceEnabled()) Log.trace("Sending " + tDequeue);
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
       if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
-      DequeueResult dequeueResult = unwrap(tDequeueResult);
+      DequeueResult dequeueResult = unwrap(tDequeueResult, dequeue.getConsumer());
 
       helper.finish(dequeueResult.isEmpty() ? NoData : Success);
 

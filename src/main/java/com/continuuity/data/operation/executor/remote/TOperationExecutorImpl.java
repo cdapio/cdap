@@ -267,7 +267,7 @@ public class TOperationExecutorImpl
         Log.trace("DequeuePayload successful with status {}",
                   result.getStatus().name());
       }
-      TDequeueResult tResult = wrap(result);
+      TDequeueResult tResult = wrap(result, queueDequeue.getConsumer());
 
       helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;

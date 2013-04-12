@@ -8,6 +8,7 @@ import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -604,6 +605,57 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       TTQueueNewOnVCTable.ClaimedEntry.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
 
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testQueueStateImplEncode() throws Exception {
+    TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
+    List<DequeueEntry> dequeueEntryList = Lists.newArrayList(new DequeueEntry(2, 1), new DequeueEntry(3, 0));
+    Map<Long, byte[]> cachedEntries = ImmutableMap.of(2L, new byte[]{1, 2}, 3L, new byte[]{4, 5});
+
+    TransientWorkingSet transientWorkingSet = new TransientWorkingSet(dequeueEntryList, 2, cachedEntries);
+    queueState.setTransientWorkingSet(transientWorkingSet);
+
+    DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet(Sets.newTreeSet(dequeueEntryList));
+    queueState.setDequeueEntrySet(dequeuedEntrySet);
+
+    long consumerReadPointer = 3L;
+    queueState.setConsumerReadPointer(consumerReadPointer);
+
+    long queueWritePointer = 6L;
+    queueState.setQueueWritePointer(queueWritePointer);
+
+    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList(
+      new TTQueueNewOnVCTable.ClaimedEntry(4L, 6L),
+      Lists.newArrayList(new TTQueueNewOnVCTable.ClaimedEntry(7L, 8L), new TTQueueNewOnVCTable.ClaimedEntry(10L, 20L)));
+    queueState.setClaimedEntryList(claimedEntryList);
+
+    long lastEvictTimeInSecs = 124325342L;
+    queueState.setLastEvictTimeInSecs(lastEvictTimeInSecs);
+
+    verifyQueueStateImplEncode(queueState, transientWorkingSet, dequeuedEntrySet, consumerReadPointer,
+                               queueWritePointer, claimedEntryList, lastEvictTimeInSecs);
+  }
+
+  private void verifyQueueStateImplEncode(TTQueueNewOnVCTable.QueueStateImpl queueState,
+                                          TransientWorkingSet transientWorkingSet, DequeuedEntrySet dequeuedEntrySet,
+                                          long consumerReadPointer, long queueWritePointer,
+                                          TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList,
+                                          long lastEvictTimeInSecs) throws Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    queueState.encodeTransient(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    TTQueueNewOnVCTable.QueueStateImpl actual =
+      TTQueueNewOnVCTable.QueueStateImpl.decodeTransient(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+
+    // QueueStateImpl does not override equals and hashcode methods
+    assertEquals(transientWorkingSet, actual.getTransientWorkingSet());
+    assertEquals(dequeuedEntrySet, actual.getDequeueEntrySet());
+    assertEquals(consumerReadPointer, actual.getConsumerReadPointer());
+    assertEquals(queueWritePointer, actual.getQueueWritePointer());
+    assertEquals(claimedEntryList, actual.getClaimedEntryList());
+    assertEquals(lastEvictTimeInSecs, actual.getLastEvictTimeInSecs());
   }
 
 /*  @Override

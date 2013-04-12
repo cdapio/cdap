@@ -877,6 +877,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.entrySet = new TreeSet<DequeueEntry>();
     }
 
+    DequeuedEntrySet(SortedSet<DequeueEntry> entrySet) {
+      this.entrySet = entrySet;
+    }
+
     public DequeueEntry min() {
       return entrySet.first();
     }
@@ -960,6 +964,23 @@ public class TTQueueNewOnVCTable implements TTQueue {
         size = decoder.readInt();
       }
       return dequeuedEntrySet;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DequeuedEntrySet that = (DequeuedEntrySet) o;
+
+      if (entrySet != null ? !entrySet.equals(that.entrySet) : that.entrySet != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return entrySet != null ? entrySet.hashCode() : 0;
     }
   }
 
@@ -1064,9 +1085,63 @@ public class TTQueueNewOnVCTable implements TTQueue {
       int mapSize = decoder.readInt();
       Map<Long, byte[]> cachedEntries = Maps.newHashMapWithExpectedSize(mapSize);
       while(mapSize > 0) {
-        cachedEntries.put(decoder.readLong(), decoder.readBytes().array());
+        for(int i= 0; i < mapSize; ++i) {
+          cachedEntries.put(decoder.readLong(), decoder.readBytes().array());
+        }
+        mapSize = decoder.readInt();
       }
       return new TransientWorkingSet(entries, curPtr, cachedEntries);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TransientWorkingSet that = (TransientWorkingSet) o;
+
+      if (curPtr != that.curPtr) {
+        return false;
+      }
+      if (cachedEntries != null ?
+        !cachedEntriesEquals(cachedEntries, that.cachedEntries) :
+        that.cachedEntries != null) {
+        return false;
+      }
+      if (entryList != null ? !entryList.equals(that.entryList) : that.entryList != null) {
+        return false;
+      }
+
+      return true;
+    }
+
+    private static boolean cachedEntriesEquals(Map<Long, byte[]> cachedEntries1, Map<Long, byte[]> cachedEntries2) {
+      if(cachedEntries1.size() != cachedEntries2.size()) {
+        return false;
+      }
+      for(Map.Entry<Long, byte[]> entry : cachedEntries1.entrySet()) {
+        byte[] bytes2 = cachedEntries2.get(entry.getKey());
+        if(entry.getValue() == null || bytes2 == null) {
+          if(entry.getValue() != bytes2) {
+            return false;
+          } else {
+            if(!Bytes.equals(entry.getValue(), bytes2)) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = entryList != null ? entryList.hashCode() : 0;
+      result = 31 * result + curPtr;
+      result = 31 * result + (cachedEntries != null ? cachedEntries.hashCode() : 0);
+      return result;
     }
   }
 
@@ -1415,7 +1490,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.otherClaimedEntries = Collections.EMPTY_LIST;
     }
 
-    private ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
+    public ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
       this.current = claimedEntry;
       this.otherClaimedEntries = otherClaimedEntries;
     }
@@ -1622,6 +1697,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   public static class QueueStateImpl implements QueueState {
+    // Note: QueueStateImpl does not override equals and hashcode,
+    // since in some cases we would want to include transient state in comparison and in some other cases not.
+
     private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
@@ -1866,6 +1944,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                              ReadPointer readPointer, boolean construct) throws OperationException {
+      // TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
       // Note: 1. QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
 
       // Note: 2. We define a deleted cell as no bytes or no zero length bytes.
