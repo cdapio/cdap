@@ -41,7 +41,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private static final int MAX_CRASH_DEQUEUE_TRIES = 10;
 
   protected void updateCConfiguration(CConfiguration conf) {
-    conf.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, 0); // Setting evict interval to be zero seconds for testing, so that evictions can be asserted immediately in tests.
+    // Setting evict interval to be high -ve number of seconds for testing,
+    // so that evictions can be asserted immediately in tests.
+    conf.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, Long.MIN_VALUE);
     conf.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, MAX_CRASH_DEQUEUE_TRIES);
   }
 
