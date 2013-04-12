@@ -11,6 +11,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
+import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -62,6 +63,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] GLOBAL_EVICT_META_PREFIX = {30, 'M'};   //row <queueName>30M
   // Row prefix for columns containing consumer specific information
   static final byte [] CONSUMER_META_PREFIX = {40, 'C'}; //row <queueName>40C
+  // Row prefix for columns that don't affect the operation of queue, i.e. groupId generation
+  static final byte [] GLOBAL_GENERIC_PREFIX = {50, 'G'}; //row <queueName>50G
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
   // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
@@ -735,13 +738,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public long getGroupID() throws OperationException {
     // TODO: implement this :)
-    return groupId++;
+    return this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
   }
 
   @Override
   public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
     // TODO: implement this :)
-    return null;
+    return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
   }
 
   private QueueStateImpl getQueueState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
@@ -985,6 +988,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.cachedEntries = cachedEntries;
     }
 
+    public TransientWorkingSet(List<DequeueEntry> entryList, int curPtr, Map<Long, byte[]> cachedEntries) {
+      this.entryList = entryList;
+      this.curPtr = curPtr;
+      this.cachedEntries = cachedEntries;
+    }
+
     public boolean hasNext() {
       return curPtr + 1 < entryList.size();
     }
@@ -1016,6 +1025,48 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("curPtr", curPtr)
         .add("cachedEntries", cachedEntries)
         .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      if(!entryList.isEmpty()) {
+        encoder.writeInt(entryList.size());
+        for(DequeueEntry entry : entryList) {
+          entry.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+
+      encoder.writeLong(curPtr);
+
+      if(!cachedEntries.isEmpty()) {
+        encoder.writeInt(cachedEntries.size());
+        for(Map.Entry<Long, byte[]> entry : cachedEntries.entrySet()) {
+          encoder.writeLong(entry.getKey());
+          encoder.writeBytes(entry.getValue());
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of map as per AVRO spec
+    }
+
+    public static TransientWorkingSet decode(Decoder decoder) throws IOException {
+      int size = decoder.readInt();
+      // TODO: return empty set if size == 0
+      List<DequeueEntry> entries = Lists.newArrayListWithExpectedSize(size);
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          entries.add(DequeueEntry.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+
+      int curPtr = decoder.readInt();
+
+      int mapSize = decoder.readInt();
+      Map<Long, byte[]> cachedEntries = Maps.newHashMapWithExpectedSize(mapSize);
+      while(mapSize > 0) {
+        cachedEntries.put(decoder.readLong(), decoder.readBytes().array());
+      }
+      return new TransientWorkingSet(entries, curPtr, cachedEntries);
     }
   }
 
@@ -1652,6 +1703,38 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
         .add("reconfigPartitionersList", reconfigPartitionersList)
         .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: write and read schema
+      dequeueEntrySet.encode(encoder);
+      encoder.writeLong(consumerReadPointer);
+      claimedEntryList.encode(encoder);
+      encoder.writeLong(queueWritePointer);
+      encoder.writeLong(lastEvictTimeInSecs);
+      reconfigPartitionersList.encode(encoder);
+    }
+
+    public void encodeTransient(Encoder encoder) throws IOException {
+      encode(encoder);
+      transientWorkingSet.encode(encoder);
+    }
+
+    public static QueueStateImpl decode(Decoder decoder) throws IOException {
+      QueueStateImpl queueState = new QueueStateImpl();
+      queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
+      queueState.setConsumerReadPointer(decoder.readLong());
+      queueState.setClaimedEntryList(ClaimedEntryList.decode(decoder));
+      queueState.setQueueWritePointer(decoder.readLong());
+      queueState.setLastEvictTimeInSecs(decoder.readLong());
+      queueState.setReconfigPartitionersList(ReconfigPartitionersList.decode(decoder));
+      return queueState;
+    }
+
+    public static QueueStateImpl decodeTransient(Decoder decoder) throws IOException {
+      QueueStateImpl queueState = QueueStateImpl.decode(decoder);
+      queueState.setTransientWorkingSet(TransientWorkingSet.decode(decoder));
+      return queueState;
     }
   }
 

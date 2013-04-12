@@ -428,10 +428,17 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(OperationContext context, @Nullable Transaction transaction, QueueAdmin.QueueConfigure configure)
-    throws OperationException {
-    // TODO: implement this
-    throw new UnsupportedOperationException("Not yet implemented");
+  public void execute(final OperationContext context, @Nullable Transaction transaction,
+                      final QueueAdmin.QueueConfigure configure) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("QueueConfigure") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.execute(context, configure);
+          return true;
+        }
+      });
   }
 
   @Override

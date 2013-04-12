@@ -24,6 +24,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigure;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
@@ -33,7 +34,6 @@ import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -362,6 +362,33 @@ public class TOperationExecutorImpl
     } catch (OperationException e) {
       helper.failure();
       Log.warn("Clear failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      throw wrap(e);
+    }
+  }
+
+  // configureQueue is safe as it returns nothing
+
+  @Override
+  public void configureQueue(TOperationContext tcontext,
+                             TQueueConfigure tQueueConfigure)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("configure", tQueueConfigure.getQueueName());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueConfigure: " + tQueueConfigure);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      QueueAdmin.QueueConfigure queueConfigure = unwrap(tQueueConfigure);
+      this.opex.execute(context, null, queueConfigure);
+      if (Log.isTraceEnabled()) Log.trace("Queue configure successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      helper.failure();
+      Log.warn("Queue configure failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
