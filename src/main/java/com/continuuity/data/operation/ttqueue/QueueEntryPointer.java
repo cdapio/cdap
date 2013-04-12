@@ -35,6 +35,13 @@ public class QueueEntryPointer {
     this.tries = tries;
   }
 
+  public QueueEntryPointer(byte[] queueName, long entryId, long shardId, int tries) {
+    this.queueName = queueName;
+    this.entryId = entryId;
+    this.shardId = shardId;
+    this.tries = tries;
+  }
+
   public byte [] getQueueName() {
     return this.queueName;
   }

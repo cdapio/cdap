@@ -6,26 +6,19 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPointer, TQueueEntryPointer._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueEntryPointer");
@@ -33,6 +26,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField ENTRY_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("entryId", org.apache.thrift.protocol.TType.I64, (short)2);
   private static final org.apache.thrift.protocol.TField SHARD_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("shardId", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField TRIES_FIELD_DESC = new org.apache.thrift.protocol.TField("tries", org.apache.thrift.protocol.TType.I32, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +37,14 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
   public ByteBuffer queueName; // required
   public long entryId; // required
   public long shardId; // required
+  public int tries; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
     ENTRY_ID((short)2, "entryId"),
-    SHARD_ID((short)3, "shardId");
+    SHARD_ID((short)3, "shardId"),
+    TRIES((short)4, "tries");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -69,6 +65,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
           return ENTRY_ID;
         case 3: // SHARD_ID
           return SHARD_ID;
+        case 4: // TRIES
+          return TRIES;
         default:
           return null;
       }
@@ -111,7 +109,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
   // isset id assignments
   private static final int __ENTRYID_ISSET_ID = 0;
   private static final int __SHARDID_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
+  private static final int __TRIES_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -121,6 +120,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.SHARD_ID, new org.apache.thrift.meta_data.FieldMetaData("shardId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.TRIES, new org.apache.thrift.meta_data.FieldMetaData("tries", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueEntryPointer.class, metaDataMap);
   }
@@ -131,7 +132,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
   public TQueueEntryPointer(
     ByteBuffer queueName,
     long entryId,
-    long shardId)
+    long shardId,
+    int tries)
   {
     this();
     this.queueName = queueName;
@@ -139,6 +141,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
     setEntryIdIsSet(true);
     this.shardId = shardId;
     setShardIdIsSet(true);
+    this.tries = tries;
+    setTriesIsSet(true);
   }
 
   /**
@@ -153,6 +157,7 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
     }
     this.entryId = other.entryId;
     this.shardId = other.shardId;
+    this.tries = other.tries;
   }
 
   public TQueueEntryPointer deepCopy() {
@@ -166,6 +171,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
     this.entryId = 0;
     setShardIdIsSet(false);
     this.shardId = 0;
+    setTriesIsSet(false);
+    this.tries = 0;
   }
 
   public byte[] getQueueName() {
@@ -248,6 +255,29 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
     __isset_bit_vector.set(__SHARDID_ISSET_ID, value);
   }
 
+  public int getTries() {
+    return this.tries;
+  }
+
+  public TQueueEntryPointer setTries(int tries) {
+    this.tries = tries;
+    setTriesIsSet(true);
+    return this;
+  }
+
+  public void unsetTries() {
+    __isset_bit_vector.clear(__TRIES_ISSET_ID);
+  }
+
+  /** Returns true if field tries is set (has been assigned a value) and false otherwise */
+  public boolean isSetTries() {
+    return __isset_bit_vector.get(__TRIES_ISSET_ID);
+  }
+
+  public void setTriesIsSet(boolean value) {
+    __isset_bit_vector.set(__TRIES_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -274,6 +304,14 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       }
       break;
 
+    case TRIES:
+      if (value == null) {
+        unsetTries();
+      } else {
+        setTries((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -287,6 +325,9 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
 
     case SHARD_ID:
       return Long.valueOf(getShardId());
+
+    case TRIES:
+      return Integer.valueOf(getTries());
 
     }
     throw new IllegalStateException();
@@ -305,6 +346,8 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       return isSetEntryId();
     case SHARD_ID:
       return isSetShardId();
+    case TRIES:
+      return isSetTries();
     }
     throw new IllegalStateException();
   }
@@ -346,6 +389,15 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (!(this_present_shardId && that_present_shardId))
         return false;
       if (this.shardId != that.shardId)
+        return false;
+    }
+
+    boolean this_present_tries = true;
+    boolean that_present_tries = true;
+    if (this_present_tries || that_present_tries) {
+      if (!(this_present_tries && that_present_tries))
+        return false;
+      if (this.tries != that.tries)
         return false;
     }
 
@@ -395,6 +447,16 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetTries()).compareTo(typedOther.isSetTries());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTries()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.tries, typedOther.tries);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -429,6 +491,10 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
     if (!first) sb.append(", ");
     sb.append("shardId:");
     sb.append(this.shardId);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("tries:");
+    sb.append(this.tries);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -498,6 +564,14 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // TRIES
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.tries = iprot.readI32();
+              struct.setTriesIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -523,6 +597,9 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       oprot.writeFieldEnd();
       oprot.writeFieldBegin(SHARD_ID_FIELD_DESC);
       oprot.writeI64(struct.shardId);
+      oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TRIES_FIELD_DESC);
+      oprot.writeI32(struct.tries);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -551,7 +628,10 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (struct.isSetShardId()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetTries()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
@@ -561,12 +641,15 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (struct.isSetShardId()) {
         oprot.writeI64(struct.shardId);
       }
+      if (struct.isSetTries()) {
+        oprot.writeI32(struct.tries);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueEntryPointer struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
@@ -578,6 +661,10 @@ public class TQueueEntryPointer implements org.apache.thrift.TBase<TQueueEntryPo
       if (incoming.get(2)) {
         struct.shardId = iprot.readI64();
         struct.setShardIdIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.tries = iprot.readI32();
+        struct.setTriesIsSet(true);
       }
     }
   }

@@ -6,32 +6,25 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
+
 import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueueConfig._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueConfig");
 
   private static final org.apache.thrift.protocol.TField PARTITIONER_FIELD_DESC = new org.apache.thrift.protocol.TField("partitioner", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField SINGLE_ENTRY_FIELD_DESC = new org.apache.thrift.protocol.TField("singleEntry", org.apache.thrift.protocol.TType.BOOL, (short)2);
+  private static final org.apache.thrift.protocol.TField BATCH_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("batchSize", org.apache.thrift.protocol.TType.I32, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -45,6 +38,7 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
    */
   public TQueuePartitioner partitioner; // required
   public boolean singleEntry; // required
+  public int batchSize; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -53,7 +47,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
      * @see TQueuePartitioner
      */
     PARTITIONER((short)1, "partitioner"),
-    SINGLE_ENTRY((short)2, "singleEntry");
+    SINGLE_ENTRY((short)2, "singleEntry"),
+    BATCH_SIZE((short)3, "batchSize");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -72,6 +67,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
           return PARTITIONER;
         case 2: // SINGLE_ENTRY
           return SINGLE_ENTRY;
+        case 3: // BATCH_SIZE
+          return BATCH_SIZE;
         default:
           return null;
       }
@@ -113,7 +110,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
 
   // isset id assignments
   private static final int __SINGLEENTRY_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private static final int __BATCHSIZE_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -121,6 +119,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TQueuePartitioner.class)));
     tmpMap.put(_Fields.SINGLE_ENTRY, new org.apache.thrift.meta_data.FieldMetaData("singleEntry", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.BATCH_SIZE, new org.apache.thrift.meta_data.FieldMetaData("batchSize", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueConfig.class, metaDataMap);
   }
@@ -130,12 +130,15 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
 
   public TQueueConfig(
     TQueuePartitioner partitioner,
-    boolean singleEntry)
+    boolean singleEntry,
+    int batchSize)
   {
     this();
     this.partitioner = partitioner;
     this.singleEntry = singleEntry;
     setSingleEntryIsSet(true);
+    this.batchSize = batchSize;
+    setBatchSizeIsSet(true);
   }
 
   /**
@@ -148,6 +151,7 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       this.partitioner = other.partitioner;
     }
     this.singleEntry = other.singleEntry;
+    this.batchSize = other.batchSize;
   }
 
   public TQueueConfig deepCopy() {
@@ -159,6 +163,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
     this.partitioner = null;
     setSingleEntryIsSet(false);
     this.singleEntry = false;
+    setBatchSizeIsSet(false);
+    this.batchSize = 0;
   }
 
   /**
@@ -216,6 +222,29 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
     __isset_bit_vector.set(__SINGLEENTRY_ISSET_ID, value);
   }
 
+  public int getBatchSize() {
+    return this.batchSize;
+  }
+
+  public TQueueConfig setBatchSize(int batchSize) {
+    this.batchSize = batchSize;
+    setBatchSizeIsSet(true);
+    return this;
+  }
+
+  public void unsetBatchSize() {
+    __isset_bit_vector.clear(__BATCHSIZE_ISSET_ID);
+  }
+
+  /** Returns true if field batchSize is set (has been assigned a value) and false otherwise */
+  public boolean isSetBatchSize() {
+    return __isset_bit_vector.get(__BATCHSIZE_ISSET_ID);
+  }
+
+  public void setBatchSizeIsSet(boolean value) {
+    __isset_bit_vector.set(__BATCHSIZE_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case PARTITIONER:
@@ -234,6 +263,14 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       }
       break;
 
+    case BATCH_SIZE:
+      if (value == null) {
+        unsetBatchSize();
+      } else {
+        setBatchSize((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -244,6 +281,9 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
 
     case SINGLE_ENTRY:
       return Boolean.valueOf(isSingleEntry());
+
+    case BATCH_SIZE:
+      return Integer.valueOf(getBatchSize());
 
     }
     throw new IllegalStateException();
@@ -260,6 +300,8 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       return isSetPartitioner();
     case SINGLE_ENTRY:
       return isSetSingleEntry();
+    case BATCH_SIZE:
+      return isSetBatchSize();
     }
     throw new IllegalStateException();
   }
@@ -292,6 +334,15 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       if (!(this_present_singleEntry && that_present_singleEntry))
         return false;
       if (this.singleEntry != that.singleEntry)
+        return false;
+    }
+
+    boolean this_present_batchSize = true;
+    boolean that_present_batchSize = true;
+    if (this_present_batchSize || that_present_batchSize) {
+      if (!(this_present_batchSize && that_present_batchSize))
+        return false;
+      if (this.batchSize != that.batchSize)
         return false;
     }
 
@@ -331,6 +382,16 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetBatchSize()).compareTo(typedOther.isSetBatchSize());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetBatchSize()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.batchSize, typedOther.batchSize);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -361,6 +422,10 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
     if (!first) sb.append(", ");
     sb.append("singleEntry:");
     sb.append(this.singleEntry);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("batchSize:");
+    sb.append(this.batchSize);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -422,6 +487,14 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 3: // BATCH_SIZE
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.batchSize = iprot.readI32();
+              struct.setBatchSizeIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -444,6 +517,9 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       }
       oprot.writeFieldBegin(SINGLE_ENTRY_FIELD_DESC);
       oprot.writeBool(struct.singleEntry);
+      oprot.writeFieldEnd();
+      oprot.writeFieldBegin(BATCH_SIZE_FIELD_DESC);
+      oprot.writeI32(struct.batchSize);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -469,19 +545,25 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       if (struct.isSetSingleEntry()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetBatchSize()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetPartitioner()) {
         oprot.writeI32(struct.partitioner.getValue());
       }
       if (struct.isSetSingleEntry()) {
         oprot.writeBool(struct.singleEntry);
       }
+      if (struct.isSetBatchSize()) {
+        oprot.writeI32(struct.batchSize);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueConfig struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.partitioner = TQueuePartitioner.findByValue(iprot.readI32());
         struct.setPartitionerIsSet(true);
@@ -489,6 +571,10 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       if (incoming.get(1)) {
         struct.singleEntry = iprot.readBool();
         struct.setSingleEntryIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.batchSize = iprot.readI32();
+        struct.setBatchSizeIsSet(true);
       }
     }
   }

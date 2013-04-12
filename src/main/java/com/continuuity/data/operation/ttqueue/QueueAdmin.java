@@ -41,7 +41,7 @@ public class QueueAdmin {
   }
 
   /**
-   * Generates and returns a unique group id for the speicified queue.
+   * Configures the queue
    */
   public static class QueueConfigure extends Operation {
 

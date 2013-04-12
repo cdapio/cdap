@@ -100,6 +100,7 @@ enum TQueuePartitioner {
 struct TQueueConfig {
   1: TQueuePartitioner partitioner,
   2: bool singleEntry,
+  3: i32 batchSize,
 }
 
 struct TQueueConsumer {
@@ -109,12 +110,16 @@ struct TQueueConsumer {
   4: optional string groupName,
   5: optional string partitioningKey,
   6: optional TQueueConfig queueConfig,
+  7: bool isStateful,
+  8: optional binary queueState,
+  9: bool canEvict,
 }
 
 struct TQueueEntryPointer {
   1: binary queueName,
   2: i64 entryId,
   3: i64 shardId,
+  4: i32 tries,
 }
 
 struct TQueueAck {
@@ -144,6 +149,7 @@ struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
   3: optional TQueueEntry entry,
+  4: optional TQueueConsumer consumer,
 }
 
 struct TGetGroupId {
@@ -155,6 +161,14 @@ struct TGetQueueInfo {
   1: binary queueName,
   2: i64 id,
   3: optional string metric,
+}
+
+struct TQueueConfigure {
+  1: binary queueName,
+  2: TQueueConfig config,
+  3: i64 groupId,
+  4: i32 newConsumerCount,
+  5: optional string metric,
 }
 
 // we add a virtual field "nulled" to indicate a null object
@@ -232,5 +246,6 @@ service TOperationExecutor {
   TQueueInfo getQueueInfo(1: TOperationContext context, 2: TGetQueueInfo getQueueInfo) throws (1: TOperationException ex),
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
   void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
+  void configureQueue(1: TOperationContext context, 2: TQueueConfigure configure) throws (1: TOperationException ex),
 
 }

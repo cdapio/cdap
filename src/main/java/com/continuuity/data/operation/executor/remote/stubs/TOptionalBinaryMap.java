@@ -6,26 +6,19 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBinaryMap, TOptionalBinaryMap._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinaryMap");
@@ -495,7 +488,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
                 struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map66.size);
                 for (int _i67 = 0; _i67 < _map66.size; ++_i67)
                 {
-                  ByteBuffer _key68; // optional
+                  ByteBuffer _key68; // required
                   TOptionalBinary _val69; // required
                   _key68 = iprot.readBinary();
                   _val69 = new TOptionalBinary();
@@ -623,7 +616,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map72.size);
           for (int _i73 = 0; _i73 < _map72.size; ++_i73)
           {
-            ByteBuffer _key74; // optional
+            ByteBuffer _key74; // required
             TOptionalBinary _val75; // required
             _key74 = iprot.readBinary();
             _val75 = new TOptionalBinary();

@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
@@ -15,8 +16,28 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.remote.stubs.*;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
+import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
+import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
+import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigure;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TRead;
+import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
+import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
+import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -103,33 +124,34 @@ public class OperationExecutorClient extends ConverterUtils {
     if (Log.isTraceEnabled())
       Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
 
-    TOperationContext tcontext = wrap(context);
-
-    List<TWriteOperation> tWrites = Lists.newArrayList();
-    for (WriteOperation writeOp : writes) {
-      if (Log.isTraceEnabled())
-        Log.trace("  WriteOperation: " + writeOp.toString());
-      TWriteOperation tWriteOp = new TWriteOperation();
-      if (writeOp instanceof Write)
-        tWriteOp.setWrite(wrap((Write)writeOp));
-      else if (writeOp instanceof Delete)
-        tWriteOp.setDelet(wrap((Delete)writeOp));
-      else if (writeOp instanceof Increment)
-        tWriteOp.setIncrement(wrap((Increment) writeOp));
-      else if (writeOp instanceof CompareAndSwap)
-        tWriteOp.setCompareAndSwap(wrap((CompareAndSwap) writeOp));
-      else if (writeOp instanceof QueueEnqueue)
-        tWriteOp.setQueueEnqueue(wrap((QueueEnqueue) writeOp));
-      else if (writeOp instanceof QueueAck)
-        tWriteOp.setQueueAck(wrap((QueueAck) writeOp));
-      else {
-        Log.error("Internal Error: Received an unknown WriteOperation of class "
-            + writeOp.getClass().getName() + ".");
-        continue;
-      }
-      tWrites.add(tWriteOp);
-    }
     try {
+      TOperationContext tcontext = wrap(context);
+
+      List<TWriteOperation> tWrites = Lists.newArrayList();
+      for (WriteOperation writeOp : writes) {
+        if (Log.isTraceEnabled())
+          Log.trace("  WriteOperation: " + writeOp.toString());
+        TWriteOperation tWriteOp = new TWriteOperation();
+        if (writeOp instanceof Write)
+          tWriteOp.setWrite(wrap((Write)writeOp));
+        else if (writeOp instanceof Delete)
+          tWriteOp.setDelet(wrap((Delete)writeOp));
+        else if (writeOp instanceof Increment)
+          tWriteOp.setIncrement(wrap((Increment) writeOp));
+        else if (writeOp instanceof CompareAndSwap)
+          tWriteOp.setCompareAndSwap(wrap((CompareAndSwap) writeOp));
+        else if (writeOp instanceof QueueEnqueue)
+          tWriteOp.setQueueEnqueue(wrap((QueueEnqueue) writeOp));
+        else if (writeOp instanceof QueueAck)
+          tWriteOp.setQueueAck(wrap((QueueAck) writeOp));
+        else {
+          Log.error("Internal Error: Received an unknown WriteOperation of class "
+              + writeOp.getClass().getName() + ".");
+          continue;
+        }
+        tWrites.add(tWriteOp);
+      }
+
       if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
       client.batch(tcontext, tWrites);
       if (Log.isTraceEnabled()) Log.trace("Batch successful.");
@@ -158,7 +180,7 @@ public class OperationExecutorClient extends ConverterUtils {
       if (Log.isTraceEnabled()) Log.trace("Sending " + tDequeue);
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
       if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
-      DequeueResult dequeueResult = unwrap(tDequeueResult);
+      DequeueResult dequeueResult = unwrap(tDequeueResult, dequeue.getConsumer());
 
       helper.finish(dequeueResult.isEmpty() ? NoData : Success);
 
@@ -352,6 +374,31 @@ public class OperationExecutorClient extends ConverterUtils {
 
       helper.finish(result.isEmpty() ? NoData : Success);
       return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void execute(OperationContext context,
+                      QueueAdmin.QueueConfigure configure)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("configure", configure.getQueueName());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received " + configure);
+      TOperationContext tContext = wrap(context);
+      TQueueConfigure tQueueConfigure = wrap(configure);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueConfigure);
+      client.configureQueue(tContext, tQueueConfigure);
+      if (Log.isTraceEnabled()) Log.trace("QueueConfigure successful.");
+      helper.success();
 
     } catch (TOperationException te) {
       helper.failure();

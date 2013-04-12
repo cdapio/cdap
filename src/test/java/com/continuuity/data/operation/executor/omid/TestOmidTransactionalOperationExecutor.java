@@ -23,6 +23,7 @@ import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationEx
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -110,6 +111,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueKey, config, 0, 1));
 
     // insert to all three types
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
@@ -139,6 +141,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         ClearFabric.ToClear.QUEUES, ClearFabric.ToClear.STREAMS)));
 
     // everything is gone
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueKey, config, 0, 1));
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
@@ -173,6 +176,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         ClearFabric.ToClear.DATA, ClearFabric.ToClear.QUEUES)));
 
     // everything is gone
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueKey, config, 0, 1));
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
@@ -417,6 +421,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // DequeuePayload it
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, config, 0, 1));
     DequeueResult dequeueResult = executor.execute(context, new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isSuccess());
 
@@ -1016,6 +1021,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // enqueue the value and commit
     executor.commit(context, tx1, batch(new QueueEnqueue(qname, new QueueEntry(value))));
     // dequeue
+    this.executor.execute(context, null,
+                          new QueueAdmin.QueueConfigure(qname, new QueueConfig(PartitionerType.FIFO, true), 0, 1));
     DequeueResult deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true)),
                                 new QueueConfig(PartitionerType.FIFO, true)));
