@@ -123,7 +123,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
     final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
-    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 60;
+    // Removing check for evictIntervalInSecs >= 0, since having it less than 0 does not cause errors in queue
+    // behaviour. -ve evictIntervalInSecs is needed for unit tests.
+    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs;
 
     final int maxCrashDequeueTries = conf.getInt(TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 15);
     this.MAX_CRASH_DEQUEUE_TRIES = maxCrashDequeueTries > 0 ? maxCrashDequeueTries : 15;
