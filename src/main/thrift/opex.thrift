@@ -101,6 +101,7 @@ struct TQueueConfig {
   1: TQueuePartitioner partitioner,
   2: bool singleEntry,
   3: i32 batchSize,
+  4: bool returnBatch,
 }
 
 struct TQueueConsumer {
@@ -147,8 +148,8 @@ enum TDequeueStatus {
 
 struct TDequeueResult {
   1: TDequeueStatus status,
-  2: TQueueEntryPointer pointer,
-  3: optional TQueueEntry entry,
+  2: optional list<TQueueEntryPointer> pointers,
+  3: optional list<TQueueEntry> entries,
   4: optional TQueueConsumer consumer,
 }
 

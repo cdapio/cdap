@@ -780,20 +780,21 @@ public class ConverterUtils {
     return new TQueueConfig(
         wrap(config.getPartitionerType()),
         config.isSingleEntry(),
-        config.getBatchSize());
+        config.getBatchSize(),
+        config.returnsBatch());
   }
   /** unwrap a queue config */
   QueueConfig unwrap(TQueueConfig config) {
     if(config.getBatchSize() < 0) {
       return new QueueConfig(
         unwrap(config.getPartitioner()),
-               config.isSingleEntry()
-      );
+               config.isSingleEntry());
     } else {
       return new QueueConfig(
           unwrap(config.getPartitioner()),
           config.isSingleEntry(),
-          config.getBatchSize());
+          config.getBatchSize(),
+          config.isReturnBatch());
     }
   }
 
@@ -825,23 +826,24 @@ public class ConverterUtils {
    */
   TDequeueResult wrap(DequeueResult result, QueueConsumer consumer) throws TOperationException {
     TDequeueStatus status;
-    if (DequeueResult.DequeueStatus.EMPTY.equals(result.getStatus()))
+    if (DequeueResult.DequeueStatus.EMPTY.equals(result.getStatus())) {
       status = TDequeueStatus.EMPTY;
-    else if (DequeueResult.DequeueStatus.RETRY.equals(result.getStatus()))
+    } else if (DequeueResult.DequeueStatus.RETRY.equals(result.getStatus())) {
       status = TDequeueStatus.RETRY;
-    else if (DequeueResult.DequeueStatus.SUCCESS.equals(result.getStatus()))
+    } else if (DequeueResult.DequeueStatus.SUCCESS.equals(result.getStatus())) {
       status = TDequeueStatus.SUCCESS;
-    else {
+    } else {
       String message = "Internal Error: Received an unknown dequeue status of "
           + result.getStatus() + ".";
       Log.error(message);
       throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
     }
-    TDequeueResult tQueueResult=new TDequeueResult(status, wrap(result.getEntryPointer()));
-    QueueEntry entry=result.getEntry();
-    if (entry!=null) {
-      TQueueEntry tQueueEntry = wrap(entry);
-      tQueueResult.setEntry(tQueueEntry);
+    TDequeueResult tQueueResult = new TDequeueResult(status);
+    if (result.getEntryPointers() != null) {
+      tQueueResult.setPointers(wrap(result.getEntryPointers()));
+    }
+    if (result.getEntries() != null) {
+      tQueueResult.setEntries(wrap(result.getEntries()));
     }
     if(consumer != null) {
       tQueueResult.setConsumer(wrap(consumer));
@@ -861,17 +863,18 @@ public class ConverterUtils {
       }
     }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
-      return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-          unwrap(tDequeueResult.getPointer()),
-          unwrap(tDequeueResult.getEntry()));
+      return new DequeueResult(
+        DequeueResult.DequeueStatus.SUCCESS,
+        unwrap(tDequeueResult.getPointers()),
+        unwrap(tDequeueResult.getEntries()));
     } else {
       DequeueResult.DequeueStatus status;
       TDequeueStatus tStatus = tDequeueResult.getStatus();
-      if (TDequeueStatus.EMPTY.equals(tStatus))
+      if (TDequeueStatus.EMPTY.equals(tStatus)) {
         status = DequeueResult.DequeueStatus.EMPTY;
-      else if (TDequeueStatus.RETRY.equals(tStatus))
+      } else if (TDequeueStatus.RETRY.equals(tStatus)) {
         status = DequeueResult.DequeueStatus.RETRY;
-      else {
+      } else {
         String message =
             "Internal Error: Received an unknown dequeue status of " + tStatus;
         Log.error(message);

@@ -6,33 +6,27 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
+
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
 import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, TDequeueResult._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TDequeueResult");
 
   private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)1);
-  private static final org.apache.thrift.protocol.TField POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("pointer", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-  private static final org.apache.thrift.protocol.TField ENTRY_FIELD_DESC = new org.apache.thrift.protocol.TField("entry", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+  private static final org.apache.thrift.protocol.TField POINTERS_FIELD_DESC = new org.apache.thrift.protocol.TField("pointers", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField ENTRIES_FIELD_DESC = new org.apache.thrift.protocol.TField("entries", org.apache.thrift.protocol.TType.LIST, (short)3);
   private static final org.apache.thrift.protocol.TField CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("consumer", org.apache.thrift.protocol.TType.STRUCT, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -46,8 +40,8 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
    * @see TDequeueStatus
    */
   public TDequeueStatus status; // required
-  public TQueueEntryPointer pointer; // required
-  public TQueueEntry entry; // optional
+  public List<TQueueEntryPointer> pointers; // optional
+  public List<TQueueEntry> entries; // optional
   public TQueueConsumer consumer; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -57,8 +51,8 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
      * @see TDequeueStatus
      */
     STATUS((short)1, "status"),
-    POINTER((short)2, "pointer"),
-    ENTRY((short)3, "entry"),
+    POINTERS((short)2, "pointers"),
+    ENTRIES((short)3, "entries"),
     CONSUMER((short)4, "consumer");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -76,10 +70,10 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       switch(fieldId) {
         case 1: // STATUS
           return STATUS;
-        case 2: // POINTER
-          return POINTER;
-        case 3: // ENTRY
-          return ENTRY;
+        case 2: // POINTERS
+          return POINTERS;
+        case 3: // ENTRIES
+          return ENTRIES;
         case 4: // CONSUMER
           return CONSUMER;
         default:
@@ -122,16 +116,18 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.ENTRY,_Fields.CONSUMER};
+  private _Fields optionals[] = {_Fields.POINTERS,_Fields.ENTRIES,_Fields.CONSUMER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TDequeueStatus.class)));
-    tmpMap.put(_Fields.POINTER, new org.apache.thrift.meta_data.FieldMetaData("pointer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntryPointer.class)));
-    tmpMap.put(_Fields.ENTRY, new org.apache.thrift.meta_data.FieldMetaData("entry", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntry.class)));
+    tmpMap.put(_Fields.POINTERS, new org.apache.thrift.meta_data.FieldMetaData("pointers", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntryPointer.class))));
+    tmpMap.put(_Fields.ENTRIES, new org.apache.thrift.meta_data.FieldMetaData("entries", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntry.class))));
     tmpMap.put(_Fields.CONSUMER, new org.apache.thrift.meta_data.FieldMetaData("consumer", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConsumer.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -142,12 +138,10 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
   }
 
   public TDequeueResult(
-    TDequeueStatus status,
-    TQueueEntryPointer pointer)
+    TDequeueStatus status)
   {
     this();
     this.status = status;
-    this.pointer = pointer;
   }
 
   /**
@@ -157,11 +151,19 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
     if (other.isSetStatus()) {
       this.status = other.status;
     }
-    if (other.isSetPointer()) {
-      this.pointer = new TQueueEntryPointer(other.pointer);
+    if (other.isSetPointers()) {
+      List<TQueueEntryPointer> __this__pointers = new ArrayList<TQueueEntryPointer>();
+      for (TQueueEntryPointer other_element : other.pointers) {
+        __this__pointers.add(new TQueueEntryPointer(other_element));
+      }
+      this.pointers = __this__pointers;
     }
-    if (other.isSetEntry()) {
-      this.entry = new TQueueEntry(other.entry);
+    if (other.isSetEntries()) {
+      List<TQueueEntry> __this__entries = new ArrayList<TQueueEntry>();
+      for (TQueueEntry other_element : other.entries) {
+        __this__entries.add(new TQueueEntry(other_element));
+      }
+      this.entries = __this__entries;
     }
     if (other.isSetConsumer()) {
       this.consumer = new TQueueConsumer(other.consumer);
@@ -175,8 +177,8 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
   @Override
   public void clear() {
     this.status = null;
-    this.pointer = null;
-    this.entry = null;
+    this.pointers = null;
+    this.entries = null;
     this.consumer = null;
   }
 
@@ -212,51 +214,81 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
     }
   }
 
-  public TQueueEntryPointer getPointer() {
-    return this.pointer;
+  public int getPointersSize() {
+    return (this.pointers == null) ? 0 : this.pointers.size();
   }
 
-  public TDequeueResult setPointer(TQueueEntryPointer pointer) {
-    this.pointer = pointer;
+  public java.util.Iterator<TQueueEntryPointer> getPointersIterator() {
+    return (this.pointers == null) ? null : this.pointers.iterator();
+  }
+
+  public void addToPointers(TQueueEntryPointer elem) {
+    if (this.pointers == null) {
+      this.pointers = new ArrayList<TQueueEntryPointer>();
+    }
+    this.pointers.add(elem);
+  }
+
+  public List<TQueueEntryPointer> getPointers() {
+    return this.pointers;
+  }
+
+  public TDequeueResult setPointers(List<TQueueEntryPointer> pointers) {
+    this.pointers = pointers;
     return this;
   }
 
-  public void unsetPointer() {
-    this.pointer = null;
+  public void unsetPointers() {
+    this.pointers = null;
   }
 
-  /** Returns true if field pointer is set (has been assigned a value) and false otherwise */
-  public boolean isSetPointer() {
-    return this.pointer != null;
+  /** Returns true if field pointers is set (has been assigned a value) and false otherwise */
+  public boolean isSetPointers() {
+    return this.pointers != null;
   }
 
-  public void setPointerIsSet(boolean value) {
+  public void setPointersIsSet(boolean value) {
     if (!value) {
-      this.pointer = null;
+      this.pointers = null;
     }
   }
 
-  public TQueueEntry getEntry() {
-    return this.entry;
+  public int getEntriesSize() {
+    return (this.entries == null) ? 0 : this.entries.size();
   }
 
-  public TDequeueResult setEntry(TQueueEntry entry) {
-    this.entry = entry;
+  public java.util.Iterator<TQueueEntry> getEntriesIterator() {
+    return (this.entries == null) ? null : this.entries.iterator();
+  }
+
+  public void addToEntries(TQueueEntry elem) {
+    if (this.entries == null) {
+      this.entries = new ArrayList<TQueueEntry>();
+    }
+    this.entries.add(elem);
+  }
+
+  public List<TQueueEntry> getEntries() {
+    return this.entries;
+  }
+
+  public TDequeueResult setEntries(List<TQueueEntry> entries) {
+    this.entries = entries;
     return this;
   }
 
-  public void unsetEntry() {
-    this.entry = null;
+  public void unsetEntries() {
+    this.entries = null;
   }
 
-  /** Returns true if field entry is set (has been assigned a value) and false otherwise */
-  public boolean isSetEntry() {
-    return this.entry != null;
+  /** Returns true if field entries is set (has been assigned a value) and false otherwise */
+  public boolean isSetEntries() {
+    return this.entries != null;
   }
 
-  public void setEntryIsSet(boolean value) {
+  public void setEntriesIsSet(boolean value) {
     if (!value) {
-      this.entry = null;
+      this.entries = null;
     }
   }
 
@@ -294,19 +326,19 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       }
       break;
 
-    case POINTER:
+    case POINTERS:
       if (value == null) {
-        unsetPointer();
+        unsetPointers();
       } else {
-        setPointer((TQueueEntryPointer)value);
+        setPointers((List<TQueueEntryPointer>)value);
       }
       break;
 
-    case ENTRY:
+    case ENTRIES:
       if (value == null) {
-        unsetEntry();
+        unsetEntries();
       } else {
-        setEntry((TQueueEntry)value);
+        setEntries((List<TQueueEntry>)value);
       }
       break;
 
@@ -326,11 +358,11 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
     case STATUS:
       return getStatus();
 
-    case POINTER:
-      return getPointer();
+    case POINTERS:
+      return getPointers();
 
-    case ENTRY:
-      return getEntry();
+    case ENTRIES:
+      return getEntries();
 
     case CONSUMER:
       return getConsumer();
@@ -348,10 +380,10 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
     switch (field) {
     case STATUS:
       return isSetStatus();
-    case POINTER:
-      return isSetPointer();
-    case ENTRY:
-      return isSetEntry();
+    case POINTERS:
+      return isSetPointers();
+    case ENTRIES:
+      return isSetEntries();
     case CONSUMER:
       return isSetConsumer();
     }
@@ -380,21 +412,21 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         return false;
     }
 
-    boolean this_present_pointer = true && this.isSetPointer();
-    boolean that_present_pointer = true && that.isSetPointer();
-    if (this_present_pointer || that_present_pointer) {
-      if (!(this_present_pointer && that_present_pointer))
+    boolean this_present_pointers = true && this.isSetPointers();
+    boolean that_present_pointers = true && that.isSetPointers();
+    if (this_present_pointers || that_present_pointers) {
+      if (!(this_present_pointers && that_present_pointers))
         return false;
-      if (!this.pointer.equals(that.pointer))
+      if (!this.pointers.equals(that.pointers))
         return false;
     }
 
-    boolean this_present_entry = true && this.isSetEntry();
-    boolean that_present_entry = true && that.isSetEntry();
-    if (this_present_entry || that_present_entry) {
-      if (!(this_present_entry && that_present_entry))
+    boolean this_present_entries = true && this.isSetEntries();
+    boolean that_present_entries = true && that.isSetEntries();
+    if (this_present_entries || that_present_entries) {
+      if (!(this_present_entries && that_present_entries))
         return false;
-      if (!this.entry.equals(that.entry))
+      if (!this.entries.equals(that.entries))
         return false;
     }
 
@@ -433,22 +465,22 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetPointer()).compareTo(typedOther.isSetPointer());
+    lastComparison = Boolean.valueOf(isSetPointers()).compareTo(typedOther.isSetPointers());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetPointer()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.pointer, typedOther.pointer);
+    if (isSetPointers()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.pointers, typedOther.pointers);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetEntry()).compareTo(typedOther.isSetEntry());
+    lastComparison = Boolean.valueOf(isSetEntries()).compareTo(typedOther.isSetEntries());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEntry()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entry, typedOther.entry);
+    if (isSetEntries()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entries, typedOther.entries);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -490,21 +522,23 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       sb.append(this.status);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("pointer:");
-    if (this.pointer == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.pointer);
-    }
-    first = false;
-    if (isSetEntry()) {
+    if (isSetPointers()) {
       if (!first) sb.append(", ");
-      sb.append("entry:");
-      if (this.entry == null) {
+      sb.append("pointers:");
+      if (this.pointers == null) {
         sb.append("null");
       } else {
-        sb.append(this.entry);
+        sb.append(this.pointers);
+      }
+      first = false;
+    }
+    if (isSetEntries()) {
+      if (!first) sb.append(", ");
+      sb.append("entries:");
+      if (this.entries == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.entries);
       }
       first = false;
     }
@@ -568,20 +602,40 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // POINTER
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.pointer = new TQueueEntryPointer();
-              struct.pointer.read(iprot);
-              struct.setPointerIsSet(true);
+          case 2: // POINTERS
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
+                struct.pointers = new ArrayList<TQueueEntryPointer>(_list74.size);
+                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
+                {
+                  TQueueEntryPointer _elem76; // required
+                  _elem76 = new TQueueEntryPointer();
+                  _elem76.read(iprot);
+                  struct.pointers.add(_elem76);
+                }
+                iprot.readListEnd();
+              }
+              struct.setPointersIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // ENTRY
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.entry = new TQueueEntry();
-              struct.entry.read(iprot);
-              struct.setEntryIsSet(true);
+          case 3: // ENTRIES
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list77 = iprot.readListBegin();
+                struct.entries = new ArrayList<TQueueEntry>(_list77.size);
+                for (int _i78 = 0; _i78 < _list77.size; ++_i78)
+                {
+                  TQueueEntry _elem79; // required
+                  _elem79 = new TQueueEntry();
+                  _elem79.read(iprot);
+                  struct.entries.add(_elem79);
+                }
+                iprot.readListEnd();
+              }
+              struct.setEntriesIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -615,15 +669,31 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         oprot.writeI32(struct.status.getValue());
         oprot.writeFieldEnd();
       }
-      if (struct.pointer != null) {
-        oprot.writeFieldBegin(POINTER_FIELD_DESC);
-        struct.pointer.write(oprot);
-        oprot.writeFieldEnd();
+      if (struct.pointers != null) {
+        if (struct.isSetPointers()) {
+          oprot.writeFieldBegin(POINTERS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.pointers.size()));
+            for (TQueueEntryPointer _iter80 : struct.pointers)
+            {
+              _iter80.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
       }
-      if (struct.entry != null) {
-        if (struct.isSetEntry()) {
-          oprot.writeFieldBegin(ENTRY_FIELD_DESC);
-          struct.entry.write(oprot);
+      if (struct.entries != null) {
+        if (struct.isSetEntries()) {
+          oprot.writeFieldBegin(ENTRIES_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.entries.size()));
+            for (TQueueEntry _iter81 : struct.entries)
+            {
+              _iter81.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
       }
@@ -655,10 +725,10 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       if (struct.isSetStatus()) {
         optionals.set(0);
       }
-      if (struct.isSetPointer()) {
+      if (struct.isSetPointers()) {
         optionals.set(1);
       }
-      if (struct.isSetEntry()) {
+      if (struct.isSetEntries()) {
         optionals.set(2);
       }
       if (struct.isSetConsumer()) {
@@ -668,11 +738,23 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       if (struct.isSetStatus()) {
         oprot.writeI32(struct.status.getValue());
       }
-      if (struct.isSetPointer()) {
-        struct.pointer.write(oprot);
+      if (struct.isSetPointers()) {
+        {
+          oprot.writeI32(struct.pointers.size());
+          for (TQueueEntryPointer _iter82 : struct.pointers)
+          {
+            _iter82.write(oprot);
+          }
+        }
       }
-      if (struct.isSetEntry()) {
-        struct.entry.write(oprot);
+      if (struct.isSetEntries()) {
+        {
+          oprot.writeI32(struct.entries.size());
+          for (TQueueEntry _iter83 : struct.entries)
+          {
+            _iter83.write(oprot);
+          }
+        }
       }
       if (struct.isSetConsumer()) {
         struct.consumer.write(oprot);
@@ -688,14 +770,32 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
         struct.setStatusIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.pointer = new TQueueEntryPointer();
-        struct.pointer.read(iprot);
-        struct.setPointerIsSet(true);
+        {
+          org.apache.thrift.protocol.TList _list84 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.pointers = new ArrayList<TQueueEntryPointer>(_list84.size);
+          for (int _i85 = 0; _i85 < _list84.size; ++_i85)
+          {
+            TQueueEntryPointer _elem86; // required
+            _elem86 = new TQueueEntryPointer();
+            _elem86.read(iprot);
+            struct.pointers.add(_elem86);
+          }
+        }
+        struct.setPointersIsSet(true);
       }
       if (incoming.get(2)) {
-        struct.entry = new TQueueEntry();
-        struct.entry.read(iprot);
-        struct.setEntryIsSet(true);
+        {
+          org.apache.thrift.protocol.TList _list87 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.entries = new ArrayList<TQueueEntry>(_list87.size);
+          for (int _i88 = 0; _i88 < _list87.size; ++_i88)
+          {
+            TQueueEntry _elem89; // required
+            _elem89 = new TQueueEntry();
+            _elem89.read(iprot);
+            struct.entries.add(_elem89);
+          }
+        }
+        struct.setEntriesIsSet(true);
       }
       if (incoming.get(3)) {
         struct.consumer = new TQueueConsumer();
