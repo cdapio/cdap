@@ -823,7 +823,7 @@ public class OmidTransactionalOperationExecutor
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries()[0],
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
                                                                    transaction.getWriteVersion());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
@@ -838,7 +838,7 @@ public class OmidTransactionalOperationExecutor
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers()[0], ack.getConsumer(),
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(),
                                       transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
@@ -858,6 +858,7 @@ public class OmidTransactionalOperationExecutor
     int retries = 0;
     long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
+    // TODO remove retry loop, new queues don't return retriable ever
     while (retries < MAX_DEQUEUE_RETRIES) {
       DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
           this.oracle.getReadPointer());

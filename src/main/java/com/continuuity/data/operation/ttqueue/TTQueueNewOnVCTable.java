@@ -142,6 +142,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
+  public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
+    // TODO implement batch
+    return enqueue(entries[0], cleanWriteVersion);
+  }
+  @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data = entry.getData();
     if (LOG.isTraceEnabled()) {
@@ -193,7 +198,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
+  public void invalidate(QueueEntryPointer [] entryPointers, long cleanWriteVersion) throws OperationException {
+    // TODO implement this for batch
+    QueueEntryPointer entryPointer = entryPointers[0];
     if(LOG.isTraceEnabled()) {
       LOG.trace(getLogMessage(String.format("Invalidating entry %d", entryPointer.getEntryId())));
     }
@@ -375,6 +382,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
+  public void ack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
+    // TODO implement batch
+    ack(entryPointers[0], consumer, readPointer);
+  }
+
+  @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
@@ -399,8 +413,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
+    // TODO implement batch
+    QueueEntryPointer entryPointer = entryPointers[0];
     // TODO: add tests for unack
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
@@ -484,8 +500,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
+  public void finalize(QueueEntryPointer [] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
+    throws OperationException {
+    // TODO implement batch
+    QueueEntryPointer entryPointer = entryPointers[0];
+    finalize(entryPointer, consumer, totalNumGroups, writePoint);
+  }
+
+  @Override
   public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups, long writePoint)
     throws OperationException {
+
     // Figure out queue entries that can be evicted, and evict them.
     // We are assuming here that for a given consumer all entries up to
     // min(min(DEQUEUE_ENTRY_SET)-1, CONSUMER_READ_POINTER-1) can be evicted.

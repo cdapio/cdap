@@ -30,14 +30,20 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
 
   @Override
   public EnqueueResult enqueue(byte [] queueName, QueueEntry entry,
-      long writeVersion) throws OperationException {
+                               long writeVersion) throws OperationException {
     return getQueue(queueName).enqueue(entry, writeVersion);
   }
 
   @Override
-  public void invalidate(byte [] queueName, QueueEntryPointer entryPointer,
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry [] entries,
+                               long writeVersion) throws OperationException {
+    return getQueue(queueName).enqueue(entries, writeVersion);
+  }
+
+  @Override
+  public void invalidate(byte [] queueName, QueueEntryPointer [] entryPointers,
       long writeVersion) throws OperationException {
-    getQueue(queueName).invalidate(entryPointer, writeVersion);
+    getQueue(queueName).invalidate(entryPointers, writeVersion);
   }
 
 //  @Override
@@ -58,14 +64,19 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException {
-    getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups, writePoint);
+  public void ack(byte[] queueName, QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).ack(entryPointers, consumer, readPointer);
   }
 
   @Override
-  public void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
-    getQueue(queueName).unack(entryPointer, consumer, readPointer);
+  public void finalize(byte[] queueName, QueueEntryPointer [] entryPointers,
+                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException {
+    getQueue(queueName).finalize(entryPointers, consumer, totalNumGroups, writePoint);
+  }
+
+  @Override
+  public void unack(byte[] queueName, QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).unack(entryPointers, consumer, readPointer);
   }
 
   @Override

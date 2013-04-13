@@ -462,8 +462,8 @@ public abstract class TestTTQueue {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getEntry().getData(), valueSemiAckedToDequeued));
     // ack it, then unack it
-    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
-    queue.unack(result.getEntryPointer(), consumer, dirtyReadPointer);
+    queue.ack(result.getEntryPointers(), consumer, dirtyReadPointer);
+    queue.unack(result.getEntryPointers(), consumer, dirtyReadPointer);
 
 
     // dequeue again, should get second entry again
@@ -777,7 +777,7 @@ public abstract class TestTTQueue {
     }
 
     // invalidate number 3
-    queue.invalidate(results[2].getEntryPointer(), version);
+    queue.invalidate(results[2].getEntryPointers(), version);
 
     // dequeue with a single consumer and FIFO partitioner
     QueueConfig multiConfig = new QueueConfig(PartitionerType.FIFO, false);

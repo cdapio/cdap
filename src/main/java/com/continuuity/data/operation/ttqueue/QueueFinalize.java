@@ -24,6 +24,6 @@ public class QueueFinalize {
   }
 
   public void execute(TTQueueTable queueTable, long writePoint) throws OperationException {
-    queueTable.finalize(queueName, entryPointers[0], consumer, totalNumGroups, writePoint);
+    queueTable.finalize(queueName, entryPointers, consumer, totalNumGroups, writePoint);
   }
 }

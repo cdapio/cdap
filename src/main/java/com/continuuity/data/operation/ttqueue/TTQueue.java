@@ -21,21 +21,31 @@ public interface TTQueue {
    * Inserts an entry into the tail of the queue using the specified write
    * version.
    * @param entry the queue entry to be inserted into the queue
-   * @return return code, and if success, the unique entryId of the queue entry
+   * @return return enqueue result that contains the entry pointer of the new queue entry
    * @throws OperationException if unsuccessful
    */
   public EnqueueResult enqueue(QueueEntry entry, long writeVersion)
-      throws OperationException;
+    throws OperationException;
 
   /**
-   * Invalidates an entry that was enqueued into the queue.  This is used only
-   * as part of a transaction rollback.
-   * @param entryPointer entry id and shard id of enqueued entry to invalidate
-   * @param writeVersion version entry was written with and version invalidated
-   *                     entry will be written with
+   * Inserts a batch of entries into the tail of the queue using the specified write
+   * version.
+   * @param entries the queue entries to be inserted into the queue
+   * @return return enqueue result that contains the entry pointers of the new queue entries
    * @throws OperationException if unsuccessful
    */
-  public void invalidate(QueueEntryPointer entryPointer, long writeVersion) throws OperationException;
+  public EnqueueResult enqueue(QueueEntry [] entries, long writeVersion)
+    throws OperationException;
+
+  /**
+   * Invalidates a batch of entries that were enqueued into the queue.  This is used only
+   * as part of a transaction rollback.
+   * @param entryPointers the entry pointers of the entries to invalidate
+   * @param writeVersion version entries were written with and version invalidated
+   *                     entries will be written with
+   * @throws OperationException if unsuccessful
+   */
+  public void invalidate(QueueEntryPointer [] entryPointers, long writeVersion) throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -53,24 +63,39 @@ public interface TTQueue {
    * @throws OperationException if unsuccessful
    */
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
-      throws OperationException;
+    throws OperationException;
+
+  /**
+   * Acknowledges a previously dequeue'd batch of queue entries. Returns true if consumer
+   * that is acknowledging is allowed to do so, false if not.
+   * @throws OperationException if unsuccessful
+   */
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException;
+
+  /**
+   * Finalizes a batch of acks.
+   * @param totalNumGroups total number of groups to use when doing evict-on-ack or -1 to disable
+   * @throws OperationException if unsuccessful
+   */
+  public void finalize(QueueEntryPointer [] entryPointers,
+                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
 
   /**
    * Finalizes an ack.
-   *
-   * @param totalNumGroups total number of groups to use when doing evict-on-ack
-   *                       or -1 to disable
+   * @param totalNumGroups total number of groups to use when doing evict-on-ack or -1 to disable
    * @throws OperationException if unsuccessful
    */
+  // TODO remove this
   public void finalize(QueueEntryPointer entryPointer,
                        QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
 
   /**
-   * Unacknowledges a previously acknowledge ack.
-   *
+   * Unacknowledges a previously acknowledge batch of acks ack.
    * @throws OperationException if unsuccessful
    */
-  void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
+  void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException;
 
   int configure(QueueConfig config, long groupId, int newConsumerCount) throws OperationException;
 
