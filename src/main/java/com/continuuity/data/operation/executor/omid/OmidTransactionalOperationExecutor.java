@@ -837,7 +837,7 @@ public class OmidTransactionalOperationExecutor
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers()[0], ack.getConsumer(),
                                       transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
@@ -846,7 +846,7 @@ public class OmidTransactionalOperationExecutor
       end("QueueAck", begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers()[0], ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override

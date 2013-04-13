@@ -476,16 +476,26 @@ public class ConverterUtils {
     return readColumnRange;
   }
 
-  QueueEntry unwrap(TQueueEntry entry) {
-    return new QueueEntry(entry.getHeader(), entry.getData());
-  }
-
+  /** wrap a queue entry */
   TQueueEntry wrap(QueueEntry entry) {
     TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
     tQueueEntry.setHeader(entry.getPartitioningMap());
     return tQueueEntry;
   }
+  /** unwrap a queue entry */
+  QueueEntry unwrap(TQueueEntry entry) {
+    return new QueueEntry(entry.getHeader(), entry.getData());
+  }
 
+  /** wrap a batch of queue entries */
+  List<TQueueEntry> wrap(QueueEntry[] entries) {
+    List<TQueueEntry> tQueueEntries = Lists.newArrayListWithCapacity(entries.length);
+    for (QueueEntry entry : entries) {
+      tQueueEntries.add(wrap(entry));
+    }
+    return tQueueEntries;
+  }
+  /** unwrap a batch of queue entries */
   QueueEntry[] unwrap(List<TQueueEntry> tEntries) {
     QueueEntry[] entries = new QueueEntry[tEntries.size()];
     int index = 0;
@@ -495,14 +505,7 @@ public class ConverterUtils {
     return entries;
   }
 
-  List<TQueueEntry> wrap(QueueEntry[] entries) {
-    List<TQueueEntry> tQueueEntries = Lists.newArrayListWithCapacity(entries.length);
-    for (QueueEntry entry : entries) {
-      tQueueEntries.add(wrap(entry));
-    }
-    return tQueueEntries;
-  }
-
+  /** wrap an Enqueue operation */
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
@@ -516,7 +519,7 @@ public class ConverterUtils {
     }
     return tQueueEnqueue;
   }
-  /** unwrap an EnqueuePayload operation */
+  /** unwrap an Enqueue operation */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
     QueueEnqueue enqueue = new QueueEnqueue(
         tEnqueue.getId(),
@@ -558,7 +561,7 @@ public class ConverterUtils {
   TQueueAck wrap(QueueAck ack) throws TOperationException {
     TQueueAck tAck = new TQueueAck(
         wrap(ack.getKey()),
-        wrap(ack.getEntryPointer()),
+        wrap(ack.getEntryPointers()),
         wrap(ack.getConsumer()),
         ack.getNumGroups(),
         ack.getId());
@@ -572,7 +575,7 @@ public class ConverterUtils {
     QueueAck ack = new QueueAck(
         tQueueAck.getId(),
         tQueueAck.getQueueName(),
-        unwrap(tQueueAck.getEntryPointer()),
+        unwrap(tQueueAck.getEntryPointers()),
         unwrap(tQueueAck.getConsumer()),
         tQueueAck.getNumGroups());
     if (tQueueAck.isSetMetric()) {
@@ -638,6 +641,24 @@ public class ConverterUtils {
         tPointer.getEntryId(),
         tPointer.getShardId(),
         tPointer.getTries());
+  }
+
+  /** wrap a batch of queue entry pointers */
+  List<TQueueEntryPointer> wrap(QueueEntryPointer[] entryPointers) {
+    List<TQueueEntryPointer> tPointers = Lists.newArrayListWithCapacity(entryPointers.length);
+    for (QueueEntryPointer pointer : entryPointers) {
+      tPointers.add(wrap(pointer));
+    }
+    return tPointers;
+  }
+  /** wrap a batch of queue entry pointers */
+  QueueEntryPointer[] unwrap(List<TQueueEntryPointer> tPointers) {
+    QueueEntryPointer[] pointers = new QueueEntryPointer[tPointers.size()];
+    int index = 0;
+    for (TQueueEntryPointer tPointer : tPointers) {
+      pointers[index++] = unwrap(tPointer);
+    }
+    return pointers;
   }
 
   /** wrap a queue consumer */

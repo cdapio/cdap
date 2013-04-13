@@ -6,32 +6,27 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueAck");
 
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField ENTRY_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("entryPointer", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+  private static final org.apache.thrift.protocol.TField ENTRY_POINTERS_FIELD_DESC = new org.apache.thrift.protocol.TField("entryPointers", org.apache.thrift.protocol.TType.LIST, (short)2);
   private static final org.apache.thrift.protocol.TField CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("consumer", org.apache.thrift.protocol.TType.STRUCT, (short)3);
   private static final org.apache.thrift.protocol.TField NUM_GROUPS_FIELD_DESC = new org.apache.thrift.protocol.TField("numGroups", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
@@ -44,7 +39,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   }
 
   public ByteBuffer queueName; // required
-  public TQueueEntryPointer entryPointer; // required
+  public List<TQueueEntryPointer> entryPointers; // required
   public TQueueConsumer consumer; // required
   public int numGroups; // required
   public long id; // required
@@ -53,7 +48,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
-    ENTRY_POINTER((short)2, "entryPointer"),
+    ENTRY_POINTERS((short)2, "entryPointers"),
     CONSUMER((short)3, "consumer"),
     NUM_GROUPS((short)4, "numGroups"),
     ID((short)5, "id"),
@@ -74,8 +69,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       switch(fieldId) {
         case 1: // QUEUE_NAME
           return QUEUE_NAME;
-        case 2: // ENTRY_POINTER
-          return ENTRY_POINTER;
+        case 2: // ENTRY_POINTERS
+          return ENTRY_POINTERS;
         case 3: // CONSUMER
           return CONSUMER;
         case 4: // NUM_GROUPS
@@ -133,8 +128,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.QUEUE_NAME, new org.apache.thrift.meta_data.FieldMetaData("queueName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.ENTRY_POINTER, new org.apache.thrift.meta_data.FieldMetaData("entryPointer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntryPointer.class)));
+    tmpMap.put(_Fields.ENTRY_POINTERS, new org.apache.thrift.meta_data.FieldMetaData("entryPointers", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEntryPointer.class))));
     tmpMap.put(_Fields.CONSUMER, new org.apache.thrift.meta_data.FieldMetaData("consumer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConsumer.class)));
     tmpMap.put(_Fields.NUM_GROUPS, new org.apache.thrift.meta_data.FieldMetaData("numGroups", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -152,14 +148,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
 
   public TQueueAck(
     ByteBuffer queueName,
-    TQueueEntryPointer entryPointer,
+    List<TQueueEntryPointer> entryPointers,
     TQueueConsumer consumer,
     int numGroups,
     long id)
   {
     this();
     this.queueName = queueName;
-    this.entryPointer = entryPointer;
+    this.entryPointers = entryPointers;
     this.consumer = consumer;
     this.numGroups = numGroups;
     setNumGroupsIsSet(true);
@@ -177,8 +173,12 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       this.queueName = org.apache.thrift.TBaseHelper.copyBinary(other.queueName);
 ;
     }
-    if (other.isSetEntryPointer()) {
-      this.entryPointer = new TQueueEntryPointer(other.entryPointer);
+    if (other.isSetEntryPointers()) {
+      List<TQueueEntryPointer> __this__entryPointers = new ArrayList<TQueueEntryPointer>();
+      for (TQueueEntryPointer other_element : other.entryPointers) {
+        __this__entryPointers.add(new TQueueEntryPointer(other_element));
+      }
+      this.entryPointers = __this__entryPointers;
     }
     if (other.isSetConsumer()) {
       this.consumer = new TQueueConsumer(other.consumer);
@@ -197,7 +197,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   @Override
   public void clear() {
     this.queueName = null;
-    this.entryPointer = null;
+    this.entryPointers = null;
     this.consumer = null;
     setNumGroupsIsSet(false);
     this.numGroups = 0;
@@ -240,27 +240,42 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     }
   }
 
-  public TQueueEntryPointer getEntryPointer() {
-    return this.entryPointer;
+  public int getEntryPointersSize() {
+    return (this.entryPointers == null) ? 0 : this.entryPointers.size();
   }
 
-  public TQueueAck setEntryPointer(TQueueEntryPointer entryPointer) {
-    this.entryPointer = entryPointer;
+  public java.util.Iterator<TQueueEntryPointer> getEntryPointersIterator() {
+    return (this.entryPointers == null) ? null : this.entryPointers.iterator();
+  }
+
+  public void addToEntryPointers(TQueueEntryPointer elem) {
+    if (this.entryPointers == null) {
+      this.entryPointers = new ArrayList<TQueueEntryPointer>();
+    }
+    this.entryPointers.add(elem);
+  }
+
+  public List<TQueueEntryPointer> getEntryPointers() {
+    return this.entryPointers;
+  }
+
+  public TQueueAck setEntryPointers(List<TQueueEntryPointer> entryPointers) {
+    this.entryPointers = entryPointers;
     return this;
   }
 
-  public void unsetEntryPointer() {
-    this.entryPointer = null;
+  public void unsetEntryPointers() {
+    this.entryPointers = null;
   }
 
-  /** Returns true if field entryPointer is set (has been assigned a value) and false otherwise */
-  public boolean isSetEntryPointer() {
-    return this.entryPointer != null;
+  /** Returns true if field entryPointers is set (has been assigned a value) and false otherwise */
+  public boolean isSetEntryPointers() {
+    return this.entryPointers != null;
   }
 
-  public void setEntryPointerIsSet(boolean value) {
+  public void setEntryPointersIsSet(boolean value) {
     if (!value) {
-      this.entryPointer = null;
+      this.entryPointers = null;
     }
   }
 
@@ -368,11 +383,11 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       }
       break;
 
-    case ENTRY_POINTER:
+    case ENTRY_POINTERS:
       if (value == null) {
-        unsetEntryPointer();
+        unsetEntryPointers();
       } else {
-        setEntryPointer((TQueueEntryPointer)value);
+        setEntryPointers((List<TQueueEntryPointer>)value);
       }
       break;
 
@@ -416,8 +431,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     case QUEUE_NAME:
       return getQueueName();
 
-    case ENTRY_POINTER:
-      return getEntryPointer();
+    case ENTRY_POINTERS:
+      return getEntryPointers();
 
     case CONSUMER:
       return getConsumer();
@@ -444,8 +459,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     switch (field) {
     case QUEUE_NAME:
       return isSetQueueName();
-    case ENTRY_POINTER:
-      return isSetEntryPointer();
+    case ENTRY_POINTERS:
+      return isSetEntryPointers();
     case CONSUMER:
       return isSetConsumer();
     case NUM_GROUPS:
@@ -480,12 +495,12 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         return false;
     }
 
-    boolean this_present_entryPointer = true && this.isSetEntryPointer();
-    boolean that_present_entryPointer = true && that.isSetEntryPointer();
-    if (this_present_entryPointer || that_present_entryPointer) {
-      if (!(this_present_entryPointer && that_present_entryPointer))
+    boolean this_present_entryPointers = true && this.isSetEntryPointers();
+    boolean that_present_entryPointers = true && that.isSetEntryPointers();
+    if (this_present_entryPointers || that_present_entryPointers) {
+      if (!(this_present_entryPointers && that_present_entryPointers))
         return false;
-      if (!this.entryPointer.equals(that.entryPointer))
+      if (!this.entryPointers.equals(that.entryPointers))
         return false;
     }
 
@@ -551,12 +566,12 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetEntryPointer()).compareTo(typedOther.isSetEntryPointer());
+    lastComparison = Boolean.valueOf(isSetEntryPointers()).compareTo(typedOther.isSetEntryPointers());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEntryPointer()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entryPointer, typedOther.entryPointer);
+    if (isSetEntryPointers()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.entryPointers, typedOther.entryPointers);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -629,11 +644,11 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("entryPointer:");
-    if (this.entryPointer == null) {
+    sb.append("entryPointers:");
+    if (this.entryPointers == null) {
       sb.append("null");
     } else {
-      sb.append(this.entryPointer);
+      sb.append(this.entryPointers);
     }
     first = false;
     if (!first) sb.append(", ");
@@ -714,11 +729,21 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // ENTRY_POINTER
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.entryPointer = new TQueueEntryPointer();
-              struct.entryPointer.read(iprot);
-              struct.setEntryPointerIsSet(true);
+          case 2: // ENTRY_POINTERS
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list66 = iprot.readListBegin();
+                struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list66.size);
+                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
+                {
+                  TQueueEntryPointer _elem68; // required
+                  _elem68 = new TQueueEntryPointer();
+                  _elem68.read(iprot);
+                  struct.entryPointers.add(_elem68);
+                }
+                iprot.readListEnd();
+              }
+              struct.setEntryPointersIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -776,9 +801,16 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         oprot.writeBinary(struct.queueName);
         oprot.writeFieldEnd();
       }
-      if (struct.entryPointer != null) {
-        oprot.writeFieldBegin(ENTRY_POINTER_FIELD_DESC);
-        struct.entryPointer.write(oprot);
+      if (struct.entryPointers != null) {
+        oprot.writeFieldBegin(ENTRY_POINTERS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.entryPointers.size()));
+          for (TQueueEntryPointer _iter69 : struct.entryPointers)
+          {
+            _iter69.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
         oprot.writeFieldEnd();
       }
       if (struct.consumer != null) {
@@ -820,7 +852,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetQueueName()) {
         optionals.set(0);
       }
-      if (struct.isSetEntryPointer()) {
+      if (struct.isSetEntryPointers()) {
         optionals.set(1);
       }
       if (struct.isSetConsumer()) {
@@ -839,8 +871,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
-      if (struct.isSetEntryPointer()) {
-        struct.entryPointer.write(oprot);
+      if (struct.isSetEntryPointers()) {
+        {
+          oprot.writeI32(struct.entryPointers.size());
+          for (TQueueEntryPointer _iter70 : struct.entryPointers)
+          {
+            _iter70.write(oprot);
+          }
+        }
       }
       if (struct.isSetConsumer()) {
         struct.consumer.write(oprot);
@@ -865,9 +903,18 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         struct.setQueueNameIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.entryPointer = new TQueueEntryPointer();
-        struct.entryPointer.read(iprot);
-        struct.setEntryPointerIsSet(true);
+        {
+          org.apache.thrift.protocol.TList _list71 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list71.size);
+          for (int _i72 = 0; _i72 < _list71.size; ++_i72)
+          {
+            TQueueEntryPointer _elem73; // required
+            _elem73 = new TQueueEntryPointer();
+            _elem73.read(iprot);
+            struct.entryPointers.add(_elem73);
+          }
+        }
+        struct.setEntryPointersIsSet(true);
       }
       if (incoming.get(2)) {
         struct.consumer = new TQueueConsumer();

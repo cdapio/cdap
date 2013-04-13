@@ -1341,14 +1341,14 @@ public class TOperationExecutor {
             case 2: // BATCH
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list84 = iprot.readListBegin();
-                  struct.batch = new ArrayList<TWriteOperation>(_list84.size);
-                  for (int _i85 = 0; _i85 < _list84.size; ++_i85)
+                  org.apache.thrift.protocol.TList _list92 = iprot.readListBegin();
+                  struct.batch = new ArrayList<TWriteOperation>(_list92.size);
+                  for (int _i93 = 0; _i93 < _list92.size; ++_i93)
                   {
-                    TWriteOperation _elem86; // required
-                    _elem86 = new TWriteOperation();
-                    _elem86.read(iprot);
-                    struct.batch.add(_elem86);
+                    TWriteOperation _elem94; // required
+                    _elem94 = new TWriteOperation();
+                    _elem94.read(iprot);
+                    struct.batch.add(_elem94);
                   }
                   iprot.readListEnd();
                 }
@@ -1381,9 +1381,9 @@ public class TOperationExecutor {
           oprot.writeFieldBegin(BATCH_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.batch.size()));
-            for (TWriteOperation _iter87 : struct.batch)
+            for (TWriteOperation _iter95 : struct.batch)
             {
-              _iter87.write(oprot);
+              _iter95.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -1420,9 +1420,9 @@ public class TOperationExecutor {
         if (struct.isSetBatch()) {
           {
             oprot.writeI32(struct.batch.size());
-            for (TWriteOperation _iter88 : struct.batch)
+            for (TWriteOperation _iter96 : struct.batch)
             {
-              _iter88.write(oprot);
+              _iter96.write(oprot);
             }
           }
         }
@@ -1439,14 +1439,14 @@ public class TOperationExecutor {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list89 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.batch = new ArrayList<TWriteOperation>(_list89.size);
-            for (int _i90 = 0; _i90 < _list89.size; ++_i90)
+            org.apache.thrift.protocol.TList _list97 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.batch = new ArrayList<TWriteOperation>(_list97.size);
+            for (int _i98 = 0; _i98 < _list97.size; ++_i98)
             {
-              TWriteOperation _elem91; // required
-              _elem91 = new TWriteOperation();
-              _elem91.read(iprot);
-              struct.batch.add(_elem91);
+              TWriteOperation _elem99; // required
+              _elem99 = new TWriteOperation();
+              _elem99.read(iprot);
+              struct.batch.add(_elem99);
             }
           }
           struct.setBatchIsSet(true);

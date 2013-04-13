@@ -124,7 +124,7 @@ struct TQueueEntryPointer {
 
 struct TQueueAck {
   1: binary queueName,
-  2: TQueueEntryPointer entryPointer,
+  2: list<TQueueEntryPointer> entryPointers,
   3: TQueueConsumer consumer,
   4: i32 numGroups,
   5: i64 id,
