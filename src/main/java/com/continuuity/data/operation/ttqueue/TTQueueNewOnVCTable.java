@@ -421,6 +421,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public int configure(QueueConfig config, long groupId, int newConsumerCount)
     throws OperationException {
+
+    // TODO: use locks so that only one configure can run at a time
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
     if(LOG.isDebugEnabled()) {

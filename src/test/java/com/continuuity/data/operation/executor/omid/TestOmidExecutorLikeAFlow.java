@@ -129,8 +129,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
-    // configure queue
+    // configure queue and stream
     this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, config, groupid, 1));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, config, groupid, 1));
 
     // enqueue to queue, stream, and write data
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
@@ -156,8 +157,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     // but if we clear the fabric they all disappear
     this.executor.execute(context, new ClearFabric());
 
-    // configure queue again
+    // configure queue and stream again
     this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, config, groupid, 1));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, config, groupid, 1));
     // everything is gone!
     assertTrue(this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config)).isEmpty());
