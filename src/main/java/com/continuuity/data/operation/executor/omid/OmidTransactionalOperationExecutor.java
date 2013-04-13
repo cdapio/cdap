@@ -197,15 +197,15 @@ public class OmidTransactionalOperationExecutor
     return Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX);
   }
 
-  private int streamSizeEstimate(byte[] streamName, byte[] data) {
+  private int streamSizeEstimate(byte[] streamName, int dataSize, int numEntries) {
     // assume HBase uses space for the stream name, the data, and some metadata
-    return streamName.length + data.length + 50;
+    return dataSize + numEntries * (streamName.length + 50);
   }
 
-  private void streamMetric(byte[] streamName, byte[] data) {
+  private void streamMetric(byte[] streamName, int dataSize, int numEntries) {
     ImmutablePair<String, String> names = getStreamMetricNames(streamName);
     streamMetric.meter(names.getFirst(), 1);
-    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
+    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, dataSize, numEntries));
   }
 
   private void dataSetMetric_read(String dataSetName) {
@@ -619,8 +619,9 @@ public class OmidTransactionalOperationExecutor
         QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue)undo;
         QueueProducer producer = unenqueue.producer;
         enqueueMetric(unenqueue.queueName, producer);
-        if (isStream(unenqueue.queueName))
-          streamMetric(unenqueue.queueName, unenqueue.data);
+        if (isStream(unenqueue.queueName)) {
+          streamMetric(unenqueue.queueName, unenqueue.sumOfSizes, unenqueue.numEntries());
+        }
       } else if (undo instanceof QueueUndo.QueueUnack) {
         QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)undo;
         QueueConsumer consumer = unack.consumer;
@@ -826,11 +827,11 @@ public class OmidTransactionalOperationExecutor
                                                                    transaction.getWriteVersion());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries()[0].getData(), enqueue.getProducer(),
-                                     result.getEntryPointer()));
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries(), enqueue.getProducer(),
+                                     result.getEntryPointers()));
   }
 
-  WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)
+  WriteTransactionResult write(QueueAck ack, Transaction transaction)
     throws  OperationException {
 
     initialize();
@@ -846,7 +847,7 @@ public class OmidTransactionalOperationExecutor
       end("QueueAck", begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers()[0], ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
