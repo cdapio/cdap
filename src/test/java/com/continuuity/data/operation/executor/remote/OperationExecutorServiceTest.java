@@ -460,6 +460,7 @@ public abstract class OperationExecutorServiceTest extends
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     remote.execute(context, null, new QueueAdmin.QueueConfigure(q, config, 1, 1));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, config, 1, 1));
     Assert.assertTrue(remote.execute(
         context, new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertTrue(remote.execute(
@@ -502,6 +503,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // verify that the streams are gone, but tables and queues are there
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, config, 1, 1));
     Assert.assertArrayEquals(x, remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());

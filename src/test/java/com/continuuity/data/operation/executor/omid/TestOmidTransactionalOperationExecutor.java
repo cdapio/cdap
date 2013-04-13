@@ -112,6 +112,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueKey, config, 0, 1));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamKey, config, 0, 1));
 
     // insert to all three types
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
@@ -142,6 +143,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // everything is gone
     this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueKey, config, 0, 1));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamKey, config, 0, 1));
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
@@ -164,6 +166,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // streams gone, queues and data remain
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamKey, config, 0, 1));
     assertArrayEquals(dataKey,
         executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
