@@ -5,6 +5,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Arrays;
+
 /**
  * Inserts an entry to the tail of a queue.
  */
@@ -14,32 +16,38 @@ public class QueueEnqueue extends WriteOperation {
   private final QueueProducer producer;
 
   private final byte [] queueName;
-  private final QueueEntry entry;
+  private final QueueEntry [] entries;
 
   public QueueEnqueue(final byte [] queueName, final QueueEntry entry) {
     this(null, queueName, entry);
   }
 
-  public QueueEnqueue(final long id, final byte[] queueName, final QueueEntry entry) {
-    this(id, null, queueName, entry);
+  public QueueEnqueue(final byte [] queueName, final QueueEntry [] entries) {
+    this(null, queueName, entries);
   }
 
   public QueueEnqueue(QueueProducer producer, final byte [] queueName, final QueueEntry entry) {
-    this.producer = producer;
-    this.queueName = queueName;
-    this.entry = entry;
+    this(producer, queueName, new QueueEntry[] { entry });
+    Preconditions.checkArgument(entry != null);
   }
 
-  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final QueueEntry entry) {
+  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final QueueEntry[] entries) {
+    Preconditions.checkArgument(entries != null && entries.length > 0);
+    this.producer = producer;
+    this.queueName = queueName;
+    this.entries = entries;
+  }
+
+  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final QueueEntry[] entries) {
     super(id);
-    Preconditions.checkArgument(entry!=null);
+    Preconditions.checkArgument(entries != null && entries.length > 0);
     this.producer = producer;
     this.queueName = queueName;
-    this.entry = entry;
+    this.entries = entries;
   }
 
-  public QueueEntry getEntry() {
-    return this.entry;
+  public QueueEntry[] getEntries() {
+    return this.entries;
   }
 
   public QueueProducer getProducer() {
@@ -55,7 +63,7 @@ public class QueueEnqueue extends WriteOperation {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("queueName", Bytes.toString(this.queueName))
-        .add("entry", this.entry)
+        .add("entries", Arrays.toString(this.entries))
         .toString();
   }
 

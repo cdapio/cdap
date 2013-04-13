@@ -84,7 +84,7 @@ struct TQueueEntry {
 
 struct TQueueEnqueue {
   1: binary queueName,
-  2: TQueueEntry entry,
+  2: list<TQueueEntry> entries,
   3: i64 id,
   4: optional TQueueProducer producer,
   5: optional string metric,

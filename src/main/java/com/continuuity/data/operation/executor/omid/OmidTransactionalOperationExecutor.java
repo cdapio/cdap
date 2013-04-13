@@ -594,7 +594,7 @@ public class OmidTransactionalOperationExecutor
       // make sure to emit the metric for failed commits
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
 
-      // attempt to ubdo all the writes of the transaction
+      // attempt to undo all the writes of the transaction
       // (transaction is already marked as invalid in oracle)
       attemptUndo(context, transaction, txResult.getUndos());
 
@@ -822,12 +822,12 @@ public class OmidTransactionalOperationExecutor
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries()[0],
                                                                    transaction.getWriteVersion());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
-            enqueue.getProducer(), result.getEntryPointer()));
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries()[0].getData(), enqueue.getProducer(),
+                                     result.getEntryPointer()));
   }
 
   WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)

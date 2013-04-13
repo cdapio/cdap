@@ -486,10 +486,27 @@ public class ConverterUtils {
     return tQueueEntry;
   }
 
+  QueueEntry[] unwrap(List<TQueueEntry> tEntries) {
+    QueueEntry[] entries = new QueueEntry[tEntries.size()];
+    int index = 0;
+    for (TQueueEntry tEntry : tEntries) {
+      entries[index++] = unwrap(tEntry);
+    }
+    return entries;
+  }
+
+  List<TQueueEntry> wrap(QueueEntry[] entries) {
+    List<TQueueEntry> tQueueEntries = Lists.newArrayListWithCapacity(entries.length);
+    for (QueueEntry entry : entries) {
+      tQueueEntries.add(wrap(entry));
+    }
+    return tQueueEntries;
+  }
+
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
-        wrap(enqueue.getEntry()),
+        wrap(enqueue.getEntries()),
         enqueue.getId());
     if (enqueue.getProducer() != null) {
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
@@ -505,7 +522,7 @@ public class ConverterUtils {
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
-        unwrap(tEnqueue.getEntry()));
+        unwrap(tEnqueue.getEntries()));
     if (tEnqueue.isSetMetric()) {
       enqueue.setMetricName(tEnqueue.getMetric());
     }
@@ -802,7 +819,7 @@ public class ConverterUtils {
     TDequeueResult tQueueResult=new TDequeueResult(status, wrap(result.getEntryPointer()));
     QueueEntry entry=result.getEntry();
     if (entry!=null) {
-      TQueueEntry tQueueEntry=wrap(entry);
+      TQueueEntry tQueueEntry = wrap(entry);
       tQueueResult.setEntry(tQueueEntry);
     }
     if(consumer != null) {
