@@ -249,6 +249,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
+    // Note this means that batch dequeue with batch return will only work in multi-entry mode TODO is that acceptable?
     if(config.isSingleEntry()) {
       final DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
       final TransientWorkingSet transientWorkingSet = queueState.getTransientWorkingSet();
@@ -285,23 +286,43 @@ public class TTQueueNewOnVCTable implements TTQueue {
       readEntries(consumer, config, queueState, readPointer, entryIds);
     }
 
-    if(queueState.getTransientWorkingSet().hasNext()) {
-      DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
-      this.dequeueReturns.incrementAndGet();
-      queueState.getDequeueEntrySet().add(dequeueEntry);
-      QueueEntry entry = new QueueEntry(queueState.getTransientWorkingSet()
-                                          .getCachedEntries().get(dequeueEntry.getEntryId()));
-      dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
-      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                     new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
-      return dequeueResult;
-    } else {
-      // No queue entries available to dequue, return queue empty
+    // If still no queue entries available to dequue, return queue empty
+    if(!queueState.getTransientWorkingSet().hasNext()) {
       if (LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage("End of queue reached using " + "read pointer " + readPointer));
       }
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
+      return dequeueResult;
+    }
+
+    if (!consumer.getQueueConfig().returnsBatch()) {
+      // if returnBatch == false, return only the first transient one
+      DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
+      queueState.getDequeueEntrySet().add(dequeueEntry);
+      QueueEntry entry = new QueueEntry(queueState.getTransientWorkingSet()
+                                          .getCachedEntries().get(dequeueEntry.getEntryId()));
+      dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
+
+      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
+                     new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
+      this.dequeueReturns.incrementAndGet();
+      return dequeueResult;
+    } else {
+      // if returnBatch == true, return all remaining transient entries
+      List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(consumer.getQueueConfig().getBatchSize());
+      List<QueueEntry> entries = Lists.newArrayListWithCapacity(consumer.getQueueConfig().getBatchSize());
+      while (queueState.getTransientWorkingSet().hasNext()) {
+        DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
+        queueState.getDequeueEntrySet().add(dequeueEntry);
+        entries.add(new QueueEntry(queueState.getTransientWorkingSet()
+                                     .getCachedEntries().get(dequeueEntry.getEntryId())));
+        pointers.add(new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()));
+      }
+      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
+                                                      pointers.toArray(new QueueEntryPointer[pointers.size()]),
+                                                      entries.toArray(new QueueEntry[entries.size()]));
+      this.dequeueReturns.incrementAndGet();
       return dequeueResult;
     }
   }
