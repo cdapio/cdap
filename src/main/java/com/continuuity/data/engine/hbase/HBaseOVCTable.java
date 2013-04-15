@@ -144,6 +144,33 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+    assert (rows.length == columnsPerRow.length);
+    assert (rows.length == valuesPerRow.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        byte[][] columns = columnsPerRow[i];
+        byte[][] values = valuesPerRow[i];
+        Put put = new Put(rows[i]);
+        for (int j = 0; j < columns.length; j++) {
+          put.add(this.family, columns[j], version, prependWithTypePrefix(DATA, values[j]));
+        }
+        puts.add(put);
+      }
+      writeTable.put(puts);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     //point delete (unlike deleteAll) is only used internally for undo-ing operations of i.e. write(?) or delete
@@ -772,14 +799,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   private boolean equalValues(KeyValue keyValue, byte[] value) {
-    if ( (value==null && keyValue==null)
-      //next line correct/not necessary?
-      || (value==null && keyValue!=null && keyValue.getValue()==null)
-      || (value!=null && keyValue!=null && Bytes.equals(removeTypePrefix(keyValue.getValue()), value))
-      ) {
-      return true;
-    }
-    return false;
+    return ((value == null && keyValue == null) ||
+      (value == null && keyValue.getValue() == null) ||
+      (value != null && keyValue != null && Bytes.equals(removeTypePrefix(keyValue.getValue()), value)));
   }
 
   @Override
@@ -787,7 +809,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer,
                              long writeVersion) throws OperationException {
-    byte[] expectedPrependedValue=null;
     KeyValue latestVisibleKV=null;
     HTable writeTable=null;
     try {
@@ -799,7 +820,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Result result = this.readTable.get(get);
       KeyValue[] rawResults=result.raw();
       if (rawResults!=null && rawResults.length!=0) {
-        expectedPrependedValue=rawResults[0].getValue();
         Set<Long> deleted = Sets.newHashSet();
         for (KeyValue kv : result.raw()) {
           long version = kv.getTimestamp();
@@ -950,6 +970,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     public void handle(IOException e) throws OperationException;
   }
 
+  @SuppressWarnings("unused")
   public static class ToOperationExceptionHandler implements IOExceptionHandler {
     @Override
     public void handle(IOException e) throws OperationException {
@@ -959,6 +980,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
+  @SuppressWarnings("unused")
   private void dumpColumn(byte[] row, byte[] column) throws OperationException {
     try {
       Get get = new Get(row);
@@ -970,13 +992,14 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         long version = kv.getTimestamp();
         byte [] value = kv.getValue();
         if (value == null || value.length == 0) Log.error("value == null || value.length");
-        Log.debug("{}.{}:{}.{} -> {}",new Object[]{Bytes.toString(row),Bytes.toString(family),column,version,value});
+        Log.debug("{}.{}:{}.{} -> {}", Bytes.toString(row), Bytes.toString(family), column, version, value);
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }
   }
 
+  @SuppressWarnings("unused")
   private void dumpTable() throws OperationException {
     try {
       Scan scan = new Scan();
@@ -991,7 +1014,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           long version = kv.getTimestamp();
           byte [] value = kv.getValue();
           if (value == null || value.length == 0) Log.error("value == null || value.length");
-          Log.debug("{}.{}:{}.{} -> {}",new Object[]{Bytes.toString(row),Bytes.toString(family),column,version,value});
+          Log.debug("{}.{}:{}.{} -> {}", Bytes.toString(row), Bytes.toString(family), column, version, value);
         }
       }
     } catch (IOException e) {

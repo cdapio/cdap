@@ -991,6 +991,40 @@ public abstract class TestOVCTable {
   }
 
   @Test
+  public void testMultiRowMultiColumnPut() throws OperationException {
+    final int MAX = 10;
+
+    // Generate row keys, cols, values
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] [] colsPerRow = new byte[MAX][][];
+    byte [] [] [] valuesPerRow = new byte[MAX][][];
+    for(int i = 0; i < MAX; ++i) {
+      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowColumnPut." + i);
+      // Verify row[i] dne
+      assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
+      colsPerRow[i] = new byte[i + 1][];
+      valuesPerRow[i] = new byte[i + 1][];
+      for (int j = 0; j <= i; ++j) {
+        colsPerRow[i][j] = Bytes.toBytes("col" + i + "." + j);
+        valuesPerRow[i][j] = Bytes.toBytes(i * j);
+      }
+    }
+
+    // Put data
+    this.table.put(rows, colsPerRow, 1L, valuesPerRow);
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
+      // Assert only one col per row is read
+      assertEquals(i + 1, colMap.size());
+      for (int j = 0; j <= i; j++) {
+        assertEquals(i * j, Bytes.toInt(colMap.get(colsPerRow[i][j])));
+      }
+    }
+  }
+
+  @Test
   public void testGetAllColumns() throws OperationException {
     final int MAX = 10;
     final byte[] COL1 = Bytes.toBytes("col1");

@@ -21,8 +21,6 @@ import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,8 +30,6 @@ import java.util.TreeMap;
 
 //public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
 public class HBaseNativeOVCTable extends HBaseOVCTable {
-
-  private static final Logger Log = LoggerFactory.getLogger(HBaseNativeOVCTable.class);
 
   public HBaseNativeOVCTable(Configuration conf, final byte[] tableName, final byte[] family,
                              IOExceptionHandler exceptionHandler) throws OperationException {
@@ -79,6 +75,33 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       for(int i = 0; i < rows.length; i++) {
         Put put = new Put(rows[i]);
         put.add(this.family, columns[i], version, values[i]);
+        puts.add(put);
+      }
+      writeTable.put(puts);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+    assert (rows.length == columnsPerRow.length);
+    assert (rows.length == valuesPerRow.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        byte[][] columns = columnsPerRow[i];
+        byte[][] values = valuesPerRow[i];
+        Put put = new Put(rows[i]);
+        for (int j = 0; j < columns.length; j++) {
+          put.add(this.family, columns[j], version, values[j]);
+        }
         puts.add(put);
       }
       writeTable.put(puts);
