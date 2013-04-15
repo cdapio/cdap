@@ -14,7 +14,6 @@ import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -170,7 +169,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H<partitionKey>/<hashValue>
     */
 
+    byte[][] rowKeys = new byte[n][];
+    byte[][][] allColumnKeys = new byte[n][][];
+    byte[][][] allColumnValues = new byte[n][][];
     QueueEntryPointer[] returnPointers = new QueueEntryPointer[n];
+
     long entryId = lastEntryId - n;
     for (int i = 0; i < n; i++) {
       ++entryId; // this puts the first one at lastId - n + 1, and the last one at lastId
@@ -190,13 +193,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
         colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
         colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
       }
-      // TODO put all rows at the same time
-      this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
-                     colKeys,
-                     cleanWriteVersion,
-                     colValues);
+
+      rowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
+      allColumnKeys[i] = colKeys;
+      allColumnValues[i] = colValues;
       returnPointers[i] = new QueueEntryPointer(this.queueName, entryId);
     }
+    // write all rows at once
+    this.table.put(rowKeys, allColumnKeys, cleanWriteVersion, allColumnValues);
+
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, returnPointers);
   }
@@ -249,15 +254,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
-    // Note this means that batch dequeue with batch return will only work in multi-entry mode TODO is that acceptable?
     if(config.isSingleEntry()) {
       final DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
       final TransientWorkingSet transientWorkingSet = queueState.getTransientWorkingSet();
       final Map<Long, byte[]> cachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
 
-      Preconditions.checkState(dequeueEntrySet.size() <= 1,
-                               "More than 1 entry dequeued in single entry mode - %s", dequeueEntrySet);
-      if(!dequeueEntrySet.isEmpty()) {
+      // how many should we return? The dequeueEntrySet may contain more than the requested batch size (this happens
+      // if a consumer crashes and is reconfigured to a smaller batch size when restarted).
+      int numToReturn = config.returnsBatch() ? getBatchSize(config) : 1;
+      List<QueueEntry> entries = Lists.newArrayListWithCapacity(numToReturn);
+      List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(numToReturn);
+
+      while (!dequeueEntrySet.isEmpty() && entries.size() < numToReturn) {
         DequeueEntry returnEntry = dequeueEntrySet.min();
         long returnEntryId = returnEntry.getEntryId();
         if(transientWorkingSet.hasNext() && transientWorkingSet.peekNext().getEntryId() == returnEntryId) {
@@ -265,16 +273,20 @@ public class TTQueueNewOnVCTable implements TTQueue {
           // The cached entry list would not have been incremented for the first time in single entry mode
           transientWorkingSet.next();
         }
-
         byte[] entryBytes = cachedEntries.get(returnEntryId);
         if(entryBytes == null) {
           throw new OperationException(StatusCode.INTERNAL_ERROR,
-                  getLogMessage(String.format("Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
+                                       getLogMessage(String.format("Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
         }
-        QueueEntry entry = new QueueEntry(entryBytes);
+        entries.add(new QueueEntry(entryBytes));
+        pointers.add(new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()));
+      }
+      // if we found any entries in the dequeued set, return them again (that is the contract of singleEntry)
+      if (entries.size() > 0) {
         dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
         DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                                  new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()), entry);
+                                                        pointers.toArray(new QueueEntryPointer[pointers.size()]),
+                                                        entries.toArray(new QueueEntry[entries.size()]));
         return dequeueResult;
       }
     }
@@ -308,12 +320,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
                      new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
       this.dequeueReturns.incrementAndGet();
       return dequeueResult;
+
     } else {
-      // if returnBatch == true, return all remaining transient entries
+      // if returnBatch == true, return all remaining transient entries up to the requested batch size
       final int batchSize = getBatchSize(config);
       List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(batchSize);
       List<QueueEntry> entries = Lists.newArrayListWithCapacity(batchSize);
-      while (queueState.getTransientWorkingSet().hasNext()) {
+      while (queueState.getTransientWorkingSet().hasNext() && entries.size() < batchSize) {
         DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
         queueState.getDequeueEntrySet().add(dequeueEntry);
         entries.add(new QueueEntry(queueState.getTransientWorkingSet()
@@ -426,7 +439,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    // TODO implement batch
     ack(new QueueEntryPointer[] { entryPointer }, consumer, readPointer);
   }
 
@@ -547,7 +559,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     throws OperationException {
     // for batch finalize, we don't know whether there are gaps in the sequence of entries getting finalized. So we
     // ignore the current finalize entry set and evict independent of that.
-    finalize((QueueEntryPointer)null, consumer, totalNumGroups, writePoint);
+    finalize(entryPointers[entryPointers.length - 1], consumer, totalNumGroups, writePoint);
   }
 
   @Override
@@ -603,8 +615,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Find the min entry that can be evicted for the consumer's group
-    final long minGroupEvictEntry = getMinGroupEvictEntry(
-      consumer, entryPointer == null ? -1L : entryPointer.getEntryId(), readPointer);
+    final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId(), readPointer);
     // Save the minGroupEvictEntry for the consumer's group
     if(minGroupEvictEntry != INVALID_ENTRY_ID) {
       writeKeys.add(GLOBAL_EVICT_META_PREFIX);
@@ -720,7 +731,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     } else {
       // For consumer running the eviction, currentConsumerFinalizeEntry is a better evict entry
       // than CONSUMER_READ_POINTER - 1, since currentConsumerFinalizeEntry > CONSUMER_READ_POINTER - 1
-      if(consumerId == consumer.getInstanceId() && currentConsumerFinalizeEntry != -1L) {
+      if(consumerId == consumer.getInstanceId()) {
         evictEntry = currentConsumerFinalizeEntry;
       } else {
         byte[] consumerReadPointerBytes = readPointerMap.get(CONSUMER_READ_POINTER);
