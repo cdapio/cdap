@@ -108,7 +108,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
-  private final long DEFAULT_BATCH_SIZE;
+  private final int DEFAULT_BATCH_SIZE;
   private final long EVICT_INTERVAL_IN_SECS;
   private final int MAX_CRASH_DEQUEUE_TRIES;
   private final int MAX_CONSUMER_COUNT;
@@ -121,7 +121,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.queueName = queueName;
     this.oracle = oracle;
 
-    final long defaultBatchSize = conf.getLong(TTQUEUE_BATCH_SIZE_DEFAULT, 100);
+    final int defaultBatchSize = conf.getInt(TTQUEUE_BATCH_SIZE_DEFAULT, 100);
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
     final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
@@ -136,7 +136,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.MAX_CONSUMER_COUNT = maxConsumerCount > 0 ? maxConsumerCount : 1000;
   }
 
-  private long getBatchSize(QueueConfig queueConfig) {
+  private int getBatchSize(QueueConfig queueConfig) {
     if(queueConfig.getBatchSize() > 0) {
       return queueConfig.getBatchSize();
     }
@@ -296,7 +296,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return dequeueResult;
     }
 
-    if (!consumer.getQueueConfig().returnsBatch()) {
+    if (!config.returnsBatch()) {
       // if returnBatch == false, return only the first transient one
       DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
       queueState.getDequeueEntrySet().add(dequeueEntry);
@@ -310,8 +310,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return dequeueResult;
     } else {
       // if returnBatch == true, return all remaining transient entries
-      List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(consumer.getQueueConfig().getBatchSize());
-      List<QueueEntry> entries = Lists.newArrayListWithCapacity(consumer.getQueueConfig().getBatchSize());
+      final int batchSize = getBatchSize(config);
+      List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(batchSize);
+      List<QueueEntry> entries = Lists.newArrayListWithCapacity(batchSize);
       while (queueState.getTransientWorkingSet().hasNext()) {
         DequeueEntry dequeueEntry = queueState.getTransientWorkingSet().next();
         queueState.getDequeueEntrySet().add(dequeueEntry);
@@ -423,14 +424,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
     // TODO implement batch
-    ack(entryPointers[0], consumer, readPointer);
+    ack(new QueueEntryPointer[] { entryPointer }, consumer, readPointer);
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
@@ -438,17 +439,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Get queue state
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
-    // Only the entry that has been dequeued by this consumer can be acked
-    if(!queueState.getDequeueEntrySet().contains(entryPointer.getEntryId())) {
-      throw new OperationException(StatusCode.ILLEGAL_ACK,
-                 getLogMessage(String.format("Entry %d is not dequeued by this consumer. Current active entries are %s",
-                                            entryPointer.getEntryId(), queueState.getDequeueEntrySet())));
+    for (QueueEntryPointer entryPointer : entryPointers) {
+      // Only an entry that has been dequeued by this consumer can be acked
+      if(!queueState.getDequeueEntrySet().contains(entryPointer.getEntryId())) {
+        throw new OperationException(
+          StatusCode.ILLEGAL_ACK,
+          getLogMessage(String.format("Entry %d is not dequeued by this consumer. Current active entries are %s",
+                                      entryPointer.getEntryId(), queueState.getDequeueEntrySet())));
+      }
+      // Set ack state
+      // TODO: what happens when you ack and crash?
+      queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
     }
-
-    // Set ack state
-    // TODO: what happens when you ack and crash?
-    queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
-
     // Write ack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
@@ -456,8 +458,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    // TODO implement batch
-    QueueEntryPointer entryPointer = entryPointers[0];
     // TODO: add tests for unack
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
@@ -469,7 +469,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // TODO: 1. Check if entry was really acked
     // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
     // TODO: 2. queue cache.
-    queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
+    for (QueueEntryPointer entryPointer : entryPointers) {
+      queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
+    }
 
     // Write unack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
@@ -2302,7 +2304,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
         }
 
-        final long batchSize = getBatchSize(config);
+        final int batchSize = getBatchSize(config);
         long startEntryId = entryId + 1;
         long endEntryId =
                 startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
@@ -2377,7 +2379,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
         }
 
-        final long batchSize = getBatchSize(config);
+        final int batchSize = getBatchSize(config);
         long startEntryId = entryId + 1;
         long endEntryId =
                   startEntryId + (batchSize * consumer.getGroupSize()) < queueState.getQueueWritePointer() ?
@@ -2513,7 +2515,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Else claim new queue entries
-      final long batchSize = getBatchSize(config);
+      final int batchSize = getBatchSize(config);
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
         // Fetch the group read pointer
