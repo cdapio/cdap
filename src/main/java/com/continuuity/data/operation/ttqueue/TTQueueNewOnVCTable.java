@@ -113,6 +113,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   private final int MAX_CRASH_DEQUEUE_TRIES;
   private final int MAX_CONSUMER_COUNT;
 
+  private static final byte[] ENTRY_META_INVALID = new EntryMeta(EntryMeta.EntryState.INVALID).getBytes();
+
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
@@ -143,76 +145,94 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   @Override
   public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
-    // TODO implement batch
-    return enqueue(entries[0], cleanWriteVersion);
-  }
-  @Override
-  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
-    byte[] data = entry.getData();
+    int n = entries.length;
     if (LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")"));
+      LOG.trace(getLogMessage("Enqueueing " + n + " entries, writeVersion=" + cleanWriteVersion + ")"));
     }
 
     // Get our unique entry id
-    long entryId;
+    long lastEntryId;
     try {
       // Make sure the increment below uses increment operation of the underlying implementation directly
       // so that it is atomic (Eg. HBase increment operation)
-      entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 1);
+      lastEntryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, n);
     } catch (OperationException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-         getLogMessage(String.format("Increment of global entry id failed with status code %d : %s",
-                                     e.getStatus(), e.getMessage())), e);
+      throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
+        String.format("Increment of global entry id failed with status code %d : %s",
+                      e.getStatus(), e.getMessage())) , e);
     }
     if (LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("New enqueue got entry id " + entryId));
+      LOG.trace(getLogMessage("New enqueue ends with entry id " + lastEntryId));
     }
 
     /*
-    Insert entry with version=<cleanWriteVersion> and
+    Insert each entry with version=<cleanWriteVersion> and
     row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H<partitionKey>/<hashValue>
     */
 
-    final int size = entry.getPartitioningMap().size() + 2;
-    byte[][] colKeys = new byte[size][];
-    byte[][] colValues = new byte[size][];
+    QueueEntryPointer[] returnPointers = new QueueEntryPointer[n];
+    long entryId = lastEntryId - n;
+    for (int i = 0; i < n; i++) {
+      ++entryId; // this puts the first one at lastId - n + 1, and the last one at lastId
+      QueueEntry entry = entries[i];
 
-    int colKeyIndex = 0;
-    int colValueIndex = 0;
-    colKeys[colKeyIndex++] = ENTRY_DATA;
-    colKeys[colKeyIndex++] = ENTRY_META;
-    colValues[colValueIndex++] = data;
-    colValues[colValueIndex++] = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
-    for(Map.Entry<String, Integer> e : entry.getPartitioningMap().entrySet()) {
-      colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
-      colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
+      final int size = entry.getPartitioningMap().size() + 2;
+      byte[][] colKeys = new byte[size][];
+      byte[][] colValues = new byte[size][];
+
+      int colKeyIndex = 0;
+      int colValueIndex = 0;
+      colKeys[colKeyIndex++] = ENTRY_DATA;
+      colKeys[colKeyIndex++] = ENTRY_META;
+      colValues[colValueIndex++] = entry.getData();
+      colValues[colValueIndex++] = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+      for(Map.Entry<String, Integer> e : entry.getPartitioningMap().entrySet()) {
+        colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
+        colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
+      }
+      // TODO put all rows at the same time
+      this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
+                     colKeys,
+                     cleanWriteVersion,
+                     colValues);
+      returnPointers[i] = new QueueEntryPointer(this.queueName, entryId);
     }
-
-    this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
-                   colKeys,
-                   cleanWriteVersion,
-                   colValues);
-
     // Return success with pointer to entry
-    return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, new QueueEntryPointer(this.queueName, entryId));
+    return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, returnPointers);
+  }
+
+  @Override
+  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
+    return enqueue(new QueueEntry[] { entry }, cleanWriteVersion);
   }
 
   @Override
   public void invalidate(QueueEntryPointer [] entryPointers, long cleanWriteVersion) throws OperationException {
-    // TODO implement this for batch
-    QueueEntryPointer entryPointer = entryPointers[0];
-    if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Invalidating entry %d", entryPointer.getEntryId())));
+    int n = entryPointers.length;
+    if (n == 0) {
+      return;
     }
-    final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
-    // Change meta data to INVALID
+    if(LOG.isTraceEnabled()) {
+      LOG.trace(getLogMessage(String.format(
+        "Invalidating %d entries starting at  %d", n, entryPointers[0].getEntryId())));
+    }
+    byte[][] rowNames = new byte[n][];
+    byte[][] columns = new byte[n][];
+    byte[][] values = new byte[n][];
+
+    // Change meta data to INVALID for each entry id
+    for (int i = 0; i < n; i++) {
+      rowNames[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryPointers[i].getEntryId());
+      columns[i] = ENTRY_META;
+      values[i] = ENTRY_META_INVALID;
+    }
+
     // TODO: check if it okay to use cleanWriteVersion during invalidate,
     // TODO: what happens to values written using transaction pointer when transaction gets rolled back
-    this.table.put(rowName, ENTRY_META,
-                   cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
+    this.table.put(rowNames, columns, cleanWriteVersion, values);
     // No need to delete data/headers since they will be cleaned up during eviction later
     if (LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("Invalidated " + entryPointer));
+      LOG.trace(getLogMessage("Invalidated " + n + " entry pointers"));
     }
   }
 
@@ -502,9 +522,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void finalize(QueueEntryPointer [] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
     throws OperationException {
-    // TODO implement batch
-    QueueEntryPointer entryPointer = entryPointers[0];
-    finalize(entryPointer, consumer, totalNumGroups, writePoint);
+    // for batch finalize, we don't know whether there are gaps in the sequence of entries getting finalized. So we
+    // ignore the current finalize entry set and evict independent of that.
+    finalize((QueueEntryPointer)null, consumer, totalNumGroups, writePoint);
   }
 
   @Override
@@ -560,7 +580,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Find the min entry that can be evicted for the consumer's group
-    final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId(), readPointer);
+    final long minGroupEvictEntry = getMinGroupEvictEntry(
+      consumer, entryPointer == null ? -1L : entryPointer.getEntryId(), readPointer);
     // Save the minGroupEvictEntry for the consumer's group
     if(minGroupEvictEntry != INVALID_ENTRY_ID) {
       writeKeys.add(GLOBAL_EVICT_META_PREFIX);
@@ -676,7 +697,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     } else {
       // For consumer running the eviction, currentConsumerFinalizeEntry is a better evict entry
       // than CONSUMER_READ_POINTER - 1, since currentConsumerFinalizeEntry > CONSUMER_READ_POINTER - 1
-      if(consumerId == consumer.getInstanceId()) {
+      if(consumerId == consumer.getInstanceId() && currentConsumerFinalizeEntry != -1L) {
         evictEntry = currentConsumerFinalizeEntry;
       } else {
         byte[] consumerReadPointerBytes = readPointerMap.get(CONSUMER_READ_POINTER);
