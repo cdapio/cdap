@@ -7,5 +7,5 @@ import com.continuuity.app.program.Program;
  */
 public interface TransactionAgentSupplierFactory {
 
-  TransactionAgentSupplier create(Program program);
+  TransactionAgentSupplier createTransactionAgentSupplierFactory(Program program);
 }

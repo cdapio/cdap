@@ -1,10 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.data.dataset.DataSetContext;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -48,7 +45,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
                                 TransactionAgentSupplierFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
-    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.createTransactionAgentSupplierFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());

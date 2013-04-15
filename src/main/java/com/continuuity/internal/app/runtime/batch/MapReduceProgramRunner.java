@@ -58,11 +58,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
 
-    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.createTransactionAgentSupplierFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     // TODO: integrate with long-running transactions
-    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateProxy();
+    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
     try {
       txAgent.start();
     } catch(OperationException e) {

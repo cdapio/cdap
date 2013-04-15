@@ -1,12 +1,14 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
@@ -15,8 +17,10 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -32,23 +36,22 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
 
   private volatile int instanceCount;
   private final QueueProducer queueProducer;
-  private volatile QueueConsumer queueConsumer;
   private final boolean asyncMode;
   private final CMetrics systemMetrics;
   private final FlowletMetrics flowletMetrics;
 
-  BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId,
+  BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, DataSet> datasets, FlowletSpecification flowletSpec, boolean asyncMode) {
     super(program, runId, datasets);
     this.flowId = program.getProgramName();
     this.flowletId = flowletId;
     this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.flowletSpec = flowletSpec;
     this.asyncMode = asyncMode;
 
     this.instanceCount = program.getSpecification().getFlows().get(flowId).getFlowlets().get(flowletId).getInstances();
     this.queueProducer = new QueueProducer(getMetricName());
-//    this.queueConsumer = createQueueConsumer();
 
     this.systemMetrics = new CMetrics(MetricType.FlowSystem, getMetricName());
     this.flowletMetrics = new FlowletMetrics(getAccountId(), getApplicationId(),
@@ -82,7 +85,6 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
 
   public void setInstanceCount(int count) {
     instanceCount = count;
-    queueConsumer = createQueueConsumer();
   }
 
   public boolean isAsyncMode() {
@@ -105,10 +107,6 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
     return queueProducer;
   }
 
-  public QueueConsumer getQueueConsumer() {
-    return queueConsumer;
-  }
-
   public LoggingContext getLoggingContext() {
     return new FlowletLoggingContext(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
   }
@@ -117,16 +115,12 @@ final class BasicFlowletContext extends ProgramRuntimeContext implements Flowlet
     return flowletMetrics;
   }
 
-  private QueueConsumer createQueueConsumer() {
+  public long getGroupId() {
     int gid = 100000 + Objects.hashCode(getAccountId(), getApplicationId(), getFlowId(), getFlowletId());
-    long groupId = 0xffffffffL & gid;
-
-    // TODO: Consumer partitioning
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! asyncMode);
-    return new QueueConsumer(getInstanceId(), groupId, getInstanceCount(), getMetricName(), config);
+    return   0xffffffffL & gid;
   }
 
-  private String getMetricName() {
+  public String getMetricName() {
     return String.format("%s.%s.%s.%s.%s.%d",
                          getAccountId(),
                          getApplicationId(),

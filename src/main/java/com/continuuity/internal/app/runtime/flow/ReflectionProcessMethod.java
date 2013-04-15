@@ -98,7 +98,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   }
 
   private PostProcess doInvoke(final InputDatum input) {
-    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateProxy();
+    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
 
     try {
       txAgent.start();
@@ -211,7 +211,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
     @Override
     public void ack() throws OperationException {
-      TransactionAgent txAgent = txAgentSupplier.create();
+      TransactionAgent txAgent = txAgentSupplier.createTransactionAgent();
       txAgent.start();
       input.submitAck(txAgent);
       txAgent.finish();

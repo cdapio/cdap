@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -11,6 +12,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.internal.app.queue.QueueConsumerFactory;
+import com.continuuity.internal.app.queue.StatefulQueueConsumerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -18,7 +22,7 @@ import com.google.inject.assistedinject.Assisted;
 
 /**
  * A {@link TransactionAgentSupplier} that will create a new {@link SmartTransactionAgent} every time
- * when the {@link #createAndUpdateProxy} method is called. Also the newly created {@link TransactionAgent} would be set
+ * when the {@link #createAndUpdateTransactionAgentProxy} method is called. Also the newly created {@link TransactionAgent} would be set
  * into the given {@link TransactionProxy} instance.
  */
 public final class SmartTransactionAgentSupplier implements TransactionAgentSupplier {
@@ -43,7 +47,7 @@ public final class SmartTransactionAgentSupplier implements TransactionAgentSupp
   }
 
   @Override
-  public TransactionAgent createAndUpdateProxy() {
+  public TransactionAgent createAndUpdateTransactionAgentProxy() {
     OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
     TransactionAgent agent = new SmartTransactionAgent(opex, ctx);
     transactionProxy.setTransactionAgent(agent);
@@ -51,9 +55,15 @@ public final class SmartTransactionAgentSupplier implements TransactionAgentSupp
   }
 
   @Override
-  public TransactionAgent create() {
+  public TransactionAgent createTransactionAgent() {
     OperationContext ctx = new OperationContext(program.getAccountId(), program.getApplicationId());
     return new SmartTransactionAgent(opex, ctx);
+  }
+
+  @Override
+  public QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName,
+                                                         QueueConfig queueConfig, QueueName queueName) {
+    return new StatefulQueueConsumerFactory(opex, program, instanceId, groupId, groupName, queueConfig, queueName);
   }
 
   private DataSetContext createDataSetContext(Program program, OperationExecutor opex, TransactionProxy proxy) {

@@ -36,7 +36,7 @@ final class ReflectionHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    TransactionAgent txAgent = txAgentSupplier.createAndUpdateProxy();
+    TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
 
     try {
       txAgent.start();
