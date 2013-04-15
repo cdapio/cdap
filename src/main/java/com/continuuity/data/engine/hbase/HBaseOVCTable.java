@@ -198,15 +198,15 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.setMaxVersions();
       Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      boolean fastForwardToNextRow=false;
+      boolean fastForwardToNextCol=false;
       byte[] previousColumn=null;
       //assumption: result.raw() has elements sorted by column (all cells from same column before next column)
       for (KeyValue kv : result.raw()) {
         byte [] column = kv.getQualifier();
-        if (Bytes.equals(previousColumn,column) && fastForwardToNextRow) {
+        if (Bytes.equals(previousColumn,column) && fastForwardToNextCol) {
           continue;
         }
-        fastForwardToNextRow=false;
+        fastForwardToNextCol=false;
         if (!Bytes.equals(previousColumn,column)) {
           deleted.clear();
         }
@@ -223,11 +223,11 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
           map.put(column, trueValue);
-          fastForwardToNextRow=true;
+          fastForwardToNextCol=true;
           deleted.clear(); // necessary?
         }
         if (typePrefix==DELETE_ALL) {
-          fastForwardToNextRow=true;
+          fastForwardToNextCol=true;
           deleted.clear();
         }
         if (typePrefix==DELETE_VERSION) {
@@ -706,6 +706,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer,
                              long writeVersion) throws OperationException {
+    // Note: Since this CAS operation is not atomic - a Get followed by a Put - there is a risk of a conflict when
+    // two transacations try to update the same column. This is ok, since opex will make sure that at commit time
+    // one of the transactions will fail.
     KeyValue latestVisibleKV=null;
     HTable writeTable=null;
     try {
