@@ -16,7 +16,7 @@ public class DequeueResult {
   private final QueueEntry[] entries;
 
   public DequeueResult(final DequeueStatus status) {
-    this(status, (QueueEntryPointer)null, null);
+    this(status, (QueueEntryPointer[])null, null);
   }
 
   public DequeueResult(final DequeueStatus status,
