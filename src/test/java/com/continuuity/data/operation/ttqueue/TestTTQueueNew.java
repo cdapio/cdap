@@ -1267,8 +1267,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             actualOldConsumerCount = oldConsumerCount;
           }
         }
-        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
-                                         actualOldConsumerCount, newConsumerCount));
+//        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
+//                                         actualOldConsumerCount, newConsumerCount));
         assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
 
       // Dequeue entries

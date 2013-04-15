@@ -150,7 +150,6 @@ public abstract class TestTTQueue {
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
     queueNormal.configure(consumer);
-    // TODO: eviction is now controlled by canEvict flag in consumer in the new queues
     int numGroups = -1;
 
     // enqueue 10 things
