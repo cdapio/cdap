@@ -419,16 +419,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public int configure(QueueConfig config, long groupId, int newConsumerCount)
+  public int configure(QueueConsumer newConsumer)
     throws OperationException {
+    // Delete state information of consumer, since it will be no longer valid after the configuration is done.
+    newConsumer.setQueueState(null);
 
-    // TODO: use locks so that only one configure can run at a time
+    // Simple leader election
+    if(newConsumer.getInstanceId() != 0) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace("Only consumer with instanceID 0 can run configure. Current consumer's instance id = %d",
+                  newConsumer.getInstanceId());
+      }
+      return -1;
+    }
+
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    QueueConfig config = newConsumer.getQueueConfig();
+    int newConsumerCount = newConsumer.getGroupSize();
+    long groupId = newConsumer.getGroupId();
 
     if(LOG.isDebugEnabled()) {
       LOG.trace(getLogMessage(String.format(
-        "Running configure with config=%s, groupId=%d, newConsumerCount=%d, readPointer= %s",
-        config, groupId, newConsumerCount, readPointer)));
+        "Running configure with consumer=%s, readPointer= %s", newConsumer, readPointer)));
     }
 
     if(newConsumerCount < 1) {
@@ -439,13 +451,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Determine what dequeue strategy to use based on the partitioner
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
-    // Read queue state for all consumers
-    int currentConsumerCount = 0;
+    // Read queue state for all consumers of the group to find the number of previous consumers
+    int oldConsumerCount = 0;
     List<QueueConsumer> consumers = Lists.newArrayList();
     List<QueueStateImpl> queueStates = Lists.newArrayList();
     for(int i = 0; i < MAX_CONSUMER_COUNT; ++i) {
       // Note: the consumers created here do not contain QueueConsumer.partitioningKey or QueueConsumer.groupSize
-      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config, false);
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
       QueueStateImpl queueState = null;
       try {
         // TODO: read queue state in one call
@@ -459,7 +471,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         break;
       }
 
-      ++currentConsumerCount;
+      ++oldConsumerCount;
       // Verify there are no inflight entries
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
@@ -470,17 +482,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueStates.add(queueState);
     }
 
-    // Nothing to do if newConsumerCount == currentConsumerCount
-    if(currentConsumerCount == newConsumerCount) {
+    // Nothing to do if newConsumerCount == oldConsumerCount
+    if(oldConsumerCount == newConsumerCount) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
-          "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
+          "Nothing to configure since oldConsumerCount is equal to newConsumerCount (%d)", oldConsumerCount)));
       }
-      return currentConsumerCount;
+      return oldConsumerCount;
     }
 
-    dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
-    return currentConsumerCount;
+    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+    return oldConsumerCount;
   }
 
   @Override
@@ -551,7 +563,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Only one consumer per queue will run the below eviction algorithm for the queue,
     // all others will save minGroupEvictEntry and return
     // Again simple leader election - only one consumer across all groups should have canEvict true
-    if(consumer.canEvict()) {
+    if(consumer.getGroupId() == 0) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage("Running global eviction..."));
       }
@@ -738,7 +750,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return maxEntryToEvict;
   }
 
-  static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
     // TODO: implement this :)
@@ -791,6 +802,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   protected byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  protected Long removePrefixFromLongId(byte[] bytes, byte[] prefix) {
+    if(Bytes.startsWith(bytes, prefix) && (bytes.length >= Bytes.SIZEOF_LONG + prefix.length)) {
+      return Bytes.toLong(bytes, prefix.length);
+    }
+    return null;
   }
 
   protected String getLogMessage(String message) {
@@ -2174,7 +2192,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
         } else {
           // Note: the consumer created here does not contain QueueConsumer.partitioningKey
-          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config, false);
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
           queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
         }
@@ -2508,7 +2526,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(newConsumerCount >= currentConsumerCount) {
         DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
-          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config, false);
+          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
           // TODO: save queue states for all consumers in a single call

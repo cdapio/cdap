@@ -46,40 +46,26 @@ public class QueueAdmin {
   public static class QueueConfigure extends Operation {
 
     private final byte [] queueName;
-    private final QueueConfig config;
-    private final long groupId;
-    private final int newConsumerCount;
+    private final QueueConsumer newConsumer;
 
-    public QueueConfigure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount) {
+    public QueueConfigure(byte[] queueName, QueueConsumer newConsumer) {
       this.queueName = queueName;
-      this.config = config;
-      this.groupId = groupId;
-      this.newConsumerCount = newConsumerCount;
+      this.newConsumer = newConsumer;
     }
 
     public byte [] getQueueName() {
       return this.queueName;
     }
 
-    public QueueConfig getConfig() {
-      return config;
-    }
-
-    public long getGroupId() {
-      return groupId;
-    }
-
-    public int getNewConsumerCount() {
-      return newConsumerCount;
+    public QueueConsumer getNewConsumer() {
+      return newConsumer;
     }
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("queuename", Bytes.toString(this.queueName))
-        .add("config", this.config)
-        .add("groupId", this.groupId)
-        .add("newConsumerCount", this.newConsumerCount)
+        .add("newConsumer", this.newConsumer)
         .toString();
     }
   }

@@ -31,7 +31,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final org.apache.thrift.protocol.TField QUEUE_CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("queueConfig", org.apache.thrift.protocol.TType.STRUCT, (short)6);
   private static final org.apache.thrift.protocol.TField IS_STATEFUL_FIELD_DESC = new org.apache.thrift.protocol.TField("isStateful", org.apache.thrift.protocol.TType.BOOL, (short)7);
   private static final org.apache.thrift.protocol.TField QUEUE_STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("queueState", org.apache.thrift.protocol.TType.STRING, (short)8);
-  private static final org.apache.thrift.protocol.TField CAN_EVICT_FIELD_DESC = new org.apache.thrift.protocol.TField("canEvict", org.apache.thrift.protocol.TType.BOOL, (short)9);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,7 +46,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   public TQueueConfig queueConfig; // optional
   public boolean isStateful; // required
   public ByteBuffer queueState; // optional
-  public boolean canEvict; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -58,8 +56,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     PARTITIONING_KEY((short)5, "partitioningKey"),
     QUEUE_CONFIG((short)6, "queueConfig"),
     IS_STATEFUL((short)7, "isStateful"),
-    QUEUE_STATE((short)8, "queueState"),
-    CAN_EVICT((short)9, "canEvict");
+    QUEUE_STATE((short)8, "queueState");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -90,8 +87,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           return IS_STATEFUL;
         case 8: // QUEUE_STATE
           return QUEUE_STATE;
-        case 9: // CAN_EVICT
-          return CAN_EVICT;
         default:
           return null;
       }
@@ -136,8 +131,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final int __GROUPID_ISSET_ID = 1;
   private static final int __GROUPSIZE_ISSET_ID = 2;
   private static final int __ISSTATEFUL_ISSET_ID = 3;
-  private static final int __CANEVICT_ISSET_ID = 4;
-  private BitSet __isset_bit_vector = new BitSet(5);
+  private BitSet __isset_bit_vector = new BitSet(4);
   private _Fields optionals[] = {_Fields.GROUP_NAME,_Fields.PARTITIONING_KEY,_Fields.QUEUE_CONFIG,_Fields.QUEUE_STATE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -158,8 +152,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     tmpMap.put(_Fields.QUEUE_STATE, new org.apache.thrift.meta_data.FieldMetaData("queueState", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.CAN_EVICT, new org.apache.thrift.meta_data.FieldMetaData("canEvict", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueConsumer.class, metaDataMap);
   }
@@ -171,8 +163,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     int instanceId,
     long groupId,
     int groupSize,
-    boolean isStateful,
-    boolean canEvict)
+    boolean isStateful)
   {
     this();
     this.instanceId = instanceId;
@@ -183,8 +174,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     setGroupSizeIsSet(true);
     this.isStateful = isStateful;
     setIsStatefulIsSet(true);
-    this.canEvict = canEvict;
-    setCanEvictIsSet(true);
   }
 
   /**
@@ -210,7 +199,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       this.queueState = org.apache.thrift.TBaseHelper.copyBinary(other.queueState);
 ;
     }
-    this.canEvict = other.canEvict;
   }
 
   public TQueueConsumer deepCopy() {
@@ -231,8 +219,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     setIsStatefulIsSet(false);
     this.isStateful = false;
     this.queueState = null;
-    setCanEvictIsSet(false);
-    this.canEvict = false;
   }
 
   public int getInstanceId() {
@@ -433,36 +419,13 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     }
   }
 
-  public boolean isCanEvict() {
-    return this.canEvict;
-  }
-
-  public TQueueConsumer setCanEvict(boolean canEvict) {
-    this.canEvict = canEvict;
-    setCanEvictIsSet(true);
-    return this;
-  }
-
-  public void unsetCanEvict() {
-    __isset_bit_vector.clear(__CANEVICT_ISSET_ID);
-  }
-
-  /** Returns true if field canEvict is set (has been assigned a value) and false otherwise */
-  public boolean isSetCanEvict() {
-    return __isset_bit_vector.get(__CANEVICT_ISSET_ID);
-  }
-
-  public void setCanEvictIsSet(boolean value) {
-    __isset_bit_vector.set(__CANEVICT_ISSET_ID, value);
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case INSTANCE_ID:
       if (value == null) {
         unsetInstanceId();
       } else {
-        setInstanceId((Integer)value);
+        setInstanceId((Integer) value);
       }
       break;
 
@@ -470,7 +433,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupId();
       } else {
-        setGroupId((Long)value);
+        setGroupId((Long) value);
       }
       break;
 
@@ -478,7 +441,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupSize();
       } else {
-        setGroupSize((Integer)value);
+        setGroupSize((Integer) value);
       }
       break;
 
@@ -486,7 +449,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupName();
       } else {
-        setGroupName((String)value);
+        setGroupName((String) value);
       }
       break;
 
@@ -494,7 +457,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetPartitioningKey();
       } else {
-        setPartitioningKey((String)value);
+        setPartitioningKey((String) value);
       }
       break;
 
@@ -502,7 +465,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetQueueConfig();
       } else {
-        setQueueConfig((TQueueConfig)value);
+        setQueueConfig((TQueueConfig) value);
       }
       break;
 
@@ -510,7 +473,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetIsStateful();
       } else {
-        setIsStateful((Boolean)value);
+        setIsStateful((Boolean) value);
       }
       break;
 
@@ -518,15 +481,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetQueueState();
       } else {
-        setQueueState((ByteBuffer)value);
-      }
-      break;
-
-    case CAN_EVICT:
-      if (value == null) {
-        unsetCanEvict();
-      } else {
-        setCanEvict((Boolean)value);
+        setQueueState((ByteBuffer) value);
       }
       break;
 
@@ -559,9 +514,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     case QUEUE_STATE:
       return getQueueState();
 
-    case CAN_EVICT:
-      return Boolean.valueOf(isCanEvict());
-
     }
     throw new IllegalStateException();
   }
@@ -589,8 +541,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       return isSetIsStateful();
     case QUEUE_STATE:
       return isSetQueueState();
-    case CAN_EVICT:
-      return isSetCanEvict();
     }
     throw new IllegalStateException();
   }
@@ -677,15 +627,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (!(this_present_queueState && that_present_queueState))
         return false;
       if (!this.queueState.equals(that.queueState))
-        return false;
-    }
-
-    boolean this_present_canEvict = true;
-    boolean that_present_canEvict = true;
-    if (this_present_canEvict || that_present_canEvict) {
-      if (!(this_present_canEvict && that_present_canEvict))
-        return false;
-      if (this.canEvict != that.canEvict)
         return false;
     }
 
@@ -785,16 +726,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetCanEvict()).compareTo(typedOther.isSetCanEvict());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetCanEvict()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.canEvict, typedOther.canEvict);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     return 0;
   }
 
@@ -870,10 +801,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       }
       first = false;
     }
-    if (!first) sb.append(", ");
-    sb.append("canEvict:");
-    sb.append(this.canEvict);
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -983,14 +910,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 9: // CAN_EVICT
-            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-              struct.canEvict = iprot.readBool();
-              struct.setCanEvictIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -1046,9 +965,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           oprot.writeFieldEnd();
         }
       }
-      oprot.writeFieldBegin(CAN_EVICT_FIELD_DESC);
-      oprot.writeBool(struct.canEvict);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -1091,10 +1007,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetQueueState()) {
         optionals.set(7);
       }
-      if (struct.isSetCanEvict()) {
-        optionals.set(8);
-      }
-      oprot.writeBitSet(optionals, 9);
+      oprot.writeBitSet(optionals, 8);
       if (struct.isSetInstanceId()) {
         oprot.writeI32(struct.instanceId);
       }
@@ -1119,15 +1032,12 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetQueueState()) {
         oprot.writeBinary(struct.queueState);
       }
-      if (struct.isSetCanEvict()) {
-        oprot.writeBool(struct.canEvict);
-      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueConsumer struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(9);
+      BitSet incoming = iprot.readBitSet(8);
       if (incoming.get(0)) {
         struct.instanceId = iprot.readI32();
         struct.setInstanceIdIsSet(true);
@@ -1160,10 +1070,6 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (incoming.get(7)) {
         struct.queueState = iprot.readBinary();
         struct.setQueueStateIsSet(true);
-      }
-      if (incoming.get(8)) {
-        struct.canEvict = iprot.readBool();
-        struct.setCanEvictIsSet(true);
       }
     }
   }

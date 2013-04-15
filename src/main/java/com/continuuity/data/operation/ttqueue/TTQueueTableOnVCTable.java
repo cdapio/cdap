@@ -32,7 +32,7 @@ public class TTQueueTableOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount)
+  public void configure(byte[] queueName, QueueConsumer newConsumer)
     throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
   }

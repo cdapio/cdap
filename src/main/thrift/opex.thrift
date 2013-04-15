@@ -112,7 +112,6 @@ struct TQueueConsumer {
   6: optional TQueueConfig queueConfig,
   7: bool isStateful,
   8: optional binary queueState,
-  9: bool canEvict,
 }
 
 struct TQueueEntryPointer {
@@ -165,10 +164,8 @@ struct TGetQueueInfo {
 
 struct TQueueConfigure {
   1: binary queueName,
-  2: TQueueConfig config,
-  3: i64 groupId,
-  4: i32 newConsumerCount,
-  5: optional string metric,
+  2: TQueueConsumer newConsumer,
+  3: optional string metric,
 }
 
 // we add a virtual field "nulled" to indicate a null object

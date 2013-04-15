@@ -83,7 +83,7 @@ public interface TTQueueTable {
   void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
              throws OperationException;
 
-  void configure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount)
+  void configure(byte[] queueName, QueueConsumer newConsumer)
     throws OperationException;
 
   /**

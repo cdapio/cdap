@@ -917,8 +917,7 @@ public class OmidTransactionalOperationExecutor
     requestMetric("QueueConfigure");
     long begin = begin();
     TTQueueTable table = getQueueTable(configure.getQueueName());
-    table.configure(configure.getQueueName(), configure.getConfig(), configure.getGroupId(),
-                    configure.getNewConsumerCount());
+    table.configure(configure.getQueueName(), configure.getNewConsumer());
     end("QueueConfigure", begin);
   }
 

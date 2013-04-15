@@ -24,10 +24,8 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueConfigure");
 
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("config", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-  private static final org.apache.thrift.protocol.TField GROUP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("groupId", org.apache.thrift.protocol.TType.I64, (short)3);
-  private static final org.apache.thrift.protocol.TField NEW_CONSUMER_COUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("newConsumerCount", org.apache.thrift.protocol.TType.I32, (short)4);
-  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField NEW_CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("newConsumer", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -36,18 +34,14 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
   }
 
   public ByteBuffer queueName; // required
-  public TQueueConfig config; // required
-  public long groupId; // required
-  public int newConsumerCount; // required
+  public TQueueConsumer newConsumer; // required
   public String metric; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
-    CONFIG((short)2, "config"),
-    GROUP_ID((short)3, "groupId"),
-    NEW_CONSUMER_COUNT((short)4, "newConsumerCount"),
-    METRIC((short)5, "metric");
+    NEW_CONSUMER((short)2, "newConsumer"),
+    METRIC((short)3, "metric");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -64,13 +58,9 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
       switch(fieldId) {
         case 1: // QUEUE_NAME
           return QUEUE_NAME;
-        case 2: // CONFIG
-          return CONFIG;
-        case 3: // GROUP_ID
-          return GROUP_ID;
-        case 4: // NEW_CONSUMER_COUNT
-          return NEW_CONSUMER_COUNT;
-        case 5: // METRIC
+        case 2: // NEW_CONSUMER
+          return NEW_CONSUMER;
+        case 3: // METRIC
           return METRIC;
         default:
           return null;
@@ -112,21 +102,14 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
   }
 
   // isset id assignments
-  private static final int __GROUPID_ISSET_ID = 0;
-  private static final int __NEWCONSUMERCOUNT_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
   private _Fields optionals[] = {_Fields.METRIC};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.QUEUE_NAME, new org.apache.thrift.meta_data.FieldMetaData("queueName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.CONFIG, new org.apache.thrift.meta_data.FieldMetaData("config", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConfig.class)));
-    tmpMap.put(_Fields.GROUP_ID, new org.apache.thrift.meta_data.FieldMetaData("groupId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.NEW_CONSUMER_COUNT, new org.apache.thrift.meta_data.FieldMetaData("newConsumerCount", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.NEW_CONSUMER, new org.apache.thrift.meta_data.FieldMetaData("newConsumer", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConsumer.class)));
     tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -138,34 +121,24 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
 
   public TQueueConfigure(
     ByteBuffer queueName,
-    TQueueConfig config,
-    long groupId,
-    int newConsumerCount)
+    TQueueConsumer newConsumer)
   {
     this();
     this.queueName = queueName;
-    this.config = config;
-    this.groupId = groupId;
-    setGroupIdIsSet(true);
-    this.newConsumerCount = newConsumerCount;
-    setNewConsumerCountIsSet(true);
+    this.newConsumer = newConsumer;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TQueueConfigure(TQueueConfigure other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetQueueName()) {
       this.queueName = org.apache.thrift.TBaseHelper.copyBinary(other.queueName);
 ;
     }
-    if (other.isSetConfig()) {
-      this.config = new TQueueConfig(other.config);
+    if (other.isSetNewConsumer()) {
+      this.newConsumer = new TQueueConsumer(other.newConsumer);
     }
-    this.groupId = other.groupId;
-    this.newConsumerCount = other.newConsumerCount;
     if (other.isSetMetric()) {
       this.metric = other.metric;
     }
@@ -178,11 +151,7 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
   @Override
   public void clear() {
     this.queueName = null;
-    this.config = null;
-    setGroupIdIsSet(false);
-    this.groupId = 0;
-    setNewConsumerCountIsSet(false);
-    this.newConsumerCount = 0;
+    this.newConsumer = null;
     this.metric = null;
   }
 
@@ -220,74 +189,28 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
     }
   }
 
-  public TQueueConfig getConfig() {
-    return this.config;
+  public TQueueConsumer getNewConsumer() {
+    return this.newConsumer;
   }
 
-  public TQueueConfigure setConfig(TQueueConfig config) {
-    this.config = config;
+  public TQueueConfigure setNewConsumer(TQueueConsumer newConsumer) {
+    this.newConsumer = newConsumer;
     return this;
   }
 
-  public void unsetConfig() {
-    this.config = null;
+  public void unsetNewConsumer() {
+    this.newConsumer = null;
   }
 
-  /** Returns true if field config is set (has been assigned a value) and false otherwise */
-  public boolean isSetConfig() {
-    return this.config != null;
+  /** Returns true if field newConsumer is set (has been assigned a value) and false otherwise */
+  public boolean isSetNewConsumer() {
+    return this.newConsumer != null;
   }
 
-  public void setConfigIsSet(boolean value) {
+  public void setNewConsumerIsSet(boolean value) {
     if (!value) {
-      this.config = null;
+      this.newConsumer = null;
     }
-  }
-
-  public long getGroupId() {
-    return this.groupId;
-  }
-
-  public TQueueConfigure setGroupId(long groupId) {
-    this.groupId = groupId;
-    setGroupIdIsSet(true);
-    return this;
-  }
-
-  public void unsetGroupId() {
-    __isset_bit_vector.clear(__GROUPID_ISSET_ID);
-  }
-
-  /** Returns true if field groupId is set (has been assigned a value) and false otherwise */
-  public boolean isSetGroupId() {
-    return __isset_bit_vector.get(__GROUPID_ISSET_ID);
-  }
-
-  public void setGroupIdIsSet(boolean value) {
-    __isset_bit_vector.set(__GROUPID_ISSET_ID, value);
-  }
-
-  public int getNewConsumerCount() {
-    return this.newConsumerCount;
-  }
-
-  public TQueueConfigure setNewConsumerCount(int newConsumerCount) {
-    this.newConsumerCount = newConsumerCount;
-    setNewConsumerCountIsSet(true);
-    return this;
-  }
-
-  public void unsetNewConsumerCount() {
-    __isset_bit_vector.clear(__NEWCONSUMERCOUNT_ISSET_ID);
-  }
-
-  /** Returns true if field newConsumerCount is set (has been assigned a value) and false otherwise */
-  public boolean isSetNewConsumerCount() {
-    return __isset_bit_vector.get(__NEWCONSUMERCOUNT_ISSET_ID);
-  }
-
-  public void setNewConsumerCountIsSet(boolean value) {
-    __isset_bit_vector.set(__NEWCONSUMERCOUNT_ISSET_ID, value);
   }
 
   public String getMetric() {
@@ -324,27 +247,11 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
       }
       break;
 
-    case CONFIG:
+    case NEW_CONSUMER:
       if (value == null) {
-        unsetConfig();
+        unsetNewConsumer();
       } else {
-        setConfig((TQueueConfig)value);
-      }
-      break;
-
-    case GROUP_ID:
-      if (value == null) {
-        unsetGroupId();
-      } else {
-        setGroupId((Long)value);
-      }
-      break;
-
-    case NEW_CONSUMER_COUNT:
-      if (value == null) {
-        unsetNewConsumerCount();
-      } else {
-        setNewConsumerCount((Integer)value);
+        setNewConsumer((TQueueConsumer) value);
       }
       break;
 
@@ -364,14 +271,8 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
     case QUEUE_NAME:
       return getQueueName();
 
-    case CONFIG:
-      return getConfig();
-
-    case GROUP_ID:
-      return Long.valueOf(getGroupId());
-
-    case NEW_CONSUMER_COUNT:
-      return Integer.valueOf(getNewConsumerCount());
+    case NEW_CONSUMER:
+      return getNewConsumer();
 
     case METRIC:
       return getMetric();
@@ -389,12 +290,8 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
     switch (field) {
     case QUEUE_NAME:
       return isSetQueueName();
-    case CONFIG:
-      return isSetConfig();
-    case GROUP_ID:
-      return isSetGroupId();
-    case NEW_CONSUMER_COUNT:
-      return isSetNewConsumerCount();
+    case NEW_CONSUMER:
+      return isSetNewConsumer();
     case METRIC:
       return isSetMetric();
     }
@@ -423,30 +320,12 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
         return false;
     }
 
-    boolean this_present_config = true && this.isSetConfig();
-    boolean that_present_config = true && that.isSetConfig();
-    if (this_present_config || that_present_config) {
-      if (!(this_present_config && that_present_config))
+    boolean this_present_newConsumer = true && this.isSetNewConsumer();
+    boolean that_present_newConsumer = true && that.isSetNewConsumer();
+    if (this_present_newConsumer || that_present_newConsumer) {
+      if (!(this_present_newConsumer && that_present_newConsumer))
         return false;
-      if (!this.config.equals(that.config))
-        return false;
-    }
-
-    boolean this_present_groupId = true;
-    boolean that_present_groupId = true;
-    if (this_present_groupId || that_present_groupId) {
-      if (!(this_present_groupId && that_present_groupId))
-        return false;
-      if (this.groupId != that.groupId)
-        return false;
-    }
-
-    boolean this_present_newConsumerCount = true;
-    boolean that_present_newConsumerCount = true;
-    if (this_present_newConsumerCount || that_present_newConsumerCount) {
-      if (!(this_present_newConsumerCount && that_present_newConsumerCount))
-        return false;
-      if (this.newConsumerCount != that.newConsumerCount)
+      if (!this.newConsumer.equals(that.newConsumer))
         return false;
     }
 
@@ -485,32 +364,12 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetConfig()).compareTo(typedOther.isSetConfig());
+    lastComparison = Boolean.valueOf(isSetNewConsumer()).compareTo(typedOther.isSetNewConsumer());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetConfig()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.config, typedOther.config);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetGroupId()).compareTo(typedOther.isSetGroupId());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetGroupId()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.groupId, typedOther.groupId);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetNewConsumerCount()).compareTo(typedOther.isSetNewConsumerCount());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetNewConsumerCount()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.newConsumerCount, typedOther.newConsumerCount);
+    if (isSetNewConsumer()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.newConsumer, typedOther.newConsumer);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -553,20 +412,12 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("config:");
-    if (this.config == null) {
+    sb.append("newConsumer:");
+    if (this.newConsumer == null) {
       sb.append("null");
     } else {
-      sb.append(this.config);
+      sb.append(this.newConsumer);
     }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("groupId:");
-    sb.append(this.groupId);
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("newConsumerCount:");
-    sb.append(this.newConsumerCount);
     first = false;
     if (isSetMetric()) {
       if (!first) sb.append(", ");
@@ -596,8 +447,6 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -630,32 +479,16 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // CONFIG
+          case 2: // NEW_CONSUMER
             if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.config = new TQueueConfig();
-              struct.config.read(iprot);
-              struct.setConfigIsSet(true);
+              struct.newConsumer = new TQueueConsumer();
+              struct.newConsumer.read(iprot);
+              struct.setNewConsumerIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // GROUP_ID
-            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.groupId = iprot.readI64();
-              struct.setGroupIdIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 4: // NEW_CONSUMER_COUNT
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.newConsumerCount = iprot.readI32();
-              struct.setNewConsumerCountIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 5: // METRIC
+          case 3: // METRIC
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.metric = iprot.readString();
               struct.setMetricIsSet(true);
@@ -683,17 +516,11 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
         oprot.writeBinary(struct.queueName);
         oprot.writeFieldEnd();
       }
-      if (struct.config != null) {
-        oprot.writeFieldBegin(CONFIG_FIELD_DESC);
-        struct.config.write(oprot);
+      if (struct.newConsumer != null) {
+        oprot.writeFieldBegin(NEW_CONSUMER_FIELD_DESC);
+        struct.newConsumer.write(oprot);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(GROUP_ID_FIELD_DESC);
-      oprot.writeI64(struct.groupId);
-      oprot.writeFieldEnd();
-      oprot.writeFieldBegin(NEW_CONSUMER_COUNT_FIELD_DESC);
-      oprot.writeI32(struct.newConsumerCount);
-      oprot.writeFieldEnd();
       if (struct.metric != null) {
         if (struct.isSetMetric()) {
           oprot.writeFieldBegin(METRIC_FIELD_DESC);
@@ -722,30 +549,18 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
       if (struct.isSetQueueName()) {
         optionals.set(0);
       }
-      if (struct.isSetConfig()) {
+      if (struct.isSetNewConsumer()) {
         optionals.set(1);
       }
-      if (struct.isSetGroupId()) {
+      if (struct.isSetMetric()) {
         optionals.set(2);
       }
-      if (struct.isSetNewConsumerCount()) {
-        optionals.set(3);
-      }
-      if (struct.isSetMetric()) {
-        optionals.set(4);
-      }
-      oprot.writeBitSet(optionals, 5);
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
-      if (struct.isSetConfig()) {
-        struct.config.write(oprot);
-      }
-      if (struct.isSetGroupId()) {
-        oprot.writeI64(struct.groupId);
-      }
-      if (struct.isSetNewConsumerCount()) {
-        oprot.writeI32(struct.newConsumerCount);
+      if (struct.isSetNewConsumer()) {
+        struct.newConsumer.write(oprot);
       }
       if (struct.isSetMetric()) {
         oprot.writeString(struct.metric);
@@ -755,25 +570,17 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueConfigure struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(5);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.config = new TQueueConfig();
-        struct.config.read(iprot);
-        struct.setConfigIsSet(true);
+        struct.newConsumer = new TQueueConsumer();
+        struct.newConsumer.read(iprot);
+        struct.setNewConsumerIsSet(true);
       }
       if (incoming.get(2)) {
-        struct.groupId = iprot.readI64();
-        struct.setGroupIdIsSet(true);
-      }
-      if (incoming.get(3)) {
-        struct.newConsumerCount = iprot.readI32();
-        struct.setNewConsumerCountIsSet(true);
-      }
-      if (incoming.get(4)) {
         struct.metric = iprot.readString();
         struct.setMetricIsSet(true);
       }

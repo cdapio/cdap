@@ -7,23 +7,18 @@ import com.google.common.base.Objects;
  */
 public class StatefulQueueConsumer extends QueueConsumer {
   private QueueState queueState = null;
-  private final boolean canEvict;
 
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config, boolean canEvict) {
+  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     super(instanceId, groupId, groupSize, config);
-    this.canEvict = canEvict;
   }
 
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, QueueConfig config,
-                               boolean canEvict) {
+  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, QueueConfig config) {
     super(instanceId, groupId, groupSize, groupName, config);
-    this.canEvict = canEvict;
   }
 
   public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
-                               QueueConfig config, boolean canEvict) {
+                               QueueConfig config) {
     super(instanceId, groupId, groupSize, groupName, partitioningKey, config);
-    this.canEvict = canEvict;
   }
 
   @Override
@@ -42,16 +37,10 @@ public class StatefulQueueConsumer extends QueueConsumer {
   }
 
   @Override
-  public boolean canEvict() {
-    return canEvict;
-  }
-
-  @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("super", super.toString())
       .add("queueState", queueState)
-      .add("canEvict", canEvict)
       .toString();
   }
 }

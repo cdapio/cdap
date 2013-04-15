@@ -78,7 +78,7 @@ public class TestLocalModeTTQueuePerf {
 
     // first test it with the intra-flow queues
     TTQueueTable queueTable = handle.getQueueTable(queueName);
-    queueTable.configure(queueName, config,0, 1);
+    queueTable.configure(queueName, consumer);
 
     // second test it with the stream queues
     StreamTable streamTable = handle.getStreamTable(streamName);
