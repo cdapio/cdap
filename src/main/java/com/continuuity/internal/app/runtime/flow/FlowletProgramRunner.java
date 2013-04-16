@@ -195,7 +195,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     }
   }
 
-  private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) throws OperationException {
+  private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {
     flowletContext.setInstanceCount(instanceCount);
     for(QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
       queueConsumerSupplier.updateInstanceCount(instanceCount);
@@ -416,8 +416,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     return new ProcessSpecificationFactory() {
       @Override
-      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method)
-        throws OperationException {
+      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -457,12 +456,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
     private final QueueConsumerFactory queueConsumerFactory;
     private volatile QueueConsumer consumer;
 
-    public QueueConsumerSupplier(QueueConsumerFactory queueConsumerFactory, int groupSize) throws OperationException {
+    public QueueConsumerSupplier(QueueConsumerFactory queueConsumerFactory, int groupSize) {
       this.queueConsumerFactory = queueConsumerFactory;
       this.consumer = queueConsumerFactory.create(groupSize);
     }
 
-    public void updateInstanceCount(int groupSize) throws OperationException {
+    public void updateInstanceCount(int groupSize) {
       consumer = queueConsumerFactory.create(groupSize);
     }
 

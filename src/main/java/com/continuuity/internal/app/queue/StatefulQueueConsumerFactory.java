@@ -9,12 +9,9 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  *  Creates a StatefulQueueConsumer
@@ -45,15 +42,19 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
    * Creates a StatefulQueueConsumer with the given groupSize, runs a QueueConfigure with the new StatefulQueueConsumer.
    * @param groupSize Size of the group of which the created StatefulQueueConsumer will be part of
    * @return Created StatefulQueueConsumer
-   * @throws OperationException An OperationException can be thrown during the execution of QueueConfigure operation
    */
   @Override
-  public QueueConsumer create(int groupSize) throws OperationException {
+  public QueueConsumer create(int groupSize) {
     StatefulQueueConsumer queueConsumer =
       new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName, queueConfig);
 
     // configure the queue
-    opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
+    try {
+      opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
+    } catch (OperationException e) {
+      // There is nothing much that can be done to resolve this OperationException, propagate it as a runtime exception
+      Throwables.propagate(e);
+    }
 
     return queueConsumer;
   }
