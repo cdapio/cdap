@@ -7,6 +7,7 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
@@ -19,7 +20,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -728,7 +728,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       int i = 0;
       for(Map.Entry<Long, Long> entry : groupEvictEntries.entrySet()) {
         columnKeys[i] = makeColumnName(GROUP_EVICT_ENTRY, entry.getKey());
-        values[i] = Bytes.toBytes(entry.getValue());
+        values[i] = Bytes.EMPTY_BYTE_ARRAY;
         ++i;
       }
       table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
@@ -2194,9 +2194,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
       writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
 
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       writeQueueStateStore.write();
       // TODO: delete evict information for the consumer
     }
@@ -2249,7 +2249,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
@@ -2515,7 +2515,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
