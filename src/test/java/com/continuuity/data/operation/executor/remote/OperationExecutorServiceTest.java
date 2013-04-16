@@ -364,8 +364,8 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, write);
     QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, config, 1, 1));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(qq, config, 1, 1));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(qq, consumer));
 
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, new QueueEntry("0".getBytes())));
@@ -459,8 +459,8 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, config, 1, 1));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, config, 1, 1));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, consumer));
     Assert.assertTrue(remote.execute(
         context, new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertTrue(remote.execute(
@@ -486,7 +486,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // clear only the queues
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.QUEUES));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, config, 1, 1));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
 
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x,
@@ -503,7 +503,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // verify that the streams are gone, but tables and queues are there
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, config, 1, 1));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, consumer));
     Assert.assertArrayEquals(x, remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());
@@ -546,14 +546,16 @@ public abstract class OperationExecutorServiceTest extends
     QueueConfig conf2 = new QueueConfig(PartitionerType.FIFO, true, 1);
 
     // create 2 consumers for each groupId
-    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "group1", HASH_KEY, conf1, false);
-    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "group1", HASH_KEY, conf1, false);
+    QueueConsumer cons11 = new StatefulQueueConsumer(0, id1, 2, "group1", HASH_KEY, conf1);
+    QueueConsumer cons12 = new StatefulQueueConsumer(1, id1, 2, "group1", HASH_KEY, conf1);
     QueueConsumer cons21 = new QueueConsumer(0, id2, 2, "group2", conf2);
     QueueConsumer cons22 = new QueueConsumer(1, id2, 2, "group2", conf2);
 
     // configure queues
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, conf1, id1, 2));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, conf2, id2, 2));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons11));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons12));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons21));
+    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons22));
 
     // dequeue with each consumer
     DequeueResult res11 = remote.execute(context, new QueueDequeue(q, cons11, conf1));

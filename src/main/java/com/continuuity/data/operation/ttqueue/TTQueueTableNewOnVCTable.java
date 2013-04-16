@@ -41,9 +41,9 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConfig config, long groupId, int newConsumerCount)
+  public void configure(byte[] queueName, QueueConsumer newConsumer)
     throws OperationException {
-    getQueue(queueName).configure(config, groupId, newConsumerCount);
+    getQueue(queueName).configure(newConsumer);
   }
 
   @Override

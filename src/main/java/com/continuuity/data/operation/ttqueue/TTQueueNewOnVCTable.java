@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -59,8 +60,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
   // Row prefix for columns containing queue entry
   static final byte [] GLOBAL_DATA_PREFIX = {20, 'D'};   //row <queueName>20D
-  // Row prefix for columns containing global eviction data
-  static final byte [] GLOBAL_EVICT_META_PREFIX = {30, 'M'};   //row <queueName>30M
+  // Row prefix for columns containing global eviction data for consumer groups
+  static final byte [] GLOBAL_EVICT_META_ROW = {30, 'M'};   //row <queueName>30M
   // Row prefix for columns containing consumer specific information
   static final byte [] CONSUMER_META_PREFIX = {40, 'C'}; //row <queueName>40C
   // Row prefix for columns that don't affect the operation of queue, i.e. groupId generation
@@ -83,10 +84,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // ENTRY_HEADER contains the partitioning keys of a queue entry.
   static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
 
-  // Columns for row = GLOBAL_EVICT_META_PREFIX (Global data, shared by all consumers)
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
   // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
   static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
+
+  // Columns for row = GLOBAL_EVICT_META_ROW (Global data, shared by all consumers)
   // GROUP_EVICT_ENTRY contains the entryId upto which the queue entries can be evicted for a group.
   // It means all consumers in the group have acked until GROUP_EVICT_ENTRY
   static final byte [] GROUP_EVICT_ENTRY = {20, 'E'};     //row  <queueName>30M<groupId>, column 20E
@@ -419,16 +421,27 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public int configure(QueueConfig config, long groupId, int newConsumerCount)
-    throws OperationException {
+  public int configure(QueueConsumer newConsumer) throws OperationException {
+    // Delete state information of consumer, since it will be no longer valid after the configuration is done.
+    newConsumer.setQueueState(null);
 
-    // TODO: use locks so that only one configure can run at a time
-    ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    // Simple leader election
+    if(newConsumer.getInstanceId() != 0) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace("Only consumer with instanceID 0 can run configure. Current consumer's instance id = %d",
+                  newConsumer.getInstanceId());
+      }
+      return -1;
+    }
+
+    final ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    final QueueConfig config = newConsumer.getQueueConfig();
+    final int newConsumerCount = newConsumer.getGroupSize();
+    final long groupId = newConsumer.getGroupId();
 
     if(LOG.isDebugEnabled()) {
       LOG.trace(getLogMessage(String.format(
-        "Running configure with config=%s, groupId=%d, newConsumerCount=%d, readPointer= %s",
-        config, groupId, newConsumerCount, readPointer)));
+        "Running configure with consumer=%s, readPointer= %s", newConsumer, readPointer)));
     }
 
     if(newConsumerCount < 1) {
@@ -439,13 +452,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Determine what dequeue strategy to use based on the partitioner
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
 
-    // Read queue state for all consumers
-    int currentConsumerCount = 0;
+    // Read queue state for all consumers of the group to find the number of previous consumers
+    int oldConsumerCount = 0;
     List<QueueConsumer> consumers = Lists.newArrayList();
     List<QueueStateImpl> queueStates = Lists.newArrayList();
     for(int i = 0; i < MAX_CONSUMER_COUNT; ++i) {
       // Note: the consumers created here do not contain QueueConsumer.partitioningKey or QueueConsumer.groupSize
-      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config, false);
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
       QueueStateImpl queueState = null;
       try {
         // TODO: read queue state in one call
@@ -459,7 +472,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         break;
       }
 
-      ++currentConsumerCount;
+      ++oldConsumerCount;
       // Verify there are no inflight entries
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
@@ -470,17 +483,25 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueStates.add(queueState);
     }
 
-    // Nothing to do if newConsumerCount == currentConsumerCount
-    if(currentConsumerCount == newConsumerCount) {
+    // Nothing to do if newConsumerCount == oldConsumerCount
+    if(oldConsumerCount == newConsumerCount) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
-          "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
+          "Nothing to configure since oldConsumerCount is equal to newConsumerCount (%d)", oldConsumerCount)));
       }
-      return currentConsumerCount;
+      return oldConsumerCount;
     }
 
-    dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
-    return currentConsumerCount;
+    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+
+    // Delete eviction information for all groups
+    // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
+    // we'll need to delete the eviction information for all groups so that we always maintain eviction information for
+    // active groups only
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.deleteGroupEvictionState(readPointer, TransactionOracle.DIRTY_WRITE_VERSION);
+
+    return oldConsumerCount;
   }
 
   @Override
@@ -505,6 +526,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // A simple leader election for selecting consumer to run eviction for group
     // Only consumers with id 0 (one per group)
     if(consumer.getInstanceId() != 0) {
+      return;
+    }
+
+    if(totalNumGroups <= 0) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format("totalNumGroups=%d, nothing to be evicted", totalNumGroups)));
+      }
       return;
     }
 
@@ -538,7 +566,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId(), readPointer);
     // Save the minGroupEvictEntry for the consumer's group
     if(minGroupEvictEntry != INVALID_ENTRY_ID) {
-      writeKeys.add(GLOBAL_EVICT_META_PREFIX);
+      writeKeys.add(GLOBAL_EVICT_META_ROW);
       writeCols.add(makeColumnName(GROUP_EVICT_ENTRY, consumer.getGroupId()));
       writeValues.add(Bytes.toBytes(minGroupEvictEntry));
     }
@@ -550,19 +578,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // Only one consumer per queue will run the below eviction algorithm for the queue,
     // all others will save minGroupEvictEntry and return
-    // Again simple leader election - only one consumer across all groups should have canEvict true
-    if(consumer.canEvict()) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage("Running global eviction..."));
-      }
-
-      final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
-      // Save the max of the entries that were evicted now
-      if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
-        writeKeys.add(GLOBAL_EVICT_META_PREFIX);
-        writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
-        writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
-      }
+    // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
+    final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
+    // Save the max of the entries that were evicted now
+    if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
+      writeKeys.add(GLOBAL_LAST_EVICT_ENTRY);
+      writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
+      writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
     }
 
     // Save the state
@@ -668,43 +690,132 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return evictEntry;
   }
 
+  static class EvictionState {
+    private long globalLastEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
+    private Map<Long, Long> groupEvictEntries = Maps.newHashMap();
+
+    private final VersionedColumnarTable table;
+
+    public EvictionState(VersionedColumnarTable table) {
+      this.table = table;
+    }
+
+    public void readEvictionState(ReadPointer readPointer) throws OperationException {
+      // Read GLOBAL_LAST_EVICT_ENTRY
+      OperationResult<byte[]> lastEvictEntryBytes = table.get(GLOBAL_LAST_EVICT_ENTRY, GLOBAL_LAST_EVICT_ENTRY,
+                                                              readPointer);
+      if(!lastEvictEntryBytes.isEmpty() && lastEvictEntryBytes.getValue() != null) {
+        globalLastEvictEntry = Bytes.toLong(lastEvictEntryBytes.getValue());
+      }
+
+      readGroupEvictInformationInternal(readPointer);
+    }
+
+    public void deleteGroupEvictionState(ReadPointer readPointer, long writeVersion) throws OperationException {
+      if(groupEvictEntries.isEmpty()) {
+        readGroupEvictInformationInternal(readPointer);
+      }
+
+      // If still no entries, noting to do
+      if(groupEvictEntries.isEmpty()) {
+        return;
+      }
+
+      // TODO: need to fix writing byte[0] to delete entries
+      // Write byte[0] to delete entries
+      byte[][] columnKeys = new byte[groupEvictEntries.size()][];
+      byte[][] values = new byte[groupEvictEntries.size()][];
+      int i = 0;
+      for(Map.Entry<Long, Long> entry : groupEvictEntries.entrySet()) {
+        columnKeys[i] = makeColumnName(GROUP_EVICT_ENTRY, entry.getKey());
+        values[i] = Bytes.toBytes(entry.getValue());
+        ++i;
+      }
+      table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
+    }
+
+    public long getGlobalLastEvictEntry() {
+      return globalLastEvictEntry;
+    }
+
+    public Set<Long> getGroupIds() {
+      return groupEvictEntries.keySet();
+    }
+
+    public Long getGroupEvictEntry(long groupId) {
+      return groupEvictEntries.get(groupId);
+    }
+
+    private void readGroupEvictInformationInternal(ReadPointer readPointer) throws OperationException {
+      // Read evict information for all groups
+      OperationResult<Map<byte[], byte[]>> groupEvictBytes = table.get(GLOBAL_EVICT_META_ROW, readPointer);
+      if(!groupEvictBytes.isEmpty()) {
+        for(Map.Entry<byte[], byte[]> entry : groupEvictBytes.getValue().entrySet()) {
+          if(entry.getKey().length > 0 && entry.getValue().length > 0) {
+            Long groupId = removePrefixFromLongId(entry.getKey(), GROUP_EVICT_ENTRY);
+            if(groupId != null) {
+              long groupEvictEntry = Bytes.toLong(entry.getValue());
+              groupEvictEntries.put(groupId, groupEvictEntry);
+            }
+          }
+        }
+      }
+    }
+  }
+
   private long runEviction(QueueConsumer consumer, long currentGroupMinEvictEntry,
                            int totalNumGroups, ReadPointer readPointer) throws OperationException {
-    // Get all the columns for row GLOBAL_EVICT_META_PREFIX, which contains the entry that can be evicted for
-    // each group and the last evicted entry.
+    // Read eviction state from table
     // TODO: move all queue state reads to a single class
-    OperationResult<Map<byte [], byte []>> evictBytes =
-      table.get(GLOBAL_EVICT_META_PREFIX, TransactionOracle.DIRTY_READ_POINTER);
-    if(evictBytes.isEmpty() || evictBytes.getValue() == null) {
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.readEvictionState(readPointer);
+
+    final long lastEvictedEntry = evictionState.getGlobalLastEvictEntry();
+
+    // Continue eviction only if eviction information for all totalNumGroups groups can be read
+    final int numGroupsRead = evictionState.getGroupIds().size();
+    if(numGroupsRead < totalNumGroups) {
+      if(LOG.isDebugEnabled()) {
+        LOG.trace(getLogMessage(
+          String.format("Cannot get eviction information for all %d groups, got only for %d groups. Aborting eviction.",
+                        totalNumGroups, numGroupsRead)));
+      }
+      return INVALID_ENTRY_ID;
+    } else if(numGroupsRead > totalNumGroups) {
+      LOG.warn(getLogMessage(
+        String.format("Getting eviction information for more groups (%d) than required (%d). %s",
+                      numGroupsRead,
+                      totalNumGroups,
+                      "Looks like eviction state is corrupted. Aborting eviction.")));
+      return INVALID_ENTRY_ID;
+    }
+
+    // Only one consumer across all groups can run eviction
+    // Simple leader election: consumer with lowest groupId will run eviction.
+    List<Long> groupIds = Lists.newArrayList(evictionState.getGroupIds());
+    Collections.sort(groupIds);
+    if(groupIds.get(0) != consumer.getGroupId()) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage("Not able to fetch eviction information"));
+        LOG.trace(getLogMessage(String.format("Min groupId=%d, current consumer groupId=%d. Aborting eviction",
+                                              groupIds.get(0), consumer.getGroupId())));
       }
       return INVALID_ENTRY_ID;
     }
 
-    // Get the last evicted entry
-    Map<byte[], byte[]> evictInfoMap = evictBytes.getValue();
-    byte[] lastEvictedEntryBytes = evictInfoMap.get(GLOBAL_LAST_EVICT_ENTRY);
-    final long lastEvictedEntry = lastEvictedEntryBytes == null ?
-                                        FIRST_QUEUE_ENTRY_ID - 1 : Bytes.toLong(lastEvictedEntryBytes);
+    if(LOG.isTraceEnabled()) {
+      LOG.trace(getLogMessage("Running global eviction..."));
+    }
 
     // Determine the max entry that can be evicted across all groups
     long maxEntryToEvict = Long.MAX_VALUE;
-    for(int groupId = 0; groupId < totalNumGroups; ++groupId) {
+    for(long groupId : groupIds) {
       long entry;
       if(groupId == consumer.getGroupId()) {
         // Min evict entry for the consumer's group was just evaluated earlier but not written to storage, use that
         entry = currentGroupMinEvictEntry;
       } else {
         // Get the evict info for group with groupId
-        byte[] entryBytes = evictInfoMap.get(makeColumnName(GROUP_EVICT_ENTRY, groupId));
-        if(entryBytes == null) {
-          if(LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format("Not able to fetch maxEvictEntry for group %d", groupId)));
-          }
-          return INVALID_ENTRY_ID;
-        }
-        entry = Bytes.toLong(entryBytes);
+        entry = evictionState.getGroupEvictEntry(groupId);
       }
       // Save the least entry
       if(maxEntryToEvict > entry) {
@@ -738,7 +849,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return maxEntryToEvict;
   }
 
-  static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
     // TODO: implement this :)
@@ -785,12 +895,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)), Bytes.toBytes(id2));
   }
 
-  protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
+  protected static byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
   }
 
-  protected byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
+  protected static byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  protected static Long removePrefixFromLongId(byte[] bytes, byte[] prefix) {
+    if(Bytes.startsWith(bytes, prefix) && (bytes.length >= Bytes.SIZEOF_LONG + prefix.length)) {
+      return Bytes.toLong(bytes, prefix.length);
+    }
+    return null;
   }
 
   protected String getLogMessage(String message) {
@@ -1913,7 +2030,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     protected long getLastEvictEntry() throws OperationException {
       QueueStateStore readEvictState = new QueueStateStore(table, oracle);
-      readEvictState.setRowKey(GLOBAL_EVICT_META_PREFIX);
+      readEvictState.setRowKey(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.read();
       OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
@@ -2174,7 +2291,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
         } else {
           // Note: the consumer created here does not contain QueueConsumer.partitioningKey
-          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config, false);
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
           queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
         }
@@ -2508,7 +2625,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(newConsumerCount >= currentConsumerCount) {
         DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
-          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config, false);
+          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
           // TODO: save queue states for all consumers in a single call

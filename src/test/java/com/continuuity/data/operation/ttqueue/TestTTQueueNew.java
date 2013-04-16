@@ -814,9 +814,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+      queue.configure(consumers[i]);
     }
 
-    queue.configure(config, consumerGroupId, numConsumers);
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
 
@@ -851,9 +851,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      queue.configure(consumers[i]);
     }
-
-    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
@@ -923,10 +922,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config, false);
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
+      queue.configure(consumers[i]);
     }
-
-    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
@@ -964,10 +962,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config, false);
+      consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      queue.configure(consumers[i]);
     }
-
-    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
@@ -1050,11 +1047,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     StatefulQueueConsumer[] statefulQueueConsumers = new StatefulQueueConsumer[numConsumers];
     QueueConsumer[] queueConsumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
-      statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config, false);
+      statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
       queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
+      queue.configure(queueConsumers[i]);
     }
-
-    queue.configure(config, consumerGroupId, numConsumers);
 
     // dequeue and verify
     dequeueFifoEntries(queue, statefulQueueConsumers, numConsumers, numQueueEntries, 0);
@@ -1134,11 +1130,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
 
-    queue.configure(config, groupId, 1);
+    queue.configure(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config));
 
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
-      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config, false),
+      DequeueResult result = queue.dequeue(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config),
                                            getDirtyPointer());
       assertTrue(result.isSuccess());
       assertEquals(1, Bytes.toInt(result.getEntry().getData()));
@@ -1146,7 +1142,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // After max tries, the entry will be ignored
     StatefulQueueConsumer statefulQueueConsumer =
-      new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config, false);
+      new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config);
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
       // No matter how many times a dequeue is repeated with state, the same entry needs to be returned
       DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
@@ -1255,19 +1251,25 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     loop:
     while(true) {
       for(Integer newConsumerCount : consumerCounts) {
-        int actualOldConsumerCount = queue.configure(config, groupId, newConsumerCount);
+        // Create new consumers
+        consumers = Lists.newArrayListWithCapacity(newConsumerCount);
+        int actualOldConsumerCount = -1;
+        for(int i = 0; i < newConsumerCount; ++i) {
+          StatefulQueueConsumer consumer;
+          if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
+            consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
+          } else {
+            consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config);
+          }
+          consumers.add(consumer);
+          int oldConsumerCount = queue.configure(consumer);
+          if(oldConsumerCount >= 0) {
+            actualOldConsumerCount = oldConsumerCount;
+          }
+        }
 //        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
 //                                         actualOldConsumerCount, newConsumerCount));
         assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
-        // Create new consumers
-        consumers = Lists.newArrayListWithCapacity(newConsumerCount);
-        for(int i = 0; i < newConsumerCount; ++i) {
-          if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
-            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, config, false));
-          } else {
-            consumers.add(new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config, false));
-          }
-        }
 
       // Dequeue entries
         int numDequeuesThisRun = 0;

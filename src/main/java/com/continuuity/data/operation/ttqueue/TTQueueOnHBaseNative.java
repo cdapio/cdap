@@ -224,7 +224,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public int configure(QueueConfig config, long groupId, int newConsumerCount)
+  public int configure(QueueConsumer newConsumer)
     throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
     return -1;

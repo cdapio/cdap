@@ -629,8 +629,7 @@ public class ConverterUtils {
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize(),
-        consumer.isStateful(),
-        consumer.canEvict());
+        consumer.isStateful());
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
     if (consumer.getQueueConfig() != null)
@@ -660,9 +659,7 @@ public class ConverterUtils {
         tQueueConsumer.getGroupSize(),
         tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
         tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
-        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null,
-        tQueueConsumer.isCanEvict()
-      );
+        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
       if(tQueueConsumer.isSetQueueState()) {
         try {
           statefulQueueConsumer.setQueueState(
@@ -843,30 +840,26 @@ public class ConverterUtils {
     }
   }
 
-  TQueueConfigure wrap(QueueAdmin.QueueConfigure configure) {
+  TQueueConfigure wrap(QueueAdmin.QueueConfigure configure) throws TOperationException {
     if(configure == null) {
       return null;
     }
     TQueueConfigure tQueueConfigure =
       new TQueueConfigure(wrap(configure.getQueueName()),
-                          wrap(configure.getConfig()),
-                          configure.getGroupId(),
-                          configure.getNewConsumerCount());
+                          wrap(configure.getNewConsumer()));
     if (configure.getMetricName() != null) {
       tQueueConfigure.setMetric(configure.getMetricName());
     }
     return tQueueConfigure;
   }
 
-  QueueAdmin.QueueConfigure unwrap(TQueueConfigure tQueueConfigure) {
+  QueueAdmin.QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
     if(tQueueConfigure == null) {
       return null;
     }
     QueueAdmin.QueueConfigure queueConfigure =
       new QueueAdmin.QueueConfigure(tQueueConfigure.getQueueName(),
-                                    unwrap(tQueueConfigure.getConfig()),
-                                    tQueueConfigure.getGroupId(),
-                                    tQueueConfigure.getNewConsumerCount());
+                                    unwrap(tQueueConfigure.getNewConsumer()));
     if (queueConfigure.getMetricName() != null) {
       tQueueConfigure.setMetric(queueConfigure.getMetricName());
     }
