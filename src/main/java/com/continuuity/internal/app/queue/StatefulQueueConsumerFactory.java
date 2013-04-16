@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ *  Creates a StatefulQueueConsumer
  */
 public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
   private final OperationExecutor opex;
@@ -41,13 +41,19 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
     this.queueName = queueName;
   }
 
+  /**
+   * Creates a StatefulQueueConsumer with the given groupSize, runs a QueueConfigure with the new StatefulQueueConsumer.
+   * @param groupSize Size of the group of which the created StatefulQueueConsumer will be part of
+   * @return Created StatefulQueueConsumer
+   * @throws OperationException An OperationException can be thrown during the execution of QueueConfigure operation
+   */
   @Override
   public QueueConsumer create(int groupSize) throws OperationException {
-      StatefulQueueConsumer queueConsumer =
-        new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName, queueConfig);
+    StatefulQueueConsumer queueConsumer =
+      new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName, queueConfig);
 
-      // configure the queue
-      opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
+    // configure the queue
+    opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
 
     return queueConsumer;
   }
