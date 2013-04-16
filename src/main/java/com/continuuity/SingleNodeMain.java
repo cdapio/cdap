@@ -16,7 +16,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
-import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
