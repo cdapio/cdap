@@ -4,7 +4,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -34,12 +34,12 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final Program program;
   private final RunId runId;
   private final int instanceId;
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory txAgentSupplierFactory;
 
   private Thread runThread;
 
   ProcedureHandlerMethodFactory(Program program, RunId runId, int instanceId,
-                                TransactionAgentSupplierFactory txAgentSupplierFactory) {
+                                DataFabricFacadeFactory txAgentSupplierFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);

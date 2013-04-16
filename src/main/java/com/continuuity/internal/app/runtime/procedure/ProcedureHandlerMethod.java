@@ -11,10 +11,10 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,9 +43,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final BasicProcedureContext context;
 
   ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
-                                TransactionAgentSupplierFactory txAgentSupplierFactory) throws ClassNotFoundException {
+                                DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
-    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.createTransactionAgentSupplierFactory(program);
+    DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
@@ -106,7 +106,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   private Map<String, HandlerMethod> createHandlerMethods(Procedure procedure,
                                                           TypeToken<? extends Procedure> procedureType,
-                                                          TransactionAgentSupplier txAgentSupplier) {
+                                                          DataFabricFacade txAgentSupplier) {
 
     ImmutableMap.Builder<String, HandlerMethod> result = ImmutableMap.builder();
 

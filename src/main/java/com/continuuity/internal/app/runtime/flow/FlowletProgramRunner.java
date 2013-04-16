@@ -47,12 +47,12 @@ import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -84,13 +84,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private final SchemaGenerator schemaGenerator;
   private final DatumWriterFactory datumWriterFactory;
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
-                              TransactionAgentSupplierFactory txAgentSupplierFactory,
+                              DataFabricFacadeFactory txAgentSupplierFactory,
                               QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -138,7 +138,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
       // Creates opex related objects
-      TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.createTransactionAgentSupplierFactory(program);
+      DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
       // Creates flowlet context
@@ -391,7 +391,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
                                                     final BasicFlowletContext flowletContext,
                                                     final SchemaCache schemaCache,
-                                                    final TransactionAgentSupplier txAgentSupplier,
+                                                    final DataFabricFacade txAgentSupplier,
                                                     final OutputSubmitter outputSubmitter) {
     return new ProcessMethodFactory() {
       @Override
@@ -408,7 +408,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   processSpecificationFactory(final Program program,
                               final QueueReaderFactory queueReaderFactory,
                               final BasicFlowletContext flowletContext,
-                              final TransactionAgentSupplier transactionAgentSupplier,
+                              final DataFabricFacade dataFabricFacade,
                               final String flowletName,
                               final Table<Node, String, Set<QueueSpecification>> queueSpecs,
                               final ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder,
@@ -434,13 +434,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
 
               QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(
-                transactionAgentSupplier.createQueueConsumerFactory(
+                dataFabricFacade.createQueueConsumerFactory(
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
                   flowletContext.getMetricName(),
-                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, ! flowletContext.isAsyncMode()),
+                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, !flowletContext.isAsyncMode()),
                   queueName
-              ),
+                ),
                 instanceCount);
               queueConsumerSupplierBuilder.add(consumerSupplier);
               queueReaders.add(queueReaderFactory.create(program, queueName, consumerSupplier, numGroups));

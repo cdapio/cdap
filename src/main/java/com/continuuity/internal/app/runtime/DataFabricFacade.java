@@ -9,7 +9,7 @@ import com.continuuity.internal.app.queue.QueueConsumerFactory;
 /**
  *
  */
-public interface TransactionAgentSupplier {
+public interface DataFabricFacade {
 
   DataSetContext getDataSetContext();
 

@@ -21,11 +21,11 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- * A {@link TransactionAgentSupplier} that will create a new {@link SmartTransactionAgent} every time
+ * A {@link DataFabricFacade} that will create a new {@link SmartTransactionAgent} every time
  * when the {@link #createAndUpdateTransactionAgentProxy} method is called. Also the newly created {@link TransactionAgent} would be set
  * into the given {@link TransactionProxy} instance.
  */
-public final class SmartTransactionAgentSupplier implements TransactionAgentSupplier {
+public final class SmartDataFabricFacade implements DataFabricFacade {
 
   private final OperationExecutor opex;
   private final Program program;
@@ -33,8 +33,7 @@ public final class SmartTransactionAgentSupplier implements TransactionAgentSupp
   private final DataSetContext dataSetContext;
 
   @Inject
-  public SmartTransactionAgentSupplier(OperationExecutor opex,
-                                       @Assisted Program program) {
+  public SmartDataFabricFacade(OperationExecutor opex, @Assisted Program program) {
     this.opex = opex;
     this.program = program;
     this.transactionProxy = new TransactionProxy();

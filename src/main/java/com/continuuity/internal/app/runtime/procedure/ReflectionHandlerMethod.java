@@ -5,7 +5,7 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.data.operation.executor.TransactionAgent;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +22,9 @@ final class ReflectionHandlerMethod implements HandlerMethod {
 
   private final Procedure procedure;
   private final Method method;
-  private final TransactionAgentSupplier txAgentSupplier;
+  private final DataFabricFacade txAgentSupplier;
 
-  ReflectionHandlerMethod(Procedure procedure, Method method, TransactionAgentSupplier txAgentSupplier) {
+  ReflectionHandlerMethod(Procedure procedure, Method method, DataFabricFacade txAgentSupplier) {
     this.procedure = procedure;
     this.method = method;
     this.txAgentSupplier = txAgentSupplier;
