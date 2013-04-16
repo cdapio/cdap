@@ -198,7 +198,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) throws OperationException {
     flowletContext.setInstanceCount(instanceCount);
     for(QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
-      queueConsumerSupplier.createConsumer(instanceCount);
+      queueConsumerSupplier.updateInstanceCount(instanceCount);
     }
   }
 
@@ -453,7 +453,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  static class QueueConsumerSupplier implements Supplier<QueueConsumer> {
+  private static final class QueueConsumerSupplier implements Supplier<QueueConsumer> {
     private final QueueConsumerFactory queueConsumerFactory;
     private volatile QueueConsumer consumer;
 
@@ -462,7 +462,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       this.consumer = queueConsumerFactory.create(groupSize);
     }
 
-    public void createConsumer(int groupSize) throws OperationException {
+    public void updateInstanceCount(int groupSize) throws OperationException {
       consumer = queueConsumerFactory.create(groupSize);
     }
 
