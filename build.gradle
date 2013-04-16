@@ -28,9 +28,9 @@ dependencies {
 
     compile libraries.kryo
     compile libraries.hsql
-    compile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity') { exclude module: 'junit' }
+    compile('org.apache.hbase:hbase:0.94.2.1.4.5.continuuity') { exclude module: 'junit' }
 
-    testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
+    testCompile('org.apache.hbase:hbase:0.94.2.1.4.5.continuuity:tests') { exclude module: 'junit' }
     testCompile libraries.hadoop_minicluster
 }
 
@@ -51,7 +51,7 @@ javadoc {
 }
 
 test {
-    jvmArgs '-Xmx512m'
+    jvmArgs '-Xmx1024m'
 }
 
 /**

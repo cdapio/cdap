@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
@@ -36,6 +37,36 @@ public class QueueAdmin {
       return Objects.toStringHelper(this)
           .add("queuename", Bytes.toString(this.queueName))
           .toString();
+    }
+  }
+
+  /**
+   * Configures the queue
+   */
+  public static class QueueConfigure extends Operation {
+
+    private final byte [] queueName;
+    private final QueueConsumer newConsumer;
+
+    public QueueConfigure(byte[] queueName, QueueConsumer newConsumer) {
+      this.queueName = queueName;
+      this.newConsumer = newConsumer;
+    }
+
+    public byte [] getQueueName() {
+      return this.queueName;
+    }
+
+    public QueueConsumer getNewConsumer() {
+      return newConsumer;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("queuename", Bytes.toString(this.queueName))
+        .add("newConsumer", this.newConsumer)
+        .toString();
     }
   }
 

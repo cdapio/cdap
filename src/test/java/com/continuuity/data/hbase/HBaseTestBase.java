@@ -1,5 +1,8 @@
 package com.continuuity.data.hbase;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -15,6 +18,7 @@ import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -41,6 +45,8 @@ public abstract class HBaseTestBase {
 
   protected static MiniHBaseCluster hbaseCluster;
 
+  private static final List<File> tmpDirList = Lists.newArrayList();
+
   // Accessors for test implementations
 
   public static Configuration getConfiguration() {
@@ -60,12 +66,9 @@ public abstract class HBaseTestBase {
   private static final Random r = new Random();
 
   public static File getRandomTempDir() {
-    File file = new File(System.getProperty("java.io.tmpdir"),
-        Integer.toString(Math.abs(r.nextInt())));
-    if (!file.mkdir()) {
-      throw new RuntimeException("Unable to create temp directory");
-    }
-    return file;
+    File dir = Files.createTempDir();
+    tmpDirList.add(dir);
+    return dir;
   }
 
   // Test startup / teardown
@@ -114,6 +117,7 @@ public abstract class HBaseTestBase {
     createHBaseRootDir(conf);
     conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
     conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
+    conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for unit tests
     Configuration c = new Configuration(conf);
     System.err.println("Instantiating HBase cluster in 1 sec...");
     Thread.sleep(1000);
@@ -153,6 +157,10 @@ public abstract class HBaseTestBase {
       zkCluster.shutdown();
       System.err.println("\n\n\nDone with zk shutdown\n\n\n");
       zkCluster = null;
+    }
+
+    for (File dir : tmpDirList) {
+      FileUtils.deleteDirectory(dir);
     }
   }
 

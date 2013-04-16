@@ -1,9 +1,12 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,11 +15,20 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the contract and semantics of {@link OrderedVersionedColumnarTable}
@@ -174,8 +186,7 @@ public abstract class TestOVCTable {
     }
 
     // get(row,RP=9) = 0 cols
-    colMap = this.table.get(row, new MemoryReadPointer(9)).getValue();
-    assertEquals(0, colMap.size());
+    assertTrue(this.table.get(row, new MemoryReadPointer(9)).isEmpty());
 
     // delete the first 5 as point deletes
     subCols = Arrays.copyOfRange(columns, 0, 5);
@@ -891,5 +902,215 @@ public abstract class TestOVCTable {
     System.err.println("completed." );
     if (failed.get())
       Assert.fail("At least one thread failed");
+  }
+
+  @Test
+  public void testDeleteDirty() throws OperationException {
+    final int MAX = 10;
+
+    // Generate row keys
+    byte [] [] rows = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
+      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testDeleteDirty." + i);
+      // Verify row[i] dne
+      assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
+    }
+
+    for(int i = 0; i < MAX; ++i) {
+      // Write values 1, 2, 3 @ ts 1, 2, 3
+      this.table.put(rows[i], Bytes.toBytes("col1_" + i), 1L, Bytes.toBytes(1L));
+      this.table.put(rows[i], Bytes.toBytes("col2_" + i), 3L, Bytes.toBytes(MAX * 2 + 3L));
+      this.table.put(rows[i], Bytes.toBytes("col3_" + i), 2L, Bytes.toBytes(MAX * 3 + 2L));
+    }
+
+    for(int i = 0; i < MAX; ++i) {
+      // Check written values
+      Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
+      assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
+      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+    }
+
+    // Delete 3rd, 6th row
+    Set<Integer> deletedRows = ImmutableSet.of(3, 6);
+    final byte [][] deletedArray = new byte[][] {Bytes.toBytes(3), Bytes.toBytes(6)};
+    this.table.deleteDirty(deletedArray);
+    // Assert deleted rows are really deleted
+    for(Integer i : deletedRows) {
+      assertTrue(this.table.get(Bytes.toBytes(i), RP_MAX).isEmpty());
+    }
+    // Assert other rows still exist
+    for(int i = 0; i < MAX; ++i) {
+      if(deletedRows.contains(i)) {
+        continue;
+      }
+      Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
+      assertEquals(1, Bytes.toLong(colMap.get(Bytes.toBytes("col1_" + i))));
+      assertEquals(MAX * 2 + 3L, Bytes.toLong(colMap.get(Bytes.toBytes("col2_" + i))));
+      assertEquals(MAX * 3 + 2L, Bytes.toLong(colMap.get(Bytes.toBytes("col3_" + i))));
+    }
+
+    // Delete all rows
+    for(int i = 0; i < MAX; ++i) {
+      this.table.deleteDirty(new byte[][]{rows[i]});
+    }
+
+    // Assert all rows are deleted
+    for(int i = 0; i < MAX; ++i) {
+      assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
+    }
+  }
+
+  @Test
+  public void testMultiRowPut() throws OperationException {
+    final int MAX = 10;
+
+    // Generate row keys, cols, values
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols = new byte[MAX][];
+    byte [] [] values = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
+      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testMultiRowPut." + i);
+      // Verify row[i] dne
+      assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
+
+      cols[i] = Bytes.toBytes("col" + i);
+      values[i] = Bytes.toBytes(i);
+    }
+
+    // Put data
+    this.table.put(rows, cols, 1L, values);
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      Map<byte[], byte[]> colMap = this.table.get(rows[i], RP_MAX).getValue();
+      // Assert only one col per row is read
+      assertEquals(1, colMap.size());
+      assertEquals(i, Bytes.toInt(colMap.get(cols[i])));
+    }
+  }
+
+  @Test
+  public void testGetAllColumns() throws OperationException {
+    final int MAX = 10;
+    final byte[] COL1 = Bytes.toBytes("col1");
+    final byte[] COL2 = Bytes.toBytes("col2");
+
+    // Generate row keys, cols, values
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols1 = new byte[MAX][];
+    byte [] [] cols2 = new byte[MAX][];
+    byte [] [] values1 = new byte[MAX][];
+    byte [] [] values2 = new byte[MAX][];
+    for(int i = 0; i < MAX; ++i) {
+      rows[i] = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns." + i);
+      // Verify row[i] dne
+      assertTrue(this.table.get(rows[i], RP_MAX).isEmpty());
+
+      cols1[i] = COL1;
+      cols2[i] = COL2;
+      values1[i] = Bytes.toBytes(i);
+      values2[i] = Bytes.toBytes(MAX + i);
+    }
+
+    // Put data
+    this.table.put(rows, cols1, 1L, values1);
+    this.table.put(rows, cols2, 1L, values2);
+
+    // Add some extraneous values
+    this.table.put(rows[0], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
+    this.table.put(rows[1], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
+    this.table.put(rows[2], Bytes.toBytes("extra_column"), 1L, Bytes.toBytes(-1));
+
+
+    // Get data
+    Map<byte[], Map<byte[], byte[]>> valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1, COL2}, RP_MAX).getValue();
+    assertFalse(valuesMap.isEmpty());
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      // Assert two cols per row is read
+      assertEquals(2, valuesMap.get(rows[i]).size());
+      assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
+      assertEquals(Bytes.toInt(values2[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols2[i])));
+    }
+
+    // Get data (single column)
+    valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1}, RP_MAX).getValue();
+    assertFalse(valuesMap.isEmpty());
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      // Assert one col per row is read
+      assertEquals(1, valuesMap.get(rows[i]).size());
+      assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
+    }
+  }
+
+  @Test
+  public void testCeilValue() throws OperationException {
+    final byte[] col = Bytes.toBytes("c");
+    final int MAX = 10;
+
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols = new byte[MAX][];
+    byte [] [] values = new byte[MAX][];
+
+    for ( int i = 0; i<MAX;i++) {
+      rows[i] = Bytes.toBytes(100*i);
+      cols[i] = col;
+      values[i] = Bytes.toBytes(100*i);
+    }
+    this.table.put(rows, cols, 1L, values);
+
+    byte [] testRow = Bytes.toBytes(90);
+    OperationResult<byte []> result = this.table.getCeilValue(testRow,col,RP_MAX);
+    assertFalse(result.isEmpty());
+    assertEquals(100, Bytes.toInt(result.getValue()) );
+
+    byte [] testNonExistingRow = Bytes.toBytes(1000);
+    result = this.table.getCeilValue(testNonExistingRow,col,RP_MAX);
+    assertTrue(result.isEmpty());
+
+  }
+
+  public void testCompareAndSwapDirty() throws OperationException {
+    // TODO: need to run multi-threaded to test for atomicity.
+    final byte[] ROW = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
+    final byte[] COL1 = Bytes.toBytes("col1");
+    final byte[] COL2 = Bytes.toBytes("col2");
+
+    final byte[] col2Value = Bytes.toBytes("col2Value");
+    this.table.put(ROW, COL2, TransactionOracle.DIRTY_WRITE_VERSION, col2Value);
+
+    for(int i = 0; i < 2 ; ++i) {
+      String message = "Iteration " + (i+1);
+      byte[] expected1 = Bytes.toBytes(1);
+      byte[] newValue1 = Bytes.toBytes(10);
+      // Cell does not exist yet
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, expected1, newValue1));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue1));
+
+      // Cell has newValue1 now
+      byte[] newValue2 = Bytes.toBytes(20);
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue2));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue2));
+
+      // Cell has newValue2 now
+      byte[] newValue3 = Bytes.toBytes(30);
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue3));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue3));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue3));
+
+      // Cell has newValue3 now
+      byte[] newValue4 = null;
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue4));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue3, newValue4));
+    }
+
+    byte[] actualCol2Value = this.table.get(ROW, COL2, TransactionOracle.DIRTY_READ_POINTER).getValue();
+    assertEquals(Bytes.toString(col2Value), Bytes.toString(actualCol2Value));
   }
 }

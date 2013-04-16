@@ -259,14 +259,4 @@ public class MemoryOracle implements TransactionOracle {
     }
     return null;
   }
-
-  @Override
-  public ReadPointer dirtyReadPointer() {
-    return new MemoryReadPointer(Long.MAX_VALUE); // this will see everything
-  }
-
-  @Override
-  public long dirtyWriteVersion() {
-    return 1L; // this is visible to any read pointer
-  }
 }

@@ -12,6 +12,7 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
@@ -21,6 +22,7 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
@@ -89,6 +91,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
     this.executor.execute(context,
@@ -126,6 +129,10 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
+    // configure queue and stream
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, consumer));
+
     // enqueue to queue, stream, and write data
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
     this.executor.commit(context, new QueueEnqueue(streamName, new QueueEntry(streamName)));
@@ -150,6 +157,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     // but if we clear the fabric they all disappear
     this.executor.execute(context, new ClearFabric());
 
+    // configure queue and stream again
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, consumer));
     // everything is gone!
     assertTrue(this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config)).isEmpty());
@@ -168,6 +178,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -252,6 +263,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     TTQueueOnVCTable.TRACE = true;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -313,6 +325,11 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Data key
     byte [] dataKey = Bytes.toBytes("datakey");
     long expectedVal;
+
+    // Configure queues
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
 
     // Go!
 
@@ -405,6 +422,11 @@ public abstract class TestOmidExecutorLikeAFlow {
     long [] expectedVals = new long [] { 0L, 0L, 0L };
 
     // Go!
+
+    // Configure queues
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
 
     // Add an entry to source queue
     this.executor.commit(context, new QueueEnqueue(srcQueueName, new QueueEntry(srcQueueValue)));
@@ -537,7 +559,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     // First consume them all in sync mode
 
     QueueConfig configOne = new QueueConfig(PartitionerType.FIFO, true);
-    QueueConsumer consumerOne = new QueueConsumer(0, 0, 1, configOne);
+    // Configure queue
+    QueueConsumer consumerOne = new StatefulQueueConsumer(0, 0, 1, configOne);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumerOne));
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne));
       assertTrue(result.isSuccess());
@@ -555,7 +579,8 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Now consume them all in async mode, no ack
     QueueConfig configTwo = new QueueConfig(PartitionerType.FIFO, false);
-    QueueConsumer consumerTwo = new QueueConsumer(0, 2, 1, configTwo);
+    QueueConsumer consumerTwo = new StatefulQueueConsumer(0, 2, 1, configTwo);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumerTwo));
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerTwo, configTwo));
       assertTrue(result.isSuccess());
@@ -590,6 +615,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Create and start a thread that dequeues in a loop
     final QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
@@ -674,135 +700,145 @@ public abstract class TestOmidExecutorLikeAFlow {
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
-    
+
     long MAX_TIMEOUT = 30000;
     //    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     //    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
     ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
-        new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-        ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
-            new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-            ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo = new
-                ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+      new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
+      new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo = new
+      ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
 
-                AtomicBoolean producersDone = new AtomicBoolean(false);
+    AtomicBoolean producersDone = new AtomicBoolean(false);
 
-                long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-                // Create P producer threads, each inserts N queue entries
-                int p = 5;
-                int n = getNumIterations();
-                Producer [] producers = new Producer[p];
-                for (int i=0;i<p;i++) {
-                  producers[i] = new Producer(i, n, enqueuedMap);
-                }
+    // Create P producer threads, each inserts N queue entries
+    int p = 5;
+    int n = getNumIterations();
+    Producer [] producers = new Producer[p];
+    for (int i=0;i<p;i++) {
+      producers[i] = new Producer(i, n, enqueuedMap);
+    }
 
-                // Create (P*2) consumer threads, two groups of (P)
-                // Use synchronous execution first
-                Consumer [] consumerGroupOne = new Consumer[p];
-                Consumer [] consumerGroupTwo = new Consumer[p];
-                QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
-                for (int i=0;i<p;i++) {
-                  consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
-                                                   config, dequeuedMapOne, producersDone);
-                }
-                for (int i=0;i<p;i++) {
-                  consumerGroupTwo[i]=new Consumer(new QueueConsumer(i, 1, p, config),
-                                                   config, dequeuedMapTwo, producersDone);
-                }
+    // Create (P*2) consumer threads, two groups of (P)
+    // Use synchronous execution first
+    Consumer [] consumerGroupOne = new Consumer[p];
+    Consumer [] consumerGroupTwo = new Consumer[p];
+    QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
 
-                // Let the producing begin!
-                System.out.println("Starting producers");
-                for (int i=0; i<p; i++) producers[i].start();
-                long expectedDequeues = p * n;
+    for (int i=0;i<p;i++) {
+      consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
+                                       config, dequeuedMapOne, producersDone);
+      this.executor.execute(context, null,
+                            new QueueAdmin.QueueConfigure(
+                              TestOmidExecutorLikeAFlow.this.threadedQueueName, consumerGroupOne[i].consumer
+                            ));
+    }
 
-                long startConsumers = System.currentTimeMillis();
+    for (int i=0;i<p;i++) {
+      consumerGroupTwo[i]=new Consumer(new QueueConsumer(i, 1, p, config),
+                                       config, dequeuedMapTwo, producersDone);
+      this.executor.execute(context, null,
+                            new QueueAdmin.QueueConfigure(
+                              TestOmidExecutorLikeAFlow.this.threadedQueueName, consumerGroupTwo[i].consumer
+                            ));
+    }
 
-                // Start consumers!
-                System.out.println("Starting consumers");
-                for (int i=0; i<p; i++) consumerGroupOne[i].start();
-                for (int i=0; i<p; i++) consumerGroupTwo[i].start();
+    // Let the producing begin!
+    System.out.println("Starting producers");
+    for (int i=0; i<p; i++) producers[i].start();
+    long expectedDequeues = p * n;
 
-                // Wait for producers to finish
-                System.out.println("Waiting for producers to finish");
-                long start = System.currentTimeMillis();
-                for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
-                long stop = System.currentTimeMillis();
-                System.out.println("Producers done");
-                if (stop - start >= MAX_TIMEOUT)
-                  fail("Timed out waiting for producers");
-                producersDone.set(true);
+    long startConsumers = System.currentTimeMillis();
 
-                // Verify producers produced correct number
-                assertEquals(p * n , enqueuedMap.size());
-                System.out.println("Producers correctly enqueued " +
-                    enqueuedMap.size() + " entries");
+    // Start consumers!
+    System.out.println("Starting consumers");
+    for (int i=0; i<p; i++) consumerGroupOne[i].start();
+    for (int i=0; i<p; i++) consumerGroupTwo[i].start();
+
+    // Wait for producers to finish
+    System.out.println("Waiting for producers to finish");
+    long start = System.currentTimeMillis();
+    for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
+    long stop = System.currentTimeMillis();
+    System.out.println("Producers done");
+    if (stop - start >= MAX_TIMEOUT)
+      fail("Timed out waiting for producers");
+    producersDone.set(true);
+
+    // Verify producers produced correct number
+    assertEquals(p * n , enqueuedMap.size());
+    System.out.println("Producers correctly enqueued " +
+                         enqueuedMap.size() + " entries");
 
     long producerTime = System.currentTimeMillis();
-                System.out.println("" + p + " producers generated " + (n*p) +
-                    " total queue entries in " + (producerTime - startTime) +
-                    " millis (" + ((producerTime - startTime)/((float)(n*p))) +
-                    " ms/enqueue)");
+    System.out.println("" + p + " producers generated " + (n*p) +
+                         " total queue entries in " + (producerTime - startTime) +
+                         " millis (" + ((producerTime - startTime)/((float)(n*p))) +
+                         " ms/enqueue)");
 
-                // Wait for consumers to finish
-                System.out.println("Waiting for consumers to finish");
-                start = System.currentTimeMillis();
-                for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
-                for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
-                stop = System.currentTimeMillis();
-                System.out.println("Consumers done!");
-                if (stop - start >= MAX_TIMEOUT)
-                  fail("Timed out waiting for consumers");
+    // Wait for consumers to finish
+    System.out.println("Waiting for consumers to finish");
+    start = System.currentTimeMillis();
+    for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
+    for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
+    stop = System.currentTimeMillis();
+    System.out.println("Consumers done!");
+    if (stop - start >= MAX_TIMEOUT)
+      fail("Timed out waiting for consumers");
 
-                long stopTime = System.currentTimeMillis();
-                System.out.println("" + (p*2) + " consumers dequeued " +
-                    (expectedDequeues*2) +
-                    " total queue entries in " + (stopTime - startConsumers) +
-                    " millis (" + ((stopTime - startConsumers)/((float)
-                    (expectedDequeues*2))) + " ms/dequeue)");
+    long stopTime = System.currentTimeMillis();
+    System.out.println("" + (p*2) + " consumers dequeued " +
+                         (expectedDequeues*2) +
+                         " total queue entries in " + (stopTime - startConsumers) +
+                         " millis (" + ((stopTime - startConsumers)/((float)
+      (expectedDequeues*2))) + " ms/dequeue)");
 
-                // Each group should total <expectedDequeues>
+    // Each group should total <expectedDequeues>
 
-                long groupOneTotal = 0;
-                long groupTwoTotal = 0;
-                for (int i=0; i<p; i++) {
-                  groupOneTotal += consumerGroupOne[i].dequeued;
-                  groupTwoTotal += consumerGroupTwo[i].dequeued;
-                }
-                if (expectedDequeues != groupOneTotal) {
-                  System.out.println("Group One: totalDequeues=" + groupOneTotal
-                      + ", DequeuedMap.size=" + dequeuedMapOne.size());
-                  for (byte [] dequeuedValue : dequeuedMapOne.values()) {
-                    enqueuedMap.remove(dequeuedValue);
-                  }
-                  System.out.println("After removing dequeued entries, there" +
-                      " are " + enqueuedMap.size() + " remaining entries " +
-                      "produced");
-                  for (byte [] enqueuedValue : enqueuedMap.values()) {
-                    System.out.println("EnqueuedNotDequeued: instanceid=" +
-                        Bytes.toInt(enqueuedValue) + ", entrynum=" +
-                        Bytes.toInt(enqueuedValue, 4));
-                  }
-                  printQueueInfo(this.threadedQueueName, 0);
-                }
-                assertEquals(expectedDequeues, groupOneTotal);
-                if (expectedDequeues != groupTwoTotal) {
-                  System.out.println("Group Two: totalDequeues=" + groupTwoTotal
-                      + ", DequeuedMap.size=" + dequeuedMapTwo.size());
-                  for (byte [] dequeuedValue : dequeuedMapTwo.values()) {
-                    enqueuedMap.remove(dequeuedValue);
-                  }
-                  System.out.println("After removing dequeued entries, there " +
-                      "are " + enqueuedMap.size() + " remaining entries " +
-                      "produced");
-                  for (byte [] enqueuedValue : enqueuedMap.values()) {
-                    System.out.println("EnqueuedNotDequeued: instanceid=" +
-                        Bytes.toInt(enqueuedValue) + ", entrynum=" +
-                        Bytes.toInt(enqueuedValue, 4));
-                  }
-                  printQueueInfo(this.threadedQueueName, 1);
-                }
-                assertEquals(expectedDequeues, groupTwoTotal);
+    long groupOneTotal = 0;
+    long groupTwoTotal = 0;
+    for (int i=0; i<p; i++) {
+      groupOneTotal += consumerGroupOne[i].dequeued;
+      groupTwoTotal += consumerGroupTwo[i].dequeued;
+    }
+    if (expectedDequeues != groupOneTotal) {
+      System.out.println("Group One: totalDequeues=" + groupOneTotal
+                           + ", DequeuedMap.size=" + dequeuedMapOne.size());
+      for (byte [] dequeuedValue : dequeuedMapOne.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there" +
+                           " are " + enqueuedMap.size() + " remaining entries " +
+                           "produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+                             Bytes.toInt(enqueuedValue) + ", entrynum=" +
+                             Bytes.toInt(enqueuedValue, 4));
+      }
+      printQueueInfo(this.threadedQueueName, 0);
+    }
+    assertEquals(expectedDequeues, groupOneTotal);
+    if (expectedDequeues != groupTwoTotal) {
+      System.out.println("Group Two: totalDequeues=" + groupTwoTotal
+                           + ", DequeuedMap.size=" + dequeuedMapTwo.size());
+      for (byte [] dequeuedValue : dequeuedMapTwo.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there " +
+                           "are " + enqueuedMap.size() + " remaining entries " +
+                           "produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+                             Bytes.toInt(enqueuedValue) + ", entrynum=" +
+                             Bytes.toInt(enqueuedValue, 4));
+      }
+      printQueueInfo(this.threadedQueueName, 1);
+    }
+    assertEquals(expectedDequeues, groupTwoTotal);
 
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }

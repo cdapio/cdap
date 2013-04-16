@@ -1,7 +1,14 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.batch;
 
 import com.continuuity.api.data.OperationException;
 
+/**
+ * Defines a reader of dataset {@link Split}
+ */
 public abstract class SplitReader<KEY, VALUE> {
 
   /**
@@ -17,24 +24,21 @@ public abstract class SplitReader<KEY, VALUE> {
    * @return true if a key/value pair was read
    * @throws InterruptedException
    */
-  public abstract
-  boolean nextKeyValue() throws InterruptedException, OperationException;
+  public abstract boolean nextKeyValue() throws InterruptedException, OperationException;
 
   /**
    * Get the current key
    * @return the current key or null if there is no current key
    * @throws InterruptedException
    */
-  public abstract
-  KEY getCurrentKey() throws InterruptedException;
+  public abstract KEY getCurrentKey() throws InterruptedException;
 
   /**
    * Get the current value.
    * @return the object that was read
    * @throws InterruptedException
    */
-  public abstract
-  VALUE getCurrentValue() throws InterruptedException;
+  public abstract VALUE getCurrentValue() throws InterruptedException;
 
   /**
    * The current progress of the record reader through its data.

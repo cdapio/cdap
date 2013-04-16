@@ -5,6 +5,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 
 import java.util.List;
 
@@ -120,17 +121,16 @@ public interface TransactionOracle {
   public ReadPointer getReadPointer();
 
   /**
-   * Get a dirty read pointer. This completely bypasses transactions and will include dirty and
+   * Defines a dirty read pointer. This completely bypasses transactions and will include dirty and
    * future writes, that is, writes that are performed after the dirty read pointer was received.
-   * @return a dirty read pointer
    */
-  public ReadPointer dirtyReadPointer();
+  public static final ReadPointer DIRTY_READ_POINTER =
+                                        new MemoryReadPointer(Long.MAX_VALUE); // this will see everything
 
   /**
-   * Obtain a dirty write version. Writes made with this version are visible immediately to everyone,
+   * Defines a dirty write version. Writes made with this version are visible immediately to everyone,
    * even transactions, so you should never use the dirty write version to write values that may be
-   * read with a non-dirty read pointer or a transaction.</li>
-   * @return a dirty write version
+   * read with a non-dirty read pointer or a transaction.
    */
-  public long dirtyWriteVersion();
+  public static final long DIRTY_WRITE_VERSION = 1L;  // this is visible to any read pointer
 }

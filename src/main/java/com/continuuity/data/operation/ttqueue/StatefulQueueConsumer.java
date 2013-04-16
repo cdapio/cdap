@@ -16,7 +16,8 @@ public class StatefulQueueConsumer extends QueueConsumer {
     super(instanceId, groupId, groupSize, groupName, config);
   }
 
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey, QueueConfig config) {
+  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
+                               QueueConfig config) {
     super(instanceId, groupId, groupSize, groupName, partitioningKey, config);
   }
 
@@ -39,7 +40,7 @@ public class StatefulQueueConsumer extends QueueConsumer {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("super", super.toString())
-      .add("queueState", queueState.toString())
+      .add("queueState", queueState)
       .toString();
   }
 }

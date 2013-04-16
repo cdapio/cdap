@@ -71,7 +71,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
           cleanWriteVersion + ")");
 
     // Get a read pointer that sees everything (dirty read pointer)
-    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
+    long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     // Perform native enqueue operation
     HBQEnqueueResult result;
     try {
@@ -93,7 +93,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   public void invalidate(QueueEntryPointer entryPointer,
       long cleanWriteVersion) throws OperationException {
     if (TRACE) log("Invalidating " + entryPointer);
-    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
+    long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
       this.table.invalidate(new HBQInvalidate(this.queueName,
           entryPointer.toHBQ(), new HBReadPointer(cleanWriteVersion, dirtyReadVersion)));
@@ -144,8 +144,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
     if (TRACE) log("Acking " + entryPointer);
-    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
-    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
+    long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
+    long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
       if (!this.table.ack(new HBQAck(this.queueName, consumer.toHBQ(),
           entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion)))) {
@@ -163,8 +163,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
       QueueConsumer consumer, int totalNumGroups, long writePoint)
           throws OperationException {
     if (TRACE) log("Finalizing " + entryPointer);
-    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
-    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
+    long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
+    long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
       if (!this.table.finalize(new HBQFinalize(this.queueName, consumer.toHBQ(),
           entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion), totalNumGroups))) {
@@ -181,8 +181,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
   @Override
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     if (TRACE) log("Unacking " + entryPointer);
-    long dirtyWriteVersion = this.oracle.dirtyWriteVersion();
-    long dirtyReadVersion = this.oracle.dirtyReadPointer().getMaximum();
+    long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
+    long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
     try {
       if (!this.table.unack(new HBQUnack(this.queueName, consumer.toHBQ(),
           entryPointer.toHBQ(), new HBReadPointer(dirtyWriteVersion, dirtyReadVersion)))) {
@@ -223,7 +223,13 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
   }
 
-  // Private helpers
+  @Override
+  public int configure(QueueConsumer newConsumer)
+    throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return -1;
+  }
+// Private helpers
 
   public static boolean TRACE = false;
 

@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -72,7 +73,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler = exceptionHandler;
     } catch (IOException e) {
       exceptionHandler.handle(e);
-      throw new InternalError("this point should never be reached.");
+      //Note: exceptionHandler.handle already throws a RuntimeException. However IntelliJ doesn't recognize it and
+      //marks all private members as un-initialized if the the throw statement below is commented out.
+      throw new RuntimeException("this point should never be reached.");
     }
   }
 
@@ -108,6 +111,29 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
       }
       writeTable.put(put);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null)  {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
+  public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
+    assert (rows.length == columns.length);
+    assert (columns.length == values.length);
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Put> puts = new ArrayList<Put>(rows.length);
+      for(int i = 0; i < rows.length; i++) {
+        Put put = new Put(rows[i]);
+        put.add(this.family, columns[i], version, prependWithTypePrefix(DATA, values[i]));
+        puts.add(put);
+      }
+      writeTable.put(puts);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
@@ -184,6 +210,27 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteDirty(byte[][] rows) throws OperationException {
+    // TODO: When a put dirty is done after deleteDirty, the put does not stick
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      List<Delete> deletes = new ArrayList<Delete>(rows.length);
+      for(byte[] row : rows) {
+        Delete delete = new Delete(row);
+        deletes.add(delete);
+      }
+      writeTable.delete(deletes);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     undeleteAll(row, new byte[][]{column}, version);
   }
@@ -234,6 +281,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           deleted.add(version);
         }
         previousColumn=column;
+      }
+
+      if(map.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -303,8 +354,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(byte[][] rows, byte[][] columns, ReadPointer readPointer)
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
+    // TODO: this can probably be improved by doing a scan instead of get.
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
@@ -323,7 +375,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
       }
       if (resultMap.isEmpty()) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
       }
       else {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(resultMap);
@@ -366,6 +418,27 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         }
       }
       return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    // as fall-back return "not found".
+    return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    try {
+      Get get = new Get(row);
+      get.addColumn(this.family, column);
+      get.setTimeRange(0, Long.MAX_VALUE);
+      get.setMaxVersions();
+      Result result = this.readTable.get(get);
+      if (!result.isEmpty()) {
+        return new OperationResult<byte[]>(result.value());
+      } else {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }
@@ -649,11 +722,19 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
     throws OperationException {
+    // Note: HBase increment does not take a write version, to keep compareAndSwapDirty compatible with increments
+    // compareAndSwapDirty too does not use an explicit write version.
+    HTable writeTable = null;
     try {
-      return this.readTable.incrementColumnValue(row, this.family, column, amount);
+      writeTable = getWriteTable();
+      return writeTable.incrementColumnValue(row, this.family, column, amount);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return -1L;
+    } finally {
+      if(writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -761,6 +842,29 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException {
+    // Note: HBase increment does not take a write version, to keep compareAndSwapDirty compatible with increments
+    // compareAndSwapDirty too does not use an explicit write version (true for vanilla HBase, right now an explicit
+    // version is used since the patched HBase only has checkAndPut with version).
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      Put put = new Put(row);
+      put.add(this.family, column, newValue);
+      // TODO: need to use checkAndPut without version (vanilla HBase)
+      return writeTable.checkAndPut(row, this.family, column, expectedValue, put);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if(writeTable != null) {
+        returnWriteTable(writeTable);
+      }
+    }
+    throw new OperationException(StatusCode.INTERNAL_ERROR, "This point should not be reached");
+  }
+
+  @Override
   public void clear() throws OperationException {
     try {
       HBaseAdmin hba = new HBaseAdmin(conf);
@@ -786,6 +890,63 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public Scanner scan(ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
+  }
+
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    Scan scan = new Scan(row);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
+      boolean fastForwardToNextRow=false;
+      byte[] previousRow=null;
+      byte[] previousColumn=null;
+      Set<Long> deletedCellsWithinRow = Sets.newHashSet();
+      int skippedRow = 0;
+
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          byte[] rowKey=kv.getRow();
+          if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
+            continue;
+          }
+          fastForwardToNextRow=false;
+          if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
+            continue;
+          }
+          fastForwardToNextColumn=false;
+          long version=kv.getTimestamp();
+          if (!readPointer.isVisible(version)) {
+            continue;
+          }
+          if (deletedCellsWithinRow.contains(version))  {
+            deletedCellsWithinRow.remove(version);
+            continue;
+          }
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            //found row with at least one cell with DATA
+            return new OperationResult<byte[]>(removeTypePrefix(value)) ;
+          }
+          if (typePrefix==DELETE_ALL) {
+            fastForwardToNextColumn=true;
+            deletedCellsWithinRow.clear();
+          }
+          if (typePrefix==DELETE_VERSION) {
+            deletedCellsWithinRow.add(version);
+          }
+          previousColumn=column;
+          previousRow=row;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
   public static interface IOExceptionHandler {

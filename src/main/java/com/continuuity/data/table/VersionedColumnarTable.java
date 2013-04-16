@@ -41,6 +41,17 @@ public interface VersionedColumnarTable {
       byte [][] values) throws OperationException;
 
   /**
+   * Writes values[i] at (rows[i], columns[i]) using the specified version
+   * version for the specified rows.
+   * @param rows
+   * @param columns
+   * @param version
+   * @param values
+   */
+  public void put(byte [][] rows, byte [][] columns, long version,
+                  byte [][] values) throws OperationException;
+
+  /**
    * Deletes the specified version of the specified row and column.
    * @param row
    * @param column
@@ -84,6 +95,13 @@ public interface VersionedColumnarTable {
    * @param version
    */
   public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
+
+  /**
+   * Deletes all versions of all columns of the specified rows. If the implementation supports it
+   * this delete will affect all readers, and it cannot be undone.
+   * @param rows
+   */
+  public void deleteDirty(byte [][] rows) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
@@ -170,16 +188,29 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer) throws OperationException;
 
   /**
-   * Reads the latest versions of the specified columns in the specified row,
+   * Reads the latest version of the specified column in the specified row,
+   * utilizing the specified read pointer to enforce visibility constraints,
+   * and returns the value.
+   * @param row
+   * @param column
+   * @return value of the latest visible column in the specified row, or null if
+   *         none exists
+   */
+  public OperationResult<byte[]> getDirty(
+    byte [] row, byte [] column)
+    throws OperationException;
+
+  /**
+   * Reads the latest versions of all specified columns for each row,
    * utilizing the specified read pointer to enforce visibility constraints.
    * @param rows
    * @param columns
    * @param readPointer
    * @return map of columns to values, never null
    */
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> get(
-    byte [][] rows, byte[][] columns,
-    ReadPointer readPointer) throws OperationException;
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(
+    byte[][] rows, byte[][] columns, ReadPointer readPointer)
+    throws OperationException;
 
   /**
    * Increments (atomically) the specified row and column by the specified
@@ -200,7 +231,11 @@ public interface VersionedColumnarTable {
 
   /**
    * Increments (atomically and dirtily) the specified row and column by the specified
-   * amount.
+   * amount. It does the increment using dirty read and dirty write pointers.
+   *
+   * Important: Counters written with this method cannot be read with a regular get(), they
+   * can only be read using this same method with an increment of 0.
+   *
    * @param row
    * @param column
    * @param amount amount to increment column by
@@ -210,6 +245,7 @@ public interface VersionedColumnarTable {
     byte [] row, byte[] column, long amount)
     throws OperationException;
 
+  // TODO implement a readDirtyCounter()
 
   /**
    * Increments (atomically) the specified row and columns by the specified
@@ -241,12 +277,29 @@ public interface VersionedColumnarTable {
    * @param newValue
    * @param readPointer
    * @param writeVersion
-   * @throws OperationException if anything goes wrong.
+   * @throws OperationException when there is a write conflict, i.e., expectedValue does not match existingValue.
    */
   public void compareAndSwap(byte[] row, byte[] column,
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer, long writeVersion)
       throws OperationException;
+
+  /**
+   * Compares-and-swaps (atomically) the value of the specified row and column
+   * by looking for the specified expected value and if found, replacing with
+   * the specified new value. If the newValue is null, then the cell is deleted.
+   * It does the compare and swap using dirty read and dirty write pointers.
+   * It also assumes the values do not have tombstones.
+   *
+   * @param row
+   * @param column
+   * @param expectedValue
+   * @param newValue
+   * @return true if swap was executed, false otherwise
+   * @throws OperationException, Note: this does not throw exception when expectedValue does not match existingValue.
+   */
+  public boolean compareAndSwapDirty(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue)
+    throws OperationException;
 
   /**
    * Clears this table, completely wiping all data irrecoverably.
