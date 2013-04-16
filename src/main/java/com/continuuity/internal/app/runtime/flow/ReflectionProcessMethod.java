@@ -12,9 +12,9 @@ import com.continuuity.internal.api.io.Schema;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.PostProcess;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.google.common.base.Preconditions;
@@ -40,7 +40,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final BasicFlowletContext flowletContext;
   private final Method method;
   private final SchemaCache schemaCache;
-  private final TransactionAgentSupplier txAgentSupplier;
+  private final DataFabricFacade txAgentSupplier;
   private final OutputSubmitter outputSubmitter;
   private final boolean hasParam;
   private final boolean needContext;
@@ -52,7 +52,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
                                                       Method method,
                                                       TypeToken<T> dataType,
                                                       Schema schema, SchemaCache schemaCache,
-                                                      TransactionAgentSupplier txAgentSupplier,
+                                                      DataFabricFacade txAgentSupplier,
                                                       OutputSubmitter outputSubmitter) {
     return new ReflectionProcessMethod<T>(flowlet, flowletContext, method, dataType, schema,
                                           schemaCache, txAgentSupplier, outputSubmitter);
@@ -62,7 +62,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
                                   Method method,
                                   TypeToken<T> dataType,
                                   Schema schema, SchemaCache schemaCache,
-                                  TransactionAgentSupplier txAgentSupplier,
+                                  DataFabricFacade txAgentSupplier,
                                   OutputSubmitter outputSubmitter) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
@@ -98,7 +98,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   }
 
   private PostProcess doInvoke(final InputDatum input) {
-    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateProxy();
+    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
 
     try {
       txAgent.start();
@@ -201,17 +201,17 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
   private static final class SimpleInputAcknowledger implements PostProcess.InputAcknowledger {
 
-    private final TransactionAgentSupplier txAgentSupplier;
+    private final DataFabricFacade txAgentSupplier;
     private final InputDatum input;
 
-    private SimpleInputAcknowledger(TransactionAgentSupplier txAgentSupplier, InputDatum input) {
+    private SimpleInputAcknowledger(DataFabricFacade txAgentSupplier, InputDatum input) {
       this.txAgentSupplier = txAgentSupplier;
       this.input = input;
     }
 
     @Override
     public void ack() throws OperationException {
-      TransactionAgent txAgent = txAgentSupplier.create();
+      TransactionAgent txAgent = txAgentSupplier.createTransactionAgent();
       txAgent.start();
       input.submitAck(txAgent);
       txAgent.finish();

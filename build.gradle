@@ -74,6 +74,11 @@ sourceSets {
   }
 }
 
+test {
+    jvmArgs '-Xmx1024m'
+}
+
+
 /**
  * Generates API javadoc.
  */

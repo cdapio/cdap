@@ -17,9 +17,9 @@ import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -34,11 +34,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
 
   private final MapReduceRuntimeService mapReduceRuntimeService;
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory txAgentSupplierFactory;
 
   @Inject
   public MapReduceProgramRunner(MapReduceRuntimeService mapReduceRuntimeService,
-                                TransactionAgentSupplierFactory txAgentSupplierFactory,
+                                DataFabricFacadeFactory txAgentSupplierFactory,
                                 LogWriter logWriter) {
     this.mapReduceRuntimeService = mapReduceRuntimeService;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
@@ -58,11 +58,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getProgramName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getProgramName());
 
-    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+    DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     // TODO: integrate with long-running transactions
-    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateProxy();
+    final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
     try {
       txAgent.start();
     } catch(OperationException e) {

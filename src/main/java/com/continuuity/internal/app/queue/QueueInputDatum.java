@@ -84,9 +84,10 @@ public final class QueueInputDatum implements InputDatum {
   @Override
   public String toString() {
     if (!dequeueResult.isEmpty()) {
-      return String.format("%s, %s, %d", queueName, dequeueResult.getEntryPointer().getEntryId(), retry.get());
+      return String.format("%s, %s, %d, %d",
+                           queueName, dequeueResult.getEntryPointer().getEntryId(), numGroups, retry.get());
     } else {
-      return String.format("%s, empty, %d", queueName, retry.get());
+      return String.format("%s, empty, %d, %d", queueName, numGroups, retry.get());
     }
   }
 }

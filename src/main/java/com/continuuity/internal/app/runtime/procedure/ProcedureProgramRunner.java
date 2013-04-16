@@ -16,7 +16,7 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -51,7 +51,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final int MAX_IO_THREADS = 5;
   private static final int MAX_HANDLER_THREADS = 20;
 
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final DiscoveryService discoveryService;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
@@ -63,7 +63,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private BasicProcedureContext procedureContext;
 
   @Inject
-  public ProcedureProgramRunner(TransactionAgentSupplierFactory txAgentSupplierFactory,
+  public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 DiscoveryService discoveryService,
                                 LogWriter logWriter) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
