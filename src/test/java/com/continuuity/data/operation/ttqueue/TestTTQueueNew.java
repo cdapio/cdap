@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -121,7 +122,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testQueueEntrySet() throws Exception {
+  public void testDequeueEntrySet() throws Exception {
     final int MAX = 10;
     DequeuedEntrySet entrySet = new DequeuedEntrySet();
     List<Long> expectedEntryIds = Lists.newArrayListWithCapacity(MAX);
@@ -163,7 +164,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testWorkingEntryList() {
     final int MAX = 10;
-    TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet = new TransientWorkingSet(Lists.<Long>newArrayList(), Collections.EMPTY_MAP);
+    TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet =
+      new TransientWorkingSet(Lists.<Long>newArrayList(), Collections.EMPTY_MAP);
     assertFalse(transientWorkingSet.hasNext());
 
     List<Long> workingSet = Lists.newArrayList();
@@ -190,9 +192,25 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance2 =
       new TTQueueNewOnVCTable.ReconfigPartitionInstance(2, 100L);
 
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance3 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(2, 101L);
+
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance4 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(3, 100L);
+
     // Verify equals
     assertEquals(reconfigPartitionInstance1, reconfigPartitionInstance1);
+    assertEquals(reconfigPartitionInstance1, reconfigPartitionInstance4);
     assertNotEquals(reconfigPartitionInstance1, reconfigPartitionInstance2);
+    assertNotEquals(reconfigPartitionInstance2, reconfigPartitionInstance3);
+    assertNotEquals(reconfigPartitionInstance4, reconfigPartitionInstance3);
+
+    // Verify redundancy
+    assertTrue(reconfigPartitionInstance1.isRedundant(1000L));
+    assertTrue(reconfigPartitionInstance1.isRedundant(101L));
+    assertFalse(reconfigPartitionInstance1.isRedundant(100L));
+    assertFalse(reconfigPartitionInstance1.isRedundant(99L));
+    assertFalse((reconfigPartitionInstance1.isRedundant(10L)));
 
     // Encode to bytes
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -208,7 +226,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testReconfigPartitionerEncode() throws Exception {
+  public void testReconfigPartitioner() throws Exception {
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner1 =
       new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
     partitioner1.add(0, 5);
@@ -224,6 +242,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Verify equals
     assertEquals(partitioner1, partitioner1);
     assertNotEquals(partitioner1, partitioner2);
+
+    // Verify redundancy
+    assertTrue(partitioner1.isRedundant(100L));
+    assertTrue(partitioner1.isRedundant(54L));
+    assertTrue(partitioner1.isRedundant(13L));
+    for(int i = 0; i < 12; ++i) {
+      assertFalse(partitioner1.isRedundant(i));
+    }
 
     // Encode to bytes
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -329,6 +355,114 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L),
                                       partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionersList() throws Exception {
+    List<TTQueueNewOnVCTable.ReconfigPartitioner> partitionerList = Lists.newArrayList();
+    List<Long> partitionerListMaxAck = Lists.newArrayList();
+
+    int groupSize = 3;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 8L);
+    partitioner.add(1, 15L);
+    partitioner.add(2, 11L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(15L);
+
+    // Verify compaction with one partitioner
+    TTQueueNewOnVCTable.ReconfigPartitionersList rl1 =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    assertEquals(1, rl1.getReconfigPartitioners().size());
+    rl1.compact(9L);
+    assertEquals(1, rl1.getReconfigPartitioners().size());
+    rl1.compact(16L);
+    assertTrue(rl1.getReconfigPartitioners().isEmpty());
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 4;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 30L);
+    partitioner.add(1, 14L);
+    partitioner.add(2, 15L);
+    partitioner.add(3, 28L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(30L);
+
+    // Verify compaction with two partitioners
+    TTQueueNewOnVCTable.ReconfigPartitionersList rl2 =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    assertEquals(2, rl2.getReconfigPartitioners().size());
+    rl2.compact(8L);
+    assertEquals(2, rl2.getReconfigPartitioners().size());
+    rl2.compact(16L);
+    assertEquals(1, rl2.getReconfigPartitioners().size());
+    rl2.compact(31L);
+    assertTrue(rl2.getReconfigPartitioners().isEmpty());
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 5;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 43L);
+    partitioner.add(1, 47L);
+    partitioner.add(2, 3L);
+    partitioner.add(3, 32L);
+    partitioner.add(3, 35L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(47L);
+
+    // Verify compaction with 3 partitioners
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 2;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 55);
+    partitioner.add(1, 50L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(55L);
+
+    // Verify compaction with 4 partitioners
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    // Verify encode/decode
+    TTQueueNewOnVCTable.ReconfigPartitionersList expectedEncode =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    expectedEncode.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    TTQueueNewOnVCTable.ReconfigPartitionersList actualEncode =
+      TTQueueNewOnVCTable.ReconfigPartitionersList.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+    assertEquals(expectedEncode, actualEncode);
+  }
+
+  private void verifyReconfigPartitionersListCompact(
+    TTQueueNewOnVCTable.ReconfigPartitionersList reconfigPartitionersList, List<Long> maxAckList) {
+    List<Long> sortedMaxAckList = Lists.newLinkedList(maxAckList);
+    Collections.sort(sortedMaxAckList);
+
+    long max = sortedMaxAckList.get(sortedMaxAckList.size() - 1);
+    for(long i = 0; i <= max; ++i) {
+      reconfigPartitionersList.compact(i);
+      if(!sortedMaxAckList.isEmpty() && i > sortedMaxAckList.get(0)) {
+        sortedMaxAckList.remove(0);
+      }
+      assertEquals(sortedMaxAckList.size(), reconfigPartitionersList.getReconfigPartitioners().size());
+    }
+    reconfigPartitionersList.compact(max + 1);
+    assertTrue(reconfigPartitionersList.getReconfigPartitioners().isEmpty());
   }
 
   @Test
@@ -1170,13 +1304,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.FIFO;
 
-    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    runConfigTest(partitionerType, condition);
   }
 
   @Test
@@ -1190,13 +1318,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.ROUND_ROBIN;
 
-    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    runConfigTest(partitionerType, condition);
   }
 
   @Test
@@ -1210,11 +1332,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.HASH;
 
+    runConfigTest(partitionerType, condition);
+  }
+
+  public void runConfigTest(QueuePartitioner.PartitionerType partitionerType, Condition condition) throws Exception {
     testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
     testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
   }
@@ -1224,10 +1349,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     boolean check(long entryId, int groupSize, long instanceId, int hash);
   }
 
+  // TODO: test with stateful and non-state consumer
   private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
                             final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
                             Condition condition) throws Exception {
     Random random = new Random(System.currentTimeMillis());
+    StringWriter debugCollector = new StringWriter();
     TTQueue queue = createQueue();
 
     List<Integer> expectedEntries = Lists.newArrayList();
@@ -1236,11 +1363,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       expectedEntries.add(i + 1);
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addPartitioningKey(HASH_KEY, i + 1);
-      assertTrue(queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
+      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
     }
 
     expectedEntries = ImmutableList.copyOf(expectedEntries);
-    assertEquals(numEntries, expectedEntries.size());
+    assertEquals(debugCollector.toString(), numEntries, expectedEntries.size());
 
     List<Integer> actualEntries = Lists.newArrayList();
     List<String> actualPrintEntries = Lists.newArrayList();
@@ -1265,22 +1392,24 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config);
           }
           consumers.add(consumer);
-          System.out.println("Running configure...");
+          debugCollector.write(String.format("Running configure...%n"));
           int oldConsumerCount = queue.configure(consumer);
           if(oldConsumerCount >= 0) {
             actualOldConsumerCount = oldConsumerCount;
           }
         }
-        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
-                                         actualOldConsumerCount, newConsumerCount));
-        assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
+        debugCollector.write(String.format("Old consumer count = %d, new consumer count = %s%n", actualOldConsumerCount, newConsumerCount));
+        assertEquals(debugCollector.toString(), expectedOldConsumerCount, actualOldConsumerCount);
 
-      // Dequeue entries
+      // Dequeue entries with random batch size and random consumers each time
         int numTriesThisRun = 0;
         int numDequeuesThisRun = 0;
-        for(QueueConsumer consumer : consumers) {
+        List<StatefulQueueConsumer> workingConsumerList = Lists.newLinkedList(consumers);
+        while(!workingConsumerList.isEmpty()) {
+          QueueConsumer consumer = workingConsumerList.remove(random.nextInt(workingConsumerList.size()));
           int curBatchSize = random.nextInt(perConsumerDequeueBatchSize + 1);
-          System.out.println("Current batch size = " + curBatchSize);
+          debugCollector.write(String.format("Current batch size = %d%n", curBatchSize));
+
           for(int i = 0; i < curBatchSize; ++i) {
             ++numTriesThisRun;
             DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
@@ -1291,21 +1420,27 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
             actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
             queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
-            assertTrue(condition.check(result.getEntryPointer().getEntryId(), newConsumerCount, consumer.getInstanceId(), (int) result.getEntryPointer().getEntryId()));
+            assertTrue(debugCollector.toString(),
+                       condition.check(
+                         result.getEntryPointer().getEntryId(),
+                         newConsumerCount,
+                         consumer.getInstanceId(),
+                         (int) result.getEntryPointer().getEntryId()
+                       ));
           }
           actualEntries.add(-1);
         }
-        System.out.println(actualPrintEntries);
-        System.out.println(actualEntries);
+        debugCollector.write(String.format("%s%n", actualPrintEntries));
+        debugCollector.write(String.format("%s%n", actualEntries));
         sortedActualEntries = Lists.newArrayList(actualEntries);
         Collections.sort(sortedActualEntries);
-        System.out.println(sortedActualEntries);
+        debugCollector.write(String.format("%s%n", sortedActualEntries));
 
         // If all consumers report queue empty then stop
         if(numDequeuesThisRun == 0 && numTriesThisRun >= consumers.size()) {
           sortedActualEntries.removeAll(Lists.newArrayList(-1));
-          System.out.println("Expected: " + expectedEntries);
-          System.out.println("Actual:   " + sortedActualEntries);
+          debugCollector.write(String.format("Expected: %s%n", expectedEntries));
+          debugCollector.write(String.format("Actual:   %s%n", sortedActualEntries));
           break loop;
         }
         expectedOldConsumerCount = newConsumerCount;
@@ -1315,10 +1450,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Make sure the queue is empty
     for(QueueConsumer consumer : consumers) {
       DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
-      assertTrue(result.isEmpty());
+      assertTrue(debugCollector.toString(), result.isEmpty());
     }
 
-    assertEquals(expectedEntries, sortedActualEntries);
+    assertEquals(debugCollector.toString(), expectedEntries, sortedActualEntries);
   }
 
   // Tests that do not work on NewTTQueue
