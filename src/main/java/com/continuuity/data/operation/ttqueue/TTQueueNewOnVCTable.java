@@ -256,38 +256,43 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
     if(config.isSingleEntry()) {
       final DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
-      final TransientWorkingSet transientWorkingSet = queueState.getTransientWorkingSet();
-      final Map<Long, byte[]> cachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
+      if (!dequeueEntrySet.isEmpty()) {
 
-      // how many should we return? The dequeueEntrySet may contain more than the requested batch size (this happens
-      // if a consumer crashes and is reconfigured to a smaller batch size when restarted).
-      int numToReturn = config.returnsBatch() ? getBatchSize(config) : 1;
-      List<QueueEntry> entries = Lists.newArrayListWithCapacity(numToReturn);
-      List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(numToReturn);
+        final TransientWorkingSet transientWorkingSet = queueState.getTransientWorkingSet();
+        final Map<Long, byte[]> cachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
 
-      while (!dequeueEntrySet.isEmpty() && entries.size() < numToReturn) {
-        DequeueEntry returnEntry = dequeueEntrySet.min();
-        long returnEntryId = returnEntry.getEntryId();
-        if(transientWorkingSet.hasNext() && transientWorkingSet.peekNext().getEntryId() == returnEntryId) {
-          // Crash recovery case.
-          // The cached entry list would not have been incremented for the first time in single entry mode
-          transientWorkingSet.next();
+        // how many should we return? The dequeueEntrySet may contain more than the requested batch size (this happens
+        // if a consumer crashes and is reconfigured to a smaller batch size when restarted).
+        int numToReturn = config.returnsBatch() ? getBatchSize(config) : 1;
+        List<QueueEntry> entries = Lists.newArrayListWithCapacity(numToReturn);
+        List<QueueEntryPointer> pointers = Lists.newArrayListWithCapacity(numToReturn);
+
+        for (DequeueEntry returnEntry : dequeueEntrySet.getEntryList()) {
+          if (entries.size() >= numToReturn) {
+            break;
+          }
+          long returnEntryId = returnEntry.getEntryId();
+          if(transientWorkingSet.hasNext() && transientWorkingSet.peekNext().getEntryId() == returnEntryId) {
+            // Crash recovery case.
+            // The cached entry list would not have been incremented for the first time in single entry mode
+            transientWorkingSet.next();
+          }
+          byte[] entryBytes = cachedEntries.get(returnEntryId);
+          if(entryBytes == null) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(String.format(
+              "Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
+          }
+          entries.add(new QueueEntry(entryBytes));
+          pointers.add(new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()));
         }
-        byte[] entryBytes = cachedEntries.get(returnEntryId);
-        if(entryBytes == null) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                       getLogMessage(String.format("Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
+
+        // if we found any entries in the dequeued set, return them again (that is the contract of singleEntry)
+        if (entries.size() > 0) {
+          dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
+          return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
+                                   pointers.toArray(new QueueEntryPointer[pointers.size()]),
+                                   entries.toArray(new QueueEntry[entries.size()]));
         }
-        entries.add(new QueueEntry(entryBytes));
-        pointers.add(new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()));
-      }
-      // if we found any entries in the dequeued set, return them again (that is the contract of singleEntry)
-      if (entries.size() > 0) {
-        dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
-        DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                                                        pointers.toArray(new QueueEntryPointer[pointers.size()]),
-                                                        entries.toArray(new QueueEntry[entries.size()]));
-        return dequeueResult;
       }
     }
 
@@ -304,8 +309,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         LOG.trace(getLogMessage("End of queue reached using " + "read pointer " + readPointer));
       }
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
-      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
-      return dequeueResult;
+      return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
     }
 
     if (!config.returnsBatch()) {
@@ -315,11 +319,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueEntry entry = new QueueEntry(queueState.getTransientWorkingSet()
                                           .getCachedEntries().get(dequeueEntry.getEntryId()));
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
-
-      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                     new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
       this.dequeueReturns.incrementAndGet();
-      return dequeueResult;
+      return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
+                               new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
 
     } else {
       // if returnBatch == true, return all remaining transient entries up to the requested batch size
@@ -333,11 +335,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                      .getCachedEntries().get(dequeueEntry.getEntryId())));
         pointers.add(new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()));
       }
-      DequeueResult dequeueResult = new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                                                      pointers.toArray(new QueueEntryPointer[pointers.size()]),
-                                                      entries.toArray(new QueueEntry[entries.size()]));
+      dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       this.dequeueReturns.incrementAndGet();
-      return dequeueResult;
+      return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
+                               pointers.toArray(new QueueEntryPointer[pointers.size()]),
+                               entries.toArray(new QueueEntry[entries.size()]));
     }
   }
 
@@ -529,13 +531,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(queueState == null) {
         break;
       }
-
       ++currentConsumerCount;
-      // Verify there are no inflight entries
-      if(!queueState.getDequeueEntrySet().isEmpty()) {
-        throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
-                     getLogMessage(String.format("Consumer %d still has inflight entries", consumer.getInstanceId())));
-      }
       consumer.setQueueState(queueState);
       consumers.add(consumer);
       queueStates.add(queueState);
@@ -548,6 +544,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
           "Nothing to configure since currentConsumerCount is equal to newConsumerCount (%d)", currentConsumerCount)));
       }
       return currentConsumerCount;
+    }
+
+    // Verify there are no inflight entries
+    for (int i = 0; i < currentConsumerCount; ++i) {
+      QueueStateImpl queueState = queueStates.get(i);
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+                                     getLogMessage(String.format("Consumer %d still has inflight entries", i)));
+      }
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, currentConsumerCount, newConsumerCount, readPointer);
@@ -2339,6 +2344,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // Determine which entries  need to be read from storage
         for(int id = 0; id < cacheSize; ++id) {
+          if (newEntryIds.size() >= batchSize) {
+            break;
+          }
           final long currentEntryId = startEntryId + id;
           if (!headerResult.isEmpty()) {
             Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
@@ -2400,6 +2408,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // Determine which entries  need to be read from storage
         for(int id = 0; id < cacheSize; ++id) {
+          if (newEntryIds.size() >= batchSize) {
+            break;
+          }
           final long currentEntryId = startEntryId + id;
           if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
             queueState.getReconfigPartitionersList()

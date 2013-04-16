@@ -1,9 +1,12 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
@@ -19,6 +22,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -1361,5 +1365,437 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Override
   @Test @Ignore
   public void testSingleConsumerWithHashValuePartitioning() throws Exception {
+  }
+
+  @Test
+  public void testBatchSyncDisjoint() throws OperationException {
+    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, false);
+    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, true);
+    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, false);
+    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, true);
+  }
+
+  public void testBatchSyncDisjoint(QueuePartitioner.PartitionerType partitioner, boolean simulateCrash)
+    throws OperationException {
+
+    TTQueue queue = createQueue();
+
+    // enqueue 100
+    String hashKey = "h";
+    QueueEntry[] entries = new QueueEntry[100];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
+    long groupId = 42;
+    String groupName = "group";
+    QueueConfig config = new QueueConfig(partitioner, true, 15, true);
+    QueueConsumer consumer = simulateCrash ?
+      // stateless consumer requires reconstruction of state every time, like after a crash
+      new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
+      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config, false);
+    queue.configure(config, groupId, 2);
+
+    // dequeue 15 should return entries: 2, 4, .., 30
+    t = oracle.startTransaction();
+    DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(2 * (i + 1), Bytes.toInt(entries[i].getData()));
+    }
+
+    // dequeue 15 again, should return the same entries
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(2 * (i + 1), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all entries received, and then unack them
+    t = oracle.startTransaction();
+    QueueEntryPointer[] pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.unack(pointers, consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return the same entries
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(2 * (i + 1), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all entries received, and then finalize them
+    t = oracle.startTransaction();
+    pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should now return new ones 32, 34, .. 60
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(2 * (16 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack 10 + finalize
+    t = oracle.startTransaction();
+    pointers = Arrays.copyOf(result.getEntryPointers(), 10);
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return the 5 previous ones again: 52, 54, ..., 60
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(5, entries.length);
+    for (int i = 0; i < 5; i++) {
+      assertEquals(2 * (26 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack the 5 + finalize
+    t = oracle.startTransaction();
+    pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return 15 new ones: 62, ..., 90
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(2 * (31 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // now we change the batch size for the consumer to 12 (reconfigure)
+    config = new QueueConfig(partitioner, true, 12, true);
+    consumer = simulateCrash ?
+      new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
+      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config, false);
+    queue.configure(config, groupId, 2);
+
+    // dequeue 12 with new consumer, should return the first 12 of previous 15: 62, ..., 84
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(12, entries.length);
+    for (int i = 0; i < 12; i++) {
+      assertEquals(2 * (31 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all 12 + finalize
+    t = oracle.startTransaction();
+    pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 12 again, should return the remaining 3  of previous 15: 86, 88, 90
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(3, entries.length);
+    for (int i = 0; i < 3; i++) {
+      assertEquals(2 * (43 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all of them + finalize
+    t = oracle.startTransaction();
+    pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue another 12, should return only 5 remaining: 92, 94, ..., 100
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    entries = result.getEntries();
+    assertEquals(5, entries.length);
+    for (int i = 0; i < 5; i++) {
+      assertEquals(2 * (46 + i), Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all of them + finalize
+    t = oracle.startTransaction();
+    pointers = result.getEntryPointers();
+    queue.ack(pointers, consumer, t.getReadPointer());
+    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue should return empty
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testBatchSyncFifo() throws OperationException {
+    testBatchSyncFifo(false);
+    testBatchSyncFifo(true);
+  }
+
+  public void testBatchSyncFifo(boolean simulateCrash) throws OperationException {
+
+    TTQueue queue = createQueue();
+
+    // enqueue 50
+    String hashKey = "h";
+    QueueEntry[] entries = new QueueEntry[75];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // we will dequeue with fifo partitioning, two consumers in group, hence returns every other entry
+    long groupId = 42;
+    String groupName = "group";
+    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 15, true);
+    QueueConsumer consumer1 = simulateCrash ?
+      new QueueConsumer(0, groupId, 2, groupName, config) :
+      new StatefulQueueConsumer(0, groupId, 2, groupName, config, false);
+    QueueConsumer consumer2 = simulateCrash ?
+      new QueueConsumer(1, groupId, 2, groupName, config) :
+      new StatefulQueueConsumer(1, groupId, 2, groupName, config, false);
+    queue.configure(config, groupId, 2);
+
+    // dequeue 15 should return first 15 entries: 1, 2, .., 15
+    t = oracle.startTransaction();
+    DequeueResult result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(i + 1, Bytes.toInt(entries[i].getData()));
+    }
+
+    // dequeue 15 again, should return the same entries
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(i + 1, Bytes.toInt(entries[i].getData()));
+    }
+
+    // attempt to ack with different consumer -> fail
+    t = oracle.startTransaction();
+    QueueEntryPointer[] pointers = result1.getEntryPointers();
+    try {
+      queue.ack(pointers, consumer2, t.getReadPointer());
+      fail("ack sould have failed due to wrong consumer");
+    } catch (OperationException e) {
+      // expect ILLEGAL_ACK
+      if (e.getStatus() != StatusCode.ILLEGAL_ACK) {
+        throw e;
+      }
+    }
+    oracle.commitTransaction(t);
+
+    // dequeue with other consumer should now return next 15 entries: 16, 17, .., 30
+    t = oracle.startTransaction();
+    DequeueResult result2 = queue.dequeue(consumer2, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result2.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(i + 16, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all entries received, and then unack them
+    t = oracle.startTransaction();
+    pointers = result1.getEntryPointers();
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.unack(pointers, consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return the same entries
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(i + 1, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all entries received, and then finalize them
+    t = oracle.startTransaction();
+    pointers = result1.getEntryPointers();
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should now return new ones 31, 32, .. 45
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(31 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack 10 + finalize
+    t = oracle.startTransaction();
+    pointers = Arrays.copyOf(result1.getEntryPointers(), 10);
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return the 5 previous ones again: 41, 42, ..., 45
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(5, entries.length);
+    for (int i = 0; i < 5; i++) {
+      assertEquals(41 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack the 5 + finalize
+    t = oracle.startTransaction();
+    pointers = result1.getEntryPointers();
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 15 again, should return 15 new ones: 46, ..., 60
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(15, entries.length);
+    for (int i = 0; i < 15; i++) {
+      assertEquals(46 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // now we change the batch size for the consumer to 12 (reconfigure)
+    config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 12, true);
+    consumer1 = simulateCrash ?
+      new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
+      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config, false);
+    consumer2 = simulateCrash ?
+      new QueueConsumer(1, groupId, 2, groupName, hashKey, config) :
+      new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config, false);
+    queue.configure(config, groupId, 2);
+
+    // dequeue 12 with new consumer, should return the first 12 of previous 15: 46, 47, ..., 57
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(12, entries.length);
+    for (int i = 0; i < 12; i++) {
+      assertEquals(46 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // dequeue 12 with new consumer 2, should return the first 12 of previous: 16, 17, ..., 27
+    t = oracle.startTransaction();
+    result2 = queue.dequeue(consumer2, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result2.isEmpty());
+    entries = result2.getEntries();
+    assertEquals(12, entries.length);
+    for (int i = 0; i < 12; i++) {
+      assertEquals(16 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all 12 + finalize
+    t = oracle.startTransaction();
+    pointers = result1.getEntryPointers();
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    pointers = result2.getEntryPointers();
+    queue.ack(pointers, consumer2, t.getReadPointer());
+    queue.finalize(pointers, consumer2, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue 12 again, should return the remaining 3  of previous 15: 58, 59, 60
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertEquals(3, entries.length);
+    for (int i = 0; i < 3; i++) {
+      assertEquals(58 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // dequeue 12 again with consumer 2, should return the remaining 3  of previous 15: 28, 29, 30
+    t = oracle.startTransaction();
+    result2 = queue.dequeue(consumer2, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result2.isEmpty());
+    entries = result2.getEntries();
+    assertEquals(3, entries.length);
+    for (int i = 0; i < 3; i++) {
+      assertEquals(28 + i, Bytes.toInt(entries[i].getData()));
+    }
+
+    // ack all of them + finalize
+    t = oracle.startTransaction();
+    pointers = result1.getEntryPointers();
+    queue.ack(pointers, consumer1, t.getReadPointer());
+    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    pointers = result2.getEntryPointers();
+    queue.ack(pointers, consumer2, t.getReadPointer());
+    queue.finalize(pointers, consumer2, 2, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    // dequeue another 12, should return some (around 5) of the 15 remaining: 61, 62, ...
+    t = oracle.startTransaction();
+    result1 = queue.dequeue(consumer1, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result1.isEmpty());
+    entries = result1.getEntries();
+    assertTrue(entries.length > 2 && entries.length < 10);
+    for (int i = 0; i < entries.length; i++) {
+      assertEquals(61 + i, Bytes.toInt(entries[i].getData()));
+    }
   }
 }
