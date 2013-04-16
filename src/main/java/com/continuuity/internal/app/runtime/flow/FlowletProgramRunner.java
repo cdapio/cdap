@@ -9,6 +9,7 @@ import com.continuuity.api.annotation.Async;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -34,21 +35,24 @@ import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
+import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -80,18 +84,20 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private final SchemaGenerator schemaGenerator;
   private final DatumWriterFactory datumWriterFactory;
-  private final TransactionAgentSupplierFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+  private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
-                              TransactionAgentSupplierFactory txAgentSupplierFactory,
+                              DataFabricFacadeFactory txAgentSupplierFactory,
                               QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
     CAppender.logWriter = logWriter;
+    queueConsumerSuppliers = ImmutableList.of();
   }
 
   @Override
@@ -132,16 +138,16 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 
       // Creates opex related objects
-      TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+      DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
+                                                                         instanceCount,
                                                                    DataSets.createDataSets(dataSetContext,
                                                                                            flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));
-      flowletContext.setInstanceCount(instanceCount);
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -158,6 +164,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                           flowletContext.getQueueProducer(),
                                                                           queueSpecs));
 
+      ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletType,
                                    processMethodFactory(flowlet, flowletContext,
@@ -166,8 +173,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                         outputSubmitter),
                                    processSpecificationFactory(program, queueReaderFactory,
                                                                flowletContext,
-                                                               flowletName, queueSpecs),
+                                                               txAgentSupplier,
+                                                               flowletName,
+                                                               queueSpecs,
+                                                               queueConsumerSupplierBuilder,
+                                                               instanceCount),
                                    Lists.<ProcessSpecification>newLinkedList());
+      queueConsumerSuppliers = queueConsumerSupplierBuilder.build();
 
       FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()));
@@ -180,6 +192,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     } catch(Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) throws OperationException {
+    flowletContext.setInstanceCount(instanceCount);
+    for(QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+      queueConsumerSupplier.createConsumer(instanceCount);
     }
   }
 
@@ -218,7 +237,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
         int instances = (Integer)value;
         LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
-        flowletContext.setInstanceCount(instances);
+        changeInstanceCount(flowletContext, instances);
         LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
       }
     };
@@ -276,7 +295,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                       ProcessMethodFactory processMethodFactory,
                                                                       ProcessSpecificationFactory processSpecFactory,
                                                                       Collection<ProcessSpecification> result)
-                                                                                  throws NoSuchMethodException {
+    throws NoSuchMethodException, OperationException {
 
     if (GeneratorFlowlet.class.isAssignableFrom(flowletType.getRawType())) {
       Method method = flowletType.getRawType().getMethod("generate");
@@ -372,7 +391,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private ProcessMethodFactory processMethodFactory(final Flowlet flowlet,
                                                     final BasicFlowletContext flowletContext,
                                                     final SchemaCache schemaCache,
-                                                    final TransactionAgentSupplier txAgentSupplier,
+                                                    final DataFabricFacade txAgentSupplier,
                                                     final OutputSubmitter outputSubmitter) {
     return new ProcessMethodFactory() {
       @Override
@@ -385,29 +404,25 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private ProcessSpecificationFactory processSpecificationFactory(final Program program,
-                                                                  final QueueReaderFactory queueReaderFactory,
-                                                                  final BasicFlowletContext flowletContext,
-                                                                  final String flowletName,
-                                                                  final Table<Node,
-                                                                              String,
-                                                                              Set<QueueSpecification>> queueSpecs) {
+  private ProcessSpecificationFactory
+  processSpecificationFactory(final Program program,
+                              final QueueReaderFactory queueReaderFactory,
+                              final BasicFlowletContext flowletContext,
+                              final DataFabricFacade dataFabricFacade,
+                              final String flowletName,
+                              final Table<Node, String, Set<QueueSpecification>> queueSpecs,
+                              final ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder,
+                              final int instanceCount) {
+
     return new ProcessSpecificationFactory() {
-
-      private final Supplier<QueueConsumer> queueConsumer = new Supplier<QueueConsumer>() {
-        @Override
-        public QueueConsumer get() {
-          return flowletContext.getQueueConsumer();
-        }
-      };
-
       @Override
-      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) {
+      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method)
+        throws OperationException {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
           for (QueueSpecification queueSpec : entry.getValue()) {
-            QueueName queueName = queueSpec.getQueueName();
+            final QueueName queueName = queueSpec.getQueueName();
 
             if (queueSpec.getInputSchema().equals(schema)
               && (inputNames.contains(queueName.getSimpleName())
@@ -417,7 +432,18 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                   ? -1
                                   : getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
 
-              queueReaders.add(queueReaderFactory.create(program, queueName, queueConsumer, numGroups));
+
+              QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(
+                dataFabricFacade.createQueueConsumerFactory(
+                  flowletContext.getInstanceId(),
+                  flowletContext.getGroupId(),
+                  flowletContext.getMetricName(),
+                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, !flowletContext.isAsyncMode()),
+                  queueName
+                ),
+                instanceCount);
+              queueConsumerSupplierBuilder.add(consumerSupplier);
+              queueReaders.add(queueReaderFactory.create(program, queueName, consumerSupplier, numGroups));
             }
           }
         }
@@ -425,6 +451,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
         return new ProcessSpecification(new RoundRobinQueueReader(queueReaders), method);
       }
     };
+  }
+
+  static class QueueConsumerSupplier implements Supplier<QueueConsumer> {
+    private final QueueConsumerFactory queueConsumerFactory;
+    private volatile QueueConsumer consumer;
+
+    public QueueConsumerSupplier(QueueConsumerFactory queueConsumerFactory, int groupSize) throws OperationException {
+      this.queueConsumerFactory = queueConsumerFactory;
+      this.consumer = queueConsumerFactory.create(groupSize);
+    }
+
+    public void createConsumer(int groupSize) throws OperationException {
+      consumer = queueConsumerFactory.create(groupSize);
+    }
+
+    @Override
+    public QueueConsumer get() {
+      return consumer;
+    }
+
   }
 
   private int getNumGroups(Iterable<QueueSpecification> queueSpecs, QueueName queueName) {
@@ -470,6 +516,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessSpecificationFactory {
-    ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method);
+    ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) throws OperationException;
   }
 }
