@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -1226,6 +1227,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
                             final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
                             Condition condition) throws Exception {
+    Random random = new Random(System.currentTimeMillis());
     TTQueue queue = createQueue();
 
     List<Integer> expectedEntries = Lists.newArrayList();
@@ -1241,6 +1243,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertEquals(numEntries, expectedEntries.size());
 
     List<Integer> actualEntries = Lists.newArrayList();
+    List<String> actualPrintEntries = Lists.newArrayList();
     List<Integer> sortedActualEntries = Lists.newArrayList();
     List<StatefulQueueConsumer> consumers = Collections.emptyList();
     // dequeue it with FIFO partitioner, single entry mode
@@ -1262,43 +1265,47 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config);
           }
           consumers.add(consumer);
+          System.out.println("Running configure...");
           int oldConsumerCount = queue.configure(consumer);
           if(oldConsumerCount >= 0) {
             actualOldConsumerCount = oldConsumerCount;
           }
         }
-//        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
-//                                         actualOldConsumerCount, newConsumerCount));
+        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
+                                         actualOldConsumerCount, newConsumerCount));
         assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
 
       // Dequeue entries
+        int numTriesThisRun = 0;
         int numDequeuesThisRun = 0;
         for(QueueConsumer consumer : consumers) {
-          for(int i = 0; i < perConsumerDequeueBatchSize; ++i) {
+          int curBatchSize = random.nextInt(perConsumerDequeueBatchSize + 1);
+          System.out.println("Current batch size = " + curBatchSize);
+          for(int i = 0; i < curBatchSize; ++i) {
+            ++numTriesThisRun;
             DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
             if(result.isEmpty()) {
               break;
             }
             ++numDequeuesThisRun;
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
+            actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
             queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
-            assertTrue(
-              condition.check(
-                result.getEntryPointer().getEntryId(),
-                newConsumerCount, consumer.getInstanceId(),
-                (int) result.getEntryPointer().getEntryId()
-              )
-            );
+            assertTrue(condition.check(result.getEntryPointer().getEntryId(), newConsumerCount, consumer.getInstanceId(), (int) result.getEntryPointer().getEntryId()));
           }
           actualEntries.add(-1);
         }
-//        System.out.println(actualEntries);
+        System.out.println(actualPrintEntries);
+        System.out.println(actualEntries);
         sortedActualEntries = Lists.newArrayList(actualEntries);
         Collections.sort(sortedActualEntries);
-//        System.out.println(sortedActualEntries);
+        System.out.println(sortedActualEntries);
 
         // If all consumers report queue empty then stop
-        if(numDequeuesThisRun == 0) {
+        if(numDequeuesThisRun == 0 && numTriesThisRun >= consumers.size()) {
+          sortedActualEntries.removeAll(Lists.newArrayList(-1));
+          System.out.println("Expected: " + expectedEntries);
+          System.out.println("Actual:   " + sortedActualEntries);
           break loop;
         }
         expectedOldConsumerCount = newConsumerCount;
@@ -1311,8 +1318,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertTrue(result.isEmpty());
     }
 
-    sortedActualEntries.removeAll(Lists.newArrayList(-1));
-//    System.out.println(sortedActualEntries);
     assertEquals(expectedEntries, sortedActualEntries);
   }
 
