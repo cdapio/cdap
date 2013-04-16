@@ -134,11 +134,14 @@ public class RowLockTable {
     private final AtomicBoolean locked;
     private boolean valid;
 
+    private final int hash;
+
     private  RowLock(Row row) {
       this.row = row;
       this.id = lockIdGenerator.nextLong();
       this.locked = new AtomicBoolean(false);
       this.valid = true;
+      this.hash = Bytes.hashCode(this.row.value);
     }
 
     private boolean unlock() {
@@ -185,7 +188,7 @@ public class RowLockTable {
 
     @Override
     public int hashCode() {
-      return Bytes.hashCode(this.row.value);
+      return hash;
     }
 
     @Override
@@ -200,9 +203,11 @@ public class RowLockTable {
    */
   public static class Row implements Comparable<Row> {
     private final byte[] value;
+    private final int hash;
 
     public Row(final byte[] value) {
       this.value = value;
+      this.hash = Bytes.hashCode(this.value);
     }
 
     public byte[] getValue() {
@@ -211,12 +216,12 @@ public class RowLockTable {
 
     @Override
     public boolean equals(Object o) {
-      return (o instanceof Row) && Bytes.equals(this.value, ((Row) o).value);
+      return (o instanceof Row) && (this == o || Bytes.equals(this.value, ((Row) o).value));
     }
 
     @Override
     public int hashCode() {
-      return Bytes.hashCode(this.value);
+      return hash;
     }
 
     @Override

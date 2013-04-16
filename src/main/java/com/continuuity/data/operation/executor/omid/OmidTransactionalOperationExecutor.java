@@ -45,6 +45,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.yammer.metrics.core.MetricName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,15 +110,61 @@ public class OmidTransactionalOperationExecutor
 
   private static final String METRIC_PREFIX = "omid-opex-";
 
-  private void requestMetric(String requestType) {
-    // TODO rework metric emission to avoid always generating the metric names
-    cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
+  public static final String NUMOPS_METRIC_SUFFIX = "-numops";
+  public static final String REQ_TYPE_READ_ALL_KEYS_NUM_OPS = METRIC_PREFIX + "ReadAllKeys" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_READ_NUM_OPS = METRIC_PREFIX + "Read" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_READ_COLUMN_RANGE_NUM_OPS =
+    METRIC_PREFIX + "ReadColumnRange" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_CLEAR_FABRIC_NUM_OPS = METRIC_PREFIX + "ClearFabric" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_WRITE_OPERATION_BATCH_NUM_OPS =
+    METRIC_PREFIX + "WriteOperationBatch" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_WRITE_NUM_OPS = METRIC_PREFIX + "Write" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_DELETE_NUM_OPS = METRIC_PREFIX + "Delete" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_INCREMENT_NUM_OPS = METRIC_PREFIX + "Increment" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_COMPARE_AND_SWAP_NUM_OPS =
+    METRIC_PREFIX + "CompareAndSwap" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS = METRIC_PREFIX + "QueueEnqueue" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_ACK_NUM_OPS = METRIC_PREFIX + "QueueAck" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS = METRIC_PREFIX + "QueueDequeue" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_GET_GROUP_ID_NUM_OPS = METRIC_PREFIX + "GetGroupID" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_GET_QUEUE_INFO_NUM_OPS = METRIC_PREFIX + "GetQueueInfo" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_START_TRANSACTION_NUM_OPS =
+    METRIC_PREFIX + "StartTransaction" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_COMMIT_TRANSACTION_NUM_OPS =
+    METRIC_PREFIX + "CommitTransaction" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS =
+    METRIC_PREFIX + "QueueConfigure" + NUMOPS_METRIC_SUFFIX;
+
+  public static final String LATENCY_METRIC_SUFFIX = "-latency";
+  public static final String REQ_TYPE_READ_ALL_KEYS_LATENCY = METRIC_PREFIX + "ReadAllKeys" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_READ_LATENCY = METRIC_PREFIX + "Read" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_READ_COLUMN_RANGE_LATENCY =
+    METRIC_PREFIX + "ReadColumnRange" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_CLEAR_FABRIC_LATENCY = METRIC_PREFIX + "ClearFabric" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_WRITE_OPERATION_BATCH_LATENCY =
+    METRIC_PREFIX + "WriteOperationBatch" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_WRITE_LATENCY = METRIC_PREFIX + "Write" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_DELETE_LATENCY = METRIC_PREFIX + "Delete" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_INCREMENT_LATENCY = METRIC_PREFIX + "Increment" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_COMPARE_AND_SWAP_LATENCY =
+    METRIC_PREFIX + "CompareAndSwap" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_ENQUEUE_LATENCY = METRIC_PREFIX + "QueueEnqueue" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_ACK_LATENCY = METRIC_PREFIX + "QueueAck" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_DEQUEUE_LATENCY = METRIC_PREFIX + "QueueDequeue" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_GET_GROUP_ID_LATENCY = METRIC_PREFIX + "GetGroupID" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY = METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+
+  private void incMetric(String metric) {
+    cmetric.meter(metric, 1);
   }
 
-  private long begin() { return System.currentTimeMillis(); }
-  private void end(String requestType, long beginning) {
-    cmetric.histogram(METRIC_PREFIX + requestType + "-latency",
-        System.currentTimeMillis() - beginning);
+  private long begin() {
+    return System.currentTimeMillis();
+  }
+
+  private void end(String metric, long beginning) {
+    cmetric.histogram(metric, System.currentTimeMillis() - beginning);
   }
 
   /* -------------------  (interstitial) queue metrics ---------------- */
@@ -208,13 +255,39 @@ public class OmidTransactionalOperationExecutor
     streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
   }
 
+  // By using this we reduce amount of strings to concat for super-freq operations, which (shown in tests) reduces
+  // mem allocation by at least 10% and cpu time by at least 10% at the moment of change
+  private CMetrics dataSetReadMetric = // we use a global flow group
+    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+      @Override
+      protected MetricName getMetricName(Class<?> scope, String metricName) {
+        return super.getMetricName(scope, "dataset.read." + metricName);
+      }
+    };
+
+  private CMetrics dataSetWriteMetric = // we use a global flow group
+    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+      @Override
+      protected MetricName getMetricName(Class<?> scope, String metricName) {
+        return super.getMetricName(scope, "dataset.write." + metricName);
+      }
+    };
+
+  private CMetrics dataSetStorageMetric = // we use a global flow group
+    new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0") {
+      @Override
+      protected MetricName getMetricName(Class<?> scope, String metricName) {
+        return super.getMetricName(scope, "dataset.storage." + metricName);
+      }
+    };
+
   private void dataSetMetric_read(String dataSetName) {
-    streamMetric.meter("dataset.read." + dataSetName, 1);
+    dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
   }
   
   private void dataSetMetric_write(String dataSetName, int dataSize) {
-    streamMetric.meter("dataset.write." + dataSetName, 1);
-    streamMetric.meter("dataset.storage." + dataSetName, dataSize);
+    dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
+    dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
   }
   
   /* -------------------  end metrics ---------------- */
@@ -411,13 +484,13 @@ public class OmidTransactionalOperationExecutor
     throws OperationException {
 
     initialize();
-    requestMetric("ReadAllKeys");
+    incMetric(REQ_TYPE_READ_ALL_KEYS_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
     ReadPointer pointer =
       transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), pointer);
-    end("ReadAllKeys", begin);
+    end(REQ_TYPE_READ_ALL_KEYS_LATENCY, begin);
     dataSetMetric_read(readKeys.getMetricName());
     return new OperationResult<List<byte[]>>(result);
   }
@@ -435,14 +508,14 @@ public class OmidTransactionalOperationExecutor
                                                       Read read)
     throws OperationException {
     initialize();
-    requestMetric("Read");
+    incMetric(REQ_TYPE_READ_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
     ReadPointer pointer =
       transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OperationResult<Map<byte[], byte[]>> result =
       table.get(read.getKey(), read.getColumns(), pointer);
-    end("Read", begin);
+    end(REQ_TYPE_READ_LATENCY, begin);
     dataSetMetric_read(read.getMetricName());
     return result;
   }
@@ -461,7 +534,7 @@ public class OmidTransactionalOperationExecutor
     throws OperationException {
 
     initialize();
-    requestMetric("ReadColumnRange");
+    incMetric(REQ_TYPE_READ_COLUMN_RANGE_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table =
       this.findRandomTable(context, readColumnRange.getTable());
@@ -471,7 +544,7 @@ public class OmidTransactionalOperationExecutor
       readColumnRange.getKey(), readColumnRange.getStartColumn(),
       readColumnRange.getStopColumn(), readColumnRange.getLimit(),
       pointer);
-    end("ReadColumnRange", begin);
+    end(REQ_TYPE_READ_COLUMN_RANGE_LATENCY, begin);
     dataSetMetric_read(readColumnRange.getMetricName());
     return result;
   }
@@ -482,7 +555,7 @@ public class OmidTransactionalOperationExecutor
   public void execute(OperationContext context,
                       ClearFabric clearFabric) throws OperationException {
     initialize();
-    requestMetric("ClearFabric");
+    incMetric(REQ_TYPE_CLEAR_FABRIC_NUM_OPS);
     long begin = begin();
     if (clearFabric.shouldClearData()) this.randomTable.clear();
     if (clearFabric.shouldClearTables()) {
@@ -501,7 +574,7 @@ public class OmidTransactionalOperationExecutor
     if (clearFabric.shouldClearMeta()) this.metaTable.clear();
     if (clearFabric.shouldClearQueues()) this.queueTable.clear();
     if (clearFabric.shouldClearStreams()) this.streamTable.clear();
-    end("ClearFabric", begin);
+    end(REQ_TYPE_CLEAR_FABRIC_LATENCY, begin);
   }
 
   @Override
@@ -517,11 +590,11 @@ public class OmidTransactionalOperationExecutor
   public void commit(OperationContext context, List<WriteOperation> writes)
     throws OperationException {
     initialize();
-    requestMetric("WriteOperationBatch");
+    incMetric(REQ_TYPE_WRITE_OPERATION_BATCH_NUM_OPS);
     long begin = begin();
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
     commit(context, startTransaction(), writes);
-    end("WriteOperationBatch", begin);
+    end(REQ_TYPE_WRITE_OPERATION_BATCH_LATENCY, begin);
   }
 
   @Override
@@ -748,11 +821,11 @@ public class OmidTransactionalOperationExecutor
   WriteTransactionResult write(OperationContext context, Write write, Transaction transaction)
     throws OperationException {
     initialize();
-    requestMetric("Write");
+    incMetric(REQ_TYPE_WRITE_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
     table.put(write.getKey(), write.getColumns(), transaction.getWriteVersion(), write.getValues());
-    end("Write", begin);
+    end(REQ_TYPE_WRITE_LATENCY, begin);
     dataSetMetric_write(write.getMetricName(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
     return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
@@ -761,12 +834,12 @@ public class OmidTransactionalOperationExecutor
   WriteTransactionResult write(OperationContext context, Delete delete,
       Transaction transaction) throws OperationException {
     initialize();
-    requestMetric("Delete");
+    incMetric(REQ_TYPE_DELETE_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table =
         this.findRandomTable(context, delete.getTable());
     table.deleteAll(delete.getKey(), delete.getColumns(), transaction.getWriteVersion());
-    end("Delete", begin);
+    end(REQ_TYPE_DELETE_LATENCY, begin);
     dataSetMetric_write(delete.getMetricName(), delete.getSize());
     return new WriteTransactionResult(
         new UndoDelete(delete.getTable(), delete.getKey(), delete.getColumns()));
@@ -775,7 +848,7 @@ public class OmidTransactionalOperationExecutor
   WriteTransactionResult write(OperationContext context, Increment increment,
       Transaction transaction) throws OperationException {
     initialize();
-    requestMetric("Increment");
+    incMetric(REQ_TYPE_INCREMENT_NUM_OPS);
     long begin = begin();
     Map<byte[],Long> map;
     try {
@@ -786,7 +859,7 @@ public class OmidTransactionalOperationExecutor
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
-    end("Increment", begin);
+    end(REQ_TYPE_INCREMENT_LATENCY, begin);
     dataSetMetric_write(increment.getMetricName(), increment.getSize());
     return new WriteTransactionResult(
         new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()), map);
@@ -795,7 +868,7 @@ public class OmidTransactionalOperationExecutor
   WriteTransactionResult write(OperationContext context, CompareAndSwap write,
       Transaction transaction) throws OperationException {
     initialize();
-    requestMetric("CompareAndSwap");
+    incMetric(REQ_TYPE_COMPARE_AND_SWAP_NUM_OPS);
     long begin = begin();
     try {
       OrderedVersionedColumnarTable table =
@@ -805,7 +878,7 @@ public class OmidTransactionalOperationExecutor
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
-    end("CompareAndSwap", begin);
+    end(REQ_TYPE_COMPARE_AND_SWAP_LATENCY, begin);
     dataSetMetric_write(write.getMetricName(), write.getSize());
     return new WriteTransactionResult(
         new UndoWrite(write.getTable(), write.getKey(), new byte[][] { write.getColumn() }));
@@ -820,11 +893,11 @@ public class OmidTransactionalOperationExecutor
    */
   WriteTransactionResult write(QueueEnqueue enqueue, Transaction transaction) throws OperationException {
     initialize();
-    requestMetric("QueueEnqueue");
+    incMetric(REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS);
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
                                                                    transaction.getWriteVersion());
-    end("QueueEnqueue", begin);
+    end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
             enqueue.getProducer(), result.getEntryPointer()));
@@ -834,7 +907,7 @@ public class OmidTransactionalOperationExecutor
     throws  OperationException {
 
     initialize();
-    requestMetric("QueueAck");
+    incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
       getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
@@ -843,7 +916,7 @@ public class OmidTransactionalOperationExecutor
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     } finally {
-      end("QueueAck", begin);
+      end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
         new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups()));
@@ -852,7 +925,7 @@ public class OmidTransactionalOperationExecutor
   @Override
   public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
     initialize();
-    requestMetric("QueueDequeue");
+    incMetric(REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS);
     long begin = begin();
     int retries = 0;
     long start = System.currentTimeMillis();
@@ -870,11 +943,11 @@ public class OmidTransactionalOperationExecutor
         }
         continue;
       }
-      end("QueueDequeue", begin);
+      end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
       return result;
     }
     long end = System.currentTimeMillis();
-    end("QueueDequeue", begin);
+    end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
     throw new OperationException(StatusCode.TOO_MANY_RETRIES,
         "Maximum retries (retried " + retries + " times over " + (end-start) +
         " millis");
@@ -883,11 +956,11 @@ public class OmidTransactionalOperationExecutor
   @Override
   public long execute(OperationContext context, GetGroupID getGroupId) throws OperationException {
     initialize();
-    requestMetric("GetGroupID");
+    incMetric(REQ_TYPE_GET_GROUP_ID_NUM_OPS);
     long begin = begin();
     TTQueueTable table = getQueueTable(getGroupId.getQueueName());
     long groupid = table.getGroupID(getGroupId.getQueueName());
-    end("GetGroupID", begin);
+    end(REQ_TYPE_GET_GROUP_ID_LATENCY, begin);
     return groupid;
   }
 
@@ -896,11 +969,11 @@ public class OmidTransactionalOperationExecutor
                                                        throws OperationException
   {
     initialize();
-    requestMetric("GetQueueInfo");
+    incMetric(REQ_TYPE_GET_QUEUE_INFO_NUM_OPS);
     long begin = begin();
     TTQueueTable table = getQueueTable(getQueueInfo.getQueueName());
     QueueInfo queueInfo = table.getQueueInfo(getQueueInfo.getQueueName());
-    end("GetQueueInfo", begin);
+    end(REQ_TYPE_GET_QUEUE_INFO_LATENCY, begin);
     return queueInfo == null ?
         new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND) :
         new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
@@ -911,15 +984,15 @@ public class OmidTransactionalOperationExecutor
     throws OperationException
   {
     initialize();
-    requestMetric("QueueConfigure");
+    incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
     TTQueueTable table = getQueueTable(configure.getQueueName());
     table.configure(configure.getQueueName(), configure.getNewConsumer());
-    end("QueueConfigure", begin);
+    end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 
   Transaction startTransaction() {
-    requestMetric("StartTransaction");
+    incMetric(REQ_TYPE_START_TRANSACTION_NUM_OPS);
     return this.oracle.startTransaction();
   }
 
@@ -930,13 +1003,13 @@ public class OmidTransactionalOperationExecutor
 
   TransactionResult commitTransaction(Transaction transaction)
     throws OmidTransactionException {
-    requestMetric("CommitTransaction");
+    incMetric(REQ_TYPE_COMMIT_TRANSACTION_NUM_OPS);
     return this.oracle.commitTransaction(transaction);
   }
 
   TransactionResult abortTransaction(Transaction transaction)
     throws OmidTransactionException {
-    requestMetric("CommitTransaction");
+    incMetric(REQ_TYPE_COMMIT_TRANSACTION_NUM_OPS);
     return this.oracle.abortTransaction(transaction);
   }
 
