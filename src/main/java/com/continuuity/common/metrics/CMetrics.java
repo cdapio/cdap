@@ -86,9 +86,7 @@ public class CMetrics {
    * @param value to increment the metric by.
    */
   public void counter(String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName);
-    counter(name, value);
+    counter(null, metricName, value);
   }
 
   /**
@@ -101,26 +99,17 @@ public class CMetrics {
    * @param value to increment the metric by.
    */
   public void counter(Class<?> scope, String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName,
-                                     getScope(scope));
-    counter(name, value);
-  }
-
-  /**
-   * Increments a given metric counter. It's a specialization of a gauge
-   * that allows to increment or decrement a value associated with the
-   * counter metric.
-   *
-   * @param name  of the metric.
-   * @param value to increment the metric by.
-   */
-  private void counter(MetricName name, long value) {
-    String metricName = name.getName();
     if(! counters.containsKey(metricName)) {
+      MetricName name = getMetricName(scope, metricName);
       counters.put(metricName, Metrics.newCounter(name));
     }
     counters.get(metricName).inc(value);
+  }
+
+  protected MetricName getMetricName(Class<?> scope, String metricName) {
+    return new MetricName(metricGroup, metricType.name(),
+                                     metricName,
+                                     scope == null ? null : getScope(scope));
   }
 
   /**
@@ -131,8 +120,7 @@ public class CMetrics {
    */
   public void set(String metricName, final float value) {
     if(! gauges.containsKey(metricName)) {
-      MetricName name = new MetricName(metricGroup, metricType.name(),
-                                       metricName);
+      MetricName name = getMetricName(null, metricName);
       gauges.put(metricName, Metrics.newGauge(name, new Gauge<Float>() {
         @Override
         public Float value() {
@@ -150,9 +138,7 @@ public class CMetrics {
    * @param value to increment the meter by.
    */
   public void meter(String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName);
-    meter(name, value);
+    meter(null, metricName, value);
   }
 
   /**
@@ -164,15 +150,8 @@ public class CMetrics {
    * @param value to increment the meter by.
    */
   public void meter(Class<?> scope, String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName,
-                                     getScope(scope));
-    meter(name, value);
-  }
-
-  private void meter(MetricName name, long value) {
-    String metricName = name.getName();
     if(! meters.containsKey(metricName)) {
+      MetricName name = getMetricName(scope, metricName);
       meters.put(metricName,
                  Metrics.newMeter(name, metricName, TimeUnit.SECONDS));
     }
@@ -184,29 +163,11 @@ public class CMetrics {
    * data. It measure min, max and mean and in addition also can measure
    * median, 75th, 90th, 95th, 98th, 99th and 99.9th percentiles.
    *
-   * @param name name of the metric.
-   * @param value to be used for histogram.
-   */
-  private void histogram(MetricName name, long value) {
-    String metricName = name.getName();
-    if(! histograms.containsKey(metricName)) {
-      histograms.put(metricName, Metrics.newHistogram(name));
-    }
-    histograms.get(metricName).update(value);
-  }
-
-  /**
-   * Measures the statistical distribution of values in a stream of
-   * data. It measure min, max and mean and in addition also can measure
-   * median, 75th, 90th, 95th, 98th, 99th and 99.9th percentiles.
-   *
    * @param metricName name of the metric.
    * @param value to be used for histogram.
    */
   public void histogram(String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName);
-    histogram(name, value);
+    histogram(null, metricName, value);
   }
 
   /**
@@ -219,9 +180,11 @@ public class CMetrics {
    * @param value to be used for histogram.
    */
   public void histogram(Class<?> scope, String metricName, long value) {
-    MetricName name = new MetricName(metricGroup, metricType.name(),
-                                     metricName, getScope(scope));
-    histogram(name, value);
+    if(! histograms.containsKey(metricName)) {
+      MetricName name = getMetricName(scope, metricName);
+      histograms.put(metricName, Metrics.newHistogram(name));
+    }
+    histograms.get(metricName).update(value);
   }
 
   /**
