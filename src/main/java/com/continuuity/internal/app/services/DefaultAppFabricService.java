@@ -485,6 +485,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return flowDef;
   }
 
+  // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
   private FlowDefinitionImpl getFlowDef4MapReduce(FlowIdentifier id, MapReduceSpecification spec)
     throws UnsupportedTypeException {
     FlowSpecification flowSpec = FlowSpecification.Builder.with()

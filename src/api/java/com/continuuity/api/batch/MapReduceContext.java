@@ -27,7 +27,7 @@ public interface MapReduceContext {
   /**
    * @return an instance of {@link org.apache.hadoop.mapreduce.Job} that used to submit the job to Hadoop cluster.
    */
-  <T> T getHadoopJobConf();
+  <T> T getHadoopJob();
 
   /**
    * Overrides input configuration of this mapreduce job to use given dataset and given data selection splits.

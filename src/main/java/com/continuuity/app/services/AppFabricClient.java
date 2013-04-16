@@ -122,7 +122,7 @@ public class AppFabricClient {
         } else if (this.mapReduce != null) {
           identifier = new FlowIdentifier("developer", application, this.mapReduce, 1);
           identifier.setType(EntityType.MAPREDUCE);
-          System.out.println(String.format("Stopping mapreduce job %s for application %s ",
+          System.out.println(String.format("Killing mapreduce job %s for application %s ",
             this.mapReduce, this.application));
         } else {
           identifier = new FlowIdentifier("developer", application, this.procedure, 1);

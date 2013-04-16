@@ -16,7 +16,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-public class DataSetOutputFormat extends OutputFormat {
+public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   public static final String OUTPUT_DATASET_SPEC = "output.dataset.spec";
 
   public static void setOutput(Job job, DataSet dataSet) {
@@ -25,12 +25,14 @@ public class DataSetOutputFormat extends OutputFormat {
   }
 
   @Override
-  public RecordWriter getRecordWriter(final TaskAttemptContext context) throws IOException, InterruptedException {
+  public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
+    throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
     BasicMapReduceContext mrContext = MapReduceContextAccessor.getContext(conf);
-    BatchWritable dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());
+    @SuppressWarnings("unchecked")
+    BatchWritable<KEY, VALUE> dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());
 
-    return new DataSetRecordWriter(dataset, mrContext);
+    return new DataSetRecordWriter<KEY, VALUE>(dataset, mrContext);
   }
 
   private DataSetSpecification getOutputDataSetSpec(Configuration conf) {
