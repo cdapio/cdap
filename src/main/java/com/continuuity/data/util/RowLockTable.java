@@ -207,7 +207,7 @@ public class RowLockTable {
 
     public Row(final byte[] value) {
       this.value = value;
-      this.hash = Bytes.hashCode(this.value);
+      this.hash = value == null ? 0 : Bytes.hashCode(this.value);
     }
 
     public byte[] getValue() {
