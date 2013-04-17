@@ -1,0 +1,116 @@
+package com.continuuity.data.operation.ttqueue;
+
+import com.continuuity.common.io.Decoder;
+import com.continuuity.common.io.Encoder;
+import com.google.common.base.Objects;
+
+import java.io.IOException;
+
+/**
+ * This represents a range of queue entry ids that have been claimed by a queue consumer.
+ * Multiple of these can be persisted with the consumer state.
+ */
+public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
+
+  public static final long INVALID_ENTRY_ID = -1L;
+
+  private long begin;
+  private long end;
+
+  static final ClaimedEntryRange INVALID = new ClaimedEntryRange(INVALID_ENTRY_ID, INVALID_ENTRY_ID);
+
+  /**
+   * Constructor from begin and end of the range.
+   * @param begin the begin of the range.
+   * @param end the end of the range, must greater or equal to begin
+   */
+  public ClaimedEntryRange(long begin, long end) {
+    if (begin > end) {
+      throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
+    } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
+      // Both begin and end can be INVALID_ENTRY_ID
+      throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
+    }
+    this.begin = begin;
+    this.end = end;
+  }
+
+  public long getBegin() {
+    return begin;
+  }
+
+  public long getEnd() {
+    return end;
+  }
+
+  private void invalidate() {
+    this.begin = INVALID_ENTRY_ID;
+  }
+
+  /**
+   * Moves the begin of this range to the given entry id
+   * @param entryId the begin entry id for the new range
+   */
+  public void move(long entryId) {
+    if (isValid()) {
+      if (entryId > end) {
+        this.invalidate();
+      } else if (entryId > begin) {
+        this.begin = entryId;
+      }
+    }
+  }
+
+  public boolean isValid() {
+    return begin != INVALID_ENTRY_ID;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("begin", begin)
+      .add("end", end)
+      .toString();
+  }
+
+  public void encode(Encoder encoder) throws IOException {
+    encoder.writeLong(begin);
+    encoder.writeLong(end);
+  }
+
+  public static ClaimedEntryRange decode(Decoder decoder) throws IOException {
+    return new ClaimedEntryRange(decoder.readLong(), decoder.readLong());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ClaimedEntryRange that = (ClaimedEntryRange) o;
+    return (begin == that.begin) && (end == that.end);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (int) (begin ^ (begin >>> 32));
+    result = 31 * result + (int) (end ^ (end >>> 32));
+    return result;
+  }
+
+  @Override
+  public int compareTo(ClaimedEntryRange other) {
+    return this.begin < other.begin ? -1 :
+        this.begin > other.begin ? 1 :
+          this.end < other.end ? -1 :
+            this.end > other.end ? 1 :
+              0;
+  }
+
+  public long size() {
+    return this.isValid() ? this.end - this.begin + 1 : 0;
+  }
+}
