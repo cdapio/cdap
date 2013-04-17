@@ -7,14 +7,14 @@ import com.continuuity.api.data.OperationException;
 */
 public class QueueFinalize {
   private final byte[] queueName;
-  private final QueueEntryPointer entryPointer;
+  private final QueueEntryPointer [] entryPointers;
   private final QueueConsumer consumer;
   private final int totalNumGroups;
 
-  public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer,
+  public QueueFinalize(final byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer,
                        int totalNumGroups) {
     this.queueName = queueName;
-    this.entryPointer = entryPointer;
+    this.entryPointers = entryPointers;
     this.consumer = consumer;
     this.totalNumGroups = totalNumGroups;
   }
@@ -24,6 +24,6 @@ public class QueueFinalize {
   }
 
   public void execute(TTQueueTable queueTable, long writePoint) throws OperationException {
-    queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups, writePoint);
+    queueTable.finalize(queueName, entryPointers, consumer, totalNumGroups, writePoint);
   }
 }

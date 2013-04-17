@@ -244,15 +244,15 @@ public class OmidTransactionalOperationExecutor
     return Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX);
   }
 
-  private int streamSizeEstimate(byte[] streamName, byte[] data) {
+  private int streamSizeEstimate(byte[] streamName, int dataSize, int numEntries) {
     // assume HBase uses space for the stream name, the data, and some metadata
-    return streamName.length + data.length + 50;
+    return dataSize + numEntries * (streamName.length + 50);
   }
 
-  private void streamMetric(byte[] streamName, byte[] data) {
+  private void streamMetric(byte[] streamName, int dataSize, int numEntries) {
     ImmutablePair<String, String> names = getStreamMetricNames(streamName);
     streamMetric.meter(names.getFirst(), 1);
-    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
+    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, dataSize, numEntries));
   }
 
   // By using this we reduce amount of strings to concat for super-freq operations, which (shown in tests) reduces
@@ -667,7 +667,7 @@ public class OmidTransactionalOperationExecutor
       // make sure to emit the metric for failed commits
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
 
-      // attempt to ubdo all the writes of the transaction
+      // attempt to undo all the writes of the transaction
       // (transaction is already marked as invalid in oracle)
       attemptUndo(context, transaction, txResult.getUndos());
 
@@ -692,8 +692,9 @@ public class OmidTransactionalOperationExecutor
         QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue)undo;
         QueueProducer producer = unenqueue.producer;
         enqueueMetric(unenqueue.queueName, producer);
-        if (isStream(unenqueue.queueName))
-          streamMetric(unenqueue.queueName, unenqueue.data);
+        if (isStream(unenqueue.queueName)) {
+          streamMetric(unenqueue.queueName, unenqueue.sumOfSizes, unenqueue.numEntries());
+        }
       } else if (undo instanceof QueueUndo.QueueUnack) {
         QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)undo;
         QueueConsumer consumer = unack.consumer;
@@ -895,22 +896,22 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS);
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntry(),
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
                                                                    transaction.getWriteVersion());
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntry().getData(),
-            enqueue.getProducer(), result.getEntryPointer()));
+        new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries(), enqueue.getProducer(),
+                                     result.getEntryPointers()));
   }
 
-  WriteTransactionResult write(QueueAck ack, @SuppressWarnings("unused") Transaction transaction)
+  WriteTransactionResult write(QueueAck ack, Transaction transaction)
     throws  OperationException {
 
     initialize();
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(),
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(),
                                       transaction.getReadPointer());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
@@ -919,7 +920,7 @@ public class OmidTransactionalOperationExecutor
       end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
@@ -930,6 +931,7 @@ public class OmidTransactionalOperationExecutor
     int retries = 0;
     long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
+    // TODO remove retry loop, new queues don't return retriable ever
     while (retries < MAX_DEQUEUE_RETRIES) {
       DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
           this.oracle.getReadPointer());

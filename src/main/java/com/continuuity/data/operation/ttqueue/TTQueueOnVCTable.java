@@ -123,6 +123,15 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
+  public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
+    if (entries.length == 1) {
+      return enqueue(entries[0], cleanWriteVersion);
+    } else {
+      throw new RuntimeException("Old queues don't support batch - received batch size of " + entries.length);
+    }
+  }
+
+  @Override
   public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
     byte[] data;
     try {
@@ -236,6 +245,14 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
+  public void invalidate(QueueEntryPointer[] entryPointers, long writeVersion) throws OperationException {
+    if (entryPointers.length == 1) {
+      invalidate(entryPointers[0], writeVersion);
+    } else {
+      throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
+    }
+  }
+
   public void invalidate(QueueEntryPointer entryPointer,
       long cleanWriteVersion) throws OperationException {
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -703,6 +720,7 @@ public class TTQueueOnVCTable implements TTQueue {
         OperationResult<Map<byte[], byte[]>> result = this.table.get(shardRow, null, null, -1, readDirty);
         if (result.isEmpty() || result.getValue().isEmpty()) {
           // strange, did someone else delete this already? skip
+          continue;
         }
         byte[][] columnsToDelete = result.getValue().keySet().toArray(new byte[result.getValue().size()][]);
         // dirty delete all versions - nobody will ever read or write this shard again
@@ -720,11 +738,18 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException {
+    if (entryPointers.length == 1) {
+      ack(entryPointers[0], consumer, readPointer);
+    } else {
+      throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
+    }
+  }
+
+  @Override
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
-
-    // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
@@ -754,6 +779,16 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
     this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn, existingValue.getValue(), newValue);
+  }
+
+  @Override
+  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
+    throws OperationException {
+    if (entryPointers.length == 1) {
+      finalize(entryPointers[0], consumer, totalNumGroups, writePoint);
+    } else {
+      throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
+    }
   }
 
   @Override
@@ -864,10 +899,17 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer) throws
+    OperationException {
+    if (entryPointers.length == 1) {
+      unack(entryPointers[0], consumer, readPointer);
+    } else {
+      throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
+    }
+  }
 
-    // Get a read pointer _only_ for dirty reads
-    ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer,
+                    @SuppressWarnings("unused") ReadPointer readPointer) throws OperationException {
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());

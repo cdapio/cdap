@@ -9,15 +9,14 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -25,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
+@Ignore
 public class TestStreamTable {
 
   private static final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());

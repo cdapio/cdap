@@ -181,7 +181,13 @@ implements OrderedVersionedColumnarTable {
   public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
     performInsert(rows, columns, version, Type.VALUE, values);
   }
-// Delete Operations
+
+  @Override
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+    performInsert(rows, columnsPerRow, version, Type.VALUE, valuesPerRow);
+  }
+
+  // Delete Operations
 
   @Override
   public void delete(byte[] row, byte[] column, long version)
@@ -967,6 +973,41 @@ implements OrderedVersionedColumnarTable {
         ps.setInt(4, type.i);
         ps.setBytes(5, values[i]);
         ps.executeUpdate();
+      }
+    } catch (SQLException e) {
+      throw createOperationException(e, "insert");
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          throw createOperationException(e, "close");
+        }
+      }
+    }
+  }
+
+  private void performInsert(byte [][] rows, byte [][][] columnsPerRow, long version,
+                             Type type, byte [][][] valuesPerRow) throws OperationException {
+    assert (rows.length == columnsPerRow.length);
+    assert (rows.length == valuesPerRow.length);
+
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement(
+        "INSERT INTO " + this.quotedTableName +
+          " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
+      for (int i = 0; i < rows.length; ++i) {
+        byte[][] columns = columnsPerRow[i];
+        byte[][] values = valuesPerRow[i];
+        for (int j = 0; j < columns.length; j++) {
+          ps.setBytes(1, rows[i]);
+          ps.setBytes(2, columns[j]);
+          ps.setLong(3, version);
+          ps.setInt(4, type.i);
+          ps.setBytes(5, values[j]);
+          ps.executeUpdate();
+        }
       }
     } catch (SQLException e) {
       throw createOperationException(e, "insert");

@@ -6,8 +6,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
-import com.continuuity.data.operation.ttqueue.TTQueue;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -125,7 +124,7 @@ public class StreamTable {
    */
   public void unack(StreamEntryPointer entryPointer, StreamQueueConsumer consumer, ReadPointer readPointer)
     throws  OperationException {
-    queue.unack(name,entryPointer,consumer,readPointer);
+    queue.unack(name,new QueueEntryPointer[] { entryPointer },consumer,readPointer);
   }
 
   /**

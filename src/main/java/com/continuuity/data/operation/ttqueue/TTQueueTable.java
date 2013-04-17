@@ -13,24 +13,31 @@ public interface TTQueueTable {
   /**
    * Inserts an entry into the tail of the queue using the specified write
    * version.
-   * @param queueName name of the queue
    * @param entry the queue entry to be inserted into the queue
-   * @param writeVersion
-   * @return return code, and if success, the unique entryId of the queue entry
-   * @throws OperationException if something goes wrong
+   * @return return enqueue result that contains the entry pointer of the new queue entry
+   * @throws OperationException if unsuccessful
    */
   public EnqueueResult enqueue(byte [] queueName, QueueEntry entry, long writeVersion) throws OperationException;
 
   /**
-   * Invalidates an entry that was enqueued into the queue.  This is used only
-   * as part of a transaction rollback.
-   * @param queueName name of the queue
-   * @param entryPointer entry id and shard id of enqueued entry to invalidate
-   * @param writeVersion version entry was written with and version invalidated
-   *                     entry will be written with
-   * @throws OperationException if something goes wrong
+   * Inserts a batch of entries into the tail of the queue using the specified write
+   * version.
+   * @param entries the queue entries to be inserted into the queue
+   * @return return enqueue result that contains the entry pointers of the new queue entries
+   * @throws OperationException if unsuccessful
    */
-  public void invalidate(byte [] queueName, QueueEntryPointer entryPointer,
+  public EnqueueResult enqueue(byte [] queueName, QueueEntry [] entries, long writeVersion)
+    throws OperationException;
+
+  /**
+   * Invalidates a batch of entries that were enqueued into the queue.  This is used only
+   * as part of a transaction rollback.
+   * @param entryPointers the entry pointers of the entries to invalidate
+   * @param writeVersion version entries were written with and version invalidated
+   *                     entries will be written with
+   * @throws OperationException if unsuccessful
+   */
+  public void invalidate(byte [] queueName, QueueEntryPointer [] entryPointers,
       long writeVersion) throws OperationException;
 
   /**
@@ -38,8 +45,6 @@ public interface TTQueueTable {
    * consumer from the specified group, according to the specified configuration
    * and read pointer.
    * @param queueName name of the queue
-   * @param consumer
-   * @param readPointer
    * @return dequeue result object
    * @throws OperationException if something goes wrong
    */
@@ -49,38 +54,35 @@ public interface TTQueueTable {
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
-   *
-   * @param queueName name of the queue
-   * @param entryPointer
-   * @param consumer
-   * @param readPointer
-   * @throws OperationException if something goes wrong
+   * @throws OperationException if unsuccessful
    */
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException;
 
   /**
-   * Finalizes an ack.
-   *
-   * @param queueName name of the queue
-   * @param entryPointer
-   * @param consumer
-   * @param totalNumGroups total number of groups to use when doing evict-on-ack
-   *                       or -1 to disable
-   * @param writePoint the version to use for writing queue state
-   * @throws OperationException if something goes wrong
+   * Acknowledges a previously dequeue'd batch of queue entries. Returns true if consumer
+   * that is acknowledging is allowed to do so, false if not.
+   * @throws OperationException if unsuccessful
    */
-  public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
+  public void ack(byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+    throws OperationException;
+
+
+  /**
+   * Finalizes a batch of acks.
+   * @param queueName name of the queue
+   * @param totalNumGroups total number of groups to use when doing evict-on-ack or -1 to disable
+   * @param writePoint the version to use for writing queue state
+   * @throws OperationException if unsuccessful
+   */
+  public void finalize(byte[] queueName, QueueEntryPointer [] entryPointers,
                        QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
 
   /**
-   * Unacknowledges a previously acknowledge ack.
-   *
-   * @param queueName name of the queue
-   * @param entryPointer
-   * @param consumer
-   * @param readPointer
+   * Unacknowledges a previously acknowledge batch of acks ack.
+   * @throws OperationException if unsuccessful
    */
-  void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  void unack(byte[] queueName, QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
              throws OperationException;
 
   void configure(byte[] queueName, QueueConsumer newConsumer)
@@ -92,7 +94,6 @@ public interface TTQueueTable {
    * Note: uniqueness only guaranteed if you always use this call to generate
    * groups ids.
    *
-   * @param queueName
    * @return a unique group id for the specified queue
    */
   public long getGroupID(byte [] queueName) throws OperationException;
@@ -100,7 +101,6 @@ public interface TTQueueTable {
   /**
    * Gets the meta information for the specified queue.  This includes all meta
    * data available without walking the entire queue.
-   * @param queueName
    * @return global meta information for the queue and its groups
    */
   public QueueInfo getQueueInfo(byte [] queueName) throws OperationException;
