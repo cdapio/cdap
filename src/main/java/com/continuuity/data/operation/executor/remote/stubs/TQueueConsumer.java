@@ -432,7 +432,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetInstanceId();
       } else {
-        setInstanceId((Integer) value);
+        setInstanceId((Integer)value);
       }
       break;
 
@@ -440,7 +440,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupId();
       } else {
-        setGroupId((Long) value);
+        setGroupId((Long)value);
       }
       break;
 
@@ -448,7 +448,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupSize();
       } else {
-        setGroupSize((Integer) value);
+        setGroupSize((Integer)value);
       }
       break;
 
@@ -456,7 +456,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetGroupName();
       } else {
-        setGroupName((String) value);
+        setGroupName((String)value);
       }
       break;
 
@@ -464,7 +464,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetPartitioningKey();
       } else {
-        setPartitioningKey((String) value);
+        setPartitioningKey((String)value);
       }
       break;
 
@@ -472,7 +472,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetQueueConfig();
       } else {
-        setQueueConfig((TQueueConfig) value);
+        setQueueConfig((TQueueConfig)value);
       }
       break;
 
@@ -480,7 +480,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetIsStateful();
       } else {
-        setIsStateful((Boolean) value);
+        setIsStateful((Boolean)value);
       }
       break;
 
@@ -488,7 +488,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetQueueState();
       } else {
-        setQueueState((ByteBuffer) value);
+        setQueueState((ByteBuffer)value);
       }
       break;
 

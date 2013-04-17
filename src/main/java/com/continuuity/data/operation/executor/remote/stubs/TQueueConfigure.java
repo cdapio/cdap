@@ -258,7 +258,7 @@ public class TQueueConfigure implements org.apache.thrift.TBase<TQueueConfigure,
       if (value == null) {
         unsetNewConsumer();
       } else {
-        setNewConsumer((TQueueConsumer) value);
+        setNewConsumer((TQueueConsumer)value);
       }
       break;
 

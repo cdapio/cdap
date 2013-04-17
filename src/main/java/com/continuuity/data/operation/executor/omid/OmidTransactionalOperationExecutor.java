@@ -928,31 +928,10 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS);
     long begin = begin();
-    int retries = 0;
-    long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
-    // TODO remove retry loop, new queues don't return retriable ever
-    while (retries < MAX_DEQUEUE_RETRIES) {
-      DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(),
-          this.oracle.getReadPointer());
-      if (result.shouldRetry()) {
-        retries++;
-        try {
-          if (DEQUEUE_RETRY_SLEEP > 0) Thread.sleep(DEQUEUE_RETRY_SLEEP);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-          // continue in loop
-        }
-        continue;
-      }
-      end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
-      return result;
-    }
-    long end = System.currentTimeMillis();
+    DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(), this.oracle.getReadPointer());
     end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
-    throw new OperationException(StatusCode.TOO_MANY_RETRIES,
-        "Maximum retries (retried " + retries + " times over " + (end-start) +
-        " millis");
+    return result;
   }
 
   @Override
