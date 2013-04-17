@@ -268,7 +268,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         byte typePrefix=value[0];
         if (typePrefix==DATA) {
           byte[] trueValue=removeTypePrefix(value);
-          fastForwardToNextRow=true;
           map.put(column, trueValue);
           fastForwardToNextCol=true;
           deleted.clear(); // necessary?
