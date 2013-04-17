@@ -7,6 +7,7 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
@@ -19,7 +20,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -728,7 +728,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       int i = 0;
       for(Map.Entry<Long, Long> entry : groupEvictEntries.entrySet()) {
         columnKeys[i] = makeColumnName(GROUP_EVICT_ENTRY, entry.getKey());
-        values[i] = Bytes.toBytes(entry.getValue());
+        values[i] = Bytes.EMPTY_BYTE_ARRAY;
         ++i;
       }
       table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
@@ -1283,6 +1283,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return instanceId;
     }
 
+    public boolean isRedundant(long minAckEntryId) {
+      return minAckEntryId > maxAckEntryId ? true : false;
+    }
+
     public void encode(Encoder encoder) throws IOException {
       encoder.writeInt(instanceId)
         .writeLong(maxAckEntryId);
@@ -1333,7 +1337,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return EMPTY_RECONFIG_PARTITIONER;
     }
 
-    // TODO: remove unneeded config info during saving
+    // TODO: convert this into a Builder
     private ReconfigPartitioner() {
       groupSize = 0;
       partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
@@ -1347,10 +1351,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void add(int consumerId, long maxAckEntryId) {
-      reconfigPartitionInstances.add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
+      add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
     }
 
     private void add(ReconfigPartitionInstance info) {
+      if(reconfigPartitionInstances.size() >= groupSize) {
+        throw new IllegalArgumentException(String.format("GroupSize %d exceeded", reconfigPartitionInstances.size()));
+      }
       reconfigPartitionInstances.add(info);
     }
 
@@ -1419,8 +1426,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return true;
     }
 
-    public void compact(long consumerReadPointer) {
-      // TODO:
+    public boolean isRedundant(long minAckEntryId) {
+      boolean allRedundant = true;
+      for(ReconfigPartitionInstance instance : reconfigPartitionInstances) {
+        if(!instance.isRedundant(minAckEntryId)) {
+          allRedundant = false;
+        }
+      }
+      return allRedundant;
     }
 
     public void encode(Encoder encoder) throws IOException {
@@ -1510,7 +1523,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public ReconfigPartitionersList(List<ReconfigPartitioner> reconfigPartitioners) {
-      this.reconfigPartitioners = reconfigPartitioners;
+      this.reconfigPartitioners = Lists.newLinkedList(reconfigPartitioners);
     }
 
     public List<ReconfigPartitioner> getReconfigPartitioners() {
@@ -1561,9 +1574,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return true;
     }
 
-    // TODO: implement
-    public void compact(long consumerReadPointer) {
-
+    public void compact(long minAckEntry) {
+      List<ReconfigPartitioner> redundantPartitioners = Lists.newLinkedList();
+      for(ReconfigPartitioner reconfigPartitioner : reconfigPartitioners) {
+        if(reconfigPartitioner.isRedundant(minAckEntry)) {
+          redundantPartitioners.add(reconfigPartitioner);
+        }
+      }
+      reconfigPartitioners.removeAll(redundantPartitioners);
     }
 
     @Override
@@ -1599,6 +1617,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       return new ReconfigPartitionersList(reconfigPartitioners);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ReconfigPartitionersList that = (ReconfigPartitionersList) o;
+
+      if (reconfigPartitioners != null ? !reconfigPartitioners.equals(that.reconfigPartitioners) : that.reconfigPartitioners != null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return reconfigPartitioners != null ? reconfigPartitioners.hashCode() : 0;
+    }
   }
 
   static class ClaimedEntryList implements Comparable<ClaimedEntryList> {
@@ -1607,35 +1643,39 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public ClaimedEntryList() {
       this.current = ClaimedEntry.getInvalidClaimedEntry();
-      // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
-      this.otherClaimedEntries = Collections.EMPTY_LIST;
+      this.otherClaimedEntries = Lists.newLinkedList();
     }
 
     public ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
-      this.current = claimedEntry;
+      otherClaimedEntries.remove(ClaimedEntry.INVALID_CLAIMED_ENTRY);
+      if(claimedEntry.isValid()) {
+        this.current = claimedEntry;
+      } else if(!otherClaimedEntries.isEmpty()) {
+        this.current = otherClaimedEntries.get(0);
+      } else {
+        this.current = ClaimedEntry.INVALID_CLAIMED_ENTRY;
+      }
       this.otherClaimedEntries = otherClaimedEntries;
     }
 
     public void add(long begin, long end) {
-      ClaimedEntry claimedEntry = new ClaimedEntry(begin, end);
-      if(!claimedEntry.isValid()) {
+      ClaimedEntry newClaimedEntry = new ClaimedEntry(begin, end);
+      if(!newClaimedEntry.isValid()) {
         return;
       }
       makeCurrentValid();
       if(!current.isValid()) {
-        current = claimedEntry;
+        current = newClaimedEntry;
       } else {
-        if(otherClaimedEntries == Collections.EMPTY_LIST) {
-          otherClaimedEntries = Lists.newArrayList();
-        }
-        otherClaimedEntries.add(claimedEntry);
+        otherClaimedEntries.add(newClaimedEntry);
       }
     }
 
     public void addAll(ClaimedEntryList claimedEntryList) {
-      // Note: otherClaimedEntries can be EMPTY_LIST, add() makes sure to create a list if so
       ClaimedEntry otherCurrent = claimedEntryList.getClaimedEntry();
       add(otherCurrent.getBegin(), otherCurrent.getEnd());
+
+      claimedEntryList.otherClaimedEntries.remove(ClaimedEntry.INVALID_CLAIMED_ENTRY);
       otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
     }
 
@@ -1699,13 +1739,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       ClaimedEntry current = ClaimedEntry.decode(decoder);
 
       int size = decoder.readInt();
-      List<ClaimedEntry> otherClaimedEntries;
-      if(size == 0) {
-        // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
-        otherClaimedEntries = Collections.EMPTY_LIST;
-      } else {
-        otherClaimedEntries = Lists.newArrayList();
-      }
+      List<ClaimedEntry> otherClaimedEntries = Lists.newLinkedList();
 
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
@@ -2003,7 +2037,22 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
-    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer) throws OperationException;
+
+    /**
+     *
+     * @param consumers List of current consumers. Needs to be sorted on instanceId
+     * @param queueStates
+     * @param config
+     * @param groupId
+     * @param currentConsumerCount
+     * @param newConsumerCount
+     * @param readPointer
+     * @throws OperationException
+     */
+    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                   long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
+      throws OperationException;
+
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
   }
@@ -2194,9 +2243,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
       writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
 
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       writeQueueStateStore.write();
       // TODO: delete evict information for the consumer
     }
@@ -2249,7 +2298,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
@@ -2266,7 +2315,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                       currentConsumers.size(), currentConsumerCount)));
       }
 
-      // TODO: does consumers list need to be sorted on instanceId?
       long minAckedEntryId = Long.MAX_VALUE;
       ReconfigPartitioner reconfigPartitioner =
         new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
@@ -2281,6 +2329,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
+      // Consumer zero is never deleted, so read partitioning information from consumer zero
+      ReconfigPartitionersList oldReconfigPartitionerList = queueStates.isEmpty() ?
+        ReconfigPartitionersList.getEmptyList() : queueStates.get(0).getReconfigPartitionersList();
+      // Run compaction
+      if(minAckedEntryId != Long.MAX_VALUE) {
+        oldReconfigPartitionerList.compact(minAckedEntryId);
+      }
 
       for(int j = 0; j < newConsumerCount; ++j) {
         QueueConsumer consumer;
@@ -2302,7 +2358,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setReconfigPartitionersList(
             new ReconfigPartitionersList(
               Lists.newArrayList(Iterables.concat(
-                queueState.getReconfigPartitionersList().getReconfigPartitioners(),
+                oldReconfigPartitionerList.getReconfigPartitioners(),
                 Collections.singleton(reconfigPartitioner))
               )
             ));
@@ -2515,7 +2571,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
