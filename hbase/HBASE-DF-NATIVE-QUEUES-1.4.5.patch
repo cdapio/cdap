@@ -2866,7 +2866,7 @@ index a806f8a..1ec3162 100644
     * Delete the latest version of the specified column.
     * This is an expensive call in that on the server-side, it first does a
 diff --git a/src/main/java/org/apache/hadoop/hbase/client/HTable.java b/src/main/java/org/apache/hadoop/hbase/client/HTable.java
-index 9bea85f..8f4028a 100644
+index 9bea85f..2c161a2 100644
 --- a/src/main/java/org/apache/hadoop/hbase/client/HTable.java
 +++ b/src/main/java/org/apache/hadoop/hbase/client/HTable.java
 @@ -26,17 +26,15 @@ import java.io.IOException;
@@ -2907,19 +2907,14 @@ index 9bea85f..8f4028a 100644
  /**
   * <p>Used to communicate with a single HBase table.
   *
-@@ -864,13 +874,29 @@ public class HTable implements HTableInterface {
+@@ -864,13 +874,24 @@ public class HTable implements HTableInterface {
     */
    @Override
    public boolean checkAndPut(final byte [] row,
 +                             final byte [] family, final byte [] qualifier, final byte [] value,
 +                             final Put put)
 +  throws IOException {
-+    return new ServerCallable<Boolean>(connection, tableName, row, operationTimeout) {
-+      public Boolean call() throws IOException {
-+        return server.checkAndPut(location.getRegionInfo().getRegionName(),
-+                                  row, family, qualifier, value, put) ? Boolean.TRUE : Boolean.FALSE;
-+      }
-+    }.withRetries();
++    return this.checkAndPut(row, family, qualifier, value, Long.MAX_VALUE, put);
 +  }
 +
 +  /**
@@ -2939,7 +2934,7 @@ index 9bea85f..8f4028a 100644
            }
          }.withRetries();
    }
-@@ -882,13 +908,13 @@ public class HTable implements HTableInterface {
+@@ -882,13 +903,13 @@ public class HTable implements HTableInterface {
    @Override
    public boolean checkAndDelete(final byte [] row,
        final byte [] family, final byte [] qualifier, final byte [] value,
@@ -2955,7 +2950,7 @@ index 9bea85f..8f4028a 100644
              ? Boolean.TRUE : Boolean.FALSE;
            }
          }.withRetries();
-@@ -1276,4 +1302,207 @@ public class HTable implements HTableInterface {
+@@ -1276,4 +1297,207 @@ public class HTable implements HTableInterface {
      return operationTimeout;
    }
  
@@ -3164,7 +3159,7 @@ index 9bea85f..8f4028a 100644
 +
  }
 diff --git a/src/main/java/org/apache/hadoop/hbase/client/HTableInterface.java b/src/main/java/org/apache/hadoop/hbase/client/HTableInterface.java
-index 007f0a3..f71ecd6 100644
+index 007f0a3..d59b969 100644
 --- a/src/main/java/org/apache/hadoop/hbase/client/HTableInterface.java
 +++ b/src/main/java/org/apache/hadoop/hbase/client/HTableInterface.java
 @@ -30,6 +30,18 @@ import org.apache.hadoop.hbase.KeyValue;
@@ -3186,32 +3181,16 @@ index 007f0a3..f71ecd6 100644
  /**
   * Used to communicate with a single HBase table.
   *
-@@ -223,7 +235,23 @@ public interface HTableInterface extends Closeable {
+@@ -223,7 +235,7 @@ public interface HTableInterface extends Closeable {
     * @return true if the new put was executed, false otherwise
     */
    boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
 -      byte[] value, Put put) throws IOException;
-+                      byte[] value, Put put) throws IOException;
-+
-+  /**
-+   * Atomically checks if a row/family/qualifier value matches the expected
-+   * value. If it does, it adds the put.  If the passed value is null, the check
-+   * is for the lack of column (ie: non-existance)
-+   *
-+   * @param row to check
-+   * @param family column family to check
-+   * @param qualifier column qualifier to check
-+   * @param value the expected value
-+   * @param put data to put if check succeeds
-+   * @throws IOException e
-+   * @return true if the new put was executed, false otherwise
-+   */
-+  boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
 +      byte[] value, long readVersion, Put put) throws IOException;
  
    /**
     * Deletes the specified cells/row.
-@@ -261,7 +289,7 @@ public interface HTableInterface extends Closeable {
+@@ -261,7 +273,7 @@ public interface HTableInterface extends Closeable {
     * @return true if the new delete was executed, false otherwise
     */
    boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
@@ -3220,7 +3199,7 @@ index 007f0a3..f71ecd6 100644
  
    /**
     * Performs multiple mutations atomically on a single row. Currently
-@@ -527,4 +555,22 @@ public interface HTableInterface extends Closeable {
+@@ -527,4 +539,22 @@ public interface HTableInterface extends Closeable {
     * @throws IOException if a remote or network exception occurs.
     */
    public void setWriteBufferSize(long writeBufferSize) throws IOException;
@@ -3576,7 +3555,7 @@ index d1d1990..0748c01 100644
     * @param instance
     */
 diff --git a/src/main/java/org/apache/hadoop/hbase/ipc/HRegionInterface.java b/src/main/java/org/apache/hadoop/hbase/ipc/HRegionInterface.java
-index d5e329e..12f6eab 100644
+index d5e329e..57087c7 100644
 --- a/src/main/java/org/apache/hadoop/hbase/ipc/HRegionInterface.java
 +++ b/src/main/java/org/apache/hadoop/hbase/ipc/HRegionInterface.java
 @@ -53,6 +53,19 @@ import org.apache.hadoop.hbase.util.Pair;
@@ -3599,36 +3578,16 @@ index d5e329e..12f6eab 100644
  /**
   * Clients interact with HRegionServers using a handle to the HRegionInterface.
   *
-@@ -222,8 +235,27 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
-    * @return true if the new put was execute, false otherwise
+@@ -223,7 +236,7 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
     */
    public boolean checkAndPut(final byte[] regionName, final byte [] row,
-+                             final byte [] family, final byte [] qualifier, final byte [] value,
-+                             final Put put)
-+    throws IOException;
-+
-+  /**
-+   * Atomically checks if a row/family/qualifier value match the expectedValue.
-+   * If it does, it adds the put. If passed expected value is null, then the
-+   * check is for non-existance of the row/column.
-+   *
-+   * @param regionName region name
-+   * @param row row to check
-+   * @param family column family
-+   * @param qualifier column qualifier
-+   * @param value the expected value
-+   * @param put data to put if check succeeds
-+   * @throws IOException e
-+   * @return true if the new put was execute, false otherwise
-+   */
-+  public boolean checkAndPut(final byte[] regionName, final byte [] row,
        final byte [] family, final byte [] qualifier, final byte [] value,
 -      final Put put)
 +      final long readVersion, final Put put)
    throws IOException;
  
  
-@@ -237,13 +269,14 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
+@@ -237,13 +250,14 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
     * @param family column family
     * @param qualifier column qualifier
     * @param value the expected value
@@ -3644,7 +3603,7 @@ index d5e329e..12f6eab 100644
    throws IOException;
  
    /**
-@@ -633,4 +666,36 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
+@@ -633,4 +647,36 @@ public interface HRegionInterface extends VersionedProtocol, Stoppable, Abortabl
  
    @Override
    public void stop(String why);
@@ -3682,7 +3641,7 @@ index d5e329e..12f6eab 100644
 +      HBQMetaOperation operation, HBQQueueMeta existingMeta) throws IOException;
  }
 diff --git a/src/main/java/org/apache/hadoop/hbase/regionserver/HRegion.java b/src/main/java/org/apache/hadoop/hbase/regionserver/HRegion.java
-index 7204a8b..61ec495 100644
+index 7204a8b..e5db126 100644
 --- a/src/main/java/org/apache/hadoop/hbase/regionserver/HRegion.java
 +++ b/src/main/java/org/apache/hadoop/hbase/regionserver/HRegion.java
 @@ -19,44 +19,14 @@
@@ -3802,120 +3761,7 @@ index 7204a8b..61ec495 100644
    @Deprecated
    public OperationStatus[] put(Pair<Put, Integer>[] putsAndLocks) throws IOException {
      Pair<Mutation, Integer>[] mutationsAndLocks = new Pair[putsAndLocks.length];
-@@ -2311,6 +2283,112 @@ public class HRegion implements HeapSize { // , Writable{
-     }
-   }
- 
-+  /**
-+   *
-+   * @param row
-+   * @param family
-+   * @param qualifier
-+   * @param compareOp
-+   * @param comparator
-+   * @param lockId
-+   * @param writeToWAL
-+   * @throws IOException
-+   * @return true if the new put was execute, false otherwise
-+   * @deprecated row locks (lockId) held outside the extent of the operation are deprecated.
-+   */
-+  public boolean checkAndMutate(byte [] row, byte [] family, byte [] qualifier,
-+                                CompareOp compareOp, WritableByteArrayComparable comparator, Writable w,
-+                                Integer lockId, boolean writeToWAL)
-+    throws IOException{
-+    checkReadOnly();
-+    //TODO, add check for value length or maybe even better move this to the
-+    //client if this becomes a global setting
-+    checkResources();
-+    boolean isPut = w instanceof Put;
-+    if (!isPut && !(w instanceof Delete))
-+      throw new DoNotRetryIOException("Action must be Put or Delete");
-+    Row r = (Row)w;
-+    if (!Bytes.equals(row, r.getRow())) {
-+      throw new DoNotRetryIOException("Action's getRow must match the passed row");
-+    }
-+
-+    startRegionOperation();
-+    this.writeRequestsCount.increment();
-+    try {
-+      RowLock lock = isPut ? ((Put)w).getRowLock() : ((Delete)w).getRowLock();
-+      Get get = new Get(row, lock);
-+      checkFamily(family);
-+      get.addColumn(family, qualifier);
-+
-+      // Lock row
-+      Integer lid = getLock(lockId, get.getRow(), true);
-+      // wait for all previous transactions to complete (with lock held)
-+      mvcc.completeMemstoreInsert(mvcc.beginMemstoreInsert());
-+      List<KeyValue> result = new ArrayList<KeyValue>();
-+      try {
-+        result = get(get, false);
-+
-+        boolean valueIsNull = comparator.getValue() == null ||
-+          comparator.getValue().length == 0;
-+        boolean matches = false;
-+        if (result.size() == 0 && valueIsNull) {
-+          matches = true;
-+        } else if (result.size() > 0 && result.get(0).getValue().length == 0 &&
-+          valueIsNull) {
-+          matches = true;
-+        } else if (result.size() == 1 && !valueIsNull) {
-+          KeyValue kv = result.get(0);
-+          int compareResult = comparator.compareTo(kv.getBuffer(),
-+                                                   kv.getValueOffset(), kv.getValueLength());
-+          switch (compareOp) {
-+            case LESS:
-+              matches = compareResult <= 0;
-+              break;
-+            case LESS_OR_EQUAL:
-+              matches = compareResult < 0;
-+              break;
-+            case EQUAL:
-+              matches = compareResult == 0;
-+              break;
-+            case NOT_EQUAL:
-+              matches = compareResult != 0;
-+              break;
-+            case GREATER_OR_EQUAL:
-+              matches = compareResult > 0;
-+              break;
-+            case GREATER:
-+              matches = compareResult >= 0;
-+              break;
-+            default:
-+              throw new RuntimeException("Unknown Compare op " + compareOp.name());
-+          }
-+        }
-+        //If matches put the new put or delete the new delete
-+        if (matches) {
-+          // All edits for the given row (across all column families) must
-+          // happen atomically.
-+          //
-+          // Using default cluster id, as this can only happen in the
-+          // originating cluster. A slave cluster receives the result as a Put
-+          // or Delete
-+          if (isPut) {
-+            internalPut(((Put) w), HConstants.DEFAULT_CLUSTER_ID, writeToWAL);
-+          } else {
-+            Delete d = (Delete)w;
-+            prepareDelete(d);
-+            internalDelete(d, HConstants.DEFAULT_CLUSTER_ID, writeToWAL);
-+          }
-+          return true;
-+        }
-+        return false;
-+      } finally {
-+        if(lockId == null) releaseRowLock(lid);
-+      }
-+    } finally {
-+      closeRegionOperation();
-+    }
-+  }
-+
-   //TODO, Think that gets/puts and deletes should be refactored a bit so that
-   //the getting of the lock happens before, so that you would just pass it into
-   //the methods. So in the case of checkAndMutate you could just do lockRow,
-@@ -2322,14 +2400,15 @@ public class HRegion implements HeapSize { // , Writable{
+@@ -2322,14 +2294,15 @@ public class HRegion implements HeapSize { // , Writable{
     * @param qualifier
     * @param compareOp
     * @param comparator
@@ -3933,7 +3779,7 @@ index 7204a8b..61ec495 100644
    throws IOException{
      checkReadOnly();
      //TODO, add check for value length or maybe even better move this to the
-@@ -2350,6 +2429,8 @@ public class HRegion implements HeapSize { // , Writable{
+@@ -2350,6 +2323,8 @@ public class HRegion implements HeapSize { // , Writable{
        Get get = new Get(row, lock);
        checkFamily(family);
        get.addColumn(family, qualifier);
@@ -3942,7 +3788,7 @@ index 7204a8b..61ec495 100644
  
        // Lock row
        Integer lid = getLock(lockId, get.getRow(), true);
-@@ -4579,7 +4660,9 @@ public class HRegion implements HeapSize { // , Writable{
+@@ -4579,7 +4554,9 @@ public class HRegion implements HeapSize { // , Writable{
        Integer lid = getLock(lockid, row, true);
        this.updatesLock.readLock().lock();
        try {
@@ -3953,7 +3799,7 @@ index 7204a8b..61ec495 100644
          // Process each family
          for (Map.Entry<byte [], NavigableMap<byte [], Long>> family :
            increment.getFamilyMap().entrySet()) {
-@@ -5242,4 +5325,2242 @@ public class HRegion implements HeapSize { // , Writable{
+@@ -5242,4 +5219,2242 @@ public class HRegion implements HeapSize { // , Writable{
         if (bc != null) bc.shutdown();
       }
    }
@@ -6197,7 +6043,7 @@ index 7204a8b..61ec495 100644
 +  }
  }
 diff --git a/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java b/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
-index 8f9cf0c..a6fb3a1 100644
+index 8f9cf0c..53b0355 100644
 --- a/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
 +++ b/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
 @@ -19,85 +19,22 @@
@@ -6344,28 +6190,9 @@ index 8f9cf0c..a6fb3a1 100644
  
  /**
   * HRegionServer makes a set of HRegions available to clients. It checks in with
-@@ -2069,9 +2009,27 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
-   }
+@@ -2070,8 +2010,8 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
  
    private boolean checkAndMutate(final byte[] regionName, final byte[] row,
-+                                 final byte[] family, final byte[] qualifier, final CompareOp compareOp,
-+                                 final WritableByteArrayComparable comparator, final Writable w,
-+                                 Integer lock) throws IOException {
-+    checkOpen();
-+    this.requestCount.incrementAndGet();
-+    HRegion region = getRegion(regionName);
-+    try {
-+      if (!region.getRegionInfo().isMetaTable()) {
-+        this.cacheFlusher.reclaimMemStoreMemory();
-+      }
-+      return region.checkAndMutate(row, family, qualifier, compareOp,
-+                                   comparator, w, lock, true);
-+    } catch (Throwable t) {
-+      throw convertThrowableToIOE(cleanup(t));
-+    }
-+  }
-+
-+  private boolean checkAndMutate(final byte[] regionName, final byte[] row,
        final byte[] family, final byte[] qualifier, final CompareOp compareOp,
 -      final WritableByteArrayComparable comparator, final Writable w,
 -      Integer lock) throws IOException {
@@ -6374,7 +6201,7 @@ index 8f9cf0c..a6fb3a1 100644
      checkOpen();
      this.requestCount.incrementAndGet();
      HRegion region = getRegion(regionName);
-@@ -2080,12 +2038,53 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2080,7 +2020,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
          this.cacheFlusher.reclaimMemStoreMemory();
        }
        return region.checkAndMutate(row, family, qualifier, compareOp,
@@ -6383,53 +6210,7 @@ index 8f9cf0c..a6fb3a1 100644
      } catch (Throwable t) {
        throw convertThrowableToIOE(cleanup(t));
      }
-   }
- 
-+   /**
-+   *
-+   * @param regionName
-+   * @param row
-+   * @param family
-+   * @param qualifier
-+   * @param value
-+   *          the expected value
-+   * @param put
-+   * @throws IOException
-+   * @return true if the new put was execute, false otherwise
-+   */
-+  public boolean checkAndPut(final byte[] regionName, final byte[] row,
-+                             final byte[] family, final byte[] qualifier, final byte[] value,
-+                             final Put put) throws IOException {
-+    checkOpen();
-+    if (regionName == null) {
-+      throw new IOException("Invalid arguments to checkAndPut "
-+                              + "regionName is null");
-+    }
-+    HRegion region = getRegion(regionName);
-+    Integer lock = getLockFromId(put.getLockId());
-+    WritableByteArrayComparable comparator = new BinaryComparator(value);
-+    if (region.getCoprocessorHost() != null) {
-+      Boolean result = region.getCoprocessorHost()
-+        .preCheckAndPut(row, family, qualifier, CompareOp.EQUAL, comparator,
-+                        put);
-+      if (result != null) {
-+        return result.booleanValue();
-+      }
-+    }
-+    boolean result = checkAndMutate(regionName, row, family, qualifier,
-+                                    CompareOp.EQUAL, comparator, put,
-+                                    lock);
-+    if (region.getCoprocessorHost() != null) {
-+      result = region.getCoprocessorHost().postCheckAndPut(row, family,
-+                                                           qualifier, CompareOp.EQUAL, comparator, put, result);
-+    }
-+    return result;
-+  }
-+
-   /**
-    *
-    * @param regionName
-@@ -2100,7 +2099,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2100,7 +2040,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
     */
    public boolean checkAndPut(final byte[] regionName, final byte[] row,
        final byte[] family, final byte[] qualifier, final byte[] value,
@@ -6438,7 +6219,7 @@ index 8f9cf0c..a6fb3a1 100644
      checkOpen();
      if (regionName == null) {
        throw new IOException("Invalid arguments to checkAndPut "
-@@ -2118,7 +2117,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2118,7 +2058,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
        }
      }
      boolean result = checkAndMutate(regionName, row, family, qualifier,
@@ -6447,7 +6228,7 @@ index 8f9cf0c..a6fb3a1 100644
        lock);
      if (region.getCoprocessorHost() != null) {
        result = region.getCoprocessorHost().postCheckAndPut(row, family,
-@@ -2141,7 +2140,8 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2141,7 +2081,8 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
     */
    public boolean checkAndPut(final byte[] regionName, final byte[] row,
        final byte[] family, final byte[] qualifier, final CompareOp compareOp,
@@ -6457,7 +6238,7 @@ index 8f9cf0c..a6fb3a1 100644
         throws IOException {
      checkOpen();
      if (regionName == null) {
-@@ -2158,7 +2158,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2158,7 +2099,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
        }
      }
      boolean result = checkAndMutate(regionName, row, family, qualifier,
@@ -6466,7 +6247,7 @@ index 8f9cf0c..a6fb3a1 100644
      if (region.getCoprocessorHost() != null) {
        result = region.getCoprocessorHost().postCheckAndPut(row, family,
          qualifier, compareOp, comparator, put, result);
-@@ -2180,7 +2180,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2180,7 +2121,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
     */
    public boolean checkAndDelete(final byte[] regionName, final byte[] row,
        final byte[] family, final byte[] qualifier, final byte[] value,
@@ -6475,7 +6256,7 @@ index 8f9cf0c..a6fb3a1 100644
      checkOpen();
  
      if (regionName == null) {
-@@ -2198,7 +2198,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2198,7 +2139,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
        }
      }
      boolean result = checkAndMutate(regionName, row, family, qualifier,
@@ -6484,7 +6265,7 @@ index 8f9cf0c..a6fb3a1 100644
      if (region.getCoprocessorHost() != null) {
        result = region.getCoprocessorHost().postCheckAndDelete(row, family,
          qualifier, CompareOp.EQUAL, comparator, delete, result);
-@@ -2306,7 +2306,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -2306,7 +2247,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
       }
      }
      boolean result = checkAndMutate(regionName, row, family, qualifier,
@@ -6493,7 +6274,7 @@ index 8f9cf0c..a6fb3a1 100644
     if (region.getCoprocessorHost() != null) {
       result = region.getCoprocessorHost().postCheckAndDelete(row, family,
         qualifier, compareOp, comparator, delete, result);
-@@ -3757,4 +3757,281 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
+@@ -3757,4 +3698,281 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
        HRegionInfo info = region.getRegionInfo();
        return CompactionRequest.getCompactionState(info.getRegionId()).name();
    }
