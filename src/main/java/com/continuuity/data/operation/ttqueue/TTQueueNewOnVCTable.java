@@ -106,7 +106,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // RECONFIG_PARTITIONER stores the partition information for prior configurations
   static final byte [] RECONFIG_PARTITIONER = {50, 'P'};     //row <queueName>40C<groupId><consumerId>, column 50P
 
-  static final long INVALID_ENTRY_ID = -1;
+  static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   private final int DEFAULT_BATCH_SIZE;
@@ -1721,220 +1721,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  static class ClaimedEntryList implements Comparable<ClaimedEntryList> {
-    private ClaimedEntry current;
-    private List<ClaimedEntry> otherClaimedEntries;
-
-    public ClaimedEntryList() {
-      this.current = ClaimedEntry.getInvalidClaimedEntry();
-      this.otherClaimedEntries = Lists.newLinkedList();
-    }
-
-    public ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
-      otherClaimedEntries.remove(ClaimedEntry.INVALID_CLAIMED_ENTRY);
-      if(claimedEntry.isValid()) {
-        this.current = claimedEntry;
-      } else if(!otherClaimedEntries.isEmpty()) {
-        this.current = otherClaimedEntries.get(0);
-      } else {
-        this.current = ClaimedEntry.INVALID_CLAIMED_ENTRY;
-      }
-      this.otherClaimedEntries = otherClaimedEntries;
-    }
-
-    public void add(long begin, long end) {
-      ClaimedEntry newClaimedEntry = new ClaimedEntry(begin, end);
-      if(!newClaimedEntry.isValid()) {
-        return;
-      }
-      makeCurrentValid();
-      if(!current.isValid()) {
-        current = newClaimedEntry;
-      } else {
-        otherClaimedEntries.add(newClaimedEntry);
-      }
-    }
-
-    public void addAll(ClaimedEntryList claimedEntryList) {
-      ClaimedEntry otherCurrent = claimedEntryList.getClaimedEntry();
-      add(otherCurrent.getBegin(), otherCurrent.getEnd());
-
-      claimedEntryList.otherClaimedEntries.remove(ClaimedEntry.INVALID_CLAIMED_ENTRY);
-      otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
-    }
-
-    public void moveForwardTo(long entryId) {
-      if(entryId < current.getBegin()) {
-        throw new IllegalArgumentException(String.format
-          ("entryId (%d) shoudl not be less than begin (%d)", entryId, current.getBegin()));
-      }
-      current = current.move(entryId);
-      makeCurrentValid();
-    }
-
-    private void makeCurrentValid() {
-      while(!current.isValid() && !otherClaimedEntries.isEmpty()) {
-        current = otherClaimedEntries.remove(0);
-      }
-    }
-
-    public ClaimedEntry getClaimedEntry() {
-      makeCurrentValid();
-      return current;
-    }
-
-    public int size() {
-      // TODO: use the claimed entry range to determine size
-      return (current.isValid() ? 1 : 0) + otherClaimedEntries.size();
-    }
-
-    @Override
-    public int compareTo(ClaimedEntryList claimedEntryList) {
-      if(this.size() > claimedEntryList.size()) {
-        return 1;
-      }
-      if(this.size() < claimedEntryList.size()) {
-        return -1;
-      }
-      return 0;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("current", current)
-        .add("otherClaimedEntries", otherClaimedEntries)
-        .toString();
-    }
-
-    public void encode(Encoder encoder) throws IOException {
-      // TODO: use common code to decode/encode lists
-      current.encode(encoder);
-      if(!otherClaimedEntries.isEmpty()) {
-        encoder.writeInt(otherClaimedEntries.size());
-        for(ClaimedEntry claimedEntry : otherClaimedEntries) {
-          claimedEntry.encode(encoder);
-        }
-      }
-      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-    }
-
-    public static ClaimedEntryList decode(Decoder decoder) throws IOException {
-      ClaimedEntry current = ClaimedEntry.decode(decoder);
-
-      int size = decoder.readInt();
-      List<ClaimedEntry> otherClaimedEntries = Lists.newLinkedList();
-
-      while(size > 0) {
-        for(int i = 0; i < size; ++i) {
-          otherClaimedEntries.add(ClaimedEntry.decode(decoder));
-        }
-        size = decoder.readInt();
-      }
-      return new ClaimedEntryList(current, otherClaimedEntries);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ClaimedEntryList that = (ClaimedEntryList) o;
-
-      if (!current.equals(that.current)) return false;
-      if (!otherClaimedEntries.equals(that.otherClaimedEntries)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = current.hashCode();
-      result = 31 * result + otherClaimedEntries.hashCode();
-      return result;
-    }
-  }
-
-  static class ClaimedEntry {
-    private final long begin;
-    private final long end;
-
-    static final ClaimedEntry INVALID_CLAIMED_ENTRY = new ClaimedEntry(INVALID_ENTRY_ID, INVALID_ENTRY_ID);
-    public static ClaimedEntry getInvalidClaimedEntry() {
-      return INVALID_CLAIMED_ENTRY;
-    }
-
-    public ClaimedEntry(long begin, long end) {
-      if(begin > end) {
-        throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
-      } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
-        // Both begin and end can be INVALID_ENTRY_ID
-        throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
-      }
-      this.begin = begin;
-      this.end = end;
-    }
-
-    public long getBegin() {
-      return begin;
-    }
-
-    public long getEnd() {
-      return end;
-    }
-
-    public ClaimedEntry move(long entryId) {
-      if(!isValid()) {
-        return this;
-      }
-      if(entryId > end) {
-        return getInvalidClaimedEntry();
-      }
-      return new ClaimedEntry(entryId, end);
-    }
-
-    public boolean isValid() {
-      return begin != INVALID_ENTRY_ID;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("begin", begin)
-        .add("end", end)
-        .toString();
-    }
-
-    public void encode(Encoder encoder) throws IOException {
-      encoder.writeLong(begin);
-      encoder.writeLong(end);
-    }
-
-    public static ClaimedEntry decode(Decoder decoder) throws IOException {
-      return new ClaimedEntry(decoder.readLong(), decoder.readLong());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ClaimedEntry that = (ClaimedEntry) o;
-
-      if (begin != that.begin) return false;
-      if (end != that.end) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (int) (begin ^ (begin >>> 32));
-      result = 31 * result + (int) (end ^ (end >>> 32));
-      return result;
-    }
-  }
-
   public static class QueueStateImpl implements QueueState {
     // Note: QueueStateImpl does not override equals and hashcode,
     // since in some cases we would want to include transient state in comparison and in some other cases not.
@@ -2643,6 +2429,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
       }
 
+      ClaimedEntryRange firstClaimed = queueState.getClaimedEntryList().getClaimedEntry();
+      if (firstClaimed.isValid() && firstClaimed.getBegin() < queueState.getConsumerReadPointer()) {
+        queueState.setConsumerReadPointer(firstClaimed.getBegin());
+      }
       // Add CLAIMED_ENTRY_LIST writeQueueStateStore so that they can be written
       // to underlying storage by base class saveDequeueState
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
@@ -2700,9 +2490,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If claimed entries exist, return them. This can happen when the queue cache is lost due to consumer
       // crash or other reasons
-      ClaimedEntry claimedEntry = queueState.getClaimedEntryList().getClaimedEntry();
-      if(claimedEntry.isValid()) {
-        for(long i = claimedEntry.getBegin(); i <= claimedEntry.getEnd(); ++i) {
+      ClaimedEntryRange claimedEntryRange = queueState.getClaimedEntryList().getClaimedEntry();
+      if(claimedEntryRange.isValid()) {
+        for(long i = claimedEntryRange.getBegin(); i <= claimedEntryRange.getEnd(); ++i) {
           newEntryIds.add(i);
         }
         return newEntryIds;

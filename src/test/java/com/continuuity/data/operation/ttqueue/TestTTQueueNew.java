@@ -37,7 +37,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  *
@@ -536,219 +535,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testClaimedEntry() {
-    TTQueueNewOnVCTable.ClaimedEntry claimedEntry = TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY;
-    for(int i = 0; i < 10; ++i) {
-      assertFalse(claimedEntry.isValid());
-      claimedEntry = claimedEntry.move(1);
-    }
-    assertFalse(claimedEntry.isValid());
-
-    claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(0, 5);
-    for(int i = 0; i < 6; ++i) {
-      assertTrue(claimedEntry.isValid());
-      claimedEntry = claimedEntry.move(claimedEntry.getBegin() + 1);
-    }
-    assertFalse(claimedEntry.isValid());
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(4, 2);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(TTQueueNewOnVCTable.INVALID_ENTRY_ID, 2);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(3, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-  }
-
-  @Test
-  public void testClaimedEntryListMove() {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
-    for(int i = 0; i < 10; ++i) {
-      assertFalse(claimedEntryList.getClaimedEntry().isValid());
-      claimedEntryList.moveForwardTo(1);
-    }
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(1, 5);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 1, 5);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(2, 9);
-    claimedEntryList.add(0, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 9);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 0, 20);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(6, 6);
-    claimedEntryList.add(2, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(3, 10);
-    claimedEntryList.add(4, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 6, 6);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 30);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 3, 10);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 4, 20);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(5, 10);
-    claimedEntryList.add(1, 3);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(5);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(8);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(8, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(20);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(1, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(3, claimedEntryList.getClaimedEntry().getEnd());
-
-    try {
-      claimedEntryList.moveForwardTo(0);
-      fail("Exception should be thrown here");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    claimedEntryList.moveForwardTo(4);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-  }
-
-  @Test
-  public void testClaimedEntryListAddAll() throws Exception {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList1.add(3, 5);
-    claimedEntryList1.add(15, 20);
-    claimedEntryList1.add(36, 41);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList2.add(1, 2);
-    claimedEntryList2.add(10, 14);
-    claimedEntryList2.add(45, 50);
-
-    claimedEntryList1.addAll(claimedEntryList2);
-
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 3, 5);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 15, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 36, 41);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 1, 2);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 10, 14);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 45, 50);
-    assertFalse(claimedEntryList1.getClaimedEntry().isValid());
-  }
-
-  private void verifyClaimedEntryListIncrementMove(TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList, long begin, long end) {
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(begin, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
-
-    for(long i = begin; i <= end; ++i, claimedEntryList.moveForwardTo(claimedEntryList.getClaimedEntry().getBegin() + 1)) {
-      assertTrue(claimedEntryList.getClaimedEntry().isValid());
-      assertEquals(i, claimedEntryList.getClaimedEntry().getBegin());
-      assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
-    }
-  }
-
-  @Test
-  public void testClaimedEntryListEncode() throws Exception {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
-    verifyClaimedEntryListEncode(claimedEntryList);
-
-    claimedEntryList.add(1, 5);
-    verifyClaimedEntryListEncode(claimedEntryList);
-
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(6, 6);
-    claimedEntryList.add(2, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(3, 10);
-    claimedEntryList.add(4, 20);
-    verifyClaimedEntryListEncode(claimedEntryList);
-  }
-
-  private void verifyClaimedEntryListEncode(TTQueueNewOnVCTable.ClaimedEntryList expected) throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    expected.encode(new BinaryEncoder(bos));
-    byte[] bytes = bos.toByteArray();
-
-    TTQueueNewOnVCTable.ClaimedEntryList actual = TTQueueNewOnVCTable.ClaimedEntryList.decode(
-      new BinaryDecoder(new ByteArrayInputStream(bytes)));
-
-    assertEquals(expected, actual);
-  }
-
-  @Test
-  public void testClaimedEntryListCompare() {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList1.add(2, 7);
-    claimedEntryList1.add(8, 16);
-    claimedEntryList1.add(25, 30);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList2.add(3, 4);
-    claimedEntryList2.add(7, 15);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList3 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList3.add(3, 8);
-    claimedEntryList3.add(15, 20);
-    claimedEntryList3.add(22, 30);
-    claimedEntryList3.add(10, 12);
-    claimedEntryList3.add(31, 35);
-
-    SortedSet<TTQueueNewOnVCTable.ClaimedEntryList> sortedSet = new TreeSet<TTQueueNewOnVCTable.ClaimedEntryList>();
-    sortedSet.add(claimedEntryList1);
-    sortedSet.add(claimedEntryList2);
-    sortedSet.add(claimedEntryList3);
-
-    assertEquals(claimedEntryList2, sortedSet.first());
-    sortedSet.remove(claimedEntryList2);
-    assertEquals(claimedEntryList1, sortedSet.first());
-    sortedSet.remove(claimedEntryList1);
-    assertEquals(claimedEntryList3, sortedSet.first());
-    sortedSet.remove(claimedEntryList3);
-    assertTrue(sortedSet.isEmpty());
-  }
-
-  @Test
-  public void testClaimedEntryEncode() throws Exception{
-    verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY);
-    verifyClaimedEntryEncode(new TTQueueNewOnVCTable.ClaimedEntry(2, 15));
-  }
-
-  private void verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry expected) throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    expected.encode(new BinaryEncoder(bos));
-    byte[] bytes = bos.toByteArray();
-
-    TTQueueNewOnVCTable.ClaimedEntry actual =
-      TTQueueNewOnVCTable.ClaimedEntry.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
-
-    assertEquals(expected, actual);
-  }
-
-  @Test
   public void testQueueStateImplEncode() throws Exception {
     TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
     List<DequeueEntry> dequeueEntryList = Lists.newArrayList(new DequeueEntry(2, 1), new DequeueEntry(3, 0));
@@ -766,9 +552,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long queueWritePointer = 6L;
     queueState.setQueueWritePointer(queueWritePointer);
 
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList(
-      new TTQueueNewOnVCTable.ClaimedEntry(4L, 6L),
-      Lists.newArrayList(new TTQueueNewOnVCTable.ClaimedEntry(7L, 8L), new TTQueueNewOnVCTable.ClaimedEntry(10L, 20L)));
+    ClaimedEntryList claimedEntryList = new ClaimedEntryList(
+      Lists.newArrayList(new ClaimedEntryRange(4L, 6L),
+                         new ClaimedEntryRange(7L, 8L),
+                         new ClaimedEntryRange(10L, 20L)));
     queueState.setClaimedEntryList(claimedEntryList);
 
     long lastEvictTimeInSecs = 124325342L;
@@ -781,7 +568,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void verifyQueueStateImplEncode(TTQueueNewOnVCTable.QueueStateImpl queueState,
                                           TransientWorkingSet transientWorkingSet, DequeuedEntrySet dequeuedEntrySet,
                                           long consumerReadPointer, long queueWritePointer,
-                                          TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList,
+                                          ClaimedEntryList claimedEntryList,
                                           long lastEvictTimeInSecs) throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     queueState.encodeTransient(new BinaryEncoder(bos));
@@ -1106,7 +893,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType
+      .ROUND_ROBIN);
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
@@ -1346,6 +1134,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
     testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    // this failed before claimed entry lists were sorted
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 50, 5, 3, partitionerType, condition);
   }
 
   private static final String HASH_KEY = "HashKey";
@@ -1411,12 +1201,17 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         List<StatefulQueueConsumer> workingConsumerList = Lists.newLinkedList(consumers);
         while(!workingConsumerList.isEmpty()) {
           QueueConsumer consumer = workingConsumerList.remove(random.nextInt(workingConsumerList.size()));
+          //QueueConsumer consumer = workingConsumerList.remove(0);
           int curBatchSize = random.nextInt(perConsumerDequeueBatchSize + 1);
+          //int curBatchSize = perConsumerDequeueBatchSize;
           debugCollector.write(String.format("Current batch size = %d%n", curBatchSize));
 
           for(int i = 0; i < curBatchSize; ++i) {
             ++numTriesThisRun;
             DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
+            debugCollector.write(consumer.getInstanceId() + " dequeued " +
+                                   (result.isEmpty() ? "<empty>" : "" + result.getEntryPointer().getEntryId()) +
+                                   ", state: " + consumer.getQueueState() + "\n");
             if(result.isEmpty()) {
               break;
             }
@@ -1424,6 +1219,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
             actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
             queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
+            queue.finalize(result.getEntryPointer(), consumer, 1, getDirtyWriteVersion());
             assertTrue(debugCollector.toString(),
                        condition.check(
                          result.getEntryPointer().getEntryId(),
