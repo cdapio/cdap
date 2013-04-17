@@ -559,8 +559,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return oldConsumerCount;
     }
 
-    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
-
     // Delete eviction information for all groups
     // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
     // we'll need to delete the eviction information for all groups so that we always maintain eviction information for

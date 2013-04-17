@@ -1964,8 +1964,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long groupId = 42;
     String groupName = "group";
     QueueConfig config = new QueueConfig(partitioner, false, 15, true);
+    QueueConsumer consumer0 = new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
     QueueConsumer consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer);
+    queue.configure(consumer0); // we must configure with instance #0
 
     // dequeue 15 -> 1 .. 29
     t = oracle.startTransaction();
