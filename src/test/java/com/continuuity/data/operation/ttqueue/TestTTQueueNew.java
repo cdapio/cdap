@@ -2182,4 +2182,47 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     int expected = partitioner == FIFO ? 10 : 5;
     assertEquals("Failure for " + groupName + ":", expected, numDequeued);
   }
+
+  // tests that if we use hash partitioning, we can also consume entries without hash key
+  @Test
+  public void testHashWithoutHashKey() throws OperationException {
+    TTQueue queue = createQueue();
+
+    // enqueue 20, then invalidate a batch of 10 in the middle
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    QueueConfig config = new QueueConfig(HASH, false, 4, true);
+    QueueConsumer[] consumers = {
+      new StatefulQueueConsumer(0, 17, 2, "or'ly", "non-existent-hash-key", config),
+      new StatefulQueueConsumer(1, 17, 2, "or'ly", "non-existent-hash-key", config) };
+    queue.configure(consumers[0]);
+
+    int numDequeued = 0;
+    boolean allEmpty;
+    do {
+      allEmpty = true;
+      for (QueueConsumer consumer : consumers) {
+        t = oracle.startTransaction();
+        DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+        oracle.commitTransaction(t);
+        if (result.isEmpty()) {
+          continue;
+        }
+        allEmpty = false;
+        numDequeued += result.getEntries().length;
+        t = oracle.startTransaction();
+        queue.ack(result.getEntryPointers(), consumer, t.getReadPointer());
+        queue.finalize(result.getEntryPointers(), consumer, 1, t.getWriteVersion());
+        oracle.commitTransaction(t);
+      }
+    } while (!allEmpty);
+
+    assertEquals(20, numDequeued);
+  }
 }
