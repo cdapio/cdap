@@ -1818,30 +1818,40 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   interface DequeueStrategy {
+    /**
+     * method to read the queue state from storage, in case it was not passed in with a request
+     */
     QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException;
+
+    /**
+     * method to read the queue state from storage or construct a new one (if called from configure)
+     */
     QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException;
+
+    /**
+     * method to fetch more entries into the queue state
+     */
     void fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
+
+    /**
+     * method to save the queue state to storage (dual to readQueueState)
+     */
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
 
     /**
-     *
-     * @param consumers List of current consumers. Needs to be sorted on instanceId
-     * @param queueStates
-     * @param config
-     * @param groupId
-     * @param currentConsumerCount
-     * @param newConsumerCount
-     * @param readPointer
-     * @throws OperationException
+     * configure all consumers of a group and persist the newly constructed consumer states
      */
     void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
                    long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
       throws OperationException;
 
+    /**
+     * delete a consumer state from storage, after reconfigure has removed that consumer
+     */
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
   }
@@ -2126,13 +2136,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
 
-    protected abstract List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config,
-                                                   QueueStateImpl queueState, ReadPointer readPointer)
-      throws OperationException;
-
-    protected abstract void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
-      throws OperationException;
-
     @Override
     public void fetchNextEntries(QueueConsumer consumer, QueueConfig config,
                                        QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
@@ -2153,6 +2156,20 @@ public class TTQueueNewOnVCTable implements TTQueue {
         break;
       }
     }
+
+    /**
+     * claim the next batch of entries from the queue using the partitioner, without reading the entry data yet
+     */
+    protected abstract List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config,
+                                                   QueueStateImpl queueState, ReadPointer readPointer)
+      throws OperationException;
+
+    /**
+     * mark the given entry ids as consumed, so that will not be claimed subsequently
+     */
+    protected abstract void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
+      throws OperationException;
+
   }
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
