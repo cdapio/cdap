@@ -94,7 +94,6 @@ enum TQueuePartitioner {
   FIFO,
   HASH,
   ROBIN,
-  HASH_ON_VALUE,
 }
 
 struct TQueueConfig {

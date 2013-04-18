@@ -36,6 +36,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
+// TODO: catch Runtime exception and translate it into OperationException
+// TODO: move all queue state manipulation methods into single class
+// TODO: use common code to decode/encode lists and maps
+// TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
+// TODO: use raw Get instead of the workaround of incrementAtomicDirtily(0)
+
 /**
  *
  */
@@ -125,10 +131,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final int defaultBatchSize = conf.getInt(TTQUEUE_BATCH_SIZE_DEFAULT, 100);
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
-    final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
     // Removing check for evictIntervalInSecs >= 0, since having it less than 0 does not cause errors in queue
-    // behaviour. -ve evictIntervalInSecs is needed for unit tests.
-    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs;
+    this.EVICT_INTERVAL_IN_SECS = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
 
     final int maxCrashDequeueTries = conf.getInt(TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 15);
     this.MAX_CRASH_DEQUEUE_TRIES = maxCrashDequeueTries > 0 ? maxCrashDequeueTries : 15;
@@ -168,37 +172,38 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     /*
     Insert each entry with version=<cleanWriteVersion> and
-    row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H<partitionKey>/<hashValue>
+    row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H/serialized hash keys
     */
 
     byte[][] rowKeys = new byte[n][];
     byte[][][] allColumnKeys = new byte[n][][];
     byte[][][] allColumnValues = new byte[n][][];
+
+    // we always write the hash keys - even if empty - to the ENTRY_HEADER column
+    // this is to distinguish entries without hash keys from entries that have no been written yet
+    // we write in reverse order of reading:
+    // - hash keys are read first - if at all - by the hash strategy. If it does not exist, fetch stops
+    // - entry meta is read next. If that does not exist, fetch stops
+    // - entry data is read last. We know it always exists if the entry meta exists
+    final byte[][] columnKeys = new byte[][] { ENTRY_DATA, ENTRY_META, ENTRY_HEADER };
+    final byte[] entryMetaValid = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+
     QueueEntryPointer[] returnPointers = new QueueEntryPointer[n];
 
     long entryId = lastEntryId - n;
     for (int i = 0; i < n; i++) {
       ++entryId; // this puts the first one at lastId - n + 1, and the last one at lastId
-      QueueEntry entry = entries[i];
-
-      final int size = entry.getPartitioningMap().size() + 2;
-      byte[][] colKeys = new byte[size][];
-      byte[][] colValues = new byte[size][];
-
-      int colKeyIndex = 0;
-      int colValueIndex = 0;
-      colKeys[colKeyIndex++] = ENTRY_DATA;
-      colKeys[colKeyIndex++] = ENTRY_META;
-      colValues[colValueIndex++] = entry.getData();
-      colValues[colValueIndex++] = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
-      for(Map.Entry<String, Integer> e : entry.getPartitioningMap().entrySet()) {
-        colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
-        colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
+      byte[] hashKeysBytes;
+      try {
+        hashKeysBytes = QueueEntry.serializeHashKeys(entries[i].getHashKeys());
+      } catch(IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing entry hash keys"), e);
       }
 
       rowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
-      allColumnKeys[i] = colKeys;
-      allColumnValues[i] = colValues;
+      allColumnKeys[i] = columnKeys;
+      allColumnValues[i] = new byte[][] { entries[i].getData(), entryMetaValid, hashKeysBytes };
       returnPointers[i] = new QueueEntryPointer(this.queueName, entryId);
     }
     // write all rows at once
@@ -234,8 +239,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       values[i] = ENTRY_META_INVALID;
     }
 
-    // TODO: check if it okay to use cleanWriteVersion during invalidate,
-    // TODO: what happens to values written using transaction pointer when transaction gets rolled back
     this.table.put(rowNames, columns, cleanWriteVersion, values);
     // No need to delete data/headers since they will be cleaned up during eviction later
     if (LOG.isTraceEnabled()) {
@@ -383,7 +386,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                       entryPointer.getEntryId(), queueState.getDequeueEntrySet())));
       }
       // Set ack state
-      // TODO: what happens when you ack and crash?
       queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
     }
     // Write ack state
@@ -393,7 +395,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
     throws OperationException {
-    // TODO: add tests for unack
+
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
@@ -403,7 +405,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // Set unack state
     // TODO: 1. Check if entry was really acked
     // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
-    // TODO: 2. queue cache.
+    //          queue cache. So unack should check whether it is in the cached set and read it if necessary
     for (QueueEntryPointer entryPointer : entryPointers) {
       queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
     }
@@ -453,7 +455,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
       QueueStateImpl queueState = null;
       try {
-        // TODO: read queue state in one call
         queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
       } catch(OperationException e) {
         if(e.getStatus() != StatusCode.NOT_CONFIGURED) {
@@ -528,6 +529,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // A simple leader election for selecting consumer to run eviction for group
     // Only consumers with id 0 (one per group)
+
     if(consumer.getInstanceId() != 0) {
       return;
     }
@@ -539,69 +541,72 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return;
     }
 
-    // TODO: can finalize throw exceptions?
-
     ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
-    // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
-    final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
-    QueueStateImpl queueState = getQueueState(consumer, readPointer);
-    if(evictStartTimeInSecs - queueState.getLastEvictTimeInSecs() < EVICT_INTERVAL_IN_SECS) {
-      return;
+    try {
+      // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
+      final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
+      QueueStateImpl queueState = getQueueState(consumer, readPointer);
+      if(evictStartTimeInSecs - queueState.getLastEvictTimeInSecs() < EVICT_INTERVAL_IN_SECS) {
+        return;
+      }
+
+      // Record things that need to be written to storage
+      List<byte[]> writeKeys = new ArrayList<byte[]>();
+      List<byte[]> writeCols = new ArrayList<byte[]>();
+      List<byte[]> writeValues = new ArrayList<byte[]>();
+
+      // Save evictStartTimeInSecs as LAST_EVICT_TIME_IN_SECS
+      writeKeys.add(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
+      writeCols.add(LAST_EVICT_TIME_IN_SECS);
+      writeValues.add(Bytes.toBytes(evictStartTimeInSecs));
+      queueState.setLastEvictTimeInSecs(evictStartTimeInSecs);
+
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format("Running eviction for group %d", consumer.getGroupId())));
+      }
+
+      // Find the min entry that can be evicted for the consumer's group
+      final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId());
+      // Save the minGroupEvictEntry for the consumer's group
+      if(minGroupEvictEntry != INVALID_ENTRY_ID) {
+        writeKeys.add(GLOBAL_EVICT_META_ROW);
+        writeCols.add(makeColumnName(GROUP_EVICT_ENTRY, consumer.getGroupId()));
+        writeValues.add(Bytes.toBytes(minGroupEvictEntry));
+      }
+
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format(
+          "minGroupEvictEntry=%d, groupId=%d", minGroupEvictEntry, consumer.getGroupId())));
+      }
+
+      // Only one consumer per queue will run the below eviction algorithm for the queue,
+      // all others will save minGroupEvictEntry and return
+      // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
+      final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
+      // Save the max of the entries that were evicted now
+      if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
+        writeKeys.add(GLOBAL_LAST_EVICT_ENTRY);
+        writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
+        writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
+      }
+
+      // Save the state
+      byte[][] keyArray = new byte[writeKeys.size()][];
+      byte[][] colArray = new byte[writeCols.size()][];
+      byte[][] valArray = new byte[writeValues.size()][];
+
+      table.put(writeKeys.toArray(keyArray), writeCols.toArray(colArray),
+                TransactionOracle.DIRTY_WRITE_VERSION, writeValues.toArray(valArray));
+
+    } catch (OperationException e) {
+      LOG.warn(getLogMessage(String.format("Eviction for group %d failed with exception", consumer.getGroupId())), e);
+      // ignore the error, we don't want throw exceptions in finalize()
     }
-
-    // Record things that need to be written to storage
-    List<byte[]> writeKeys = new ArrayList<byte[]>();
-    List<byte[]> writeCols = new ArrayList<byte[]>();
-    List<byte[]> writeValues = new ArrayList<byte[]>();
-
-    // Save evictStartTimeInSecs as LAST_EVICT_TIME_IN_SECS
-    writeKeys.add(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
-    writeCols.add(LAST_EVICT_TIME_IN_SECS);
-    writeValues.add(Bytes.toBytes(evictStartTimeInSecs));
-    queueState.setLastEvictTimeInSecs(evictStartTimeInSecs);
-
-    if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Running eviction for group %d", consumer.getGroupId())));
-    }
-
-    // Find the min entry that can be evicted for the consumer's group
-    final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId(), readPointer);
-    // Save the minGroupEvictEntry for the consumer's group
-    if(minGroupEvictEntry != INVALID_ENTRY_ID) {
-      writeKeys.add(GLOBAL_EVICT_META_ROW);
-      writeCols.add(makeColumnName(GROUP_EVICT_ENTRY, consumer.getGroupId()));
-      writeValues.add(Bytes.toBytes(minGroupEvictEntry));
-    }
-
-    if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format(
-        "minGroupEvictEntry=%d, groupId=%d", minGroupEvictEntry, consumer.getGroupId())));
-    }
-
-    // Only one consumer per queue will run the below eviction algorithm for the queue,
-    // all others will save minGroupEvictEntry and return
-    // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
-    final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
-    // Save the max of the entries that were evicted now
-    if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
-      writeKeys.add(GLOBAL_LAST_EVICT_ENTRY);
-      writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
-      writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
-    }
-
-    // Save the state
-    byte[][] keyArray = new byte[writeKeys.size()][];
-    byte[][] colArray = new byte[writeCols.size()][];
-    byte[][] valArray = new byte[writeValues.size()][];
-
-    // TODO: move all queue state manipulation into a single class
-    table.put(writeKeys.toArray(keyArray), writeCols.toArray(colArray),
-              TransactionOracle.DIRTY_WRITE_VERSION, writeValues.toArray(valArray));
   }
 
-  private long getMinGroupEvictEntry(QueueConsumer consumer, long currentConsumerFinalizeEntry,
-                                     ReadPointer readPointer) throws OperationException {
+  private long getMinGroupEvictEntry(QueueConsumer consumer, long currentConsumerFinalizeEntry)
+    throws OperationException {
     // Find out the min entry that can be evicted across all consumers in the consumer's group
 
     // Read CONSUMER_READ_POINTER and DEQUEUE_ENTRY_SET for all consumers in the group to determine evict entry
@@ -609,7 +614,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
       rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
     }
-    // TODO: move all queue state manipulation methods into single class
     OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult =
       table.getAllColumns(rowKeys,
                           new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, TransactionOracle.DIRTY_READ_POINTER);
@@ -724,8 +728,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
         return;
       }
 
-      // TODO: need to fix writing byte[0] to delete entries
-      // Write byte[0] to delete entries
+      // Write byte[0] to delete entries. If we delete, then HBase may not allow us to add these rows again in the
+      // future (this is due to using the same dirty time stamp every time)
       byte[][] columnKeys = new byte[groupEvictEntries.size()][];
       byte[][] values = new byte[groupEvictEntries.size()][];
       int i = 0;
@@ -769,7 +773,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   private long runEviction(QueueConsumer consumer, long currentGroupMinEvictEntry,
                            int totalNumGroups, ReadPointer readPointer) throws OperationException {
     // Read eviction state from table
-    // TODO: move all queue state reads to a single class
     EvictionState evictionState = new EvictionState(table);
     evictionState.readEvictionState(readPointer);
 
@@ -835,32 +838,31 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return INVALID_ENTRY_ID;
     }
 
-      final long startEvictEntry = lastEvictedEntry + 1;
+    final long startEvictEntry = lastEvictedEntry + 1;
 
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
-      }
+    if(LOG.isTraceEnabled()) {
+      LOG.trace(getLogMessage(String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
+    }
 
-      // Evict entries
-      int i = 0;
-      byte[][] deleteKeys = new byte[(int) (maxEntryToEvict - startEvictEntry) + 1][];
-      for(long id = startEvictEntry; id <= maxEntryToEvict; ++id) {
-        deleteKeys[i++] = makeRowKey(GLOBAL_DATA_PREFIX, id);
-      }
-      this.table.deleteDirty(deleteKeys);
+    // Evict entries
+    int i = 0;
+    byte[][] deleteKeys = new byte[(int) (maxEntryToEvict - startEvictEntry) + 1][];
+    for(long id = startEvictEntry; id <= maxEntryToEvict; ++id) {
+      deleteKeys[i++] = makeRowKey(GLOBAL_DATA_PREFIX, id);
+    }
+    this.table.deleteDirty(deleteKeys);
 
     return maxEntryToEvict;
   }
 
   @Override
   public long getGroupID() throws OperationException {
-    // TODO: implement this :)
     return this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
   }
 
   @Override
   public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
-    // TODO: implement this :)
+    // TODO: implement getQueueInfo()
     return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
   }
 
@@ -899,10 +901,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   protected static byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
-    return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
-  }
-
-  protected static byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
   }
 
@@ -959,14 +957,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       DequeueEntry that = (DequeueEntry) o;
-
-      if (entryId != that.entryId) return false;
-
-      return true;
+      return entryId == that.entryId;
     }
 
     @Override
@@ -1047,7 +1045,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public SortedSet<Long> startNewTry(final long maxCrashDequeueTries) {
       SortedSet<Long> droppedEntries = new TreeSet<Long>();
-      // TODO: Right now we increment tries and remove all dequeueed entries no matter which entry caused the crash.
       for(Iterator<DequeueEntry> it = entrySet.iterator(); it.hasNext();) {
         DequeueEntry entry = it.next();
         entry.incrementTries();
@@ -1079,7 +1076,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public static DequeuedEntrySet decode(Decoder decoder) throws IOException {
       int size = decoder.readInt();
-      // TODO: return empty set if size == 0
       DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
@@ -1092,14 +1088,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       DequeuedEntrySet that = (DequeuedEntrySet) o;
-
-      if (entrySet != null ? !entrySet.equals(that.entrySet) : that.entrySet != null) return false;
-
-      return true;
+      return entrySet == null ? that.entrySet == null : entrySet.equals(that.entrySet);
     }
 
     @Override
@@ -1124,7 +1120,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       List<DequeueEntry> entries = Lists.newArrayListWithCapacity(entryIds.size());
       for(long id : entryIds) {
         if(!cachedEntries.containsKey(id)) {
-          // TODO: catch Runtime exception and translate it into OperationException
           throw new IllegalArgumentException(String.format("Cached entries does not contain entry %d", id));
         }
         entries.add(new DequeueEntry(id, 0));
@@ -1195,7 +1190,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public static TransientWorkingSet decode(Decoder decoder) throws IOException {
       int size = decoder.readInt();
-      // TODO: return empty set if size == 0
       List<DequeueEntry> entries = Lists.newArrayListWithExpectedSize(size);
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
@@ -1219,26 +1213,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
+      if (this == o) {
+        return true;
+      }
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-
       TransientWorkingSet that = (TransientWorkingSet) o;
-
-      if (curPtr != that.curPtr) {
-        return false;
-      }
-      if (cachedEntries != null ?
-        !cachedEntriesEquals(cachedEntries, that.cachedEntries) :
-        that.cachedEntries != null) {
-        return false;
-      }
-      if (entryList != null ? !entryList.equals(that.entryList) : that.entryList != null) {
-        return false;
-      }
-
-      return true;
+      return (curPtr == that.curPtr) &&
+        (entryList == null ? that.entryList == null : entryList.equals(that.entryList)) &&
+        (cachedEntries == null ? that.cachedEntries == null : cachedEntriesEquals(cachedEntries, that .cachedEntries));
     }
 
     private static boolean cachedEntriesEquals(Map<Long, byte[]> cachedEntries1, Map<Long, byte[]> cachedEntries2) {
@@ -1287,7 +1271,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public boolean isRedundant(long minAckEntryId) {
-      return minAckEntryId > maxAckEntryId ? true : false;
+      return minAckEntryId > maxAckEntryId;
     }
 
     public void encode(Encoder encoder) throws IOException {
@@ -1303,15 +1287,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       ReconfigPartitionInstance that = (ReconfigPartitionInstance) o;
-
-      if (instanceId != that.instanceId) return false;
-      if (maxAckEntryId != that.maxAckEntryId) return false;
-
-      return true;
+      return instanceId == that.instanceId && maxAckEntryId == that.maxAckEntryId;
     }
 
     @Override
@@ -1340,7 +1323,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return EMPTY_RECONFIG_PARTITIONER;
     }
 
-    // TODO: convert this into a Builder
     private ReconfigPartitioner() {
       groupSize = 0;
       partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
@@ -1364,65 +1346,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       reconfigPartitionInstances.add(info);
     }
 
-    public int getGroupSize() {
-      return groupSize;
-    }
-
-    public PartitionerType getPartitionerType() {
-      return partitionerType;
-    }
-
-    public List<ReconfigPartitionInstance> getReconfigPartitionInstances() {
-      return reconfigPartitionInstances;
-    }
-
-    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
     @Override
-    public boolean isDisjoint() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
-      QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
-        // Ignore passed in groupSize and instanceId since we are partitioning using old information
-        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
-        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
-          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, value)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
       for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
         // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
         if(entryId <= reconfigInfo.getMaxAckEntryId() &&
           partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, hash)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
-        // Ignore passed in groupSize and instanceId since we are partitioning using old information
-        // No consumer with reconfigInfo.getInstanceId() should have already acked entryId
-        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
-          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId)) {
           return false;
         }
       }
@@ -1445,7 +1376,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
           "Groupsize: %d is not equal to partition information objects %d", groupSize, reconfigPartitionInstances.size()));
       }
 
-      // TODO: use common code to decode/encode lists
       if(!reconfigPartitionInstances.isEmpty()) {
         // Note: we are not writing reconfigPartitionInstances.size() again, we use groupSize as the size of the list
         encoder.writeInt(groupSize)
@@ -1458,7 +1388,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public static ReconfigPartitioner decode(Decoder decoder) throws IOException {
-      // TODO: use common code to decode/encode lists
       // Note: we are not reading reconfigPartitionInstances.size() again, we use groupSize as the size of the list
       int groupSize = decoder.readInt();
       if(groupSize == 0) {
@@ -1485,16 +1414,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       ReconfigPartitioner that = (ReconfigPartitioner) o;
-
-      if (groupSize != that.groupSize) return false;
-      if (partitionerType != that.partitionerType) return false;
-      if (!reconfigPartitionInstances.equals(that.reconfigPartitionInstances)) return false;
-
-      return true;
+      return groupSize == that.groupSize &&
+        partitionerType == that.partitionerType &&
+        reconfigPartitionInstances.equals(that.reconfigPartitionInstances);
     }
 
     @Override
@@ -1519,7 +1448,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private final List<ReconfigPartitioner> reconfigPartitioners;
 
     private static final ReconfigPartitionersList EMPTY_RECONFIGURATION_PARTITIONERS_LIST =
-      new ReconfigPartitionersList(Collections.EMPTY_LIST);
+      new ReconfigPartitionersList(Collections.<ReconfigPartitioner>emptyList());
 
     public static ReconfigPartitionersList getEmptyList() {
       return EMPTY_RECONFIGURATION_PARTITIONERS_LIST;
@@ -1533,44 +1462,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return reconfigPartitioners;
     }
 
-    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
     @Override
-    public boolean isDisjoint() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
-      // Return false if the entry has been acknowledged by any of the previous partitions
-      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
-        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, value)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       // Return false if the entry has been acknowledged by any of the previous partitions
       for(ReconfigPartitioner partitioner : reconfigPartitioners) {
         if(!partitioner.shouldEmit(groupSize, instanceId, entryId, hash)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      // Return false if the entry has been acknowledged by any of the previous partitions
-      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
-        if(!partitioner.shouldEmit(groupSize, instanceId, entryId)) {
           return false;
         }
       }
@@ -1595,7 +1491,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void encode(Encoder encoder) throws IOException {
-      // TODO: use common code to decode/encode lists
       if(!reconfigPartitioners.isEmpty()) {
         encoder.writeInt(reconfigPartitioners.size());
         for(ReconfigPartitioner partitioner : reconfigPartitioners) {
@@ -1623,15 +1518,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ReconfigPartitionersList that = (ReconfigPartitionersList) o;
-
-      if (reconfigPartitioners != null ? !reconfigPartitioners.equals(that.reconfigPartitioners) : that.reconfigPartitioners != null)
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
         return false;
-
-      return true;
+      }
+      ReconfigPartitionersList that = (ReconfigPartitionersList) o;
+      return Objects.equal(reconfigPartitioners, that.reconfigPartitioners);
     }
 
     @Override
@@ -1762,20 +1656,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private static class QueueStateStore {
     private final VersionedColumnarTable table;
-    private final TransactionOracle oracle;
     private byte[] rowKey;
     private final List<byte[]> columnNames = Lists.newArrayList();
     private final List<byte[]> columnValues = Lists.newArrayList();
 
     private OperationResult<Map<byte[], byte[]>> readResult;
 
-    private QueueStateStore(VersionedColumnarTable table, TransactionOracle oracle) {
+    private QueueStateStore(VersionedColumnarTable table) {
       this.table = table;
-      this.oracle = oracle;
-    }
-
-    public byte[] getRowKey() {
-      return rowKey;
     }
 
     public void setRowKey(byte[] rowKey) {
@@ -1848,17 +1736,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
                    long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
       throws OperationException;
-
-    /**
-     * delete a consumer state from storage, after reconfigure has removed that consumer
-     */
-    void deleteDequeueState(QueueConsumer consumer) throws OperationException;
-
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
-    protected final QueueStateStore readQueueStateStore = new QueueStateStore(table, oracle);
-    protected final QueueStateStore writeQueueStateStore = new QueueStateStore(table, oracle);
+    protected final QueueStateStore readQueueStateStore = new QueueStateStore(table);
+    protected final QueueStateStore writeQueueStateStore = new QueueStateStore(table);
     protected SortedSet<Long> droppedEntries = ImmutableSortedSet.of();
 
     /**
@@ -1877,7 +1759,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     protected long getLastEvictEntry() throws OperationException {
-      QueueStateStore readEvictState = new QueueStateStore(table, oracle);
+      QueueStateStore readEvictState = new QueueStateStore(table);
       readEvictState.setRowKey(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.read();
@@ -1886,8 +1768,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(!evictStateBytes.isEmpty()) {
         byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
         if(!isNullOrEmpty(lastEvictEntryBytes)) {
-          long lastEvictEntry = Bytes.toLong(lastEvictEntryBytes);
-          return lastEvictEntry;
+          return Bytes.toLong(lastEvictEntryBytes);
         }
       }
       return INVALID_ENTRY_ID;
@@ -1897,7 +1778,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException {
       // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
-      return constructQueueStateInternal(consumer, config, readPointer, false); // TODO: change to false
+      return constructQueueStateInternal(consumer, config, readPointer, false);
     }
 
     @Override
@@ -1913,7 +1794,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                              ReadPointer readPointer, boolean construct) throws OperationException {
-      // TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
       // Note: 1. QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
 
       // Note: 2. We define a deleted cell as no bytes or no zero length bytes.
@@ -1970,7 +1850,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Read queue write pointer
-      // TODO: use raw Get instead of the workaround of incrementing zero
       long queueWritePointer = table.incrementAtomicDirtily(
         makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
       queueState.setQueueWritePointer(queueWritePointer);
@@ -1979,16 +1858,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // This is the crash recovery case, the consumer has stopped processing before acking the previous dequeues
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         droppedEntries = queueState.getDequeueEntrySet().startNewTry(MAX_CRASH_DEQUEUE_TRIES);
-        // TODO: what do we do with the dropped entries?
         if(!droppedEntries.isEmpty() && LOG.isWarnEnabled()) {
           LOG.warn(getLogMessage(String.format("Dropping entries %s after %d tries",
                                                droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
         }
-
-        // TODO: Do we still need the entries to be in dequeue list?
-        // TODO: If not, what happens if the consumer crashes again before the claimed entries are processed?
         // Any previously dequeued entries will now need to be dequeued again
-        readEntries(consumer, config, queueState, readPointer, queueState.getDequeueEntrySet().getEntryIds());
+        readEntries(queueState, readPointer, queueState.getDequeueEntrySet().getEntryIds());
       }
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format("Constructed new QueueState - %s", queueState)));
@@ -2031,7 +1906,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       writeQueueStateStore.write();
     }
 
-    @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       // Delete queue state for the consumer, see notes in constructQueueStateInternal
 
@@ -2050,11 +1924,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     /**
-     * @returns true if all entries were skipped because they are invalid or evicted. That means we have to move the
+     * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
      * consumer past these entries and fetch again.
      */
-    protected boolean readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
-                                  ReadPointer readPointer, List<Long> entryIds) throws OperationException{
+    protected boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+      throws OperationException
+    {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format("Reading entries from storage - %s", entryIds)));
       }
@@ -2145,7 +2020,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         if (nextEntryIds.isEmpty()) {
           return;
         }
-        boolean allInvalid = readEntries(consumer, config, queueState, readPointer, nextEntryIds);
+        boolean allInvalid = readEntries(queueState, readPointer, nextEntryIds);
         if (allInvalid) {
           // all the entries returned by the dequeue strategy are invalid.
           // we must ignore them and remember that in the queue state, and try again
@@ -2289,14 +2164,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
             queueState.setConsumerReadPointer(minAckedEntryId);
           }
         }
-        // TODO: save queue states for all consumers in a single call
         saveDequeueState(consumer, config, queueState, readPointer);
       }
 
       // Delete queue state for removed consumers, if any
       for(int j = newConsumerCount; j < currentConsumerCount; ++j) {
         QueueConsumer consumer = currentConsumers.get(j);
-        // TODO: save and delete queue states for all consumers in a single call
         deleteDequeueState(consumer);
       }
     }
@@ -2321,7 +2194,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
         if(entryId >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers
-          // TODO: use raw Get instead of the workaround of incrementing zero
           long queueWritePointer = table.incrementAtomicDirtily(
             makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
@@ -2330,7 +2202,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
         }
 
@@ -2351,8 +2223,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         for(int id = 0; id < cacheSize; ++id) {
           rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
         }
-        final byte[][] columnKeys = new byte[1][];
-        columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
+        final byte[][] columnKeys = { ENTRY_HEADER };
         OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult =
           table.getAllColumns(rowKeys, columnKeys, readPointer);
 
@@ -2365,14 +2236,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
           if (!headerResult.isEmpty()) {
             Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
             Map<byte[], byte[]> headerMap = headerValue.get(rowKeys[id]);
-            if(headerMap == null) {
+            byte[] hashBytes = headerMap == null ? null : headerMap.get(ENTRY_HEADER);
+            if (hashBytes == null) {
+              // every existing entry has hashBytes. If it is null, we have reached the end of queue
               break outerLoop;
             }
-            byte[] hashBytes = headerMap.get(columnKeys[0]);
-            if(hashBytes == null) {
-              break outerLoop;
+            Map<String, Integer> hashKeyMap;
+            try {
+              hashKeyMap = QueueEntry.deserializeHashKeys(hashBytes);
+            } catch(IOException e) {
+              throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                           getLogMessage("Exception while deserializing hash keys"), e);
             }
-            int hashValue = Bytes.toInt(hashBytes);
+            Integer hashValue = hashKeyMap.get(partitioningKey);
             if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
               queueState.getReconfigPartitionersList().shouldEmit(
                 consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue)
@@ -2402,13 +2278,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
         if(entryId >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers
-          // TODO: use raw Get instead of the workaround of incrementing zero
           long queueWritePointer = table.incrementAtomicDirtily(
             makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
         }
 
@@ -2426,10 +2301,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
             break;
           }
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitionersList()
-              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
-            ) {
+          if (partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, null)
+            && queueState.getReconfigPartitionersList()
+              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, null)) {
             newEntryIds.add(currentEntryId);
           }
         }
@@ -2514,15 +2388,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     /**
      * Returns the group read pointer for the consumer. This also initializes the group read pointer
      * when the consumer group is starting for the first time.
-     * @param consumer
      * @return group read pointer
      * @throws OperationException
      */
     private long getGroupReadPointer(QueueConsumer consumer) throws OperationException {
       // Fetch the group read pointer
       final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
-      // TODO: use raw Get instead of the workaround of incrementing zero
-      // TODO: move counters into oracle
       long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
 
       // If read pointer is zero then this the first time the consumer group is running, initialize the read pointer
@@ -2556,15 +2427,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // Else claim new queue entries
       final int batchSize = getBatchSize(config);
-      QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
         // Fetch the group read pointer
         long groupReadPointer = getGroupReadPointer(consumer);
         if(groupReadPointer + batchSize >= queueState.getQueueWritePointer()) {
           // Reached the end of queue as per cached QueueWritePointer,
           // read it again to see if there is any progress made by producers
-          // TODO: use raw Get instead of the workaround of incrementing zero
-          // TODO: move counters into oracle
           long queueWritePointer = table.incrementAtomicDirtily(
             makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
@@ -2572,7 +2440,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // End of queue reached
         if(groupReadPointer >= queueState.getQueueWritePointer()) {
-          return Collections.EMPTY_LIST;
+          return Collections.emptyList();
         }
 
         // If there are enough entries for all consumers to claim, then claim batchSize entries
@@ -2600,13 +2468,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Determine which entries  need to be read from storage based on partition type
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          // TODO: No need for partitioner in FIFO
-          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitionersList().
-              shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
-            ) {
-            newEntryIds.add(currentEntryId);
-          }
+          newEntryIds.add(currentEntryId);
         }
       }
       return newEntryIds;
@@ -2628,7 +2490,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
           StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
           consumer.setQueueState(queueState);
-          // TODO: save queue states for all consumers in a single call
           saveDequeueState(consumer, config, queueState, readPointer);
         }
         return;
@@ -2662,16 +2523,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // Save dequeue state of consumers that won't be removed
       for(int i = 0; i < newConsumerCount; ++i) {
-        // TODO: save queue states for all consumers in a single call
         saveDequeueState(currentConsumers.get(i), config, queueStates.get(i), readPointer);
       }
 
       // Delete the state of removed consumers
       for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
-        // TODO: save and delete queue states for all consumers in a single call
         deleteDequeueState(currentConsumers.get(i));
       }
-      return;
     }
   }
 }

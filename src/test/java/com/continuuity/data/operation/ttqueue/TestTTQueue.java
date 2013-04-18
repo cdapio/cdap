@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -378,6 +379,8 @@ public abstract class TestTTQueue {
     final int numQueueEntries = 8;
     final int numConsumers = 4;
     final int consumerGroupId = 0;
+    final String consumerGroupName = "group0";
+    final String hashKey = "h";
     TTQueue queue = createQueue();
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
@@ -385,17 +388,17 @@ public abstract class TestTTQueue {
     QueueEntry[] queueEntries = new QueueEntry[numQueueEntries];
     for(int i=0; i<numQueueEntries; i++) {
       queueEntries[i]=new QueueEntry(Bytes.toBytes("value"+i%numConsumers));
-      queueEntries[i].addPartitioningKey("hashKey",i);
+      queueEntries[i].addHashKey(hashKey, i);
       assertTrue(queue.enqueue(queueEntries[i], dirtyVersion).isSuccess());
     }
     // enqueue two entries
 
     // dequeue it with the single consumer and FIFO partitioner
-    QueueConfig config = new QueueConfig(PartitionerType.HASH_ON_VALUE, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for(int i=0; i<numConsumers; i++) {
-      consumers[i]=new QueueConsumer(i,consumerGroupId,numConsumers,config);
+      consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, consumerGroupName, hashKey, config);
     }
     for(int i=0; i<numConsumers; i++) {
       DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
@@ -1025,18 +1028,18 @@ public abstract class TestTTQueue {
     int n=100;
     EnqueueResult [] results = new EnqueueResult[n];
     for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(new QueueEntry(Bytes.toBytes(i+1)), version);
+      results[i] = queue.enqueue(new QueueEntry(Collections.singletonMap("h", i+1), Bytes.toBytes(i+1)), version);
       assertTrue(results[i].isSuccess());
     }
     // we want to verify at the end of the test we acked every entry
     Set<Integer> acked = new TreeSet<Integer>();
 
     // use multi config
-    PartitionerType hashPartitionerType = PartitionerType.HASH_ON_VALUE;
+    PartitionerType hashPartitionerType = PartitionerType.HASH;
     QueueConfig config = new QueueConfig(hashPartitionerType, false);
     // two consumers with a hash partitioner, both single mode
-    QueueConsumer consumer1 = new QueueConsumer(0, 0, 2, config);
-    QueueConsumer consumer2 = new QueueConsumer(1, 0, 2, config);
+    QueueConsumer consumer1 = new QueueConsumer(0, 0, 2, "0", "h", config);
+    QueueConsumer consumer2 = new QueueConsumer(1, 0, 2, "0", "h", config);
 
     // dequeue all entries for consumer 1 but only ack until the first hole
     boolean ack = true;
