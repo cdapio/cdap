@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -57,6 +56,11 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
   @Override
   public void emit(T data) {
     emit(data, ImmutableMap.<String, Object>of());
+  }
+
+  @Override
+  public void emit(T data, String partitionKey, Object partitionValue) {
+    emit(data, ImmutableMap.of(partitionKey, partitionValue));
   }
 
   @Override

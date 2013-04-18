@@ -22,20 +22,22 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
   private final int instanceId;
   private final long groupId;
   private final String groupName;
-  private final QueueConfig queueConfig;
   private final QueueName queueName;
+  private final PartitionInfo partitionInfo;
+  private final boolean sync;
 
   @Inject
   public StatefulQueueConsumerFactory(OperationExecutor opex, @Assisted Program program, @Assisted int instanceId,
-                                      @Assisted long groupId, @Assisted String groupName,
-                                      @Assisted QueueConfig queueConfig, @Assisted QueueName queueName) {
+                                      @Assisted long groupId, @Assisted String groupName, @Assisted QueueName queueName,
+                                      @Assisted PartitionInfo partitionInfo, @Assisted boolean singleEntry) {
     this.opex = opex;
     this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.instanceId = instanceId;
     this.groupId = groupId;
     this.groupName = groupName;
-    this.queueConfig = queueConfig;
     this.queueName = queueName;
+    this.partitionInfo = partitionInfo;
+    this.sync = singleEntry;
   }
 
   /**
@@ -45,15 +47,17 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
    */
   @Override
   public QueueConsumer create(int groupSize) {
-    StatefulQueueConsumer queueConsumer =
-      new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName, queueConfig);
+    QueueConfig queueConfig = new QueueConfig(partitionInfo.getPartitionerType(), sync);
+
+    StatefulQueueConsumer queueConsumer = new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName,
+                                                                    partitionInfo.getPartitionKey(), queueConfig);
 
     // configure the queue
     try {
       opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
     } catch (OperationException e) {
       // There is nothing much that can be done to resolve this OperationException, propagate it as a runtime exception
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);    // Using throw to suppress warning
     }
 
     return queueConsumer;

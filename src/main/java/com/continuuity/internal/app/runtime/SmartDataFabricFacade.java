@@ -1,19 +1,19 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.app.queue.QueueName;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
+import com.continuuity.internal.app.queue.QueueConsumerFactory.PartitionInfo;
 import com.continuuity.internal.app.queue.StatefulQueueConsumerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -61,8 +61,10 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
 
   @Override
   public QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName,
-                                                         QueueConfig queueConfig, QueueName queueName) {
-    return new StatefulQueueConsumerFactory(opex, program, instanceId, groupId, groupName, queueConfig, queueName);
+                                                         QueueName queueName, PartitionInfo partitionInfo,
+                                                         boolean singleEntry) {
+    return new StatefulQueueConsumerFactory(opex, program, instanceId, groupId, groupName, queueName, partitionInfo,
+                                            singleEntry);
   }
 
   private DataSetContext createDataSetContext(Program program, OperationExecutor opex, TransactionProxy proxy) {
