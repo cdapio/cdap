@@ -335,73 +335,63 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
+  public synchronized long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
     PreparedStatement ps = null;
-    long newAmount = amount;
-      try {
-//        try {
-//          ps = this.connection.prepareStatement(
-//            "MERGE INTO "+ this.quotedTableName + " " +
-//            "USING (VALUES(?,?,?,?,?) " +
-//            "AS vals(rowkey, column, version, kvtype, value)) " +
-//            "ON rowkey=vals.rowkey and column=vals.column and kvtype=3" +
-//            "WHEN MATCHED THEN UPDATE SET value=CONVERT(CONVERT(value, SQL_BIGINT)+?,SQL_BINARY) "+
-//            "WHEN NOT MATCHED THEN INSERT VALUES (?,?,?,?,?)");
-//          ps.setBytes(1, row);
-//          ps.setBytes(2, column);
-//          ps.setLong(3, writeVersion);
-//          ps.setInt(4, Type.VALUE.i);
-//          ps.setBytes(5, Bytes.toBytes(newAmount));
-//          ...
-//          ps.executeUpdate();
-//          ps.close();
-//        } catch (SQLException e) {
-//          handleSQLException(e, "merge");
-//        }
-      try {
+    try {
+      //Execute select/insert update in one transaction.
+      this.connection.setAutoCommit(false);
+
+      ps = this.connection.prepareStatement(
+             "SELECT version, kvtype, id, value " +
+             "FROM " + this.quotedTableName + " " +
+             "WHERE rowkey = ? AND column = ? AND kvtype = 3 " +
+             "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps.setBytes(1, row);
+      ps.setBytes(2, column);
+
+      ResultSet result = ps.executeQuery();
+      ps.close();
+
+      ImmutablePair<Long, byte[]> latest = latest(result);
+      long newAmount = amount;
+
+      if(latest == null) {
         ps = this.connection.prepareStatement(
-          "SELECT version, kvtype, id, value " +
-            "FROM " + this.quotedTableName + " " +
-            "WHERE rowkey = ? AND column = ? " +
-            "ORDER BY version DESC, kvtype ASC, id DESC");
-        ps.setBytes(1, row);
-        ps.setBytes(2, column);
-        ResultSet result = ps.executeQuery();
-        ImmutablePair<Long, byte[]> latest = latest(result);
-        if (latest != null) {
-          try {
-            newAmount += Bytes.toLong(latest.getSecond());
-          } catch(IllegalArgumentException e) {
-            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
-          }
-        }
-        ps.close();
-      } catch (SQLException e) {
-        throw createOperationException(e, "select");
-      }
-      try {
-        ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.quotedTableName + " (rowkey, column, version, kvtype, value) " +
-            "VALUES ( ? , ? , ? , ? , ?)");
+              "INSERT INTO " + this.quotedTableName +
+              " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
         ps.setBytes(1, row);
         ps.setBytes(2, column);
         ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
         ps.setInt(4, Type.VALUE.i);
         ps.setBytes(5, Bytes.toBytes(newAmount));
         ps.executeUpdate();
-      } catch (SQLException e) {
-        throw createOperationException(e, "insert");
+      } else {
+        ps = this.connection.prepareStatement(
+              "UPDATE " + this.quotedTableName +
+              " SET value = ? " +
+              " WHERE rowkey = ? AND column = ? AND version = ? "
+        );
+        newAmount = Bytes.toLong(latest.getSecond()) + amount;
+        ps.setBytes(1, Bytes.toBytes(newAmount));
+        ps.setBytes(2, row);
+        ps.setBytes(3, column);
+        ps.setLong(4, TransactionOracle.DIRTY_WRITE_VERSION);
+        ps.executeUpdate();
       }
+      this.connection.commit();
+      return newAmount;
+    } catch (SQLException e) {
+      throw createOperationException(e, "compareAndSwap");
     } finally {
-      if (ps != null) {
-        try {
+      try {
+        this.connection.setAutoCommit(true);
+        if (ps != null) {
           ps.close();
-        } catch (SQLException e) {
-          throw createOperationException(e, "close");
         }
+      } catch (SQLException e) {
+        throw createOperationException(e, "close");
       }
     }
-    return newAmount;
   }
 
   @Override
