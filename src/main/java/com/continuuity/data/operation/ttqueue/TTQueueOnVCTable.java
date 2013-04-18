@@ -387,10 +387,8 @@ public class TTQueueOnVCTable implements TTQueue {
       if (!readPointer.isVisible(entryMetaDataAndStamp.getSecond())) {
         // This is currently being enqueued in an uncommitted transaction,
         // wait and loop back without changing entry pointer
-        log("Data exists but is not yet visible at " + entryPointer +
-            ", retrying");
-        quickWait();
-        return new DequeueResult(DequeueStatus.RETRY);
+        log("Data exists but is not yet visible at " + entryPointer + ", returning empty.");
+        return new DequeueResult(DequeueStatus.EMPTY);
       }
 
       // Queue entry exists and is visible, check the global state of it

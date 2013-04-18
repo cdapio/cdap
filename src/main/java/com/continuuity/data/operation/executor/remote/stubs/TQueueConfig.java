@@ -304,7 +304,7 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       if (value == null) {
         unsetSingleEntry();
       } else {
-        setSingleEntry((Boolean) value);
+        setSingleEntry((Boolean)value);
       }
       break;
 
@@ -312,7 +312,7 @@ public class TQueueConfig implements org.apache.thrift.TBase<TQueueConfig, TQueu
       if (value == null) {
         unsetBatchSize();
       } else {
-        setBatchSize((Integer) value);
+        setBatchSize((Integer)value);
       }
       break;
 

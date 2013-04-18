@@ -825,8 +825,6 @@ public class ConverterUtils {
     TDequeueStatus status;
     if (DequeueResult.DequeueStatus.EMPTY.equals(result.getStatus())) {
       status = TDequeueStatus.EMPTY;
-    } else if (DequeueResult.DequeueStatus.RETRY.equals(result.getStatus())) {
-      status = TDequeueStatus.RETRY;
     } else if (DequeueResult.DequeueStatus.SUCCESS.equals(result.getStatus())) {
       status = TDequeueStatus.SUCCESS;
     } else {
@@ -869,8 +867,6 @@ public class ConverterUtils {
       TDequeueStatus tStatus = tDequeueResult.getStatus();
       if (TDequeueStatus.EMPTY.equals(tStatus)) {
         status = DequeueResult.DequeueStatus.EMPTY;
-      } else if (TDequeueStatus.RETRY.equals(tStatus)) {
-        status = DequeueResult.DequeueStatus.RETRY;
       } else {
         String message =
             "Internal Error: Received an unknown dequeue status of " + tStatus;

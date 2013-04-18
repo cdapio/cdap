@@ -77,10 +77,6 @@ public class DequeueResult {
     return this.status == DequeueStatus.EMPTY;
   }
 
-  public boolean shouldRetry() {
-    return this.status == DequeueStatus.RETRY;
-  }
-
   public DequeueStatus getStatus() {
     return this.status;
   }
@@ -102,7 +98,7 @@ public class DequeueResult {
   }
 
   public static enum DequeueStatus {
-    SUCCESS, EMPTY, RETRY
+    SUCCESS, EMPTY
   }
 
   @Override
