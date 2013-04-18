@@ -1389,20 +1389,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
-      QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
-        // Ignore passed in groupSize and instanceId since we are partitioning using old information
-        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
-        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
-          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, value)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
       for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
@@ -1543,17 +1529,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public boolean usesHeaderData() {
       return false;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
-      // Return false if the entry has been acknowledged by any of the previous partitions
-      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
-        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, value)) {
-          return false;
-        }
-      }
-      return true;
     }
 
     @Override
