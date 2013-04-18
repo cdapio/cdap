@@ -39,7 +39,7 @@ public final class QueueEntrySerializer {
     try {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
-      Map<String, Integer> map = entry.getPartitioningMap();
+      Map<String, Integer> map = entry.getHashKeys();
 
       //writing version number which might be needed in the future if we change the schema
       encoder.writeInt(version);
@@ -93,7 +93,7 @@ public final class QueueEntrySerializer {
       QueueEntry queueEntry = new QueueEntry(data);
       if (map!=null) {
         for(Map.Entry<String, Integer> e: map.entrySet()) {
-          queueEntry.addPartitioningKey(e.getKey(),e.getValue());
+          queueEntry.addHashKey(e.getKey(), e.getValue());
         }
       }
       return queueEntry;

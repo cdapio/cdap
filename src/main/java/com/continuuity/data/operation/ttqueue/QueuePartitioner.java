@@ -19,7 +19,7 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value);
 
-  public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash);
+  public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash);
 
   /**
    * Returns true if the specified entry should be emitted to the specified
@@ -84,8 +84,9 @@ public interface QueuePartitioner {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
-      return (hash % groupSize == instanceId);
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
+      int hashValue = hash == null ? 0 : hash;
+      return (hashValue % groupSize == instanceId);
     }
 
     @Override
@@ -117,8 +118,9 @@ public interface QueuePartitioner {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
-      return (hash % groupSize == instanceId);
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
+      int hashValue = hash == null ? 0 : hash;
+      return (hashValue % groupSize == instanceId);
     }
 
     @Override
@@ -149,7 +151,7 @@ public interface QueuePartitioner {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       return true;
     }
 
@@ -181,7 +183,7 @@ public interface QueuePartitioner {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       return false;
     }
 

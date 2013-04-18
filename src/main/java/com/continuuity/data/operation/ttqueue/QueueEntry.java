@@ -1,60 +1,105 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Encoder;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Map;
 
 public class QueueEntry {
-  private final Map<String, Integer> header;
+  private final Map<String, Integer> hashKeys;
   private byte[] data;
 
-  public QueueEntry(Map<String, Integer> header, byte[] data) {
+  public QueueEntry(Map<String, Integer> hashKeys, byte[] data) {
     Preconditions.checkNotNull(data);
-    Preconditions.checkNotNull(header);
-    this.data=data;
-    this.header=header;
+    Preconditions.checkNotNull(hashKeys);
+    this.data = data;
+    this.hashKeys = hashKeys;
   }
 
   public QueueEntry(byte[] data) {
     Preconditions.checkNotNull(data);
-    this.header= Maps.newHashMap();
-    this.data=data;
+    this.hashKeys = Maps.newHashMap();
+    this.data = data;
   }
 
   public byte[] getData() {
     return this.data;
   }
 
-  public void setData(byte[] data) {
-    Preconditions.checkNotNull(data);
-    this.data=data;
+  public Map<String, Integer> getHashKeys() {
+    return hashKeys;
   }
 
-  public Map<String, Integer> getPartitioningMap() {
-    return header;
+  public void addHashKey(String key, int hash) {
+    this.hashKeys.put(key, hash);
   }
 
-  public Map<String, Integer> getHeader() {
-    return this.header;
-  }
-
-  public void addPartitioningKey(String key, int hash) {
-    this.header.put(key, hash);
-  }
-
-  public Integer getHash(String key) {
-    if (header==null) {
+  public Integer getHashKey(String key) {
+    if (hashKeys == null) {
       return null;
     }
-    return this.header.get(key);
+    return this.hashKeys.get(key);
   }
 
   public String toString() {
     return Objects.toStringHelper(this)
       .add("data", this.data)
-      .add("header", this.header)
+      .add("hashKeys", this.hashKeys)
       .toString();
+  }
+
+  // many entries will have no hash keys. Serialize that once and for good
+  private static byte[] serializedEmptyHashKeys;
+  private static byte[] getSerializedEmptyHashKeys() throws IOException {
+    if (serializedEmptyHashKeys == null) {
+      // we don't synchronize here: the worst thing that go wrong here is repeated assignment to the same value
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Encoder encoder = new BinaryEncoder(bos);
+      encoder.writeInt(0);
+      serializedEmptyHashKeys = bos.toByteArray();
+    }
+    return serializedEmptyHashKeys;
+  }
+
+  public static byte[] serializeHashKeys(Map<String, Integer> hashKeys) throws IOException {
+    // many entries will have no hash keys. Reuse a static value for that
+    if (hashKeys == null || hashKeys.isEmpty()) {
+      return getSerializedEmptyHashKeys();
+    }
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    Encoder encoder = new BinaryEncoder(bos);
+    encoder.writeInt(hashKeys.size());
+    for (Map.Entry<String, Integer> entry : hashKeys.entrySet()) {
+      encoder.writeString(entry.getKey());
+      encoder.writeInt(entry.getValue());
+    }
+    encoder.writeInt(0); // per Avro spec, end with a (block of length) zero
+    return bos.toByteArray();
+  }
+
+  public static Map<String, Integer> deserializeHashKeys(byte[] bytes) throws IOException {
+    if (bytes == null) {
+      return null;
+    }
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    BinaryDecoder decoder = new BinaryDecoder(bis);
+    int size = decoder.readInt();
+    Map<String, Integer> hashKeys = Maps.newHashMapWithExpectedSize(size);
+    while (size > 0) { // per avro spec, ther ecan be multiple blocks
+      while (size-- > 0) {
+        String key = decoder.readString();
+        int value = decoder.readInt();
+        hashKeys.put(key, value);
+      }
+      size = decoder.readInt(); // next block length, will be always zero in this case
+    }
+    return hashKeys;
   }
 }

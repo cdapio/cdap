@@ -479,7 +479,7 @@ public class ConverterUtils {
   /** wrap a queue entry */
   TQueueEntry wrap(QueueEntry entry) {
     TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
-    tQueueEntry.setHeader(entry.getPartitioningMap());
+    tQueueEntry.setHeader(entry.getHashKeys());
     return tQueueEntry;
   }
   /** unwrap a queue entry */

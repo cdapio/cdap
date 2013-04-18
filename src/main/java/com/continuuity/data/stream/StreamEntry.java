@@ -40,7 +40,7 @@ public class StreamEntry {
   }
 
   public static StreamEntry fromQueueEntry(QueueEntry entry) {
-    return new StreamEntry(entry.getHeader(), entry.getData());
+    return new StreamEntry(entry.getHashKeys(), entry.getData());
   }
 
 }

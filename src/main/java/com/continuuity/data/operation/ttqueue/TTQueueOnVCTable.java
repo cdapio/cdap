@@ -578,7 +578,7 @@ public class TTQueueOnVCTable implements TTQueue {
         QueuePartitioner partitioner = config.getPartitionerType().getPartitioner();
         if (config.getPartitionerType() == QueuePartitioner.PartitionerType.HASH
             && !partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), entryPointer.getEntryId(),
-                                       entry.getHash(consumer.getPartitioningKey())) ||
+                                       entry.getHashKey(consumer.getPartitioningKey())) ||
           config.getPartitionerType() != QueuePartitioner.PartitionerType.HASH
             && !partitioner.shouldEmit(
             consumer.getGroupSize(), consumer.getInstanceId(), entryPointer.getEntryId(), entry.getData())) {

@@ -735,7 +735,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
-      queueEntry.addPartitioningKey(HASH_KEY, i);
+      queueEntry.addHashKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
@@ -753,7 +753,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
-      queueEntry.addPartitioningKey(HASH_KEY, i);
+      queueEntry.addHashKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
@@ -843,7 +843,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      queueEntry.addPartitioningKey(HASH_KEY, i);
+      queueEntry.addHashKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
@@ -863,7 +863,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      queueEntry.addPartitioningKey(HASH_KEY, i);
+      queueEntry.addHashKey(HASH_KEY, i);
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
@@ -1160,7 +1160,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for(int i = 0; i < numEntries; ++i) {
       expectedEntries.add(i + 1);
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      queueEntry.addPartitioningKey(HASH_KEY, i + 1);
+      queueEntry.addHashKey(HASH_KEY, i + 1);
       assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
     }
 
@@ -2135,7 +2135,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueEntry[] entries = new QueueEntry[20];
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
-      entries[i - 1].addPartitioningKey("p", i);
+      entries[i - 1].addHashKey("p", i);
     }
     Transaction t = oracle.startTransaction();
     EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());

@@ -840,7 +840,7 @@ public abstract class TestOVCTable {
 //    this.table.undeleteAll(Bytes.toBytes("row" + 6), COL, 10);
 //
 //    // get all keys and only get 8 back
-//    keys = this.table.getPartitioningMap(Integer.MAX_VALUE, 0, RP_MAX);
+//    keys = this.table.getHashKeys(Integer.MAX_VALUE, 0, RP_MAX);
 //    assertEquals(8, keys.size());
 
   }

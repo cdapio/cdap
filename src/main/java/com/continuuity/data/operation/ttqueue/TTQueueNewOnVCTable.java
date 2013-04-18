@@ -168,37 +168,38 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     /*
     Insert each entry with version=<cleanWriteVersion> and
-    row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H<partitionKey>/<hashValue>
+    row-key = <queueName>20D<entryId> , column/value 20D/<data>, 10M/EntryState.VALID, 30H/serialized hash keys
     */
 
     byte[][] rowKeys = new byte[n][];
     byte[][][] allColumnKeys = new byte[n][][];
     byte[][][] allColumnValues = new byte[n][][];
+
+    // we always write the hash keys - even if empty - to the ENTRY_HEADER column
+    // this is to distinguish entries without hash keys from entries that have no been written yet
+    // we write in reverse order of reading:
+    // - hash keys are read first - if at all - by the hash strategy. If it does not exist, fetch stops
+    // - entry meta is read next. If that does not exist, fetch stops
+    // - entry data is read last. We know it always exists if the entry meta exists
+    final byte[][] columnKeys = new byte[][] { ENTRY_DATA, ENTRY_META, ENTRY_HEADER };
+    final byte[] entryMetaValid = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+
     QueueEntryPointer[] returnPointers = new QueueEntryPointer[n];
 
     long entryId = lastEntryId - n;
     for (int i = 0; i < n; i++) {
       ++entryId; // this puts the first one at lastId - n + 1, and the last one at lastId
-      QueueEntry entry = entries[i];
-
-      final int size = entry.getPartitioningMap().size() + 2;
-      byte[][] colKeys = new byte[size][];
-      byte[][] colValues = new byte[size][];
-
-      int colKeyIndex = 0;
-      int colValueIndex = 0;
-      colKeys[colKeyIndex++] = ENTRY_DATA;
-      colKeys[colKeyIndex++] = ENTRY_META;
-      colValues[colValueIndex++] = entry.getData();
-      colValues[colValueIndex++] = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
-      for(Map.Entry<String, Integer> e : entry.getPartitioningMap().entrySet()) {
-        colKeys[colKeyIndex++] = makeColumnName(ENTRY_HEADER, e.getKey());
-        colValues[colValueIndex++] = Bytes.toBytes(e.getValue());
+      byte[] hashKeysBytes;
+      try {
+        hashKeysBytes = QueueEntry.serializeHashKeys(entries[i].getHashKeys());
+      } catch(IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing entry hash keys"), e);
       }
 
       rowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
-      allColumnKeys[i] = colKeys;
-      allColumnValues[i] = colValues;
+      allColumnKeys[i] = columnKeys;
+      allColumnValues[i] = new byte[][] { entries[i].getData(), entryMetaValid, hashKeysBytes };
       returnPointers[i] = new QueueEntryPointer(this.queueName, entryId);
     }
     // write all rows at once
@@ -835,19 +836,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return INVALID_ENTRY_ID;
     }
 
-      final long startEvictEntry = lastEvictedEntry + 1;
+    final long startEvictEntry = lastEvictedEntry + 1;
 
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
-      }
+    if(LOG.isTraceEnabled()) {
+      LOG.trace(getLogMessage(String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
+    }
 
-      // Evict entries
-      int i = 0;
-      byte[][] deleteKeys = new byte[(int) (maxEntryToEvict - startEvictEntry) + 1][];
-      for(long id = startEvictEntry; id <= maxEntryToEvict; ++id) {
-        deleteKeys[i++] = makeRowKey(GLOBAL_DATA_PREFIX, id);
-      }
-      this.table.deleteDirty(deleteKeys);
+    // Evict entries
+    int i = 0;
+    byte[][] deleteKeys = new byte[(int) (maxEntryToEvict - startEvictEntry) + 1][];
+    for(long id = startEvictEntry; id <= maxEntryToEvict; ++id) {
+      deleteKeys[i++] = makeRowKey(GLOBAL_DATA_PREFIX, id);
+    }
+    this.table.deleteDirty(deleteKeys);
 
     return maxEntryToEvict;
   }
@@ -1379,12 +1380,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
     @Override
     public boolean isDisjoint() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean usesHeaderData() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
@@ -1402,7 +1403,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
       for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
         // Ignore passed in groupSize and instanceId since we are partitioning using old information
@@ -1536,12 +1537,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
     @Override
     public boolean isDisjoint() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean usesHeaderData() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
@@ -1556,7 +1557,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       // Return false if the entry has been acknowledged by any of the previous partitions
       for(ReconfigPartitioner partitioner : reconfigPartitioners) {
         if(!partitioner.shouldEmit(groupSize, instanceId, entryId, hash)) {
@@ -2351,8 +2352,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         for(int id = 0; id < cacheSize; ++id) {
           rowKeys[id] = makeRowKey(GLOBAL_DATA_PREFIX, startEntryId + id);
         }
-        final byte[][] columnKeys = new byte[1][];
-        columnKeys[0] = makeColumnName(ENTRY_HEADER, partitioningKey);
+        final byte[][] columnKeys = { ENTRY_HEADER };
         OperationResult<Map<byte[], Map<byte[], byte[]>>> headerResult =
           table.getAllColumns(rowKeys, columnKeys, readPointer);
 
@@ -2365,14 +2365,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
           if (!headerResult.isEmpty()) {
             Map<byte[], Map<byte[], byte[]>> headerValue = headerResult.getValue();
             Map<byte[], byte[]> headerMap = headerValue.get(rowKeys[id]);
-            if(headerMap == null) {
+            byte[] hashBytes = headerMap == null ? null : headerMap.get(ENTRY_HEADER);
+            if (hashBytes == null) {
+              // every existing entry has hashBytes. If it is null, we have reached the end of queue
               break outerLoop;
             }
-            byte[] hashBytes = headerMap.get(columnKeys[0]);
-            if(hashBytes == null) {
-              break outerLoop;
+            Map<String, Integer> hashKeyMap;
+            try {
+              hashKeyMap = QueueEntry.deserializeHashKeys(hashBytes);
+            } catch(IOException e) {
+              throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                           getLogMessage("Exception while deserializing hash keys"), e);
             }
-            int hashValue = Bytes.toInt(hashBytes);
+            Integer hashValue = hashKeyMap.get(partitioningKey);
             if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
               queueState.getReconfigPartitionersList().shouldEmit(
                 consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue)
