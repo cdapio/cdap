@@ -9,8 +9,6 @@ import com.google.common.base.Objects;
  */
 public interface QueuePartitioner {
 
-  public boolean isDisjoint();
-  public boolean usesHeaderData();
   /**
    * Returns true if the specified entry should be emitted to the specified
    * consumer.
@@ -54,15 +52,6 @@ public interface QueuePartitioner {
   }
 
   public static class HashPartitioner implements QueuePartitioner {
-    @Override
-    public boolean isDisjoint() {
-      return true;
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return true;
-    }
 
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
@@ -82,15 +71,6 @@ public interface QueuePartitioner {
   }
 
   public static class FifoPartitioner implements QueuePartitioner {
-    @Override
-    public boolean isDisjoint() {
-      return false;
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;
-    }
 
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
@@ -109,15 +89,6 @@ public interface QueuePartitioner {
   }
 
   public static class RoundRobinPartitioner implements QueuePartitioner {
-    @Override
-    public boolean isDisjoint() {
-      return true;
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;
-    }
 
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId) {

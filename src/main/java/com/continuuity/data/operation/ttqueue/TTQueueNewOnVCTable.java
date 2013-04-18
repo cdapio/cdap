@@ -1377,17 +1377,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return reconfigPartitionInstances;
     }
 
-    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
-    @Override
-    public boolean isDisjoint() {
-      return false;
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;
-    }
-
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       QueuePartitioner partitioner = partitionerType.getPartitioner();
@@ -1518,17 +1507,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public List<ReconfigPartitioner> getReconfigPartitioners() {
       return reconfigPartitioners;
-    }
-
-    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
-    @Override
-    public boolean isDisjoint() {
-      return false;
-    }
-
-    @Override
-    public boolean usesHeaderData() {
-      return false;
     }
 
     @Override
