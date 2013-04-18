@@ -25,7 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -33,6 +32,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.FIFO;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.HASH;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.ROUND_ROBIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -92,8 +95,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     sortedSet.add(new DequeueEntry(0, 2));
 
     int expected = 0;
-    for(Iterator<DequeueEntry> iterator = sortedSet.iterator(); iterator.hasNext(); ) {
-      assertEquals(expected++, iterator.next().getEntryId());
+    for (DequeueEntry aSortedSet : sortedSet) {
+      assertEquals(expected++, aSortedSet.getEntryId());
     }
   }
 
@@ -168,8 +171,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testWorkingEntryList() {
     final int MAX = 10;
+    Map<Long, byte[]> noCachedEntries = Collections.emptyMap();
     TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet =
-      new TransientWorkingSet(Lists.<Long>newArrayList(), Collections.EMPTY_MAP);
+      new TransientWorkingSet(Lists.<Long>newArrayList(), noCachedEntries);
     assertFalse(transientWorkingSet.hasNext());
 
     List<Long> workingSet = Lists.newArrayList();
@@ -232,13 +236,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testReconfigPartitioner() throws Exception {
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner1 =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, PartitionerType.HASH);
     partitioner1.add(0, 5);
     partitioner1.add(1, 10);
     partitioner1.add(2, 12);
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner2 =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, PartitionerType.HASH);
     partitioner2.add(0, 5);
     partitioner2.add(1, 15);
     partitioner2.add(2, 12);
@@ -283,7 +287,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 8L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -306,7 +310,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 2L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -329,7 +333,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 2L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -352,7 +356,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 11L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -369,7 +373,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     int groupSize = 3;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, 8L);
     partitioner.add(1, 15L);
     partitioner.add(2, 11L);
@@ -390,7 +394,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     groupSize = 4;
 
     partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, 30L);
     partitioner.add(1, 14L);
     partitioner.add(2, 15L);
@@ -414,7 +418,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     groupSize = 5;
 
     partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, 43L);
     partitioner.add(1, 47L);
     partitioner.add(2, 3L);
@@ -430,7 +434,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     groupSize = 2;
 
     partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, 55);
     partitioner.add(1, 50L);
     partitionerList.add(partitioner);
@@ -478,14 +482,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
 
     int groupSize = 3;
-    int lastEntry = 12;
 
     long zeroAck = 3L;
     long oneAck = 7L;
     long twoAck = 8L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -499,7 +502,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Partition      :1  2  3  0  1  2  3  0  1  2   3   0   1   2   3   0   1   2
 
     groupSize = 4;
-    lastEntry = 18;
+    int lastEntry = 18;
 
     zeroAck = 12L;
     oneAck = 5L;
@@ -507,7 +510,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long threeAck = 7L;
 
     partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -736,7 +739,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -773,7 +776,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue it with ROUND_ROBIN partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.ROUND_ROBIN, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -845,7 +848,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
     // dequeue it with HASH partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry, 29);
+    QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry, 29);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -854,7 +857,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, PartitionerType.HASH);
     System.out.println("Round 1 dequeue done");
 
     // enqueue some more entries
@@ -864,7 +867,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.HASH);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, PartitionerType.HASH);
     System.out.println("Round 2 dequeue done");
   }
 
@@ -885,7 +888,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // dequeue it with ROUND_ROBIN partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry, 11);
+    QueueConfig config = new QueueConfig(PartitionerType.ROUND_ROBIN, singleEntry, 11);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -894,7 +897,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, PartitionerType
       .ROUND_ROBIN);
 
     // enqueue some more entries
@@ -904,11 +907,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, PartitionerType.ROUND_ROBIN);
   }
 
   private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
-                                         int numQueueEntries, int startQueueEntry, QueuePartitioner.PartitionerType partitionerType) throws Exception {
+                                         int numQueueEntries, int startQueueEntry, PartitionerType partitionerType) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
@@ -916,7 +919,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
         int expectedValue = startQueueEntry + consumer + (2 * entry * numConsumers);
-        if(partitionerType == QueuePartitioner.PartitionerType.ROUND_ROBIN) {
+        if(partitionerType == PartitionerType.ROUND_ROBIN) {
           if(consumer == 0) {
             // Adjust the expected value for consumer 0
             expectedValue += numConsumers;
@@ -970,7 +973,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // dequeue it with ROUND_ROBIN partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, singleEntry, 10);
+    QueueConfig config = new QueueConfig(FIFO, singleEntry, 10);
 
     StatefulQueueConsumer[] statefulQueueConsumers = new StatefulQueueConsumer[numConsumers];
     QueueConsumer[] queueConsumers = new QueueConsumer[numConsumers];
@@ -1056,7 +1059,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
 
     // dequeue it with FIFO partitioner, single entry mode
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConfig config = new QueueConfig(FIFO, true);
 
     queue.configure(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config));
 
@@ -1095,7 +1098,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.FIFO;
+    PartitionerType partitionerType = FIFO;
 
     runConfigTest(partitionerType, condition);
   }
@@ -1109,7 +1112,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.ROUND_ROBIN;
+    PartitionerType partitionerType = PartitionerType.ROUND_ROBIN;
 
     runConfigTest(partitionerType, condition);
   }
@@ -1123,12 +1126,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.HASH;
+    PartitionerType partitionerType = PartitionerType.HASH;
 
     runConfigTest(partitionerType, condition);
   }
 
-  public void runConfigTest(QueuePartitioner.PartitionerType partitionerType, Condition condition) throws Exception {
+  public void runConfigTest(PartitionerType partitionerType, Condition condition) throws Exception {
     testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
@@ -1146,7 +1149,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   // TODO: test with stateful and non-state consumer
   private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
-                            final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
+                            final int perConsumerDequeueBatchSize, PartitionerType partitionerType,
                             Condition condition) throws Exception {
     Random random = new Random(System.currentTimeMillis());
     StringWriter debugCollector = new StringWriter();
@@ -1166,8 +1169,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     List<Integer> actualEntries = Lists.newArrayList();
     List<String> actualPrintEntries = Lists.newArrayList();
-    List<Integer> sortedActualEntries = Lists.newArrayList();
-    List<StatefulQueueConsumer> consumers = Collections.emptyList();
+    List<Integer> sortedActualEntries;
+    List<StatefulQueueConsumer> consumers;
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(partitionerType, true, queueBatchSize);
     long groupId = queue.getGroupID();
@@ -1181,7 +1184,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         int actualOldConsumerCount = -1;
         for(int i = 0; i < newConsumerCount; ++i) {
           StatefulQueueConsumer consumer;
-          if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
+          if(partitionerType != PartitionerType.HASH) {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           } else {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config);
@@ -1308,13 +1311,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   @Test
   public void testBatchSyncDisjoint() throws OperationException {
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, false);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, true);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, false);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, true);
+    testBatchSyncDisjoint(PartitionerType.HASH, false);
+    testBatchSyncDisjoint(PartitionerType.HASH, true);
+    testBatchSyncDisjoint(PartitionerType.ROUND_ROBIN, false);
+    testBatchSyncDisjoint(PartitionerType.ROUND_ROBIN, true);
   }
 
-  public void testBatchSyncDisjoint(QueuePartitioner.PartitionerType partitioner, boolean simulateCrash)
+  public void testBatchSyncDisjoint(PartitionerType partitioner, boolean simulateCrash)
     throws OperationException {
 
     TTQueue queue = createQueue();
@@ -1523,7 +1526,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // we will dequeue with fifo partitioning, two consumers in group, hence returns every other entry
     long groupId = 42;
     String groupName = "group";
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 15, true);
+    QueueConfig config = new QueueConfig(FIFO, true, 15, true);
     QueueConsumer consumer1 = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, config) :
       new StatefulQueueConsumer(0, groupId, 2, groupName, config);
@@ -1652,7 +1655,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // now we change the batch size for the consumer to 12 (reconfigure)
-    config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 12, true);
+    config = new QueueConfig(FIFO, true, 12, true);
     consumer1 = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, config) :
       new StatefulQueueConsumer(0, groupId, 2, groupName, config);
@@ -1739,11 +1742,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   @Test
   public void testBatchAsyncDisjoint() throws OperationException {
-    testBatchAsyncDisjoint(QueuePartitioner.PartitionerType.HASH);
-    testBatchAsyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    testBatchAsyncDisjoint(PartitionerType.HASH);
+    testBatchAsyncDisjoint(PartitionerType.ROUND_ROBIN);
   }
 
-  public void testBatchAsyncDisjoint(QueuePartitioner.PartitionerType partitioner) throws OperationException {
+  public void testBatchAsyncDisjoint(PartitionerType partitioner) throws OperationException {
 
     TTQueue queue = createQueue();
 
@@ -1922,7 +1925,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
     long groupId = 42;
     String groupName = "group";
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, false, 15, true);
+    QueueConfig config = new QueueConfig(FIFO, false, 15, true);
     QueueConsumer consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
     QueueConsumer consumer2 = new StatefulQueueConsumer(1, groupId, 2, groupName, config);
     queue.configure(consumer1);
@@ -1995,7 +1998,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // simulate crash of consumer 1 - new consumer with batch size 10
-    config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, false, 10, true);
+    config = new QueueConfig(FIFO, false, 10, true);
     consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
 
     // dequeue 10 with first consumer 1 .. 10
@@ -2119,5 +2122,64 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < entries.length; i++) {
       assertEquals(i + 86 + dequeued, Bytes.toInt(entries[i].getData()));
     }
+  }
+
+  // this tests that the dequeue can deal with a batch of consecutive, invalid queue entries that is larger than the
+  // dequeue batch size. If it does not deal with this condition correctly, it may return empty or even go into an
+  // infinite loop!
+  @Test//(timeout = 10000)
+  public void testSkipBatchofInvalidEntries () throws OperationException {
+    TTQueue queue = createQueue();
+
+    // enqueue 20, then invalidate a batch of 10 in the middle
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+      entries[i - 1].addPartitioningKey("p", i);
+    }
+    Transaction t = oracle.startTransaction();
+    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    queue.invalidate(Arrays.copyOfRange(enqResult.getEntryPointers(), 5, 15), t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    long groupId = 0;
+    for (int batchSize = 1; batchSize < 12; batchSize++) {
+      for (boolean returnBatch : new boolean[] { true, false }) {
+        for (boolean singleEntry : new boolean[] { true, false }) {
+          for (PartitionerType partitioner : new PartitionerType[] { FIFO, ROUND_ROBIN, HASH }) {
+            testSkipBatchofInvalidEntries(queue, ++groupId, batchSize, returnBatch, singleEntry, partitioner);
+          }
+        }
+      }
+    }
+  }
+
+  public void testSkipBatchofInvalidEntries(TTQueue queue, long groupId, int batchSize, boolean returnBatch,
+                                            boolean singleEntry, PartitionerType partitioner)
+    throws OperationException {
+
+    String groupName = "batch=" + batchSize + ":" + returnBatch + "," + (singleEntry ? "single" : "multi")
+      + "," + partitioner;
+    // System.out.println(groupName);
+    QueueConfig config = new QueueConfig(partitioner, singleEntry, batchSize, returnBatch);
+    QueueConsumer consumer = new StatefulQueueConsumer(0, groupId, 2, groupName, "p", config);
+    queue.configure(consumer);
+
+    int numDequeued = 0;
+    while (true) {
+      Transaction t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+      oracle.commitTransaction(t);
+      if (result.isEmpty()) {
+        break;
+      }
+      numDequeued += result.getEntries().length;
+      t = oracle.startTransaction();
+      queue.ack(result.getEntryPointers(), consumer, t.getReadPointer());
+      queue.finalize(result.getEntryPointers(), consumer, 1, t.getWriteVersion());
+      oracle.commitTransaction(t);
+    }
+    int expected = partitioner == FIFO ? 10 : 5;
+    assertEquals("Failure for " + groupName + ":", expected, numDequeued);
   }
 }
