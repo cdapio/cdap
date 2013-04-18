@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1147,4 +1148,61 @@ public abstract class TestOVCTable {
     byte[] actualCol2Value = this.table.get(ROW, COL2, TransactionOracle.DIRTY_READ_POINTER).getValue();
     assertEquals(Bytes.toString(col2Value), Bytes.toString(actualCol2Value));
   }
+
+  @Test
+  public void testAtomicIncrementDirtily() throws OperationException {
+    byte [] row = Bytes.toBytes("testAtomicIncrementDirtily");
+
+    long val = this.table.incrementAtomicDirtily(row,COL,1L);
+    assertEquals(1L, val);
+
+    val = this.table.incrementAtomicDirtily(row,COL,1L);
+    assertEquals(2L, val);
+
+    val = this.table.incrementAtomicDirtily(row,COL,10L);
+    assertEquals(12L, val);
+  }
+
+  @Test
+  public void testAtomicIncrementConcurrently() throws OperationException, InterruptedException {
+    final byte [] row = Bytes.toBytes("testAtomicIncrementDirtily");
+    final int count = 100;
+    final OrderedVersionedColumnarTable table = this.table;
+
+    Thread atomicIncrementThread1 = new Thread() {
+      @Override
+      public void run() {
+        for( int i = 0 ; i < count; i++){
+          try {
+           table.incrementAtomicDirtily(row, COL, 1L);
+          } catch (OperationException e) {
+            assertTrue(false); //This case should never occur
+          }
+        }
+      }
+    };
+
+    Thread atomicIncrementThread2 = new Thread() {
+      @Override
+      public void run() {
+        for( int i = 0 ; i < count; i++){
+          try {
+            table.incrementAtomicDirtily(row,COL,1L);
+          } catch (OperationException e) {
+            assertTrue(false); //This case should never occur
+          }
+        }
+      }
+    };
+
+    atomicIncrementThread2.start();
+    atomicIncrementThread1.start();
+
+    atomicIncrementThread2.join();
+    atomicIncrementThread1.join();
+
+    long val  = this.table.incrementAtomicDirtily(row,COL,1L);
+    assertEquals(201,val);
+  }
+
 }
