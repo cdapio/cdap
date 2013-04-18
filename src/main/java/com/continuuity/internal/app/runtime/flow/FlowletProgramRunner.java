@@ -340,11 +340,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
                           method.getName())
           );
         } else if (hashPartition != null) {
-          if(hashPartition.key().isEmpty()) {
+          if(hashPartition.value().isEmpty()) {
             throw new IllegalArgumentException(
               String.format("%s: Partition key cannot be empty when HashPartition used", method.getName()));
           }
-          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.key());
+          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.value());
         } else if (roundRobin != null) {
           partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.ROUND_ROBIN);
         } else {

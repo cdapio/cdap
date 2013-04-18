@@ -6,7 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Used to define the strategy to read data from {@link com.continuuity.api.flow.flowlet.Flowlet}'s input
+ *  Used to define the strategy to read data from {@link com.continuuity.api.flow.flowlet.Flowlet}'s input.
+ *  The input is partitioned among the running {@link com.continuuity.api.flow.flowlet.Flowlet}s using the
+ *  partition key.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -17,6 +19,6 @@ public @interface HashPartition {
    *
    * @return Name of the partition key.
    */
-  String key();
+  String value();
 
 }
