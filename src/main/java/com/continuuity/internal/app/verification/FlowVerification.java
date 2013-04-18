@@ -41,18 +41,6 @@ import java.util.Set;
 */
 public class FlowVerification extends AbstractVerifier implements Verifier<FlowSpecification> {
 
-  private static final Schema STREAM_EVENT_SCHEMA;
-
-  static {
-    Schema schema;
-    try {
-      schema = new ReflectionSchemaGenerator().generate(StreamEvent.class);
-    } catch (UnsupportedTypeException e) {
-      schema = null;
-    }
-    STREAM_EVENT_SCHEMA = schema;
-  }
-
   /**
    * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}
    * defined within an {@link com.continuuity.api.Application}

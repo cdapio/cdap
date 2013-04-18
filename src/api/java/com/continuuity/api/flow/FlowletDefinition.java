@@ -203,11 +203,14 @@ public final class FlowletDefinition {
 
           Set<Type> types = outputs.get(outputName);
           if (types == null) {
-            types = Sets.newHashSet();
+            types = Sets.newHashSet(outputType);
             outputs.put(outputName, types);
+          } else {
+            // Currently queue name is constructed by flowletname+outputname, hence only one type object can be emitted.
+            throw new IllegalArgumentException(
+              String.format("Same output name cannot have more than one type. Use @Output; class: %s, field: %s",
+                            type, field));
           }
-          Preconditions.checkArgument(types.add(outputType),
-                                      "Same output name cannot have same type; class: %s, field: %s", type, field);
         }
       }
 
