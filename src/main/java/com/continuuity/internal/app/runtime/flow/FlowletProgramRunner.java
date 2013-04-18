@@ -334,16 +334,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         HashPartition hashPartition = method.getAnnotation(HashPartition.class);
         RoundRobin roundRobin = method.getAnnotation(RoundRobin.class);
 
-        if(hashPartition != null && roundRobin != null) {
-          throw new IllegalArgumentException(
-            String.format("%s: process() method can have either HashPartition or RoundRobin strategy to read input.",
-                          method.getName())
-          );
-        } else if (hashPartition != null) {
-          if(hashPartition.value().isEmpty()) {
-            throw new IllegalArgumentException(
-              String.format("%s: Partition key cannot be empty when HashPartition used", method.getName()));
-          }
+        Preconditions.checkArgument(
+          !(hashPartition != null && roundRobin != null),
+          "%s: process() method can have either HashPartition or RoundRobin strategy to read input, not both.",
+          method.getName());
+
+        if (hashPartition != null) {
+          Preconditions.checkArgument(!hashPartition.value().isEmpty(),
+                                      "%s: Partition key cannot be empty when HashPartition used", method.getName());
           partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.value());
         } else if (roundRobin != null) {
           partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.ROUND_ROBIN);

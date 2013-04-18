@@ -9,6 +9,8 @@ import java.lang.annotation.Target;
  *  Used to define the strategy to read data from {@link com.continuuity.api.flow.flowlet.Flowlet}'s input.
  *  The input is partitioned among the running {@link com.continuuity.api.flow.flowlet.Flowlet}s using the
  *  partition key.
+ *  If the partition key is not emitted then the input is treated as part of partition zero.
+ *  @see RoundRobin
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
