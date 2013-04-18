@@ -530,10 +530,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for(long entryId = 1; entryId <= queueSize; ++entryId) {
       if(ackedEntries.contains(entryId)) {
 //        System.out.println("Not Emit:" + entryId);
-        assertFalse("Not Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId));
+        assertFalse("Not Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId, null));
       } else {
 //        System.out.println("Emit:" + entryId);
-        assertTrue("Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId));
+        assertTrue("Emit:" + entryId, partitioner.shouldEmit(groupSize, instanceId, entryId, null));
       }
     }
   }

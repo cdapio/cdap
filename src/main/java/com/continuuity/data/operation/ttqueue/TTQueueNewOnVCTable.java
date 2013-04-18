@@ -1391,20 +1391,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return true;
     }
 
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      QueuePartitioner partitioner = partitionerType.getPartitioner();
-      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
-        // Ignore passed in groupSize and instanceId since we are partitioning using old information
-        // No consumer with reconfigInfo.getInstanceId() should have already acked entryId
-        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
-          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
     public boolean isRedundant(long minAckEntryId) {
       boolean allRedundant = true;
       for(ReconfigPartitionInstance instance : reconfigPartitionInstances) {
@@ -1514,17 +1500,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Return false if the entry has been acknowledged by any of the previous partitions
       for(ReconfigPartitioner partitioner : reconfigPartitioners) {
         if(!partitioner.shouldEmit(groupSize, instanceId, entryId, hash)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      // Return false if the entry has been acknowledged by any of the previous partitions
-      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
-        if(!partitioner.shouldEmit(groupSize, instanceId, entryId)) {
           return false;
         }
       }
@@ -2384,10 +2359,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
             break;
           }
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitionersList()
-              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
-            ) {
+          if (partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, null)
+            && queueState.getReconfigPartitionersList()
+              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, null)) {
             newEntryIds.add(currentEntryId);
           }
         }
@@ -2514,7 +2488,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // Else claim new queue entries
       final int batchSize = getBatchSize(config);
-      QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
       while (newEntryIds.isEmpty()) {
         // Fetch the group read pointer
         long groupReadPointer = getGroupReadPointer(consumer);
@@ -2530,7 +2503,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
         // End of queue reached
         if(groupReadPointer >= queueState.getQueueWritePointer()) {
-          return Collections.EMPTY_LIST;
+          return Collections.emptyList();
         }
 
         // If there are enough entries for all consumers to claim, then claim batchSize entries
@@ -2558,13 +2531,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Determine which entries  need to be read from storage based on partition type
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          // TODO: No need for partitioner in FIFO
-          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
-            queueState.getReconfigPartitionersList().
-              shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
-            ) {
-            newEntryIds.add(currentEntryId);
-          }
+          newEntryIds.add(currentEntryId);
         }
       }
       return newEntryIds;

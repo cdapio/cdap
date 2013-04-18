@@ -16,13 +16,6 @@ public interface QueuePartitioner {
    */
   public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash);
 
-  /**
-   * Returns true if the specified entry should be emitted to the specified
-   * consumer.
-   * @return true if entry should be emitted to consumer, false if not
-   */
-  public boolean shouldEmit(int groupSize, int instanceId, long entryId);
-
   public static enum PartitionerType {
     HASH, FIFO, ROUND_ROBIN;
 
@@ -54,11 +47,6 @@ public interface QueuePartitioner {
   public static class HashPartitioner implements QueuePartitioner {
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      return false;
-    }
-
-    @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
       int hashValue = hash == null ? 0 : hash;
       return (hashValue % groupSize == instanceId);
@@ -71,11 +59,6 @@ public interface QueuePartitioner {
   }
 
   public static class FifoPartitioner implements QueuePartitioner {
-
-    @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      return true;
-    }
 
     @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
@@ -91,13 +74,8 @@ public interface QueuePartitioner {
   public static class RoundRobinPartitioner implements QueuePartitioner {
 
     @Override
-    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
-      return entryId % groupSize == instanceId;
-    }
-
-    @Override
     public boolean shouldEmit(int groupSize, int instanceId, long entryId, Integer hash) {
-      return false;
+      return (entryId % groupSize == instanceId);
     }
 
     @Override
