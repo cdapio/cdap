@@ -72,6 +72,12 @@ public interface TTQueue {
    */
   void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
+  /**
+   * Used to configure the queue on start-up, or when consumer instances are changed.
+   * @param newConsumer consumer that contains the new configuration information.
+   * @return the old consumer count
+   * @throws OperationException if unsuccessful
+   */
   int configure(QueueConsumer newConsumer) throws OperationException;
 
   /**
