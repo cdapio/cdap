@@ -23,19 +23,19 @@ public class TestQueuePartition extends AppFabricTestBase {
       FlowManager flowManager = applicationManager.startFlow("QueuePartitionFlow");
 
       StreamWriter s1 = applicationManager.getStreamWriter("s1");
-      RuntimeMetrics roundRobinMetrics = RuntimeStats.getFlowletMetrics("TestQueuePartitionApp", "QueuePartitionFlow",
-                                                                      "RoundRobinFlowlet");
-      flowManager.setFlowletInstances("RoundRobinFlowlet", TestQueuePartitionApp.RR_NUM_INSTANCES);
+      RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestQueuePartitionApp", "QueuePartitionFlow",
+                                                                      "Flowlet1");
+      flowManager.setFlowletInstances("Flowlet1", TestQueuePartitionApp.Flowlet1.NUM_INSTANCES);
 
-      RuntimeMetrics hashPartitionMetrics = RuntimeStats.getFlowletMetrics("TestQueuePartitionApp",
-                                                                           "QueuePartitionFlow", "HashPartitionFlowlet");
-      flowManager.setFlowletInstances("HashPartitionFlowlet", TestQueuePartitionApp.HASH_NUM_INSTANCES);
+      RuntimeMetrics flowletMetrics2 = RuntimeStats.getFlowletMetrics("TestQueuePartitionApp",
+                                                                           "QueuePartitionFlow", "Flowlet2");
+      flowManager.setFlowletInstances("Flowlet2", TestQueuePartitionApp.Flowlet2.NUM_INSTANCES);
       for(int i = 0; i < MAX_ITERATIONS; i++) {
         s1.send(String.valueOf(i));
       }
 
-      roundRobinMetrics.waitForProcessed(MAX_ITERATIONS, 10, TimeUnit.SECONDS);
-      hashPartitionMetrics.waitForProcessed(MAX_ITERATIONS, 10, TimeUnit.SECONDS);
+      flowletMetrics1.waitForProcessed(MAX_ITERATIONS * 3, 10, TimeUnit.SECONDS);
+      flowletMetrics2.waitForProcessed(MAX_ITERATIONS, 10, TimeUnit.SECONDS);
     } finally {
       applicationManager.stopAll();
       clearAppFabric();
