@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class QueueBenchmark extends OpexBenchmark {
 
@@ -42,6 +43,14 @@ public class QueueBenchmark extends OpexBenchmark {
   int numPendingAcks = 0;
   ArrayList<LinkedList<QueueAck>> pendingAcks;
 
+  int fetchSize = 1;
+  int enqueueSize = 1;
+  boolean dequeueBatch = false;
+  String partitionerName = "rr";
+  String hashKey = null;
+
+  QueueConfig qconfig;
+
   @Override
   public Map<String, String> usage() {
     Map<String, String> usage = super.usage();
@@ -54,7 +63,15 @@ public class QueueBenchmark extends OpexBenchmark {
     usage.put("--ack <num>", "Number of runs to delay the ack for each " +
         "dequeue. Default is 0 (ack immediately).");
     usage.put("--queue <name>", "Name of the queue to enqueue/dequeue. " +
-        "Default is 'queue://benchmark'.");
+      "Default is 'queue://benchmark'.");
+    usage.put("--enqueue <num>", "Batch size for enqueue." +
+      "Default is 1.");
+    usage.put("--fetch <num>", "Fetch size for dequeue." +
+      "Default is 1.");
+    usage.put("--batch (true|false)", "Whether to dequeue in batch." +
+      "Default is false.");
+    usage.put("--partition (rr|hash|fifo)", "What partitioning to use." +
+      "Default is rr (round-robin).");
     return usage;
   }
 
@@ -72,55 +89,90 @@ public class QueueBenchmark extends OpexBenchmark {
     queueName = config.get("queue", queueName);
     queueBytes = queueName.getBytes();
 
+    // batch size for enqueues and dequeues
+    fetchSize = config.getInt("fetch", fetchSize);
+    enqueueSize = config.getInt("enqueue", enqueueSize);
+    dequeueBatch = config.getBoolean("batch", dequeueBatch);
+    partitionerName = config.get("partition", partitionerName);
+
     // initialize the list of pending acks for each consumer
     pendingAcks = Lists.newArrayList();
     for (int i = 0; i < numConsumers; i++) {
       pendingAcks.add(new LinkedList<QueueAck>());
     }
+
+    QueuePartitioner.PartitionerType partitioner;
+    if ("rr".equals(partitionerName)) {
+      partitioner = QueuePartitioner.PartitionerType.ROUND_ROBIN;
+    } else if ("hash".equals(partitionerName)) {
+      partitioner = QueuePartitioner.PartitionerType.HASH;
+      hashKey = "k";
+    } else if ("fifo".equals(partitionerName)) {
+      partitioner = QueuePartitioner.PartitionerType.FIFO;
+    } else {
+      throw new BenchmarkException("'" + partitionerName + "' is not a valid partitioner ");
+    }
+
+    qconfig = new QueueConfig(partitioner, numPendingAcks == 0, fetchSize, dequeueBatch);
   }
 
   LinkedList<QueueAck> getPending(int agentId) {
     return pendingAcks.get(agentId);
   }
 
+  Random randomm = new Random(1L);
+
   long doEnqueue(long iteration, int agentId) throws BenchmarkException {
-    byte[] value = Bytes.toBytes(iteration);
-    QueueEnqueue enqueue = null;
+
+    QueueEnqueue enqueue;
+    if (enqueueSize <= 1) {
+      QueueEntry entry = new QueueEntry(Bytes.toBytes(iteration));
+      if (hashKey != null) {
+        entry.addHashKey(hashKey, randomm.nextInt());
+      }
+      enqueue = new QueueEnqueue(queueBytes, entry);
+    } else {
+      QueueEntry[] entries = new QueueEntry[enqueueSize];
+      for (int i = 0; i < enqueueSize; ++i) {
+        entries[i] = new QueueEntry(Bytes.toBytes(iteration + i));
+        if (hashKey != null) {
+          entries[i].addHashKey(hashKey, randomm.nextInt());
+        }
+      }
+      enqueue = new QueueEnqueue(queueBytes, entries);
+    }
     try {
-      enqueue = new QueueEnqueue(queueBytes, new QueueEntry(value));
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
-      System.err.println("Operation " + enqueue + " failed: " + e.getMessage() +
-                           "(Ignoring this error)");
+      //System.err.println("Operation " + enqueue + " failed: " + e.getMessage() +
+      //                     "(Ignoring this error)");
       return 0L;
     }
-    return 1L;
+    return enqueueSize;
   }
-
-  QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, numPendingAcks == 0);
 
   long doDequeue(int consumerId) throws BenchmarkException {
     // create a dequeue operation
-    QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, config);
-    QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
+    QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, "x", hashKey, qconfig);
+    QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, qconfig);
 
     // first dequeue
     DequeueResult result;
     try {
       result = opex.execute(opContext, dequeue);
-      System.err.println("Good operation " + dequeue + "returned result " + result);
+      // System.err.println("Good operation " + dequeue + "returned result " + result);
     } catch (OperationException e) {
       Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
-      System.err.println("Bad operation " + dequeue + " failed: " + e.getMessage() +
-                           "(Ignoring this error)");
+      //System.err.println("Bad operation " + dequeue + " failed: " + e.getMessage() +
+      //                     "(Ignoring this error)");
       return 0L;
     }
     if (result.isEmpty()) {
-      System.err.println("Bad operation " + dequeue + "returned empty result" +
-                           "(Ignoring this error)");
+      //System.err.println("Bad operation " + dequeue + "returned empty result" +
+      //                     "(Ignoring this error)");
       return 0L;
     }
     QueueAck ack = new QueueAck(queueBytes, result.getEntryPointer(), consumer);
@@ -128,24 +180,24 @@ public class QueueBenchmark extends OpexBenchmark {
     QueueAck ackToExecute = null;
     LinkedList<QueueAck> pending = getPending(consumerId);
     pending.addLast(ack);
-    if (pending.size() > numPendingAcks)
+    if (pending.size() > numPendingAcks) {
       ackToExecute = pending.getFirst();
-
+    }
     // execute the ack operation
     if (ackToExecute != null) {
       try {
         opex.commit(opContext, ackToExecute);
-        System.err.println("Good operation " + ackToExecute + "returned.");
+        // System.err.println("Good operation " + ackToExecute + "returned.");
       } catch (OperationException e) {
         Log.error("Operation " + ackToExecute + " failed: " + e.getMessage() +
             "(Ignoring this error)", e);
-        System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() +
-        "(Ignoring this error)");
+        //System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() +
+        //  "(Ignoring this error)");
         return 0L;
       }
       pending.removeFirst();
     }
-    return 1L;
+    return result.getEntryPointers().length;
   }
 
   @Override
@@ -153,7 +205,7 @@ public class QueueBenchmark extends OpexBenchmark {
     super.initialize();
     try {
       opex.execute(opContext, null,
-                   new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, config)));
+                   new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, qconfig)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
     }
@@ -162,14 +214,10 @@ public class QueueBenchmark extends OpexBenchmark {
   @Override
   public void warmup() throws BenchmarkException {
     int numEnqueues = Math.min(100, simpleConfig.numRuns);
-    numEnqueues = 10000;
     System.out.println("Warmup: Performing " + numEnqueues + " enqueues.");
     for (int i = 0; i < numEnqueues; i++) {
       try {
         doEnqueue(i, 0);
-        if (i % 10000 == 0) {
-          System.out.println(i);
-        }
       } catch (BenchmarkException e) {
         throw new BenchmarkException(
             "Failure after " + i + " enqueues: " + e.getMessage() , e);
