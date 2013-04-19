@@ -221,6 +221,18 @@ struct TOptionalBinaryMap {
   3: optional string message,
 }
 
+struct TReadPointer {
+  1: i64 readPoint,
+  2: i64 writePoint,
+  3: set<i64> excludes,
+}
+
+struct TTransaction {
+  1: bool isNull,
+  2: optional i64 txid,
+  3: optional TReadPointer readPointer,
+}
+
 exception TOperationException {
   1: required i32 status,
   2: string message,
@@ -229,12 +241,22 @@ exception TOperationException {
 service TOperationExecutor {
 
   // batch op ex
+  TTransaction start(1: TOperationContext context) throws (1: TOperationException ex),
   void batch(1: TOperationContext context, 2: TWriteBatch batch) throws (1: TOperationException ex),
+  TTransaction execute(1: TOperationContext context, 2: TTransaction tx, 3: TWriteBatch batch) throws (1: TOperationException ex),
+  void finish(1: TOperationContext context, 2: TTransaction tx, 3: TWriteBatch batch) throws (1: TOperationException ex),
+  void commit(1: TOperationContext context, 2: TTransaction tx) throws (1: TOperationException ex),
+  void abort(1: TOperationContext context, 2: TTransaction tx) throws (1: TOperationException ex),
 
   // read op ex
   TOptionalBinaryMap read(1: TOperationContext context, 2: TRead read) throws (1: TOperationException ex),
+  TOptionalBinaryMap readTx(1: TOperationContext context, 2: TTransaction tx, 3: TRead read) throws (1: TOperationException ex),
   TOptionalBinaryList readAllKeys(1: TOperationContext context, 2: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
+  TOptionalBinaryList readAllKeysTx(1: TOperationContext context, 2: TTransaction tx, 3: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
   TOptionalBinaryMap readColumnRange(1: TOperationContext context, 2: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
+  TOptionalBinaryMap readColumnRangeTx(1: TOperationContext context, 2: TTransaction tx, 3: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
+  map<binary, i64> increment(1: TOperationContext context, 2: TIncrement increment) throws (1: TOperationException ex),
+  map<binary, i64> incrementTx(1: TOperationContext context, 2: TTransaction tx, 3: TIncrement increment) throws (1: TOperationException ex),
 
   // internal op ex
   TDequeueResult dequeue(1: TOperationContext context, 2: TQueueDequeue dequeue) throws (1: TOperationException ex),

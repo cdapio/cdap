@@ -6,20 +6,19 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
 import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
 import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
 import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
 import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
@@ -32,13 +31,10 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
-import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
+import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -46,6 +42,7 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -115,6 +112,30 @@ public class OperationExecutorClient extends ConverterUtils {
       this.transport.close();
   }
 
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("startTransaction");
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received StartTransaction");
+      TOperationContext tcontext = wrap(context);
+      TTransaction ttx = client.start(tcontext);
+      if (Log.isTraceEnabled()) Log.trace("StartTransaction successful.");
+      Transaction tx = unwrap(ttx);
+      helper.finish(Success);
+      return tx;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
   public void execute(OperationContext context,
                       List<WriteOperation> writes)
       throws OperationException, TException {
@@ -127,34 +148,115 @@ public class OperationExecutorClient extends ConverterUtils {
     try {
       TOperationContext tcontext = wrap(context);
 
-      List<TWriteOperation> tWrites = Lists.newArrayList();
-      for (WriteOperation writeOp : writes) {
-        if (Log.isTraceEnabled())
-          Log.trace("  WriteOperation: " + writeOp.toString());
-        TWriteOperation tWriteOp = new TWriteOperation();
-        if (writeOp instanceof Write)
-          tWriteOp.setWrite(wrap((Write)writeOp));
-        else if (writeOp instanceof Delete)
-          tWriteOp.setDelet(wrap((Delete)writeOp));
-        else if (writeOp instanceof Increment)
-          tWriteOp.setIncrement(wrap((Increment) writeOp));
-        else if (writeOp instanceof CompareAndSwap)
-          tWriteOp.setCompareAndSwap(wrap((CompareAndSwap) writeOp));
-        else if (writeOp instanceof QueueEnqueue)
-          tWriteOp.setQueueEnqueue(wrap((QueueEnqueue) writeOp));
-        else if (writeOp instanceof QueueAck)
-          tWriteOp.setQueueAck(wrap((QueueAck) writeOp));
-        else {
-          Log.error("Internal Error: Received an unknown WriteOperation of class "
-              + writeOp.getClass().getName() + ".");
-          continue;
-        }
-        tWrites.add(tWriteOp);
-      }
+      if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
+      client.batch(tcontext, wrapBatch(writes));
+      if (Log.isTraceEnabled()) Log.trace("Batch successful.");
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public Transaction execute(OperationContext context,
+                             Transaction transaction,
+                             List<WriteOperation> writes)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("executeBatch");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
+
+    try {
+      TOperationContext tcontext = wrap(context);
 
       if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
-      client.batch(tcontext, tWrites);
+      TTransaction ttx = client.execute(tcontext, wrap(transaction), wrapBatch(writes));
       if (Log.isTraceEnabled()) Log.trace("Batch successful.");
+      helper.success();
+      return unwrap(ttx);
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("commmitBatch");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
+
+    try {
+      TOperationContext tcontext = wrap(context);
+
+      if (Log.isTraceEnabled()) Log.trace("Committing Batch.");
+      client.finish(tcontext, wrap(transaction), wrapBatch(writes));
+      if (Log.isTraceEnabled()) Log.trace("Batch and commit successful.");
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void commit(OperationContext context,
+                     Transaction transaction)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("Commit");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Commit");
+
+    try {
+      TOperationContext tcontext = wrap(context);
+      client.commit(tcontext, wrap(transaction));
+      if (Log.isTraceEnabled()) Log.trace("Commit successful.");
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void abort(OperationContext context, Transaction transaction)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("Abort");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Abort");
+
+    try {
+      TOperationContext tcontext = wrap(context);
+      client.commit(tcontext, wrap(transaction));
+      if (Log.isTraceEnabled()) Log.trace("Abort successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -181,9 +283,7 @@ public class OperationExecutorClient extends ConverterUtils {
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
       if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
       DequeueResult dequeueResult = unwrap(tDequeueResult, dequeue.getConsumer());
-
       helper.finish(dequeueResult.isEmpty() ? NoData : Success);
-
       return dequeueResult;
 
     } catch (TOperationException te) {
@@ -327,6 +427,37 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException, TException {
+
+
+    MetricsHelper helper = newHelper("read", read.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received " + read);
+      TOperationContext tcontext = wrap(context);
+      TRead tRead = wrap(read);
+      if (Log.isTraceEnabled()) Log.trace("Sending TRead." + tRead);
+      TOptionalBinaryMap tResult = client.readTx(tcontext, wrap(transaction), tRead);
+      if (Log.isTraceEnabled()) Log.trace("TRead successful.");
+      OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
       throws OperationException, TException {
@@ -355,9 +486,37 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context,
-          ReadColumnRange readColumnRange)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
+                                               ReadAllKeys readKeys)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("listkeys", readKeys.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received " + readKeys);
+      TOperationContext tcontext = wrap(context);
+      TReadAllKeys tReadAllKeys = wrap(readKeys);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tReadAllKeys);
+      TOptionalBinaryList tResult = client.readAllKeysTx(tcontext, wrap(transaction), tReadAllKeys);
+      if (Log.isTraceEnabled()) Log.trace("TReadAllKeys successful.");
+      OperationResult<List<byte[]>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      ReadColumnRange readColumnRange)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper("range", readColumnRange.getTable());
@@ -369,6 +528,36 @@ public class OperationExecutorClient extends ConverterUtils {
       if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
       TOptionalBinaryMap tResult =
           client.readColumnRange(tcontext, tReadColumnRange);
+      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      ReadColumnRange readColumnRange)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("range", readColumnRange.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received ReadColumnRange.");
+      TOperationContext tcontext = wrap(context);
+      TReadColumnRange tReadColumnRange = wrap(readColumnRange);
+      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
+      TOptionalBinaryMap tResult =
+        client.readColumnRangeTx(tcontext, wrap(transaction), tReadColumnRange);
       if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
 
@@ -410,8 +599,63 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
+  public Map<byte[], Long> increment(OperationContext context, Transaction transaction, Increment increment)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("increment", increment.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
+      TOperationContext tcontext = wrap(context);
+      TIncrement tReadColumnRange = wrap(increment);
+      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
+      Map<ByteBuffer, Long> tResult = client.incrementTx(tcontext, wrap(transaction), tReadColumnRange);
+      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      Map<byte[], Long> result = unwrapLongMap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public Map<byte[], Long> increment(OperationContext context,
+                                     Increment increment)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("increment", increment.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
+      TOperationContext tcontext = wrap(context);
+      TIncrement tReadColumnRange = wrap(increment);
+      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
+      Map<ByteBuffer, Long> tResult = client.increment(tcontext, tReadColumnRange);
+      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      Map<byte[], Long> result = unwrapLongMap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+
   public String getName() {
     return "remote-client";
   }
-
 }
