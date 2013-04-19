@@ -255,7 +255,7 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       TOperationContext tcontext = wrap(context);
-      client.commit(tcontext, wrap(transaction));
+      client.abort(tcontext, wrap(transaction));
       if (Log.isTraceEnabled()) Log.trace("Abort successful.");
       helper.success();
 
@@ -607,10 +607,10 @@ public class OperationExecutorClient extends ConverterUtils {
     try {
       if (Log.isTraceEnabled()) Log.trace("Received Increment.");
       TOperationContext tcontext = wrap(context);
-      TIncrement tReadColumnRange = wrap(increment);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
-      Map<ByteBuffer, Long> tResult = client.incrementTx(tcontext, wrap(transaction), tReadColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      TIncrement tIncrement = wrap(increment);
+      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
+      Map<ByteBuffer, Long> tResult = client.incrementTx(tcontext, wrap(transaction), tIncrement);
+      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
       Map<byte[], Long> result = unwrapLongMap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -635,10 +635,10 @@ public class OperationExecutorClient extends ConverterUtils {
     try {
       if (Log.isTraceEnabled()) Log.trace("Received Increment.");
       TOperationContext tcontext = wrap(context);
-      TIncrement tReadColumnRange = wrap(increment);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
-      Map<ByteBuffer, Long> tResult = client.increment(tcontext, tReadColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      TIncrement tIncrement = wrap(increment);
+      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
+      Map<ByteBuffer, Long> tResult = client.increment(tcontext, tIncrement);
+      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
       Map<byte[], Long> result = unwrapLongMap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);

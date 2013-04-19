@@ -76,6 +76,13 @@ public interface TransactionOracle {
   public Transaction startTransaction();
 
   /**
+   * Validate that a transaction is in progress.
+   * @param tx the transction
+   * @throws OmidTransactionException if the transaction is not in progress
+   */
+  public void validateTransaction(Transaction tx) throws OmidTransactionException;
+
+  /**
    * Add a batch of operations to a transaction. The list of undo operations is saved for that
    * transaction.
    * @param tx the transction

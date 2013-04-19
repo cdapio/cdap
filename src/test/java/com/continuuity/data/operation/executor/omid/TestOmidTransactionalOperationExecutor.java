@@ -5,7 +5,6 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -15,6 +14,7 @@ import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.Transaction;
@@ -1116,5 +1116,85 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, tx1); // succeeds anyway
     executor.commit(context, tx2); // no conflict between named table and default table
     executor.commit(context, tx3); // no conflict between two named tables
+  }
+
+  // test that operations fail if an invalid transaction is passed in
+  @Test
+  public void testInvalidTransactions() throws OperationException {
+
+    final String table = "tIT";
+    final byte[] a = {'a'};
+    final byte[] b = {'b'};
+
+    // start a transactions
+    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx2 = executor.startTransaction(context);
+    // execute some write
+    executor.execute(context, tx1, batch(new Write(table, a, b, b)));
+    // commit the first transaction, abort the second
+    executor.commit(context, tx1);
+    executor.abort(context, tx2);
+
+    for (Transaction tx : Lists.newArrayList(tx1, tx2)) {
+
+      // attempt to commit the transaction
+      try {
+        executor.commit(context, tx);
+        fail("commit should fail for " + (tx == tx1 ? "committed" : "aborted") + " transaction");
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+          throw e;
+        }
+      }
+
+      // attempt to abort transaction
+      try {
+        executor.abort(context, tx);
+        fail("abort should fail for " + (tx == tx1 ? "committed" : "aborted") + " transaction");
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+          throw e;
+        }
+      }
+
+      // attempt to execute write and commit transaction
+      try {
+        executor.commit(context, tx, batch(new Write(table, b, b, b)));
+        fail("commit should fail for " + (tx == tx1 ? "committed" : "aborted") + " transaction");
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+          throw e;
+        }
+      }
+      // verify the write did not go through
+      OperationResult<Map<byte[], byte[]>> result = executor.execute(context, new Read(table, b, b));
+      assertTrue(result.isEmpty() || result.getValue().get(b) == null);
+
+      // attempt to execute write with transaction
+      try {
+        executor.execute(context, tx, batch(new Write(table, b, b, b)));
+        fail("write should fail for " + (tx == tx1 ? "committed" : "aborted") + " transaction");
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+          throw e;
+        }
+      }
+      // verify the write did not go through
+      result = executor.execute(context, new Read(table, b, b));
+      assertTrue(result.isEmpty() || result.getValue().get(b) == null);
+
+      // attempt to execute increment with transaction
+      try {
+        executor.execute(context, tx, batch(new Increment(table, b, b, 1L)));
+        fail("increment should fail for " + (tx == tx1 ? "committed" : "aborted") + " transaction");
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+          throw e;
+        }
+      }
+      // verify the write did not go through
+      result = executor.execute(context, new Read(table, b, b));
+      assertTrue(result.isEmpty() || result.getValue().get(b) == null);
+    }
   }
 }

@@ -169,21 +169,19 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-   * Executes a {@link com.continuuity.data.operation.Increment} operation. If
-   * a non-null transaction is passed in, the operation is performed in that
-   * client-side transaction. Otherwise it is performed and committed as an
-   * anonymous transaction.
+   * Executes a {@link com.continuuity.data.operation.Increment} operation.
+   * A valid transaction must be passed in, and the operation is performed in
+   * that client-side transaction.
    *
    * @param context the operation context
-   * @param transaction an existing transaction, or null to perform an anonymous
-   *                    transaction
+   * @param transaction an existing, valid transaction
    * @param increment the operation
    * @return a result object containing a map of columns to the new, incremented
    *         values.
    * @throws OperationException is something goes wrong
    */
   public Map<byte[], Long> increment(OperationContext context,
-                                     @Nullable Transaction transaction,
+                                     Transaction transaction,
                                      Increment increment)
     throws OperationException;
 

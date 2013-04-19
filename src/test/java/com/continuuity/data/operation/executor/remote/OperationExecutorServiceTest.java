@@ -1,6 +1,8 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -10,8 +12,10 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
@@ -37,6 +41,10 @@ import java.util.Random;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
@@ -124,23 +132,23 @@ public abstract class OperationExecutorServiceTest extends
 
     // read back key with remote and verify null
     Read read = new Read(key, col);
-    Assert.assertTrue(remote.execute(context, read).isEmpty());
+    assertTrue(remote.execute(context, read).isEmpty());
 
     // read back one column and verify null
     read = new Read(key, "none".getBytes());
-    Assert.assertTrue(remote.execute(context, read).isEmpty());
+    assertTrue(remote.execute(context, read).isEmpty());
 
     // read back two columns and verify null
     read = new Read(key,
         new byte[][] { "neither".getBytes(), "nor".getBytes() });
-    Assert.assertTrue(remote.execute(context, read).isEmpty());
+    assertTrue(remote.execute(context, read).isEmpty());
 
     // read back column range and verify null
     ReadColumnRange readColumnRange = new ReadColumnRange(
         key,
         "from".getBytes(),
         "to".getBytes());
-    Assert.assertTrue(remote.execute(context, readColumnRange).isEmpty());
+    assertTrue(remote.execute(context, readColumnRange).isEmpty());
   }
 
    /** Tests Write, ReadColumnRange, Delete */
@@ -210,7 +218,7 @@ public abstract class OperationExecutorServiceTest extends
     // read back a disjoint column range, verify it is empty by not null
     readColumnRange =
         new ReadColumnRange(row, "d".getBytes(), "e".getBytes());
-    Assert.assertTrue(remote.execute(context, readColumnRange).isEmpty());
+    assertTrue(remote.execute(context, readColumnRange).isEmpty());
 
     // delete two of the columns with remote
     Delete delete = new Delete(row,
@@ -273,7 +281,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // verify the row is not there any more, actually the read will return
     // a map with an entry for x, but with a null value
-    Assert.assertTrue(remote.execute(context, read).isEmpty());
+    assertTrue(remote.execute(context, read).isEmpty());
 
     // compareAndSwap
     compareAndSwap = new CompareAndSwap(key,
@@ -286,7 +294,7 @@ public abstract class OperationExecutorServiceTest extends
     }
 
     // verify the row is still not there
-    Assert.assertTrue(remote.execute(context, read).isEmpty());
+    assertTrue(remote.execute(context, read).isEmpty());
   }
 
   /** clear the tables, then write a batch of keys, then readAllKeys */
@@ -373,7 +381,7 @@ public abstract class OperationExecutorServiceTest extends
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(context, dequeue);
     Assert.assertNotNull(dequeueResult);
-    Assert.assertTrue(dequeueResult.isSuccess());
+    assertTrue(dequeueResult.isSuccess());
     Assert.assertFalse(dequeueResult.isEmpty());
     Assert.assertArrayEquals("0".getBytes(), dequeueResult.getEntry().getData());
 
@@ -397,18 +405,17 @@ public abstract class OperationExecutorServiceTest extends
     }
 
     // verify that all operations were rolled back
-    Assert.assertTrue(remote.execute(context, new Read(keyA, kvcol)).isEmpty());
+    assertTrue(remote.execute(context, new Read(keyA, kvcol)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
         remote.execute(context, new Read(keyB, kvcol)).getValue().get(kvcol));
-    Assert.assertTrue(remote.execute(context, new Read(keyC, kvcol)).isEmpty());
+    assertTrue(remote.execute(context, new Read(keyC, kvcol)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
         remote.execute(context, new Read(keyD, kvcol)).getValue().get(kvcol));
-    Assert.assertTrue(remote.execute(context,
-        new QueueDequeue(qq, consumer, config)).isEmpty());
+    assertTrue(remote.execute(context, new QueueDequeue(qq, consumer, config)).isEmpty());
     // queue should return the same element until it is acked
     dequeueResult = remote.execute(context,
         new QueueDequeue(q, consumer, config));
-    Assert.assertTrue(dequeueResult.isSuccess());
+    assertTrue(dequeueResult.isSuccess());
     Assert.assertFalse(dequeueResult.isEmpty());
     Assert.assertArrayEquals("0".getBytes(), dequeueResult.getEntry().getData());
 
@@ -421,20 +428,20 @@ public abstract class OperationExecutorServiceTest extends
     // verify that all operations were performed
     Assert.assertArrayEquals("1".getBytes(),
         remote.execute(context, new Read(keyA, kvcol)).getValue().get(kvcol));
-    Assert.assertTrue(remote.execute(context, new Read(keyB, kvcol)).isEmpty());
+    assertTrue(remote.execute(context, new Read(keyB, kvcol)).isEmpty());
     Assert.assertArrayEquals(new byte[] { 0,0,0,0,0,0,0,5 },
         remote.execute(context, new Read(keyC, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals("2".getBytes(),
         remote.execute(context, new Read(keyD, kvcol)).getValue().get(kvcol));
     dequeueResult = remote.execute(context,
         new QueueDequeue(qq, consumer, config));
-    Assert.assertTrue(dequeueResult.isSuccess());
+    assertTrue(dequeueResult.isSuccess());
     Assert.assertFalse(dequeueResult.isEmpty());
     Assert.assertArrayEquals("1".getBytes(), dequeueResult.getEntry().getData());
     // queue should return the next element now that the previous one is acked
     dequeueResult = remote.execute(context,
         new QueueDequeue(q, consumer, config));
-    Assert.assertTrue(dequeueResult.isSuccess());
+    assertTrue(dequeueResult.isSuccess());
     Assert.assertFalse(dequeueResult.isEmpty());
     Assert.assertArrayEquals("1".getBytes(), dequeueResult.getEntry().getData());
   }
@@ -456,15 +463,13 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
 
     // verify that all is gone
-    Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
+    assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
     remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
     remote.execute(context, null, new QueueAdmin.QueueConfigure(s, consumer));
-    Assert.assertTrue(remote.execute(
-        context, new QueueDequeue(q, consumer, config)).isEmpty());
-    Assert.assertTrue(remote.execute(
-        context, new QueueDequeue(s, consumer, config)).isEmpty());
+    assertTrue(remote.execute(context, new QueueDequeue(q, consumer, config)).isEmpty());
+    assertTrue(remote.execute(context, new QueueDequeue(s, consumer, config)).isEmpty());
 
     // write back all values
     remote.commit(context, new Write(a, kvcol, x));
@@ -475,7 +480,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
 
     // verify that the tables are gone, but queues and streams are there
-    Assert.assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
+    assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());
     Assert.assertArrayEquals(x, remote.execute(
@@ -491,8 +496,7 @@ public abstract class OperationExecutorServiceTest extends
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x,
         remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
-    Assert.assertTrue(remote.execute(
-        context, new QueueDequeue(q, consumer, config)).isEmpty());
+    assertTrue(remote.execute(context, new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(s, consumer, config)).getEntry().getData());
 
@@ -507,8 +511,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals(x, remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());
-    Assert.assertTrue(remote.execute(
-        context, new QueueDequeue(s, consumer, config)).isEmpty());
+    assertTrue(remote.execute(context, new QueueDequeue(s, consumer, config)).isEmpty());
   }
 
   /** tests enqueue, getGroupId and dequeue with ack for different groups */
@@ -564,10 +567,10 @@ public abstract class OperationExecutorServiceTest extends
     DequeueResult res22 = remote.execute(context, new QueueDequeue(q, cons22, conf2));
 
     // verify that all results are successful
-    Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
-    Assert.assertTrue(res12.isSuccess() && !res12.isEmpty());
-    Assert.assertTrue(res21.isSuccess() && !res21.isEmpty());
-    Assert.assertTrue(res22.isSuccess() && !res22.isEmpty());
+    assertTrue(res11.isSuccess() && !res11.isEmpty());
+    assertTrue(res12.isSuccess() && !res12.isEmpty());
+    assertTrue(res21.isSuccess() && !res21.isEmpty());
+    assertTrue(res22.isSuccess() && !res22.isEmpty());
 
     // verify that the values from group 1 are different (hash partitioner)
     Assert.assertFalse(Arrays.equals(res11.getEntry().getData(), res12.getEntry().getData()));
@@ -576,17 +579,17 @@ public abstract class OperationExecutorServiceTest extends
 
     // verify that group1 (multi-entry config) can dequeue more elements
     DequeueResult next11 =  remote.execute(context, new QueueDequeue(q, cons11, conf1));
-    Assert.assertTrue(next11.isSuccess() && !next11.isEmpty());
+    assertTrue(next11.isSuccess() && !next11.isEmpty());
     // for the second read we expect the same value again (enqueued twice)
     Assert.assertArrayEquals(res11.getEntry().getData(), next11.getEntry().getData());
     // but if we dequeue again, we should see a different one.
     next11 = remote.execute(context, new QueueDequeue(q, cons11, conf1));
-    Assert.assertTrue(next11.isSuccess() && !next11.isEmpty());
+    assertTrue(next11.isSuccess() && !next11.isEmpty());
     Assert.assertFalse(Arrays.equals(res11.getEntry().getData(), next11.getEntry().getData()));
 
     // verify that group2 (single-entry config) cannot dequeue more elements
     DequeueResult next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    assertTrue(next21.isSuccess() && !next21.isEmpty());
     // other than for group1 above, we would see a different value right
     // away (because the first two, identical value have been dequeued)
     // but this queue is in single-entry mode and requires an ack before
@@ -594,7 +597,7 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals(res21.getEntry().getData(), next21.getEntry().getData());
     // just to be sure, do it again
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    assertTrue(next21.isSuccess() && !next21.isEmpty());
     Assert.assertArrayEquals(res21.getEntry().getData(), next21.getEntry().getData());
 
     // ack group 1 to verify that it did not affect group 2
@@ -602,11 +605,11 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, new QueueAck(q, pointer11, cons11));
     // dequeue group 2 again
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    assertTrue(next21.isSuccess() && !next21.isEmpty());
     Assert.assertArrayEquals(res21.getEntry().getData(), next21.getEntry().getData());
     // just to be sure, do it twice
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    assertTrue(next21.isSuccess() && !next21.isEmpty());
     Assert.assertArrayEquals(res21.getEntry().getData(), next21.getEntry().getData());
 
     // ack group 2, consumer 1,
@@ -614,12 +617,12 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, new QueueAck(q, pointer21, cons21));
     // dequeue group 2 again
     next21 = remote.execute(context, new QueueDequeue(q, cons21, conf2));
-    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    assertTrue(next21.isSuccess() && !next21.isEmpty());
     Assert.assertFalse(Arrays.equals(res21.getEntry().getData(), next21.getEntry().getData()));
 
     // verify that consumer 2 of group 2 can still not see new entries
     DequeueResult next22 = remote.execute(context, new QueueDequeue(q, cons22, conf2));
-    Assert.assertTrue(next22.isSuccess() && !next22.isEmpty());
+    assertTrue(next22.isSuccess() && !next22.isEmpty());
     Assert.assertArrayEquals(res22.getEntry().getData(), next22.getEntry().getData());
 
     // get queue info with remote and opex, verify they are equal
@@ -689,6 +692,83 @@ public abstract class OperationExecutorServiceTest extends
         Assert.fail("Exception in thread " + id + ": " + e.getMessage());
       }
     }
+  }
+
+  @Test
+  public void testClientSideTransactions() throws OperationException {
+    final String table = "tCST";
+    final byte[] r1 = { 'r', '1' };
+    final byte[] r2 = { 'r', '2' };
+    final byte[] r3 = { 'r', '3' };
+    final byte[] c1 = { 'c', '1' };
+    final byte[] c2 = { 'c', '2' };
+    final byte[] one = Bytes.toBytes(1L);
+    final byte[] two = Bytes.toBytes(2L);
+
+    // start a transaction
+    Transaction tx = remote.startTransaction(context);
+    // execute a write in xaction
+    remote.execute(context, tx, batch(new Write(table, r1, c1, one)));
+    // read from outside xaction -> not visible
+    OperationResult<Map<byte[], byte[]>> result = remote.execute(context, new ReadColumnRange(table, r1, null, null));
+    assertTrue(result.isEmpty() || result.getValue().get(c1) == null);
+    // read from inside xaction -> visible
+    result = remote.execute(context, tx, new ReadColumnRange(table, r1, null, null));
+    assertArrayEquals(one, result.getValue().get(c1));
+    // increment outside xaction -> increments pre-xaction value
+    Map<byte[], Long> iresult = remote.increment(context, new Increment(table, r1, c1, 4L));
+    assertEquals(new Long(4L), iresult.get(c1));
+    // execute another increment within xaction -> sees first write but not previous increment
+    iresult = remote.increment(context, tx, new Increment(table, r1, c1, 1L));
+    assertEquals(new Long(2L), iresult.get(c1));
+    // commit xaction -> fail
+    try {
+      remote.commit(context, tx);
+      fail("Commit should have failed with write conflict.");
+    } catch (OperationException e) {
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+        throw e;
+      }
+    }
+
+    // try to submit another operation to the transaction -> fails with invalid transactio
+    try {
+      remote.execute(context, tx, batch(new Write(table, r2, c1, two)));
+      fail("Commit should have failed with invalid transaction.");
+    } catch (OperationException e) {
+      if (e.getStatus() != StatusCode.INVALID_TRANSACTION) {
+        throw e;
+      }
+    }
+    // verify the write did not happen
+    result = remote.execute(context, new ReadColumnRange(table, r2, null, null));
+    assertTrue(result.isEmpty() || result.getValue().get(c1) == null);
+
+    // execute batch without xaction -> returns xaction
+    tx = remote.execute(context, null, batch(new Write(table, r2, c1, two)));
+    // read from outside xaction -> not visible
+    result = remote.execute(context, new ReadColumnRange(table, r2, null, null));
+    assertTrue(result.isEmpty() || result.getValue().get(c1) == null);
+    // read from inside xaction -> visible
+    result = remote.execute(context, tx, new ReadColumnRange(table, r2, null, null));
+    assertArrayEquals(two, result.getValue().get(c1));
+    // finish xaction with another write
+    remote.commit(context, tx, batch(new Write(table, r2, c2, two)));
+    // read again -> both visible
+    result = remote.execute(context, new ReadColumnRange(table, r2, null, null));
+    assertArrayEquals(two, result.getValue().get(c1));
+    assertArrayEquals(two, result.getValue().get(c2));
+
+    // start xaction
+    tx = remote.startTransaction(context);
+    // increment in xaction
+    iresult = remote.increment(context, tx, new Increment(table, r3, c1, 2L));
+    assertEquals(new Long(2L), iresult.get(c1));
+    // abort xaction
+    remote.abort(context, tx);
+    // increment outside -> sees previous value
+    iresult = remote.increment(context, new Increment(table, r3, c1, 5L));
+    assertEquals(new Long(5L), iresult.get(c1));
   }
 
 }
