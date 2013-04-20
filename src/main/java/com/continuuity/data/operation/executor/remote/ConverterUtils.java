@@ -15,6 +15,10 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
 import com.continuuity.data.operation.executor.remote.stubs.TCompareAndSwap;
 import com.continuuity.data.operation.executor.remote.stubs.TDelete;
@@ -43,7 +47,10 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueProducer;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
+import com.continuuity.data.operation.executor.remote.stubs.TReadPointer;
+import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
 import com.continuuity.data.operation.executor.remote.stubs.TWrite;
+import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
@@ -189,6 +196,23 @@ public class ConverterUtils {
       return new OperationResult<List<byte[]>>(opt.getStatus(),
           opt.getMessage());
     }
+  }
+
+  /** wrap a map of byte arrays to long into a map of byte buffers to long */
+  Map<ByteBuffer, Long> wrapLongMap(Map<byte[], Long> map) {
+    if (map == null)
+      return null;
+    Map<ByteBuffer, Long> result = Maps.newHashMap();
+    for(Map.Entry<byte[], Long> entry : map.entrySet())
+      result.put(wrap(entry.getKey()), entry.getValue());
+    return result;
+  }
+  /** unwrap a map of byte arrays to long from a map of byte buffers to long */
+  Map<byte[], Long> unwrapLongMap(Map<ByteBuffer, Long> map) {
+    Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for(Map.Entry<ByteBuffer, Long> entry : map.entrySet())
+      result.put(unwrap(entry.getKey()), entry.getValue());
+    return result;
   }
 
   /** wrap a map of byte arrays into a map of byte buffers */
@@ -389,6 +413,63 @@ public class ConverterUtils {
       compareAndSwap.setMetricName(tCompareAndSwap.getMetric());
     }
     return compareAndSwap;
+  }
+
+  /** wrap a batch of write operations */
+  List<TWriteOperation> wrapBatch(List<WriteOperation> writes) throws TOperationException {
+    List<TWriteOperation> tWrites = Lists.newArrayList();
+    for (WriteOperation writeOp : writes) {
+      if (Log.isTraceEnabled())
+        Log.trace("  WriteOperation: " + writeOp.toString());
+      TWriteOperation tWriteOp = new TWriteOperation();
+      if (writeOp instanceof Write)
+        tWriteOp.setWrite(wrap((Write)writeOp));
+      else if (writeOp instanceof Delete)
+        tWriteOp.setDelet(wrap((Delete)writeOp));
+      else if (writeOp instanceof Increment)
+        tWriteOp.setIncrement(wrap((Increment) writeOp));
+      else if (writeOp instanceof CompareAndSwap)
+        tWriteOp.setCompareAndSwap(wrap((CompareAndSwap) writeOp));
+      else if (writeOp instanceof QueueEnqueue)
+        tWriteOp.setQueueEnqueue(wrap((QueueEnqueue) writeOp));
+      else if (writeOp instanceof QueueAck)
+        tWriteOp.setQueueAck(wrap((QueueAck) writeOp));
+      else {
+        Log.error("Internal Error: Received an unknown WriteOperation of class "
+                    + writeOp.getClass().getName() + ".");
+        continue;
+      }
+      tWrites.add(tWriteOp);
+    }
+    return tWrites;
+  }
+  /** unwrap a batch of write operations */
+  List<WriteOperation> unwrapBatch(List<TWriteOperation> batch) throws TOperationException {
+    List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
+    for (TWriteOperation tWriteOp : batch) {
+      WriteOperation writeOp;
+      if (tWriteOp.isSetWrite())
+       writeOp = unwrap(tWriteOp.getWrite());
+      else if (tWriteOp.isSetDelet())
+        writeOp = unwrap(tWriteOp.getDelet());
+      else if (tWriteOp.isSetIncrement())
+        writeOp = unwrap(tWriteOp.getIncrement());
+      else if (tWriteOp.isSetCompareAndSwap())
+        writeOp = unwrap(tWriteOp.getCompareAndSwap());
+      else if (tWriteOp.isSetQueueEnqueue())
+        writeOp = unwrap(tWriteOp.getQueueEnqueue());
+      else if (tWriteOp.isSetQueueAck())
+        writeOp = unwrap(tWriteOp.getQueueAck());
+      else {
+        Log.error("Internal Error: Unkown TWriteOperation "
+                    + tWriteOp.toString() + " in batch. Skipping.");
+        continue;
+      }
+      if (Log.isTraceEnabled())
+        Log.trace("Operation in batch: " + writeOp);
+      writes.add(writeOp);
+    }
+    return writes;
   }
 
   /** wrap a Read operation */
@@ -885,7 +966,6 @@ public class ConverterUtils {
     }
     return tQueueConfigure;
   }
-
   QueueAdmin.QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
     if(tQueueConfigure == null) {
       return null;
@@ -899,13 +979,44 @@ public class ConverterUtils {
     return queueConfigure;
   }
 
+  /** wrap a read pointer. Only memory read pionters are supported */
+  TReadPointer wrap(ReadPointer readPointer) throws TOperationException {
+    if (!(readPointer instanceof MemoryReadPointer)) {
+      String message = String.format("Unsupported readPointer implementation %s, only MemortReadPointer is supported",
+                                     readPointer.getClass().getName());
+      Log.error(message);
+      throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
+
+    }
+    MemoryReadPointer rp = (MemoryReadPointer)readPointer;
+    return new TReadPointer(rp.getWritePointer(), rp.getReadPointer(), rp.getReadExcludes());
+  }
+  /** unwrap a read pointer */
+  ReadPointer unwrap(TReadPointer trp) {
+    return new MemoryReadPointer(trp.getWritePoint(), trp.getReadPoint(), trp.getExcludes());
+  }
+
+  /** wrap a transaction */
+  TTransaction wrap(Transaction tx) throws TOperationException {
+    if (tx == null) {
+      return new TTransaction(true);
+    }
+    TTransaction ttx = new TTransaction(false);
+    ttx.setReadPointer(wrap(tx.getReadPointer()));
+    ttx.setTxid(tx.getWriteVersion());
+    return ttx;
+  }
+  /** unwrap a transaction */
+  Transaction unwrap(TTransaction ttx) {
+    return ttx.isIsNull() ? null : new Transaction(ttx.getTxid(), unwrap(ttx.getReadPointer()));
+  }
+
   /**
    * wrap an operation exception
    */
   TOperationException wrap(OperationException e) {
     return new TOperationException(e.getStatus(), e.getMessage());
   }
-
   /**
    * unwrap an operation exception
    */

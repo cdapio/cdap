@@ -7,17 +7,19 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
 import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
 import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
 import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
 import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
@@ -30,6 +32,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
+import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
@@ -38,7 +41,7 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +111,31 @@ public class TOperationExecutorImpl
   // batch write, return a structure and never null, and is thus safe
 
   @Override
+  public TTransaction start(TOperationContext tcontext) throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("startTransaction");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received startTransaction");
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction result = this.opex.startTransaction(context);
+      TTransaction ttx = wrap(result);
+      if (Log.isTraceEnabled()) Log.trace("Read successful.");
+
+      helper.finish(Success);
+      return ttx;
+
+    } catch (OperationException e) {
+      Log.warn("startTransaction failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
   public void batch(TOperationContext tcontext,
                     List<TWriteOperation> batch)
       throws TException, TOperationException {
@@ -116,39 +144,119 @@ public class TOperationExecutorImpl
 
     if (Log.isTraceEnabled())
       Log.trace("Received Batch");
-    List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
-    for (TWriteOperation tWriteOp : batch) {
-      WriteOperation writeOp;
-      if (tWriteOp.isSetWrite())
-        writeOp = unwrap(tWriteOp.getWrite());
-      else if (tWriteOp.isSetDelet())
-        writeOp = unwrap(tWriteOp.getDelet());
-      else if (tWriteOp.isSetIncrement())
-        writeOp = unwrap(tWriteOp.getIncrement());
-      else if (tWriteOp.isSetCompareAndSwap())
-        writeOp = unwrap(tWriteOp.getCompareAndSwap());
-      else if (tWriteOp.isSetQueueEnqueue())
-        writeOp = unwrap(tWriteOp.getQueueEnqueue());
-      else if (tWriteOp.isSetQueueAck())
-        writeOp = unwrap(tWriteOp.getQueueAck());
-      else {
-        Log.error("Internal Error: Unkown TWriteOperation "
-            + tWriteOp.toString() + " in batch. Skipping.");
-        continue;
-      }
-      if (Log.isTraceEnabled())
-        Log.trace("Operation in batch: " + writeOp);
-      writes.add(writeOp);
-    }
 
     try {
       OperationContext context = unwrap(tcontext);
-      this.opex.commit(context, writes);
+      this.opex.commit(context, unwrapBatch(batch));
       if (Log.isTraceEnabled()) Log.trace("Batch successful.");
       helper.success();
 
     } catch (OperationException e) {
       Log.warn("Batch failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public TTransaction execute(TOperationContext tcontext,
+                              TTransaction ttx,
+                              List<TWriteOperation> batch)
+    throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("execute");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Execute batch");
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      tx = this.opex.execute(context, tx, unwrapBatch(batch));
+      if (Log.isTraceEnabled()) Log.trace("Execute batch successful.");
+      helper.success();
+
+      return wrap(tx);
+
+    } catch (OperationException e) {
+      Log.warn("Execute batch failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void finish(TOperationContext tcontext,
+                     TTransaction ttx,
+                     List<TWriteOperation> batch)
+    throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("finish");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Commit with batch");
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      this.opex.commit(context, tx, unwrapBatch(batch));
+      if (Log.isTraceEnabled()) Log.trace("Commit batch successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      Log.warn("Commit batch failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void commit(TOperationContext tcontext,
+                     TTransaction ttx)
+    throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("commit");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Commit");
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      this.opex.commit(context, tx);
+      if (Log.isTraceEnabled()) Log.trace("Commit successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      Log.warn("Commit failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public void abort(TOperationContext tcontext,
+                    TTransaction ttx)
+    throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("abort");
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received Abort");
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      this.opex.abort(context, tx);
+      if (Log.isTraceEnabled()) Log.trace("Abort successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      Log.warn("Abort failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
@@ -189,9 +297,40 @@ public class TOperationExecutorImpl
   }
 
   @Override
+  public TOptionalBinaryMap readTx(TOperationContext tcontext,
+                                   TTransaction ttx,
+                                   TRead tRead)
+    throws TOperationException, TException {
+
+    MetricsHelper helper = newHelper("readTx", tRead.getTable());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TRead: " + tRead);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      Read read = unwrap(tRead);
+      OperationResult<Map<byte[], byte[]>> result =
+        this.opex.execute(context, tx, read);
+      TOptionalBinaryMap tResult = wrapMap(result);
+      if (Log.isTraceEnabled()) Log.trace("Read successful.");
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return tResult;
+
+    } catch (OperationException e) {
+      Log.warn("readTx failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
   public TOptionalBinaryList readAllKeys(TOperationContext tcontext,
                                          TReadAllKeys tReadAllKeys)
-      throws TException, TOperationException {
+    throws TException, TOperationException {
 
     MetricsHelper helper = newHelper("listkeys", tReadAllKeys.getTable());
 
@@ -202,7 +341,7 @@ public class TOperationExecutorImpl
       OperationContext context = unwrap(tcontext);
       ReadAllKeys readAllKeys = unwrap(tReadAllKeys);
       OperationResult<List<byte[]>> result =
-          this.opex.execute(context, readAllKeys);
+        this.opex.execute(context, readAllKeys);
       TOptionalBinaryList tResult = wrapList(result);
       if (Log.isTraceEnabled()) Log.trace("ReadAllKeys successful.");
 
@@ -218,10 +357,40 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public TOptionalBinaryMap
-  readColumnRange(TOperationContext tcontext,
-                  TReadColumnRange tReadColumnRange)
-      throws TException, TOperationException {
+  public TOptionalBinaryList readAllKeysTx(TOperationContext tcontext,
+                                           TTransaction ttx,
+                                           TReadAllKeys tReadAllKeys)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("listkeysTx", tReadAllKeys.getTable());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TReadAllKeys: " + tReadAllKeys);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      ReadAllKeys readAllKeys = unwrap(tReadAllKeys);
+      OperationResult<List<byte[]>> result =
+        this.opex.execute(context, tx, readAllKeys);
+      TOptionalBinaryList tResult = wrapList(result);
+      if (Log.isTraceEnabled()) Log.trace("ReadAllKeys successful.");
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return tResult;
+
+    } catch (OperationException e) {
+      Log.warn("ReadAllKeys failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public TOptionalBinaryMap readColumnRange(TOperationContext tcontext,
+                                            TReadColumnRange tReadColumnRange)
+    throws TException, TOperationException {
 
     MetricsHelper helper = newHelper("range", tReadColumnRange.getTable());
 
@@ -232,7 +401,7 @@ public class TOperationExecutorImpl
       OperationContext context = unwrap(tcontext);
       ReadColumnRange readColumnRange = unwrap(tReadColumnRange);
       OperationResult<Map<byte[], byte[]>> result =
-          this.opex.execute(context, readColumnRange);
+        this.opex.execute(context, readColumnRange);
       TOptionalBinaryMap tResult = wrapMap(result);
       if (Log.isTraceEnabled()) Log.trace("ReadColumnRange successful.");
 
@@ -241,6 +410,95 @@ public class TOperationExecutorImpl
 
     } catch (OperationException e) {
       Log.warn("ReadColumnRange failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public TOptionalBinaryMap readColumnRangeTx(TOperationContext tcontext,
+                                              TTransaction ttx,
+                                              TReadColumnRange tReadColumnRange)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("rangeTx", tReadColumnRange.getTable());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TReadColumnRange: " + tReadColumnRange);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      ReadColumnRange readColumnRange = unwrap(tReadColumnRange);
+      OperationResult<Map<byte[], byte[]>> result =
+        this.opex.execute(context, tx, readColumnRange);
+      TOptionalBinaryMap tResult = wrapMap(result);
+      if (Log.isTraceEnabled()) Log.trace("ReadColumnRange successful.");
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return tResult;
+
+    } catch (OperationException e) {
+      Log.warn("ReadColumnRange failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public Map<ByteBuffer, Long> increment(TOperationContext tcontext,
+                                         TIncrement tIncrement)
+    throws TOperationException,
+    TException {
+
+    MetricsHelper helper = newHelper("increment", tIncrement.getTable());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TIncrement: " + tIncrement);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Increment increment = unwrap(tIncrement);
+      Map<byte[], Long> result = this.opex.increment(context, increment);
+      if (Log.isTraceEnabled()) Log.trace("Increment successful.");
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return wrapLongMap(result);
+
+    } catch (OperationException e) {
+      Log.warn("Increment failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public Map<ByteBuffer, Long> incrementTx(TOperationContext tcontext,
+                                           TTransaction ttx,
+                                           TIncrement tIncrement)
+    throws TOperationException,
+    TException {
+
+    MetricsHelper helper = newHelper("incrementTx", tIncrement.getTable());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TIncrement: " + tIncrement);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      Transaction tx = unwrap(ttx);
+      Increment increment = unwrap(tIncrement);
+      Map<byte[], Long> result = this.opex.increment(context, tx, increment);
+      if (Log.isTraceEnabled()) Log.trace("Increment successful.");
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return wrapLongMap(result);
+
+    } catch (OperationException e) {
+      Log.warn("Increment failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
