@@ -291,8 +291,8 @@ public abstract class TestTTQueue {
     //       behavior or are the old ttqueue implementations correct?
     
     // dequeue again should be empty on consumer4
-    assertTrue(
-        queue.dequeue(consumer4, dirtyReadPointer).isEmpty());
+    result = queue.dequeue(consumer4, dirtyReadPointer);
+    assertTrue(result.isEmpty());
 
     // dequeue is empty for 1 and 2
     assertTrue(
