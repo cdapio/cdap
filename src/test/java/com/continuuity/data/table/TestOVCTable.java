@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -14,11 +15,20 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the contract and semantics of {@link OrderedVersionedColumnarTable}
@@ -1024,9 +1034,19 @@ public abstract class TestOVCTable {
       assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
       assertEquals(Bytes.toInt(values2[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols2[i])));
     }
+
+    // Get data (single column)
+    valuesMap = this.table.getAllColumns(rows, new byte[][]{COL1}, RP_MAX).getValue();
+    assertFalse(valuesMap.isEmpty());
+
+    // Verify data
+    for(int i = 0; i < MAX; ++i) {
+      // Assert one col per row is read
+      assertEquals(1, valuesMap.get(rows[i]).size());
+      assertEquals(Bytes.toInt(values1[i]), Bytes.toInt(valuesMap.get(rows[i]).get(cols1[i])));
+    }
   }
 
-  @Test
   public void testCeilValue() throws OperationException {
     final byte[] col = Bytes.toBytes("c");
     final int MAX = 10;
@@ -1053,4 +1073,44 @@ public abstract class TestOVCTable {
 
   }
 
+  @Test
+  public void testCompareAndSwapDirty() throws OperationException {
+    // TODO: need to run multi-threaded to test for atomicity.
+    final byte[] ROW = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
+    final byte[] COL1 = Bytes.toBytes("col1");
+    final byte[] COL2 = Bytes.toBytes("col2");
+
+    final byte[] col2Value = Bytes.toBytes("col2Value");
+    this.table.put(ROW, COL2, TransactionOracle.DIRTY_WRITE_VERSION, col2Value);
+
+    for(int i = 0; i < 2 ; ++i) {
+      String message = "Iteration " + (i+1);
+      byte[] expected1 = Bytes.toBytes(1);
+      byte[] newValue1 = Bytes.toBytes(10);
+      // Cell does not exist yet
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, expected1, newValue1));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue1));
+
+      // Cell has newValue1 now
+      byte[] newValue2 = Bytes.toBytes(20);
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue2));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue2));
+
+      // Cell has newValue2 now
+      byte[] newValue3 = Bytes.toBytes(30);
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue3));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue3));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue3));
+
+      // Cell has newValue3 now
+      byte[] newValue4 = null;
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, null, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue1, newValue4));
+      assertFalse(message, this.table.compareAndSwapDirty(ROW, COL1, newValue2, newValue4));
+      assertTrue(message, this.table.compareAndSwapDirty(ROW, COL1, newValue3, newValue4));
+    }
+
+    byte[] actualCol2Value = this.table.get(ROW, COL2, TransactionOracle.DIRTY_READ_POINTER).getValue();
+    assertEquals(Bytes.toString(col2Value), Bytes.toString(actualCol2Value));
+  }
 }

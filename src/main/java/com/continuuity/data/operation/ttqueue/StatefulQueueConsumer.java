@@ -39,7 +39,7 @@ public class StatefulQueueConsumer extends QueueConsumer {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("super", super.toString())
-      .add("queueState", queueState.toString())
+      .add("queueState", queueState)
       .toString();
   }
 }

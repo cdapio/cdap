@@ -11,18 +11,28 @@ public class QueueEntryPointer {
   protected final byte [] queueName;
   protected final long entryId;
   protected final long shardId;
+  protected final int tries;
 
   public QueueEntryPointer(final byte [] queueName, final long entryId,
       final long shardId) {
     this.queueName = queueName;
     this.entryId = entryId;
     this.shardId = shardId;
+    this.tries = 0;
   }
 
   public QueueEntryPointer(byte[] queueName, long entryId) {
     this.queueName = queueName;
     this.entryId = entryId;
     this.shardId = -1; // Single shard
+    this.tries = 0;
+  }
+
+  public QueueEntryPointer(byte[] queueName, long entryId, int tries) {
+    this.queueName = queueName;
+    this.entryId = entryId;
+    this.shardId = -1;
+    this.tries = tries;
   }
 
   public byte [] getQueueName() {
@@ -37,14 +47,20 @@ public class QueueEntryPointer {
     return this.shardId;
   }
 
+  public int getTries() {
+    return tries;
+  }
+
   @Override
   public boolean equals(Object o) {
+    // tries doesn't affect object identity
     return this.entryId == ((QueueEntryPointer)o).entryId &&
         this.shardId == ((QueueEntryPointer)o).shardId;
   }
 
   @Override
   public int hashCode() {
+    // tries doesn't affect object identity
     return Bytes.hashCode(Bytes.toBytes(entryId)) ^ Bytes.hashCode(Bytes.toBytes(shardId));
   }
 
@@ -54,6 +70,7 @@ public class QueueEntryPointer {
         .add("queueName", this.queueName)
         .add("entryId", this.entryId)
         .add("shardId", this.shardId)
+        .add("tries", this.tries)
         .toString();
   }
 
