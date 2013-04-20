@@ -98,8 +98,9 @@ public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
   }
 
   public boolean overlapsWith(ClaimedEntryRange other) {
-    return this.begin <= other.begin && this.end >= other.begin
-      || this.begin > other.begin && this.begin <= other.end;
+    // if this begin is within the other range: true
+    // if this begin is before the other range: true iff this does not end before the begin of the other
+    return this.begin <= other.end && this.end >= other.begin;
   }
 
   @Override

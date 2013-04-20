@@ -21,10 +21,6 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
     this.ranges = Lists.newLinkedList();
   }
 
-  public ClaimedEntryList(List<ClaimedEntryRange> claimedEntries) {
-    this.ranges = claimedEntries;
-  }
-
   public void add(long begin, long end) {
     ClaimedEntryRange newRange = new ClaimedEntryRange(begin, end);
     if (newRange.isValid()) {
@@ -39,7 +35,10 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
       if (current.overlapsWith(newRange)) {
         throw new IllegalArgumentException("Attempt to add new range " + newRange + " that overlaps with existing " +
                                              "claimed entries " + this);
-      } if (current.compareTo(newRange) > 0) {
+      }
+      // current element is greater than new range and does not overlap. That means its begin is greater than the
+      // end of the new range. Since all following element are even greater, they also don't overlap.
+      if (current.compareTo(newRange) > 0) {
         iterator.previous();
         break;
       }
@@ -104,14 +103,14 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
 
   public static ClaimedEntryList decode(Decoder decoder) throws IOException {
     int size = decoder.readInt();
-    List<ClaimedEntryRange> ranges = Lists.newLinkedList();
+    ClaimedEntryList list = new ClaimedEntryList();
     while (size > 0) {
       for (int i = 0; i < size; ++i) {
-        ranges.add(ClaimedEntryRange.decode(decoder));
+        list.add(ClaimedEntryRange.decode(decoder));
       }
       size = decoder.readInt();
     }
-    return new ClaimedEntryList(ranges);
+    return list;
   }
 
   @Override
