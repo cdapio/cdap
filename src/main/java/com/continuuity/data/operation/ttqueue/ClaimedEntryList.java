@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -13,16 +14,12 @@ import java.util.ListIterator;
  * by a queue consumer. It is implemented as a sorted set of ranges. It gets
  * persisted as part of the consumer's state
  */
-public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
+class ClaimedEntryList implements Comparable<ClaimedEntryList> {
 
   private List<ClaimedEntryRange> ranges;
 
   public ClaimedEntryList() {
     this.ranges = Lists.newLinkedList();
-  }
-
-  public ClaimedEntryList(List<ClaimedEntryRange> claimedEntries) {
-    this.ranges = claimedEntries;
   }
 
   public void add(long begin, long end) {
@@ -36,10 +33,11 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
     ListIterator<ClaimedEntryRange> iterator = ranges.listIterator();
     while (iterator.hasNext()) {
       ClaimedEntryRange current = iterator.next();
-      if (current.overlapsWith(newRange)) {
-        throw new IllegalArgumentException("Attempt to add new range " + newRange + " that overlaps with existing " +
-                                             "claimed entries " + this);
-      } if (current.compareTo(newRange) > 0) {
+      Preconditions.checkArgument(!current.overlapsWith(newRange), "Attempt to add new range %s that overlaps with " +
+        "existing claimed entries %s", newRange, this);
+      // current element is greater than new range and does not overlap. That means its begin is greater than the
+      // end of the new range. Since all following element are even greater, they also don't overlap.
+      if (current.compareTo(newRange) > 0) {
         iterator.previous();
         break;
       }
@@ -57,9 +55,8 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
     boolean firstRange = true;
     while (!this.ranges.isEmpty()) {
       ClaimedEntryRange range = this.ranges.get(0);
-      if (firstRange && range.getBegin() > entryId) {
-        throw new IllegalArgumentException("Attempt to move " + this + " backward to entry id " + entryId);
-      }
+      Preconditions.checkArgument(!firstRange || range.getBegin() <= entryId,
+        "Attempt to move %s backward to entry id %s", this, entryId);
       range.move(entryId);
       if (range.isValid()) {
         break;
@@ -104,14 +101,14 @@ public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
 
   public static ClaimedEntryList decode(Decoder decoder) throws IOException {
     int size = decoder.readInt();
-    List<ClaimedEntryRange> ranges = Lists.newLinkedList();
+    ClaimedEntryList list = new ClaimedEntryList();
     while (size > 0) {
       for (int i = 0; i < size; ++i) {
-        ranges.add(ClaimedEntryRange.decode(decoder));
+        list.add(ClaimedEntryRange.decode(decoder));
       }
       size = decoder.readInt();
     }
-    return new ClaimedEntryList(ranges);
+    return list;
   }
 
   @Override

@@ -556,10 +556,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long queueWritePointer = 6L;
     queueState.setQueueWritePointer(queueWritePointer);
 
-    ClaimedEntryList claimedEntryList = new ClaimedEntryList(
-      Lists.newArrayList(new ClaimedEntryRange(4L, 6L),
-                         new ClaimedEntryRange(7L, 8L),
-                         new ClaimedEntryRange(10L, 20L)));
+    ClaimedEntryList claimedEntryList = new ClaimedEntryList();
+    claimedEntryList.add(new ClaimedEntryRange(4L, 6L));
+    claimedEntryList.add(new ClaimedEntryRange(7L, 8L));
+    claimedEntryList.add(new ClaimedEntryRange(10L, 20L));
     queueState.setClaimedEntryList(claimedEntryList);
 
     long lastEvictTimeInSecs = 124325342L;
