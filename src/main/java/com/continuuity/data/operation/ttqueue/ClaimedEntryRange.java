@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 
@@ -24,12 +25,11 @@ class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
    * @param end the end of the range, must greater or equal to begin
    */
   public ClaimedEntryRange(long begin, long end) {
-    if (begin > end) {
-      throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
-    } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
-      // Both begin and end can be INVALID_ENTRY_ID
-      throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
-    }
+    // range must begin at or before end
+    Preconditions.checkArgument(end >= begin, "begin (%d) is greater than end (%d)", begin, end);
+    // begin and end can be INVALID_ENTRY_ID only of they both are
+    Preconditions.checkArgument(begin != INVALID_ENTRY_ID && end != INVALID_ENTRY_ID || begin == end,
+      "Either begin (%d) or end (%d) is invalid", begin, end));
     this.begin = begin;
     this.end = end;
   }
