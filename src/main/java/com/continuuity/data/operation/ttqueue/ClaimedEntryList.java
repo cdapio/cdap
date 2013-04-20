@@ -13,7 +13,7 @@ import java.util.ListIterator;
  * by a queue consumer. It is implemented as a sorted set of ranges. It gets
  * persisted as part of the consumer's state
  */
-public class ClaimedEntryList implements Comparable<ClaimedEntryList> {
+class ClaimedEntryList implements Comparable<ClaimedEntryList> {
 
   private List<ClaimedEntryRange> ranges;
 
