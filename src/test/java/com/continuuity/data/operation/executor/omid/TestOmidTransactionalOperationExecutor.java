@@ -1197,4 +1197,30 @@ public abstract class TestOmidTransactionalOperationExecutor {
       assertTrue(result.isEmpty() || result.getValue().get(b) == null);
     }
   }
+
+  @Test
+  public void testIncrementIgnoresInProgressXactions() throws OperationException {
+    final String table = "tIIIPX";
+    final byte[] r1 = { 'r', '1' };
+    final byte[] c1 = { 'c', '1' };
+    final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
+
+    // execute a write in a new xaction
+    Transaction tx = executor.execute(context, null, batch(new Write(table, r1, c1, one)));
+    // read from outside xaction -> not visible
+    OperationResult<Map<byte[], byte[]>> result = executor.execute(context, new Read(table, r1, c1));
+    assertTrue(result.isEmpty() || result.getValue().get(c1) == null);
+    // increment outside xaction -> increments pre-xaction value
+    Map<byte[], Long> iresult = executor.increment(context, new Increment(table, r1, c1, 4L));
+    assertEquals(new Long(4L), iresult.get(c1));
+    // commit should fail with conflict
+    try {
+      executor.commit(context, tx);
+      fail("commit should fail due to write conflict");
+    } catch (OperationException e) {
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+        throw e;
+      }
+    }
+  }
 }
