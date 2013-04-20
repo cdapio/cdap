@@ -29,7 +29,7 @@ class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
     Preconditions.checkArgument(end >= begin, "begin (%d) is greater than end (%d)", begin, end);
     // begin and end can be INVALID_ENTRY_ID only of they both are
     Preconditions.checkArgument(begin != INVALID_ENTRY_ID && end != INVALID_ENTRY_ID || begin == end,
-      "Either begin (%d) or end (%d) is invalid", begin, end));
+      "Either begin (%d) or end (%d) is invalid", begin, end);
     this.begin = begin;
     this.end = end;
   }
