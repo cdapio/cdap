@@ -14,7 +14,8 @@ public class MemoryStrictlyMonotonicTimeOracle implements TimestampOracle {
     if (cur <= last) {
       return ++last;
     }
-    return last = cur;
+    last = cur;
+    return cur;
   }
 
 }
