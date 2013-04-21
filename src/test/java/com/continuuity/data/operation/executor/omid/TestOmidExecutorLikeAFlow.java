@@ -879,7 +879,8 @@ public abstract class TestOmidExecutorLikeAFlow {
             context, new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, entry));
           this.enqueuedMap.put(entry.getData(), entry.getData());
         } catch (OperationException e) {
-          fail("OperationException for EnqueuePayload");
+          e.printStackTrace();
+          fail("OperationException for EnqueuePayload" + e.getMessage());
         }
       }
       System.out.println("Producer " + this.instanceid + " done");
@@ -913,13 +914,15 @@ public abstract class TestOmidExecutorLikeAFlow {
             result = TestOmidExecutorLikeAFlow.this.
                 executor.execute(context, dequeue);
           } catch (OperationException e) {
+            e.printStackTrace();
             fail("DequeuePayload failed: " + e.getMessage());
           }
           if (result.isSuccess() && this.config.isSingleEntry()) {
             try {
               TestOmidExecutorLikeAFlow.this.executor.commit(context, new QueueAck(TestOmidExecutorLikeAFlow.this.threadedQueueName, result.getEntryPointer(), this.consumer));
             } catch (OperationException e) {
-              fail("OperationException for Ack");
+              e.printStackTrace();
+              fail("OperationException for Ack" + e.getMessage());
             }
           }
           if (result.isSuccess()) {

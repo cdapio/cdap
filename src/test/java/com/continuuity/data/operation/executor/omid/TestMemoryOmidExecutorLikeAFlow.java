@@ -5,8 +5,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class TestMemoryOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
@@ -33,10 +31,4 @@ public class TestMemoryOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   protected int getNumIterations() {
     return 100;
   }
-
-  /**
-   * Currently not working.  Will be fixed in ENG-2164.
-   */
-  @Test @Override @Ignore
-  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
 }

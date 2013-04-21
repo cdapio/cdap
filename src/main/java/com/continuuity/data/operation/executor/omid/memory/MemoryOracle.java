@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MemoryOracle implements TransactionOracle {
@@ -100,7 +101,7 @@ public class MemoryOracle implements TransactionOracle {
    * This the list of in progress transactions, each with a time stamp and a
    * list of undo operations, to rollback any writes performed so far
    */
-  TreeMap<Long, InProgress> inProgress = new TreeMap<Long, InProgress>();
+  NavigableMap<Long, InProgress> inProgress = new ConcurrentSkipListMap<Long, InProgress>();
 
   /**
    * Utility to get the in-progress status of a transaction, or throw an
