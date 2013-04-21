@@ -46,10 +46,7 @@ public class TestLocalModeTTQueuePerf {
   //  }
 
 
-  /**
-   * Currently not working.  Will be fixed in ENG-2162.
-   */
-  @Test @Ignore
+  @Test
   public void test100EnqueuesThenSyncDequeues() throws Exception {
     testNEnqueuesThenSyncDequeues(100);
   }
