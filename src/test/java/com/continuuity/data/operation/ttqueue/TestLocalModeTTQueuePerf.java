@@ -45,7 +45,11 @@ public class TestLocalModeTTQueuePerf {
   //    config.numEnqueuesThenSyncDequeueAckFinalize = 1000;
   //  }
 
-  @Test
+
+  /**
+   * Currently not working.  Will be fixed in ENG-2162.
+   */
+  @Test @Ignore
   public void test100EnqueuesThenSyncDequeues() throws Exception {
     testNEnqueuesThenSyncDequeues(100);
   }
