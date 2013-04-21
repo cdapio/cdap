@@ -81,6 +81,7 @@ public class TestLocalModeTTQueuePerf {
 
     // second test it with the stream queues
     TTQueueTable streamTable = handle.getStreamTable(streamName);
+    streamTable.configure(streamName, consumer);
 
     log("Enqueueing to queue table");
     long start = now();
@@ -108,7 +109,7 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      streamTable.enqueue(queueName, new QueueEntry(data), version);
+      streamTable.enqueue(streamName, new QueueEntry(data), version);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -119,9 +120,9 @@ public class TestLocalModeTTQueuePerf {
     last = start;
     for (int i=0; i<n; i++) {
       DequeueResult result =
-          streamTable.dequeue(queueName, consumer, readPointer);
-      streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
-      streamTable.finalize(queueName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
+          streamTable.dequeue(streamName, consumer, readPointer);
+      streamTable.ack(streamName, result.getEntryPointer(), consumer, readPointer);
+      streamTable.finalize(streamName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);

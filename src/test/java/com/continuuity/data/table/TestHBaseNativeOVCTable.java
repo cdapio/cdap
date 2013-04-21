@@ -53,7 +53,7 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
   public void testIncrementCASIncrementWithSameTimestamp() {}
 
   /**
-   * Currently not working.  Will be fixed in ENG-2163.
+   * Not working because native hbase ignores excludes in read pointer
    */
   @Override @Test
   @Ignore
