@@ -6,19 +6,26 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.nio.ByteBuffer;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueEntry._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueEntry");
@@ -426,7 +433,7 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
                 struct.header = new HashMap<String,Integer>(2*_map48.size);
                 for (int _i49 = 0; _i49 < _map48.size; ++_i49)
                 {
-                  String _key50; // required
+                  String _key50; // optional
                   int _val51; // required
                   _key50 = iprot.readString();
                   _val51 = iprot.readI32();
@@ -532,7 +539,7 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
           struct.header = new HashMap<String,Integer>(2*_map54.size);
           for (int _i55 = 0; _i55 < _map54.size; ++_i55)
           {
-            String _key56; // required
+            String _key56; // optional
             int _val57; // required
             _key56 = iprot.readString();
             _val57 = iprot.readI32();

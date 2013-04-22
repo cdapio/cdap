@@ -52,9 +52,6 @@ implements OrderedVersionedColumnarTable {
 
   private final String basePath;
 
-  @SuppressWarnings("unused")
-  private final String tableName;
-  
   private final String encodedTableName;
 
   private final Integer blockSize;
@@ -72,13 +69,12 @@ implements OrderedVersionedColumnarTable {
   LevelDBOVCTable(final String basePath, final String tableName,
                   final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
-    this.tableName = tableName;
     this.blockSize = blockSize;
     this.cacheSize = cacheSize;
     try {
       this.encodedTableName = URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
-      LOG.error("Error encoding table name", e);
+      LOG.error("Error encoding table name '" + tableName + "'", e);
       throw new RuntimeException(e);
     }
   }
@@ -140,10 +136,6 @@ implements OrderedVersionedColumnarTable {
       return "hbase-kv";
     }
     
-  }
-
-  public static interface ColumnMatcher {
-    public boolean includeColumn(byte [] column);
   }
 
   // LevelDB specific helpers
@@ -441,6 +433,13 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
+  @Override
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+    for (int i = 0; i < rows.length; i++) {
+      performInsert(rows[i], columnsPerRow[i], version, Type.Put, valuesPerRow[i]);
+    }
+  }
+
 // Delete Operations
 
   @Override
@@ -478,12 +477,17 @@ implements OrderedVersionedColumnarTable {
   @Override
   public void deleteDirty(byte[][] rows) throws OperationException {
     try {
-      for(int i = 0; i < rows.length; ++i) {
-        byte [] startKey = createStartKey(rows[i]);
-        byte [] endKey = createEndKey(rows[i]);
+      for (byte[] row : rows) {
+        byte[] startKey = createStartKey(row);
+        byte[] endKey = createEndKey(row);
         DBIterator iterator = db.iterator();
-        for(iterator.seek(startKey); iterator.hasNext() && KeyValue.KEY_COMPARATOR.compare(iterator.peekNext().getKey(), endKey) <= 0;) {
-          db.delete(iterator.next().getKey());
+        iterator.seek(startKey);
+        while (iterator.hasNext()) {
+          byte[] nextKey = iterator.next().getKey();
+          if (KeyValue.KEY_COMPARATOR.compare(nextKey, endKey) > 0) {
+            break;
+          }
+          db.delete(nextKey);
         }
       }
     } catch (DBException dbe) {
@@ -607,14 +611,15 @@ implements OrderedVersionedColumnarTable {
     // TODO: can the below algorithm be improved by doing something like a scan of rows instead of point lookups?
     Map<byte[], Map<byte[], byte[]>> retMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     try {
-      for(int i = 0; i < rows.length; ++i) {
-        Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(rows[i], columns, readPointer);
-        if(map != null) {
-          retMap.put(rows[i], map);
+      for (byte[] row : rows) {
+        Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(row, columns, readPointer);
+        if (map != null) {
+          retMap.put(row, map);
         }
       }
       // Remove empty rows
-      for(Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> iterator = retMap.entrySet().iterator(); iterator.hasNext();) {
+      Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> iterator = retMap.entrySet().iterator();
+      while (iterator.hasNext()) {
         if(iterator.next().getValue().isEmpty()) {
           iterator.remove();
         }
@@ -632,8 +637,7 @@ implements OrderedVersionedColumnarTable {
   // Scan Operations
 
   @Override
-  public List<byte[]> getKeys(int limit, int offset,
-      ReadPointer readPointer)
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer)
       throws OperationException {
     DBIterator iterator = db.iterator();
 

@@ -22,66 +22,53 @@ public interface VersionedColumnarTable {
   /**
    * Writes the specified value at the specified version for the specified
    * row and column.
-   * @param row
-   * @param column
-   * @param version
-   * @param value
    */
   public void put(byte [] row, byte [] column, long version, byte [] value) throws OperationException;
 
   /**
    * Writes the specified values for the specified columns at the specified
    * version for the specified row.
-   * @param row
-   * @param columns
-   * @param version
-   * @param values
    */
-  public void put(byte [] row, byte [][] columns, long version,
-      byte [][] values) throws OperationException;
+  public void put(byte [] row, byte [][] columns, long version, byte[][] values) throws OperationException;
 
   /**
    * Writes values[i] at (rows[i], columns[i]) using the specified version
    * version for the specified rows.
-   * @param rows
-   * @param columns
-   * @param version
-   * @param values
    */
-  public void put(byte [][] rows, byte [][] columns, long version,
-                  byte [][] values) throws OperationException;
+  public void put(byte [][] rows, byte [][] columns, long version, byte[][] values)
+    throws OperationException;
+
+
+  /**
+   * Equivalent to put(rows[i], columnsPerRow[i], version, valuesPerRow[i]) for all i, in a single operation.
+   * The number/set of columns can vary from row to row.
+   * @param rows array of row keys
+   * @param columnsPerRow for each row, the array of columns to put
+   * @param version the write version
+   * @param valuesPerRow for each row, the array of values to put
+   */
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+    throws OperationException;
 
   /**
    * Deletes the specified version of the specified row and column.
-   * @param row
-   * @param column
-   * @param version
    */
   public void delete(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Deletes the specified version of the specified row and columns.
-   * @param row
-   * @param columns
-   * @param version
    */
   public void delete(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Deletes all versions of the specified row and column that have a version
    * less than or equal to the specified version.
-   * @param row
-   * @param column
-   * @param version
    */
   public void deleteAll(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Deletes all versions of the specified row and columns that have a version
    * less than or equal to the specified version.
-   * @param row
-   * @param columns
-   * @param version
    */
   public void deleteAll(byte [] row, byte [][] columns, long version) throws OperationException;
 
@@ -90,42 +77,30 @@ public interface VersionedColumnarTable {
    * less than or equal to the specified version. If the implementation supports it
    * this delete will affect all readers, even those with a read pointer less than
    * the given version, and it cannot be undone.
-   * @param row
-   * @param columns
-   * @param version
    */
   public void deleteDirty(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Deletes all versions of all columns of the specified rows. If the implementation supports it
    * this delete will affect all readers, and it cannot be undone.
-   * @param rows
    */
   public void deleteDirty(byte [][] rows) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
    * {@link #deleteAll(byte[], byte[], long)} operation.
-   * @param row
-   * @param column
-   * @param version
    */
   public void undeleteAll(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
    * {@link #deleteAll(byte[], byte[][], long)} operation.
-   * @param row
-   * @param columns
-   * @param version
    */
   public void undeleteAll(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Reads the latest version of all columns in the specified row, utilizing
    * the specified read pointer to enforce visibility constraints.
-   * @param row
-   * @param readPointer
    * @return map of columns to values
    */
   public OperationResult<Map<byte [], byte []>>
@@ -135,9 +110,6 @@ public interface VersionedColumnarTable {
    * Reads the latest version of the specified column in the specified row,
    * utilizing the specified read pointer to enforce visibility constraints,
    * and returns the value.
-   * @param row
-   * @param column
-   * @param readPointer
    * @return value of the latest visible column in the specified row, or null if
    *         none exists
    */
@@ -148,11 +120,6 @@ public interface VersionedColumnarTable {
    * Reads the latest version of the specified column in the specified row,
    * utilizing the specified read pointer to enforce visibility constraints,
    * and returns both the value as well as the version this value exists at.
-   *
-   *
-   * @param row
-   * @param column
-   * @param readPointer
    * @return value and version of the latest visible column in the specified
    *         row, or null if none exists
    */
@@ -164,11 +131,9 @@ public interface VersionedColumnarTable {
    * Reads the latest versions of all columns in the specified row that are
    * between the specified start (inclusive) and stop (exclusive) columns,
    * utilizing the specified read pointer to enforce visibility constraints.
-   * @param row
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param limit maximum number of columns to return
-   * @param readPointer
    * @return map of columns to values, never null
    */
   public OperationResult<Map<byte [], byte []>> get(
@@ -178,9 +143,6 @@ public interface VersionedColumnarTable {
   /**
    * Reads the latest versions of the specified columns in the specified row,
    * utilizing the specified read pointer to enforce visibility constraints.
-   * @param row
-   * @param columns
-   * @param readPointer
    * @return map of columns to values, never null
    */
   public OperationResult<Map<byte[], byte[]>> get(
@@ -191,8 +153,6 @@ public interface VersionedColumnarTable {
    * Reads the latest version of the specified column in the specified row,
    * utilizing the specified read pointer to enforce visibility constraints,
    * and returns the value.
-   * @param row
-   * @param column
    * @return value of the latest visible column in the specified row, or null if
    *         none exists
    */
@@ -203,9 +163,6 @@ public interface VersionedColumnarTable {
   /**
    * Reads the latest versions of all specified columns for each row,
    * utilizing the specified read pointer to enforce visibility constraints.
-   * @param rows
-   * @param columns
-   * @param readPointer
    * @return map of columns to values, never null
    */
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(
@@ -217,11 +174,7 @@ public interface VersionedColumnarTable {
    * amount, utilizing the specified read pointer to enforce visibility
    * constraints when performing the initial read.  The specified write version
    * will be used when performing the post-incremented write.
-   * @param row
-   * @param column
    * @param amount amount to increment column by
-   * @param readPointer
-   * @param writeVersion
    * @return value of counter after this increment is performed
    */
   public long increment(
@@ -236,8 +189,6 @@ public interface VersionedColumnarTable {
    * Important: Counters written with this method cannot be read with a regular get(), they
    * can only be read using this same method with an increment of 0.
    *
-   * @param row
-   * @param column
    * @param amount amount to increment column by
    * @return value of counter after this increment is performed
    */
@@ -252,11 +203,7 @@ public interface VersionedColumnarTable {
    * amounts, utilizing the specified read pointer to enforce visibility
    * constraints when performing the initial reads.  The specified write version
    * will be used when performing the post-incremented writes.
-   * @param row
-   * @param columns
    * @param amounts amounts to increment columns by
-   * @param readPointer
-   * @param writeVersion
    * @return values of counters after the increments are performed, never null
    */
   public Map<byte[],Long> increment(
@@ -271,12 +218,6 @@ public interface VersionedColumnarTable {
    * visibility constraints on the read, utilizes the specified write version
    * to perform the swap.
    *
-   * @param row
-   * @param column
-   * @param expectedValue
-   * @param newValue
-   * @param readPointer
-   * @param writeVersion
    * @throws OperationException when there is a write conflict, i.e., expectedValue does not match existingValue.
    */
   public void compareAndSwap(byte[] row, byte[] column,
@@ -291,10 +232,6 @@ public interface VersionedColumnarTable {
    * It does the compare and swap using dirty read and dirty write pointers.
    * It also assumes the values do not have tombstones.
    *
-   * @param row
-   * @param column
-   * @param expectedValue
-   * @param newValue
    * @return true if swap was executed, false otherwise
    * @throws OperationException, Note: this does not throw exception when expectedValue does not match existingValue.
    */
@@ -305,4 +242,5 @@ public interface VersionedColumnarTable {
    * Clears this table, completely wiping all data irrecoverably.
    */
   public void clear() throws OperationException;
+
 }

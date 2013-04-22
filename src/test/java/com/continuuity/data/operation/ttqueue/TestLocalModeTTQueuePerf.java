@@ -95,7 +95,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result = queueTable.dequeue(queueName, consumer, readPointer);
       queueTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
-      queueTable.finalize(queueName, result.getEntryPointer(), consumer, -1, readPointer.getMaximum());
+      queueTable.finalize(queueName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -117,7 +117,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result = streamTable.dequeue(queueName, consumer, readPointer);
       streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
-      streamTable.finalize(queueName, result.getEntryPointer(), consumer, -1, readPointer.getMaximum());
+      streamTable.finalize(queueName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);

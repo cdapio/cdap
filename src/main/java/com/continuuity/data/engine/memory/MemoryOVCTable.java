@@ -98,6 +98,14 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+    throws OperationException {
+    for (int i = 0; i < rows.length; i++) {
+      this.put(rows[i], columnsPerRow[i], version, valuesPerRow[i]);
+    }
+  }
+
+  @Override
   public void delete(byte[] row, byte[] column, long version) {
     performDelete(row, column, version, Version.Type.DELETE);
   }
@@ -177,9 +185,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteDirty(byte[][] rows) throws OperationException {
-    for(int i = 0; i < rows.length; ++i) {
-      RowLockTable.Row r = new RowLockTable.Row(rows[i]);
-      NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockRow(r);
+    for (byte[] row : rows) {
+      RowLockTable.Row r = new RowLockTable.Row(row);
+      getAndLockRow(r);
       try {
         // this row is gone, remove it from the table and also from the lock table
         this.map.remove(r); // safe to remove because we have the lock
@@ -303,13 +311,13 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     Map<byte[], Map<byte[], byte[]>> ret = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
-    for (int i = 0; i < rows.length; ++i) {
-      Map<byte[], byte[]> writeColumnMap = ret.get(rows[i]);
-      if(writeColumnMap == null) {
+    for (byte[] row : rows) {
+      Map<byte[], byte[]> writeColumnMap = ret.get(row);
+      if (writeColumnMap == null) {
         writeColumnMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-        ret.put(rows[i], writeColumnMap);
+        ret.put(row, writeColumnMap);
       }
-      RowLockTable.Row r = new RowLockTable.Row(rows[i]);
+      RowLockTable.Row r = new RowLockTable.Row(row);
       NavigableMap<Column, NavigableMap<Version, Value>> readRowMap = getAndLockExistingRow(r);
       if (readRowMap == null) {
         continue;
@@ -777,10 +785,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   private NavigableMap<Column, NavigableMap<Version, Value>> getAndLockRow(RowLockTable.Row row) {
 
     // first obtain the row lock
-    while (!this.locks.lock(row).isValid()) {
-      // obtained a lock, but it is invalid, try again
+    RowLockTable.RowLock rowLock;
+    do {
+      rowLock = this.locks.lock(row);
+      // obtained a lock, but it may be invalid, loop until valid
       // this can happen because we evict locks from the table when a row is empty
-    }
+    } while (!rowLock.isValid());
 
     // Now we have a definitive lock, see if the row exists
     NavigableMap<Column, NavigableMap<Version, Value>> rowMap = this.map.get(row);

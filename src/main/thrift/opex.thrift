@@ -84,7 +84,7 @@ struct TQueueEntry {
 
 struct TQueueEnqueue {
   1: binary queueName,
-  2: TQueueEntry entry,
+  2: list<TQueueEntry> entries,
   3: i64 id,
   4: optional TQueueProducer producer,
   5: optional string metric,
@@ -101,6 +101,7 @@ struct TQueueConfig {
   1: TQueuePartitioner partitioner,
   2: bool singleEntry,
   3: i32 batchSize,
+  4: bool returnBatch,
 }
 
 struct TQueueConsumer {
@@ -123,7 +124,7 @@ struct TQueueEntryPointer {
 
 struct TQueueAck {
   1: binary queueName,
-  2: TQueueEntryPointer entryPointer,
+  2: list<TQueueEntryPointer> entryPointers,
   3: TQueueConsumer consumer,
   4: i32 numGroups,
   5: i64 id,
@@ -146,8 +147,8 @@ enum TDequeueStatus {
 
 struct TDequeueResult {
   1: TDequeueStatus status,
-  2: TQueueEntryPointer pointer,
-  3: optional TQueueEntry entry,
+  2: optional list<TQueueEntryPointer> pointers,
+  3: optional list<TQueueEntry> entries,
   4: optional TQueueConsumer consumer,
 }
 
