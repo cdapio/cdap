@@ -13,8 +13,7 @@ import org.apache.thrift.TEnum;
 
 public enum TDequeueStatus implements org.apache.thrift.TEnum {
   SUCCESS(0),
-  EMPTY(1),
-  RETRY(2);
+  EMPTY(1);
 
   private final int value;
 
@@ -39,8 +38,6 @@ public enum TDequeueStatus implements org.apache.thrift.TEnum {
         return SUCCESS;
       case 1:
         return EMPTY;
-      case 2:
-        return RETRY;
       default:
         return null;
     }

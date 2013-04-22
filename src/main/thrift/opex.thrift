@@ -142,7 +142,6 @@ struct TQueueDequeue {
 enum TDequeueStatus {
   SUCCESS,
   EMPTY,
-  RETRY,
 }
 
 struct TDequeueResult {

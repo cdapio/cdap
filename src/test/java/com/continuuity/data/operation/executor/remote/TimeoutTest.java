@@ -104,7 +104,7 @@ public class TimeoutTest extends OpexServiceTestBase {
    * This tests that the thrift client times out and returns an error or
    * non-success in some other way.
    */
-  @Test(expected = OperationException.class)
+  @Test(expected = OperationException.class, timeout = 10000)
   public void testThriftTimeout() throws OperationException {
     Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
     remote.commit(context, write);
@@ -114,7 +114,7 @@ public class TimeoutTest extends OpexServiceTestBase {
    * This tests that the thrift client times out and returns an error or
    * non-success in some other way.
    */
-  @Test(expected = OperationException.class)
+  @Test(expected = OperationException.class, timeout = 10000)
   public void testThriftTimeoutBatch() throws OperationException {
     List<WriteOperation> batch = Lists.newArrayList();
     Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
@@ -125,7 +125,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   /**
    * This tests that the thrift client retries (see override of read() above.
    */
-  @Test
+  @Test(timeout = 10000)
   public void testRetry() throws OperationException {
     Read read = new Read("x".getBytes(), Operation.KV_COL);
     Assert.assertArrayEquals(new byte[] { 3 },
@@ -135,7 +135,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   /**
    * This tests that clear fabric has a longer timeout
    */
-  @Test
+  @Test(timeout = 10000)
   public void testLongTimeout() throws OperationException {
     ClearFabric clearFabric = new ClearFabric(ClearFabric.ToClear.ALL);
     remote.execute(context, clearFabric);

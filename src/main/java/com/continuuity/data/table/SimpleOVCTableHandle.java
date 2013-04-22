@@ -14,13 +14,13 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
   protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable>
-    openTables =
-    new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
-      Bytes.BYTES_COMPARATOR);
+      openTables =
+        new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
+            Bytes.BYTES_COMPARATOR);
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
-    new ConcurrentSkipListMap<byte[],TTQueueTable>(
-      Bytes.BYTES_COMPARATOR);
+      new ConcurrentSkipListMap<byte[],TTQueueTable>(
+          Bytes.BYTES_COMPARATOR);
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
     new ConcurrentSkipListMap<byte[],TTQueueTable>(Bytes.BYTES_COMPARATOR);
@@ -38,7 +38,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
-    throws OperationException {
+      throws OperationException {
     OrderedVersionedColumnarTable table = this.openTables.get(tableName);
 
     // we currently have an open table for this name
@@ -55,7 +55,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
     // some other thread may have created/found and added it already
     OrderedVersionedColumnarTable existing =
-      this.openTables.putIfAbsent(tableName, table);
+        this.openTables.putIfAbsent(tableName, table);
 
     return existing != null ? existing : table;
   }
@@ -65,15 +65,14 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
 
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName)
-    throws OperationException {
+      throws OperationException {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
 
     queueTable = new TTQueueTableOnVCTable(table, oracle, conf);
 //    queueTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
-    TTQueueTable existing = this.queueTables.putIfAbsent(
-      queueTableName, queueTable);
+    TTQueueTable existing = this.queueTables.putIfAbsent(queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
   
@@ -85,9 +84,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
 
     streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-      streamTableName, streamTable);
-
+    TTQueueTable existing = this.streamTables.putIfAbsent(streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 
@@ -99,7 +96,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * @throws OperationException if an operation fails
    */
   public abstract OrderedVersionedColumnarTable createNewTable(
-    byte [] tableName) throws OperationException;
+      byte [] tableName) throws OperationException;
 
   /**
    * attempts to open an existing table.
@@ -108,6 +105,6 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
    * @throws OperationException
    */
   public abstract OrderedVersionedColumnarTable openTable(
-    byte [] tableName) throws OperationException;
+      byte [] tableName) throws OperationException;
 
 }

@@ -7,6 +7,7 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
@@ -18,7 +19,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +106,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // RECONFIG_PARTITIONER stores the partition information for prior configurations
   static final byte [] RECONFIG_PARTITIONER = {50, 'P'};     //row <queueName>40C<groupId><consumerId>, column 50P
 
-  static final long INVALID_ENTRY_ID = -1;
+  static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
   private final int DEFAULT_BATCH_SIZE;
@@ -299,10 +299,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // If no more cached entries, read entries from storage
-    if(!queueState.getTransientWorkingSet().hasNext()) {
-      // TODO: return a list of DequeueEntry instead of list of Long
-      List<Long> entryIds = dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
-      readEntries(consumer, config, queueState, readPointer, entryIds);
+    if (!queueState.getTransientWorkingSet().hasNext()) {
+      dequeueStrategy.fetchNextEntries(consumer, config, queueState, readPointer);
     }
 
     // If still no queue entries available to dequue, return queue empty
@@ -359,85 +357,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                      queuePartitioner.getClass())));
     }
     return dequeueStrategy;
-  }
-
-  private void readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
-                           ReadPointer readPointer, List<Long> entryIds) throws OperationException{
-    if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Reading entries from storage - %s", entryIds)));
-    }
-
-    // Copy over the entries that are dequeued, but not yet acked
-    Map<Long, byte[]> currentCachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
-    Map<Long, byte[]> newCachedEntries = Maps.newHashMap();
-    for(long entryId : queueState.getDequeueEntrySet().getEntryIds()) {
-      byte[] entry = currentCachedEntries.get(entryId);
-      if(entry != null) {
-        newCachedEntries.put(entryId, entry);
-      }
-    }
-
-    List<Long> readEntryIds = Lists.newArrayListWithCapacity(entryIds.size());
-
-    try {
-      if(entryIds.isEmpty()) {
-        return;
-      }
-
-      final byte[][] entryRowKeys = new byte[entryIds.size()][];
-      for(int i = 0; i < entryIds.size(); ++i) {
-        entryRowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryIds.get(i));
-      }
-
-      final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
-      OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
-                                                    this.table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
-      if(entriesResult.isEmpty()) {
-      } else {
-        for(int i = 0; i < entryIds.size(); ++i) {
-          Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
-          if(entryMap == null) {
-            if (LOG.isTraceEnabled()) {
-              LOG.trace(getLogMessage(
-                String.format("Not able to read entry with entryId %d. Returning empty cached list.",
-                              entryIds.get(i))));
-            }
-            return;
-          }
-          byte[] entryMetaBytes = entryMap.get(ENTRY_META);
-          if(entryMetaBytes == null) {
-            if (LOG.isTraceEnabled()) {
-              LOG.trace(getLogMessage(
-                String.format("Not able to decode entry with entryId %d. Returning empty cached list.",
-                              entryIds.get(i))));
-            }
-            return;
-          }
-          EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString()));
-          }
-
-          // Check if entry has been invalidated or evicted
-          if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
-            if (LOG.isTraceEnabled()) {
-              LOG.trace(getLogMessage("Found invalidated or evicted entry at " + entryIds.get(i) +
-                          " (" + entryMeta.toString() + ")"));
-            }
-          } else {
-            // Entry is visible and valid!
-            assert(entryMeta.isValid());
-            long entryId = entryIds.get(i);
-            byte [] entryData = entryMap.get(ENTRY_DATA);
-            newCachedEntries.put(entryId, entryData);
-            readEntryIds.add(entryId);
-          }
-        }
-      }
-    } finally {
-      // Update queue state
-      queueState.setTransientWorkingSet(new TransientWorkingSet(readEntryIds, newCachedEntries));
-    }
   }
 
   @Override
@@ -559,6 +478,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return oldConsumerCount;
     }
 
+    // Delete eviction information for all groups
+    // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
+    // we'll need to delete the eviction information for all groups so that we always maintain eviction information for
+    // active groups only
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.deleteGroupEvictionState(readPointer, TransactionOracle.DIRTY_WRITE_VERSION);
+
     // Verify there are no inflight entries
     for (int i = 0; i < oldConsumerCount; ++i) {
       QueueStateImpl queueState = queueStates.get(i);
@@ -569,14 +495,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
-
-    // Delete eviction information for all groups
-    // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
-    // we'll need to delete the eviction information for all groups so that we always maintain eviction information for
-    // active groups only
-    EvictionState evictionState = new EvictionState(table);
-    evictionState.deleteGroupEvictionState(readPointer, TransactionOracle.DIRTY_WRITE_VERSION);
-
     return oldConsumerCount;
   }
 
@@ -813,7 +731,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       int i = 0;
       for(Map.Entry<Long, Long> entry : groupEvictEntries.entrySet()) {
         columnKeys[i] = makeColumnName(GROUP_EVICT_ENTRY, entry.getKey());
-        values[i] = Bytes.toBytes(entry.getValue());
+        values[i] = Bytes.EMPTY_BYTE_ARRAY;
         ++i;
       }
       table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
@@ -1368,6 +1286,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return instanceId;
     }
 
+    public boolean isRedundant(long minAckEntryId) {
+      return minAckEntryId > maxAckEntryId ? true : false;
+    }
+
     public void encode(Encoder encoder) throws IOException {
       encoder.writeInt(instanceId)
         .writeLong(maxAckEntryId);
@@ -1418,7 +1340,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return EMPTY_RECONFIG_PARTITIONER;
     }
 
-    // TODO: remove unneeded config info during saving
+    // TODO: convert this into a Builder
     private ReconfigPartitioner() {
       groupSize = 0;
       partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
@@ -1432,10 +1354,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void add(int consumerId, long maxAckEntryId) {
-      reconfigPartitionInstances.add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
+      add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
     }
 
     private void add(ReconfigPartitionInstance info) {
+      if(reconfigPartitionInstances.size() >= groupSize) {
+        throw new IllegalArgumentException(String.format("GroupSize %d exceeded", reconfigPartitionInstances.size()));
+      }
       reconfigPartitionInstances.add(info);
     }
 
@@ -1504,8 +1429,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return true;
     }
 
-    public void compact(long consumerReadPointer) {
-      // TODO:
+    public boolean isRedundant(long minAckEntryId) {
+      boolean allRedundant = true;
+      for(ReconfigPartitionInstance instance : reconfigPartitionInstances) {
+        if(!instance.isRedundant(minAckEntryId)) {
+          allRedundant = false;
+        }
+      }
+      return allRedundant;
     }
 
     public void encode(Encoder encoder) throws IOException {
@@ -1595,7 +1526,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public ReconfigPartitionersList(List<ReconfigPartitioner> reconfigPartitioners) {
-      this.reconfigPartitioners = reconfigPartitioners;
+      this.reconfigPartitioners = Lists.newLinkedList(reconfigPartitioners);
     }
 
     public List<ReconfigPartitioner> getReconfigPartitioners() {
@@ -1646,9 +1577,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return true;
     }
 
-    // TODO: implement
-    public void compact(long consumerReadPointer) {
-
+    public void compact(long minAckEntry) {
+      List<ReconfigPartitioner> redundantPartitioners = Lists.newLinkedList();
+      for(ReconfigPartitioner reconfigPartitioner : reconfigPartitioners) {
+        if(reconfigPartitioner.isRedundant(minAckEntry)) {
+          redundantPartitioners.add(reconfigPartitioner);
+        }
+      }
+      reconfigPartitioners.removeAll(redundantPartitioners);
     }
 
     @Override
@@ -1684,221 +1620,23 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       return new ReconfigPartitionersList(reconfigPartitioners);
     }
-  }
-
-  static class ClaimedEntryList implements Comparable<ClaimedEntryList> {
-    private ClaimedEntry current;
-    private List<ClaimedEntry> otherClaimedEntries;
-
-    public ClaimedEntryList() {
-      this.current = ClaimedEntry.getInvalidClaimedEntry();
-      // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
-      this.otherClaimedEntries = Collections.EMPTY_LIST;
-    }
-
-    public ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
-      this.current = claimedEntry;
-      this.otherClaimedEntries = otherClaimedEntries;
-    }
-
-    public void add(long begin, long end) {
-      ClaimedEntry claimedEntry = new ClaimedEntry(begin, end);
-      if(!claimedEntry.isValid()) {
-        return;
-      }
-      makeCurrentValid();
-      if(!current.isValid()) {
-        current = claimedEntry;
-      } else {
-        if(otherClaimedEntries == Collections.EMPTY_LIST) {
-          otherClaimedEntries = Lists.newArrayList();
-        }
-        otherClaimedEntries.add(claimedEntry);
-      }
-    }
-
-    public void addAll(ClaimedEntryList claimedEntryList) {
-      // Note: otherClaimedEntries can be EMPTY_LIST, add() makes sure to create a list if so
-      ClaimedEntry otherCurrent = claimedEntryList.getClaimedEntry();
-      add(otherCurrent.getBegin(), otherCurrent.getEnd());
-      otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
-    }
-
-    public void moveForwardTo(long entryId) {
-      if(entryId < current.getBegin()) {
-        throw new IllegalArgumentException(String.format
-          ("entryId (%d) shoudl not be less than begin (%d)", entryId, current.getBegin()));
-      }
-      current = current.move(entryId);
-      makeCurrentValid();
-    }
-
-    private void makeCurrentValid() {
-      while(!current.isValid() && !otherClaimedEntries.isEmpty()) {
-        current = otherClaimedEntries.remove(0);
-      }
-    }
-
-    public ClaimedEntry getClaimedEntry() {
-      makeCurrentValid();
-      return current;
-    }
-
-    public int size() {
-      // TODO: use the claimed entry range to determine size
-      return (current.isValid() ? 1 : 0) + otherClaimedEntries.size();
-    }
-
-    @Override
-    public int compareTo(ClaimedEntryList claimedEntryList) {
-      if(this.size() > claimedEntryList.size()) {
-        return 1;
-      }
-      if(this.size() < claimedEntryList.size()) {
-        return -1;
-      }
-      return 0;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("current", current)
-        .add("otherClaimedEntries", otherClaimedEntries)
-        .toString();
-    }
-
-    public void encode(Encoder encoder) throws IOException {
-      // TODO: use common code to decode/encode lists
-      current.encode(encoder);
-      if(!otherClaimedEntries.isEmpty()) {
-        encoder.writeInt(otherClaimedEntries.size());
-        for(ClaimedEntry claimedEntry : otherClaimedEntries) {
-          claimedEntry.encode(encoder);
-        }
-      }
-      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-    }
-
-    public static ClaimedEntryList decode(Decoder decoder) throws IOException {
-      ClaimedEntry current = ClaimedEntry.decode(decoder);
-
-      int size = decoder.readInt();
-      List<ClaimedEntry> otherClaimedEntries;
-      if(size == 0) {
-        // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
-        otherClaimedEntries = Collections.EMPTY_LIST;
-      } else {
-        otherClaimedEntries = Lists.newArrayList();
-      }
-
-      while(size > 0) {
-        for(int i = 0; i < size; ++i) {
-          otherClaimedEntries.add(ClaimedEntry.decode(decoder));
-        }
-        size = decoder.readInt();
-      }
-      return new ClaimedEntryList(current, otherClaimedEntries);
-    }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      ClaimedEntryList that = (ClaimedEntryList) o;
+      ReconfigPartitionersList that = (ReconfigPartitionersList) o;
 
-      if (!current.equals(that.current)) return false;
-      if (!otherClaimedEntries.equals(that.otherClaimedEntries)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = current.hashCode();
-      result = 31 * result + otherClaimedEntries.hashCode();
-      return result;
-    }
-  }
-
-  static class ClaimedEntry {
-    private final long begin;
-    private final long end;
-
-    static final ClaimedEntry INVALID_CLAIMED_ENTRY = new ClaimedEntry(INVALID_ENTRY_ID, INVALID_ENTRY_ID);
-    public static ClaimedEntry getInvalidClaimedEntry() {
-      return INVALID_CLAIMED_ENTRY;
-    }
-
-    public ClaimedEntry(long begin, long end) {
-      if(begin > end) {
-        throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
-      } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
-        // Both begin and end can be INVALID_ENTRY_ID
-        throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
-      }
-      this.begin = begin;
-      this.end = end;
-    }
-
-    public long getBegin() {
-      return begin;
-    }
-
-    public long getEnd() {
-      return end;
-    }
-
-    public ClaimedEntry move(long entryId) {
-      if(!isValid()) {
-        return this;
-      }
-      if(entryId > end) {
-        return getInvalidClaimedEntry();
-      }
-      return new ClaimedEntry(entryId, end);
-    }
-
-    public boolean isValid() {
-      return begin != INVALID_ENTRY_ID;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("begin", begin)
-        .add("end", end)
-        .toString();
-    }
-
-    public void encode(Encoder encoder) throws IOException {
-      encoder.writeLong(begin);
-      encoder.writeLong(end);
-    }
-
-    public static ClaimedEntry decode(Decoder decoder) throws IOException {
-      return new ClaimedEntry(decoder.readLong(), decoder.readLong());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ClaimedEntry that = (ClaimedEntry) o;
-
-      if (begin != that.begin) return false;
-      if (end != that.end) return false;
+      if (reconfigPartitioners != null ? !reconfigPartitioners.equals(that.reconfigPartitioners) : that.reconfigPartitioners != null)
+        return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = (int) (begin ^ (begin >>> 32));
-      result = 31 * result + (int) (end ^ (end >>> 32));
-      return result;
+      return reconfigPartitioners != null ? reconfigPartitioners.hashCode() : 0;
     }
   }
 
@@ -2080,15 +1818,40 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   interface DequeueStrategy {
+    /**
+     * method to read the queue state from storage, in case it was not passed in with a request
+     */
     QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException;
+
+    /**
+     * method to read the queue state from storage or construct a new one (if called from configure)
+     */
     QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
       throws OperationException;
-    List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+
+    /**
+     * method to fetch more entries into the queue state
+     */
+    void fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
+
+    /**
+     * method to save the queue state to storage (dual to readQueueState)
+     */
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
-    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer) throws OperationException;
+
+    /**
+     * configure all consumers of a group and persist the newly constructed consumer states
+     */
+    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                   long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
+      throws OperationException;
+
+    /**
+     * delete a consumer state from storage, after reconfigure has removed that consumer
+     */
     void deleteDequeueState(QueueConsumer consumer) throws OperationException;
 
   }
@@ -2279,12 +2042,134 @@ public class TTQueueNewOnVCTable implements TTQueue {
       writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
       writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
 
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       writeQueueStateStore.write();
       // TODO: delete evict information for the consumer
     }
+
+    /**
+     * @returns true if all entries were skipped because they are invalid or evicted. That means we have to move the
+     * consumer past these entries and fetch again.
+     */
+    protected boolean readEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                  ReadPointer readPointer, List<Long> entryIds) throws OperationException{
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format("Reading entries from storage - %s", entryIds)));
+      }
+
+      if(entryIds.isEmpty()) {
+        return false;
+      }
+
+      // Copy over the entries that are dequeued, but not yet acked
+      Map<Long, byte[]> currentCachedEntries = queueState.getTransientWorkingSet().getCachedEntries();
+      Map<Long, byte[]> newCachedEntries = Maps.newHashMap();
+      for(long entryId : queueState.getDequeueEntrySet().getEntryIds()) {
+        byte[] entry = currentCachedEntries.get(entryId);
+        if(entry != null) {
+          newCachedEntries.put(entryId, entry);
+        }
+      }
+
+      List<Long> readEntryIds = Lists.newArrayListWithCapacity(entryIds.size());
+
+      try {
+        final byte[][] entryRowKeys = new byte[entryIds.size()][];
+        for(int i = 0; i < entryIds.size(); ++i) {
+          entryRowKeys[i] = makeRowKey(GLOBAL_DATA_PREFIX, entryIds.get(i));
+        }
+
+        final byte[][] entryColKeys = new byte[][]{ ENTRY_META, ENTRY_DATA };
+        OperationResult<Map<byte[], Map<byte[], byte[]>>> entriesResult =
+          table.getAllColumns(entryRowKeys, entryColKeys, readPointer);
+        if (entriesResult.isEmpty()) {
+          return false;
+        } else {
+          boolean allInvalid = true;
+          for(int i = 0; i < entryIds.size(); ++i) {
+            Map<byte[], byte[]> entryMap = entriesResult.getValue().get(entryRowKeys[i]);
+            if(entryMap == null) {
+              if (LOG.isTraceEnabled()) {
+                LOG.trace(getLogMessage(
+                  String.format("Entry with entryId %d does not exist yet. Treating this as end of queue.",
+                                entryIds.get(i))));
+              }
+              return false;
+            }
+            byte[] entryMetaBytes = entryMap.get(ENTRY_META);
+            if(entryMetaBytes == null) {
+              if (LOG.isTraceEnabled()) {
+                LOG.trace(getLogMessage(
+                  String.format("No entry meta data found for existing entryId %d. Treating this as end of queue.",
+                                entryIds.get(i))));
+              }
+              return false;
+            }
+            EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaBytes);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(getLogMessage("entryId:" + entryIds.get(i) + ". entryMeta : " + entryMeta.toString()));
+            }
+
+            // Check if entry has been invalidated or evicted
+            if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
+              if (LOG.isTraceEnabled()) {
+                LOG.trace(getLogMessage("Found invalidated or evicted entry at " + entryIds.get(i) +
+                                          " (" + entryMeta.toString() + ")"));
+              }
+            } else {
+              // Entry is visible and valid!
+              assert(entryMeta.isValid());
+              long entryId = entryIds.get(i);
+              byte [] entryData = entryMap.get(ENTRY_DATA);
+              newCachedEntries.put(entryId, entryData);
+              readEntryIds.add(entryId);
+              allInvalid = false;
+            }
+          }
+          return allInvalid;
+        }
+      } finally {
+        // Update queue state
+        queueState.setTransientWorkingSet(new TransientWorkingSet(readEntryIds, newCachedEntries));
+      }
+    }
+
+    @Override
+    public void fetchNextEntries(QueueConsumer consumer, QueueConfig config,
+                                       QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
+
+      while (!queueState.getTransientWorkingSet().hasNext()) {
+        List<Long> nextEntryIds = claimNextEntries(consumer, config, queueState, readPointer);
+        if (nextEntryIds.isEmpty()) {
+          return;
+        }
+        boolean allInvalid = readEntries(consumer, config, queueState, readPointer, nextEntryIds);
+        if (allInvalid) {
+          // all the entries returned by the dequeue strategy are invalid.
+          // we must ignore them and remember that in the queue state, and try again
+          ignoreInvalidEntries(queueState, nextEntryIds);
+          continue;
+        }
+        // we either found no more entries (not even invalid ones), or we have at least one valid entry.
+        break;
+      }
+    }
+
+    /**
+     * claim the next batch of entries from the queue using the partitioner, without reading the entry data yet
+     */
+    protected abstract List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config,
+                                                   QueueStateImpl queueState, ReadPointer readPointer)
+      throws OperationException;
+
+    /**
+     * mark the given entry ids as consumed, so that will not be claimed subsequently
+     */
+    protected abstract void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
+      throws OperationException;
+
   }
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
@@ -2334,7 +2219,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
@@ -2351,7 +2236,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
                                       currentConsumers.size(), currentConsumerCount)));
       }
 
-      // TODO: does consumers list need to be sorted on instanceId?
       long minAckedEntryId = Long.MAX_VALUE;
       ReconfigPartitioner reconfigPartitioner =
         new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
@@ -2366,6 +2250,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
+      // Consumer zero is never deleted, so read partitioning information from consumer zero
+      ReconfigPartitionersList oldReconfigPartitionerList = queueStates.isEmpty() ?
+        ReconfigPartitionersList.getEmptyList() : queueStates.get(0).getReconfigPartitionersList();
+      // Run compaction
+      if(minAckedEntryId != Long.MAX_VALUE) {
+        oldReconfigPartitionerList.compact(minAckedEntryId);
+      }
 
       for(int j = 0; j < newConsumerCount; ++j) {
         QueueConsumer consumer;
@@ -2387,7 +2279,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setReconfigPartitionersList(
             new ReconfigPartitionersList(
               Lists.newArrayList(Iterables.concat(
-                queueState.getReconfigPartitionersList().getReconfigPartitioners(),
+                oldReconfigPartitionerList.getReconfigPartitioners(),
                 Collections.singleton(reconfigPartitioner))
               )
             ));
@@ -2408,11 +2300,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
         deleteDequeueState(consumer);
       }
     }
+
+    @Override
+    protected void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds) throws OperationException {
+      queueState.setConsumerReadPointer(invalidEntryIds.get(invalidEntryIds.size() - 1));
+    }
   }
 
   class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
-    public List<Long> fetchNextEntries(
+    public List<Long> claimNextEntries(
       QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer)
       throws OperationException {
       long entryId = queueState.getConsumerReadPointer();
@@ -2495,7 +2392,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   class RoundRobinDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
-    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+    public List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                        ReadPointer readPointer) throws OperationException {
       long entryId = queueState.getConsumerReadPointer();
       QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
@@ -2588,6 +2485,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
       }
 
+      ClaimedEntryRange firstClaimed = queueState.getClaimedEntryList().getClaimedEntry();
+      if (firstClaimed.isValid() && firstClaimed.getBegin() < queueState.getConsumerReadPointer()) {
+        queueState.setConsumerReadPointer(firstClaimed.getBegin());
+      }
       // Add CLAIMED_ENTRY_LIST writeQueueStateStore so that they can be written
       // to underlying storage by base class saveDequeueState
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
@@ -2606,7 +2507,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
       super.deleteDequeueState(consumer);
     }
 
@@ -2638,16 +2539,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+    public List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                        ReadPointer readPointer) throws OperationException {
       // Determine the next batch of entries that can be dequeued by this consumer
       List<Long> newEntryIds = new ArrayList<Long>();
 
       // If claimed entries exist, return them. This can happen when the queue cache is lost due to consumer
       // crash or other reasons
-      ClaimedEntry claimedEntry = queueState.getClaimedEntryList().getClaimedEntry();
-      if(claimedEntry.isValid()) {
-        for(long i = claimedEntry.getBegin(); i <= claimedEntry.getEnd(); ++i) {
+      ClaimedEntryRange claimedEntryRange = queueState.getClaimedEntryList().getClaimedEntry();
+      if(claimedEntryRange.isValid()) {
+        for(long i = claimedEntryRange.getBegin(); i <= claimedEntryRange.getEnd(); ++i) {
           newEntryIds.add(i);
         }
         return newEntryIds;
@@ -2712,7 +2613,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
-    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config, final long groupId, final int currentConsumerCount, final int newConsumerCount, ReadPointer readPointer) throws OperationException {
+    protected void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
+      throws OperationException {
+      queueState.getClaimedEntryList().moveForwardTo(invalidEntryIds.get(invalidEntryIds.size() - 1) + 1);
+    }
+
+    @Override
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates,
+                          QueueConfig config, final long groupId, final int currentConsumerCount,
+                          final int newConsumerCount, ReadPointer readPointer) throws OperationException {
       if(newConsumerCount >= currentConsumerCount) {
         DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
@@ -2728,7 +2637,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(currentConsumers.size() != currentConsumerCount) {
         throw new OperationException(
           StatusCode.INTERNAL_ERROR,
-          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)", currentConsumers.size(), currentConsumerCount)));
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
+                                      currentConsumers.size(), currentConsumerCount)));
       }
 
       if(currentConsumers.isEmpty()) {

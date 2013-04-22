@@ -22,15 +22,20 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.FIFO;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.HASH;
+import static com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType.ROUND_ROBIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -90,8 +95,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     sortedSet.add(new DequeueEntry(0, 2));
 
     int expected = 0;
-    for(Iterator<DequeueEntry> iterator = sortedSet.iterator(); iterator.hasNext(); ) {
-      assertEquals(expected++, iterator.next().getEntryId());
+    for (DequeueEntry aSortedSet : sortedSet) {
+      assertEquals(expected++, aSortedSet.getEntryId());
     }
   }
 
@@ -124,7 +129,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testQueueEntrySet() throws Exception {
+  public void testDequeueEntrySet() throws Exception {
     final int MAX = 10;
     DequeuedEntrySet entrySet = new DequeuedEntrySet();
     List<Long> expectedEntryIds = Lists.newArrayListWithCapacity(MAX);
@@ -166,7 +171,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testWorkingEntryList() {
     final int MAX = 10;
-    TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet = new TransientWorkingSet(Lists.<Long>newArrayList(), Collections.EMPTY_MAP);
+    Map<Long, byte[]> noCachedEntries = Collections.emptyMap();
+    TTQueueNewOnVCTable.TransientWorkingSet transientWorkingSet =
+      new TransientWorkingSet(Lists.<Long>newArrayList(), noCachedEntries);
     assertFalse(transientWorkingSet.hasNext());
 
     List<Long> workingSet = Lists.newArrayList();
@@ -193,9 +200,25 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance2 =
       new TTQueueNewOnVCTable.ReconfigPartitionInstance(2, 100L);
 
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance3 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(2, 101L);
+
+    final TTQueueNewOnVCTable.ReconfigPartitionInstance reconfigPartitionInstance4 =
+      new TTQueueNewOnVCTable.ReconfigPartitionInstance(3, 100L);
+
     // Verify equals
     assertEquals(reconfigPartitionInstance1, reconfigPartitionInstance1);
+    assertEquals(reconfigPartitionInstance1, reconfigPartitionInstance4);
     assertNotEquals(reconfigPartitionInstance1, reconfigPartitionInstance2);
+    assertNotEquals(reconfigPartitionInstance2, reconfigPartitionInstance3);
+    assertNotEquals(reconfigPartitionInstance4, reconfigPartitionInstance3);
+
+    // Verify redundancy
+    assertTrue(reconfigPartitionInstance1.isRedundant(1000L));
+    assertTrue(reconfigPartitionInstance1.isRedundant(101L));
+    assertFalse(reconfigPartitionInstance1.isRedundant(100L));
+    assertFalse(reconfigPartitionInstance1.isRedundant(99L));
+    assertFalse((reconfigPartitionInstance1.isRedundant(10L)));
 
     // Encode to bytes
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -211,15 +234,15 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testReconfigPartitionerEncode() throws Exception {
+  public void testReconfigPartitioner() throws Exception {
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner1 =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, PartitionerType.HASH);
     partitioner1.add(0, 5);
     partitioner1.add(1, 10);
     partitioner1.add(2, 12);
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner2 =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(3, QueuePartitioner.PartitionerType.HASH);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(3, PartitionerType.HASH);
     partitioner2.add(0, 5);
     partitioner2.add(1, 15);
     partitioner2.add(2, 12);
@@ -227,6 +250,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Verify equals
     assertEquals(partitioner1, partitioner1);
     assertNotEquals(partitioner1, partitioner2);
+
+    // Verify redundancy
+    assertTrue(partitioner1.isRedundant(100L));
+    assertTrue(partitioner1.isRedundant(54L));
+    assertTrue(partitioner1.isRedundant(13L));
+    for(int i = 0; i < 12; ++i) {
+      assertFalse(partitioner1.isRedundant(i));
+    }
 
     // Encode to bytes
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -256,7 +287,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 8L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -279,7 +310,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 2L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -302,7 +333,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 2L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -325,13 +356,121 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long twoAck = 11L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
 
     verifyTestReconfigPartitionerEmit(lastEntry, ImmutableSet.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L),
                                       partitioner);
+  }
+
+  @Test
+  public void testReconfigPartitionersList() throws Exception {
+    List<TTQueueNewOnVCTable.ReconfigPartitioner> partitionerList = Lists.newArrayList();
+    List<Long> partitionerListMaxAck = Lists.newArrayList();
+
+    int groupSize = 3;
+
+    TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 8L);
+    partitioner.add(1, 15L);
+    partitioner.add(2, 11L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(15L);
+
+    // Verify compaction with one partitioner
+    TTQueueNewOnVCTable.ReconfigPartitionersList rl1 =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    assertEquals(1, rl1.getReconfigPartitioners().size());
+    rl1.compact(9L);
+    assertEquals(1, rl1.getReconfigPartitioners().size());
+    rl1.compact(16L);
+    assertTrue(rl1.getReconfigPartitioners().isEmpty());
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 4;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 30L);
+    partitioner.add(1, 14L);
+    partitioner.add(2, 15L);
+    partitioner.add(3, 28L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(30L);
+
+    // Verify compaction with two partitioners
+    TTQueueNewOnVCTable.ReconfigPartitionersList rl2 =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    assertEquals(2, rl2.getReconfigPartitioners().size());
+    rl2.compact(8L);
+    assertEquals(2, rl2.getReconfigPartitioners().size());
+    rl2.compact(16L);
+    assertEquals(1, rl2.getReconfigPartitioners().size());
+    rl2.compact(31L);
+    assertTrue(rl2.getReconfigPartitioners().isEmpty());
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 5;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 43L);
+    partitioner.add(1, 47L);
+    partitioner.add(2, 3L);
+    partitioner.add(3, 32L);
+    partitioner.add(3, 35L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(47L);
+
+    // Verify compaction with 3 partitioners
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    groupSize = 2;
+
+    partitioner =
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
+    partitioner.add(0, 55);
+    partitioner.add(1, 50L);
+    partitionerList.add(partitioner);
+    partitionerListMaxAck.add(55L);
+
+    // Verify compaction with 4 partitioners
+    verifyReconfigPartitionersListCompact(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList), partitionerListMaxAck);
+
+    // Verify encode/decode
+    TTQueueNewOnVCTable.ReconfigPartitionersList expectedEncode =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(partitionerList);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    expectedEncode.encode(new BinaryEncoder(bos));
+    byte[] bytes = bos.toByteArray();
+
+    TTQueueNewOnVCTable.ReconfigPartitionersList actualEncode =
+      TTQueueNewOnVCTable.ReconfigPartitionersList.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
+    assertEquals(expectedEncode, actualEncode);
+  }
+
+  private void verifyReconfigPartitionersListCompact(
+    TTQueueNewOnVCTable.ReconfigPartitionersList reconfigPartitionersList, List<Long> maxAckList) {
+    List<Long> sortedMaxAckList = Lists.newLinkedList(maxAckList);
+    Collections.sort(sortedMaxAckList);
+
+    long max = sortedMaxAckList.get(sortedMaxAckList.size() - 1);
+    for(long i = 0; i <= max; ++i) {
+      reconfigPartitionersList.compact(i);
+      if(!sortedMaxAckList.isEmpty() && i > sortedMaxAckList.get(0)) {
+        sortedMaxAckList.remove(0);
+      }
+      assertEquals(sortedMaxAckList.size(), reconfigPartitionersList.getReconfigPartitioners().size());
+    }
+    reconfigPartitionersList.compact(max + 1);
+    assertTrue(reconfigPartitionersList.getReconfigPartitioners().isEmpty());
   }
 
   @Test
@@ -343,14 +482,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Partition      :1  2  0  1  2  0  1  2  0  1   2   0
 
     int groupSize = 3;
-    int lastEntry = 12;
 
     long zeroAck = 3L;
     long oneAck = 7L;
     long twoAck = 8L;
 
     TTQueueNewOnVCTable.ReconfigPartitioner partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -364,7 +502,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Partition      :1  2  3  0  1  2  3  0  1  2   3   0   1   2   3   0   1   2
 
     groupSize = 4;
-    lastEntry = 18;
+    int lastEntry = 18;
 
     zeroAck = 12L;
     oneAck = 5L;
@@ -372,7 +510,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long threeAck = 7L;
 
     partitioner =
-      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+      new TTQueueNewOnVCTable.ReconfigPartitioner(groupSize, PartitionerType.ROUND_ROBIN);
     partitioner.add(0, zeroAck);
     partitioner.add(1, oneAck);
     partitioner.add(2, twoAck);
@@ -401,219 +539,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testClaimedEntry() {
-    TTQueueNewOnVCTable.ClaimedEntry claimedEntry = TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY;
-    for(int i = 0; i < 10; ++i) {
-      assertFalse(claimedEntry.isValid());
-      claimedEntry = claimedEntry.move(1);
-    }
-    assertFalse(claimedEntry.isValid());
-
-    claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(0, 5);
-    for(int i = 0; i < 6; ++i) {
-      assertTrue(claimedEntry.isValid());
-      claimedEntry = claimedEntry.move(claimedEntry.getBegin() + 1);
-    }
-    assertFalse(claimedEntry.isValid());
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(4, 2);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(TTQueueNewOnVCTable.INVALID_ENTRY_ID, 2);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    try {
-      claimedEntry = new TTQueueNewOnVCTable.ClaimedEntry(3, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-      fail("Should throw exception");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-  }
-
-  @Test
-  public void testClaimedEntryListMove() {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
-    for(int i = 0; i < 10; ++i) {
-      assertFalse(claimedEntryList.getClaimedEntry().isValid());
-      claimedEntryList.moveForwardTo(1);
-    }
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(1, 5);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 1, 5);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(2, 9);
-    claimedEntryList.add(0, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 9);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 0, 20);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(6, 6);
-    claimedEntryList.add(2, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(3, 10);
-    claimedEntryList.add(4, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 6, 6);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 2, 30);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 3, 10);
-    verifyClaimedEntryListIncrementMove(claimedEntryList, 4, 20);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-
-    claimedEntryList.add(5, 10);
-    claimedEntryList.add(1, 3);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(5);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(5, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(8);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(8, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(10, claimedEntryList.getClaimedEntry().getEnd());
-
-    claimedEntryList.moveForwardTo(20);
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(1, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(3, claimedEntryList.getClaimedEntry().getEnd());
-
-    try {
-      claimedEntryList.moveForwardTo(0);
-      fail("Exception should be thrown here");
-    } catch (IllegalArgumentException e) {
-      // Expected
-    }
-
-    claimedEntryList.moveForwardTo(4);
-    assertFalse(claimedEntryList.getClaimedEntry().isValid());
-  }
-
-  @Test
-  public void testClaimedEntryListAddAll() throws Exception {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList1.add(3, 5);
-    claimedEntryList1.add(15, 20);
-    claimedEntryList1.add(36, 41);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList2.add(1, 2);
-    claimedEntryList2.add(10, 14);
-    claimedEntryList2.add(45, 50);
-
-    claimedEntryList1.addAll(claimedEntryList2);
-
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 3, 5);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 15, 20);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 36, 41);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 1, 2);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 10, 14);
-    verifyClaimedEntryListIncrementMove(claimedEntryList1, 45, 50);
-    assertFalse(claimedEntryList1.getClaimedEntry().isValid());
-  }
-
-  private void verifyClaimedEntryListIncrementMove(TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList, long begin, long end) {
-    assertTrue(claimedEntryList.getClaimedEntry().isValid());
-    assertEquals(begin, claimedEntryList.getClaimedEntry().getBegin());
-    assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
-
-    for(long i = begin; i <= end; ++i, claimedEntryList.moveForwardTo(claimedEntryList.getClaimedEntry().getBegin() + 1)) {
-      assertTrue(claimedEntryList.getClaimedEntry().isValid());
-      assertEquals(i, claimedEntryList.getClaimedEntry().getBegin());
-      assertEquals(end, claimedEntryList.getClaimedEntry().getEnd());
-    }
-  }
-
-  @Test
-  public void testClaimedEntryListEncode() throws Exception {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList();
-    verifyClaimedEntryListEncode(claimedEntryList);
-
-    claimedEntryList.add(1, 5);
-    verifyClaimedEntryListEncode(claimedEntryList);
-
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(6, 6);
-    claimedEntryList.add(2, 30);
-    claimedEntryList.add(TTQueueNewOnVCTable.INVALID_ENTRY_ID, TTQueueNewOnVCTable.INVALID_ENTRY_ID);
-    claimedEntryList.add(3, 10);
-    claimedEntryList.add(4, 20);
-    verifyClaimedEntryListEncode(claimedEntryList);
-  }
-
-  private void verifyClaimedEntryListEncode(TTQueueNewOnVCTable.ClaimedEntryList expected) throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    expected.encode(new BinaryEncoder(bos));
-    byte[] bytes = bos.toByteArray();
-
-    TTQueueNewOnVCTable.ClaimedEntryList actual = TTQueueNewOnVCTable.ClaimedEntryList.decode(
-      new BinaryDecoder(new ByteArrayInputStream(bytes)));
-
-    assertEquals(expected, actual);
-  }
-
-  @Test
-  public void testClaimedEntryListCompare() {
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList1 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList1.add(2, 7);
-    claimedEntryList1.add(8, 16);
-    claimedEntryList1.add(25, 30);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList2 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList2.add(3, 4);
-    claimedEntryList2.add(7, 15);
-
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList3 = new TTQueueNewOnVCTable.ClaimedEntryList();
-    claimedEntryList3.add(3, 8);
-    claimedEntryList3.add(15, 20);
-    claimedEntryList3.add(22, 30);
-    claimedEntryList3.add(10, 12);
-    claimedEntryList3.add(31, 35);
-
-    SortedSet<TTQueueNewOnVCTable.ClaimedEntryList> sortedSet = new TreeSet<TTQueueNewOnVCTable.ClaimedEntryList>();
-    sortedSet.add(claimedEntryList1);
-    sortedSet.add(claimedEntryList2);
-    sortedSet.add(claimedEntryList3);
-
-    assertEquals(claimedEntryList2, sortedSet.first());
-    sortedSet.remove(claimedEntryList2);
-    assertEquals(claimedEntryList1, sortedSet.first());
-    sortedSet.remove(claimedEntryList1);
-    assertEquals(claimedEntryList3, sortedSet.first());
-    sortedSet.remove(claimedEntryList3);
-    assertTrue(sortedSet.isEmpty());
-  }
-
-  @Test
-  public void testClaimedEntryEncode() throws Exception{
-    verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry.INVALID_CLAIMED_ENTRY);
-    verifyClaimedEntryEncode(new TTQueueNewOnVCTable.ClaimedEntry(2, 15));
-  }
-
-  private void verifyClaimedEntryEncode(TTQueueNewOnVCTable.ClaimedEntry expected) throws Exception {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    expected.encode(new BinaryEncoder(bos));
-    byte[] bytes = bos.toByteArray();
-
-    TTQueueNewOnVCTable.ClaimedEntry actual =
-      TTQueueNewOnVCTable.ClaimedEntry.decode(new BinaryDecoder(new ByteArrayInputStream(bytes)));
-
-    assertEquals(expected, actual);
-  }
-
-  @Test
   public void testQueueStateImplEncode() throws Exception {
     TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
     List<DequeueEntry> dequeueEntryList = Lists.newArrayList(new DequeueEntry(2, 1), new DequeueEntry(3, 0));
@@ -631,9 +556,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long queueWritePointer = 6L;
     queueState.setQueueWritePointer(queueWritePointer);
 
-    TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList = new TTQueueNewOnVCTable.ClaimedEntryList(
-      new TTQueueNewOnVCTable.ClaimedEntry(4L, 6L),
-      Lists.newArrayList(new TTQueueNewOnVCTable.ClaimedEntry(7L, 8L), new TTQueueNewOnVCTable.ClaimedEntry(10L, 20L)));
+    ClaimedEntryList claimedEntryList = new ClaimedEntryList(
+      Lists.newArrayList(new ClaimedEntryRange(4L, 6L),
+                         new ClaimedEntryRange(7L, 8L),
+                         new ClaimedEntryRange(10L, 20L)));
     queueState.setClaimedEntryList(claimedEntryList);
 
     long lastEvictTimeInSecs = 124325342L;
@@ -646,7 +572,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void verifyQueueStateImplEncode(TTQueueNewOnVCTable.QueueStateImpl queueState,
                                           TransientWorkingSet transientWorkingSet, DequeuedEntrySet dequeuedEntrySet,
                                           long consumerReadPointer, long queueWritePointer,
-                                          TTQueueNewOnVCTable.ClaimedEntryList claimedEntryList,
+                                          ClaimedEntryList claimedEntryList,
                                           long lastEvictTimeInSecs) throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     queueState.encodeTransient(new BinaryEncoder(bos));
@@ -813,7 +739,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue it with HASH partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -850,7 +776,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue it with ROUND_ROBIN partitioner
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.ROUND_ROBIN, singleEntry);
 
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -922,7 +848,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
     // dequeue it with HASH partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.HASH, singleEntry, 29);
+    QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry, 29);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -931,7 +857,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.HASH);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, PartitionerType.HASH);
     System.out.println("Round 1 dequeue done");
 
     // enqueue some more entries
@@ -941,7 +867,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
     }
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.HASH);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, PartitionerType.HASH);
     System.out.println("Round 2 dequeue done");
   }
 
@@ -962,7 +888,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // dequeue it with ROUND_ROBIN partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.ROUND_ROBIN, singleEntry, 11);
+    QueueConfig config = new QueueConfig(PartitionerType.ROUND_ROBIN, singleEntry, 11);
 
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
@@ -971,7 +897,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, 0, PartitionerType
+      .ROUND_ROBIN);
 
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
@@ -980,11 +907,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue and verify
-    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, PartitionerType.ROUND_ROBIN);
   }
 
   private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
-                                         int numQueueEntries, int startQueueEntry, QueuePartitioner.PartitionerType partitionerType) throws Exception {
+                                         int numQueueEntries, int startQueueEntry, PartitionerType partitionerType) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
@@ -992,7 +919,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         // verify we got something and it's the first value
         assertTrue(result.toString(), result.isSuccess());
         int expectedValue = startQueueEntry + consumer + (2 * entry * numConsumers);
-        if(partitionerType == QueuePartitioner.PartitionerType.ROUND_ROBIN) {
+        if(partitionerType == PartitionerType.ROUND_ROBIN) {
           if(consumer == 0) {
             // Adjust the expected value for consumer 0
             expectedValue += numConsumers;
@@ -1046,7 +973,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // dequeue it with ROUND_ROBIN partitioner
     // TODO: test with more batch sizes
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, singleEntry, 10);
+    QueueConfig config = new QueueConfig(FIFO, singleEntry, 10);
 
     StatefulQueueConsumer[] statefulQueueConsumers = new StatefulQueueConsumer[numConsumers];
     QueueConsumer[] queueConsumers = new QueueConsumer[numConsumers];
@@ -1132,7 +1059,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
 
     // dequeue it with FIFO partitioner, single entry mode
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+    QueueConfig config = new QueueConfig(FIFO, true);
 
     queue.configure(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config));
 
@@ -1171,15 +1098,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.FIFO;
+    PartitionerType partitionerType = FIFO;
 
-    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    runConfigTest(partitionerType, condition);
   }
 
   @Test
@@ -1191,15 +1112,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.ROUND_ROBIN;
+    PartitionerType partitionerType = PartitionerType.ROUND_ROBIN;
 
-    testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    runConfigTest(partitionerType, condition);
   }
 
   @Test
@@ -1211,15 +1126,20 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
     };
 
-    QueuePartitioner.PartitionerType partitionerType = QueuePartitioner.PartitionerType.HASH;
+    PartitionerType partitionerType = PartitionerType.HASH;
 
+    runConfigTest(partitionerType, condition);
+  }
+
+  public void runConfigTest(PartitionerType partitionerType, Condition condition) throws Exception {
     testReconfig(Lists.newArrayList(3, 2), 54, 5, 6, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 3, 4, 2), 144, 5, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 5, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 9, partitionerType, condition);
     testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
-    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 200, 9, 5, partitionerType, condition);
     testReconfig(Lists.newArrayList(1, 2, 3, 4, 5, 4, 3, 2, 1), 300, 9, 5, partitionerType, condition);
+    // this failed before claimed entry lists were sorted
+    testReconfig(Lists.newArrayList(3, 5, 2, 1, 6, 2), 50, 5, 3, partitionerType, condition);
   }
 
   private static final String HASH_KEY = "HashKey";
@@ -1227,9 +1147,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     boolean check(long entryId, int groupSize, long instanceId, int hash);
   }
 
+  // TODO: test with stateful and non-state consumer
   private void testReconfig(List<Integer> consumerCounts, final int numEntries, final int queueBatchSize,
-                            final int perConsumerDequeueBatchSize, QueuePartitioner.PartitionerType partitionerType,
+                            final int perConsumerDequeueBatchSize, PartitionerType partitionerType,
                             Condition condition) throws Exception {
+    Random random = new Random(System.currentTimeMillis());
+    StringWriter debugCollector = new StringWriter();
     TTQueue queue = createQueue();
 
     List<Integer> expectedEntries = Lists.newArrayList();
@@ -1238,15 +1161,16 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       expectedEntries.add(i + 1);
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addPartitioningKey(HASH_KEY, i + 1);
-      assertTrue(queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
+      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
     }
 
     expectedEntries = ImmutableList.copyOf(expectedEntries);
-    assertEquals(numEntries, expectedEntries.size());
+    assertEquals(debugCollector.toString(), numEntries, expectedEntries.size());
 
     List<Integer> actualEntries = Lists.newArrayList();
-    List<Integer> sortedActualEntries = Lists.newArrayList();
-    List<StatefulQueueConsumer> consumers = Collections.emptyList();
+    List<String> actualPrintEntries = Lists.newArrayList();
+    List<Integer> sortedActualEntries;
+    List<StatefulQueueConsumer> consumers;
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(partitionerType, true, queueBatchSize);
     long groupId = queue.getGroupID();
@@ -1260,49 +1184,67 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         int actualOldConsumerCount = -1;
         for(int i = 0; i < newConsumerCount; ++i) {
           StatefulQueueConsumer consumer;
-          if(partitionerType != QueuePartitioner.PartitionerType.HASH) {
+          if(partitionerType != PartitionerType.HASH) {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           } else {
             consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, "", HASH_KEY, config);
           }
           consumers.add(consumer);
+          debugCollector.write(String.format("Running configure...%n"));
           int oldConsumerCount = queue.configure(consumer);
           if(oldConsumerCount >= 0) {
             actualOldConsumerCount = oldConsumerCount;
           }
         }
-//        System.out.println(String.format("Old consumer count = %d, new consumer count = %s",
-//                                         actualOldConsumerCount, newConsumerCount));
-        assertEquals(expectedOldConsumerCount, actualOldConsumerCount);
+        debugCollector.write(String.format("Old consumer count = %d, new consumer count = %s%n", actualOldConsumerCount, newConsumerCount));
+        assertEquals(debugCollector.toString(), expectedOldConsumerCount, actualOldConsumerCount);
 
-      // Dequeue entries
+      // Dequeue entries with random batch size and random consumers each time
+        int numTriesThisRun = 0;
         int numDequeuesThisRun = 0;
-        for(QueueConsumer consumer : consumers) {
-          for(int i = 0; i < perConsumerDequeueBatchSize; ++i) {
+        List<StatefulQueueConsumer> workingConsumerList = Lists.newLinkedList(consumers);
+        while(!workingConsumerList.isEmpty()) {
+          QueueConsumer consumer = workingConsumerList.remove(random.nextInt(workingConsumerList.size()));
+          //QueueConsumer consumer = workingConsumerList.remove(0);
+          int curBatchSize = random.nextInt(perConsumerDequeueBatchSize + 1);
+          //int curBatchSize = perConsumerDequeueBatchSize;
+          debugCollector.write(String.format("Current batch size = %d%n", curBatchSize));
+
+          for(int i = 0; i < curBatchSize; ++i) {
+            ++numTriesThisRun;
             DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
+            debugCollector.write(consumer.getInstanceId() + " dequeued " +
+                                   (result.isEmpty() ? "<empty>" : "" + result.getEntryPointer().getEntryId()) +
+                                   ", state: " + consumer.getQueueState() + "\n");
             if(result.isEmpty()) {
               break;
             }
             ++numDequeuesThisRun;
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
+            actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
             queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
-            assertTrue(
-              condition.check(
-                result.getEntryPointer().getEntryId(),
-                newConsumerCount, consumer.getInstanceId(),
-                (int) result.getEntryPointer().getEntryId()
-              )
-            );
+            queue.finalize(result.getEntryPointer(), consumer, 1, getDirtyWriteVersion());
+            assertTrue(debugCollector.toString(),
+                       condition.check(
+                         result.getEntryPointer().getEntryId(),
+                         newConsumerCount,
+                         consumer.getInstanceId(),
+                         (int) result.getEntryPointer().getEntryId()
+                       ));
           }
           actualEntries.add(-1);
         }
-//        System.out.println(actualEntries);
+        debugCollector.write(String.format("%s%n", actualPrintEntries));
+        debugCollector.write(String.format("%s%n", actualEntries));
         sortedActualEntries = Lists.newArrayList(actualEntries);
         Collections.sort(sortedActualEntries);
-//        System.out.println(sortedActualEntries);
+        debugCollector.write(String.format("%s%n", sortedActualEntries));
 
         // If all consumers report queue empty then stop
-        if(numDequeuesThisRun == 0) {
+        if(numDequeuesThisRun == 0 && numTriesThisRun >= consumers.size()) {
+          sortedActualEntries.removeAll(Lists.newArrayList(-1));
+          debugCollector.write(String.format("Expected: %s%n", expectedEntries));
+          debugCollector.write(String.format("Actual:   %s%n", sortedActualEntries));
           break loop;
         }
         expectedOldConsumerCount = newConsumerCount;
@@ -1312,12 +1254,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Make sure the queue is empty
     for(QueueConsumer consumer : consumers) {
       DequeueResult result = queue.dequeue(consumer, getDirtyPointer());
-      assertTrue(result.isEmpty());
+      assertTrue(debugCollector.toString(), result.isEmpty());
     }
 
-    sortedActualEntries.removeAll(Lists.newArrayList(-1));
-//    System.out.println(sortedActualEntries);
-    assertEquals(expectedEntries, sortedActualEntries);
+    assertEquals(debugCollector.toString(), expectedEntries, sortedActualEntries);
   }
 
   // Tests that do not work on NewTTQueue
@@ -1371,13 +1311,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   @Test
   public void testBatchSyncDisjoint() throws OperationException {
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, false);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.HASH, true);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, false);
-    testBatchSyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN, true);
+    testBatchSyncDisjoint(PartitionerType.HASH, false);
+    testBatchSyncDisjoint(PartitionerType.HASH, true);
+    testBatchSyncDisjoint(PartitionerType.ROUND_ROBIN, false);
+    testBatchSyncDisjoint(PartitionerType.ROUND_ROBIN, true);
   }
 
-  public void testBatchSyncDisjoint(QueuePartitioner.PartitionerType partitioner, boolean simulateCrash)
+  public void testBatchSyncDisjoint(PartitionerType partitioner, boolean simulateCrash)
     throws OperationException {
 
     TTQueue queue = createQueue();
@@ -1399,8 +1339,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer consumer = simulateCrash ?
       // stateless consumer requires reconstruction of state every time, like after a crash
       new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
-      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config, false);
-    queue.configure(config, groupId, 2);
+      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
+    queue.configure(consumer);
 
     // dequeue 15 should return entries: 2, 4, .., 30
     t = oracle.startTransaction();
@@ -1500,8 +1440,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     config = new QueueConfig(partitioner, true, 12, true);
     consumer = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
-      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config, false);
-    queue.configure(config, groupId, 2);
+      new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
+    queue.configure(consumer);
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 62, ..., 84
     t = oracle.startTransaction();
@@ -1586,14 +1526,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // we will dequeue with fifo partitioning, two consumers in group, hence returns every other entry
     long groupId = 42;
     String groupName = "group";
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 15, true);
+    QueueConfig config = new QueueConfig(FIFO, true, 15, true);
     QueueConsumer consumer1 = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, config) :
-      new StatefulQueueConsumer(0, groupId, 2, groupName, config, false);
+      new StatefulQueueConsumer(0, groupId, 2, groupName, config);
     QueueConsumer consumer2 = simulateCrash ?
       new QueueConsumer(1, groupId, 2, groupName, config) :
-      new StatefulQueueConsumer(1, groupId, 2, groupName, config, false);
-    queue.configure(config, groupId, 2);
+      new StatefulQueueConsumer(1, groupId, 2, groupName, config);
+    queue.configure(consumer1);
 
     // dequeue 15 should return first 15 entries: 1, 2, .., 15
     t = oracle.startTransaction();
@@ -1715,14 +1655,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // now we change the batch size for the consumer to 12 (reconfigure)
-    config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 12, true);
+    config = new QueueConfig(FIFO, true, 12, true);
     consumer1 = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, config) :
-      new StatefulQueueConsumer(0, groupId, 2, groupName, config, false);
+      new StatefulQueueConsumer(0, groupId, 2, groupName, config);
     consumer2 = simulateCrash ?
       new QueueConsumer(1, groupId, 2, groupName, config) :
-      new StatefulQueueConsumer(1, groupId, 2, groupName, config, false);
-    queue.configure(config, groupId, 2);
+      new StatefulQueueConsumer(1, groupId, 2, groupName, config);
+    queue.configure(consumer1);
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 46, 47, ..., 57
     t = oracle.startTransaction();
@@ -1802,11 +1742,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   @Test
   public void testBatchAsyncDisjoint() throws OperationException {
-    testBatchAsyncDisjoint(QueuePartitioner.PartitionerType.HASH);
-    testBatchAsyncDisjoint(QueuePartitioner.PartitionerType.ROUND_ROBIN);
+    testBatchAsyncDisjoint(PartitionerType.HASH);
+    testBatchAsyncDisjoint(PartitionerType.ROUND_ROBIN);
   }
 
-  public void testBatchAsyncDisjoint(QueuePartitioner.PartitionerType partitioner) throws OperationException {
+  public void testBatchAsyncDisjoint(PartitionerType partitioner) throws OperationException {
 
     TTQueue queue = createQueue();
 
@@ -1824,8 +1764,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long groupId = 42;
     String groupName = "group";
     QueueConfig config = new QueueConfig(partitioner, false, 15, true);
-    QueueConsumer consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config, false);
-    queue.configure(config, groupId, 2);
+    QueueConsumer consumer0 = new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
+    QueueConsumer consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
+    queue.configure(consumer0); // we must configure with instance #0
 
     // dequeue 15 -> 1 .. 29
     t = oracle.startTransaction();
@@ -1889,8 +1830,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // start new consumer (simulate crash)
     config = new QueueConfig(partitioner, false, 10, true);
-    consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config, false);
-    queue.configure(config, groupId, 2);
+    consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
+    queue.configure(consumer);
 
     // dequeue 10 -> 1 .. 19
     t = oracle.startTransaction();
@@ -1957,8 +1898,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // new consumer
     // start new consumer (simulate crash)
     config = new QueueConfig(partitioner, false, 20, true);
-    consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config, false);
-    queue.configure(config, groupId, 2);
+    consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
+    queue.configure(consumer);
 
     // dequeue -> empty
     t = oracle.startTransaction();
@@ -1984,11 +1925,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
     long groupId = 42;
     String groupName = "group";
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, false, 15, true);
-    QueueConsumer consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config, false);
-    QueueConsumer consumer2 = new StatefulQueueConsumer(1, groupId, 2, groupName, config, false);
-    queue.configure(config, groupId, 2);
-    queue.configure(config, groupId, 2);
+    QueueConfig config = new QueueConfig(FIFO, false, 15, true);
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
+    QueueConsumer consumer2 = new StatefulQueueConsumer(1, groupId, 2, groupName, config);
+    queue.configure(consumer1);
+    queue.configure(consumer2);
 
     // dequeue 15 with first consumer -> 1 .. 15
     t = oracle.startTransaction();
@@ -2057,8 +1998,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // simulate crash of consumer 1 - new consumer with batch size 10
-    config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, false, 10, true);
-    consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config, false);
+    config = new QueueConfig(FIFO, false, 10, true);
+    consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
 
     // dequeue 10 with first consumer 1 .. 10
     t = oracle.startTransaction();
@@ -2181,5 +2122,64 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < entries.length; i++) {
       assertEquals(i + 86 + dequeued, Bytes.toInt(entries[i].getData()));
     }
+  }
+
+  // this tests that the dequeue can deal with a batch of consecutive, invalid queue entries that is larger than the
+  // dequeue batch size. If it does not deal with this condition correctly, it may return empty or even go into an
+  // infinite loop!
+  @Test//(timeout = 10000)
+  public void testSkipBatchofInvalidEntries () throws OperationException {
+    TTQueue queue = createQueue();
+
+    // enqueue 20, then invalidate a batch of 10 in the middle
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+      entries[i - 1].addPartitioningKey("p", i);
+    }
+    Transaction t = oracle.startTransaction();
+    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    queue.invalidate(Arrays.copyOfRange(enqResult.getEntryPointers(), 5, 15), t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    long groupId = 0;
+    for (int batchSize = 1; batchSize < 12; batchSize++) {
+      for (boolean returnBatch : new boolean[] { true, false }) {
+        for (boolean singleEntry : new boolean[] { true, false }) {
+          for (PartitionerType partitioner : new PartitionerType[] { FIFO, ROUND_ROBIN, HASH }) {
+            testSkipBatchofInvalidEntries(queue, ++groupId, batchSize, returnBatch, singleEntry, partitioner);
+          }
+        }
+      }
+    }
+  }
+
+  public void testSkipBatchofInvalidEntries(TTQueue queue, long groupId, int batchSize, boolean returnBatch,
+                                            boolean singleEntry, PartitionerType partitioner)
+    throws OperationException {
+
+    String groupName = "batch=" + batchSize + ":" + returnBatch + "," + (singleEntry ? "single" : "multi")
+      + "," + partitioner;
+    // System.out.println(groupName);
+    QueueConfig config = new QueueConfig(partitioner, singleEntry, batchSize, returnBatch);
+    QueueConsumer consumer = new StatefulQueueConsumer(0, groupId, 2, groupName, "p", config);
+    queue.configure(consumer);
+
+    int numDequeued = 0;
+    while (true) {
+      Transaction t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+      oracle.commitTransaction(t);
+      if (result.isEmpty()) {
+        break;
+      }
+      numDequeued += result.getEntries().length;
+      t = oracle.startTransaction();
+      queue.ack(result.getEntryPointers(), consumer, t.getReadPointer());
+      queue.finalize(result.getEntryPointers(), consumer, 1, t.getWriteVersion());
+      oracle.commitTransaction(t);
+    }
+    int expected = partitioner == FIFO ? 10 : 5;
+    assertEquals("Failure for " + groupName + ":", expected, numDequeued);
   }
 }

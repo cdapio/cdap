@@ -56,13 +56,13 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     HTable table = getHTable(queueOVCTable, HBQConstants.HBQ_FAMILY);
-
+    
     queueTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
-      queueTableName, queueTable);
+        queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
-
+  
   @Override
   public TTQueueTable getStreamTable(byte[] streamTableName) throws OperationException {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
@@ -70,9 +70,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
 
     streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-      streamTableName, streamTable);
-
+    TTQueueTable existing = this.streamTables.putIfAbsent(streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 
@@ -83,7 +81,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
       table = createTable(tableName, family);
     } catch (IOException e) {
       throw new OperationException(StatusCode.HBASE_ERROR,
-                                   "Error creating table", e);
+          "Error creating table", e);
     }
     HTable existing = this.htables.putIfAbsent(tableName, table);
     return existing != null ? existing : table;

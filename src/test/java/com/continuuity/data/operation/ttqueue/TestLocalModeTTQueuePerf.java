@@ -20,13 +20,13 @@ public class TestLocalModeTTQueuePerf {
   //  private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
 
   private static final DataFabricLocalModule module =
-    new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null);
+      new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null);
   //  new DataFabricLocalModule();
 
   private static final Injector injector = Guice.createInjector(module);
 
   private static final OVCTableHandle handle =
-    injector.getInstance(OVCTableHandle.class);
+      injector.getInstance(OVCTableHandle.class);
 
   //  // Configuration for hypersql
   //  static {
@@ -68,7 +68,6 @@ public class TestLocalModeTTQueuePerf {
     byte [] data = new byte[1024];
     long version = 10L;
 
-    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
     ReadPointer readPointer = new MemoryReadPointer(version);
 
@@ -115,7 +114,8 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      DequeueResult result = streamTable.dequeue(queueName, consumer, readPointer);
+      DequeueResult result =
+          streamTable.dequeue(queueName, consumer, readPointer);
       streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
       streamTable.finalize(queueName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
@@ -131,7 +131,7 @@ public class TestLocalModeTTQueuePerf {
     if (i % (perline/10) == 0) System.out.print(".");
     if (i % perline == 0) {
       System.out.println(" " + i + " : Last " + perline + " finished in " +
-                           timeReport(last, now(), perline));
+          timeReport(last, now(), perline));
       return now();
     }
     return last;
@@ -139,12 +139,12 @@ public class TestLocalModeTTQueuePerf {
 
   private void printReport(long start, long end, int iterations) {
     log("Finished " + iterations + " iterations in " +
-          timeReport(start, end, iterations));
+        timeReport(start, end, iterations));
   }
 
   private String timeReport(long start, long end, int iterations) {
     return "" + format(end-start) + " (" +
-      format(end-start, iterations) + "/iteration)";
+        format(end-start, iterations) + "/iteration)";
   }
 
   private String format(long time, int iterations) {
