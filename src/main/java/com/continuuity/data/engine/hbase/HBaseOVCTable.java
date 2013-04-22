@@ -5,7 +5,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
@@ -425,6 +424,27 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
   }
 
+  @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    try {
+      Get get = new Get(row);
+      get.addColumn(this.family, column);
+      get.setTimeRange(0, Long.MAX_VALUE);
+      get.setMaxVersions();
+      Result result = this.readTable.get(get);
+      if (!result.isEmpty()) {
+        return new OperationResult<byte[]>(result.value());
+      } else {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    // as fall-back return "not found".
+    return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+  }
+
   protected long getMaxStamp(ReadPointer readPointer) {
     return readPointer.getMaximum() == Long.MAX_VALUE ? readPointer.getMaximum() : readPointer.getMaximum() + 1;
   }
@@ -832,8 +852,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Put put = new Put(row);
       put.add(this.family, column, newValue);
       // TODO: need to use checkAndPut without version (vanilla HBase)
-      return writeTable.checkAndPut(row, this.family, column, expectedValue,
-                                    TransactionOracle.DIRTY_READ_POINTER.getMaximum(), put);
+      return writeTable.checkAndPut(row, this.family, column, expectedValue, put);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {

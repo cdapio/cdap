@@ -738,6 +738,12 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+  }
+
+  @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     PreparedStatement ps = null;
     try {

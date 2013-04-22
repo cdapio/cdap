@@ -295,6 +295,12 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
+    throws OperationException {
+    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+  }
+
+  @Override
   public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
     Map<byte[], Map<byte[], byte[]>> ret = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < rows.length; ++i) {

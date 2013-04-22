@@ -188,6 +188,19 @@ public interface VersionedColumnarTable {
       ReadPointer readPointer) throws OperationException;
 
   /**
+   * Reads the latest version of the specified column in the specified row,
+   * utilizing the specified read pointer to enforce visibility constraints,
+   * and returns the value.
+   * @param row
+   * @param column
+   * @return value of the latest visible column in the specified row, or null if
+   *         none exists
+   */
+  public OperationResult<byte[]> getDirty(
+    byte [] row, byte [] column)
+    throws OperationException;
+
+  /**
    * Reads the latest versions of all specified columns for each row,
    * utilizing the specified read pointer to enforce visibility constraints.
    * @param rows
@@ -195,7 +208,9 @@ public interface VersionedColumnarTable {
    * @param readPointer
    * @return map of columns to values, never null
    */
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException;
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(
+    byte[][] rows, byte[][] columns, ReadPointer readPointer)
+    throws OperationException;
 
   /**
    * Increments (atomically) the specified row and column by the specified
