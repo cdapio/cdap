@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,11 +17,13 @@ public class ReportWriterThread extends ReportThread {
 
   private static final Logger Log = LoggerFactory.getLogger(ReportWriterThread.class);
 
-  private static final String metricBaseName = "benchmark.ops.per_sec";
+  private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
+  private static final String OPS_PER_SEC_AVG = "benchmark.ops.per_sec.avg";
 
   String fileName;
   File reportFile;
   String benchmarkName;
+  Map<Integer,ArrayList<Double>> mensaMetrics;
 
   public ReportWriterThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics, CConfiguration config) {
     this.groupMetrics = metrics;
@@ -33,11 +36,15 @@ public class ReportWriterThread extends ReportThread {
     } else {
       this.benchmarkName=benchmarkName;
     }
-
+    mensaMetrics = new HashMap<Integer,ArrayList<Double>>(groups.length);
+    for (int i=0; i<groups.length; i++) {
+      mensaMetrics.put(i, new ArrayList<Double>());
+    }
   }
 
   public void run() {
-   BufferedWriter bw = null;
+    BufferedWriter bw = null;
+    long unixTime;
     try {
       reportFile = new File(fileName);
       bw = new BufferedWriter(new FileWriter(reportFile));
@@ -52,7 +59,7 @@ public class ReportWriterThread extends ReportThread {
       for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
         long wakeup = start + (seconds * 1000);
         long currentTime = System.currentTimeMillis();
-        long unixTime = currentTime / 1000L;
+        unixTime = currentTime / 1000L;
         try {
           if (wakeup > currentTime) {
             Thread.sleep(wakeup - currentTime);
@@ -78,12 +85,13 @@ public class ReportWriterThread extends ReportThread {
                 if (previousValue == null) previousValue = 0L;
                 long valueSince = value - previousValue;
                 long millisSince = millis - previousMillis[i];
-                String metricValue = String.format("%1.1f", valueSince * 1000.0 / millisSince);
-                String metric = buildMetric(metricBaseName, Long.toString(unixTime), metricValue, benchmarkName,
+                mensaMetrics.get(i).add(valueSince * 1000.0 / millisSince);
+                String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
+                String metric = buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue, benchmarkName,
                                             groups[i].getName(), Integer.toString(groups[i].getNumAgents()));
-                Log.info("Writing "+metric+" to file "+fileName);
-                bw.write(metric);
-                bw.write("\n");
+                Log.info("Collecting "+metric+" in memory ");
+//                bw.write(metric);
+//                bw.write("\n");
               }
             }
           }
@@ -91,10 +99,30 @@ public class ReportWriterThread extends ReportThread {
           previousMillis[i] = millis;
         }
       }
+      unixTime = System.currentTimeMillis() / 1000L;
+      for (int i=0; i<groups.length; i++) {
+        List<Double> grpVals = mensaMetrics.get(i);
+        if (grpVals.size() != 0 ) {
+          double sum = 0;
+          for (int j = 0; j < grpVals.size(); j++) {
+            sum += grpVals.get(j);
+          }
+          double avg = sum / grpVals.size();
+          String metricValue = String.format("%1.2f", avg);
+          String metric = buildMetric(OPS_PER_SEC_AVG, Long.toString(unixTime), metricValue, benchmarkName,
+                                      groups[i].getName(), Integer.toString(groups[i].getNumAgents()));
+          Log.info("Writing "+metric+" to file "+fileName);
+          bw.write(metric);
+          bw.write("\n");
+          bw.flush();
+        }
+      }
     } catch (IOException e) {
       Log.error("Error when trying to write to report file " + fileName);
     } finally {
-      if (bw != null) try { bw.close(); } catch (IOException e) { }
+      if (bw != null) try { bw.close(); } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
   }
   private String buildMetric(String metric, String timestamp, String value, String benchmark, String operation,
@@ -108,9 +136,9 @@ public class ReportWriterThread extends ReportThread {
     builder.append(" ");
     builder.append(value);
     // add tags to metric
-    builder.append(" benchmarkName=");
+    builder.append(" benchmark=");
     builder.append(benchmark);
-    builder.append(" opName=");
+    builder.append(" operation=");
     builder.append(operation);
     builder.append(" threadCount=");
     builder.append(threadCount);

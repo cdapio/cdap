@@ -71,7 +71,8 @@ public class ReportConsoleThread extends ReportThread {
         for (Map.Entry<String, Long> kv : metrics.entrySet()) {
           String key = kv.getKey();
           long value = kv.getValue();
-          builder.append(sep); sep = ", ";
+          builder.append(sep);
+          sep = ", ";
           builder.append(String.format(
               "%d %s (%1.1f/sec, %1.1f/sec/thread)",
               value, key,
