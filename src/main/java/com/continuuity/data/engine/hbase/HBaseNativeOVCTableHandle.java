@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   private final ConcurrentSkipListMap<byte[], HTable> htables =
-      new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
-  
+    new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
+
   @Inject
   public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
                                    @Named("HBaseOVCTableHandleHConfig")Configuration hConf) throws IOException {
@@ -68,10 +68,9 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
-    
+
     streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(
-        streamTableName, streamTable);
+    TTQueueTable existing = this.streamTables.putIfAbsent(streamTableName, streamTable);
     return existing != null ? existing : streamTable;
   }
 
