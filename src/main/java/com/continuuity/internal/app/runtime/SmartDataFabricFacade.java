@@ -13,7 +13,7 @@ import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
-import com.continuuity.internal.app.queue.QueueConsumerFactory.PartitionInfo;
+import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.StatefulQueueConsumerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -61,9 +61,9 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
 
   @Override
   public QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName,
-                                                         QueueName queueName, PartitionInfo partitionInfo,
+                                                         QueueName queueName, QueueInfo queueInfo,
                                                          boolean singleEntry) {
-    return new StatefulQueueConsumerFactory(opex, program, instanceId, groupId, groupName, queueName, partitionInfo,
+    return new StatefulQueueConsumerFactory(opex, program, instanceId, groupId, groupName, queueName, queueInfo,
                                             singleEntry);
   }
 

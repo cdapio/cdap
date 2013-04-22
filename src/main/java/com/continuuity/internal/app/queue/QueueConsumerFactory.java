@@ -18,21 +18,33 @@ public interface QueueConsumerFactory {
   /**
    * Represents partitioning information of a Flowlet's process method
    */
-  public static class PartitionInfo {
+  public static class QueueInfo {
     private final PartitionerType partitionerType;
     private final String partitionKey;
+    private int batchSize;
+    private boolean batchMode;
 
-    public PartitionInfo() {
+    public QueueInfo() {
       this(PartitionerType.FIFO, null);
     }
 
-    public PartitionInfo(PartitionerType partitionerType) {
+    public QueueInfo(PartitionerType partitionerType) {
       this(partitionerType, null);
     }
 
-    public PartitionInfo(PartitionerType partitionerType, String partitionKey) {
+    public QueueInfo(PartitionerType partitionerType, String partitionKey) {
       this.partitionerType = partitionerType;
       this.partitionKey = partitionKey;
+      this.batchSize = -1;
+      this.batchMode = false;
+    }
+
+    public void setBatchSize(int batchSize) {
+      this.batchSize = batchSize;
+    }
+
+    public void setBatchMode(boolean batchMode) {
+      this.batchMode = batchMode;
     }
 
     public PartitionerType getPartitionerType() {
@@ -41,6 +53,14 @@ public interface QueueConsumerFactory {
 
     public String getPartitionKey() {
       return partitionKey;
+    }
+
+    public int getBatchSize() {
+      return batchSize;
+    }
+
+    public boolean isBatchMode() {
+      return batchMode;
     }
   }
 }

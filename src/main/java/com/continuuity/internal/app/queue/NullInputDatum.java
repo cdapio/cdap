@@ -3,8 +3,10 @@ package com.continuuity.internal.app.queue;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.google.common.collect.Iterators;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 /**
  * An {@link com.continuuity.app.queue.InputDatum} that has nothing inside and is not from queue.
@@ -24,8 +26,8 @@ public final class NullInputDatum implements InputDatum {
   }
 
   @Override
-  public ByteBuffer getData() {
-    return EMPTY_BUFFER;
+  public Iterator<ByteBuffer> getData() {
+    return Iterators.singletonIterator(EMPTY_BUFFER);
   }
 
   @Override

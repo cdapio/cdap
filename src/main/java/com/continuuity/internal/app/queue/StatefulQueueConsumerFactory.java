@@ -23,20 +23,20 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
   private final long groupId;
   private final String groupName;
   private final QueueName queueName;
-  private final PartitionInfo partitionInfo;
+  private final QueueInfo queueInfo;
   private final boolean sync;
 
   @Inject
   public StatefulQueueConsumerFactory(OperationExecutor opex, @Assisted Program program, @Assisted int instanceId,
                                       @Assisted long groupId, @Assisted String groupName, @Assisted QueueName queueName,
-                                      @Assisted PartitionInfo partitionInfo, @Assisted boolean singleEntry) {
+                                      @Assisted QueueInfo queueInfo, @Assisted boolean singleEntry) {
     this.opex = opex;
     this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.instanceId = instanceId;
     this.groupId = groupId;
     this.groupName = groupName;
     this.queueName = queueName;
-    this.partitionInfo = partitionInfo;
+    this.queueInfo = queueInfo;
     this.sync = singleEntry;
   }
 
@@ -47,10 +47,17 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
    */
   @Override
   public QueueConsumer create(int groupSize) {
-    QueueConfig queueConfig = new QueueConfig(partitionInfo.getPartitionerType(), sync);
+    QueueConfig queueConfig;
+
+    if(queueInfo.isBatchMode()) {
+      queueConfig =
+        new QueueConfig(queueInfo.getPartitionerType(), sync, queueInfo.getBatchSize(), queueInfo.isBatchMode());
+    } else {
+      queueConfig = new QueueConfig(queueInfo.getPartitionerType(), sync);
+    }
 
     StatefulQueueConsumer queueConsumer = new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName,
-                                                                    partitionInfo.getPartitionKey(), queueConfig);
+                                                                    queueInfo.getPartitionKey(), queueConfig);
 
     // configure the queue
     try {
