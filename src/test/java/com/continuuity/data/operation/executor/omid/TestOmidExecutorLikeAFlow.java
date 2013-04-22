@@ -30,7 +30,6 @@ import com.continuuity.data.util.OperationUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -603,7 +602,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
-  @Test @Ignore
+  @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
 
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
