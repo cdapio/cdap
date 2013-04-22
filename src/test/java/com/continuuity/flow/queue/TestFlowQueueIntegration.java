@@ -38,6 +38,7 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
       }
 
       flowletMetrics1.waitForProcessed(MAX_ITERATIONS * 3, 10, TimeUnit.SECONDS);
+      // TODO: fix RuntimeMetrics collection to handle batch
       flowletMetrics2.waitForProcessed(5, 10, TimeUnit.SECONDS);
     } finally {
       applicationManager.stopAll();

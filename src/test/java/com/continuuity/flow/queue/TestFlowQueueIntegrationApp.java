@@ -23,7 +23,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,7 +175,7 @@ public class TestFlowQueueIntegrationApp implements Application {
       if(expectedHash2Iterator == null) {
         expectedHash2Iterator = expectedHash2Lists[first].iterator();
       }
-      verify(actual.i,expectedHash2Iterator, logID);
+      verify(actual.i, expectedHash2Iterator, logID);
     }
 
     public void verify(int i, Iterator<Integer> iterator, String logID) {
@@ -202,21 +201,37 @@ public class TestFlowQueueIntegrationApp implements Application {
 
   public static class QueueBatchTestFlowlet extends AbstractFlowlet implements Callback {
     public static final int NUM_INSTANCES = 5;
-    private int prev = -1;
     private int id = new Random(System.currentTimeMillis()).nextInt(100);
+    private int first = -1;
+
+    private final List<Integer>[] expectedLists;
+    private Iterator<Integer> expectedListIterator;
+
+    public QueueBatchTestFlowlet() {
+      //noinspection unchecked
+      expectedLists = new List[5];
+
+      expectedLists[0] = ImmutableList.of(0, 5, 10, 15);
+      expectedLists[1] = ImmutableList.of(1, 6, 11, 16);
+      expectedLists[2] = ImmutableList.of(2, 7, 12, 17);
+      expectedLists[3] = ImmutableList.of(3, 8, 13, 18);
+      expectedLists[4] = ImmutableList.of(4, 9, 14, 19);
+    }
 
     @ProcessInput("int")
     @HashPartition(HASH_KEY1)
     @Batch(100)
     public void foo(Iterator<Integer> it) {
-      LOG.warn("HID:" + id + " values=" + Iterators.toString(it));
-      while(it.hasNext()) {
-        int i = it.next();
-        LOG.warn("*********HID:" + id + " value=" + i);
-        if(prev != -1) {
-          Assert.assertEquals(prev + NUM_INSTANCES, (int) i);
-        }
-        prev = i;
+      List<Integer> actualList = ImmutableList.copyOf(it);
+      LOG.warn("HID:" + id + " values=" + actualList);
+
+      if(first == -1) {
+        first = actualList.get(0);
+        expectedListIterator = expectedLists[first].iterator();
+      }
+
+      for (Integer actual : actualList) {
+        Assert.assertEquals(expectedListIterator.next(), actual);
       }
     }
 
