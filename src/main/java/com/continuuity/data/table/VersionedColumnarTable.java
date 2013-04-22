@@ -184,7 +184,9 @@ public interface VersionedColumnarTable {
 
   /**
    * Increments (atomically and dirtily) the specified row and column by the specified
-   * amount. It does the increment using dirty read and dirty write pointers.
+   * amount. It does the increment using dirty read and dirty write pointers. The operation
+   * either increments the current value for the given row and column or inserts a new
+   * row and column with the provided amount
    *
    * Important: Counters written with this method cannot be read with a regular get(), they
    * can only be read using this same method with an increment of 0.
