@@ -166,7 +166,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
 //      }
 //    }
 //  }
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--opex";
     args1[args.length + 1] = LocalHBaseOpexProvider.class.getName();

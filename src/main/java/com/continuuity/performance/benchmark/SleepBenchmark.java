@@ -36,7 +36,7 @@ public class SleepBenchmark extends SimpleBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 try {
                   if (isVerbose()) {
@@ -50,6 +50,7 @@ public class SleepBenchmark extends SimpleBenchmark {
                       " interrupted when sleeping for the " + iteration +
                       ". time." );
                 }
+                return 1L;
               }
             };
           } // newAgent()
@@ -58,7 +59,7 @@ public class SleepBenchmark extends SimpleBenchmark {
   } // getAgentGroups()
 
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     args = Arrays.copyOf(args, args.length + 2);
     args[args.length - 2] = "--bench";
     args[args.length - 1] = SleepBenchmark.class.getName();

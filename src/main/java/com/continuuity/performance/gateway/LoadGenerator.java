@@ -120,7 +120,7 @@ public class LoadGenerator extends SimpleBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
 
                 // create a string of random words and length
@@ -164,6 +164,7 @@ public class LoadGenerator extends SimpleBenchmark {
                 } catch (IOException e) {
                   System.err.println("Error sending HTTP request: " + e.getMessage());
                 }
+                return 1L;
               }
             };
           } // newAgent()
@@ -172,7 +173,7 @@ public class LoadGenerator extends SimpleBenchmark {
   } // getAgentGroups()
 
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     args = Arrays.copyOf(args, args.length + 2);
     args[args.length - 2] = "--bench";
     args[args.length - 1] = LoadGenerator.class.getName();

@@ -26,12 +26,14 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class QueueBenchmark extends OpexBenchmark {
+public class QueueBenchmark4 extends OpexBenchmark {
+  private static long FOREVER = Long.MAX_VALUE;
 
   private static final Logger Log =
-    LoggerFactory.getLogger(QueueBenchmark.class);
+    LoggerFactory.getLogger(QueueBenchmark4.class);
 
   int numProducers = 1;
   int numConsumers = 1;
@@ -42,36 +44,20 @@ public class QueueBenchmark extends OpexBenchmark {
   // this will be used by each consumer to hold back a number of delayed acks
   int numPendingAcks = 0;
   ArrayList<LinkedList<QueueAck>> pendingAcks;
-
-  int fetchSize = 1;
-  int enqueueSize = 1;
-  boolean dequeueBatch = false;
-  String partitionerName = "rr";
-  String hashKey = null;
-
-  QueueConfig qconfig;
+  AtomicBoolean pauseAllAgents = new AtomicBoolean(false);
+  AtomicLong enqueuedCount = new AtomicLong(0L);
+  AtomicLong dequeuedCount = new AtomicLong(0L);
+  AtomicLong ackedCount = new AtomicLong(0L);
 
   @Override
   public Map<String, String> usage() {
     Map<String, String> usage = super.usage();
-    usage.put("--producers <num>",
-        "Number of producer agents to run. Each producer will enqueue " +
-            "runs/producers times. Default is 1.");
-    usage.put("--consumers <num>",
-        "Number of consumer agents to run. Each consumer will dequeue " +
-            "runs/producers times. Default is 1.");
-    usage.put("--ack <num>", "Number of runs to delay the ack for each " +
-        "dequeue. Default is 0 (ack immediately).");
-    usage.put("--queue <name>", "Name of the queue to enqueue/dequeue. " +
-      "Default is 'queue://benchmark'.");
-    usage.put("--enqueue <num>", "Batch size for enqueue." +
-      "Default is 1.");
-    usage.put("--fetch <num>", "Fetch size for dequeue." +
-      "Default is 1.");
-    usage.put("--batch (true|false)", "Whether to dequeue in batch." +
-      "Default is false.");
-    usage.put("--partition (rr|hash|fifo)", "What partitioning to use." +
-      "Default is rr (round-robin).");
+    usage.put("--producers <num>", "Number of producer agents to run. Each producer will enqueue " +
+              "runs/producers times. Default is 1.");
+    usage.put("--consumers <num>", "Number of consumer agents to run. Each consumer will dequeue " +
+              "runs/producers times. Default is 1.");
+    usage.put("--ack <num>", "Number of runs to delay the ack for each " + "dequeue. Default is 0 (ack immediately).");
+    usage.put("--queue <name>", "Name of the queue to enqueue/dequeue. " + "Default is 'queue://benchmark'.");
     return usage;
   }
 
@@ -89,92 +75,80 @@ public class QueueBenchmark extends OpexBenchmark {
     queueName = config.get("queue", queueName);
     queueBytes = queueName.getBytes();
 
-    // batch size for enqueues and dequeues
-    fetchSize = config.getInt("fetch", fetchSize);
-    enqueueSize = config.getInt("enqueue", enqueueSize);
-    dequeueBatch = config.getBoolean("batch", dequeueBatch);
-    partitionerName = config.get("partition", partitionerName);
-
     // initialize the list of pending acks for each consumer
     pendingAcks = Lists.newArrayList();
     for (int i = 0; i < numConsumers; i++) {
       pendingAcks.add(new LinkedList<QueueAck>());
     }
-
-    QueuePartitioner.PartitionerType partitioner;
-    if ("rr".equals(partitionerName)) {
-      partitioner = QueuePartitioner.PartitionerType.ROUND_ROBIN;
-    } else if ("hash".equals(partitionerName)) {
-      partitioner = QueuePartitioner.PartitionerType.HASH;
-      hashKey = "k";
-    } else if ("fifo".equals(partitionerName)) {
-      partitioner = QueuePartitioner.PartitionerType.FIFO;
-    } else {
-      throw new BenchmarkException("'" + partitionerName + "' is not a valid partitioner ");
-    }
-
-    qconfig = new QueueConfig(partitioner, numPendingAcks == 0, fetchSize, dequeueBatch);
   }
 
   LinkedList<QueueAck> getPending(int agentId) {
     return pendingAcks.get(agentId);
   }
-
-  Random randomm = new Random(1L);
-
-  long doEnqueue(long iteration, int agentId) throws BenchmarkException {
-
-    QueueEnqueue enqueue;
-    if (enqueueSize <= 1) {
-      QueueEntry entry = new QueueEntry(Bytes.toBytes(iteration));
-      if (hashKey != null) {
-        entry.addHashKey(hashKey, randomm.nextInt());
-      }
-      enqueue = new QueueEnqueue(queueBytes, entry);
-    } else {
-      QueueEntry[] entries = new QueueEntry[enqueueSize];
-      for (int i = 0; i < enqueueSize; ++i) {
-        entries[i] = new QueueEntry(Bytes.toBytes(iteration + i));
-        if (hashKey != null) {
-          entries[i].addHashKey(hashKey, randomm.nextInt());
-        }
-      }
-      enqueue = new QueueEnqueue(queueBytes, entries);
-    }
+  private void pauseThread() {
     try {
+      Thread.sleep(FOREVER);
+    } catch (InterruptedException e1) {
+    }
+  }
+  private void sleepThread(long milli) {
+    try {
+      Thread.sleep(milli);
+    } catch (InterruptedException e1) {
+    }
+  }
+  private void pauseAllAgents() {
+    pauseAllAgents.compareAndSet(false, true);
+    sleepThread(FOREVER);
+  }
+  long doEnqueue(long iteration, int agentId) throws BenchmarkException {
+    if (pauseAllAgents.get()==true) {
+      pauseThread();
+    }
+    byte[] value = new byte[12];
+    Bytes.putInt(value,0,agentId);
+    Bytes.putLong(value, 4, iteration);
+    QueueEnqueue enqueue = null;
+    try {
+      enqueue = new QueueEnqueue(queueBytes, new QueueEntry(value));
       opex.commit(opContext, enqueue);
+      enqueuedCount.incrementAndGet();
+
     } catch (Exception e) {
-      Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
-          "(Ignoring this error)", e);
-      //System.err.println("Operation " + enqueue + " failed: " + e.getMessage() +
-      //                     "(Ignoring this error)");
+      System.err.println("Operation " + enqueue + " failed: " + e.getMessage() + "(Ignoring this error)");
       return 0L;
     }
-    return enqueueSize;
+    return 1L;
   }
 
+  QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, numPendingAcks == 0);
+
   long doDequeue(int consumerId) throws BenchmarkException {
+    if (pauseAllAgents.get()==true) {
+      pauseThread();
+    }
+
     // create a dequeue operation
-    QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, "x", hashKey, qconfig);
-    QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, qconfig);
+    QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, config);
+    QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
     // first dequeue
     DequeueResult result;
     try {
       result = opex.execute(opContext, dequeue);
-      // System.err.println("Good operation " + dequeue + "returned result " + result);
+      dequeuedCount.incrementAndGet();
+      if (result.isEmpty()) {
+        return 0L;
+      } else {
+        byte[] value = result.getEntry().getData();
+      }
     } catch (OperationException e) {
-      Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
-          "(Ignoring this error)", e);
-      //System.err.println("Bad operation " + dequeue + " failed: " + e.getMessage() +
-      //                     "(Ignoring this error)");
+      Log.error("Operation " + dequeue + " failed: " + e.getMessage() + "(Ignoring this error)", e);
+      System.err.println("Bad operation " + dequeue + " failed: " + e.getMessage() + "(Ignoring this error)");
       return 0L;
     }
-    if (result.isEmpty()) {
-      //System.err.println("Bad operation " + dequeue + "returned empty result" +
-      //                     "(Ignoring this error)");
-      return 0L;
-    }
+
+    // create the ack operation for this dequeue
     QueueAck ack = new QueueAck(queueBytes, result.getEntryPointer(), consumer);
     // now check whether there is a pending ack that is due for execution
     QueueAck ackToExecute = null;
@@ -187,17 +161,15 @@ public class QueueBenchmark extends OpexBenchmark {
     if (ackToExecute != null) {
       try {
         opex.commit(opContext, ackToExecute);
-        // System.err.println("Good operation " + ackToExecute + "returned.");
+        ackedCount.incrementAndGet();
       } catch (OperationException e) {
-        Log.error("Operation " + ackToExecute + " failed: " + e.getMessage() +
-            "(Ignoring this error)", e);
-        //System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() +
-        //  "(Ignoring this error)");
+        Log.error("Operation " + ackToExecute + " failed: " + e.getMessage() + "(Ignoring this error)", e);
+        System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() + "(Ignoring this error)");
         return 0L;
       }
       pending.removeFirst();
     }
-    return result.getEntryPointers().length;
+    return 1L;
   }
 
   @Override
@@ -205,7 +177,7 @@ public class QueueBenchmark extends OpexBenchmark {
     super.initialize();
     try {
       opex.execute(opContext, null,
-                   new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, qconfig)));
+                   new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, config)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
     }
@@ -213,16 +185,6 @@ public class QueueBenchmark extends OpexBenchmark {
 
   @Override
   public void warmup() throws BenchmarkException {
-    int numEnqueues = Math.min(100, simpleConfig.numRuns);
-    System.out.println("Warmup: Performing " + numEnqueues + " enqueues.");
-    for (int i = 0; i < numEnqueues; i++) {
-      try {
-        doEnqueue(i, 0);
-      } catch (BenchmarkException e) {
-        throw new BenchmarkException(
-            "Failure after " + i + " enqueues: " + e.getMessage() , e);
-      }
-    }
     System.out.println("Warmup: Done.");
   }
 
@@ -259,8 +221,7 @@ public class QueueBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
-                  throws BenchmarkException {
+              public long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException {
                 return doEnqueue(iteration, agentId);
               }
             };
@@ -280,6 +241,15 @@ public class QueueBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
+              public long warmup(int agentId, int numAgents) throws BenchmarkException {
+                try {
+                  Thread.sleep(1200*1000); // 2 min
+                } catch (InterruptedException e) {
+                  throw new BenchmarkException(e.getMessage(), e);
+                }
+                return 0L;
+              }
+              @Override
               public long runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 return doDequeue(agentId);
@@ -294,7 +264,7 @@ public class QueueBenchmark extends OpexBenchmark {
   public static void main(String[] args) throws Exception {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--bench";
-    args1[args.length + 1] = QueueBenchmark.class.getName();
+    args1[args.length + 1] = QueueBenchmark4.class.getName();
     BenchmarkRunner.main(args1);
   }
 }
