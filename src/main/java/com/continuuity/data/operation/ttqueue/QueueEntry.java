@@ -56,22 +56,23 @@ public class QueueEntry {
   }
 
   // many entries will have no hash keys. Serialize that once and for good
-  private static byte[] serializedEmptyHashKeys;
-  private static byte[] getSerializedEmptyHashKeys() throws IOException {
-    if (serializedEmptyHashKeys == null) {
+  private static byte[] getSerializedEmptyHashKeys() {
+    try {
       // we don't synchronize here: the worst thing that go wrong here is repeated assignment to the same value
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
       encoder.writeInt(0);
-      serializedEmptyHashKeys = bos.toByteArray();
+      return bos.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException("encoding empty hash keys went wrong - bailing out: " + e.getMessage(), e);
     }
-    return serializedEmptyHashKeys;
   }
+  private final static byte[] serializedEmptyHashKeys = getSerializedEmptyHashKeys();
 
   public static byte[] serializeHashKeys(Map<String, Integer> hashKeys) throws IOException {
     // many entries will have no hash keys. Reuse a static value for that
     if (hashKeys == null || hashKeys.isEmpty()) {
-      return getSerializedEmptyHashKeys();
+      return serializedEmptyHashKeys;
     }
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     Encoder encoder = new BinaryEncoder(bos);
