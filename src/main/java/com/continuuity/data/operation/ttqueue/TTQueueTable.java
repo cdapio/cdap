@@ -83,6 +83,12 @@ public interface TTQueueTable {
   void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
              throws OperationException;
 
+  /**
+   * Used to configure the queue on start-up, or when consumer instances are changed.
+   * @param queueName name of the queue
+   * @param newConsumer consumer that contains the new configuration information.
+   * @throws OperationException if unsuccessful
+   */
   void configure(byte[] queueName, QueueConsumer newConsumer)
     throws OperationException;
 
