@@ -1042,6 +1042,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.oracle = oracle;
     }
 
+    public byte[] getRowKey() {
+      return rowKey;
+    }
+
     public void setRowKey(byte[] rowKey) {
       this.rowKey = rowKey;
     }
@@ -1246,7 +1250,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.emptyList();
+            return Collections.EMPTY_LIST;
           }
         }
 
@@ -1318,7 +1322,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           queueState.setQueueWritePointer(queueWritePointer);
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
-            return Collections.emptyList();
+            return Collections.EMPTY_LIST;
           }
         }
 

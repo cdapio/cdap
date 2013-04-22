@@ -535,7 +535,7 @@ implements OrderedVersionedColumnarTable {
 
       return false;
     } catch (SQLException e) {
-      handleSQLException(e, "compareAndSwap");
+      throw createOperationException(e, "compareAndSwap");
     } finally {
       try {
         // Release the read lock
@@ -549,10 +549,9 @@ implements OrderedVersionedColumnarTable {
             ps.close();
         }
       } catch (SQLException e) {
-        handleSQLException(e, "close");
+        throw createOperationException(e, "close");
       }
     }
-    throw new OperationException(StatusCode.INTERNAL_ERROR, "This point should not be reached.");
   }
 // Read Operations
 

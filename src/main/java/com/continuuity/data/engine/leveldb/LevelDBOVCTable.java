@@ -928,23 +928,9 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  private void handleIOException(IOException e, String where)
-      throws OperationException {
-    String msg = "LevelDB exception on " + where + "(error code = " +
-        e.getMessage() + ")";
-    LOG.error(msg, e);
-    throw new OperationException(StatusCode.SQL_ERROR, msg, e);
-  }
-  
-  private void handleDBException(DBException e, String where)
-      throws OperationException {
-    String msg = "LevelDB exception on " + where + "(error code = " +
-        e.getMessage() + ")";
-  }
-
   private OperationException createOperationException(Exception e,  String where) {
-      String msg =  "LevelDB exception on " + where + "(error code = " +
-        e.getMessage() + ")";
+    String msg =  "LevelDB exception on " + where + "(error code = " +
+      e.getMessage() + ")";
     LOG.error(msg, e);
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
   }

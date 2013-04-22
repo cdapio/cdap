@@ -217,6 +217,10 @@ public interface VersionedColumnarTable {
   /**
    * Increments (atomically and dirtily) the specified row and column by the specified
    * amount. It does the increment using dirty read and dirty write pointers.
+   *
+   * Important: Counters written with this method cannot be read with a regular get(), they
+   * can only be read using this same method with an increment of 0.
+   *
    * @param row
    * @param column
    * @param amount amount to increment column by

@@ -1074,6 +1074,32 @@ public abstract class TestOVCTable {
   }
 
   @Test
+  public void testCeilValue() throws OperationException {
+    final byte[] col = Bytes.toBytes("c");
+    final int MAX = 10;
+
+    byte [] [] rows = new byte[MAX][];
+    byte [] [] cols = new byte[MAX][];
+    byte [] [] values = new byte[MAX][];
+
+    for ( int i = 0; i<MAX;i++) {
+      rows[i] = Bytes.toBytes(100*i);
+      cols[i] = col;
+      values[i] = Bytes.toBytes(100*i);
+    }
+    this.table.put(rows, cols, 1L, values);
+
+    byte [] testRow = Bytes.toBytes(90);
+    OperationResult<byte []> result = this.table.getCeilValue(testRow,col,RP_MAX);
+    assertFalse(result.isEmpty());
+    assertEquals(100, Bytes.toInt(result.getValue()) );
+
+    byte [] testNonExistingRow = Bytes.toBytes(1000);
+    result = this.table.getCeilValue(testNonExistingRow,col,RP_MAX);
+    assertTrue(result.isEmpty());
+
+  }
+
   public void testCompareAndSwapDirty() throws OperationException {
     // TODO: need to run multi-threaded to test for atomicity.
     final byte[] ROW = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
