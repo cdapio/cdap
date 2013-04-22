@@ -23,8 +23,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
       Bytes.BYTES_COMPARATOR);
 
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
-    new ConcurrentSkipListMap<byte[],TTQueueTable>(
-      Bytes.BYTES_COMPARATOR);
+    new ConcurrentSkipListMap<byte[],TTQueueTable>(Bytes.BYTES_COMPARATOR);
 
   /**
    * This is the timestamp generator that we will use
@@ -77,7 +76,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
       queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
-
+  
   @Override
   public TTQueueTable getStreamTable(byte[] streamTableName)
     throws OperationException {
@@ -88,6 +87,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
+
     return existing != null ? existing : streamTable;
   }
 

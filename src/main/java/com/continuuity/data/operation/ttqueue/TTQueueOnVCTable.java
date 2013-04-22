@@ -273,7 +273,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
       // Do a dirty read of the global group information
       OperationResult<byte[]> existingValue =
-          this.table.get(groupRow, GROUP_STATE, readDirty);
+          this.table.getDirty(groupRow, GROUP_STATE);
 
       if (existingValue.isEmpty() || existingValue.getValue().length == 0) {
         // Group information did not exist, create blank initial group state
@@ -284,8 +284,8 @@ public class TTQueueOnVCTable implements TTQueue {
 
         // Atomically insert group state
         try {
-          this.table.compareAndSwap(groupRow, GROUP_STATE,
-              existingValue.getValue(), groupState.getBytes(), readDirty, writeDirty);
+          this.table.compareAndSwapDirty(groupRow, GROUP_STATE,
+              existingValue.getValue(), groupState.getBytes());
 
           // CAS was successful, we created the group, add us to list,
           this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
@@ -323,8 +323,8 @@ public class TTQueueOnVCTable implements TTQueue {
         groupState = new GroupState(consumer.getGroupSize(),
             groupState.getHead(), ExecutionMode.fromQueueConfig(config));
         try {
-          this.table.compareAndSwap(groupRow, GROUP_STATE,
-              existingValue.getValue(), groupState.getBytes(), readDirty, writeDirty);
+          this.table.compareAndSwapDirty(groupRow, GROUP_STATE,
+              existingValue.getValue(), groupState.getBytes());
 
           // Group config update success, update state, break from loop
           this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
@@ -392,14 +392,14 @@ public class TTQueueOnVCTable implements TTQueue {
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
           try {
-            this.table.compareAndSwap(groupRow, GROUP_STATE,
-                groupState.getBytes(), newGroupState.getBytes(), readDirty, writeDirty);
+            this.table.compareAndSwapDirty(groupRow, GROUP_STATE,
+                groupState.getBytes(), newGroupState.getBytes());
               // Successfully moved group head, move on
               groupState = newGroupState;
           } catch (com.continuuity.api.data.OperationException e) {
             // Group head update failed, someone else has changed it, move on
             groupState = GroupState.fromBytes(
-              this.table.get(groupRow, GROUP_STATE, readDirty).getValue());
+              this.table.getDirty(groupRow, GROUP_STATE).getValue());
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -420,8 +420,8 @@ public class TTQueueOnVCTable implements TTQueue {
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
           try {
-            this.table.compareAndSwap(groupRow, GROUP_STATE,
-                groupState.getBytes(), newGroupState.getBytes(), readDirty, writeDirty);
+            this.table.compareAndSwapDirty(groupRow, GROUP_STATE,
+                groupState.getBytes(), newGroupState.getBytes());
             // Successfully moved group head, move on
             groupState = newGroupState;
             // attempt to delete the old shard - if all of its entrys have been evicted
@@ -429,7 +429,7 @@ public class TTQueueOnVCTable implements TTQueue {
           } catch (OperationException e) {
             // Group head update failed, someone else has changed it, move on
             groupState = GroupState.fromBytes(
-                this.table.get(groupRow, GROUP_STATE, readDirty).getValue());
+                this.table.getDirty(groupRow, GROUP_STATE).getValue());
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -444,7 +444,7 @@ public class TTQueueOnVCTable implements TTQueue {
       byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
           ENTRY_GROUP_META, consumer.getGroupId());
       OperationResult<byte[]> entryGroupMetaDataResult =
-          this.table.get(shardRow, entryGroupMetaColumn, readDirty);
+          this.table.getDirty(shardRow, entryGroupMetaColumn);
 
       byte[] entryGroupMetaData = null;
       if (entryGroupMetaDataResult.isEmpty() ||
@@ -476,15 +476,15 @@ public class TTQueueOnVCTable implements TTQueue {
             GroupState newGroupState = new GroupState(groupState.getGroupSize(),
                 nextEntryPointer, groupState.getMode());
             try {
-              this.table.compareAndSwap(groupRow, GROUP_STATE,
-                  groupState.getBytes(), newGroupState.getBytes(), readDirty, writeDirty);
+              this.table.compareAndSwapDirty(groupRow, GROUP_STATE,
+                  groupState.getBytes(), newGroupState.getBytes());
               // Successfully moved group head, move on
               groupState = newGroupState;
 
             } catch (OperationException e) {
               // Group head update failed, someone else has changed it, move on
-              groupState = GroupState.fromBytes(this.table.get(
-                    groupRow, GROUP_STATE, readDirty).getValue());
+              groupState = GroupState.fromBytes(this.table.getDirty(
+                    groupRow, GROUP_STATE).getValue());
             }
           }
           // This entry is acked, move to the next entry and loop
@@ -505,8 +505,8 @@ public class TTQueueOnVCTable implements TTQueue {
                 EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
             // Attempt to update with updated timestamp
             try {
-              this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-                  entryGroupMetaData, newEntryGroupMeta.getBytes(), readDirty, writeDirty);
+              this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn,
+                  entryGroupMetaData, newEntryGroupMeta.getBytes());
               // Successfully updated timestamp, still own it, return this
               this.dequeueReturns.incrementAndGet();
 
@@ -576,21 +576,25 @@ public class TTQueueOnVCTable implements TTQueue {
         // Atomically update group meta to point to this consumer and return!
         EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
           EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
+        boolean success;
         try {
-          this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-                                    entryGroupMetaData, newEntryGroupMeta.getBytes(), readDirty, writeDirty);
+          success = this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn,
+                                    entryGroupMetaData, newEntryGroupMeta.getBytes());
+        } catch (com.continuuity.api.data.OperationException e) {
+          //Todo: log exception
+          success = false;
+        }
+        if (success) {
           // We own it!  Return it.
           this.dequeueReturns.incrementAndGet();
           if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
-
           return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, entry);
-        } catch (com.continuuity.api.data.OperationException e) {
+        } else {
           // Someone else has grabbed it, on to the next one
           if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
-          entryPointer = new EntryPointer(
-            entryPointer.getEntryId() + 1, entryPointer.getShardId());
-          // continue and loop on
+          entryPointer = new EntryPointer(entryPointer.getEntryId() + 1, entryPointer.getShardId());
         }
+        // continue and loop on
       } catch (IOException e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
                                      "Queue entry deserialization failed.", e);
@@ -723,10 +727,10 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
-    byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+    byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
     OperationResult<byte[]> existingValue =
-        this.table.get(shardRow, groupColumn, readDirty);
+        this.table.getDirty(shardRow, entryGroupMetaColumn);
     if (existingValue.isEmpty() || existingValue.getValue().length == 0)
       throw new OperationException(StatusCode.ILLEGAL_ACK,
           "No existing group meta data was found.");
@@ -748,8 +752,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // (ack passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
+    this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn, existingValue.getValue(), newValue);
   }
 
   @Override
@@ -762,10 +765,10 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
-    byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+    byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
 
-    OperationResult<byte[]> existingValue = this.table.get(shardRow, groupColumn, readDirty);
+    OperationResult<byte[]> existingValue = this.table.getDirty(shardRow, entryGroupMetaColumn);
     if (existingValue.isEmpty() || existingValue.getValue().length == 0)
       throw new OperationException(StatusCode.ILLEGAL_FINALIZE,
           "No existing group meta data was found.");
@@ -782,8 +785,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    this.table.compareAndSwap(shardRow, groupColumn, existingValue.
-        getValue(), newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
+    this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn, existingValue.getValue(), newValue);
 
     if (enableThrottling) acks.incrementAndGet();
 
@@ -810,7 +812,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Delete entry data and group meta entries
     byte[][] groupColumns = new byte[totalNumGroups + 1][];
     if (totalNumGroups == 1) {
-      groupColumns[0] = groupColumn;
+      groupColumns[0] = entryGroupMetaColumn;
     } else {
       // that set contains exactly totalNumGroups entries.
       // copy them into the groupColumns array, that leaves room for one
@@ -868,10 +870,10 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
-    byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+    byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
 
-    OperationResult<byte[]> existingValue = this.table.get(shardRow, groupColumn, readDirty);
+    OperationResult<byte[]> existingValue = this.table.getDirty(shardRow, entryGroupMetaColumn);
     if (existingValue.isEmpty() || existingValue.getValue().length == 0)
       throw new OperationException(StatusCode.ILLEGAL_UNACK,
           "No existing group meta data was found.");
@@ -887,8 +889,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
-    this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
-        newValue, readDirty, TransactionOracle.DIRTY_WRITE_VERSION);
+    this.table.compareAndSwapDirty(shardRow, entryGroupMetaColumn, existingValue.getValue(), newValue);
   }
 
 // Private helpers
@@ -951,7 +952,7 @@ public class TTQueueOnVCTable implements TTQueue {
       byte [] entryGroupMetaColumn = makeColumn(curEntry.getEntryId(),
           ENTRY_GROUP_META, groupId);
       OperationResult<byte[]> entryGroupMetaData =
-          this.table.get(shardRow, entryGroupMetaColumn, readPointer);
+          this.table.getDirty(shardRow, entryGroupMetaColumn);
       if (entryGroupMetaData.isEmpty() ||
           entryGroupMetaData.getValue().length == 0) {
 
@@ -1120,7 +1121,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, groupId);
     // Do a dirty read of the global group information
     OperationResult<byte[]> existingValue =
-        this.table.get(groupRow, GROUP_STATE, readDirty);
+        this.table.getDirty(groupRow, GROUP_STATE);
 
     if (existingValue.isEmpty() || existingValue.getValue().length == 0) {
       sb.append("No group info exists!\n");

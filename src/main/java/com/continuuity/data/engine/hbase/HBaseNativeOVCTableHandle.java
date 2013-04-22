@@ -72,6 +72,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     streamTable = new TTQueueTableOnHBaseNative(table, oracle, conf, hConf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
       streamTableName, streamTable);
+
     return existing != null ? existing : streamTable;
   }
 

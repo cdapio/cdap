@@ -113,8 +113,7 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      DequeueResult result =
-        streamTable.dequeue(queueName, consumer, readPointer);
+      DequeueResult result = streamTable.dequeue(queueName, consumer, readPointer);
       streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
       streamTable.finalize(queueName, result.getEntryPointer(), consumer, -1, readPointer.getMaximum());
       last = printStat(i, last, 1000);
