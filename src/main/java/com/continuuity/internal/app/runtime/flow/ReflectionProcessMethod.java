@@ -8,24 +8,29 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
-import com.continuuity.internal.api.io.Schema;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.app.runtime.PostProcess;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionDatumReader;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterators;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.concurrent.Executor;
 
 /**
@@ -43,6 +48,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   private final DataFabricFacade txAgentSupplier;
   private final OutputSubmitter outputSubmitter;
   private final boolean hasParam;
+  private final boolean needsBatch;
   private final boolean needContext;
   private final ReflectionDatumReader<T> datumReader;
   private final ByteBufferInputStream byteBufferInput;
@@ -72,6 +78,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     this.outputSubmitter = outputSubmitter;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
+    this.needsBatch = hasParam &&
+      TypeToken.of(method.getGenericParameterTypes()[0]).getRawType().equals(Iterator.class);
     this.needContext = method.getGenericParameterTypes().length == 2;
     this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
     this.byteBufferInput = new ByteBufferInputStream(null);
@@ -106,13 +114,32 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
       T event = null;
       if (hasParam) {
-        ByteBuffer data = input.getData();
-        Schema sourceSchema = schemaCache.get(data);
-        Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+        Iterator<ByteBuffer> dataIterator = input.getData();
 
-        byteBufferInput.reset(data);
-        event = datumReader.read(decoder, sourceSchema);
-
+        if(needsBatch) {
+          //noinspection unchecked
+          event = (T) Iterators.transform(dataIterator,
+                                      new Function<ByteBuffer, Object>() {
+                                        @Nullable
+                                        @Override
+                                        public Object apply(@Nullable ByteBuffer input) {
+                                          byteBufferInput.reset(input);
+                                          try {
+                                            final Schema sourceSchema = schemaCache.get(input);
+                                            Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+                                            return datumReader.read(decoder, sourceSchema);
+                                          } catch (IOException e) {
+                                            throw Throwables.propagate(e);
+                                          }
+                                        }
+                                      });
+        } else {
+          final ByteBuffer data = dataIterator.next();
+          final Schema sourceSchema = schemaCache.get(data);
+          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+          byteBufferInput.reset(data);
+          event = datumReader.read(decoder, sourceSchema);
+        }
       }
       InputContext inputContext = input.getInputContext();
 
@@ -120,7 +147,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
         if (hasParam) {
           if(needContext) {
             method.invoke(flowlet, event, inputContext);
-          } else if (hasParam) {
+          } else {
             method.invoke(flowlet, event);
           }
         } else {

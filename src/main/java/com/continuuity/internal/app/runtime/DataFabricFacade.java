@@ -4,7 +4,7 @@ import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
-import com.continuuity.internal.app.queue.QueueConsumerFactory.PartitionInfo;
+import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 
 /**
  *
@@ -18,5 +18,5 @@ public interface DataFabricFacade {
   TransactionAgent createTransactionAgent();
 
   QueueConsumerFactory createQueueConsumerFactory(int instanceId, long groupId, String groupName, QueueName queueName,
-                                                  PartitionInfo partitionInfo, boolean singleEntry);
+                                                  QueueInfo queueInfo, boolean singleEntry);
 }

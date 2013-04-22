@@ -6,6 +6,7 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Async;
+import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -44,7 +45,7 @@ import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
-import com.continuuity.internal.app.queue.QueueConsumerFactory.PartitionInfo;
+import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -73,6 +74,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -306,7 +308,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                   Schema.of(Schema.Type.NULL));
       return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
                                                         Schema.of(Schema.Type.NULL),
-                                                        generatorMethod, new PartitionInfo()));
+                                                        generatorMethod, new QueueInfo()));
     }
 
     // Walk up the hierarchy of flowlet class to get all process methods
@@ -329,12 +331,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
           inputNames = ImmutableSet.copyOf(processInputAnnotation.value());
         }
 
+        QueueInfo queueInfo;
         // Determine input queue partition type
-        PartitionInfo partitionInfo;
         HashPartition hashPartition = method.getAnnotation(HashPartition.class);
         RoundRobin roundRobin = method.getAnnotation(RoundRobin.class);
 
-        if(hashPartition != null && roundRobin != null) {
+        if (hashPartition != null && roundRobin != null) {
           throw new IllegalArgumentException(
             String.format("%s: process() method can have either HashPartition or RoundRobin strategy to read input.",
                           method.getName())
@@ -344,19 +346,38 @@ public final class FlowletProgramRunner implements ProgramRunner {
             throw new IllegalArgumentException(
               String.format("%s: Partition key cannot be empty when HashPartition used", method.getName()));
           }
-          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.value());
+          queueInfo = new QueueInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.value());
         } else if (roundRobin != null) {
-          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.ROUND_ROBIN);
+          queueInfo = new QueueInfo(QueuePartitioner.PartitionerType.ROUND_ROBIN);
         } else {
-          partitionInfo = new PartitionInfo();
+          queueInfo = new QueueInfo();
+        }
+
+        // Determine queue batch size, if any
+        Batch batch = method.getAnnotation(Batch.class);
+        if (batch != null) {
+          queueInfo.setBatchMode(true);
+          queueInfo.setBatchSize(batch.value());
         }
 
         try {
+          // If batch mode then generate schema for Iterator's parameter type
           TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
+          if(batch != null) {
+            Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class), "" +
+              "Batch mode without an Iterator as first parameter is not supported yet.");
+            Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
+                                        "Iterator needs to be a ParameterizedType to extract type information");
+            ParameterizedType pType = (ParameterizedType) dataType.getType();
+            Preconditions.checkArgument(
+              pType.getActualTypeArguments().length > 0,
+              "Iterator does not define actual type parameters, cannot extract type information.");
+            dataType = TypeToken.of(pType.getActualTypeArguments()[0]);
+          }
           Schema schema = schemaGenerator.generate(dataType.getType());
 
           ProcessMethod processMethod = processMethodFactory.create(method, dataType, schema);
-          result.add(processSpecFactory.create(inputNames, schema, processMethod, partitionInfo));
+          result.add(processSpecFactory.create(inputNames, schema, processMethod, queueInfo));
         } catch (UnsupportedTypeException e) {
           throw Throwables.propagate(e);
         }
@@ -441,7 +462,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new ProcessSpecificationFactory() {
       @Override
       public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method,
-                                         PartitionInfo partitionInfo) {
+                                         QueueInfo queueInfo) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -462,8 +483,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
                   flowletContext.getMetricName(),
-                  queueName,
-                  partitionInfo,
+                  queueName, queueInfo,
                   ! flowletContext.isAsyncMode()
                 ),
                 instanceCount);
@@ -542,6 +562,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private static interface ProcessSpecificationFactory {
     ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method,
-                                PartitionInfo partitionInfo) throws OperationException;
+                                QueueInfo queueInfo) throws OperationException;
   }
 }
