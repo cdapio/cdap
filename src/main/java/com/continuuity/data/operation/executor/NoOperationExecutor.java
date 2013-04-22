@@ -15,6 +15,7 @@ import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +168,12 @@ public class NoOperationExecutor implements OperationExecutor {
                                                       ReadColumnRange readColumnRange)
     throws OperationException {
     return execute(context, readColumnRange);
+  }
+
+  @Override
+  public void execute(OperationContext context, @Nullable Transaction transaction, QueueAdmin.QueueConfigure configure)
+    throws OperationException {
+    // Nothing to do
   }
 
   @Override

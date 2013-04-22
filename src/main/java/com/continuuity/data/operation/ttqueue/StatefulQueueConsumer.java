@@ -16,7 +16,8 @@ public class StatefulQueueConsumer extends QueueConsumer {
     super(instanceId, groupId, groupSize, groupName, config);
   }
 
-  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey, QueueConfig config) {
+  public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
+                               QueueConfig config) {
     super(instanceId, groupId, groupSize, groupName, partitioningKey, config);
   }
 

@@ -11,6 +11,7 @@ import org.junit.Ignore;
 
 import java.util.Random;
 
+// TODO: fix HyperSQL functions and enable test
 @Ignore
 public class TestHyperSQLNewTTQueue extends TestTTQueueNew {
 
@@ -35,6 +36,6 @@ public class TestHyperSQLNewTTQueue extends TestTTQueueNew {
 
   @Override
   protected int getNumIterations() {
-    return 100;
+    return 201;
   }
 }

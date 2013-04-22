@@ -3,10 +3,10 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.operation.executor.ReadPointer;
 import org.junit.Test;
 
 import java.util.Random;
@@ -79,6 +79,7 @@ public abstract class BenchTTQueue {
     last = dstart;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    queue.configure(consumer);
     ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
     for (int i=0; i<iterations; i++) {
       DequeueResult result = queue.dequeue(consumer, rp);

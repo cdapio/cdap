@@ -11,10 +11,12 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
+import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,6 +31,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,8 +50,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   public static final String TTQUEUE_BATCH_SIZE_DEFAULT = "ttqueue.batch.size.default";
   public static final String TTQUEUE_EVICT_INTERVAL_SECS = "ttqueue.evict.interval.secs";
   public static final String TTQUEUE_MAX_CRASH_DEQUEUE_TRIES = "ttqueue.max.crash.dequeue.tries";
-
-  private final int MAX_CRASH_DEQUEUE_TRIES;
+  public static final String TTQUEUE_MAX_CONSUMER_COUNT = "ttqueue.max.consumer.count";
 
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
@@ -57,10 +60,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10, 'I'};  //row <queueName>10I
   // Row prefix for columns containing queue entry
   static final byte [] GLOBAL_DATA_PREFIX = {20, 'D'};   //row <queueName>20D
-  // Row prefix for columns containing global eviction data
-  static final byte [] GLOBAL_EVICT_META_PREFIX = {30, 'M'};   //row <queueName>30M
+  // Row prefix for columns containing global eviction data for consumer groups
+  static final byte [] GLOBAL_EVICT_META_ROW = {30, 'M'};   //row <queueName>30M
   // Row prefix for columns containing consumer specific information
   static final byte [] CONSUMER_META_PREFIX = {40, 'C'}; //row <queueName>40C
+  // Row prefix for columns that don't affect the operation of queue, i.e. groupId generation
+  static final byte [] GLOBAL_GENERIC_PREFIX = {50, 'G'}; //row <queueName>50G
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
   // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
@@ -79,10 +84,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // ENTRY_HEADER contains the partitioning keys of a queue entry.
   static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
 
-  // Columns for row = GLOBAL_EVICT_META_PREFIX (Global data, shared by all consumers)
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
   // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
   static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
+
+  // Columns for row = GLOBAL_EVICT_META_ROW (Global data, shared by all consumers)
   // GROUP_EVICT_ENTRY contains the entryId upto which the queue entries can be evicted for a group.
   // It means all consumers in the group have acked until GROUP_EVICT_ENTRY
   static final byte [] GROUP_EVICT_ENTRY = {20, 'E'};     //row  <queueName>30M<groupId>, column 20E
@@ -95,17 +101,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // CONSUMER_READ_POINTER + 1 points to the next entry that the consumer can dequeue.
   static final byte [] CONSUMER_READ_POINTER = {20, 'R'};     //row <queueName>40C<groupId><consumerId>, column 20R
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
-  static final byte [] CLAIMED_ENTRY_BEGIN = {30, 'B'};       //row <queueName>40C<groupId><consumerId>, column 30B
-  // CLAIMED_ENTRY_END is used by a consumer of FifoDequeueStrategy to specify the end entryId of the batch of entries claimed by it.
-  static final byte [] CLAIMED_ENTRY_END = {40, 'E'};         //row <queueName>40C<groupId><consumerId>, column 40E
+  static final byte [] CLAIMED_ENTRY_LIST = {30, 'C'};       //row <queueName>40C<groupId><consumerId>, column 30C
   // LAST_EVICT_TIME_IN_SECS is the time when the last eviction was run by the consumer
-  static final byte [] LAST_EVICT_TIME_IN_SECS = {50, 'T'};           //row <queueName>40C<groupId><consumerId>, column 50T
+  static final byte [] LAST_EVICT_TIME_IN_SECS = {40, 'T'};           //row <queueName>40C<groupId><consumerId>, column 40T
+  // RECONFIG_PARTITIONER stores the partition information for prior configurations
+  static final byte [] RECONFIG_PARTITIONER = {50, 'P'};     //row <queueName>40C<groupId><consumerId>, column 50P
 
   static final long INVALID_ENTRY_ID = -1;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
 
-  final long DEFAULT_BATCH_SIZE;
-  final long EVICT_INTERVAL_IN_SECS;
+  private final long DEFAULT_BATCH_SIZE;
+  private final long EVICT_INTERVAL_IN_SECS;
+  private final int MAX_CRASH_DEQUEUE_TRIES;
+  private final int MAX_CONSUMER_COUNT;
 
   protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
@@ -116,11 +124,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long defaultBatchSize = conf.getLong(TTQUEUE_BATCH_SIZE_DEFAULT, 100);
     this.DEFAULT_BATCH_SIZE = defaultBatchSize > 0 ? defaultBatchSize : 100;
 
-    final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 10 * 60 * 60);
-    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs >= 0 ? evictIntervalInSecs : 10 * 60 * 60;
+    final long evictIntervalInSecs = conf.getLong(TTQUEUE_EVICT_INTERVAL_SECS, 60);
+    // Removing check for evictIntervalInSecs >= 0, since having it less than 0 does not cause errors in queue
+    // behaviour. -ve evictIntervalInSecs is needed for unit tests.
+    this.EVICT_INTERVAL_IN_SECS = evictIntervalInSecs;
 
     final int maxCrashDequeueTries = conf.getInt(TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 15);
     this.MAX_CRASH_DEQUEUE_TRIES = maxCrashDequeueTries > 0 ? maxCrashDequeueTries : 15;
+
+    final int maxConsumerCount = conf.getInt(TTQUEUE_MAX_CONSUMER_COUNT, 1000);
+    this.MAX_CONSUMER_COUNT = maxConsumerCount > 0 ? maxConsumerCount : 1000;
   }
 
   private long getBatchSize(QueueConfig queueConfig) {
@@ -380,6 +393,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Set ack state
+    // TODO: what happens when you ack and crash?
     queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
 
     // Write ack state
@@ -397,10 +411,97 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // Set unack state
+    // TODO: 1. Check if entry was really acked
+    // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
+    // TODO: 2. queue cache.
     queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
 
     // Write unack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
+  }
+
+  @Override
+  public int configure(QueueConsumer newConsumer) throws OperationException {
+    // Delete state information of consumer, since it will be no longer valid after the configuration is done.
+    newConsumer.setQueueState(null);
+
+    // Simple leader election
+    if(newConsumer.getInstanceId() != 0) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace("Only consumer with instanceID 0 can run configure. Current consumer's instance id = %d",
+                  newConsumer.getInstanceId());
+      }
+      return -1;
+    }
+
+    final ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    final QueueConfig config = newConsumer.getQueueConfig();
+    final int newConsumerCount = newConsumer.getGroupSize();
+    final long groupId = newConsumer.getGroupId();
+
+    if(LOG.isDebugEnabled()) {
+      LOG.trace(getLogMessage(String.format(
+        "Running configure with consumer=%s, readPointer= %s", newConsumer, readPointer)));
+    }
+
+    if(newConsumerCount < 1) {
+      throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+                        getLogMessage(String.format("New consumer count (%d) should atleast be 1", newConsumerCount)));
+    }
+
+    // Determine what dequeue strategy to use based on the partitioner
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
+    // Read queue state for all consumers of the group to find the number of previous consumers
+    int oldConsumerCount = 0;
+    List<QueueConsumer> consumers = Lists.newArrayList();
+    List<QueueStateImpl> queueStates = Lists.newArrayList();
+    for(int i = 0; i < MAX_CONSUMER_COUNT; ++i) {
+      // Note: the consumers created here do not contain QueueConsumer.partitioningKey or QueueConsumer.groupSize
+      StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
+      QueueStateImpl queueState = null;
+      try {
+        // TODO: read queue state in one call
+        queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
+      } catch(OperationException e) {
+        if(e.getStatus() != StatusCode.NOT_CONFIGURED) {
+          throw e;
+        }
+      }
+      if(queueState == null) {
+        break;
+      }
+
+      ++oldConsumerCount;
+      // Verify there are no inflight entries
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+                     getLogMessage(String.format("Consumer %d still has inflight entries", consumer.getInstanceId())));
+      }
+      consumer.setQueueState(queueState);
+      consumers.add(consumer);
+      queueStates.add(queueState);
+    }
+
+    // Nothing to do if newConsumerCount == oldConsumerCount
+    if(oldConsumerCount == newConsumerCount) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format(
+          "Nothing to configure since oldConsumerCount is equal to newConsumerCount (%d)", oldConsumerCount)));
+      }
+      return oldConsumerCount;
+    }
+
+    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+
+    // Delete eviction information for all groups
+    // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
+    // we'll need to delete the eviction information for all groups so that we always maintain eviction information for
+    // active groups only
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.deleteGroupEvictionState(readPointer, TransactionOracle.DIRTY_WRITE_VERSION);
+
+    return oldConsumerCount;
   }
 
   @Override
@@ -425,6 +526,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // A simple leader election for selecting consumer to run eviction for group
     // Only consumers with id 0 (one per group)
     if(consumer.getInstanceId() != 0) {
+      return;
+    }
+
+    if(totalNumGroups <= 0) {
+      if(LOG.isTraceEnabled()) {
+        LOG.trace(getLogMessage(String.format("totalNumGroups=%d, nothing to be evicted", totalNumGroups)));
+      }
       return;
     }
 
@@ -458,7 +566,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId(), readPointer);
     // Save the minGroupEvictEntry for the consumer's group
     if(minGroupEvictEntry != INVALID_ENTRY_ID) {
-      writeKeys.add(GLOBAL_EVICT_META_PREFIX);
+      writeKeys.add(GLOBAL_EVICT_META_ROW);
       writeCols.add(makeColumnName(GROUP_EVICT_ENTRY, consumer.getGroupId()));
       writeValues.add(Bytes.toBytes(minGroupEvictEntry));
     }
@@ -470,19 +578,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // Only one consumer per queue will run the below eviction algorithm for the queue,
     // all others will save minGroupEvictEntry and return
-    // Again simple leader election
-    if(consumer.getGroupId() == 0) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage("Running global eviction..."));
-      }
-
-      final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
-      // Save the max of the entries that were evicted now
-      if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
-        writeKeys.add(GLOBAL_EVICT_META_PREFIX);
-        writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
-        writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
-      }
+    // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
+    final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
+    // Save the max of the entries that were evicted now
+    if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
+      writeKeys.add(GLOBAL_LAST_EVICT_ENTRY);
+      writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
+      writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
     }
 
     // Save the state
@@ -588,43 +690,132 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return evictEntry;
   }
 
+  static class EvictionState {
+    private long globalLastEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
+    private Map<Long, Long> groupEvictEntries = Maps.newHashMap();
+
+    private final VersionedColumnarTable table;
+
+    public EvictionState(VersionedColumnarTable table) {
+      this.table = table;
+    }
+
+    public void readEvictionState(ReadPointer readPointer) throws OperationException {
+      // Read GLOBAL_LAST_EVICT_ENTRY
+      OperationResult<byte[]> lastEvictEntryBytes = table.get(GLOBAL_LAST_EVICT_ENTRY, GLOBAL_LAST_EVICT_ENTRY,
+                                                              readPointer);
+      if(!lastEvictEntryBytes.isEmpty() && lastEvictEntryBytes.getValue() != null) {
+        globalLastEvictEntry = Bytes.toLong(lastEvictEntryBytes.getValue());
+      }
+
+      readGroupEvictInformationInternal(readPointer);
+    }
+
+    public void deleteGroupEvictionState(ReadPointer readPointer, long writeVersion) throws OperationException {
+      if(groupEvictEntries.isEmpty()) {
+        readGroupEvictInformationInternal(readPointer);
+      }
+
+      // If still no entries, noting to do
+      if(groupEvictEntries.isEmpty()) {
+        return;
+      }
+
+      // TODO: need to fix writing byte[0] to delete entries
+      // Write byte[0] to delete entries
+      byte[][] columnKeys = new byte[groupEvictEntries.size()][];
+      byte[][] values = new byte[groupEvictEntries.size()][];
+      int i = 0;
+      for(Map.Entry<Long, Long> entry : groupEvictEntries.entrySet()) {
+        columnKeys[i] = makeColumnName(GROUP_EVICT_ENTRY, entry.getKey());
+        values[i] = Bytes.toBytes(entry.getValue());
+        ++i;
+      }
+      table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
+    }
+
+    public long getGlobalLastEvictEntry() {
+      return globalLastEvictEntry;
+    }
+
+    public Set<Long> getGroupIds() {
+      return groupEvictEntries.keySet();
+    }
+
+    public Long getGroupEvictEntry(long groupId) {
+      return groupEvictEntries.get(groupId);
+    }
+
+    private void readGroupEvictInformationInternal(ReadPointer readPointer) throws OperationException {
+      // Read evict information for all groups
+      OperationResult<Map<byte[], byte[]>> groupEvictBytes = table.get(GLOBAL_EVICT_META_ROW, readPointer);
+      if(!groupEvictBytes.isEmpty()) {
+        for(Map.Entry<byte[], byte[]> entry : groupEvictBytes.getValue().entrySet()) {
+          if(entry.getKey().length > 0 && entry.getValue().length > 0) {
+            Long groupId = removePrefixFromLongId(entry.getKey(), GROUP_EVICT_ENTRY);
+            if(groupId != null) {
+              long groupEvictEntry = Bytes.toLong(entry.getValue());
+              groupEvictEntries.put(groupId, groupEvictEntry);
+            }
+          }
+        }
+      }
+    }
+  }
+
   private long runEviction(QueueConsumer consumer, long currentGroupMinEvictEntry,
                            int totalNumGroups, ReadPointer readPointer) throws OperationException {
-    // Get all the columns for row GLOBAL_EVICT_META_PREFIX, which contains the entry that can be evicted for
-    // each group and the last evicted entry.
+    // Read eviction state from table
     // TODO: move all queue state reads to a single class
-    OperationResult<Map<byte [], byte []>> evictBytes =
-      table.get(GLOBAL_EVICT_META_PREFIX, TransactionOracle.DIRTY_READ_POINTER);
-    if(evictBytes.isEmpty() || evictBytes.getValue() == null) {
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.readEvictionState(readPointer);
+
+    final long lastEvictedEntry = evictionState.getGlobalLastEvictEntry();
+
+    // Continue eviction only if eviction information for all totalNumGroups groups can be read
+    final int numGroupsRead = evictionState.getGroupIds().size();
+    if(numGroupsRead < totalNumGroups) {
+      if(LOG.isDebugEnabled()) {
+        LOG.trace(getLogMessage(
+          String.format("Cannot get eviction information for all %d groups, got only for %d groups. Aborting eviction.",
+                        totalNumGroups, numGroupsRead)));
+      }
+      return INVALID_ENTRY_ID;
+    } else if(numGroupsRead > totalNumGroups) {
+      LOG.warn(getLogMessage(
+        String.format("Getting eviction information for more groups (%d) than required (%d). %s",
+                      numGroupsRead,
+                      totalNumGroups,
+                      "Looks like eviction state is corrupted. Aborting eviction.")));
+      return INVALID_ENTRY_ID;
+    }
+
+    // Only one consumer across all groups can run eviction
+    // Simple leader election: consumer with lowest groupId will run eviction.
+    List<Long> groupIds = Lists.newArrayList(evictionState.getGroupIds());
+    Collections.sort(groupIds);
+    if(groupIds.get(0) != consumer.getGroupId()) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage("Not able to fetch eviction information"));
+        LOG.trace(getLogMessage(String.format("Min groupId=%d, current consumer groupId=%d. Aborting eviction",
+                                              groupIds.get(0), consumer.getGroupId())));
       }
       return INVALID_ENTRY_ID;
     }
 
-    // Get the last evicted entry
-    Map<byte[], byte[]> evictInfoMap = evictBytes.getValue();
-    byte[] lastEvictedEntryBytes = evictInfoMap.get(GLOBAL_LAST_EVICT_ENTRY);
-    final long lastEvictedEntry = lastEvictedEntryBytes == null ?
-                                        FIRST_QUEUE_ENTRY_ID - 1 : Bytes.toLong(lastEvictedEntryBytes);
+    if(LOG.isTraceEnabled()) {
+      LOG.trace(getLogMessage("Running global eviction..."));
+    }
 
     // Determine the max entry that can be evicted across all groups
     long maxEntryToEvict = Long.MAX_VALUE;
-    for(int groupId = 0; groupId < totalNumGroups; ++groupId) {
+    for(long groupId : groupIds) {
       long entry;
       if(groupId == consumer.getGroupId()) {
         // Min evict entry for the consumer's group was just evaluated earlier but not written to storage, use that
         entry = currentGroupMinEvictEntry;
       } else {
         // Get the evict info for group with groupId
-        byte[] entryBytes = evictInfoMap.get(makeColumnName(GROUP_EVICT_ENTRY, groupId));
-        if(entryBytes == null) {
-          if(LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format("Not able to fetch maxEvictEntry for group %d", groupId)));
-          }
-          return INVALID_ENTRY_ID;
-        }
-        entry = Bytes.toLong(entryBytes);
+        entry = evictionState.getGroupEvictEntry(groupId);
       }
       // Save the least entry
       if(maxEntryToEvict > entry) {
@@ -658,17 +849,16 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return maxEntryToEvict;
   }
 
-  static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
     // TODO: implement this :)
-    return groupId++;
+    return this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
   }
 
   @Override
   public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
     // TODO: implement this :)
-    return null;
+    return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
   }
 
   private QueueStateImpl getQueueState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
@@ -679,7 +869,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     QueueStateImpl queueState;
     // If QueueState is null, read the queue state from underlying storage.
     if(consumer.getQueueState() == null) {
-      queueState = dequeueStrategy.constructQueueState(consumer, consumer.getQueueConfig(), readPointer);
+      queueState = dequeueStrategy.readQueueState(consumer, consumer.getQueueConfig(), readPointer);
     } else {
       if(! (consumer.getQueueState() instanceof QueueStateImpl)) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
@@ -705,12 +895,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)), Bytes.toBytes(id2));
   }
 
-  protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
+  protected static byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
   }
 
-  protected byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
+  protected static byte[] makeColumnName(byte[] bytesToPrependToId, String id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  protected static Long removePrefixFromLongId(byte[] bytes, byte[] prefix) {
+    if(Bytes.startsWith(bytes, prefix) && (bytes.length >= Bytes.SIZEOF_LONG + prefix.length)) {
+      return Bytes.toLong(bytes, prefix.length);
+    }
+    return null;
   }
 
   protected String getLogMessage(String message) {
@@ -801,6 +998,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.entrySet = new TreeSet<DequeueEntry>();
     }
 
+    DequeuedEntrySet(SortedSet<DequeueEntry> entrySet) {
+      this.entrySet = entrySet;
+    }
+
     public DequeueEntry min() {
       return entrySet.first();
     }
@@ -843,6 +1044,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public SortedSet<Long> startNewTry(final long maxCrashDequeueTries) {
       SortedSet<Long> droppedEntries = new TreeSet<Long>();
+      // TODO: Right now we increment tries and remove all dequeueed entries no matter which entry caused the crash.
       for(Iterator<DequeueEntry> it = entrySet.iterator(); it.hasNext();) {
         DequeueEntry entry = it.next();
         entry.incrementTries();
@@ -873,8 +1075,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public static DequeuedEntrySet decode(Decoder decoder) throws IOException {
-      DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       int size = decoder.readInt();
+      // TODO: return empty set if size == 0
+      DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet();
       while(size > 0) {
         for(int i = 0; i < size; ++i) {
           dequeuedEntrySet.add(DequeueEntry.decode(decoder));
@@ -883,6 +1086,23 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       return dequeuedEntrySet;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DequeuedEntrySet that = (DequeuedEntrySet) o;
+
+      if (entrySet != null ? !entrySet.equals(that.entrySet) : that.entrySet != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return entrySet != null ? entrySet.hashCode() : 0;
+    }
   }
 
   public static class TransientWorkingSet {
@@ -890,11 +1110,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private int curPtr = -1;
     private final Map<Long, byte[]> cachedEntries;
 
-    private static final TransientWorkingSet EMPTY_LIST =
+    private static final TransientWorkingSet EMPTY_SET =
       new TransientWorkingSet(Collections.<Long>emptyList(), Collections.<Long, byte[]>emptyMap());
 
-    public static TransientWorkingSet emptyList() {
-      return EMPTY_LIST;
+    public static TransientWorkingSet emptySet() {
+      return EMPTY_SET;
     }
 
     public TransientWorkingSet(List<Long> entryIds, Map<Long, byte[]> cachedEntries) {
@@ -907,6 +1127,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
         entries.add(new DequeueEntry(id, 0));
       }
       this.entryList = entries;
+      this.cachedEntries = cachedEntries;
+    }
+
+    public TransientWorkingSet(List<DequeueEntry> entryList, int curPtr, Map<Long, byte[]> cachedEntries) {
+      this.entryList = entryList;
+      this.curPtr = curPtr;
       this.cachedEntries = cachedEntries;
     }
 
@@ -942,20 +1168,671 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("cachedEntries", cachedEntries)
         .toString();
     }
+
+    public void encode(Encoder encoder) throws IOException {
+      if(!entryList.isEmpty()) {
+        encoder.writeInt(entryList.size());
+        for(DequeueEntry entry : entryList) {
+          entry.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+
+      encoder.writeLong(curPtr);
+
+      if(!cachedEntries.isEmpty()) {
+        encoder.writeInt(cachedEntries.size());
+        for(Map.Entry<Long, byte[]> entry : cachedEntries.entrySet()) {
+          encoder.writeLong(entry.getKey());
+          encoder.writeBytes(entry.getValue());
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of map as per AVRO spec
+    }
+
+    public static TransientWorkingSet decode(Decoder decoder) throws IOException {
+      int size = decoder.readInt();
+      // TODO: return empty set if size == 0
+      List<DequeueEntry> entries = Lists.newArrayListWithExpectedSize(size);
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          entries.add(DequeueEntry.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+
+      int curPtr = decoder.readInt();
+
+      int mapSize = decoder.readInt();
+      Map<Long, byte[]> cachedEntries = Maps.newHashMapWithExpectedSize(mapSize);
+      while(mapSize > 0) {
+        for(int i= 0; i < mapSize; ++i) {
+          cachedEntries.put(decoder.readLong(), decoder.readBytes().array());
+        }
+        mapSize = decoder.readInt();
+      }
+      return new TransientWorkingSet(entries, curPtr, cachedEntries);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TransientWorkingSet that = (TransientWorkingSet) o;
+
+      if (curPtr != that.curPtr) {
+        return false;
+      }
+      if (cachedEntries != null ?
+        !cachedEntriesEquals(cachedEntries, that.cachedEntries) :
+        that.cachedEntries != null) {
+        return false;
+      }
+      if (entryList != null ? !entryList.equals(that.entryList) : that.entryList != null) {
+        return false;
+      }
+
+      return true;
+    }
+
+    private static boolean cachedEntriesEquals(Map<Long, byte[]> cachedEntries1, Map<Long, byte[]> cachedEntries2) {
+      if(cachedEntries1.size() != cachedEntries2.size()) {
+        return false;
+      }
+      for(Map.Entry<Long, byte[]> entry : cachedEntries1.entrySet()) {
+        byte[] bytes2 = cachedEntries2.get(entry.getKey());
+        if(entry.getValue() == null || bytes2 == null) {
+          if(entry.getValue() != bytes2) {
+            return false;
+          } else {
+            if(!Bytes.equals(entry.getValue(), bytes2)) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = entryList != null ? entryList.hashCode() : 0;
+      result = 31 * result + curPtr;
+      result = 31 * result + (cachedEntries != null ? cachedEntries.hashCode() : 0);
+      return result;
+    }
+  }
+
+  static class ReconfigPartitionInstance {
+    private final int instanceId;
+    private final long maxAckEntryId;
+
+    ReconfigPartitionInstance(int instanceId, long maxAckEntryId) {
+      this.instanceId = instanceId;
+      this.maxAckEntryId = maxAckEntryId;
+    }
+
+    public long getMaxAckEntryId() {
+      return maxAckEntryId;
+    }
+
+    public int getInstanceId() {
+      return instanceId;
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      encoder.writeInt(instanceId)
+        .writeLong(maxAckEntryId);
+    }
+
+    public static ReconfigPartitionInstance decode(Decoder decoder) throws IOException {
+      int instanceId = decoder.readInt();
+      long maxAckEntryId = decoder.readLong();
+      return new ReconfigPartitionInstance(instanceId, maxAckEntryId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ReconfigPartitionInstance that = (ReconfigPartitionInstance) o;
+
+      if (instanceId != that.instanceId) return false;
+      if (maxAckEntryId != that.maxAckEntryId) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = instanceId;
+      result = 31 * result + (int) (maxAckEntryId ^ (maxAckEntryId >>> 32));
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("instanceId", instanceId)
+        .add("maxAckEntryId", maxAckEntryId)
+        .toString();
+    }
+  }
+
+  static class ReconfigPartitioner implements QueuePartitioner {
+    private final int groupSize;
+    private final QueuePartitioner.PartitionerType partitionerType;
+    private final List<ReconfigPartitionInstance> reconfigPartitionInstances;
+
+    private static final ReconfigPartitioner EMPTY_RECONFIG_PARTITIONER = new ReconfigPartitioner();
+    public static ReconfigPartitioner getEmptyReconfigPartitioner() {
+      return EMPTY_RECONFIG_PARTITIONER;
+    }
+
+    // TODO: remove unneeded config info during saving
+    private ReconfigPartitioner() {
+      groupSize = 0;
+      partitionerType = PartitionerType.FIFO; // Doesn't matter what partition type
+      reconfigPartitionInstances = Collections.emptyList();
+    }
+
+    public ReconfigPartitioner(int groupSize, PartitionerType partitionerType) {
+      this.groupSize = groupSize;
+      this.partitionerType = partitionerType;
+      this.reconfigPartitionInstances = Lists.newArrayListWithCapacity(groupSize);
+    }
+
+    public void add(int consumerId, long maxAckEntryId) {
+      reconfigPartitionInstances.add(new ReconfigPartitionInstance(consumerId, maxAckEntryId));
+    }
+
+    private void add(ReconfigPartitionInstance info) {
+      reconfigPartitionInstances.add(info);
+    }
+
+    public int getGroupSize() {
+      return groupSize;
+    }
+
+    public PartitionerType getPartitionerType() {
+      return partitionerType;
+    }
+
+    public List<ReconfigPartitionInstance> getReconfigPartitionInstances() {
+      return reconfigPartitionInstances;
+    }
+
+    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
+    @Override
+    public boolean isDisjoint() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean usesHeaderData() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, value)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigPartitioner.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId, hash)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
+      QueuePartitioner partitioner = partitionerType.getPartitioner();
+      for(ReconfigPartitionInstance reconfigInfo : reconfigPartitionInstances) {
+        // Ignore passed in groupSize and instanceId since we are partitioning using old information
+        // No consumer with reconfigInfo.getInstanceId() should have already acked entryId
+        if(entryId <= reconfigInfo.getMaxAckEntryId() &&
+          partitioner.shouldEmit(this.groupSize, reconfigInfo.getInstanceId(), entryId)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public void compact(long consumerReadPointer) {
+      // TODO:
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      if(groupSize != reconfigPartitionInstances.size()) {
+        throw new IllegalStateException(String.format(
+          "Groupsize: %d is not equal to partition information objects %d", groupSize, reconfigPartitionInstances.size()));
+      }
+
+      // TODO: use common code to decode/encode lists
+      if(!reconfigPartitionInstances.isEmpty()) {
+        // Note: we are not writing reconfigPartitionInstances.size() again, we use groupSize as the size of the list
+        encoder.writeInt(groupSize)
+          .writeString(partitionerType.name());
+        for(ReconfigPartitionInstance info : reconfigPartitionInstances) {
+          info.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ReconfigPartitioner decode(Decoder decoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      // Note: we are not reading reconfigPartitionInstances.size() again, we use groupSize as the size of the list
+      int groupSize = decoder.readInt();
+      if(groupSize == 0) {
+        return ReconfigPartitioner.getEmptyReconfigPartitioner();
+      }
+
+      PartitionerType partitionerType = PartitionerType.valueOf(decoder.readString());
+      ReconfigPartitioner partitioner = new ReconfigPartitioner(groupSize, partitionerType);
+      int size = groupSize;
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          partitioner.add(ReconfigPartitionInstance.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+
+      if(groupSize != partitioner.reconfigPartitionInstances.size()) {
+        throw new IllegalStateException(String.format(
+          "Groupsize: %d is not equal to partition information objects %d", groupSize,
+          partitioner.reconfigPartitionInstances.size()));
+      }
+      return partitioner;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ReconfigPartitioner that = (ReconfigPartitioner) o;
+
+      if (groupSize != that.groupSize) return false;
+      if (partitionerType != that.partitionerType) return false;
+      if (!reconfigPartitionInstances.equals(that.reconfigPartitionInstances)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = groupSize;
+      result = 31 * result + partitionerType.hashCode();
+      result = 31 * result + reconfigPartitionInstances.hashCode();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("groupSize", groupSize)
+        .add("partitionerType", partitionerType)
+        .add("reconfigPartitionInstances", reconfigPartitionInstances)
+        .toString();
+    }
+  }
+
+  public static class ReconfigPartitionersList implements QueuePartitioner {
+    private final List<ReconfigPartitioner> reconfigPartitioners;
+
+    private static final ReconfigPartitionersList EMPTY_RECONFIGURATION_PARTITIONERS_LIST =
+      new ReconfigPartitionersList(Collections.EMPTY_LIST);
+
+    public static ReconfigPartitionersList getEmptyList() {
+      return EMPTY_RECONFIGURATION_PARTITIONERS_LIST;
+    }
+
+    public ReconfigPartitionersList(List<ReconfigPartitioner> reconfigPartitioners) {
+      this.reconfigPartitioners = reconfigPartitioners;
+    }
+
+    public List<ReconfigPartitioner> getReconfigPartitioners() {
+      return reconfigPartitioners;
+    }
+
+    // TODO: remove isDisjoint and usesHeaderData methods from QueuePartitioner interface
+    @Override
+    public boolean isDisjoint() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean usesHeaderData() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, byte[] value) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, value)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId, int hash) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId, hash)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean shouldEmit(int groupSize, int instanceId, long entryId) {
+      // Return false if the entry has been acknowledged by any of the previous partitions
+      for(ReconfigPartitioner partitioner : reconfigPartitioners) {
+        if(!partitioner.shouldEmit(groupSize, instanceId, entryId)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // TODO: implement
+    public void compact(long consumerReadPointer) {
+
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("reconfigPartitioners", reconfigPartitioners)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      if(!reconfigPartitioners.isEmpty()) {
+        encoder.writeInt(reconfigPartitioners.size());
+        for(ReconfigPartitioner partitioner : reconfigPartitioners) {
+          partitioner.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ReconfigPartitionersList decode(Decoder decoder) throws IOException {
+      int size = decoder.readInt();
+      if(size == 0) {
+        return ReconfigPartitionersList.getEmptyList();
+      }
+
+      List<ReconfigPartitioner> reconfigPartitioners = Lists.newArrayList();
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          reconfigPartitioners.add(ReconfigPartitioner.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+      return new ReconfigPartitionersList(reconfigPartitioners);
+    }
+  }
+
+  static class ClaimedEntryList implements Comparable<ClaimedEntryList> {
+    private ClaimedEntry current;
+    private List<ClaimedEntry> otherClaimedEntries;
+
+    public ClaimedEntryList() {
+      this.current = ClaimedEntry.getInvalidClaimedEntry();
+      // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
+      this.otherClaimedEntries = Collections.EMPTY_LIST;
+    }
+
+    public ClaimedEntryList(ClaimedEntry claimedEntry, List<ClaimedEntry> otherClaimedEntries) {
+      this.current = claimedEntry;
+      this.otherClaimedEntries = otherClaimedEntries;
+    }
+
+    public void add(long begin, long end) {
+      ClaimedEntry claimedEntry = new ClaimedEntry(begin, end);
+      if(!claimedEntry.isValid()) {
+        return;
+      }
+      makeCurrentValid();
+      if(!current.isValid()) {
+        current = claimedEntry;
+      } else {
+        if(otherClaimedEntries == Collections.EMPTY_LIST) {
+          otherClaimedEntries = Lists.newArrayList();
+        }
+        otherClaimedEntries.add(claimedEntry);
+      }
+    }
+
+    public void addAll(ClaimedEntryList claimedEntryList) {
+      // Note: otherClaimedEntries can be EMPTY_LIST, add() makes sure to create a list if so
+      ClaimedEntry otherCurrent = claimedEntryList.getClaimedEntry();
+      add(otherCurrent.getBegin(), otherCurrent.getEnd());
+      otherClaimedEntries.addAll(claimedEntryList.otherClaimedEntries);
+    }
+
+    public void moveForwardTo(long entryId) {
+      if(entryId < current.getBegin()) {
+        throw new IllegalArgumentException(String.format
+          ("entryId (%d) shoudl not be less than begin (%d)", entryId, current.getBegin()));
+      }
+      current = current.move(entryId);
+      makeCurrentValid();
+    }
+
+    private void makeCurrentValid() {
+      while(!current.isValid() && !otherClaimedEntries.isEmpty()) {
+        current = otherClaimedEntries.remove(0);
+      }
+    }
+
+    public ClaimedEntry getClaimedEntry() {
+      makeCurrentValid();
+      return current;
+    }
+
+    public int size() {
+      // TODO: use the claimed entry range to determine size
+      return (current.isValid() ? 1 : 0) + otherClaimedEntries.size();
+    }
+
+    @Override
+    public int compareTo(ClaimedEntryList claimedEntryList) {
+      if(this.size() > claimedEntryList.size()) {
+        return 1;
+      }
+      if(this.size() < claimedEntryList.size()) {
+        return -1;
+      }
+      return 0;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("current", current)
+        .add("otherClaimedEntries", otherClaimedEntries)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: use common code to decode/encode lists
+      current.encode(encoder);
+      if(!otherClaimedEntries.isEmpty()) {
+        encoder.writeInt(otherClaimedEntries.size());
+        for(ClaimedEntry claimedEntry : otherClaimedEntries) {
+          claimedEntry.encode(encoder);
+        }
+      }
+      encoder.writeInt(0); // zero denotes end of list as per AVRO spec
+    }
+
+    public static ClaimedEntryList decode(Decoder decoder) throws IOException {
+      ClaimedEntry current = ClaimedEntry.decode(decoder);
+
+      int size = decoder.readInt();
+      List<ClaimedEntry> otherClaimedEntries;
+      if(size == 0) {
+        // Note: using EMPTY_LIST vs emptyList() since we're doing an identity equals in add() method
+        otherClaimedEntries = Collections.EMPTY_LIST;
+      } else {
+        otherClaimedEntries = Lists.newArrayList();
+      }
+
+      while(size > 0) {
+        for(int i = 0; i < size; ++i) {
+          otherClaimedEntries.add(ClaimedEntry.decode(decoder));
+        }
+        size = decoder.readInt();
+      }
+      return new ClaimedEntryList(current, otherClaimedEntries);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClaimedEntryList that = (ClaimedEntryList) o;
+
+      if (!current.equals(that.current)) return false;
+      if (!otherClaimedEntries.equals(that.otherClaimedEntries)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = current.hashCode();
+      result = 31 * result + otherClaimedEntries.hashCode();
+      return result;
+    }
+  }
+
+  static class ClaimedEntry {
+    private final long begin;
+    private final long end;
+
+    static final ClaimedEntry INVALID_CLAIMED_ENTRY = new ClaimedEntry(INVALID_ENTRY_ID, INVALID_ENTRY_ID);
+    public static ClaimedEntry getInvalidClaimedEntry() {
+      return INVALID_CLAIMED_ENTRY;
+    }
+
+    public ClaimedEntry(long begin, long end) {
+      if(begin > end) {
+        throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
+      } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
+        // Both begin and end can be INVALID_ENTRY_ID
+        throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
+      }
+      this.begin = begin;
+      this.end = end;
+    }
+
+    public long getBegin() {
+      return begin;
+    }
+
+    public long getEnd() {
+      return end;
+    }
+
+    public ClaimedEntry move(long entryId) {
+      if(!isValid()) {
+        return this;
+      }
+      if(entryId > end) {
+        return getInvalidClaimedEntry();
+      }
+      return new ClaimedEntry(entryId, end);
+    }
+
+    public boolean isValid() {
+      return begin != INVALID_ENTRY_ID;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("begin", begin)
+        .add("end", end)
+        .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      encoder.writeLong(begin);
+      encoder.writeLong(end);
+    }
+
+    public static ClaimedEntry decode(Decoder decoder) throws IOException {
+      return new ClaimedEntry(decoder.readLong(), decoder.readLong());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClaimedEntry that = (ClaimedEntry) o;
+
+      if (begin != that.begin) return false;
+      if (end != that.end) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (begin ^ (begin >>> 32));
+      result = 31 * result + (int) (end ^ (end >>> 32));
+      return result;
+    }
   }
 
   public static class QueueStateImpl implements QueueState {
-    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.EMPTY_LIST;
+    // Note: QueueStateImpl does not override equals and hashcode,
+    // since in some cases we would want to include transient state in comparison and in some other cases not.
+
+    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
     private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
-    private long claimedEntryBegin = INVALID_ENTRY_ID;
-    private long claimedEntryEnd = INVALID_ENTRY_ID;
+    private ClaimedEntryList claimedEntryList;
     private long lastEvictTimeInSecs = 0;
 
+    private ReconfigPartitionersList reconfigPartitionersList = ReconfigPartitionersList.getEmptyList();
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
+      claimedEntryList = new ClaimedEntryList();
     }
 
     public TransientWorkingSet getTransientWorkingSet() {
@@ -982,20 +1859,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.consumerReadPointer = consumerReadPointer;
     }
 
-    public long getClaimedEntryBegin() {
-      return claimedEntryBegin;
+    public ClaimedEntryList getClaimedEntryList() {
+      return claimedEntryList;
     }
 
-    public void setClaimedEntryBegin(long claimedEntryBegin) {
-      this.claimedEntryBegin = claimedEntryBegin;
-    }
-
-    public long getClaimedEntryEnd() {
-      return claimedEntryEnd;
-    }
-
-    public void setClaimedEntryEnd(long claimedEntryEnd) {
-      this.claimedEntryEnd = claimedEntryEnd;
+    public void setClaimedEntryList(ClaimedEntryList claimedEntryList) {
+      this.claimedEntryList = claimedEntryList;
     }
 
     public long getQueueWritePointer() {
@@ -1014,17 +1883,57 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.queueWritePointer = queueWritePointer;
     }
 
+    public ReconfigPartitionersList getReconfigPartitionersList() {
+      return reconfigPartitionersList;
+    }
+
+    public void setReconfigPartitionersList(ReconfigPartitionersList reconfigPartitionersList) {
+      this.reconfigPartitionersList = reconfigPartitionersList;
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("transientWorkingSet", transientWorkingSet)
         .add("dequeueEntrySet", dequeueEntrySet)
         .add("consumerReadPointer", consumerReadPointer)
-        .add("claimedEntryBegin", claimedEntryBegin)
-        .add("claimedEntryEnd", claimedEntryEnd)
+        .add("claimedEntryList", claimedEntryList)
         .add("queueWritePointer", queueWritePointer)
         .add("lastEvictTimeInSecs", lastEvictTimeInSecs)
+        .add("reconfigPartitionersList", reconfigPartitionersList)
         .toString();
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      // TODO: write and read schema
+      dequeueEntrySet.encode(encoder);
+      encoder.writeLong(consumerReadPointer);
+      claimedEntryList.encode(encoder);
+      encoder.writeLong(queueWritePointer);
+      encoder.writeLong(lastEvictTimeInSecs);
+      reconfigPartitionersList.encode(encoder);
+    }
+
+    public void encodeTransient(Encoder encoder) throws IOException {
+      encode(encoder);
+      transientWorkingSet.encode(encoder);
+    }
+
+    public static QueueStateImpl decode(Decoder decoder) throws IOException {
+      QueueStateImpl queueState = new QueueStateImpl();
+      queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
+      queueState.setConsumerReadPointer(decoder.readLong());
+      queueState.setClaimedEntryList(ClaimedEntryList.decode(decoder));
+      queueState.setQueueWritePointer(decoder.readLong());
+      queueState.setLastEvictTimeInSecs(decoder.readLong());
+      queueState.setReconfigPartitionersList(ReconfigPartitionersList.decode(decoder));
+      return queueState;
+    }
+
+    public static QueueStateImpl decodeTransient(Decoder decoder) throws IOException {
+      QueueStateImpl queueState = QueueStateImpl.decode(decoder);
+      queueState.setTransientWorkingSet(TransientWorkingSet.decode(decoder));
+      return queueState;
     }
   }
 
@@ -1062,6 +1971,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       throws OperationException{
       final byte[][] colNamesByteArray = new byte[columnNames.size()][];
       readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), TransactionOracle.DIRTY_READ_POINTER);
+      clearParameters();
     }
 
     public OperationResult<Map<byte[], byte[]>> getReadResult() {
@@ -1074,16 +1984,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final byte[][] colValuesByteArray = new byte[columnValues.size()][];
       table.put(rowKey, columnNames.toArray(colNamesByteArray),
                 TransactionOracle.DIRTY_WRITE_VERSION, columnValues.toArray(colValuesByteArray));
+      clearParameters();
+    }
+
+    public void clearParameters() {
+      rowKey = null;
+      columnNames.clear();
+      columnValues.clear();
     }
   }
 
   interface DequeueStrategy {
-    QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
-                               ReadPointer readPointer) throws OperationException;
+    QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException;
+    QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException;
     List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
+    void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config, long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer) throws OperationException;
+    void deleteDequeueState(QueueConsumer consumer) throws OperationException;
+
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
@@ -1108,14 +2030,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     protected long getLastEvictEntry() throws OperationException {
       QueueStateStore readEvictState = new QueueStateStore(table, oracle);
-      readEvictState.setRowKey(GLOBAL_EVICT_META_PREFIX);
+      readEvictState.setRowKey(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.read();
       OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
 
       if(!evictStateBytes.isEmpty()) {
         byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
-        if(lastEvictEntryBytes != null) {
+        if(!isNullOrEmpty(lastEvictEntryBytes)) {
           long lastEvictEntry = Bytes.toLong(lastEvictEntryBytes);
           return lastEvictEntry;
         }
@@ -1124,8 +2046,33 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+      return constructQueueStateInternal(consumer, config, readPointer, false); // TODO: change to false
+    }
+
+    @Override
     public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-                                                       throws OperationException {
+      throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+      return constructQueueStateInternal(consumer, config, readPointer, true);
+    }
+
+    protected boolean isNullOrEmpty(byte[] bytes) {
+      return bytes == null || bytes.length == 0;
+    }
+
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                             ReadPointer readPointer, boolean construct) throws OperationException {
+      // TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
+      // Note: 1. QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+
+      // Note: 2. We define a deleted cell as no bytes or no zero length bytes.
+      //          This is to do with limitation of deleteDiry on HBase
+
+      // Note: 3. We define deleted queue state as empty bytes or zero length consumerReadPointerBytes
+
       readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
       readQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
       readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
@@ -1133,30 +2080,40 @@ public class TTQueueNewOnVCTable implements TTQueue {
       readQueueStateStore.read();
 
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
+      byte[] consumerReadPointerBytes = null;
+
       QueueStateImpl queueState = new QueueStateImpl();
       if(!stateBytes.isEmpty()) {
-        // Read active entry
-        ByteArrayInputStream bin = new ByteArrayInputStream(stateBytes.getValue().get(DEQUEUE_ENTRY_SET));
-        BinaryDecoder decoder = new BinaryDecoder(bin);
-        // TODO: Read and check schema
-        try {
-          queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
-        } catch (IOException e) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-            "Exception while deserializing dequeue entry list"), e);
+        // Read dequeued entries
+        byte[] dequeueEntrySetBytes = stateBytes.getValue().get(DEQUEUE_ENTRY_SET);
+        if(!isNullOrEmpty(dequeueEntrySetBytes)) {
+          ByteArrayInputStream bin = new ByteArrayInputStream(dequeueEntrySetBytes);
+          BinaryDecoder decoder = new BinaryDecoder(bin);
+          // TODO: Read and check schema
+          try {
+            queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
+              "Exception while deserializing dequeue entry list"), e);
+          }
         }
 
         // Read consumer read pointer
-        byte[] consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
-        if(consumerReadPointerBytes != null) {
+        consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
+        if(!isNullOrEmpty(consumerReadPointerBytes)) {
           queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
         }
 
         // Note: last evict time is read while constructing state, but it is only saved after finalize
         byte[] lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
-        if(lastEvictTimeInSecsBytes != null) {
+        if(!isNullOrEmpty(lastEvictTimeInSecsBytes)) {
           queueState.setLastEvictTimeInSecs(Bytes.toLong(lastEvictTimeInSecsBytes));
         }
+      }
+
+      if(!construct && (stateBytes.isEmpty() || isNullOrEmpty(consumerReadPointerBytes))) {
+        throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
+          "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
       }
 
       // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
@@ -1225,9 +2182,150 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       writeQueueStateStore.write();
     }
+
+    @Override
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      // Delete queue state for the consumer, see notes in constructQueueStateInternal
+
+      // TODO: make delete automatically detect the columns that needs to be empty
+      writeQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
+
+      writeQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
+      writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
+      writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
+
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      writeQueueStateStore.write();
+      // TODO: delete evict information for the consumer
+    }
   }
 
-  class HashDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+  abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                              ReadPointer readPointer, boolean construct) throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+
+      // Read reconfig partition information
+      readQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
+      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
+      if(!stateBytes.isEmpty()) {
+        byte[] configPartitionerBytes = stateBytes.getValue().get(RECONFIG_PARTITIONER);
+        if(!isNullOrEmpty(configPartitionerBytes)) {
+          try {
+            // TODO: Read and check schema
+            ReconfigPartitionersList partitioners = ReconfigPartitionersList.decode(new BinaryDecoder(
+              new ByteArrayInputStream(configPartitionerBytes)));
+            queueState.setReconfigPartitionersList(partitioners);
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                         getLogMessage("Exception while deserializing reconfig partitioners"), e);
+          }
+        }
+      }
+      return queueState;
+    }
+
+    @Override
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
+      // Write reconfig partition information
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Encoder encoder = new BinaryEncoder(bos);
+      try {
+        queueState.getReconfigPartitionersList().encode(encoder);
+      } catch(IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing reconfig partitioners"), e);
+      }
+      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+      writeQueueStateStore.addColumnValue(bos.toByteArray());
+      super.saveDequeueState(consumer, config, queueState, readPointer);
+    }
+
+    @Override
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      super.deleteDequeueState(consumer);
+    }
+
+    @Override
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                          final long groupId, final int currentConsumerCount, final int newConsumerCount,
+                          ReadPointer readPointer) throws OperationException {
+      // Note: the consumers list passed here does not contain QueueConsumer.partitioningKey
+
+      if(currentConsumers.size() != currentConsumerCount) {
+        throw new OperationException(
+          StatusCode.INTERNAL_ERROR,
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)",
+                                      currentConsumers.size(), currentConsumerCount)));
+      }
+
+      // TODO: does consumers list need to be sorted on instanceId?
+      long minAckedEntryId = Long.MAX_VALUE;
+      ReconfigPartitioner reconfigPartitioner =
+        new ReconfigPartitioner(currentConsumerCount, config.getPartitionerType());
+      for(QueueConsumer consumer : currentConsumers) {
+        QueueStateImpl queueState = (QueueStateImpl) consumer.getQueueState();
+        // Since there are no inflight entries, all entries till and including consumer read pointer are acked
+        long ackedEntryId = queueState.getConsumerReadPointer();
+        if(ackedEntryId < minAckedEntryId) {
+          minAckedEntryId = ackedEntryId;
+        }
+        reconfigPartitioner.add(consumer.getInstanceId(), ackedEntryId);
+      }
+
+      DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+
+      for(int j = 0; j < newConsumerCount; ++j) {
+        QueueConsumer consumer;
+        QueueStateImpl queueState;
+        if(j < currentConsumerCount) {
+          consumer = currentConsumers.get(j);
+          queueState = (QueueStateImpl) consumer.getQueueState();
+          queueState.setTransientWorkingSet(TransientWorkingSet.emptySet());
+        } else {
+          // Note: the consumer created here does not contain QueueConsumer.partitioningKey
+          consumer = new StatefulQueueConsumer(j, groupId, newConsumerCount, config);
+          queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
+          consumer.setQueueState(queueState);
+        }
+
+        if(!currentConsumers.isEmpty()) {
+          // Modify queue state for active consumers
+          // Add reconfigPartitioner
+          queueState.setReconfigPartitionersList(
+            new ReconfigPartitionersList(
+              Lists.newArrayList(Iterables.concat(
+                queueState.getReconfigPartitionersList().getReconfigPartitioners(),
+                Collections.singleton(reconfigPartitioner))
+              )
+            ));
+
+          // Move consumer read pointer to the min acked entry for all consumers
+          if(minAckedEntryId != Long.MAX_VALUE) {
+            queueState.setConsumerReadPointer(minAckedEntryId);
+          }
+        }
+        // TODO: save queue states for all consumers in a single call
+        saveDequeueState(consumer, config, queueState, readPointer);
+      }
+
+      // Delete queue state for removed consumers, if any
+      for(int j = newConsumerCount; j < currentConsumerCount; ++j) {
+        QueueConsumer consumer = currentConsumers.get(j);
+        // TODO: save and delete queue states for all consumers in a single call
+        deleteDequeueState(consumer);
+      }
+    }
+  }
+
+  class HashDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(
       QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer)
@@ -1290,7 +2388,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
               break outerLoop;
             }
             int hashValue = Bytes.toInt(hashBytes);
-            if(partitioner.shouldEmit(consumer, currentEntryId, hashValue)) {
+            if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
+              queueState.getReconfigPartitionersList().shouldEmit(
+                consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue)
+              ) {
               newEntryIds.add(currentEntryId);
             }
           } else {
@@ -1304,7 +2405,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  class RoundRobinDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+  class RoundRobinDequeueStrategy extends AbstractDisjointDequeueStrategy implements DequeueStrategy {
     @Override
     public List<Long> fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                        ReadPointer readPointer) throws OperationException {
@@ -1337,7 +2438,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // Determine which entries  need to be read from storage
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
+            queueState.getReconfigPartitionersList()
+              .shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            ) {
             newEntryIds.add(currentEntryId);
           }
         }
@@ -1355,33 +2459,29 @@ public class TTQueueNewOnVCTable implements TTQueue {
    */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
     @Override
-    public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config,
-                                              ReadPointer readPointer) throws OperationException {
-      // Read CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END, and store them in queueState
-      readQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
-      readQueueStateStore.addColumnName(CLAIMED_ENTRY_END);
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                              ReadPointer readPointer, boolean construct) throws OperationException {
+      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
 
-      QueueStateImpl queueState = super.constructQueueState(consumer, config, readPointer);
+      // Read CLAIMED_ENTRY_LIST and store it in queueState
+      readQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
+
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
       OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
       if(!stateBytes.isEmpty()) {
-        long claimedEntryIdBegin = Bytes.toLong(stateBytes.getValue().get(CLAIMED_ENTRY_BEGIN));
-        long claimedEntryIdEnd = Bytes.toLong(stateBytes.getValue().get(CLAIMED_ENTRY_END));
-        if(droppedEntries.contains(claimedEntryIdBegin)) {
-          // Some entries were dropped, move claimed entry begin to reflect that
-          if(claimedEntryIdEnd <= droppedEntries.last()) {
-            // All claimed entries are dropped
-            claimedEntryIdBegin = claimedEntryIdEnd = INVALID_ENTRY_ID;
-          } else {
-            final long newClaimedEntryIdBegin = droppedEntries.last() + 1;
-            if(newClaimedEntryIdBegin > claimedEntryIdEnd) {
-              claimedEntryIdBegin = claimedEntryIdEnd = INVALID_ENTRY_ID;
-            } else {
-              claimedEntryIdBegin = newClaimedEntryIdBegin;
-            }
+        byte[] claimedEntryListBytes = stateBytes.getValue().get(CLAIMED_ENTRY_LIST);
+        if(!isNullOrEmpty(claimedEntryListBytes)) {
+          ClaimedEntryList claimedEntryList;
+          try {
+            // TODO: Read and check schema
+            claimedEntryList = ClaimedEntryList.decode(
+              new BinaryDecoder(new ByteArrayInputStream(claimedEntryListBytes)));
+          } catch (IOException e) {
+            throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                         getLogMessage("Exception while deserializing CLAIMED_ENTRY_LIST"), e);
           }
+          queueState.setClaimedEntryList(claimedEntryList);
         }
-        queueState.setClaimedEntryBegin(claimedEntryIdBegin);
-        queueState.setClaimedEntryEnd(claimedEntryIdEnd);
       }
       return queueState;
     }
@@ -1389,28 +2489,34 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                  ReadPointer readPointer) throws OperationException {
-      // If a claimed entry is now being dequeued then update CLAIMED_ENTRY_BEGIN
-      if(queueState.getDequeueEntrySet().contains(queueState.getClaimedEntryBegin())) {
-        long claimedEntryIdBegin = queueState.getClaimedEntryBegin();
-        final long newClaimedEntryBegin = claimedEntryIdBegin + 1;
-        // If reached end of claimed entries, then reset the claimed ids
-        if(newClaimedEntryBegin > queueState.getClaimedEntryEnd()) {
-          queueState.setClaimedEntryBegin(INVALID_ENTRY_ID);
-          queueState.setClaimedEntryEnd(INVALID_ENTRY_ID);
-        } else {
-          queueState.setClaimedEntryBegin(newClaimedEntryBegin);
+      // We can now move the claimed entry begin pointer to dequeueEntrySet.max() + 1
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        long maxDequeuedEntry = queueState.getDequeueEntrySet().max().getEntryId();
+        if(maxDequeuedEntry >= queueState.getClaimedEntryList().getClaimedEntry().getBegin()) {
+          queueState.getClaimedEntryList().moveForwardTo(maxDequeuedEntry + 1);
         }
       }
 
-      // Add CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END to writeQueueStateStore so that they can be written
+      // Add CLAIMED_ENTRY_LIST writeQueueStateStore so that they can be written
       // to underlying storage by base class saveDequeueState
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_BEGIN);
-      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getClaimedEntryBegin()));
-
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_END);
-      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getClaimedEntryEnd()));
+      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      try {
+        queueState.getClaimedEntryList().encode(new BinaryEncoder(bos));
+      } catch (IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                     getLogMessage("Exception while serializing CLAIMED_ENTRY_LIST"), e);
+      }
+      writeQueueStateStore.addColumnValue(bos.toByteArray());
 
       super.saveDequeueState(consumer, config, queueState, readPointer);
+    }
+
+    @Override
+    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
+      writeQueueStateStore.addColumnValue(new byte[0]);
+      super.deleteDequeueState(consumer);
     }
 
     /**
@@ -1448,11 +2554,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If claimed entries exist, return them. This can happen when the queue cache is lost due to consumer
       // crash or other reasons
-      long claimedEntryIdBegin = queueState.getClaimedEntryBegin();
-      long claimedEntryIdEnd = queueState.getClaimedEntryEnd();
-      if(claimedEntryIdBegin != INVALID_ENTRY_ID && claimedEntryIdEnd != INVALID_ENTRY_ID &&
-        claimedEntryIdEnd >= claimedEntryIdBegin) {
-        for(long i = claimedEntryIdBegin; i <= claimedEntryIdEnd; ++i) {
+      ClaimedEntry claimedEntry = queueState.getClaimedEntryList().getClaimedEntry();
+      if(claimedEntry.isValid()) {
+        for(long i = claimedEntry.getBegin(); i <= claimedEntry.getEnd(); ++i) {
           newEntryIds.add(i);
         }
         return newEntryIds;
@@ -1497,20 +2601,76 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // happen atomically. HBase doesn't support atomic increment and put.
         // Also, for performance reasons we have moved the write to method saveDequeueEntryState where
         // all writes for a dequeue happen
-        queueState.setClaimedEntryBegin(startEntryId);
-        queueState.setClaimedEntryEnd(endEntryId);
+        queueState.getClaimedEntryList().add(startEntryId, endEntryId);
 
         final int cacheSize = (int)(endEntryId - startEntryId + 1);
 
         // Determine which entries  need to be read from storage based on partition type
         for(int id = 0; id < cacheSize; ++id) {
           final long currentEntryId = startEntryId + id;
-          if(partitioner.shouldEmit(consumer, currentEntryId)) {
+          // TODO: No need for partitioner in FIFO
+          if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId) &&
+            queueState.getReconfigPartitionersList().
+              shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId)
+            ) {
             newEntryIds.add(currentEntryId);
           }
         }
       }
       return newEntryIds;
+    }
+
+    @Override
+    public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config, final long groupId, final int currentConsumerCount, final int newConsumerCount, ReadPointer readPointer) throws OperationException {
+      if(newConsumerCount >= currentConsumerCount) {
+        DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+        for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
+          StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
+          QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
+          consumer.setQueueState(queueState);
+          // TODO: save queue states for all consumers in a single call
+          saveDequeueState(consumer, config, queueState, readPointer);
+        }
+        return;
+      }
+
+      if(currentConsumers.size() != currentConsumerCount) {
+        throw new OperationException(
+          StatusCode.INTERNAL_ERROR,
+          getLogMessage(String.format("Size of passed in consumer list (%d) is not equal to currentConsumerCount (%d)", currentConsumers.size(), currentConsumerCount)));
+      }
+
+      if(currentConsumers.isEmpty()) {
+        // Nothing to do
+        return;
+      }
+
+      PriorityQueue<ClaimedEntryList> priorityQueue = new PriorityQueue<ClaimedEntryList>(currentConsumerCount);
+      for(int i = 0; i < newConsumerCount; ++i) {
+        ClaimedEntryList claimedEntryList = queueStates.get(i).getClaimedEntryList();
+        priorityQueue.add(claimedEntryList);
+      }
+
+      // Transfer the claimed entries of to be removed consumers to other consumers
+      for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
+        ClaimedEntryList claimedEntryList = queueStates.get(i).getClaimedEntryList();
+        ClaimedEntryList transferEntryList = priorityQueue.poll();
+        transferEntryList.addAll(claimedEntryList);
+        priorityQueue.add(transferEntryList);
+      }
+
+      // Save dequeue state of consumers that won't be removed
+      for(int i = 0; i < newConsumerCount; ++i) {
+        // TODO: save queue states for all consumers in a single call
+        saveDequeueState(currentConsumers.get(i), config, queueStates.get(i), readPointer);
+      }
+
+      // Delete the state of removed consumers
+      for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
+        // TODO: save and delete queue states for all consumers in a single call
+        deleteDequeueState(currentConsumers.get(i));
+      }
+      return;
     }
   }
 }
