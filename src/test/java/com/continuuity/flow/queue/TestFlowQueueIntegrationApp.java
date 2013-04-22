@@ -36,9 +36,9 @@ import java.util.concurrent.CountDownLatch;
  * This is a sample word count app that is used in testing in
  * many places.
  */
-public class TestQueuePartitionApp implements Application {
+public class TestFlowQueueIntegrationApp implements Application {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TestQueuePartitionApp.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TestFlowQueueIntegrationApp.class);
   private static final String HASH_KEY1 = "hkey1";
   private static final String HASH_KEY2 = "hkey2";
 
@@ -51,7 +51,7 @@ public class TestQueuePartitionApp implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("TestQueuePartitionApp")
+      .setName("TestFlowQueueIntegrationApp")
       .setDescription("Application for testing queue partitioning")
       .withStreams().add(new Stream("s1"))
       .noDataSet()
@@ -66,10 +66,10 @@ public class TestQueuePartitionApp implements Application {
         .setName("QueuePartitionFlow")
         .setDescription("Flow for testing queue partitioning")
         .withFlowlets().add(new StreamReader())
-                       .add(new Flowlet1())
-                       .add(new Flowlet2())
-        .connect().from("StreamReader").to("Flowlet1")
-        .from("StreamReader").to("Flowlet2")
+                       .add(new QueuePartitionTestFlowlet())
+                       .add(new QueueBatchTestFlowlet())
+        .connect().from("StreamReader").to("QueuePartitionTestFlowlet")
+        .from("StreamReader").to("QueueBatchTestFlowlet")
         .fromStream("s1").to("StreamReader")
         .build();
     }
@@ -94,7 +94,7 @@ public class TestQueuePartitionApp implements Application {
     }
   }
 
-  public static class Flowlet1 extends AbstractFlowlet implements Callback {
+  public static class QueuePartitionTestFlowlet extends AbstractFlowlet implements Callback {
     public static final int NUM_INSTANCES = 3;
     private final int id = new Random(System.currentTimeMillis()).nextInt(100);
 
@@ -111,7 +111,7 @@ public class TestQueuePartitionApp implements Application {
     private CountDownLatch latch = new CountDownLatch(1);
 
     @SuppressWarnings("unchecked")
-    public Flowlet1() {
+    public QueuePartitionTestFlowlet() {
       expectedRoundRobinLists = new List[NUM_INSTANCES];
       expectedRoundRobinLists[0] = ImmutableList.of(0, 3, 6, 9, 12, 15, 18);
       expectedRoundRobinLists[1] = ImmutableList.of(1, 4, 7, 10, 13, 16, 19);
@@ -202,7 +202,7 @@ public class TestQueuePartitionApp implements Application {
     }
   }
 
-  public static class Flowlet2 extends AbstractFlowlet implements Callback {
+  public static class QueueBatchTestFlowlet extends AbstractFlowlet implements Callback {
     public static final int NUM_INSTANCES = 5;
     private int prev = -1;
     private int id = new Random(System.currentTimeMillis()).nextInt(100);
