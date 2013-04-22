@@ -23,7 +23,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1161,6 +1160,12 @@ public abstract class TestOVCTable {
 
     val = this.table.incrementAtomicDirtily(row,COL,10L);
     assertEquals(12L, val);
+
+    // -- this will fail right now in some implementations. Will be addressed in ENG-2170
+    // this.table.deleteDirty(new byte[][] { row } );
+    //
+    // val = this.table.incrementAtomicDirtily(row,COL,10L);
+    // assertEquals(10L, val);
   }
 
   @Test

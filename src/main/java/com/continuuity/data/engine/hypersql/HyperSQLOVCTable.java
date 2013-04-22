@@ -344,7 +344,7 @@ implements OrderedVersionedColumnarTable {
       ps = this.connection.prepareStatement(
              "SELECT version, kvtype, id, value " +
              "FROM " + this.quotedTableName + " " +
-             "WHERE rowkey = ? AND column = ? AND kvtype = 3 " +
+             "WHERE rowkey = ? AND column = ? " +
              "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
