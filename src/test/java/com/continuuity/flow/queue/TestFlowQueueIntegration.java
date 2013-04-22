@@ -38,7 +38,7 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
       }
 
       flowletMetrics1.waitForProcessed(MAX_ITERATIONS * 3, 10, TimeUnit.SECONDS);
-      flowletMetrics2.waitForProcessed(MAX_ITERATIONS, 10, TimeUnit.SECONDS);
+      flowletMetrics2.waitForProcessed(5, 10, TimeUnit.SECONDS);
     } finally {
       applicationManager.stopAll();
       clearAppFabric();

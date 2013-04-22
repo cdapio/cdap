@@ -6,6 +6,7 @@ package com.continuuity.flow.queue;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -22,6 +23,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +34,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-/**
- * This is a sample word count app that is used in testing in
- * many places.
- */
 public class TestFlowQueueIntegrationApp implements Application {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestFlowQueueIntegrationApp.class);
@@ -209,12 +207,17 @@ public class TestFlowQueueIntegrationApp implements Application {
 
     @ProcessInput("int")
     @HashPartition(HASH_KEY1)
-    public void foo(Integer i) {
-      LOG.warn("HID:" + id + " value=" + i);
-      if(prev != -1) {
-        Assert.assertEquals(prev + NUM_INSTANCES, (int) i);
+    @Batch(100)
+    public void foo(Iterator<Integer> it) {
+      LOG.warn("HID:" + id + " values=" + Iterators.toString(it));
+      while(it.hasNext()) {
+        int i = it.next();
+        LOG.warn("*********HID:" + id + " value=" + i);
+        if(prev != -1) {
+          Assert.assertEquals(prev + NUM_INSTANCES, (int) i);
+        }
+        prev = i;
       }
-      prev = i;
     }
 
     @Override
