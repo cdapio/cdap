@@ -280,7 +280,7 @@ public class QueueBenchmark3 extends OpexBenchmark {
     }; // new AgentGroup[]
   } // getAgentGroups()
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--bench";
     args1[args.length + 1] = QueueBenchmark3.class.getName();

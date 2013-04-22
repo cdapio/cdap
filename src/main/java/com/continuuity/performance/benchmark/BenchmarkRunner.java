@@ -9,28 +9,28 @@ import java.util.Map;
 
 public class BenchmarkRunner {
 
-  private static final Logger Log = LoggerFactory.getLogger(BenchmarkRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
 
   String benchName = null;
   Benchmark benchmark = null;
   CConfiguration config = CConfiguration.create();
 
   static void error(String message) {
-    Log.error("Error: " + message);
+    LOG.error("Error: " + message);
   }
 
   void usage() {
-    Log.info("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
+    LOG.info("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
     if (benchmark != null) {
       Map<String, String> usage = benchmark.usage();
       if (usage != null && !usage.isEmpty()) {
-        Log.info("Specific options for benchmark " + benchName + ":");
+        LOG.info("Specific options for benchmark " + benchName + ":");
         for (String option : usage.keySet()) {
-          Log.info(String.format("  %-20s %s", option, usage.get(option)));
+          LOG.info(String.format("  %-20s %s", option, usage.get(option)));
         }
       }
     } else {
-      Log.info("Use --help --bench <name> for benchmark specific " + "options.");
+      LOG.info("Use --help --bench <name> for benchmark specific " + "options.");
     }
   }
 
@@ -102,7 +102,7 @@ public class BenchmarkRunner {
             .getName() + " must be at leat one but is " + numAgents + ".");
       }
       int runsPerAgent = group.getTotalRuns() / numAgents;
-      Log.info("Running " + numAgents + " " + group.getName() + " agents (" +
+      LOG.info("Running " + numAgents + " " + group.getName() + " agents (" +
                  (runsPerAgent > 0 ? Integer.toString(runsPerAgent) : "unlimited") + " runs per agent, " +
                  (group.getSecondsToRun() > 0 ? Integer.toString(group.getSecondsToRun()) + " seconds" : "no") + " " +
                  "time limit, " +
@@ -161,7 +161,7 @@ public class BenchmarkRunner {
       benchmark.shutdown();
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     // create a runner
     BenchmarkRunner runner = new BenchmarkRunner();
 
@@ -171,20 +171,16 @@ public class BenchmarkRunner {
 
       // run it
       if (ok) runner.run();
-
     } catch (Exception e) {
       error(e.getMessage());
-
+      throw e;
     } finally {
-
       // shut it down
       try {
         runner.shutdown();
       } catch (Exception e) {
         error(e.getMessage());
-
-        // returning -1 in case of exception
-        System.exit(-1);
+        throw e;
       }
     }
   }

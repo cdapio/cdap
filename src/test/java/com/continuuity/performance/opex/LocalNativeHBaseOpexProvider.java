@@ -11,7 +11,7 @@ public class LocalNativeHBaseOpexProvider extends LocalHBaseOpexProvider {
     return true;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--opex";
     args1[args.length + 1] = LocalNativeHBaseOpexProvider.class.getName();
