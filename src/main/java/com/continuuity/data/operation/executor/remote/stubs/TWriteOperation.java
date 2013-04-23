@@ -35,6 +35,8 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
   private static final org.apache.thrift.protocol.TField COMPARE_AND_SWAP_FIELD_DESC = new org.apache.thrift.protocol.TField("compareAndSwap", org.apache.thrift.protocol.TType.STRUCT, (short)4);
   private static final org.apache.thrift.protocol.TField QUEUE_ENQUEUE_FIELD_DESC = new org.apache.thrift.protocol.TField("queueEnqueue", org.apache.thrift.protocol.TType.STRUCT, (short)5);
   private static final org.apache.thrift.protocol.TField QUEUE_ACK_FIELD_DESC = new org.apache.thrift.protocol.TField("queueAck", org.apache.thrift.protocol.TType.STRUCT, (short)6);
+  private static final org.apache.thrift.protocol.TField ASYNC_WRITE_FIELD_DESC = new org.apache.thrift.protocol.TField("asyncWrite", org.apache.thrift.protocol.TType.STRUCT, (short)7);
+  private static final org.apache.thrift.protocol.TField ASYNC_INCREMENT_FIELD_DESC = new org.apache.thrift.protocol.TField("asyncIncrement", org.apache.thrift.protocol.TType.STRUCT, (short)8);
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -43,7 +45,9 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
     INCREMENT((short)3, "increment"),
     COMPARE_AND_SWAP((short)4, "compareAndSwap"),
     QUEUE_ENQUEUE((short)5, "queueEnqueue"),
-    QUEUE_ACK((short)6, "queueAck");
+    QUEUE_ACK((short)6, "queueAck"),
+    ASYNC_WRITE((short)7, "asyncWrite"),
+    ASYNC_INCREMENT((short)8, "asyncIncrement");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -70,6 +74,10 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
           return QUEUE_ENQUEUE;
         case 6: // QUEUE_ACK
           return QUEUE_ACK;
+        case 7: // ASYNC_WRITE
+          return ASYNC_WRITE;
+        case 8: // ASYNC_INCREMENT
+          return ASYNC_INCREMENT;
         default:
           return null;
       }
@@ -124,6 +132,10 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueEnqueue.class)));
     tmpMap.put(_Fields.QUEUE_ACK, new org.apache.thrift.meta_data.FieldMetaData("queueAck", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueAck.class)));
+    tmpMap.put(_Fields.ASYNC_WRITE, new org.apache.thrift.meta_data.FieldMetaData("asyncWrite", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TAsyncWrite.class)));
+    tmpMap.put(_Fields.ASYNC_INCREMENT, new org.apache.thrift.meta_data.FieldMetaData("asyncIncrement", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TAsyncIncrement.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TWriteOperation.class, metaDataMap);
   }
@@ -179,6 +191,18 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
     return x;
   }
 
+  public static TWriteOperation asyncWrite(TAsyncWrite value) {
+    TWriteOperation x = new TWriteOperation();
+    x.setAsyncWrite(value);
+    return x;
+  }
+
+  public static TWriteOperation asyncIncrement(TAsyncIncrement value) {
+    TWriteOperation x = new TWriteOperation();
+    x.setAsyncIncrement(value);
+    return x;
+  }
+
 
   @Override
   protected void checkType(_Fields setField, Object value) throws ClassCastException {
@@ -213,6 +237,16 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
           break;
         }
         throw new ClassCastException("Was expecting value of type TQueueAck for field 'queueAck', but got " + value.getClass().getSimpleName());
+      case ASYNC_WRITE:
+        if (value instanceof TAsyncWrite) {
+          break;
+        }
+        throw new ClassCastException("Was expecting value of type TAsyncWrite for field 'asyncWrite', but got " + value.getClass().getSimpleName());
+      case ASYNC_INCREMENT:
+        if (value instanceof TAsyncIncrement) {
+          break;
+        }
+        throw new ClassCastException("Was expecting value of type TAsyncIncrement for field 'asyncIncrement', but got " + value.getClass().getSimpleName());
       default:
         throw new IllegalArgumentException("Unknown field id " + setField);
     }
@@ -283,6 +317,26 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             return null;
           }
+        case ASYNC_WRITE:
+          if (field.type == ASYNC_WRITE_FIELD_DESC.type) {
+            TAsyncWrite asyncWrite;
+            asyncWrite = new TAsyncWrite();
+            asyncWrite.read(iprot);
+            return asyncWrite;
+          } else {
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            return null;
+          }
+        case ASYNC_INCREMENT:
+          if (field.type == ASYNC_INCREMENT_FIELD_DESC.type) {
+            TAsyncIncrement asyncIncrement;
+            asyncIncrement = new TAsyncIncrement();
+            asyncIncrement.read(iprot);
+            return asyncIncrement;
+          } else {
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            return null;
+          }
         default:
           throw new IllegalStateException("setField wasn't null, but didn't match any of the case statements!");
       }
@@ -317,6 +371,14 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
       case QUEUE_ACK:
         TQueueAck queueAck = (TQueueAck)value_;
         queueAck.write(oprot);
+        return;
+      case ASYNC_WRITE:
+        TAsyncWrite asyncWrite = (TAsyncWrite)value_;
+        asyncWrite.write(oprot);
+        return;
+      case ASYNC_INCREMENT:
+        TAsyncIncrement asyncIncrement = (TAsyncIncrement)value_;
+        asyncIncrement.write(oprot);
         return;
       default:
         throw new IllegalStateException("Cannot write union with unknown field " + setField_);
@@ -358,6 +420,16 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
           queueAck = new TQueueAck();
           queueAck.read(iprot);
           return queueAck;
+        case ASYNC_WRITE:
+          TAsyncWrite asyncWrite;
+          asyncWrite = new TAsyncWrite();
+          asyncWrite.read(iprot);
+          return asyncWrite;
+        case ASYNC_INCREMENT:
+          TAsyncIncrement asyncIncrement;
+          asyncIncrement = new TAsyncIncrement();
+          asyncIncrement.read(iprot);
+          return asyncIncrement;
         default:
           throw new IllegalStateException("setField wasn't null, but didn't match any of the case statements!");
       }
@@ -393,6 +465,14 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
         TQueueAck queueAck = (TQueueAck)value_;
         queueAck.write(oprot);
         return;
+      case ASYNC_WRITE:
+        TAsyncWrite asyncWrite = (TAsyncWrite)value_;
+        asyncWrite.write(oprot);
+        return;
+      case ASYNC_INCREMENT:
+        TAsyncIncrement asyncIncrement = (TAsyncIncrement)value_;
+        asyncIncrement.write(oprot);
+        return;
       default:
         throw new IllegalStateException("Cannot write union with unknown field " + setField_);
     }
@@ -413,6 +493,10 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
         return QUEUE_ENQUEUE_FIELD_DESC;
       case QUEUE_ACK:
         return QUEUE_ACK_FIELD_DESC;
+      case ASYNC_WRITE:
+        return ASYNC_WRITE_FIELD_DESC;
+      case ASYNC_INCREMENT:
+        return ASYNC_INCREMENT_FIELD_DESC;
       default:
         throw new IllegalArgumentException("Unknown field id " + setField);
     }
@@ -517,6 +601,34 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
     value_ = value;
   }
 
+  public TAsyncWrite getAsyncWrite() {
+    if (getSetField() == _Fields.ASYNC_WRITE) {
+      return (TAsyncWrite)getFieldValue();
+    } else {
+      throw new RuntimeException("Cannot get field 'asyncWrite' because union is currently set to " + getFieldDesc(getSetField()).name);
+    }
+  }
+
+  public void setAsyncWrite(TAsyncWrite value) {
+    if (value == null) throw new NullPointerException();
+    setField_ = _Fields.ASYNC_WRITE;
+    value_ = value;
+  }
+
+  public TAsyncIncrement getAsyncIncrement() {
+    if (getSetField() == _Fields.ASYNC_INCREMENT) {
+      return (TAsyncIncrement)getFieldValue();
+    } else {
+      throw new RuntimeException("Cannot get field 'asyncIncrement' because union is currently set to " + getFieldDesc(getSetField()).name);
+    }
+  }
+
+  public void setAsyncIncrement(TAsyncIncrement value) {
+    if (value == null) throw new NullPointerException();
+    setField_ = _Fields.ASYNC_INCREMENT;
+    value_ = value;
+  }
+
   public boolean isSetWrite() {
     return setField_ == _Fields.WRITE;
   }
@@ -544,6 +656,16 @@ public class TWriteOperation extends org.apache.thrift.TUnion<TWriteOperation, T
 
   public boolean isSetQueueAck() {
     return setField_ == _Fields.QUEUE_ACK;
+  }
+
+
+  public boolean isSetAsyncWrite() {
+    return setField_ == _Fields.ASYNC_WRITE;
+  }
+
+
+  public boolean isSetAsyncIncrement() {
+    return setField_ == _Fields.ASYNC_INCREMENT;
   }
 
 

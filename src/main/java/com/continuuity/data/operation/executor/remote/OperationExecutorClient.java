@@ -5,6 +5,8 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.AsyncIncrement;
+import com.continuuity.data.operation.AsyncWrite;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;

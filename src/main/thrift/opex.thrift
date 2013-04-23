@@ -44,6 +44,15 @@ struct TWrite {
   6: i64 id,
 }
 
+struct TAsyncWrite {
+  1: optional string table,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: list<binary> values,
+  6: i64 id,
+}
+
 struct TDelete {
   1: optional string table,
   2: optional string metric,
@@ -53,6 +62,15 @@ struct TDelete {
 }
 
 struct TIncrement {
+  1: optional string table,
+  2: optional string metric,
+  3: binary key,
+  4: list<binary> columns,
+  5: list<i64> amounts,
+  6: i64 id,
+}
+
+struct TAsyncIncrement {
   1: optional string table,
   2: optional string metric,
   3: binary key,
@@ -183,6 +201,8 @@ union TWriteOperation {
   4: TCompareAndSwap compareAndSwap,
   5: TQueueEnqueue queueEnqueue,
   6: TQueueAck queueAck,
+  7: TAsyncWrite asyncWrite,
+  8: TAsyncIncrement asyncIncrement,
 }
 
 typedef list<TWriteOperation> TWriteBatch

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -1203,7 +1204,7 @@ public abstract class TestOVCTable {
     atomicIncrementThread2.join();
     atomicIncrementThread1.join();
 
-    long val  = this.table.incrementAtomicDirtily(row,COL,1L);
+    long val  = this.table.incrementAtomicDirtily(row, COL, 1L);
     assertEquals(201,val);
   }
 
@@ -1224,5 +1225,199 @@ public abstract class TestOVCTable {
     Map<byte[], Long> value = this.table.increment(row, new byte[][]{ c1 }, new long[]{ 4L }, outside,
                                                    outside.getMaximum());
     assertEquals(new Long(4L), value.get(c1));
+  }
+
+  @Test
+  public void testAsyncIncrementsSupportReadAndWritePointers()
+    throws OperationException {
+    // NOTE: this is a cpoy of test for non-async version
+
+    byte [] row = Bytes.toBytes("testIncrementsSupportReadAndWritePointers");
+
+    // increment with write pointers
+
+    assertEquals(1L, asyncIncAndPersist(row, COL, 1L, RP_MAX, 1L));
+
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(1L)).getValue()));
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(2L)).getValue()));
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(4L)).getValue()));
+
+    assertEquals(3L, asyncIncAndPersist(row, COL, 2L, RP_MAX, 3L));
+
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(1L)).getValue()));
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(2L)).getValue()));
+    assertEquals(3L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+    assertEquals(3L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(4L)).getValue()));
+
+    // test an increment with a read pointer
+
+    assertEquals(2L, asyncIncAndPersist(row, COL, 1L,
+                                        new MemoryReadPointer(1L), 2L));
+
+    // read it back with read pointer reads
+
+    assertEquals(3L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
+    assertEquals(2L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(2L)).getValue()));
+    assertEquals(1L, Bytes.toLong(
+      this.table.get(row, COL, new MemoryReadPointer(1L)).getValue()));
+
+    // read it back with increment=0
+
+    assertEquals(1L, asyncIncAndPersist(row, COL, 0L,
+                                        new MemoryReadPointer(1L), 1L));
+    assertEquals(2L, asyncIncAndPersist(row, COL, 0L,
+                                        new MemoryReadPointer(2L), 2L));
+    assertEquals(3L, asyncIncAndPersist(row, COL, 0L,
+                                        new MemoryReadPointer(3L), 3L));
+  }
+
+  @Test
+  public void testAsyncIncrementIgnoresInProgressXactions() throws OperationException {
+    // NOTE: this is a cpoy of test for non-async version
+
+    final byte[] row = "tIIIPX".getBytes();
+    final byte[] c1 = { 'c', '1' };
+    final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
+
+    // execute a write in a new xaction
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    this.table.put(row, c1, tx.getWriteVersion(), one);
+    // read from outside xaction -> not visible
+    ReadPointer outside = new MemoryReadPointer(2, 2, Collections.singleton(1L));
+    OperationResult<byte[]> result = this.table.get(row, c1, outside);
+    assertTrue(result.isEmpty() || result.getValue() == null);
+    // increment outside xaction -> increments pre-xaction value
+    Map<byte[], Long> value = asyncIncAndPersist(row, new byte[][]{c1}, new long[]{4L}, outside,
+                                                 outside.getMaximum());
+    assertEquals(new Long(4L), value.get(c1));
+  }
+
+
+  @Test
+  public void testSameVersionOverwritesExistingWithAsync() throws OperationException {
+    // NOTE: this is a cpoy of test for non-async version
+
+    byte [] row = Bytes.toBytes("testSVOEKey");
+
+    // Write value = 5 @ ts = 5
+    asyncPutAndPersist(row, COL, 5L, Bytes.toBytes(5L));
+
+    // Read value = 5 @ tsMax
+    assertEquals(5L,
+                 Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+
+    // Write value = 10 @ ts = 10
+    asyncPutAndPersist(row, COL, 10L, Bytes.toBytes(10L));
+
+    // Read value = 10 @ tsMax
+    assertEquals(10L,
+                 Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+
+    // Write value = 11 @ ts = 10
+    asyncPutAndPersist(row, COL, 10L, Bytes.toBytes(11L));
+
+    // Read value = 11 @ tsMax
+    assertEquals(11L,
+                 Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+
+    // Read value = 11 @ ts <= 10
+    assertEquals(11L, Bytes.toLong(this.table.get(row, COL,
+                                                  new MemoryReadPointer(10L)).getValue()));
+
+    // Read value = 5 @ ts <= 9
+    assertEquals(5L, Bytes.toLong(this.table.get(row, COL,
+                                                 new MemoryReadPointer(9L)).getValue()));
+
+    // Increment + 1 @ ts = 9 to ts=11
+    assertEquals(6L, this.table.increment(row, COL, 1L,
+                                          new MemoryReadPointer(9L), 11L));
+
+    // Read value = 6 @ tsMax
+    assertEquals(6L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+
+    // CompareAndSwap 6 to 15 @ ts = 11
+    this.table.compareAndSwap(row, COL, Bytes.toBytes(6L),
+                              Bytes.toBytes(15L), new MemoryReadPointer(11L), 12L);
+
+    // Increment + 1 @ ts = 12
+    assertEquals(16L, asyncIncAndPersist(row, COL, 1L,
+                                         new MemoryReadPointer(12L), 13L));
+
+    // Read value = 16 @ tsMax
+    assertEquals(16L,
+                 Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+
+    // Read value = 5 @ ts <= 9
+    assertEquals(5L, Bytes.toLong(this.table.get(row, COL,
+                                                 new MemoryReadPointer(9L)).getValue()));
+  }
+
+  @Test
+  public void testSimpleReadWriteWithAsync() throws OperationException {
+    // NOTE: this is a cpoy of test for non-async version
+
+    byte [] row = Bytes.toBytes("testSimpleReadWrite");
+
+    asyncPutAndPersist(row, COL, 1L, row);
+
+    assertEquals(Bytes.toString(row),
+                 Bytes.toString(this.table.get(row, COL, RP_MAX).getValue()));
+    assertEquals(Bytes.toString(row), Bytes.toString(
+      this.table.get(row, COL, new MemoryReadPointer(1L)).getValue()));
+
+  }
+
+  private long asyncIncAndPersist(byte[] row, byte[] column, long amount,
+                                  ReadPointer readPointer, long writeVersion)
+    throws OperationException {
+    Map<byte[], Long> counts =
+      asyncIncAndPersist(row, new byte[][]{column}, new long[]{amount}, readPointer, writeVersion);
+    Long result = counts.get(column);
+    return result == null ? 0 : result;
+  }
+
+  private Map<byte[], Long> asyncIncAndPersist(byte[] row, byte[][] columns, long[] amounts,
+                                               final ReadPointer readPointer, final long writeVersion)
+    throws OperationException {
+    this.table.asyncIncrement(row, columns, amounts, readPointer, writeVersion);
+    // persisting async operation
+    this.table.persistAllFor(writeVersion);
+    // advancing readPointer at least up to writeVersion so that we can read whatever we just have written
+    ReadPointer readPointer4ReadingResult = new MemoryReadPointer(writeVersion) {
+      @Override
+      public boolean isVisible(long txid) {
+        return txid == writeVersion || readPointer.isVisible(txid);
+      }
+    };
+    OperationResult<Map<byte[], byte[]>> res = this.table.get(row, columns, readPointer4ReadingResult);
+    Map<byte[], Long> counts = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
+    if (res.isEmpty()) {
+      return counts;
+    }
+    for (Map.Entry<byte[], byte[]> colVal : res.getValue().entrySet()) {
+      counts.put(colVal.getKey(), Bytes.toLong(colVal.getValue()));
+    }
+    return counts;
+  }
+
+  private void asyncPutAndPersist(byte [] row, byte [] column, long version, byte [] value) throws OperationException {
+    asyncPutAndPersist(row, new byte[][]{column}, version, new byte[][]{value});
+  }
+
+  private void asyncPutAndPersist(byte [] row, byte [][] columns, long version, byte[][] values)
+    throws OperationException {
+    table.asyncPut(row, columns, version, values);
+    table.persistAllFor(version);
   }
 }

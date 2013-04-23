@@ -75,6 +75,10 @@ public interface RowSet extends Iterable<RowSet.Row> {
     public String toString() {
       return (this.table == null ? "<default>" : this.table) + ":" + Arrays.toString(this.row);
     }
+
+    public String getTable() {
+      return table;
+    }
   }
 
   /**

@@ -7,6 +7,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 
+import java.util.Collection;
 import java.util.List;
 
 
@@ -126,6 +127,14 @@ public interface TransactionOracle {
    * @return A read pointer that includes all committed transactions.
    */
   public ReadPointer getReadPointer();
+
+  /**
+   * Get all tables that given transaction has written data to.
+   * @param tx the transaction
+   * @return collection of table names
+   * @throws OmidTransactionException
+   */
+  public Collection<String> getTablesWrittenTo(Transaction tx) throws OmidTransactionException;
 
   /**
    * Defines a dirty read pointer. This completely bypasses transactions and will include dirty and
