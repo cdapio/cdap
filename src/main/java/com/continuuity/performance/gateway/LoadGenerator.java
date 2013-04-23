@@ -173,7 +173,7 @@ public class LoadGenerator extends SimpleBenchmark {
   } // getAgentGroups()
 
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     args = Arrays.copyOf(args, args.length + 2);
     args[args.length - 2] = "--bench";
     args[args.length - 1] = LoadGenerator.class.getName();
