@@ -428,6 +428,10 @@ public class RestHandler extends NettyRestHandler {
           QueueDequeue dequeue = new QueueDequeue(queueURI.getBytes(), queueConsumer, queueConfig);
           DequeueResult result;
           try {
+            // configure queue, we'll end up configuring queue every time a dequeue is called since we don't have a way
+            // of saying whether the queue is already configured or not
+            this.collector.getExecutor()
+              .execute(operationContext, null, new QueueAdmin.QueueConfigure(queueURI.getBytes(), queueConsumer));
             result = this.collector.getExecutor().
                 execute(operationContext, dequeue);
           } catch (OperationException e) {

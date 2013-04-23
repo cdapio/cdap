@@ -1,7 +1,6 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -11,6 +10,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -448,6 +448,7 @@ public class DatasetRestAccessorTest {
     long groupId = executor.execute(context, new QueueAdmin.GetGroupID(queue.getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, groupId, 1,
                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
+    executor.execute(context, null, new QueueAdmin.QueueConfigure(queue.getBytes(), consumer));
     DequeueResult result = executor.execute(context,
                                             new QueueDequeue(queue.getBytes(), consumer, consumer.getQueueConfig()));
     return !result.isEmpty();
