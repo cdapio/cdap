@@ -380,6 +380,14 @@ public class RestHandler extends NettyRestHandler {
           try {
             id = this.collector.getExecutor().
                 execute(operationContext, op);
+            // Configure queue. A consumer is required to call getGroupId before dequeue-ing, we can configure the queue
+            // during the getGroupId call since getGroupId is called once per consumer.
+            // Also, if any changes are made to queue config or queue consumer below then same change needs to be
+            // made in dequeue too.
+            QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
+            QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
+            this.collector.getExecutor()
+              .execute(operationContext, null, new QueueAdmin.QueueConfigure(queueURI.getBytes(), queueConsumer));
           } catch (Exception e) {
             LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
             helper.finish(Error);
@@ -422,6 +430,8 @@ public class RestHandler extends NettyRestHandler {
           String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
                                      .toString();
           // 0th instance of group 'id' of size 1
+          // NOTE: the queue is configured during getGroupId call, if any changes are made to the queue config
+          // or queue consumer below then same change needs to be made for configure call too.
           QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
           QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
           // singleEntry = true means we must ack before we can see the next entry
