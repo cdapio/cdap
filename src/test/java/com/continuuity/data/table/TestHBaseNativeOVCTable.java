@@ -59,10 +59,4 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
   @Ignore
   public void testIncrementIgnoresInProgressXactions() {}
 
-  /**
-   * Not working because native hbase ignores excludes in read pointer
-   */
-  @Override @Test
-  @Ignore
-  public void testAsyncIncrementIgnoresInProgressXactions() {}
 }
