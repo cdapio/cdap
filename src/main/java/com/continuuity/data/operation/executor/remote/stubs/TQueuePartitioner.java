@@ -14,8 +14,7 @@ import org.apache.thrift.TEnum;
 public enum TQueuePartitioner implements org.apache.thrift.TEnum {
   FIFO(0),
   HASH(1),
-  ROBIN(2),
-  HASH_ON_VALUE(3);
+  ROBIN(2);
 
   private final int value;
 
@@ -42,8 +41,6 @@ public enum TQueuePartitioner implements org.apache.thrift.TEnum {
         return HASH;
       case 2:
         return ROBIN;
-      case 3:
-        return HASH_ON_VALUE;
       default:
         return null;
     }

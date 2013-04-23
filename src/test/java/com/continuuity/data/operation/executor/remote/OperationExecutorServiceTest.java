@@ -529,7 +529,7 @@ public abstract class OperationExecutorServiceTest extends
       if (next == prev) continue;
       byte[] value = Integer.toString(next).getBytes();
       QueueEntry entry =new QueueEntry(value);
-      entry.addPartitioningKey(HASH_KEY, next);
+      entry.addHashKey(HASH_KEY, next);
       QueueEnqueue enqueue = new QueueEnqueue(q, entry);
       remote.commit(context, enqueue);
       remote.commit(context, enqueue);

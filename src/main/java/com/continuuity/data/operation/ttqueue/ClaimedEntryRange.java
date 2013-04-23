@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 
@@ -9,7 +10,7 @@ import java.io.IOException;
  * This represents a range of queue entry ids that have been claimed by a queue consumer.
  * Multiple of these can be persisted with the consumer state.
  */
-public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
+class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
 
   public static final long INVALID_ENTRY_ID = -1L;
 
@@ -24,12 +25,11 @@ public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
    * @param end the end of the range, must greater or equal to begin
    */
   public ClaimedEntryRange(long begin, long end) {
-    if (begin > end) {
-      throw new IllegalArgumentException(String.format("begin (%d) is greater than end (%d)", begin, end));
-    } else if((begin == INVALID_ENTRY_ID || end == INVALID_ENTRY_ID) && begin != end) {
-      // Both begin and end can be INVALID_ENTRY_ID
-      throw new IllegalArgumentException(String.format("Either begin (%d) or end (%d) is invalid", begin, end));
-    }
+    // range must begin at or before end
+    Preconditions.checkArgument(end >= begin, "begin (%d) is greater than end (%d)", begin, end);
+    // begin and end can be INVALID_ENTRY_ID only of they both are
+    Preconditions.checkArgument(begin != INVALID_ENTRY_ID && end != INVALID_ENTRY_ID || begin == end,
+      "Either begin (%d) or end (%d) is invalid", begin, end);
     this.begin = begin;
     this.end = end;
   }
@@ -98,8 +98,9 @@ public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
   }
 
   public boolean overlapsWith(ClaimedEntryRange other) {
-    return this.begin <= other.begin && this.end >= other.begin
-      || this.begin > other.begin && this.begin <= other.end;
+    // if this begin is within the other range: true
+    // if this begin is before the other range: true iff this does not end before the begin of the other
+    return this.begin <= other.end && this.end >= other.begin;
   }
 
   @Override
