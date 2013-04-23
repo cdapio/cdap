@@ -13,13 +13,13 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-class DataSetRecordReader extends RecordReader<Object, Object> {
-  private final SplitReader splitReader;
-  private final BatchReadable dataset;
+final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
+  private final SplitReader<KEY, VALUE> splitReader;
+  private final BatchReadable<KEY, VALUE> dataset;
   private final BasicMapReduceContext context;
 
-  public DataSetRecordReader(final BatchReadable dataset, final SplitReader splitReader,
-                             BasicMapReduceContext context) {
+  public DataSetRecordReader(final BatchReadable<KEY, VALUE> dataset, final SplitReader<KEY, VALUE> splitReader,
+                                  BasicMapReduceContext context) {
     this.dataset = dataset;
     this.splitReader = splitReader;
     this.context = context;
@@ -59,12 +59,12 @@ class DataSetRecordReader extends RecordReader<Object, Object> {
   }
 
   @Override
-  public Object getCurrentKey() throws IOException, InterruptedException {
+  public KEY getCurrentKey() throws IOException, InterruptedException {
     return splitReader.getCurrentKey();
   }
 
   @Override
-  public Object getCurrentValue() throws IOException, InterruptedException {
+  public VALUE getCurrentValue() throws IOException, InterruptedException {
     return splitReader.getCurrentValue();
   }
 

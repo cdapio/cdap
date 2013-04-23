@@ -10,19 +10,17 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-class DataSetRecordWriter extends RecordWriter {
-  private final BatchWritable batchWritable;
-  private final BasicMapReduceContext context;
+final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
+  private final BatchWritable<KEY, VALUE> batchWritable;
 
-  public DataSetRecordWriter(final BatchWritable batchWritable, BasicMapReduceContext context) {
+  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext context) {
     this.batchWritable = batchWritable;
-    this.context = context;
     // hack: making sure logging constext is set on the thread that accesses the runtime context
     LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
   }
 
   @Override
-  public void write(final Object key, final Object value) throws IOException {
+  public void write(final KEY key, final VALUE value) throws IOException {
     try {
       batchWritable.write(key, value);
     } catch(OperationException e) {

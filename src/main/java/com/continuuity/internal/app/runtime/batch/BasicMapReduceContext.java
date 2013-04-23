@@ -64,7 +64,7 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   }
 
   @Override
-  public <T> T getHadoopJobConf() {
+  public <T> T getHadoopJob() {
     return (T) job;
   }
 

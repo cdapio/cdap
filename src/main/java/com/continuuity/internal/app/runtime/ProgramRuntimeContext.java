@@ -64,7 +64,6 @@ public abstract class ProgramRuntimeContext {
     return runId;
   }
 
-  // TODO: duplicate code in ProcedureProgramRunner
   public void injectFields(Object injectTo) {
 
     TypeToken<?> typeToken = TypeToken.of(injectTo.getClass());

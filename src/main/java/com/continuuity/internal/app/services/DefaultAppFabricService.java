@@ -234,7 +234,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         program = store.loadProgram(programId, entityTypeToType(id));
       } catch (Throwable th) {
-        // hack: in that case the flow is mapreduce ;)
+        // TODO: hack: in that case the flow is mapreduce ;)
         id.setType(EntityType.MAPREDUCE);
         program = store.loadProgram(programId, entityTypeToType(id));
       }
@@ -265,7 +265,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
-      // hack: this might be a mapreduce job ;)
+      // TODO: hack: this might be a mapreduce job ;)
       if (runtimeInfo == null && id.getType() == EntityType.FLOW) {
         id.setType(EntityType.MAPREDUCE);
         runtimeInfo = findRuntimeInfo(id);
@@ -467,7 +467,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Preconditions.checkArgument(appSpec != null, "Not application specification found.");
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getFlowId());
     if (flowSpec == null) {
-      // this is hack for a mapreduce job ;)
+      // TODO: this is hack for a mapreduce job ;)
       return getFlowDef4MapReduce(id, appSpec.getMapReduces().get(id.getFlowId()));
     } else {
       return getFlowDef4Flow(id, flowSpec);
@@ -485,6 +485,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return flowDef;
   }
 
+  // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
   private FlowDefinitionImpl getFlowDef4MapReduce(FlowIdentifier id, MapReduceSpecification spec)
     throws UnsupportedTypeException {
     FlowSpecification flowSpec = FlowSpecification.Builder.with()

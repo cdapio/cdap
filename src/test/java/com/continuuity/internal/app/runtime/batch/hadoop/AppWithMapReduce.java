@@ -44,7 +44,7 @@ public class AppWithMapReduce implements Application {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       String inputPath = Bytes.toString(table.read(Bytes.toBytes("inputPath")));
       String outputPath = Bytes.toString(table.read(Bytes.toBytes("outputPath")));
-      WordCount.configureJob((Job) context.getHadoopJobConf(), inputPath, outputPath);
+      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class AppWithMapReduce implements Application {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      AggregateMetricsByTag.configureJob((Job) context.getHadoopJobConf());
+      AggregateMetricsByTag.configureJob((Job) context.getHadoopJob());
       context.setInput(table, table.getInput(2, Bytes.toBytes("metric"), 1, 3, Bytes.toBytes("tag1")));
     }
 

@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataSetInputFormat extends InputFormat<Object, Object> {
+public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 
   public static void setInput(Job job, DataSet dataSet) {
@@ -42,18 +42,19 @@ public class DataSetInputFormat extends InputFormat<Object, Object> {
   }
 
   @Override
-  public RecordReader<Object, Object> createRecordReader(final InputSplit split,
-                                                                final TaskAttemptContext context)
+  public RecordReader<KEY, VALUE> createRecordReader(final InputSplit split,
+                                                         final TaskAttemptContext context)
     throws IOException, InterruptedException {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
     BasicMapReduceContext mrContext = MapReduceContextAccessor.getContext(conf);
-    BatchReadable dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
-    SplitReader splitReader = dataset.createSplitReader(inputSplit.getSplit());
+    @SuppressWarnings("unchecked")
+    BatchReadable<KEY, VALUE> dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
+    SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
 
-    return new DataSetRecordReader(dataset, splitReader, mrContext);
+    return new DataSetRecordReader<KEY, VALUE>(dataset, splitReader, mrContext);
   }
 
   private DataSetSpecification getInputDataSetSpec(Configuration conf) {

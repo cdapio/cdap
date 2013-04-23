@@ -140,7 +140,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
-      // do nothing here: we stop mapreduce job in listener
+      // When job is stopped by controller doStop() method, the stopping() method of listener is also called.
+      // That is where we kill the job, so no need to do any extra job in doStop().
     }
 
     @Override

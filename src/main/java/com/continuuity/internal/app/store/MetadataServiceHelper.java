@@ -158,7 +158,8 @@ class MetadataServiceHelper {
       flow.setDatasets(new ArrayList<String>(datasets));
       toStore.put(flow.getId(), flow);
     }
-    // also treating mapreduce jobs as flows
+    // also treating mapreduce jobs as flows:
+    // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
     for (MapReduceSpecification mrSpec : spec.getMapReduces().values()) {
       Flow flow = new Flow(mrSpec.getName(), id.getId());
       flow.setName(mrSpec.getName());

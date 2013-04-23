@@ -95,7 +95,7 @@ public class InMemoryMapReduceRuntimeService implements MapReduceRuntimeService 
     DataSet outputDataset = null;
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getOutputDataset() != null) {
-
+      outputDataset = (DataSet) mapReduceContext.getOutputDataset();
     } else {
       // trying to init output dataset from spec
       String outputDataSetName = mapReduceContext.getSpecification().getOutputDataSet();

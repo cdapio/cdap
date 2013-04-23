@@ -14,7 +14,7 @@ public interface MapReduce {
   /**
    * Invoked before starting mapreduce job.
    * <p>
-   * User can access and modify job configuration via {@link MapReduceContext#getHadoopJobConf()} which returns
+   * User can access and modify job configuration via {@link MapReduceContext#getHadoopJob()} which returns
    * an instance of {@link org.apache.hadoop.mapreduce.Job}.
    * @param context job execution context
    * @throws Exception if there's an error during this method invocation
