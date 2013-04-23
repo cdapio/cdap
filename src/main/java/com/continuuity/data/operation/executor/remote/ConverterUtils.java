@@ -4,6 +4,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.data.operation.AsyncIncrement;
+import com.continuuity.data.operation.AsyncWrite;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -15,6 +17,8 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.remote.stubs.TAsyncIncrement;
+import com.continuuity.data.operation.executor.remote.stubs.TAsyncWrite;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
@@ -328,6 +332,35 @@ public class ConverterUtils {
     return write;
   }
 
+  /** wrap a Write operation */
+  TAsyncWrite wrap(AsyncWrite write) {
+    TAsyncWrite tWrite = new TAsyncWrite(
+        wrap(write.getKey()),
+        wrap(write.getColumns()),
+        wrap(write.getValues()),
+        write.getId());
+    if (write.getTable() != null) {
+      tWrite.setTable(write.getTable());
+    }
+    if (write.getMetricName() != null) {
+      tWrite.setMetric(write.getMetricName());
+    }
+    return tWrite;
+  }
+  /** unwrap a Write operation */
+  AsyncWrite unwrap(TAsyncWrite tWrite) {
+    AsyncWrite write = new AsyncWrite(
+        tWrite.getId(),
+        tWrite.isSetTable() ? tWrite.getTable() : null,
+        tWrite.getKey(),
+        unwrap(tWrite.getColumns()),
+        unwrap(tWrite.getValues()));
+    if (tWrite.isSetMetric()) {
+      write.setMetricName(tWrite.getMetric());
+    }
+    return write;
+  }
+
   /** wrap a Delete operation */
   TDelete wrap(Delete delete) {
     TDelete tDelete = new TDelete(
@@ -384,6 +417,35 @@ public class ConverterUtils {
     return increment;
   }
 
+  /** wrap an Increment operation */
+  TAsyncIncrement wrap(AsyncIncrement increment) {
+    TAsyncIncrement tIncrement = new TAsyncIncrement(
+        wrap(increment.getKey()),
+        wrap(increment.getColumns()),
+        wrap(increment.getAmounts()),
+        increment.getId());
+    if (increment.getTable() != null) {
+      tIncrement.setTable(increment.getTable());
+    }
+    if (increment.getMetricName() != null) {
+      tIncrement.setMetric(increment.getMetricName());
+    }
+    return tIncrement;
+  }
+  /** unwrap an Increment operation */
+  AsyncIncrement unwrap(TAsyncIncrement tIncrement) {
+    AsyncIncrement increment = new AsyncIncrement(
+        tIncrement.getId(),
+        tIncrement.isSetTable() ? tIncrement.getTable() : null,
+        tIncrement.getKey(),
+        unwrap(tIncrement.getColumns()),
+        unwrapAmounts(tIncrement.getAmounts()));
+    if (tIncrement.isSetMetric()) {
+      increment.setMetricName(tIncrement.getMetric());
+    }
+    return increment;
+  }
+
   /** wrap a CompareAndSwap operation */
   TCompareAndSwap wrap(CompareAndSwap compareAndSwap) {
     TCompareAndSwap tCompareAndSwap = new TCompareAndSwap(
@@ -422,10 +484,14 @@ public class ConverterUtils {
       if (Log.isTraceEnabled())
         Log.trace("  WriteOperation: " + writeOp.toString());
       TWriteOperation tWriteOp = new TWriteOperation();
-      if (writeOp instanceof Write)
+      if (writeOp instanceof AsyncWrite)
+        tWriteOp.setAsyncWrite(wrap((AsyncWrite)writeOp));
+      else if (writeOp instanceof Write)
         tWriteOp.setWrite(wrap((Write)writeOp));
       else if (writeOp instanceof Delete)
         tWriteOp.setDelet(wrap((Delete)writeOp));
+      else if (writeOp instanceof AsyncIncrement)
+        tWriteOp.setAsyncIncrement(wrap((AsyncIncrement) writeOp));
       else if (writeOp instanceof Increment)
         tWriteOp.setIncrement(wrap((Increment) writeOp));
       else if (writeOp instanceof CompareAndSwap)

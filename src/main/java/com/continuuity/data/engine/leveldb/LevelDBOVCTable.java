@@ -782,6 +782,24 @@ implements OrderedVersionedColumnarTable {
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
+  @Override
+  public void persistAllFor(long version) {
+    // No action needed: all operations are persisted synchronously
+  }
+
+  @Override
+  public void asyncPut(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
+    // this implementation doesn't support async operations. Doing sync instead
+    put(row, columns, version, values);
+  }
+
+  @Override
+  public void asyncIncrement(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
+    // this implementation doesn't support async operations. Doing sync instead
+    increment(row, columns, amounts, readPointer, writeVersion);
+  }
+
   // Private Helper Methods
 
   private void performInsert(byte [] row, byte [] column,
