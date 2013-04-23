@@ -11,8 +11,6 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
@@ -61,28 +59,4 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   protected int getNumIterations() {
     return 100;
   }
-
-  // Test Overrides
-  /**
-   * Currently not working.  Will be fixed in ENG-1840.
-   */
-  @Test @Override @Ignore
-  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
-  // Test Overrides
-  /**
-   * Currently not working.  Will be fixed in ENG-1840.
-   */
-//  @Test @Override @Ignore
-  public void testConcurrentEnqueueDequeue() throws Exception {}
-  /**
-   * Currently not working.  Will be fixed in ENG-421.
-   */
-  @Test @Override @Ignore
-  public void testUserReadOwnWritesAndWritesStableSorted() throws Exception {}
-
-  /**
-   * Currently not working.  Will be fixed in ENG-421.
-   */
-  @Test @Override @Ignore
-  public void testWriteBatchWithMultiWritesMultiEnqueuesPlusSuccessfulAck() {}
 }

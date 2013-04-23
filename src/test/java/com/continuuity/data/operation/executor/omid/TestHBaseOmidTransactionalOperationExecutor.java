@@ -1,18 +1,15 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTransactionalOperationExecutor {
 
@@ -47,13 +44,4 @@ public class  TestHBaseOmidTransactionalOperationExecutor  extends TestOmidTrans
   protected OmidTransactionalOperationExecutor getOmidExecutor() {
     return executor;
   }
-
-  // Test Overrides
-
-  /**
-   * Currently not working.  Will be fixed in ENG-420.
-   */
-  @Test @Ignore @Override
-  public void testDeletesCanBeTransacted() throws Exception {}
-
 }
