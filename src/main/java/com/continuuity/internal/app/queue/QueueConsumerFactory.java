@@ -1,16 +1,16 @@
 package com.continuuity.internal.app.queue;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.app.queue.QueueName;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 
-import java.util.Map;
-
 /**
- *
+ *  A factory interface to create QueueConsumer
  */
 public interface QueueConsumerFactory {
 
-  QueueConsumer create(int groupSize) throws OperationException;
+  /**
+   * Creates a QueueConsumer with the given groupSize, and runs a QueueConfigure with the new QueueConsumer.
+   * @param groupSize Size of the group of which the created QueueConsumer will be part of
+   * @return Created QueueConsumer
+   */
+  QueueConsumer create(int groupSize);
 }
