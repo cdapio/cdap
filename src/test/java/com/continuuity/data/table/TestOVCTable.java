@@ -1112,6 +1112,7 @@ public abstract class TestOVCTable {
 
   }
 
+  @Test
   public void testCompareAndSwapDirty() throws OperationException {
     // TODO: need to run multi-threaded to test for atomicity.
     final byte[] ROW = Bytes.toBytes(this.getClass().getCanonicalName() + ".testGetAllColumns");
