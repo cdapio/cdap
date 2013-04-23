@@ -20,6 +20,14 @@ public class BenchmarkThread extends Thread {
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
 
+    System.out.println(agentGroup.getName() + " " + agentId + " warming up.");
+
+    try {
+      agent.warmup(agentId, numAgents);
+    } catch (BenchmarkException e) {
+      e.printStackTrace();
+    }
+
     System.out.println(agentGroup.getName() + " " + agentId + " starting.");
 
     long startTime = System.currentTimeMillis();
@@ -34,15 +42,16 @@ public class BenchmarkThread extends Thread {
     for (; (totalRuns <= 0) || (runs < totalRuns); ++runs) {
       // run one iteration
       long thisTime = System.currentTimeMillis();
+      long delta;
       try {
-        agent.runOnce(runs + 1, agentId, numAgents);
+        delta = agent.runOnce(runs + 1, agentId, numAgents);
       } catch (BenchmarkException e) {
         // TODO: better way to report the error
         // TODO: add option to continue
         e.printStackTrace();
         break;
       }
-      globalMetrics.increment("runs", 1L);
+      globalMetrics.increment("runs", delta);
 
       // if necessary, sleep to throttle runs per second
       long currentTime = System.currentTimeMillis();

@@ -1,16 +1,20 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
-import com.continuuity.performance.benchmark.*;
-import com.continuuity.common.utils.Bytes;
+import com.continuuity.performance.benchmark.Agent;
+import com.continuuity.performance.benchmark.AgentGroup;
+import com.continuuity.performance.benchmark.BenchmarkException;
+import com.continuuity.performance.benchmark.BenchmarkRunner;
+import com.continuuity.performance.benchmark.SimpleAgentGroup;
 
 import java.util.Arrays;
 
 public class WriteBenchmark extends OpexBenchmark {
 
-  void doOneWrite(long iteration, int agentId)
+  long doOneWrite(long iteration, int agentId)
       throws BenchmarkException {
 
     final byte[] key = ("key" + agentId).getBytes();
@@ -20,9 +24,11 @@ public class WriteBenchmark extends OpexBenchmark {
     try {
       opex.commit(opContext, write);
     } catch (OperationException e) {
+      System.err.println("Operation " + write + " failed: " + e.getMessage());
       throw new BenchmarkException(
           "Operation " + write + " failed: " + e.getMessage());
     }
+    return 1L;
   }
 
   @Override
@@ -33,6 +39,7 @@ public class WriteBenchmark extends OpexBenchmark {
       try {
         doOneWrite(i, 0);
       } catch (BenchmarkException e) {
+        System.err.println("Failure after " + i + " writes: " + e.getMessage());
         throw new BenchmarkException(
             "Failure after " + i + " writes: " + e.getMessage() , e);
       }
@@ -52,9 +59,9 @@ public class WriteBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
-                doOneWrite(iteration, agentId);
+                return doOneWrite(iteration, agentId);
               }
             };
           } // newAgent()

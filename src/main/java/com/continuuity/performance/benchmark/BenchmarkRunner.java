@@ -1,36 +1,36 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Map;
 
 public class BenchmarkRunner {
 
+  private static final Logger Log = LoggerFactory.getLogger(BenchmarkRunner.class);
+
   String benchName = null;
   Benchmark benchmark = null;
   CConfiguration config = CConfiguration.create();
 
   static void error(String message) {
-    System.err.println("Error: " + message);
+    Log.error("Error: " + message);
   }
 
   void usage() {
-    System.out.println("Usage: BenchmarkRunner --bench <name> [ --report " +
-        "<seconds> ] [ --<key> <value> ... ]");
+    Log.info("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
     if (benchmark != null) {
       Map<String, String> usage = benchmark.usage();
       if (usage != null && !usage.isEmpty()) {
-        System.out.println("Specific options for benchmark " + benchName +
-            ":");
+        Log.info("Specific options for benchmark " + benchName + ":");
         for (String option : usage.keySet()) {
-          System.out.println(
-              String.format("  %-20s %s", option, usage.get(option)));
+          Log.info(String.format("  %-20s %s", option, usage.get(option)));
         }
       }
     } else {
-      System.out.print("Use --help --bench <name> for benchmark specific " +
-          "options.");
+      Log.info("Use --help --bench <name> for benchmark specific " + "options.");
     }
   }
 
@@ -102,15 +102,15 @@ public class BenchmarkRunner {
             .getName() + " must be at leat one but is " + numAgents + ".");
       }
       int runsPerAgent = group.getTotalRuns() / numAgents;
-      System.out.println(
-          "Running " + numAgents + " " + group.getName() + " agents (" +
-          (runsPerAgent > 0 ? Integer.toString(runsPerAgent) : "unlimited") +
-          " runs per agent, " + (group.getSecondsToRun() > 0 ? Integer.toString
-          (group.getSecondsToRun()) + " seconds" : "no") + " time limit, " +
-          (group.getRunsPerSecond() > 0 ? "max " + Integer.toString(group
-              .getRunsPerSecond()) : "unlimited") + " runs per second).");
+      Log.info("Running " + numAgents + " " + group.getName() + " agents (" +
+                 (runsPerAgent > 0 ? Integer.toString(runsPerAgent) : "unlimited") + " runs per agent, " +
+                 (group.getSecondsToRun() > 0 ? Integer.toString(group.getSecondsToRun()) + " seconds" : "no") + " " +
+                 "time limit, " +
+                 (group.getRunsPerSecond() > 0 ? "max " + Integer.toString(group.getRunsPerSecond()) : "unlimited") +
+                 " runs per second).");
+
       groupMetrics[j] = new BenchmarkMetric();
-      for (int i = 1; i <= group.getNumAgents(); ++i) {
+      for (int i = 0; i < group.getNumAgents(); ++i) {
         threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
       }
     }
@@ -118,7 +118,13 @@ public class BenchmarkRunner {
         threadList.toArray(new BenchmarkThread[threadList.size()]);
 
     // 4. start a reporter thread
-    ReportThread reporter = new ReportThread(groups, groupMetrics, config);
+    ReportThread reporter;
+    String reportFile = config.get("reportfile");
+    if (reportFile != null && reportFile.length() != 0) {
+      reporter = new ReportWriterThread(benchName, groups, groupMetrics, config);
+    } else {
+      reporter = new ReportConsoleThread(groups, groupMetrics, config);
+    }
     reporter.start();
 
     // 5. start all threads
@@ -176,6 +182,9 @@ public class BenchmarkRunner {
         runner.shutdown();
       } catch (Exception e) {
         error(e.getMessage());
+
+        // returning -1 in case of exception
+        System.exit(-1);
       }
     }
   }
