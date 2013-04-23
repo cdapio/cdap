@@ -6,7 +6,6 @@ package com.continuuity.flow.queue;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -23,6 +22,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +34,8 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 public class TestFlowQueueIntegrationApp implements Application {
+
+  public static final int MAX_ITERATIONS = 20;
 
   private static final Logger LOG = LoggerFactory.getLogger(TestFlowQueueIntegrationApp.class);
   private static final String HASH_KEY1 = "hkey1";
@@ -80,14 +82,25 @@ public class TestFlowQueueIntegrationApp implements Application {
     private OutputEmitter<Entry1> output1;
     @Output("entry2")
     private OutputEmitter<Entry2> output2;
+    @Output("batch_entry")
+    private OutputEmitter<BatchEntry> batchOutput;
 
     @ProcessInput
     public void foo(StreamEvent event) {
-      int i = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
-      LOG.warn("Writing " + i);
-      output.emit(i, HASH_KEY1, i + 1);
-      output1.emit(new Entry1(i), HASH_KEY1, i + 1);
-      output2.emit(new Entry2(i), HASH_KEY2, i + 2);
+      final int input = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
+      LOG.warn("Writing " + input);
+      output.emit(input, HASH_KEY1, input + 1);
+      output1.emit(new Entry1(input), HASH_KEY1, input + 1);
+      output2.emit(new Entry2(input), HASH_KEY2, input + 2);
+
+      // Emit batch output in one shot in the beginning
+      if(input == 0) {
+        List<OutputEmitter.DataObject<BatchEntry>> dataObjects = Lists.newArrayList();
+        for(int j = 0; j < MAX_ITERATIONS; ++j) {
+          dataObjects.add(new OutputEmitter.DataObject<BatchEntry>(new BatchEntry(j), HASH_KEY1, j));
+        }
+        batchOutput.emit(dataObjects);
+      }
     }
   }
 
@@ -218,20 +231,22 @@ public class TestFlowQueueIntegrationApp implements Application {
       expectedLists[4] = ImmutableList.of(4, 9, 14, 19);
     }
 
-    @ProcessInput("int")
+    @ProcessInput("batch_entry")
     @HashPartition(HASH_KEY1)
-    @Batch(100)
-    public void foo(Iterator<Integer> it) {
-      List<Integer> actualList = ImmutableList.copyOf(it);
+    @com.continuuity.api.annotation.Batch(100)
+    public void foo(Iterator<BatchEntry> it) {
+      List<BatchEntry> actualList = ImmutableList.copyOf(it);
       LOG.warn("HID:" + id + " values=" + actualList);
 
       if(first == -1) {
-        first = actualList.get(0);
+        first = actualList.get(0).i;
         expectedListIterator = expectedLists[first].iterator();
-      }
-
-      for (Integer actual : actualList) {
-        Assert.assertEquals(expectedListIterator.next(), actual);
+        for (BatchEntry actual : actualList) {
+          Assert.assertEquals((int)expectedListIterator.next(), actual.i);
+        }
+        Assert.assertFalse(expectedListIterator.hasNext());
+      } else {
+        Assert.fail("Batch dequeue is not working correctly");
       }
     }
 
@@ -257,6 +272,14 @@ public class TestFlowQueueIntegrationApp implements Application {
     public int i;
 
     private Entry2(int i) {
+      this.i = i;
+    }
+  }
+
+  private static class BatchEntry {
+    public int i;
+
+    private BatchEntry(int i) {
       this.i = i;
     }
   }
