@@ -106,6 +106,12 @@ public class CMetrics {
     counters.get(metricName).inc(value);
   }
 
+  /**
+   * Creates metric name.
+   * @param metricName  the name of the {@link Metric}
+   * @param scope the scope of the {@link Metric}
+   * @return instance of {@link MetricName}
+   */
   protected MetricName getMetricName(Class<?> scope, String metricName) {
     return new MetricName(metricGroup, metricType.name(),
                                      metricName,
