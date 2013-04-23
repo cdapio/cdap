@@ -83,15 +83,10 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     if (streamTable != null) return streamTable;
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
 
-<<<<<<< HEAD
-    streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
-    TTQueueTable existing = this.streamTables.putIfAbsent(streamTableName, streamTable);
-=======
     // streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     streamTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
->>>>>>> feature/remote-xactions
     return existing != null ? existing : streamTable;
   }
 
