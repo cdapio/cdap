@@ -119,7 +119,7 @@ public class SingleNodeMain {
       gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
-      appFabricServer.startAndWait();
+      appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
       overlordCollection.stop(true);
     } catch (Exception e) {
