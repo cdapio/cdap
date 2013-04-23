@@ -31,5 +31,6 @@ public @interface ProcessInput {
    *
    * @return Name of the partition key.
    */
+  @Deprecated
   String partition() default "";
 }

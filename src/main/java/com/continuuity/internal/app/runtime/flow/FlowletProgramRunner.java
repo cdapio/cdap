@@ -6,8 +6,10 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Async;
+import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
@@ -35,7 +37,6 @@ import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.dataset.DataSetContext;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
@@ -43,6 +44,7 @@ import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
+import com.continuuity.internal.app.queue.QueueConsumerFactory.PartitionInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -304,7 +306,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                   Schema.of(Schema.Type.NULL));
       return ImmutableList.of(processSpecFactory.create(ImmutableSet.<String>of(),
                                                         Schema.of(Schema.Type.NULL),
-                                                        generatorMethod));
+                                                        generatorMethod, new PartitionInfo()));
     }
 
     // Walk up the hierarchy of flowlet class to get all process methods
@@ -327,12 +329,32 @@ public final class FlowletProgramRunner implements ProgramRunner {
           inputNames = ImmutableSet.copyOf(processInputAnnotation.value());
         }
 
+        // Determine input queue partition type
+        PartitionInfo partitionInfo;
+        HashPartition hashPartition = method.getAnnotation(HashPartition.class);
+        RoundRobin roundRobin = method.getAnnotation(RoundRobin.class);
+
+        Preconditions.checkArgument(
+          !(hashPartition != null && roundRobin != null),
+          "%s: process() method can have either HashPartition or RoundRobin strategy to read input, not both.",
+          method.getName());
+
+        if (hashPartition != null) {
+          Preconditions.checkArgument(!hashPartition.value().isEmpty(),
+                                      "%s: Partition key cannot be empty when HashPartition used", method.getName());
+          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.HASH, hashPartition.value());
+        } else if (roundRobin != null) {
+          partitionInfo = new PartitionInfo(QueuePartitioner.PartitionerType.ROUND_ROBIN);
+        } else {
+          partitionInfo = new PartitionInfo();
+        }
+
         try {
           TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
           Schema schema = schemaGenerator.generate(dataType.getType());
 
           ProcessMethod processMethod = processMethodFactory.create(method, dataType, schema);
-          result.add(processSpecFactory.create(inputNames, schema, processMethod));
+          result.add(processSpecFactory.create(inputNames, schema, processMethod, partitionInfo));
         } catch (UnsupportedTypeException e) {
           throw Throwables.propagate(e);
         }
@@ -416,7 +438,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     return new ProcessSpecificationFactory() {
       @Override
-      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) {
+      public ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method,
+                                         PartitionInfo partitionInfo) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -437,8 +460,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   flowletContext.getInstanceId(),
                   flowletContext.getGroupId(),
                   flowletContext.getMetricName(),
-                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, !flowletContext.isAsyncMode()),
-                  queueName
+                  queueName,
+                  partitionInfo,
+                  ! flowletContext.isAsyncMode()
                 ),
                 instanceCount);
               queueConsumerSupplierBuilder.add(consumerSupplier);
@@ -515,6 +539,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessSpecificationFactory {
-    ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method) throws OperationException;
+    ProcessSpecification create(Set<String> inputNames, Schema schema, ProcessMethod method,
+                                PartitionInfo partitionInfo) throws OperationException;
   }
 }
