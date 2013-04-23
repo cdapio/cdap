@@ -58,4 +58,5 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
   @Override @Test
   @Ignore
   public void testIncrementIgnoresInProgressXactions() {}
+
 }
