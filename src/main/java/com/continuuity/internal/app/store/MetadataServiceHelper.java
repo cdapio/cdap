@@ -6,6 +6,7 @@ package com.continuuity.internal.app.store;
 
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
@@ -63,8 +64,8 @@ class MetadataServiceHelper {
         updateInMetadataService(account, streamSpec);
       }
 
-      // flows
-      updateFlowsInMetadataService(id, spec);
+      // flows & mapreduce jobs
+      updateFlowsAndMapReducesInMetadataService(id, spec);
 
       // procedures
       updateProceduresInMetadataService(id, spec);
@@ -133,7 +134,7 @@ class MetadataServiceHelper {
     }
   }
 
-  private void updateFlowsInMetadataService(Id.Application id, ApplicationSpecification spec)
+  private void updateFlowsAndMapReducesInMetadataService(Id.Application id, ApplicationSpecification spec)
     throws MetadataServiceException, TException {
     // Basic logic: we need to remove flows that were removed from the app, add those that were added and
     //              update those that remained in the application.
@@ -155,6 +156,18 @@ class MetadataServiceHelper {
         datasets.addAll(flowlet.getDatasets());
       }
       flow.setDatasets(new ArrayList<String>(datasets));
+      toStore.put(flow.getId(), flow);
+    }
+    // also treating mapreduce jobs as flows:
+    // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
+    for (MapReduceSpecification mrSpec : spec.getMapReduces().values()) {
+      Flow flow = new Flow(mrSpec.getName(), id.getId());
+      flow.setName(mrSpec.getName());
+
+      // no streams
+      flow.setStreams(new ArrayList<String>());
+
+      flow.setDatasets(new ArrayList<String>(mrSpec.getDataSets()));
       toStore.put(flow.getId(), flow);
     }
 

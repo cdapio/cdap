@@ -5,6 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
@@ -53,6 +54,7 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
                   .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
                   .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
+                  .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);

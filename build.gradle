@@ -45,6 +45,7 @@ dependencies {
   compile libraries.google_guava
   compile libraries.jsr_305
   compile libraries.netty
+  compile libraries.hadoop_minicluster
 
 
   // Thrift related stuff.
@@ -72,6 +73,11 @@ sourceSets {
     runtimeClasspath += thrift.output
   }
 }
+
+test {
+    jvmArgs '-Xmx1024m'
+}
+
 
 /**
  * Generates API javadoc.

@@ -1,10 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.data.dataset.DataSetContext;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -14,10 +11,10 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.InstantiatorFactory;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplier;
-import com.continuuity.internal.app.runtime.TransactionAgentSupplierFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -46,9 +43,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final BasicProcedureContext context;
 
   ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
-                                TransactionAgentSupplierFactory txAgentSupplierFactory) throws ClassNotFoundException {
+                                DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
-    TransactionAgentSupplier txAgentSupplier = txAgentSupplierFactory.create(program);
+    DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
@@ -58,7 +55,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
     TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());
     procedure = new InstantiatorFactory(false).get(procedureType).create();
-    injectFields(procedure, procedureType, context);
+    context.injectFields(procedure);
     handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
     // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
@@ -107,35 +104,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     }
   }
 
-  private void injectFields(Procedure procedure, TypeToken<? extends Procedure> procedureType,
-                            BasicProcedureContext context) {
-
-    // Walk up the hierarchy of procedure class.
-    for (TypeToken<?> type : procedureType.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Inject DataSet and Metrics fields.
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject DataSet
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset != null && !dataset.value().isEmpty()) {
-            setField(procedure, field, context.getDataSet(dataset.value()));
-          }
-          continue;
-        }
-        if (Metrics.class.equals(field.getType())) {
-          setField(procedure, field, context.getMetrics());
-        }
-      }
-    }
-  }
-
   private Map<String, HandlerMethod> createHandlerMethods(Procedure procedure,
                                                           TypeToken<? extends Procedure> procedureType,
-                                                          TransactionAgentSupplier txAgentSupplier) {
+                                                          DataFabricFacade txAgentSupplier) {
 
     ImmutableMap.Builder<String, HandlerMethod> result = ImmutableMap.builder();
 

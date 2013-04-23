@@ -43,8 +43,8 @@ public final class InMemoryProgramRuntimeService extends AbstractIdleService imp
       case PROCEDURE:
         runner = programRunnerFactory.create(ProgramRunnerFactory.Type.PROCEDURE);
         break;
-      case BATCH:
-        runner = programRunnerFactory.create(ProgramRunnerFactory.Type.BATCH);
+      case MAPREDUCE:
+        runner = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE);
         break;
     }
 
