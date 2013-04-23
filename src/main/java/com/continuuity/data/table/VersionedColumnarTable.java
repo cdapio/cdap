@@ -245,43 +245,4 @@ public interface VersionedColumnarTable {
    */
   public void clear() throws OperationException;
 
-  /**
-   * Persists all write/inc operations of a given version.
-   * <p>
-   *   This is intented mainly to persist all asynchronous or any other write operations that can be buffered in-memory.
-   * </p>
-   * @param version the version
-   * @throws OperationException
-   */
-  void persistAllFor(long version) throws OperationException;
-
-  /**
-   * Same as {@link #put(byte[], byte[][], long, byte[][])}, but done asynchronously:
-   *   <ul>
-   *     <li>
-   *       Operation result may not be visible before transaction is committed
-   *       to other operations inside same transaction.
-   *     </li>
-   *     <li>
-   *       Operation is guaranteed to be finished (and its result to be visible) when transaction is committed.
-   *     </li>
-   *   </ul>
-   */
-  void asyncPut(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException;
-
-  /**
-   * Same as {@link #increment(byte[], byte[][], long[], com.continuuity.data.operation.executor.ReadPointer, long)},
-   * but done asynchronously:
-   *   <ul>
-   *     <li>
-   *       Operation result may not be visible before transaction is committed
-   *       to other operations inside same transaction.
-   *     </li>
-   *     <li>
-   *       Operation is guaranteed to be finished (and its result to be visible) when transaction is committed.
-   *     </li>
-   *   </ul>
-   */
-  void asyncIncrement(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer, long writeVersion)
-    throws OperationException;
 }

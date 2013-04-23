@@ -429,24 +429,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
-  @Override
-  public void persistAllFor(long version) {
-    // no-op
-  }
-
-  @Override
-  public void asyncPut(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
-    // this implementation doesn't support async operations. Doing sync instead
-    put(row, columns, version, values);
-  }
-
-  @Override
-  public void asyncIncrement(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer, long writeVersion)
-    throws OperationException {
-    // this implementation doesn't support async operations. Doing sync instead
-    increment(row, columns, amounts, readPointer, writeVersion);
-  }
-
   private boolean isEmpty(byte[] column) {
     return column == null || column.length == 0;
   }

@@ -11,8 +11,6 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.AsyncIncrement;
-import com.continuuity.data.operation.AsyncWrite;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -121,10 +119,8 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_WRITE_OPERATION_BATCH_NUM_OPS =
     METRIC_PREFIX + "WriteOperationBatch" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_WRITE_NUM_OPS = METRIC_PREFIX + "Write" + NUMOPS_METRIC_SUFFIX;
-  public static final String REQ_TYPE_ASYNC_WRITE_NUM_OPS = METRIC_PREFIX + "AsyncWrite" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_DELETE_NUM_OPS = METRIC_PREFIX + "Delete" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_INCREMENT_NUM_OPS = METRIC_PREFIX + "Increment" + NUMOPS_METRIC_SUFFIX;
-  public static final String REQ_TYPE_ASYNC_INCREMENT_NUM_OPS = METRIC_PREFIX + "AsyncIncrement" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_COMPARE_AND_SWAP_NUM_OPS =
     METRIC_PREFIX + "CompareAndSwap" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS = METRIC_PREFIX + "QueueEnqueue" + NUMOPS_METRIC_SUFFIX;
@@ -148,11 +144,8 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_WRITE_OPERATION_BATCH_LATENCY =
     METRIC_PREFIX + "WriteOperationBatch" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_WRITE_LATENCY = METRIC_PREFIX + "Write" + LATENCY_METRIC_SUFFIX;
-  public static final String REQ_TYPE_ASYNC_WRITE_LATENCY = METRIC_PREFIX + "AsyncWrite" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_DELETE_LATENCY = METRIC_PREFIX + "Delete" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_INCREMENT_LATENCY = METRIC_PREFIX + "Increment" + LATENCY_METRIC_SUFFIX;
-  public static final String REQ_TYPE_ASYNC_INCREMENT_LATENCY =
-    METRIC_PREFIX + "AsyncIncrement" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_COMPARE_AND_SWAP_LATENCY =
     METRIC_PREFIX + "CompareAndSwap" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_ENQUEUE_LATENCY = METRIC_PREFIX + "QueueEnqueue" + LATENCY_METRIC_SUFFIX;
@@ -670,8 +663,7 @@ public class OmidTransactionalOperationExecutor
                      Transaction transaction)
     throws OperationException {
 
-    persistOperationsInTables(context, transaction);
-
+    // attempt to commit in Oracle
     TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
       // make sure to emit the metric for failed commits
@@ -712,13 +704,6 @@ public class OmidTransactionalOperationExecutor
       }
     }
     // done
-  }
-
-  private void persistOperationsInTables(OperationContext context, Transaction transaction) throws OperationException {
-    for (String tableName : oracle.getTablesWrittenTo(transaction)) {
-      OrderedVersionedColumnarTable table = this.findRandomTable(context, tableName);
-      table.persistAllFor(transaction.getWriteVersion());
-    }
   }
 
   @Override
@@ -820,14 +805,10 @@ public class OmidTransactionalOperationExecutor
   private WriteTransactionResult dispatchWrite(
       OperationContext context, WriteOperation write,
       Transaction transaction) throws OperationException {
-    if (write instanceof AsyncWrite) {
-      return write(context, (AsyncWrite)write, transaction);
-    } else if (write instanceof Write) {
+    if (write instanceof Write) {
       return write(context, (Write)write, transaction);
     } else if (write instanceof Delete) {
       return write(context, (Delete)write, transaction);
-    } else if (write instanceof AsyncIncrement) {
-      return write(context, (AsyncIncrement)write, transaction);
     } else if (write instanceof Increment) {
       return write(context, (Increment)write, transaction);
     } else if (write instanceof CompareAndSwap) {
@@ -851,18 +832,6 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_WRITE_LATENCY, begin);
     dataSetMetric_write(write.getMetricName(), write.getSize());
 //    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
-    return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
-  }
-
-  WriteTransactionResult write(OperationContext context, AsyncWrite write, Transaction transaction)
-    throws OperationException {
-    initialize();
-    incMetric(REQ_TYPE_ASYNC_WRITE_NUM_OPS);
-    long begin = begin();
-    OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
-    table.asyncPut(write.getKey(), write.getColumns(), transaction.getWriteVersion(), write.getValues());
-    end(REQ_TYPE_ASYNC_WRITE_LATENCY, begin);
-    dataSetMetric_write(write.getMetricName(), write.getSize());
     return new WriteTransactionResult(new UndoWrite(write.getTable(), write.getKey(), write.getColumns()));
   }
 
@@ -898,25 +867,6 @@ public class OmidTransactionalOperationExecutor
     dataSetMetric_write(increment.getMetricName(), increment.getSize());
     return new WriteTransactionResult(
         new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()), map);
-  }
-
-  WriteTransactionResult write(OperationContext context, AsyncIncrement increment,
-      Transaction transaction) throws OperationException {
-    initialize();
-    incMetric(REQ_TYPE_ASYNC_INCREMENT_NUM_OPS);
-    long begin = begin();
-    try {
-      OrderedVersionedColumnarTable table =
-          this.findRandomTable(context, increment.getTable());
-      table.asyncIncrement(increment.getKey(), increment.getColumns(), increment.getAmounts(),
-                           transaction.getReadPointer(), transaction.getWriteVersion());
-    } catch (OperationException e) {
-      return new WriteTransactionResult(e.getStatus(), e.getMessage());
-    }
-    end(REQ_TYPE_ASYNC_INCREMENT_LATENCY, begin);
-    dataSetMetric_write(increment.getMetricName(), increment.getSize());
-    return new WriteTransactionResult(
-        new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()));
   }
 
   WriteTransactionResult write(OperationContext context, CompareAndSwap write,

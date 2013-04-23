@@ -13,8 +13,6 @@ import com.continuuity.data.operation.executor.omid.Undo;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.google.inject.Inject;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -139,21 +137,6 @@ public class MemoryOracle implements TransactionOracle {
       readPoint = this.timeOracle.getTimestamp();
     }
     return new MemoryReadPointer(this.readPoint, this.getExcludes());
-  }
-
-  @Override
-  public Collection<String> getTablesWrittenTo(Transaction tx) throws OmidTransactionException {
-    long txid = tx.getWriteVersion();
-    // finding all tables given operation has written to using the rowset of undo (i.e. write) operations
-    List<Undo> undos = getInProgress(txid).getUndos();
-    Set<String> tables = new HashSet<String>();
-    RowSet rows = computeRowSet(undos);
-    if (rows != null) {
-      for (RowSet.Row row : rows) {
-        tables.add(row.getTable());
-      }
-    }
-    return tables;
   }
 
   @Override

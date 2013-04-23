@@ -1,8 +1,6 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.AsyncIncrement;
-import com.continuuity.api.data.dataset.table.AsyncWrite;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
@@ -102,12 +100,7 @@ public abstract class RuntimeTable extends Table {
    */
   private com.continuuity.data.operation.WriteOperation toOperation(WriteOperation op) {
     com.continuuity.data.operation.WriteOperation operation;
-    if (op instanceof AsyncWrite) {
-      AsyncWrite write = (AsyncWrite)op;
-      operation = new com.continuuity.data.operation.AsyncWrite(
-        this.tableName(), write.getRow(), write.getColumns(), write.getValues());
-    }
-    else if (op instanceof Write) {
+    if (op instanceof Write) {
       Write write = (Write)op;
       operation = new com.continuuity.data.operation.Write(
         this.tableName(), write.getRow(), write.getColumns(), write.getValues());
@@ -116,9 +109,6 @@ public abstract class RuntimeTable extends Table {
       Delete delete = (Delete)op;
       operation = new com.continuuity.data.operation.Delete(
         this.tableName(), delete.getRow(), delete.getColumns());
-    }
-    else if (op instanceof AsyncIncrement) {
-      operation = toOperation((AsyncIncrement)op);
     }
     else if (op instanceof Increment) {
       operation = toOperation((Increment)op);
@@ -142,13 +132,6 @@ public abstract class RuntimeTable extends Table {
    */
   private com.continuuity.data.operation.Increment toOperation(Increment increment) {
     com.continuuity.data.operation.Increment operation = new com.continuuity.data.operation.Increment(
-      this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
-    operation.setMetricName(getMetricName());
-    return operation;
-  }
-
-  private com.continuuity.data.operation.Increment toOperation(AsyncIncrement increment) {
-    com.continuuity.data.operation.AsyncIncrement operation = new com.continuuity.data.operation.AsyncIncrement(
       this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
     operation.setMetricName(getMetricName());
     return operation;

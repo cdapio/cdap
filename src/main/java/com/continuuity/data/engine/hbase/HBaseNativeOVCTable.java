@@ -523,18 +523,5 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
 
   }
 
-  @Override
-  public void asyncPut(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
-    // todo: implement "true" async operation
-    // For now, executing synchronously
-    put(row, columns, version, values);
-  }
 
-  @Override
-  public void asyncIncrement(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer, long writeVersion)
-    throws OperationException {
-    // todo: implement "true" async operation
-    // For now, executing synchronously
-    increment(row, columns, amounts, readPointer, writeVersion);
-  }
 }
