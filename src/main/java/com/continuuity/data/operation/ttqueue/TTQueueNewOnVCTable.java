@@ -570,7 +570,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId());
       // Save the minGroupEvictEntry for the consumer's group
       if(minGroupEvictEntry != INVALID_ENTRY_ID) {
-        writeKeys.add(GLOBAL_EVICT_META_ROW);
+        writeKeys.add(makeRowName(GLOBAL_EVICT_META_ROW));
         writeCols.add(makeColumnName(GROUP_EVICT_ENTRY, consumer.getGroupId()));
         writeValues.add(Bytes.toBytes(minGroupEvictEntry));
       }
@@ -586,7 +586,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
       // Save the max of the entries that were evicted now
       if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
-        writeKeys.add(GLOBAL_LAST_EVICT_ENTRY);
+        writeKeys.add(makeRowName(GLOBAL_LAST_EVICT_ENTRY));
         writeCols.add(GLOBAL_LAST_EVICT_ENTRY);
         writeValues.add(Bytes.toBytes(currentMaxEvictedEntry));
       }
@@ -697,7 +697,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return evictEntry;
   }
 
-  static class EvictionState {
+  class EvictionState {
     private long globalLastEvictEntry = FIRST_QUEUE_ENTRY_ID - 1;
     private Map<Long, Long> groupEvictEntries = Maps.newHashMap();
 
@@ -709,8 +709,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public void readEvictionState(ReadPointer readPointer) throws OperationException {
       // Read GLOBAL_LAST_EVICT_ENTRY
-      OperationResult<byte[]> lastEvictEntryBytes = table.get(GLOBAL_LAST_EVICT_ENTRY, GLOBAL_LAST_EVICT_ENTRY,
-                                                              readPointer);
+      OperationResult<byte[]> lastEvictEntryBytes = table.get(makeRowName(GLOBAL_LAST_EVICT_ENTRY),
+                                                              GLOBAL_LAST_EVICT_ENTRY, readPointer);
       if(!lastEvictEntryBytes.isEmpty() && lastEvictEntryBytes.getValue() != null) {
         globalLastEvictEntry = Bytes.toLong(lastEvictEntryBytes.getValue());
       }
@@ -738,7 +738,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         values[i] = Bytes.EMPTY_BYTE_ARRAY;
         ++i;
       }
-      table.put(GLOBAL_EVICT_META_ROW, columnKeys, writeVersion, values);
+      table.put(makeRowName(GLOBAL_EVICT_META_ROW), columnKeys, writeVersion, values);
     }
 
     public long getGlobalLastEvictEntry() {
@@ -755,7 +755,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     private void readGroupEvictInformationInternal(ReadPointer readPointer) throws OperationException {
       // Read evict information for all groups
-      OperationResult<Map<byte[], byte[]>> groupEvictBytes = table.get(GLOBAL_EVICT_META_ROW, readPointer);
+      OperationResult<Map<byte[], byte[]>> groupEvictBytes = table.get(makeRowName(GLOBAL_EVICT_META_ROW), readPointer);
       if(!groupEvictBytes.isEmpty()) {
         for(Map.Entry<byte[], byte[]> entry : groupEvictBytes.getValue().entrySet()) {
           if(entry.getKey().length > 0 && entry.getValue().length > 0) {
@@ -1760,7 +1760,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     protected long getLastEvictEntry() throws OperationException {
       QueueStateStore readEvictState = new QueueStateStore(table);
-      readEvictState.setRowKey(GLOBAL_LAST_EVICT_ENTRY);
+      readEvictState.setRowKey(makeRowName(GLOBAL_LAST_EVICT_ENTRY));
       readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
       readEvictState.read();
       OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
