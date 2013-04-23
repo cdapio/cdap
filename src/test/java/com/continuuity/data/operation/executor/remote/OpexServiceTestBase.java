@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 
@@ -11,6 +12,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class OpexServiceTestBase {
 
@@ -82,4 +86,9 @@ public abstract class OpexServiceTestBase {
   public void enableQueuePayloads() {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
+
+  protected static List<WriteOperation> batch(WriteOperation ... ops) {
+    return Arrays.asList(ops);
+  }
+
 }

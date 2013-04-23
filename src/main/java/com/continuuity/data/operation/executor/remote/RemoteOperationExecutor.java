@@ -223,10 +223,16 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public Transaction startTransaction(OperationContext context)
+  public Transaction startTransaction(final OperationContext context)
     throws OperationException {
-    // TODO implement this properly
-    return null;
+    return this.execute(
+      new Operation<Transaction>("startTransaction") {
+        @Override
+        public Transaction execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.startTransaction(context);
+        }
+      });
   }
 
   @Override
@@ -234,50 +240,85 @@ public class RemoteOperationExecutor
                              final Transaction transaction,
                              final List<WriteOperation> writes)
     throws OperationException {
-    // TODO implement this properly
-    commit(context, writes);
-    return null;
+    return this.execute(
+      new Operation<Transaction>("execute batch") {
+        @Override
+        public Transaction execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, transaction, writes);
+        }
+      });
   }
 
   @Override
-  public void commit(OperationContext context,
-                     Transaction transaction)
+  public void commit(final OperationContext context,
+                     final Transaction transaction)
     throws OperationException {
-    // TODO implement this properly
+    this.execute(
+      new Operation<Boolean>("Commit") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          client.commit(context, transaction);
+          return true;
+        }
+      });
   }
 
   @Override
-  public void commit(OperationContext context,
-                     Transaction transaction,
-                     List<WriteOperation> writes)
+  public void commit(final OperationContext context,
+                     final Transaction transaction,
+                     final List<WriteOperation> writes)
     throws OperationException {
-    // TODO implement this properly
-    commit(context, writes);
+    this.execute(new Operation<Boolean>("Execute+Commit") {
+      @Override
+      public Boolean execute(OperationExecutorClient client) throws OperationException, TException {
+        client.commit(context, transaction, writes);
+        return true;
+      }
+    });
   }
 
   @Override
-  public void abort(OperationContext context,
-                    Transaction transaction)
+  public void abort(final OperationContext context,
+                    final Transaction transaction)
     throws OperationException {
-    // TODO implement this properly
+    this.execute(
+      new Operation<Boolean>("Abort") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          client.abort(context, transaction);
+          return true;
+        }
+      });
   }
 
   @Override
-  public Map<byte[], Long> increment(OperationContext context, Increment increment)
+  public Map<byte[], Long> increment(final OperationContext context,
+                                     final Increment increment)
     throws OperationException {
-    // TODO implement this properly
-    commit(context, increment);
-    return Collections.EMPTY_MAP;
+    return this.execute(new Operation<Map<byte[], Long>>("Increment") {
+      @Override
+      public Map<byte[], Long> execute(OperationExecutorClient client)
+        throws OperationException, TException {
+        return client.increment(context, increment);
+      }
+    });
   }
 
   @Override
-  public Map<byte[], Long> increment(OperationContext context,
-                                     Transaction transaction,
-                                     Increment increment)
+  public Map<byte[], Long> increment(final OperationContext context,
+                                     final Transaction transaction,
+                                     final Increment increment)
     throws OperationException {
-    // TODO implement this properly
-    execute(context, transaction, Collections.singletonList((WriteOperation)increment));
-    return Collections.EMPTY_MAP;
+    return this.execute(new Operation<Map<byte[], Long>>("Increment") {
+      @Override
+      public Map<byte[], Long> execute(OperationExecutorClient client)
+        throws OperationException, TException {
+        return client.increment(context, transaction, increment);
+      }
+    });
   }
 
   @Override
@@ -353,78 +394,90 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  execute(final OperationContext context,
-          final Read read)
-      throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(final OperationContext context,
+                                                      final Read read)
+    throws OperationException {
     return this.execute(
         new Operation<OperationResult<Map<byte[],byte[]>>>("Read") {
           @Override
           public OperationResult<Map<byte[], byte[]>>
           execute(OperationExecutorClient client)
-              throws OperationException, TException {
+            throws OperationException, TException {
             return client.execute(context, read);
           }
         });
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Transaction transaction,
-                                                      Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(final OperationContext context,
+                                                      final Transaction transaction,
+                                                      final Read read)
     throws OperationException {
-    // TODO implement this properly
-    return execute(context, read);
+    return this.execute(new Operation<OperationResult<Map<byte[], byte[]>>>("Read") {
+      @Override
+      public OperationResult<Map<byte[], byte[]>> execute(OperationExecutorClient client)
+        throws OperationException, TException {
+        return client.execute(context, transaction, read);
+      }
+    });
   }
 
   @Override
-  public OperationResult<List<byte[]>>
-  execute(final OperationContext context,
-          final ReadAllKeys readAllKeys)
-      throws OperationException {
+  public OperationResult<List<byte[]>> execute(final OperationContext context,
+                                               final ReadAllKeys readAllKeys)
+    throws OperationException {
     return this.execute(
-        new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
-          @Override
-          public OperationResult<List<byte[]>>
-          execute(OperationExecutorClient client)
-              throws OperationException, TException {
-            return client.execute(context, readAllKeys);
-          }
-        });
+      new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
+        @Override
+        public OperationResult<List<byte[]>>
+        execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, readAllKeys);
+        }
+      });
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(OperationContext context,
-                                               Transaction transaction,
-                                               ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(final OperationContext context,
+                                               final Transaction transaction,
+                                               final ReadAllKeys readAllKeys)
     throws OperationException {
-    // TODO implement this properly
-    return execute(context, readKeys);
+    return this.execute(new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
+      @Override
+      public OperationResult<List<byte[]>> execute(OperationExecutorClient client) throws OperationException,
+        TException {
+        return client.execute(context, transaction, readAllKeys);
+      }
+    });
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  execute(final OperationContext context,
-          final ReadColumnRange readColumnRange)
-      throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> execute(final OperationContext context,
+                                                      final ReadColumnRange readColumnRange)
+    throws OperationException {
     return this.execute(new Operation<
-            OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
-          @Override
-          public OperationResult<Map<byte[], byte[]>>
-          execute(OperationExecutorClient client)
-              throws OperationException, TException {
-            return client.execute(context, readColumnRange);
-          }
-        });
+      OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
+      @Override
+      public OperationResult<Map<byte[], byte[]>>
+      execute(OperationExecutorClient client)
+        throws OperationException, TException {
+        return client.execute(context, readColumnRange);
+      }
+    });
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Transaction transaction,
-                                                      ReadColumnRange readColumnRange)
+  public OperationResult<Map<byte[], byte[]>> execute(final OperationContext context,
+                                                      final Transaction transaction,
+                                                      final ReadColumnRange readColumnRange)
     throws OperationException {
-    // TODO implement this properly
-    return execute(context, readColumnRange);
+    return this.execute(new Operation<OperationResult<Map<byte[], byte[]>>>("ReadColumnRange") {
+      @Override
+      public OperationResult<Map<byte[], byte[]>> execute(OperationExecutorClient client) throws OperationException,
+        TException {
+        return client.execute(context, transaction, readColumnRange);
+      }
+    });
   }
 
   @Override

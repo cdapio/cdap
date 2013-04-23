@@ -4,6 +4,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.google.common.collect.ImmutableSet;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -1210,4 +1213,22 @@ public abstract class TestOVCTable {
     assertEquals(201,val);
   }
 
+  @Test
+  public void testIncrementIgnoresInProgressXactions() throws OperationException {
+    final byte[] row = "tIIIPX".getBytes();
+    final byte[] c1 = { 'c', '1' };
+    final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
+
+    // execute a write in a new xaction
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    this.table.put(row, c1, tx.getWriteVersion(), one);
+    // read from outside xaction -> not visible
+    ReadPointer outside = new MemoryReadPointer(2, 2, Collections.singleton(1L));
+    OperationResult<byte[]> result = this.table.get(row, c1, outside);
+    assertTrue(result.isEmpty() || result.getValue() == null);
+    // increment outside xaction -> increments pre-xaction value
+    Map<byte[], Long> value = this.table.increment(row, new byte[][]{ c1 }, new long[]{ 4L }, outside,
+                                                   outside.getMaximum());
+    assertEquals(new Long(4L), value.get(c1));
+  }
 }

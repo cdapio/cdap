@@ -607,8 +607,10 @@ public class OmidTransactionalOperationExecutor
   public Transaction execute(OperationContext context,
                              Transaction transaction,
                              List<WriteOperation> writes) throws OperationException {
-    // make sure we have a transaction
-    if (transaction == null) {
+    // make sure we have a valid transaction
+    if (transaction != null) {
+      oracle.validateTransaction(transaction);
+    } else {
       transaction = startTransaction();
     }
 
@@ -737,9 +739,10 @@ public class OmidTransactionalOperationExecutor
                                      Transaction transaction,
                                      Increment increment) throws OperationException {
     // if a null transaction is passed in,
-    // call the companion method that wraps this into a new transaction
     if (transaction == null) {
-      return increment(context, increment);
+      throw new OmidTransactionException(StatusCode.INVALID_TRANSACTION, "transaction cannot be null");
+    } else {
+      oracle.validateTransaction(transaction);
     }
 
     WriteTransactionResult writeTxReturn = write(context, increment, transaction);
