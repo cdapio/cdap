@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
@@ -13,11 +14,11 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.internal.api.Preconditions;
+import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
-import com.continuuity.internal.api.Preconditions;
-import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,6 +31,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -237,8 +239,25 @@ public final class FlowletDefinition {
                                       InputContext.class.getName());
         }
 
+        Type firstParameter = type.resolveType(methodParams[0]).getType();
+
+        // In batch mode, if the first parameter is an iterator then extract the type information from
+        // iterator's type parameter
+        if(method.getAnnotation(Batch.class) != null) {
+          Preconditions.checkArgument(firstParameter instanceof ParameterizedType,
+                                      "Iterator needs to be a ParameterizedType to extract type information");
+          ParameterizedType pType = (ParameterizedType) firstParameter;
+          Preconditions.checkArgument(pType.getRawType().equals(Iterator.class),
+                                      "Batch mode without an Iterator as first parameter is not supported yet.");
+          Preconditions.checkArgument(
+            pType.getActualTypeArguments().length > 0,
+            "Iterator does not define actual type parameters, cannot extract type information."
+          );
+          firstParameter = pType.getActualTypeArguments()[0];
+        }
+
         // Extract the Input type from the first parameter of the process method
-        Type inputType = type.resolveType(methodParams[0]).getType();
+        Type inputType = type.resolveType(firstParameter).getType();
 
         List<String> inputNames = Lists.newLinkedList();
         if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {

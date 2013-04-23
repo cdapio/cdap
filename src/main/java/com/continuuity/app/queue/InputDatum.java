@@ -5,6 +5,7 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 /**
  *
@@ -15,7 +16,7 @@ public interface InputDatum {
 
   boolean needProcess();
 
-  ByteBuffer getData();
+  Iterator<ByteBuffer> getData();
 
   void incrementRetry();
 
