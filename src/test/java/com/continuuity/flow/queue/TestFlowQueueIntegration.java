@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class TestFlowQueueIntegration extends AppFabricTestBase {
+  private static final int FLOWLET_TIMEOUT = 30;
   @Test
   public void testQueuePartition() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestFlowQueueIntegrationApp.class);
@@ -35,9 +36,13 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
         s1.send(String.valueOf(i));
       }
 
-      flowletMetrics1.waitForProcessed(TestFlowQueueIntegrationApp.MAX_ITERATIONS * 3, 10, TimeUnit.SECONDS);
-      flowletMetrics2.waitForProcessed(TestFlowQueueIntegrationApp.QueueBatchTestFlowlet.NUM_INSTANCES, 10,
-                                       TimeUnit.SECONDS);
+      flowletMetrics1.waitForProcessed(TestFlowQueueIntegrationApp.MAX_ITERATIONS * 3,
+                                       FLOWLET_TIMEOUT, TimeUnit.SECONDS);
+      flowletMetrics2.waitForProcessed(TestFlowQueueIntegrationApp.QueueBatchTestFlowlet.NUM_INSTANCES,
+                                       FLOWLET_TIMEOUT, TimeUnit.SECONDS);
+
+      // Wait for Fifo consumers to finish
+      TimeUnit.SECONDS.sleep(1);
     } finally {
       applicationManager.stopAll();
       clearAppFabric();
