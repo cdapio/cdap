@@ -1,7 +1,7 @@
 package com.continuuity.data.metadata;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
+import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertTrue;
 
-public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
+public abstract class HBaseNativeMetaDataStoreTest extends MetaDataStoreTest {
 
   private static Injector injector;
 
@@ -23,11 +23,11 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
   public static void setupOpex() throws Exception {
     HBaseTestBase.startHBase();
     CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
     DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf);
     injector = Guice.createInjector(module);
-    opex = injector.getInstance(Key.get(
-        OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
+    opex = injector.getInstance(Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
+    mds = new SerializingMetaDataStore(opex);
   }
 
   @AfterClass
@@ -37,6 +37,6 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
 
   @Override
   public void testInjection() {
-    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof HBaseOVCTableHandle);
+    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof HBaseNativeOVCTableHandle);
   }
 }

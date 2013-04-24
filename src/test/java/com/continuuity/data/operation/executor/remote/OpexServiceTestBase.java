@@ -6,12 +6,12 @@ import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,5 +90,4 @@ public abstract class OpexServiceTestBase {
   protected static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
   }
-
 }

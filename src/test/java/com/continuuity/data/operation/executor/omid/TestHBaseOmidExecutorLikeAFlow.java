@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -11,6 +12,8 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
+import static org.junit.Assert.assertTrue;
 
 public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
@@ -58,5 +61,10 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   @Override
   protected int getNumIterations() {
     return 100;
+  }
+
+  @Override
+  public void testInjection() {
+    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof HBaseOVCTableHandle);
   }
 }

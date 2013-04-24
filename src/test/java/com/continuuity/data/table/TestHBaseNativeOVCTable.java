@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.engine.hbase.HBaseNativeOVCTable;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
@@ -11,6 +12,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertTrue;
 
 public class  TestHBaseNativeOVCTable extends TestOVCTable {
 
@@ -59,4 +62,8 @@ public class  TestHBaseNativeOVCTable extends TestOVCTable {
   @Ignore
   public void testIncrementIgnoresInProgressXactions() {}
 
+  @Override
+  public void testInjection() {
+    assertTrue(table instanceof HBaseNativeOVCTable);
+  }
 }
