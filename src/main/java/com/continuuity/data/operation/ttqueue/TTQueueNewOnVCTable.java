@@ -101,16 +101,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // Columns for row = CONSUMER_META_PREFIX (consumer specific information)
   // CONSUMER_STATE contains the entire encoded queue state
   static final byte [] CONSUMER_STATE = { 'S' };
-  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the highest entryId that the consumer has read
-  // DEQUEUE_ENTRY_SET contains a list of entries dequeued by a consumer, but not yet acked.
-  static final byte [] DEQUEUE_ENTRY_SET = {'A'};              //row <queueName>40C<groupId><consumerId>, column A
-  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the highest entryId that the consumer has read
-  // (the consumer may not have completed processing the entry).
-  // CONSUMER_READ_POINTER + 1 points to the next entry that the consumer can dequeue.
-  static final byte [] CONSUMER_READ_POINTER = {'R'};     //row <queueName>40C<groupId><consumerId>, column R
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
   static final byte [] LAST_EVICT_TIME_IN_SECS = {'T'};           //row <queueName>40C<groupId><consumerId>, column T
-  // RECONFIG_PARTITIONER stores the partition information for prior configurations
 
   static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
