@@ -151,7 +151,6 @@ public abstract class TestTTQueue {
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-//    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config);
 
@@ -212,8 +211,6 @@ public abstract class TestTTQueue {
     queueEvict.configure(consumer);
     result = queueEvict.dequeue(consumer, dirtyReadPointer);
     assertTrue(result.toString(), result.isEmpty());
-
-
   }
 
   @Test
