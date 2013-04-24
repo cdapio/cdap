@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -13,11 +14,18 @@ import org.junit.BeforeClass;
 
 import java.util.Random;
 
+import static org.junit.Assert.assertTrue;
+
 public class TestHBaseNewTTQueue extends TestTTQueueNew {
 
   private static Injector injector;
 
   private static OVCTableHandle handle;
+
+  @Override
+  public void testInjection() {
+    assertTrue(handle instanceof HBaseOVCTableHandle);
+  }
 
   @BeforeClass
   public static void startEmbeddedHBase() {

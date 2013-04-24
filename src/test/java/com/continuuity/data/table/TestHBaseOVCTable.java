@@ -3,17 +3,17 @@ package com.continuuity.data.table;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.engine.hbase.HBaseOVCTable;
+import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class  TestHBaseOVCTable extends TestOVCTable {
@@ -286,4 +285,8 @@ public class  TestHBaseOVCTable extends TestOVCTable {
   @Override @Test @Ignore
   public void testIncrementCASIncrementWithSameTimestamp() {}
 
+  @Override
+  public void testInjection() {
+    assertTrue(table.getClass().equals(HBaseOVCTable.class));
+  }
 }

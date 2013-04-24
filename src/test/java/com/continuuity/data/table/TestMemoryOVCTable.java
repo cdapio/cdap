@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.Guice;
@@ -64,4 +65,8 @@ public class TestMemoryOVCTable extends TestOVCTable {
     assertTrue(this.table.get(row, COL, new MemoryReadPointer(1)).isEmpty());
   }
 
+  @Override
+  public void testInjection() {
+    assertTrue(table instanceof MemoryOVCTable);
+  }
 }
