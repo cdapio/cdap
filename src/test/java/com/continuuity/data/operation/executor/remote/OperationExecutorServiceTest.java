@@ -51,6 +51,12 @@ public abstract class OperationExecutorServiceTest extends
 
   static OperationContext context = OperationUtil.DEFAULT;
 
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection();
+
   /** Tests Write, Read */
   @Test
   public void testWriteThenRead() throws Exception {

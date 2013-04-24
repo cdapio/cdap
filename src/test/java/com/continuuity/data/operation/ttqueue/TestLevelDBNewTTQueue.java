@@ -3,6 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
@@ -10,6 +11,8 @@ import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Random;
+
+import static org.junit.Assert.assertTrue;
 
 public class TestLevelDBNewTTQueue extends TestTTQueueNew {
 
@@ -27,6 +30,11 @@ public class TestLevelDBNewTTQueue extends TestTTQueueNew {
       injector.getInstance(OVCTableHandle.class);
 
   private static final Random r = new Random();
+
+  @Override
+  public void testInjection() {
+    assertTrue(handle instanceof LevelDBOVCTableHandle);
+  }
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {

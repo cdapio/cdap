@@ -60,6 +60,13 @@ public abstract class TestTTQueue {
     return TransactionOracle.DIRTY_WRITE_VERSION;
   }
 
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection() throws OperationException;
+
+
   @Test
   public void testLotsOfAsyncDequeueing() throws Exception {
     TTQueue queue = createQueue();

@@ -79,7 +79,13 @@ public abstract class TestOmidExecutorLikeAFlow {
   protected abstract OVCTableHandle getTableHandle();
 
   protected abstract int getNumIterations();
-  
+
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection();
+
   @Test
   public void testGetGroupIdAndGetGroupMeta() throws Exception {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
