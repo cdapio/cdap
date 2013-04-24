@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.DataObject;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
@@ -14,7 +15,6 @@ import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.DatumWriter;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -57,17 +57,22 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
 
   @Override
   public void emit(T data) {
-    emit(data, ImmutableMap.<String, Object>of());
+    emit(new DataObject<T>(data));
   }
 
   @Override
   public void emit(T data, String partitionKey, Object partitionValue) {
-    emit(data, ImmutableMap.of(partitionKey, partitionValue));
+    emit(new DataObject<T>(data, partitionKey, partitionValue));
   }
 
   @Override
   public void emit(T data, Map<String, Object> partitions) {
-    dataQueue.add(new DataObject<T>(data, partitions));
+    emit(new DataObject<T>(data, partitions));
+  }
+
+  @Override
+  public void emit(DataObject<T> dataObject) {
+    dataQueue.add(dataObject);
   }
 
   @Override
