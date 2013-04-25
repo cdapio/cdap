@@ -398,7 +398,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
     readPointer) throws OperationException {
-
     RowLockTable.Row r = new RowLockTable.Row(row);
 
     Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
@@ -432,7 +431,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
-
     RowLockTable.Row r = new RowLockTable.Row(row);
 
     Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
