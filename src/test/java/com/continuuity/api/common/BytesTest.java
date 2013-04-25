@@ -31,4 +31,16 @@ public class BytesTest {
     assertEquals(-1, Bytes.indexOf(source,target2));
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testSourceNull() throws Exception {
+    byte [] target  = {11,14};
+    Bytes.indexOf(null, target);
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testTargetNull() throws Exception {
+    byte [] source  = {11,14};
+    Bytes.indexOf(source,null);
+  }
+
 }
