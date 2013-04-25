@@ -16,6 +16,7 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.Callback;
+import com.continuuity.api.flow.flowlet.DataObject;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.InputContext;
@@ -23,6 +24,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,8 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 public class TestFlowQueueIntegrationApp implements Application {
+
+  public static final int MAX_ITERATIONS = 20;
 
   private static final Logger LOG = LoggerFactory.getLogger(TestFlowQueueIntegrationApp.class);
   private static final String HASH_KEY1 = "hkey1";
@@ -80,14 +84,25 @@ public class TestFlowQueueIntegrationApp implements Application {
     private OutputEmitter<Entry1> output1;
     @Output("entry2")
     private OutputEmitter<Entry2> output2;
+    @Output("batch_entry")
+    private OutputEmitter<BatchEntry> batchOutput;
 
     @ProcessInput
     public void foo(StreamEvent event) {
-      int i = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
-      LOG.warn("Writing " + i);
-      output.emit(i, HASH_KEY1, i + 1);
-      output1.emit(new Entry1(i), HASH_KEY1, i + 1);
-      output2.emit(new Entry2(i), HASH_KEY2, i + 2);
+      final int input = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
+      LOG.warn("Writing " + input);
+      output.emit(input, HASH_KEY1, input + 1);
+      output1.emit(new Entry1(input), HASH_KEY1, input + 1);
+      output2.emit(new Entry2(input), HASH_KEY2, input + 2);
+
+      // Emit batch output in one shot in the beginning
+      if(input == 0) {
+        List<DataObject<BatchEntry>> dataObjects = Lists.newArrayList();
+        for(int j = 0; j < MAX_ITERATIONS; ++j) {
+          dataObjects.add(new DataObject<BatchEntry>(new BatchEntry(j), HASH_KEY1, j));
+        }
+        batchOutput.emit(dataObjects);
+      }
     }
   }
 
@@ -106,6 +121,14 @@ public class TestFlowQueueIntegrationApp implements Application {
 
     private volatile int first = -1;
     private CountDownLatch latch = new CountDownLatch(1);
+
+    /*
+    private int fifoPrevious = -1;
+    private boolean fifoLeader = false;
+    private int fifoDequeueCount = 0;
+    private static final Queue<Integer> leaderElection =
+      new ConcurrentLinkedQueue<java.lang.Integer>(ImmutableList.of(0, 1, 2));
+      */
 
     @SuppressWarnings("unchecked")
     public QueuePartitionTestFlowlet() {
@@ -178,7 +201,7 @@ public class TestFlowQueueIntegrationApp implements Application {
       verify(actual.i, expectedHash2Iterator, logID);
     }
 
-    public void verify(int i, Iterator<Integer> iterator, String logID) {
+    private void verify(int i, Iterator<Integer> iterator, String logID) {
       logID = logID  + " : first=" + first;
       LOG.warn(logID + ": value=" + i);
       if(iterator.hasNext()) {
@@ -188,6 +211,47 @@ public class TestFlowQueueIntegrationApp implements Application {
         Assert.fail(logID + ": Not enough inputs!");
       }
     }
+
+    /*
+        @ProcessInput("batch_entry")
+        public void fifo(BatchEntry entry) {
+          ++fifoDequeueCount;
+
+          if(!leaderElection.isEmpty()) {
+            int i = leaderElection.poll();
+            if(i == 0) {
+              fifoLeader = true;
+            }
+          }
+          LOG.warn("*****FID:" + id + " fifoLeader=" + fifoLeader + " value=" + entry.i);
+          if(!fifoLeader) {
+            try {
+              TimeUnit.MILLISECONDS.sleep(50);
+            } catch (InterruptedException e) {
+              // Noting to do
+            }
+          }
+
+          // Assert that what we got now is greater than the previous dequeue entry
+          if(fifoPrevious != -1) {
+            Assert.assertTrue( entry.i > fifoPrevious);
+          }
+          fifoPrevious = entry.i;
+        }
+
+        @Override
+        public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+          if(input instanceof BatchEntry) {
+            // Assert that Fifo leader did most number of dequeues
+            BatchEntry entry = (BatchEntry) input;
+            String log = "Fifo leader=" + fifoLeader +  " Dequeue Count=" + fifoDequeueCount + " Entry=" + entry.i;
+            LOG.warn("*******Verifying Fifo. " + log);
+            if(entry.i > 0.75 * MAX_ITERATIONS  && fifoLeader) {
+              Assert.assertTrue(log, fifoDequeueCount > (MAX_ITERATIONS/NUM_INSTANCES) + 1);
+            }
+          }
+        }
+    */
 
     @Override
     public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
@@ -218,20 +282,22 @@ public class TestFlowQueueIntegrationApp implements Application {
       expectedLists[4] = ImmutableList.of(4, 9, 14, 19);
     }
 
-    @ProcessInput("int")
+    @ProcessInput("batch_entry")
     @HashPartition(HASH_KEY1)
     @Batch(100)
-    public void foo(Iterator<Integer> it) {
-      List<Integer> actualList = ImmutableList.copyOf(it);
+    public void foo(Iterator<BatchEntry> it) {
+      List<BatchEntry> actualList = ImmutableList.copyOf(it);
       LOG.warn("HID:" + id + " values=" + actualList);
 
       if(first == -1) {
-        first = actualList.get(0);
+        first = actualList.get(0).i;
         expectedListIterator = expectedLists[first].iterator();
-      }
-
-      for (Integer actual : actualList) {
-        Assert.assertEquals(expectedListIterator.next(), actual);
+        for (BatchEntry actual : actualList) {
+          Assert.assertEquals((int)expectedListIterator.next(), actual.i);
+        }
+        Assert.assertFalse(expectedListIterator.hasNext());
+      } else {
+        Assert.fail("Batch dequeue is not working correctly");
       }
     }
 
@@ -257,6 +323,14 @@ public class TestFlowQueueIntegrationApp implements Application {
     public int i;
 
     private Entry2(int i) {
+      this.i = i;
+    }
+  }
+
+  private static class BatchEntry {
+    public int i;
+
+    private BatchEntry(int i) {
       this.i = i;
     }
   }
