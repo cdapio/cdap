@@ -12,6 +12,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
@@ -143,4 +144,10 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
       throw new OperationException(StatusCode.HBASE_ERROR, "Problem clearing");
     }
   }
+
+  @Override
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end) {
+    return getQueue(queueName).getIterator(start,end);
+  }
+
 }

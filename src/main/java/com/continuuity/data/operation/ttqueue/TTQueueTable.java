@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
+import java.util.Iterator;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
@@ -115,6 +116,15 @@ public interface TTQueueTable {
    * Clears this queue table, completely wiping all queues.
    */
   public void clear() throws OperationException;
+
+  /**
+   * Returns iterator of QueueEntry for the given queue
+   * @param queueName queuename to iterate on
+   * @param start Start QueueEntryPointer
+   * @param end  end QueeuEntryPointer
+   * @return Iterator of QueueEntry
+   */
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end);
 
   // Old debugging methods
 

@@ -8,6 +8,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.dataset.Stream;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
@@ -35,13 +36,16 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -92,6 +96,10 @@ public class OmidTransactionalOperationExecutor
 
   private OrderedVersionedColumnarTable metaTable;
   private OrderedVersionedColumnarTable randomTable;
+  private OrderedVersionedColumnarTable streamMetaTable;
+
+
+  private StreamMetaOracle streamMetaOracle = new StreamMetaOracle();
 
   private MetaDataStore metaStore;
 
@@ -683,6 +691,7 @@ public class OmidTransactionalOperationExecutor
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
       finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
+
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -901,7 +910,10 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
                                                                    transaction.getWriteVersion());
+
+    streamMetaOracle.writeMeta(result.getEntryPointer(), this.streamMetaTable);
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
+
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries(), enqueue.getProducer(),
                                      result.getEntryPointers()));
@@ -1058,8 +1070,57 @@ public class OmidTransactionalOperationExecutor
       this.randomTable = this.tableHandle.getTable(Bytes.toBytes("random"));
       this.queueTable = this.tableHandle.getQueueTable(Bytes.toBytes("queues"));
       this.streamTable = this.tableHandle.getStreamTable(Bytes.toBytes("streams"));
+      this.streamMetaTable = this.tableHandle.getTable(Bytes.toBytes("streamMeta"));
       this.namedTables = Maps.newConcurrentMap();
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
+
+  /**
+   * StreamMetaOracle maintains the streamMeta data for all the entries written to streams. It is implemented
+   * as a write-through cache.
+   * In the current implementation the meta data  the stream offsets and queue entry pointers for each streams.
+   * This will not work for distributed Opex - and needs to move out to a service of its own
+   */
+  private static final class StreamMetaOracle {
+
+    private final ConcurrentHashMap<byte[], Long> cache = new ConcurrentHashMap <byte[], Long>();
+    //TODO: Make time-offsets configurable
+    private final long offsetWriteIntervalInSecs = 60*60;
+    private final byte [] offsetColumn = "o".getBytes(Charsets.UTF_8); //o for "offset"
+    private final long version = 1L;
+
+    private void writeMeta(QueueEntryPointer pointer, OrderedVersionedColumnarTable streamTable)
+                                                                               throws OperationException {
+      byte [] streamName = pointer.getQueueName();
+      Preconditions.checkNotNull(streamName);
+
+      if (!Bytes.startsWith(streamName, TTQueue.STREAM_NAME_PREFIX)) {
+        return;
+      }
+
+      long offsetToBeWritten  = System.currentTimeMillis()/1000;
+      boolean writeMeta = false;
+
+      if (cache.containsKey(streamName)) {
+        Long existingOffset = cache.get(streamName);
+        //Write offsets if it has been offsetWriteIntervalInSecs time since last time offset was written
+        // or on regular offset boundaries.
+        if( (offsetToBeWritten - existingOffset) >= offsetWriteIntervalInSecs ||
+             (offsetToBeWritten % offsetWriteIntervalInSecs ==0 ) ){
+          writeMeta =true;
+        }
+      } else {
+         writeMeta = true;
+         cache.put(streamName,offsetToBeWritten);
+      }
+
+      if(writeMeta){
+        //Write Meta with tablename:offset as key and entrypointer as value
+        byte [] rowKey = Stream.StreamMeta.makeStreamMetaRowKey(streamName, offsetToBeWritten);
+        streamTable.put(rowKey,offsetColumn,version,pointer.getBytes());
+      }
+    }
+  }
+
 } // end of OmitTransactionalOperationExecutor

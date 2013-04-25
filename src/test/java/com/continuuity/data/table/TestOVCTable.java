@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -1109,6 +1110,12 @@ public abstract class TestOVCTable {
     result = this.table.getCeilValue(testNonExistingRow,col,RP_MAX);
     assertTrue(result.isEmpty());
 
+
+    byte [] testExistingRow = Bytes.toBytes(500);
+    result = this.table.getCeilValue(testExistingRow,col,RP_MAX);
+    assertFalse(result.isEmpty());
+    assertEquals(500, Bytes.toInt(result.getValue()));
+
   }
 
   @Test
@@ -1211,7 +1218,7 @@ public abstract class TestOVCTable {
     atomicIncrementThread1.join();
 
     long val  = this.table.incrementAtomicDirtily(row,COL,1L);
-    assertEquals(201,val);
+    assertEquals(201, val);
   }
 
   @Test
@@ -1232,4 +1239,113 @@ public abstract class TestOVCTable {
                                                    outside.getMaximum());
     assertEquals(new Long(4L), value.get(c1));
   }
+
+
+  @Test
+  public void testScanDirty() throws OperationException {
+    final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1,1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey,col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(100));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(150));
+
+    Scanner scanner = this.table.scanDirty(startRow,stopRow);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(100,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+     }
+    }
+
+    assertEquals(50,count); // checks if we got required amount of entry
+    assertEquals(149,lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+  @Test
+  public void testScanDirtyMid() throws OperationException {
+    final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1,1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey,col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(150));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(175));
+
+    Scanner scanner = this.table.scanDirty(startRow,stopRow);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(150,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(25,count); // checks if we got required amount of entry
+    assertEquals(174,lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+  @Test
+  public void testScanDirtyNoResult() throws OperationException {
+    final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1,1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey,col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(210));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(250));
+
+    Scanner scanner = this.table.scanDirty(startRow,stopRow);
+
+    assertTrue(scanner != null);
+
+    int count = 0;
+    while(scanner.next()!=null) {
+      count++;
+    }
+
+    assertEquals(0,count);
+  }
+
 }

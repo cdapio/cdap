@@ -2,11 +2,9 @@ package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.List;
-import java.util.Map;
 
 
 public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
@@ -20,6 +18,14 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @return list of keys
    */
   public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) throws OperationException;
+
+  /**
+   * Scans the table and returns all row keys according to the specified
+   * limit.
+   * @param limit
+   * @return list of keys
+   */
+  public List<byte[]> getKeysDirty(int limit) throws OperationException;
 
   /**
    * Scans all columns of all rows between the specified start row (inclusive)
@@ -60,9 +66,9 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * Gets the value associated with the least key that is greater than or equal to the given row for
    * the specified column. Returns empty OperationResult if there is no such value.
    *
-   * @param row
-   * @param column
-   * @param readPointer
+   * @param row  Start row for the scan
+   * @param column column value to get
+   * @param readPointer instance of ReadPointer
    * @return Value  of the column that corresponds to the least key that is greater than or equal to
    * given row. Returns empty OperationResult if there is no such value. Never returns null.
    * @throws OperationException
@@ -71,16 +77,23 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
     readPointer) throws OperationException;
 
   /**
-   * Gets the value and version associated with the least key that is less than or equal to the given row.
-   * Returns null if there is no such key
-   * @param row
-   * @param column
-   * @param readPointer
-   * @return Value and version of the column that corresponds to the least key that is less than or equal to
-   * given row. Null if no such key
+   * Gets the value associated with the least key that is greater than or equal to the given row for the
+   * specified column.
+   * @param row  Start row for the scan
+   * @param column column value to get
+   * @return Value  of the column that corresponds to the least key that is greater than or equal to
+   * given row. Returns empty OperationResult if there is no such value. Never returns null.
    * @throws OperationException
    */
-//  public OperationResult<ImmutablePair<byte[], Long>> getFloorValueWithVersion( byte[] row, byte[] column,
-//                                                              ReadPointer readPointer) throws OperationException;
+  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException;
 
+  /**
+   * Scans all columns of all rows between the specified start row (inclusive)
+   * and stop row (exclusive).  This scan is dirty - doesn't use read pointer
+   * column.
+   * @param startRow
+   * @param stopRow
+   * @return scanner cursor
+   */
+  public Scanner scanDirty(byte[] startRow, byte[] stopRow);
 }

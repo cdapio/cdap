@@ -5,7 +5,10 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.table.Scanner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -432,6 +435,32 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
+  public List<byte[]> getKeysDirty(int limit)  throws OperationException{
+
+    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+    int returned = 0;
+    try {
+      Scan scan = new Scan();
+      scan.setMaxVersions();
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          if (returned < limit) {
+            returned++;
+            keys.add(kv.getRow());
+          }
+          if (returned == limit) return keys;
+          break;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return keys;
+  }
+
+  @Override
   public long increment(byte[] row, byte[] column, long amount,
                         ReadPointer readPointer, long writeVersion) throws OperationException {
     try {
@@ -520,8 +549,80 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       this.exceptionHandler.handle(e);
     }
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
 
+  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
+
+    Scan scan = new Scan(row);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          if (Bytes.equals(column,kv.getQualifier())) {
+            return new OperationResult<byte[]>(kv.getValue());
+          }
+        }
+      }
+    }catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
 
+
+  @Override
+  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
+    Scan scan =  new Scan(startRow);
+    scan.setStopRow(stopRow);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      return new HBaseNativeScanner(scanner);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public class HBaseNativeScanner implements Scanner {
+
+    private final ResultScanner scanner ;
+
+    public HBaseNativeScanner(ResultScanner scanner) {
+      this.scanner = scanner;
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      if (scanner == null) {
+        return null;
+      }
+      try {
+        Result result = scanner.next();
+        if(result == null) {
+          return null;
+        }
+        Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        byte [] rowKey = null;
+        for (KeyValue kv : result.raw()) {
+          rowKey = kv.getKey();
+          byte[] column = kv.getQualifier();
+          byte [] value = kv.getValue();
+          colValue.put(column, value);
+        }
+        if (rowKey == null) {
+          return null;
+        } else {
+          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+      scanner.close();
+    }
+  }
 }
