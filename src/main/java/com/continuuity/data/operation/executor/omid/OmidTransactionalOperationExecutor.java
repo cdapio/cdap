@@ -292,7 +292,7 @@ public class OmidTransactionalOperationExecutor
   private void dataSetMetric_read(String dataSetName) {
     dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
   }
-  
+
   private void dataSetMetric_write(String dataSetName, int dataSize) {
     dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
     dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
@@ -1088,7 +1088,6 @@ public class OmidTransactionalOperationExecutor
     //TODO: Make time-offsets configurable
     private final long offsetWriteIntervalInSecs = 60*60;
     private final byte [] offsetColumn = "o".getBytes(Charsets.UTF_8); //o for "offset"
-    private final long version = 1L;
 
     private void writeMeta(QueueEntryPointer pointer, OrderedVersionedColumnarTable streamTable)
                                                                                throws OperationException {
@@ -1107,7 +1106,7 @@ public class OmidTransactionalOperationExecutor
         //Write offsets if it has been offsetWriteIntervalInSecs time since last time offset was written
         // or on regular offset boundaries.
         if( (offsetToBeWritten - existingOffset) >= offsetWriteIntervalInSecs ||
-             (offsetToBeWritten % offsetWriteIntervalInSecs ==0 ) ){
+             (offsetToBeWritten % offsetWriteIntervalInSecs == 0 ) ){
           writeMeta =true;
         }
       } else {
@@ -1118,7 +1117,7 @@ public class OmidTransactionalOperationExecutor
       if(writeMeta){
         //Write Meta with tablename:offset as key and entrypointer as value
         byte [] rowKey = Stream.StreamMeta.makeStreamMetaRowKey(streamName, offsetToBeWritten);
-        streamTable.put(rowKey,offsetColumn,version,pointer.getBytes());
+        streamTable.put(rowKey, offsetColumn, TransactionOracle.DIRTY_WRITE_VERSION, pointer.getBytes());
       }
     }
   }
