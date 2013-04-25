@@ -1327,4 +1327,24 @@ public class Bytes {
     for (int i = 0; i < size - s.length(); ++i)
       out.writeByte(0);
   }
+
+  /**
+   * Returns the start position of the first occurrence of the specified {@code
+   * target} within {@code source}, or {@code -1} if there is no such occurrence.
+   *
+   * @param source array to search for the sequence {@code target}
+   * @param target array to search for as a sub-sequence of {@code source}
+   */
+  public static int indexOf(byte [] source, byte [] target) {
+    outer:
+    for ( int index = 0 ; index < source.length - target.length + 1 ; index++ ) {
+      for(int targetIndex =0 ; targetIndex < target.length; targetIndex++) {
+        if ( source[index+targetIndex] != target[targetIndex]) {
+          continue outer;
+        }
+      }
+      return index;
+    }
+    return -1;
+  }
 }
