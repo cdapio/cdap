@@ -2210,11 +2210,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       super.saveDequeueState(consumer, config, queueState, readPointer);
     }
 
-    @Override
-    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
-      super.deleteDequeueState(consumer);
-    }
-
     /**
      * Returns the group read pointer for the consumer. This also initializes the group read pointer
      * when the consumer group is starting for the first time.
