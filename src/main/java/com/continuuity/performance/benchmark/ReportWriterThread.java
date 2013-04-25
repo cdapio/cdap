@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class ReportWriterThread extends ReportThread {
 
-  private static final Logger Log = LoggerFactory.getLogger(ReportWriterThread.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ReportWriterThread.class);
 
   private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
   private static final String OPS_PER_SEC_AVG = "benchmark.ops.per_sec.avg";
@@ -60,12 +60,14 @@ public class ReportWriterThread extends ReportThread {
         long wakeup = start + (seconds * 1000);
         long currentTime = System.currentTimeMillis();
         unixTime = currentTime / 1000L;
-        try {
-          if (wakeup > currentTime) {
-            Thread.sleep(wakeup - currentTime);
+        if (wakeup > currentTime) {
+          long sleepTime = wakeup - currentTime;
+          try {
+            Thread.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            LOG.debug("InterruptedException caught during Thread.sleep({}).", sleepTime);
+            interrupt = true;
           }
-        } catch (InterruptedException e) {
-          interrupt = true;
         }
         long millis;
         if (!interrupt) {
@@ -89,9 +91,7 @@ public class ReportWriterThread extends ReportThread {
                 String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
                 String metric = buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue, benchmarkName,
                                             groups[i].getName(), Integer.toString(groups[i].getNumAgents()));
-                Log.info("Collecting "+metric+" in memory ");
-//                bw.write(metric);
-//                bw.write("\n");
+                LOG.info("Collected metric {} in memory ", metric);
               }
             }
           }
@@ -99,6 +99,7 @@ public class ReportWriterThread extends ReportThread {
           previousMillis[i] = millis;
         }
       }
+      LOG.debug("Summarizing collected metrics...");
       unixTime = System.currentTimeMillis() / 1000L;
       for (int i=0; i<groups.length; i++) {
         List<Double> grpVals = mensaMetrics.get(i);
@@ -111,14 +112,14 @@ public class ReportWriterThread extends ReportThread {
           String metricValue = String.format("%1.2f", avg);
           String metric = buildMetric(OPS_PER_SEC_AVG, Long.toString(unixTime), metricValue, benchmarkName,
                                       groups[i].getName(), Integer.toString(groups[i].getNumAgents()));
-          Log.info("Writing "+metric+" to file "+fileName);
+          LOG.info("Writing {} to file {}", metric, fileName);
           bw.write(metric);
           bw.write("\n");
           bw.flush();
         }
       }
     } catch (IOException e) {
-      Log.error("Error when trying to write to report file " + fileName);
+      LOG.error("Error when trying to write to report file " + fileName);
     } finally {
       if (bw != null) try { bw.close(); } catch (IOException e) {
         e.printStackTrace();

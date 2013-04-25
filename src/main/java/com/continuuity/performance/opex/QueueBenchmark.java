@@ -12,6 +12,7 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -20,7 +21,6 @@ import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -30,8 +30,7 @@ import java.util.Random;
 
 public class QueueBenchmark extends OpexBenchmark {
 
-  private static final Logger Log =
-    LoggerFactory.getLogger(QueueBenchmark.class);
+  private static final Logger LOG = LoggerFactory.getLogger(QueueBenchmark.class);
 
   int numProducers = 1;
   int numConsumers = 1;
@@ -144,38 +143,28 @@ public class QueueBenchmark extends OpexBenchmark {
     try {
       opex.commit(opContext, enqueue);
     } catch (Exception e) {
-      Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
-          "(Ignoring this error)", e);
-      //System.err.println("Operation " + enqueue + " failed: " + e.getMessage() +
-      //                     "(Ignoring this error)");
+      LOG.error("Operation {} failed: {} (Ignoring this error)", enqueue, e.getMessage(), e);
       return 0L;
     }
     return enqueueSize;
   }
 
-  long doDequeue(int consumerId) throws BenchmarkException {
+  long doDequeue(int consumerId, QueueConsumer consumer) throws BenchmarkException {
     // create a dequeue operation
-    QueueConsumer consumer = new QueueConsumer(consumerId, 0, numConsumers, "x", hashKey, qconfig);
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, qconfig);
 
     // first dequeue
     DequeueResult result;
     try {
       result = opex.execute(opContext, dequeue);
-      // System.err.println("Good operation " + dequeue + "returned result " + result);
     } catch (OperationException e) {
-      Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
-          "(Ignoring this error)", e);
-      //System.err.println("Bad operation " + dequeue + " failed: " + e.getMessage() +
-      //                     "(Ignoring this error)");
+      LOG.error("Operation {} failed: {} (Ignoring this error)", dequeue, e.getMessage(), e);
       return 0L;
     }
     if (result.isEmpty()) {
-      //System.err.println("Bad operation " + dequeue + "returned empty result" +
-      //                     "(Ignoring this error)");
       return 0L;
     }
-    QueueAck ack = new QueueAck(queueBytes, result.getEntryPointer(), consumer);
+    QueueAck ack = new QueueAck(queueBytes, result.getEntryPointers(), consumer);
     // now check whether there is a pending ack that is due for execution
     QueueAck ackToExecute = null;
     LinkedList<QueueAck> pending = getPending(consumerId);
@@ -187,12 +176,8 @@ public class QueueBenchmark extends OpexBenchmark {
     if (ackToExecute != null) {
       try {
         opex.commit(opContext, ackToExecute);
-        // System.err.println("Good operation " + ackToExecute + "returned.");
       } catch (OperationException e) {
-        Log.error("Operation " + ackToExecute + " failed: " + e.getMessage() +
-            "(Ignoring this error)", e);
-        //System.err.println("Bad operation " + ackToExecute + " failed: " + e.getMessage() +
-        //  "(Ignoring this error)");
+        LOG.error("Operation {} failed: {} (Ignoring this error)", ackToExecute, e.getMessage(), e);
         return 0L;
       }
       pending.removeFirst();
@@ -205,7 +190,7 @@ public class QueueBenchmark extends OpexBenchmark {
     super.initialize();
     try {
       opex.execute(opContext, null,
-                   new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, qconfig)));
+                   new QueueAdmin.QueueConfigure(queueBytes, new StatefulQueueConsumer(0, 0, numConsumers, qconfig)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
     }
@@ -219,11 +204,10 @@ public class QueueBenchmark extends OpexBenchmark {
       try {
         doEnqueue(i, 0);
       } catch (BenchmarkException e) {
-        throw new BenchmarkException(
-            "Failure after " + i + " enqueues: " + e.getMessage() , e);
+        throw new BenchmarkException("Failure after " + i + " enqueues: " + e.getMessage() , e);
       }
     }
-    System.out.println("Warmup: Done.");
+    LOG.info("Warmup: Done.");
   }
 
   @Override
@@ -256,11 +240,10 @@ public class QueueBenchmark extends OpexBenchmark {
             return numProducers;
           }
           @Override
-          public Agent newAgent() {
+          public Agent newAgent(final int agentId) {
             return new Agent() {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
-                  throws BenchmarkException {
+              public long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException {
                 return doEnqueue(iteration, agentId);
               }
             };
@@ -277,12 +260,12 @@ public class QueueBenchmark extends OpexBenchmark {
             return numConsumers;
           }
           @Override
-          public Agent newAgent() {
+          public Agent newAgent(final int agentId) {
             return new Agent() {
+              QueueConsumer consumer = new StatefulQueueConsumer(agentId, 0, numConsumers, "x", hashKey, qconfig);
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
-                  throws BenchmarkException {
-                return doDequeue(agentId);
+              public long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException {
+                return doDequeue(agentId, consumer);
               }
             };
           } // newAgent()

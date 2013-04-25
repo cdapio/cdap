@@ -44,7 +44,7 @@ public abstract class AgentGroup {
    * Create a new agent that is ready to run.
    * @return a new agent
    */
-  public abstract Agent newAgent();
+  public abstract Agent newAgent(int agentId);
 
   public long getGroupMillisDelay() {
     return 0L;
