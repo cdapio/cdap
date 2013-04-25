@@ -18,9 +18,6 @@ import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
-import com.continuuity.data.table.VersionedColumnarTable;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -119,6 +116,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   private final int MAX_CONSUMER_COUNT;
 
   private static final byte[] ENTRY_META_INVALID = new EntryMeta(EntryMeta.EntryState.INVALID).getBytes();
+  private static final byte[] ENTRY_META_VALID = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
 
   protected TTQueueNewOnVCTable(OrderedVersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
@@ -2382,8 +2380,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private final Scanner scanner;
     private boolean peeked;
     private QueueEntry currentQueueEntry;
-    final byte[] validEntryMetaBytes = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
-
+    private final byte[] validEntryMetaBytes;
     /**
      * Construct new TTQueueNewIterator taking in Table Scanner as a parameter
      * @param scanner Table scanner
@@ -2392,6 +2389,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.scanner = scanner;
       this.peeked = false;
       this.currentQueueEntry = null;
+      this.validEntryMetaBytes  = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+
     }
 
     private QueueEntry getNextValidQueueEntry() throws IOException {
@@ -2406,11 +2405,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
         if (value == null ) {
           done  = true;
         }  else {
-          byte [] queueEntryBytes = value.getSecond().get(this.validEntryMetaBytes);
-          if (queueEntryBytes !=null) {
-            entry  = new QueueEntry(queueEntryBytes);
-            done = true;
-          }
+           byte [] entryMetaValue = value.getSecond().get(ENTRY_META);
+           byte [] queueEntryBytes = value.getSecond().get(GLOBAL_DATA_PREFIX);
+           boolean validEntryMeta  = (entryMetaValue != null) ? (Bytes.equals(entryMetaValue, ENTRY_META_VALID))
+                                                              : false;
+           if ( validEntryMeta && (queueEntryBytes !=null) ) {
+               entry  = new QueueEntry(queueEntryBytes);
+               done = true;
+             }
         }
       }
       return entry;
