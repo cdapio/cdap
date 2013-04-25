@@ -534,7 +534,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   @Override
   public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
     readPointer) throws OperationException {
-
     Scan scan = new Scan(row);
     try {
       ResultScanner scanner = this.readTable.getScanner(scan);
@@ -552,7 +551,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
-
     Scan scan = new Scan(row);
     try {
       ResultScanner scanner = this.readTable.getScanner(scan);
