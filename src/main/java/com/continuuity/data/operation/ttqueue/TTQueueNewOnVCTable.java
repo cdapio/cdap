@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicLong;
 // TODO: catch Runtime exception and translate it into OperationException
 // TODO: move all queue state manipulation methods into single class
 // TODO: use common code to decode/encode lists and maps
-// TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
 // TODO: use raw Get instead of the workaround of incrementAtomicDirtily(0)
 
 /**
@@ -1534,6 +1533,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   public static class QueueStateImpl implements QueueState {
+
+    // we use this to mark encoded queue state in the table - when decoding we can verify the correct version
+    final static int encodingVersion = 1;
+
     // Note: QueueStateImpl does not override equals and hashcode,
     // since in some cases we would want to include transient state in comparison and in some other cases not.
 
@@ -1630,9 +1633,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void encode(Encoder encoder) throws IOException {
-      // TODO: write and read schema
       // transient working set is not encoded - in case we have to reconstruct the state, we can re-read it
       // last evict time is not encoded - it is stored in a separate column
+      encoder.writeInt(encodingVersion);
       partitioner.encode(encoder);
       dequeueEntrySet.encode(encoder);
       encoder.writeLong(consumerReadPointer);
@@ -1649,6 +1652,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
     public static QueueStateImpl decode(Decoder decoder) throws IOException {
       // transient working set is not encoded - in case we have to reconstruct the state, we can re-read it
       // last evict time is not encoded - it is stored in a separate column
+      int versionFound = decoder.readInt();
+      if (versionFound != encodingVersion) {
+        throw new IOException("Cannot decode QueueStateImpl with incomatible version " + versionFound);
+      }
       QueueStateImpl queueState = new QueueStateImpl();
       queueState.setPartitioner(QueuePartitioner.PartitionerType.decode(decoder));
       queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
