@@ -24,6 +24,7 @@ import com.continuuity.hbase.ttqueue.HBReadPointer;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
@@ -267,6 +268,12 @@ public class TTQueueOnHBaseNative implements TTQueue {
       e.printStackTrace();
       throw new OperationException(StatusCode.HBASE_ERROR, e.getMessage());
     }
+  }
+
+
+  @Override
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+    throw new UnsupportedOperationException("Iterator not implemented on TTQueeuOnHbaseNative");
   }
 
   @Override

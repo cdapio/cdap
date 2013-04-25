@@ -9,6 +9,8 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -728,6 +730,12 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
+
+  @Override
+  public List<byte[]> getKeysDirty(int limit) throws OperationException {
+   return new ArrayList<byte[]>();
+  }
+
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
@@ -780,6 +788,48 @@ implements OrderedVersionedColumnarTable {
        }
     }
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+
+  @Override
+  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column)
+    throws OperationException {
+    DBIterator iterator = db.iterator();
+    iterator.seek(createStartKey(row,column));
+    long lastDelete = -1;
+    long undeleted = -1;
+
+    while( iterator.hasNext()) {
+      byte[] key = iterator.peekNext().getKey();
+      byte [] value = iterator.peekNext().getValue();
+
+      KeyValue kv = createKeyValue(key, value);
+      long curVersion = kv.getTimestamp();
+
+      Type type = Type.codeToType(kv.getType());
+
+      if (type == Type.Delete) {
+        lastDelete = curVersion;
+      } else if (type == Type.UndeleteColumn) {
+        undeleted = curVersion;
+      } else if (type == Type.DeleteColumn) {
+        if (undeleted != curVersion) {
+          break;
+        }
+      } else if (type == Type.Put) {
+        if (curVersion != lastDelete) {
+          // If we get here, this version is visible
+          return new OperationResult<byte[]>(value);
+        }
+      }
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+
+  @Override
+  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
+    return new LevelDBScanner(db.iterator(),startRow, stopRow);
   }
 
   // Private Helper Methods
@@ -943,5 +993,78 @@ implements OrderedVersionedColumnarTable {
       e.getMessage() + ")";
     LOG.error(msg, e);
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
+
+  public class LevelDBScanner implements Scanner {
+
+    private final DBIterator iterator;
+    private final byte [] endRow;
+
+    public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow) {
+      this.iterator = iterator;
+      this.iterator.seek(createStartKey(startRow));
+      this.endRow = endRow;
+    }
+
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+
+      //From the current iterator do one of the following:
+      // a) get all columns for currentRow if it is not the endRow
+      // b) return null if we have reached endRow
+      // c) return null if there are no more entries
+      if (! iterator.hasNext()) {
+        return null;
+      }
+
+      Map.Entry<byte[],byte[]> entry = iterator.peekNext();
+
+      if ( entry == null) {
+        return null;
+      }
+
+      KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
+      byte [] row = keyValue.getRow();
+
+      if  ( Bytes.compareTo(row,endRow) >= 0) {
+        return null;
+      }
+
+      Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      columnValues.put(keyValue.getQualifier(),keyValue.getValue());
+
+      boolean gotAllColumnsForCurrentRow = false;
+
+      while(!gotAllColumnsForCurrentRow) {
+        this.iterator.next();
+        entry = iterator.peekNext();
+
+        if ( entry == null) {
+          // we have reached the end
+          gotAllColumnsForCurrentRow = true;
+        }  else {
+          KeyValue kv = createKeyValue(entry.getKey(),entry.getValue());
+          // Check if we are still on the current Row
+          if ( Bytes.equals(kv.getKey(),row)) {
+            columnValues.put(kv.getQualifier(),kv.getValue());
+            this.iterator.next();
+          } else {
+            gotAllColumnsForCurrentRow = true;
+          }
+        }
+      }
+      return new ImmutablePair<byte[], Map<byte[], byte[]>>(row,columnValues);
+    }
+
+    @Override
+    public void close() {
+      try {
+        iterator.close();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
   }
 }

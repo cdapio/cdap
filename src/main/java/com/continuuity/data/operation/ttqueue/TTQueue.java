@@ -4,6 +4,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Iterator;
+
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
@@ -121,4 +123,15 @@ public interface TTQueue {
    * @return global meta information for this queue and its groups
    */
   public QueueInfo getQueueInfo() throws OperationException;
+
+  /**
+   * Scan the queue from QueueEntryPointer begin to end. This scan is dirty i.e., doesn't use ReadPointer to read
+   * filter the entries. Designed to be used by batch operation
+   *
+   * @param begin start QueueEntryPointer
+   * @param end  end QueueEntryPointer
+   * @return Iterator of QueueEntry
+   */
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end);
+
 }

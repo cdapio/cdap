@@ -7,7 +7,9 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -688,6 +690,70 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public List<byte[]> getKeysDirty(int limit) throws OperationException {
+    if (limit <= 0) {
+      limit = Integer.MAX_VALUE;
+    }
+    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+    int returnedRow = 0;
+    Set<Long> deletedCellsWithinRow = Sets.newHashSet();
+    boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
+    boolean fastForwardToNextRow=false;
+    byte[] previousRow=null;
+    byte[] previousColumn=null;
+    try {
+      Scan scan = new Scan();
+      scan.setMaxVersions();
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          byte[] row=kv.getRow();
+          if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
+            continue;
+          }
+          fastForwardToNextRow=false;
+          byte[] column=kv.getQualifier();
+          if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
+            continue;
+          }
+          fastForwardToNextColumn=false;
+          long version=kv.getTimestamp();
+          if (deletedCellsWithinRow.contains(version))  {
+            deletedCellsWithinRow.remove(version);
+            continue;
+          }
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            if (returnedRow < limit) {
+              returnedRow++;
+              keys.add(kv.getRow());
+            }
+            if (returnedRow == limit) {
+              return keys;
+            }
+            fastForwardToNextRow=true;
+            fastForwardToNextColumn=false;
+          }
+          if (typePrefix==DELETE_ALL) {
+            fastForwardToNextColumn=true;
+            deletedCellsWithinRow.clear();
+          }
+          if (typePrefix==DELETE_VERSION) {
+            deletedCellsWithinRow.add(version);
+          }
+          previousColumn=column;
+          previousRow=row;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return keys;
+  }
+
+  @Override
   public long increment(byte[] row, byte[] column, long amount, ReadPointer readPointer,
                         long writeVersion) throws OperationException {
     HTable writeTable=null;
@@ -923,19 +989,16 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       ResultScanner scanner = this.readTable.getScanner(scan);
       Result result;
       boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
-      boolean fastForwardToNextRow=false;
       byte[] previousRow=null;
       byte[] previousColumn=null;
       Set<Long> deletedCellsWithinRow = Sets.newHashSet();
-      int skippedRow = 0;
 
       while ((result = scanner.next()) != null) {
         for (KeyValue kv : result.raw()) {
           byte[] rowKey=kv.getRow();
-          if (Bytes.equals(previousRow,row) && fastForwardToNextRow) {
+          if (Bytes.equals(previousRow,rowKey)) {
             continue;
           }
-          fastForwardToNextRow=false;
           if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
             continue;
           }
@@ -969,6 +1032,72 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler.handle(e);
     }
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
+
+    Scan scan = new Scan(row);
+    try {
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      boolean fastForwardToNextColumn=false;  // due to DeleteAll tombstone
+      boolean fastForwardToNextRow=false;
+      byte[] previousRow=null;
+      byte[] previousColumn=null;
+      Set<Long> deletedCellsWithinRow = Sets.newHashSet();
+
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          byte[] rowKey=kv.getRow();
+          if (Bytes.equals(previousRow,rowKey) && fastForwardToNextRow) {
+            continue;
+          }
+          fastForwardToNextRow=false;
+          if (Bytes.equals(previousColumn,column) && fastForwardToNextColumn) {
+            continue;
+          }
+          fastForwardToNextColumn=false;
+          long version=kv.getTimestamp();
+
+          if (deletedCellsWithinRow.contains(version))  {
+            deletedCellsWithinRow.remove(version);
+            continue;
+          }
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            //found row with at least one cell with DATA
+            return new OperationResult<byte[]>(removeTypePrefix(value)) ;
+          }
+          if (typePrefix==DELETE_ALL) {
+            fastForwardToNextColumn=true;
+            deletedCellsWithinRow.clear();
+          }
+          if (typePrefix==DELETE_VERSION) {
+            deletedCellsWithinRow.add(version);
+          }
+          previousColumn=column;
+          previousRow=row;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+  }
+
+
+  @Override
+  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
+    Scan scan = new Scan(startRow);
+    scan.setStopRow(stopRow);
+    try {
+      ResultScanner resultScanner = this.readTable.getScanner(scan);
+      return new HBaseScanner(resultScanner);
+    } catch (IOException e){
+      throw Throwables.propagate(e);
+    }
   }
 
   public static interface IOExceptionHandler {
@@ -1024,6 +1153,48 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    }
+  }
+
+  public class HBaseScanner implements Scanner {
+
+    private final ResultScanner scanner ;
+
+    public HBaseScanner(ResultScanner scanner) {
+      this.scanner = scanner;
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      if (scanner == null) {
+        return null;
+      }
+      try {
+        Result result = scanner.next();
+        if(result == null) {
+          return null;
+        }
+        Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        byte [] rowKey = null;
+        for (KeyValue kv : result.raw()) {
+          rowKey = kv.getKey();
+          byte[] column = kv.getQualifier();
+          byte [] value = removeTypePrefix(kv.getValue());
+          colValue.put(column, value);
+        }
+        if (rowKey == null) {
+          return null;
+        } else {
+          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+      scanner.close();
     }
   }
 }

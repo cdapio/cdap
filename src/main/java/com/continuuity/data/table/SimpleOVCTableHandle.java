@@ -5,7 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableNewOnVCTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -83,8 +82,6 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
-
-    // streamTable = new TTQueueTableOnVCTable(table, oracle, conf);
     streamTable = new TTQueueTableNewOnVCTable(table, oracle, conf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);

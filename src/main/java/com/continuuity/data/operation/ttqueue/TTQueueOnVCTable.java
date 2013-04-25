@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -1087,6 +1088,11 @@ public class TTQueueOnVCTable implements TTQueue {
   public QueueInfo getQueueInfo() throws OperationException {
     QueueMeta meta = getQueueMeta();
     return meta == null ? null : new QueueInfo(meta);
+  }
+
+  @Override
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+    throw new UnsupportedOperationException("getIterator is not supported on old queues");
   }
 
   private QueueMeta getQueueMeta() throws OperationException {

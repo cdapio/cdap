@@ -21,4 +21,11 @@ public interface DataSetContext {
    */
   public <T extends DataSet> T getDataSet(String name)
       throws DataSetInstantiationException;
+
+  /**
+   * Find out if the data set context has the data set with the specified name.
+   * @param name name of the data set
+   * @return true if the data set exists in the data set context, false otherwise
+   */
+  public boolean hasDataSet(String name);
 }

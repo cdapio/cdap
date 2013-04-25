@@ -9,6 +9,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -429,6 +430,56 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
+  @Override
+  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
+
+    RowLockTable.Row r = new RowLockTable.Row(row);
+
+    Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
+
+    if ( ceilEntry == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+
+    RowLockTable.Row lockedRow = ceilEntry.getKey();
+
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
+    if (map == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+      byte[] ret =null;
+      NavigableMap<Version, Value> columnMap = getColumn(map, column);
+      ImmutablePair<Long, byte[]> latest = filteredLatestDirty(columnMap);
+      if (latest != null) {
+        ret = latest.getSecond();
+      }
+      if (ret == null) {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<byte[]>(ret);
+      }
+    } finally {
+      this.locks.unlock(lockedRow);
+    }
+  }
+
+  /**
+   * Scans all columns of all rows between the specified start row (inclusive)
+   * and stop row (exclusive).  Returns the latest visible version of each
+   * column.
+   *
+   * @param startRow row to start scanning
+   * @param stopRow row to stop the scan. The value corresponding to the stop row will not be included in the result.
+   * @return scanner cursor
+   */
+  @Override
+  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
+    return new MemoryScanner(this.map.subMap(
+      new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet().iterator(),
+                             new MemoryReadPointer(Long.MAX_VALUE));
+  }
+
   private boolean isEmpty(byte[] column) {
     return column == null || column.length == 0;
   }
@@ -452,6 +503,27 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         if (returned == limit) return keys;
       }
     }
+    return keys;
+  }
+
+  /**
+   * Scans the table and returns all row keys according to the specified limit.
+   * @param limit number of keys to get. max value is limited to 1024
+   * @return list of keys
+   */
+  @Override
+  public List<byte[]> getKeysDirty(int limit) throws OperationException {
+    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+    int returned  = 0;
+    for (Map.Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> entry :
+      this.map.entrySet()) {
+      if (returned < limit) {
+        returned++;
+        keys.add(entry.getKey().getValue());
+      }
+      if (returned==limit) return keys;
+    }
+
     return keys;
   }
 
@@ -523,7 +595,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           Bytes.BYTES_COMPARATOR);
       for (Map.Entry<Column, NavigableMap<Version,Value>> colEntry :
         rowEntry.getValue().entrySet()) {
-        if (!this.columnSet.contains(colEntry.getKey().getValue())) continue;
+       if (!this.columnSet.contains(colEntry.getKey().getValue()) && !this.columnSet.isEmpty()) continue;
         byte [] value =
             filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
         if (value != null) columns.put(colEntry.getKey().getValue(), value);
@@ -761,6 +833,34 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
+      if (curVersion.isUndeleteAll()){
+        undeleted = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.isDeleteAll()) {
+        if (undeleted == curVersion.stamp) continue;
+        else break;
+      }
+      if (curVersion.isDelete()) {
+        lastDelete = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.stamp == lastDelete) continue;
+      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
+    }
+    return null;
+  }
+
+  /**
+   * Returns the latest version of a column within the specified column map,
+   * filtering out deleted values without a readPointer
+   */
+  private ImmutablePair<Long, byte[]> filteredLatestDirty( NavigableMap<Version, Value> columnMap) {
+    if (columnMap == null || columnMap.isEmpty()) return null;
+    long lastDelete = -1;
+    long undeleted = -1;
+    for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
+      Version curVersion = entry.getKey();
       if (curVersion.isUndeleteAll()){
         undeleted = entry.getKey().stamp;
         continue;

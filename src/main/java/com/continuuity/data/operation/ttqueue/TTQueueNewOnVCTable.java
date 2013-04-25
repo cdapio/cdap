@@ -8,6 +8,7 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.common.utils.Bytes;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
@@ -15,6 +16,12 @@ import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.Scanner;
+import com.continuuity.data.table.VersionedColumnarTable;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -47,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TTQueueNewOnVCTable implements TTQueue {
 
   private static final Logger LOG = LoggerFactory.getLogger(TTQueueNewOnVCTable.class);
-  protected final VersionedColumnarTable table;
+  protected final OrderedVersionedColumnarTable table;
   private final byte [] queueName;
   final TransactionOracle oracle;
 
@@ -113,7 +120,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private static final byte[] ENTRY_META_INVALID = new EntryMeta(EntryMeta.EntryState.INVALID).getBytes();
 
-  protected TTQueueNewOnVCTable(VersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
+  protected TTQueueNewOnVCTable(OrderedVersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
@@ -242,7 +249,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final QueueConfig config = consumer.getQueueConfig();
     if (LOG.isTraceEnabled()) {
       LOG.trace(getLogMessage("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
-                  "] (" + consumer + ", " + config + ", " + readPointer + ")"));
+                                "] (" + consumer + ", " + config + ", " + readPointer + ")"));
     }
 
     // Determine what dequeue strategy to use based on the partitioner
@@ -862,6 +869,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
   public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
     // TODO: implement getQueueInfo()
     return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
+  }
+
+  @Override
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+    byte [] startRow = makeRowKey(GLOBAL_DATA_PREFIX,begin.getEntryId());
+    byte [] endRow = makeRowKey(GLOBAL_DATA_PREFIX,end.getEntryId());
+    Scanner scanner = this.table.scanDirty(startRow,endRow);
+    return new TTQueueNewIterator(scanner);
   }
 
   private QueueStateImpl getQueueState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
@@ -2362,4 +2377,84 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
   }
+
+  /**
+   * TTQueueNewIterator implements Iterator interface to provide iteration on top of table Scanner.
+   * remove functionality is not implemented
+   */
+  private static class TTQueueNewIterator implements Iterator<QueueEntry> {
+
+    private final Scanner scanner;
+    private boolean peeked;
+    private QueueEntry currentQueueEntry;
+    final byte[] validEntryMetaBytes = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
+
+    /**
+     * Construct new TTQueueNewIterator taking in Table Scanner as a parameter
+     * @param scanner Table scanner
+     */
+    private TTQueueNewIterator(Scanner scanner) {
+      this.scanner = scanner;
+      this.peeked = false;
+      this.currentQueueEntry = null;
+    }
+
+    private QueueEntry getNextValidQueueEntry() throws IOException {
+      QueueEntry entry = null;
+      if (scanner == null) {
+        return null;
+      }
+      //Get the first Entry that is Valid. If not found return null;
+      boolean done  = false;
+      while (!done){
+        ImmutablePair<byte[], Map<byte[], byte[]>> value = scanner.next();
+        if (value == null ) {
+          done  = true;
+        }  else {
+          byte [] queueEntryBytes = value.getSecond().get(this.validEntryMetaBytes);
+          if (queueEntryBytes !=null) {
+            entry  = new QueueEntry(queueEntryBytes);
+            done = true;
+          }
+        }
+      }
+      return entry;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if(!peeked) {
+        peeked =true;
+        try {
+          currentQueueEntry = getNextValidQueueEntry();
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+      return (currentQueueEntry !=null) ? true: false;
+    }
+
+    @Override
+    public QueueEntry next() {
+      if(peeked) {
+        peeked = false;
+        return currentQueueEntry;
+      } else {
+        QueueEntry entry = null;
+        try {
+          entry = getNextValidQueueEntry();
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+        currentQueueEntry = null;
+        return entry;
+      }
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove is not supported in this iterator");
+    }
+  }
+
 }
