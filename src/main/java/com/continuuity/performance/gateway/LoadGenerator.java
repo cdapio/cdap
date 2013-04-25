@@ -117,7 +117,7 @@ public class LoadGenerator extends SimpleBenchmark {
           }
 
           @Override
-          public Agent newAgent() {
+          public Agent newAgent(int agentId) {
             return new Agent() {
               @Override
               public long runOnce(long iteration, int agentId, int numAgents)

@@ -15,12 +15,8 @@ public class BenchmarkRunner {
   Benchmark benchmark = null;
   CConfiguration config = CConfiguration.create();
 
-  static void error(String message) {
-    LOG.error("Error: " + message);
-  }
-
   void usage() {
-    LOG.info("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
+    System.out.println("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
     if (benchmark != null) {
       Map<String, String> usage = benchmark.usage();
       if (usage != null && !usage.isEmpty()) {
@@ -30,7 +26,7 @@ public class BenchmarkRunner {
         }
       }
     } else {
-      LOG.info("Use --help --bench <name> for benchmark specific " + "options.");
+      System.out.println("Use --help --bench <name> for benchmark specific " + "options.");
     }
   }
 
@@ -38,6 +34,7 @@ public class BenchmarkRunner {
     boolean help = false;
 
     // 1. parse command line for --bench, copy everything else into config
+    LOG.debug("Parsing command line options...");
     for (int i = 0; i < args.length; i++) {
       if ("--help".equals(args[i])) {
         help = true;
@@ -48,14 +45,16 @@ public class BenchmarkRunner {
           String key = args[i].substring(2);
           String value = args[++i];
           config.set(key, value);
-          if ("bench".equals(key))
+          if ("bench".equals(key)) {
             benchName = value;
+          }
         } else {
           throw new BenchmarkException("--<key> must have an argument.");
         }
       }
     }
 
+    LOG.debug("Instantiating and configuring benchmark...");
     // 2. instantiate benchmark and configure it
     if (benchName == null) {
       if (help) {
@@ -85,15 +84,21 @@ public class BenchmarkRunner {
 
   boolean run() throws BenchmarkException {
     // 1. initialize benchmark
+
+    LOG.debug("Executing benchmark.initialize()");
     benchmark.initialize();
 
     // 2. warm up benchmark
+    LOG.debug("Executing benchmark.warmup()");
     benchmark.warmup();
+
 
     // 3. get agent groups and create a thread for each agent
     AgentGroup[] groups = benchmark.getAgentGroups();
     BenchmarkMetric[] groupMetrics = new BenchmarkMetric[groups.length];
     LinkedList<BenchmarkThread> threadList = new LinkedList<BenchmarkThread>();
+
+    LOG.debug("Executing benchmark.warmup()");
     for (int j = 0; j < groups.length; j++) {
       AgentGroup group = groups[j];
       int numAgents = group.getNumAgents();
@@ -111,54 +116,95 @@ public class BenchmarkRunner {
 
       groupMetrics[j] = new BenchmarkMetric();
       for (int i = 0; i < group.getNumAgents(); ++i) {
-        threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
+        threadList.add(new BenchmarkThread(Thread.currentThread(), group, i, groupMetrics[j]));
       }
     }
+
     BenchmarkThread[] threads =
         threadList.toArray(new BenchmarkThread[threadList.size()]);
+    ReportThread consoleReporter = new ReportConsoleThread(groups, groupMetrics, config);
 
-    // 4. start a reporter thread
-    ReportThread reporter;
+    // 4. start the console and other reporter threads
+    LOG.debug("Starting console reporter thread ");
+    consoleReporter.start();
+
+    ReportThread mensaReporter = null;
     String reportFile = config.get("reportfile");
     if (reportFile != null && reportFile.length() != 0) {
-      reporter = new ReportWriterThread(benchName, groups, groupMetrics, config);
-    } else {
-      reporter = new ReportConsoleThread(groups, groupMetrics, config);
+      mensaReporter = new ReportWriterThread(benchName, groups, groupMetrics, config);
+      LOG.debug("Starting mensa reporter thread ");
+      mensaReporter.start();
     }
-    reporter.start();
 
-    // 5. start all threads
-    for (BenchmarkThread thread : threads) {
-      thread.start();
+    // 5. start all benchmark threads
+    for (int i=0; i<threads.length; i++) {
+      LOG.debug("Starting benchmark thread {}", i);
+      threads[i].start();
     }
 
     // 6. wait for all threads to finish
+    int threadsFinished=0;
+    LOG.debug("Waiting for all {} benchmark threads to finish...", threadList.size());
+    int checkedThreads=threadList.size();
+    int msJoin = 10000;
     while (!threadList.isEmpty()) {
+      if (checkedThreads == threadList.size()) {
+        msJoin = 10000;
+      } else {
+        checkedThreads++;
+      }
       BenchmarkThread thread = threadList.removeFirst();
       try {
-        thread.join(10);
-      } catch (InterruptedException e) {
-        error("InterruptedException caught in Thread.join(). Ignoring.");
+        LOG.debug("Giving benchmark thread {} ms to finish...", msJoin);
+        thread.join(msJoin);
+      } catch (InterruptedException e1) {
+        checkedThreads = 0;
+        msJoin = 10;
+        LOG.debug("InterruptedException caught during thread.join({}) when trying to wait for a " +
+                    "benchmark thread to finish.", msJoin);
       }
       if (thread.isAlive()) {
         threadList.addLast(thread);
+      } else {
+        threadsFinished++;
+        if (threadsFinished==1) {
+          LOG.debug("Stopping console reporter thread...");
+          stopReporterThread(consoleReporter);
+          if (mensaReporter != null) {
+            LOG.debug("Stopping mensa reporter thread...");
+            stopReporterThread(mensaReporter);
+          }
+        }
+        LOG.debug("Another benchmark thread finished. {} benchmark threads are still running.", threadList.size());
       }
     }
+    LOG.debug("All benchmark threads stopped.");
 
-    // 7. Stop reporter thread
-    reporter.interrupt();
-    try {
-      reporter.join();
-    } catch (InterruptedException e) {
-      error("InterruptedException caught in Thread.join(). Ignoring.");
-    }
+    Thread.interrupted();
 
+    // 7. Stop reporter thread if still running
+    stopReporterThread(consoleReporter);
+    stopReporterThread(mensaReporter);
     return true;
   }
 
   void shutdown() throws BenchmarkException {
-    if (benchmark != null)
+    if (benchmark != null) {
+      LOG.debug("Executing benchmark.shutdown()");
       benchmark.shutdown();
+    }
+  }
+
+  private void stopReporterThread(ReportThread reporter) {
+    if (reporter!= null && !reporter.isAlive()) return;
+    reporter.interrupt();
+    while (reporter.isAlive()) {
+      try {
+        reporter.join();
+      } catch (InterruptedException e) {
+        LOG.debug("InterruptedException caught in thread.join() when trying to stop reporter thread.");
+      }
+    }
   }
 
   public static void main(String[] args) throws Exception {
@@ -172,14 +218,14 @@ public class BenchmarkRunner {
       // run it
       if (ok) runner.run();
     } catch (Exception e) {
-      error(e.getMessage());
+      LOG.error(e.getMessage());
       throw e;
     } finally {
       // shut it down
       try {
         runner.shutdown();
       } catch (Exception e) {
-        error(e.getMessage());
+        LOG.error(e.getMessage());
         throw e;
       }
     }
