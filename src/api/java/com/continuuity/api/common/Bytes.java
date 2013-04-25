@@ -1336,6 +1336,10 @@ public class Bytes {
    * @param target array to search for as a sub-sequence of {@code source}
    */
   public static int indexOf(byte [] source, byte [] target) {
+    if (source == null || target == null){
+      throw new RuntimeException("Source and target should not be null");
+    }
+
     outer:
     for ( int index = 0 ; index < source.length - target.length + 1 ; index++ ) {
       for(int targetIndex =0 ; targetIndex < target.length; targetIndex++) {
