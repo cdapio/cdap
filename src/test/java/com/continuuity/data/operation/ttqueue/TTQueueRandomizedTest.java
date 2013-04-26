@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -101,9 +103,9 @@ public class TTQueueRandomizedTest {
 
     // Start consumer groups
     List<ListenableFuture<?>> consumerGroupFutures = Lists.newArrayList();
-    Map<Integer, Map<Integer, Queue<Integer>>> dequeueMap = Maps.newConcurrentMap();
+    Map<Integer, Queue<Integer>> dequeueMap = Maps.newConcurrentMap();
     for(int i = 0; i < numConsumerGroups; ++i) {
-      dequeueMap.put(i, Maps.<Integer, Queue<Integer>>newConcurrentMap());
+      dequeueMap.put(i, new ConcurrentLinkedQueue<Integer>());
       ConsumerGroup consumerGroup = new ConsumerGroup(i, listeningExecutorService, testConfig, testController,
                                                       ttQueue, dequeueMap.get(i));
       ListenableFuture<?> future = listeningExecutorService.submit(consumerGroup);
@@ -139,23 +141,20 @@ public class TTQueueRandomizedTest {
       LOG.info("Producer:" + i + " invalidList=" + invalidMap.get(i));
     }
 
-    for(Map.Entry<Integer, Map<Integer, Queue<Integer>>> group : dequeueMap.entrySet()) {
-      for(Map.Entry<Integer, Queue<Integer>> consumer : group.getValue().entrySet()) {
-        List<Integer> dequeued = Lists.newArrayList(consumer.getValue());
-        Collections.sort(dequeued);
-        LOG.info(String.format("Group:%d Consumer%d dequeueList=%s",
-                               group.getKey(), consumer.getKey(), dequeued));
-      }
+    for(Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
+        List<Integer> dequeuedPerGroup = Lists.newArrayList(group.getValue());
+        Collections.sort(dequeuedPerGroup);
+        LOG.info(String.format("Group:%d dequeueList=%s", group.getKey(), dequeuedPerGroup));
     }
 
     LOG.info(String.format("Total entries=%d, Actual enqueued=%d, Invalidated=%d", inputList.size(),
                            actualEnqueued.size(), actualInvalidated.size()));
 
     // Verify only non-invalidated entries were dequeued
-    for(Map.Entry<Integer, Map<Integer, Queue<Integer>>> entries : dequeueMap.entrySet()) {
-      List<Integer> actualDequeuedPerGroup = Lists.newArrayList(Iterables.concat(entries.getValue().values()));
+    for(Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
+      List<Integer> actualDequeuedPerGroup = Lists.newArrayList(group.getValue());
       Collections.sort(actualDequeuedPerGroup);
-      LOG.info(String.format("Verifying dequeues of group %d. Expected size=%d, actual size=%d", entries.getKey(),
+      LOG.info(String.format("Verifying dequeues of group %d. Expected size=%d, actual size=%d", group.getKey(),
                              actualEnqueued.size(), actualDequeuedPerGroup.size()));
       Assert.assertEquals(actualEnqueued, actualDequeuedPerGroup);
     }
@@ -247,8 +246,12 @@ public class TTQueueRandomizedTest {
       return selectionFunction.select(100);
     }
 
-    public boolean shouldConfigure() {
-      return selectionFunction.isProbable(0.4f);
+    public int getNumDequeueRuns() {
+      return selectionFunction.select(10);
+    }
+
+    public boolean shouldFinalize() {
+      return selectionFunction.isProbable(0.75f);
     }
 
     public QueuePartitioner.PartitionerType getPartitionType() {
@@ -373,11 +376,17 @@ public class TTQueueRandomizedTest {
   public class ConsumerGroupControl {
     private final int id;
     private final int size;
+    private final QueuePartitioner.PartitionerType partitionerType;
+    private final int numDequeueRuns;
     private final CountDownLatch configureLatch;
+    private final Set<Integer> consumersAtQueueEnd = Sets.newCopyOnWriteArraySet();
 
-    public ConsumerGroupControl(int id, int size) {
+    public ConsumerGroupControl(int id, int size, QueuePartitioner.PartitionerType partitionerType,
+                                int numDequeueRuns) {
       this.id = id;
       this.size = size;
+      this.partitionerType = partitionerType;
+      this.numDequeueRuns = numDequeueRuns;
       this.configureLatch = new CountDownLatch(size);
     }
 
@@ -387,6 +396,22 @@ public class TTQueueRandomizedTest {
 
     public int getSize() {
       return size;
+    }
+
+    public QueuePartitioner.PartitionerType getPartitionerType() {
+      return partitionerType;
+    }
+
+    public int getNumDequeueRuns() {
+      return numDequeueRuns;
+    }
+
+    public void setConsumersAtQueueEnd(int consumerId) {
+      consumersAtQueueEnd.add(consumerId);
+    }
+
+    public Set<Integer> getConsumersAtQueueEnd() {
+      return consumersAtQueueEnd;
     }
 
     public void doneSingleConfigure() {
@@ -404,42 +429,55 @@ public class TTQueueRandomizedTest {
     private final TestConfig testConfig;
     private final TestController testController;
     private final TTQueue queue;
-    private final Map<Integer, Queue<Integer>> groupMap;
+    private final Queue<Integer> groupDequeueList;
 
     public ConsumerGroup(int id, ListeningExecutorService listeningExecutorService, TestConfig testConfig,
-                         TestController testController, TTQueue queue, Map<Integer, Queue<Integer>> groupMap) {
+                         TestController testController, TTQueue queue, Queue<Integer> groupDequeueList) {
       this.id = id;
       this.listeningExecutorService = listeningExecutorService;
       this.testConfig = testConfig;
       this.testController = testController;
       this.queue = queue;
-      this.groupMap = groupMap;
+      this.groupDequeueList = groupDequeueList;
     }
 
     @Override
     public void run() {
+      final QueuePartitioner.PartitionerType partitionerType = testConfig.getPartitionType();
+      LOG.info(getLogMessage(String.format("Partition type=%s", partitionerType)));
+
+      int run = 0;
       try {
-        // Create consumers
-        final int numConsumers = testConfig.getNumConsumers();
-        LOG.info(getLogMessage("Num consumers=" + numConsumers));
-        List<ListenableFuture<?>> consumerFutures = Lists.newArrayList();
-        ConsumerGroupControl consumerGroupControl = new ConsumerGroupControl(id, numConsumers);
-        QueuePartitioner.PartitionerType partitionerType = testConfig.getPartitionType();
-        LOG.info(getLogMessage(String.format("Partition type=%s", partitionerType)));
-        for(int i = 0; i < numConsumers; ++i) {
-          groupMap.put(i, new ConcurrentLinkedQueue<Integer>());
-          ListenableFuture<?> future = listeningExecutorService.submit(
-            new Consumer(i, consumerGroupControl, testConfig, testController, queue, groupMap.get(i), partitionerType));
-          consumerFutures.add(future);
+        while(true) {
+          run++;
+          // Create consumers
+          final int numConsumers = testConfig.getNumConsumers();
+          LOG.info(getLogMessage(String.format("Run=%d Num consumers=%d", run, numConsumers)));
+          List<ListenableFuture<?>> consumerFutures = Lists.newArrayList();
+          ConsumerGroupControl consumerGroupControl = new ConsumerGroupControl(id, numConsumers, partitionerType,
+                                                                               testConfig.getNumDequeueRuns());
+          Map<Integer, Queue<Integer>> groupMap = Maps.newConcurrentMap();
+          for(int i = 0; i < numConsumers; ++i) {
+            groupMap.put(i, new ConcurrentLinkedQueue<Integer>());
+            ListenableFuture<?> future = listeningExecutorService.submit(
+              new Consumer(i, consumerGroupControl, testConfig, testController, queue, groupMap.get(i)));
+            consumerFutures.add(future);
+          }
+
+          // Wait for all consumers to complete
+          final Future<?> compositeConsumerFuture = Futures.allAsList(consumerFutures);
+          compositeConsumerFuture.get();
+
+          Iterables.addAll(groupDequeueList, Iterables.concat(groupMap.values()));
+
+  //        for(int i = 0; i < numConsumers; ++i) {
+  //          LOG.info(getLogMessage("Consumer:" + i + " dequeueList=" + groupMap.get(i)));
+  //        }
+
+          if(consumerGroupControl.getConsumersAtQueueEnd().size() == numConsumers) {
+            break;
+          }
         }
-
-        // Wait for all consumers to complete
-        final Future<?> compositeConsumerFuture = Futures.allAsList(consumerFutures);
-        compositeConsumerFuture.get();
-
-//        for(int i = 0; i < numConsumers; ++i) {
-//          LOG.info(getLogMessage("Consumer:" + i + " dequeueList=" + groupMap.get(i)));
-//        }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -457,18 +495,15 @@ public class TTQueueRandomizedTest {
     private final TestController testController;
     private final TTQueue queue;
     private final Queue<Integer> dequeueList;
-    private final QueuePartitioner.PartitionerType partitionerType;
 
     public Consumer(int id, ConsumerGroupControl consumerGroupControl, TestConfig testConfig,
-                    TestController testController, TTQueue queue, Queue<Integer> dequeueList,
-                    QueuePartitioner.PartitionerType partitionerType) {
+                    TestController testController, TTQueue queue, Queue<Integer> dequeueList) {
       this.id = id;
       this.consumerGroupControl = consumerGroupControl;
       this.testConfig = testConfig;
       this.testController = testController;
       this.queue = queue;
       this.dequeueList = dequeueList;
-      this.partitionerType = partitionerType;
     }
 
     @Override
@@ -480,8 +515,9 @@ public class TTQueueRandomizedTest {
         // Note: in this test we have a different batch size for each consumer
         final int batchSize = testConfig.getConsumerBatchSize();
         LOG.info(getLogMessage(String.format("Batch size=%d",batchSize)));
-        QueueConfig queueConfig = new QueueConfig(partitionerType, true, batchSize, true);
-        StatefulQueueConsumer consumer = new StatefulQueueConsumer(id, consumerGroupControl.getId(), consumerGroupControl.getSize(),
+        QueueConfig queueConfig = new QueueConfig(consumerGroupControl.getPartitionerType(), true, batchSize, true);
+        StatefulQueueConsumer consumer = new StatefulQueueConsumer(id, consumerGroupControl.getId(),
+                                                                   consumerGroupControl.getSize(),
                                                                    "", HASH_KEY, queueConfig);
         queue.configure(consumer);
         consumerGroupControl.doneSingleConfigure();
@@ -489,8 +525,11 @@ public class TTQueueRandomizedTest {
         consumerGroupControl.waitForGroupConfigure();
         LOG.info(getLogMessage("Group configuration done, starting dequeues..."));
 
+        final int MAX_STOP_FLAG = 3;
         int stopFlag = 0;
-        while(stopFlag < 3) {
+        int runs = 0;
+        while(stopFlag < MAX_STOP_FLAG && runs < consumerGroupControl.getNumDequeueRuns()) {
+          runs++;
           Transaction transaction = oracle.startTransaction();
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
           if(result.isEmpty()) {
@@ -501,12 +540,23 @@ public class TTQueueRandomizedTest {
           } else {
             Assert.assertTrue(result.isSuccess());
             TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
+
             Iterable<Integer> dequeued = entriesToInt(result.getEntries());
             LOG.info(getLogMessage(String.format("intermediate dequeue list=%s", dequeued)));
             Iterables.addAll(dequeueList, dequeued);
+
             queue.ack(result.getEntryPointers(), consumer, transaction.getReadPointer());
             oracle.commitTransaction(transaction);
+
+            TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
+            if(testConfig.shouldFinalize()) {
+              queue.finalize(result.getEntryPointers(), consumer, consumerGroupControl.getSize(),
+                             transaction.getWriteVersion());
+            }
           }
+        }
+        if(stopFlag >= MAX_STOP_FLAG - 1) {
+          consumerGroupControl.setConsumersAtQueueEnd(id);
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
