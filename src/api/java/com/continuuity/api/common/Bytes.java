@@ -1333,7 +1333,7 @@ public class Bytes {
    * target} within {@code source}, or {@code -1} if there is no such occurrence.
    *
    * @param array array to search for the sequence {@code target}
-   * @param target array to search for as a sub-sequence of {@code source}
+   * @param target array to search for as a sub-sequence of {@code array}
    */
   public static int indexOf(byte [] array, byte [] target) {
     if (array == null || target == null){
