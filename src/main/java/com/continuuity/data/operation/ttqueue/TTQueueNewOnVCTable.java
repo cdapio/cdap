@@ -72,26 +72,33 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // Row prefix for columns that don't affect the operation of queue, i.e. groupId generation
   static final byte [] GLOBAL_GENERIC_PREFIX = {50, 'G'}; //row <queueName>50G
 
+  // Column prefix for every configured consumer group
+  static final byte [] GLOBAL_GROUPID_PREFIX = { 'I' }; // row <queueName>50G column I<groupId>
+  // for cocnvenience: stop column that immediately follows the greatest possible consumer group
+  static final byte [] GLOBAL_GROUPID_ENDRANGE = { (byte)(GLOBAL_GROUPID_PREFIX[0] + 1) };
+  // the value we will write to every column. It does not matter what it is
+  static final byte [] GLOBAL_GROUPID_EXISTS_MARKER = { '+' };
+
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
   // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
   // GLOBAL_ENTRYID_COUNTER contains the highest valid entryId for the queue
-  static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //row <queueName>10I, column 10I
+  static final byte [] GLOBAL_ENTRYID_COUNTER = {'I'};  //row <queueName>10I, column I
 
   // GROUP_READ_POINTER is a group counter used by consumers of a FifoDequeueStrategy group to claim queue entries.
   // GROUP_READ_POINTER contains the higest entryId claimed by consumers of a FifoDequeueStrategy group
-  static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
+  static final byte [] GROUP_READ_POINTER = {'I'}; //row <queueName>10I<groupId>, column I
 
   // Columns for row = GLOBAL_DATA_PREFIX (Global data, shared by all consumer groups)
   // ENTRY_META contains the meta data for a queue entry, whether the entry is invalid or not.
-  static final byte [] ENTRY_META = {10, 'M'}; //row  <queueName>20D<entryId>, column 10M
+  static final byte [] ENTRY_META = {'M'}; //row  <queueName>20D<entryId>, column M
   // ENTRY_DATA contains the queue entry.
-  static final byte [] ENTRY_DATA = {20, 'D'}; //row  <queueName>20D<entryId>, column 20D
+  static final byte [] ENTRY_DATA = {'D'}; //row  <queueName>20D<entryId>, column D
   // ENTRY_HEADER contains the partitioning keys of a queue entry.
-  static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
+  static final byte [] ENTRY_HEADER = {'H'};  //row  <queueName>20D<entryId>, column H
 
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
   // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
-  static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
+  static final byte [] GLOBAL_LAST_EVICT_ENTRY = {'L'};   //row  <queueName>30M<groupId>, column L
 
   // Columns for row = GLOBAL_EVICT_META_ROW (Global data, shared by all consumers)
   // GROUP_EVICT_ENTRY contains the entryId upto which the queue entries can be evicted for a group.
@@ -496,7 +503,47 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+
+    // for a new consumer group, add it to the list of configured groups
+    if (oldConsumerCount == 0) {
+      this.table.put(makeRowName(GLOBAL_GENERIC_PREFIX), makeColumnName(GLOBAL_GROUPID_PREFIX, groupId),
+                     TransactionOracle.DIRTY_WRITE_VERSION, GLOBAL_GROUPID_EXISTS_MARKER);
+    }
+
     return oldConsumerCount;
+  }
+
+  // this has package visibility for access from test package
+  List<Long> listAllConfiguredGroups() throws OperationException {
+    // read column range that includes all group ids ['G'..'H'[
+    OperationResult<Map<byte[], byte[]>> result =
+      this.table.get(makeRowName(GLOBAL_GENERIC_PREFIX), GLOBAL_GROUPID_PREFIX, GLOBAL_GROUPID_ENDRANGE,
+                     -1,  TransactionOracle.DIRTY_READ_POINTER);
+    if (result.isEmpty() || result.getValue().isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Long> ids = Lists.newArrayListWithExpectedSize(result.getValue().size());
+    for (byte[] column : result.getValue().keySet()) {
+      if (column.length != Bytes.SIZEOF_LONG + GLOBAL_GROUPID_PREFIX.length) {
+        continue; // this must be something else that ended up in this row
+      }
+      if (!Bytes.startsWith(column, GLOBAL_GROUPID_PREFIX)) {
+        continue; // this must be something else that ended up in this row (but why is it in the range?)
+      }
+      long id = Bytes.toLong(column, GLOBAL_GROUPID_PREFIX.length);
+      ids.add(id);
+    }
+    return ids;
+  }
+
+  @Override
+  public long getGroupID() throws OperationException {
+    List<Long> existing = this.listAllConfiguredGroups();
+    long id;
+    do {
+      id = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
+    } while (existing.contains(id));
+    return id;
   }
 
   @Override
@@ -853,11 +900,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.table.deleteDirty(deleteKeys);
 
     return maxEntryToEvict;
-  }
-
-  @Override
-  public long getGroupID() throws OperationException {
-    return this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
   }
 
   @Override
