@@ -541,6 +541,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   @Test
   public void testQueueStateImplEncode() throws Exception {
     TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
+    queueState.setPartitioner(FIFO);
     List<DequeueEntry> dequeueEntryList = Lists.newArrayList(new DequeueEntry(2, 1), new DequeueEntry(3, 0));
     Map<Long, byte[]> cachedEntries = ImmutableMap.of(2L, new byte[]{1, 2}, 3L, new byte[]{4, 5});
 
@@ -565,15 +566,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     long lastEvictTimeInSecs = 124325342L;
     queueState.setLastEvictTimeInSecs(lastEvictTimeInSecs);
 
-    verifyQueueStateImplEncode(queueState, transientWorkingSet, dequeuedEntrySet, consumerReadPointer,
-                               queueWritePointer, claimedEntryList, lastEvictTimeInSecs);
-  }
-
-  private void verifyQueueStateImplEncode(TTQueueNewOnVCTable.QueueStateImpl queueState,
-                                          TransientWorkingSet transientWorkingSet, DequeuedEntrySet dequeuedEntrySet,
-                                          long consumerReadPointer, long queueWritePointer,
-                                          ClaimedEntryList claimedEntryList,
-                                          long lastEvictTimeInSecs) throws Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     queueState.encodeTransient(new BinaryEncoder(bos));
     byte[] bytes = bos.toByteArray();
@@ -582,12 +574,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       TTQueueNewOnVCTable.QueueStateImpl.decodeTransient(new BinaryDecoder(new ByteArrayInputStream(bytes)));
 
     // QueueStateImpl does not override equals and hashcode methods
+    assertEquals(FIFO, actual.getPartitioner());
     assertEquals(transientWorkingSet, actual.getTransientWorkingSet());
     assertEquals(dequeuedEntrySet, actual.getDequeueEntrySet());
     assertEquals(consumerReadPointer, actual.getConsumerReadPointer());
     assertEquals(queueWritePointer, actual.getQueueWritePointer());
     assertEquals(claimedEntryList, actual.getClaimedEntryList());
-    assertEquals(lastEvictTimeInSecs, actual.getLastEvictTimeInSecs());
+    assertEquals(0L, actual.getLastEvictTimeInSecs()); // last evict is not encoded
   }
 
 /*  @Override

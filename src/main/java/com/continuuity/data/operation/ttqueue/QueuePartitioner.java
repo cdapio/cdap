@@ -1,7 +1,11 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.common.io.Decoder;
+import com.continuuity.common.io.Encoder;
 import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
+
+import java.io.IOException;
 
 /**
  * Interface used to determine whether a queue entry should be returned to a
@@ -40,6 +44,33 @@ public interface QueuePartitioner {
         case FIFO: return HBQPartitionerType.RANDOM; // TODO whatever we do with HBQ, rename this too
         case HASH: return HBQPartitionerType.HASH_ON_VALUE; // TODO: Not 100% the same !!!
         default: return HBQPartitionerType.RANDOM;
+      }
+    }
+
+    public void encode(Encoder encoder) throws IOException {
+      int value;
+      if (this.equals(HASH)) {
+        value = 0;
+      } else if (this.equals(FIFO)) {
+        value = 1;
+      } else if (this.equals(ROUND_ROBIN)) {
+        value = 2;
+      } else {
+        throw new RuntimeException("Unknown partitioner type " + this.name());
+      }
+      encoder.writeInt(value);
+    }
+
+    public static PartitionerType decode(Decoder decoder) throws IOException {
+      int value = decoder.readInt();
+      if (value == 0) {
+        return HASH;
+      } else if (value == 1) {
+        return FIFO;
+      } else if (value == 2) {
+        return ROUND_ROBIN;
+      } else {
+        throw new RuntimeException("Unknown partitioner type " + value);
       }
     }
   }
