@@ -556,10 +556,10 @@ public class TTQueueRandomizedTest {
 
         int stopTries = 0;
         int runId = 0;
-        while((stopTries < MAX_STOP_TRIES && dequeueRunsDone.get() < consumerGroupControl.getNumDequeueRuns()) ||
-          asyncDegree.get() > 0) {
+        while(stopTries < MAX_STOP_TRIES &&
+          dequeueRunsDone.get() + asyncDegree.get() < consumerGroupControl.getNumDequeueRuns()) {
           ++runId;
-          if(asyncDegree.get() < maxAsyncDegree && dequeueRunsDone.get() < consumerGroupControl.getNumDequeueRuns()) {
+          if(asyncDegree.get() < maxAsyncDegree) {
             listeningExecutorService.submit(new QueueDequeue(runId, listeningExecutorService, consumerHolder));
             TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
           } else {
@@ -574,6 +574,12 @@ public class TTQueueRandomizedTest {
             stopTries = 0;
           }
         }
+
+        // Wait for all async calls to complete
+        while(asyncDegree.get() > 0) {
+          TimeUnit.MILLISECONDS.sleep(100);
+        }
+
         if(stopTries >= MAX_STOP_TRIES - 1) {
           LOG.info(getLogMessage("Stop flag is true."));
           consumerGroupControl.setConsumersAtQueueEnd(id);
