@@ -38,6 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -260,7 +261,9 @@ public class TTQueueRandomizedTest {
         ];
     }
 
-    // TODO: test crash case?
+    public boolean shouldConsumerCrash() {
+      return selectionFunction.isProbable(0.15f);
+    }
   }
 
   public static class Producer implements Runnable {
@@ -515,11 +518,7 @@ public class TTQueueRandomizedTest {
         // Note: in this test we have a different batch size for each consumer
         final int batchSize = testConfig.getConsumerBatchSize();
         LOG.info(getLogMessage(String.format("Batch size=%d",batchSize)));
-        QueueConfig queueConfig = new QueueConfig(consumerGroupControl.getPartitionerType(), true, batchSize, true);
-        StatefulQueueConsumer consumer = new StatefulQueueConsumer(id, consumerGroupControl.getId(),
-                                                                   consumerGroupControl.getSize(),
-                                                                   "", HASH_KEY, queueConfig);
-        queue.configure(consumer);
+        QueueConsumer consumer = createConsumer(batchSize);
         consumerGroupControl.doneSingleConfigure();
         LOG.info(getLogMessage("Configure done, waiting for group configuration to be done..."));
         consumerGroupControl.waitForGroupConfigure();
@@ -528,9 +527,16 @@ public class TTQueueRandomizedTest {
         final int MAX_STOP_FLAG = 3;
         int stopFlag = 0;
         int runs = 0;
+        AtomicBoolean crashed = new AtomicBoolean(false);
         while(stopFlag < MAX_STOP_FLAG && runs < consumerGroupControl.getNumDequeueRuns()) {
           runs++;
           Transaction transaction = oracle.startTransaction();
+
+          consumer = crashConsumer(consumer, "dequeue", crashed);
+          if(crashed.get()) {
+            runs--;
+            continue;
+          }
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
           if(result.isEmpty()) {
             if(testController.canDequeueStop()) {
@@ -543,13 +549,23 @@ public class TTQueueRandomizedTest {
 
             Iterable<Integer> dequeued = entriesToInt(result.getEntries());
             LOG.info(getLogMessage(String.format("intermediate dequeue list=%s", dequeued)));
-            Iterables.addAll(dequeueList, dequeued);
 
+            consumer = crashConsumer(consumer, "ack", crashed);
+            if(crashed.get()) {
+              runs--;
+              continue;
+            }
             queue.ack(result.getEntryPointers(), consumer, transaction.getReadPointer());
             oracle.commitTransaction(transaction);
+            Iterables.addAll(dequeueList, dequeued);
 
             TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
             if(testConfig.shouldFinalize()) {
+              consumer = crashConsumer(consumer, "finalize", crashed);
+              if(crashed.get()) {
+                runs--;
+                continue;
+              }
               queue.finalize(result.getEntryPointers(), consumer, consumerGroupControl.getSize(),
                              transaction.getWriteVersion());
             }
@@ -561,6 +577,26 @@ public class TTQueueRandomizedTest {
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+    }
+
+    private QueueConsumer createConsumer(int batchSize) throws Exception {
+      QueueConfig queueConfig = new QueueConfig(consumerGroupControl.getPartitionerType(), true, batchSize, true);
+      QueueConsumer consumer = new StatefulQueueConsumer(id, consumerGroupControl.getId(),
+                                       consumerGroupControl.getSize(),
+                                       "", HASH_KEY, queueConfig);
+      queue.configure(consumer);
+      return consumer;
+    }
+
+    private QueueConsumer crashConsumer(QueueConsumer consumer, String position, AtomicBoolean crashed)
+      throws Exception {
+      if(testConfig.shouldConsumerCrash()) {
+        LOG.info(getLogMessage(String.format("Crashing consumer before %s", position)));
+        crashed.set(true);
+        return createConsumer(consumer.getQueueConfig().getBatchSize());
+      }
+      crashed.set(false);
+      return consumer;
     }
 
     private String getLogMessage(String message) {
