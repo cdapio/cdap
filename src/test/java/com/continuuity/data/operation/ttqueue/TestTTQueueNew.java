@@ -39,6 +39,7 @@ import static com.continuuity.data.operation.ttqueue.QueuePartitioner.Partitione
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -2181,7 +2182,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   public void testHashWithoutHashKey() throws OperationException {
     TTQueue queue = createQueue();
 
-    // enqueue 20, then invalidate a batch of 10 in the middle
+    // enqueue 20
     QueueEntry[] entries = new QueueEntry[20];
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
@@ -2218,4 +2219,75 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     assertEquals(20, numDequeued);
   }
+
+  // this tests that repeated reconfiguration (without changing the group size - that is not allowed if there are
+  // dequeued entries) does not drop the dequeued entries.
+  @Test
+  public void testRepeatedConfigureDoesNotExpireEntries() throws OperationException {
+    TTQueue queue = createQueue();
+
+    // enqueue 20
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    oracle.commitTransaction(t);
+
+    QueueConfig config = new QueueConfig(FIFO, true, 20, true);
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 432567, 1, "xyz", config);
+    queue.configure(consumer);
+
+    // dequeue but don't ack
+    t = oracle.startTransaction();
+    DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    assertEquals(20, result.getEntries().length);
+
+    // now reconfigure the consumer with the same group size several times
+    for (int i = 0; i < MAX_CRASH_DEQUEUE_TRIES + 30; i++) {
+      config = new QueueConfig(FIFO, true, 20 + i, true); // varying the batch size but nothing else
+      consumer = new StatefulQueueConsumer(0, 432567, 1, "xyz", config);
+      queue.configure(consumer);
+    }
+
+    // dequeue should still return these entries
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    oracle.commitTransaction(t);
+    assertFalse(result.isEmpty());
+    assertEquals(20, result.getEntries().length);
+  }
+
+  // this tests that all configured groups can be listed
+  @Test
+  public void testListConfiguredGroups() throws OperationException {
+    TTQueue queue = createQueue();
+
+    long[] groupIds = { 0, Long.MIN_VALUE, Long.MAX_VALUE, 1, 42, 4536277 };
+
+    for (long id : groupIds) {
+      QueueConfig config = new QueueConfig(FIFO, true, 10, false);
+      QueueConsumer consumer = new StatefulQueueConsumer(0, id, 1, "xyz", config);
+      queue.configure(consumer);
+    }
+    List<Long> returnedGroupIds = ((TTQueueNewOnVCTable)queue).listAllConfiguredGroups();
+    assertEquals(groupIds.length, returnedGroupIds.size());
+    for (long id : groupIds) {
+      assertTrue(returnedGroupIds.contains(id));
+    }
+
+    // make sure getGroupID does not return an already configured group
+    long id = queue.getGroupID();
+    assertFalse(returnedGroupIds.contains(id));
+
+    // get the queue info
+    QueueAdmin.QueueInfo info = queue.getQueueInfo();
+    assertNotNull(info.getJSONString());
+    assertFalse(info.getJSONString().isEmpty());
+    // System.out.println(info.getJSONString());
+  }
 }
+
