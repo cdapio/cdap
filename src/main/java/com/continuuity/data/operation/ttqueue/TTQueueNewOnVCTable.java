@@ -12,13 +12,13 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
-import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -538,6 +538,40 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
+  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
+    List<Long> groupIds = this.listAllConfiguredGroups();
+    Map<Long, List<QueueState>> groupInfos = Maps.newHashMap();
+    for (long groupId : groupIds) {
+      List<QueueState> states = Lists.newArrayList();
+      // iterate over every consumer and retrieve its state
+      for (int consumerId = 0; consumerId < MAX_CONSUMER_COUNT; consumerId++) {
+        final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, groupId, consumerId);
+        OperationResult<byte[]> readResult = table.get(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_READ_POINTER);
+        if (readResult.isEmpty()) {
+          break;
+        }
+        try {
+          states.add(QueueStateImpl.decode(new BinaryDecoder(new ByteArrayInputStream(readResult.getValue()))));
+        } catch (IOException e) {
+          continue; // can't read this group state... ignoring because we want to return all useful info
+        }
+      }
+      groupInfos.put(groupId, states);
+    }
+    Map<String, Object> info = Maps.newHashMap();
+
+    // Read queue write pointer
+    long queueWritePointer = table.incrementAtomicDirtily(
+      makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+    info.put("writePointer", queueWritePointer);
+    info.put("groups", groupInfos);
+
+    // return the entnire map as a json string
+    Gson gson = new Gson();
+    return new QueueAdmin.QueueInfo(gson.toJson(info));
+  }
+
+  @Override
   public void finalize(QueueEntryPointer [] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
     throws OperationException {
     // for batch finalize, we don't know whether there are gaps in the sequence of entries getting finalized. So we
@@ -898,12 +932,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.table.deleteDirty(deleteKeys);
 
     return maxEntryToEvict;
-  }
-
-  @Override
-  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
-    // TODO: implement getQueueInfo()
-    return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
   }
 
   private QueueStateImpl getQueueState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {

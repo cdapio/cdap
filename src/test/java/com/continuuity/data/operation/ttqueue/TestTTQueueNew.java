@@ -39,6 +39,7 @@ import static com.continuuity.data.operation.ttqueue.QueuePartitioner.Partitione
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -2281,6 +2282,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // make sure getGroupID does not return an already configured group
     long id = queue.getGroupID();
     assertFalse(returnedGroupIds.contains(id));
+
+    // get the queue info
+    QueueAdmin.QueueInfo info = queue.getQueueInfo();
+    assertNotNull(info.getJSONString());
+    assertFalse(info.getJSONString().isEmpty());
+    // System.out.println(info.getJSONString());
   }
 }
 
