@@ -1332,18 +1332,18 @@ public class Bytes {
    * Returns the start position of the first occurrence of the specified {@code
    * target} within {@code source}, or {@code -1} if there is no such occurrence.
    *
-   * @param source array to search for the sequence {@code target}
+   * @param array array to search for the sequence {@code target}
    * @param target array to search for as a sub-sequence of {@code source}
    */
-  public static int indexOf(byte [] source, byte [] target) {
-    if (source == null || target == null){
+  public static int indexOf(byte [] array, byte [] target) {
+    if (array == null || target == null){
       throw new RuntimeException("Source and target should not be null");
     }
 
     outer:
-    for ( int index = 0 ; index < source.length - target.length + 1 ; index++ ) {
+    for ( int index = 0 ; index < array.length - target.length + 1 ; index++ ) {
       for(int targetIndex =0 ; targetIndex < target.length; targetIndex++) {
-        if ( source[index+targetIndex] != target[targetIndex]) {
+        if ( array[index+targetIndex] != target[targetIndex]) {
           continue outer;
         }
       }
