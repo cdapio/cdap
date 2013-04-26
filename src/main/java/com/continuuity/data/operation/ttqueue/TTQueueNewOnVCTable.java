@@ -553,7 +553,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         try {
           states.add(QueueStateImpl.decode(new BinaryDecoder(new ByteArrayInputStream(readResult.getValue()))));
         } catch (IOException e) {
-          continue; // can't read this group state... ignoring because we want to return all useful info
+          // can't read this group state... ignoring because we want to return all useful info
         }
       }
       groupInfos.put(groupId, states);
