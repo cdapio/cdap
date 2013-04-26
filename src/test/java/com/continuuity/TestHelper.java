@@ -17,6 +17,7 @@ import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
@@ -45,13 +46,14 @@ import java.util.jar.Manifest;
  */
 public class TestHelper {
   private static CConfiguration configuration;
-  private static Injector injector;
+  public static Injector injector;
 
   static {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
     configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
-    injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
+    //injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricLevelDBModule(configuration));
   }
 
   public static Injector getInjector() {
@@ -64,7 +66,7 @@ public class TestHelper {
    * @param klass to set as Main-Class in manifest file.
    * @return An instance {@link Manifest}
    */
-  public static Manifest getManifestWithMainClass(Class<?> klass) {
+  public static Manifest getManifestWithMainClass( Class<?> klass) {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
@@ -74,10 +76,27 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager(Injector injector, CConfiguration configuration) {
+    if (injector == null) {
     injector = Guice.createInjector(new BigMamaModule(configuration),
                                                    new DataFabricModules().getInMemoryModules());
 
+    }
+
+    ManagerFactory factory = injector.getInstance(ManagerFactory.class);
+    return (Manager<Location, ApplicationWithPrograms>)factory.create();
+  }
+
+
+  /**
+   * @return Returns an instance of {@link LocalManager}
+   */
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager( CConfiguration configuration) {
+    if (injector == null) {
+      injector = Guice.createInjector(new BigMamaModule(configuration),
+                                      new DataFabricModules().getInMemoryModules());
+
+    }
 
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
     return (Manager<Location, ApplicationWithPrograms>)factory.create();

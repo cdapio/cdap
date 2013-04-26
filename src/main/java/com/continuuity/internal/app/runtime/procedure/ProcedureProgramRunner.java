@@ -13,6 +13,7 @@ import com.continuuity.base.Cancellable;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.discovery.Discoverable;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
@@ -61,14 +62,16 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private Channel serverChannel;
   private ChannelGroup channelGroup;
   private BasicProcedureContext procedureContext;
+  private final OVCTableHandle tableHandle;
 
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 DiscoveryService discoveryService,
-                                LogWriter logWriter) {
+                                LogWriter logWriter, OVCTableHandle tableHandle) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.discoveryService = discoveryService;
     CAppender.logWriter = logWriter;
+    this.tableHandle = tableHandle;
   }
 
   @Override
@@ -94,7 +97,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
                                                    procedureSpec);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, txAgentSupplierFactory);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId,
+                                                               txAgentSupplierFactory, tableHandle);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();

@@ -41,6 +41,7 @@ import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
@@ -90,16 +91,20 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+  private final OVCTableHandle tableHandle;
+
+
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
+                              QueueReaderFactory queueReaderFactory, LogWriter logWriter, OVCTableHandle tableHandle) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
+    this.tableHandle = tableHandle;
     CAppender.logWriter = logWriter;
     queueConsumerSuppliers = ImmutableList.of();
   }
@@ -145,10 +150,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
+
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
                                                                          instanceCount,
-                                                                   DataSets.createDataSets(dataSetContext,
+                                                                   DataSets.createDataSets(dataSetContext, tableHandle,
                                                                                            flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));

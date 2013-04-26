@@ -156,6 +156,12 @@ public interface MapReduceSpecification {
         return this;
       }
 
+      public AfterDescription useInputStream(String stream) {
+        dataSets.add(stream);
+        inputDataSet = stream;
+        return this;
+      }
+
       /**
        * Specifies which dataset to use as an output destination of mapreduce job. Automatically adds dataset to the
        * list of datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.

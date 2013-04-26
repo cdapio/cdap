@@ -15,6 +15,7 @@ import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
@@ -35,13 +36,16 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final MapReduceRuntimeService mapReduceRuntimeService;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final OVCTableHandle tableHandle;
 
   @Inject
   public MapReduceProgramRunner(MapReduceRuntimeService mapReduceRuntimeService,
                                 DataFabricFacadeFactory txAgentSupplierFactory,
-                                LogWriter logWriter) {
+                                LogWriter logWriter, OVCTableHandle tableHandle) {
+
     this.mapReduceRuntimeService = mapReduceRuntimeService;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.tableHandle = tableHandle;
     CAppender.logWriter = logWriter;
   }
 
@@ -72,7 +76,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       RunId runId = RunId.generate();
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
+        new BasicMapReduceContext(program, runId, DataSets.createDataSets(dataSetContext, tableHandle, spec.getDataSets()), spec);
 
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
       context.injectFields(job);

@@ -155,11 +155,13 @@ public class DefaultAppFabricServiceTest {
   public void testGetFlowHistory() throws Exception {
     Store store = sFactory.create();
     // record finished flow
-    Id.Program programId = new Id.Program(new Id.Application(new Id.Account("account1"), "application1"), "flow1");
+    Id.Program programId = new Id.Program(new Id.Application(new Id.Account("accountFlowHistoryTest1"),
+                                                             "applicationFlowHistoryTest1"), "flowFlowHistoryTest1");
     store.setStart(programId, "run1", 20);
     store.setStop(programId, "run1", 29, "FAILED");
 
-    FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "flow1", 0);
+    FlowIdentifier flowId = new FlowIdentifier("accountFlowHistoryTest1", "applicationFlowHistoryTest1",
+                                               "flowFlowHistoryTest1", 0);
     List<FlowRunRecord> history = server.getFlowHistory(flowId);
     Assert.assertEquals(1, history.size());
     FlowRunRecord record = history.get(0);
