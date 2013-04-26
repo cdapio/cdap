@@ -653,6 +653,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException {
+    LOG.debug("Init deploying application " + info.toString());
     ResourceIdentifier identifier = new ResourceIdentifier( info.getAccountId(), "appId", "resourceId", 1);
 
     try {
@@ -683,6 +684,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws AppFabricServiceException {
+    LOG.debug("Receiving chunk of application " + resource.toString());
     if(! sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("A session id has not been created for upload. Please call #init");
     }
@@ -714,6 +716,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void deploy(AuthToken token, final ResourceIdentifier resource) throws AppFabricServiceException {
+    LOG.debug("Finishing deploy of application " + resource.toString());
     if(!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("No information about archive being uploaded is available.");
     }
