@@ -1337,7 +1337,7 @@ public class Bytes {
    */
   public static int indexOf(byte [] array, byte [] target) {
     if (array == null || target == null){
-      throw new RuntimeException("Source and target should not be null");
+      throw new RuntimeException("Input array and target should not be null");
     }
 
     outer:
