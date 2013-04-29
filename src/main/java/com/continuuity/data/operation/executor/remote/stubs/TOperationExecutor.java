@@ -6,26 +6,23 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TOperationExecutor {
 
@@ -13794,7 +13791,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map140.size);
                   for (int _i141 = 0; _i141 < _map140.size; ++_i141)
                   {
-                    ByteBuffer _key142; // optional
+                    ByteBuffer _key142; // required
                     long _val143; // required
                     _key142 = iprot.readBinary();
                     _val143 = iprot.readI64();
@@ -13899,7 +13896,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map146.size);
             for (int _i147 = 0; _i147 < _map146.size; ++_i147)
             {
-              ByteBuffer _key148; // optional
+              ByteBuffer _key148; // required
               long _val149; // required
               _key148 = iprot.readBinary();
               _val149 = iprot.readI64();
@@ -14872,7 +14869,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map150.size);
                   for (int _i151 = 0; _i151 < _map150.size; ++_i151)
                   {
-                    ByteBuffer _key152; // optional
+                    ByteBuffer _key152; // required
                     long _val153; // required
                     _key152 = iprot.readBinary();
                     _val153 = iprot.readI64();
@@ -14977,7 +14974,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map156.size);
             for (int _i157 = 0; _i157 < _map156.size; ++_i157)
             {
-              ByteBuffer _key158; // optional
+              ByteBuffer _key158; // required
               long _val159; // required
               _key158 = iprot.readBinary();
               _val159 = iprot.readI64();
@@ -16704,6 +16701,8 @@ public class TOperationExecutor {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);

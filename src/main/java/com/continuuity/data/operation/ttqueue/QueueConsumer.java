@@ -13,6 +13,8 @@ public class QueueConsumer {
   private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
+  // stateInitialized is used to determine when a consumer has crashed.
+  private volatile boolean stateInitialized = false;
 
   /**
    * @param instanceId id of this consumer instance (starts at 0)
@@ -91,6 +93,14 @@ public class QueueConsumer {
     // Nothing to do
   }
 
+  public boolean isStateInitialized() {
+    return stateInitialized;
+  }
+
+  public void setStateInitialized(boolean stateInitialized) {
+    this.stateInitialized = stateInitialized;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -100,6 +110,7 @@ public class QueueConsumer {
         .add("config", this.config)
         .add("name", this.groupName)
         .add("partitioningKey", this.partitioningKey)
+        .add("stateInitialized", this.stateInitialized)
         .toString();
   }
 

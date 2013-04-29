@@ -6,6 +6,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -76,6 +77,7 @@ public abstract class QueueUndo implements Undo {
   }
 
   public static class QueueUnack extends QueueUndo {
+    final StatefulQueueOperationExecutor statefulQueueOperationExecutor;
     final QueueConsumer consumer;
     final int numGroups;
 
@@ -87,16 +89,30 @@ public abstract class QueueUndo implements Undo {
       return numGroups;
     }
 
+    public StatefulQueueOperationExecutor getStatefulQueueOperationExecutor() {
+      return statefulQueueOperationExecutor;
+    }
+
     public QueueUnack(final byte[] queueName, QueueEntryPointer [] entryPointers,
-        QueueConsumer consumer, int numGroups) {
+                      StatefulQueueOperationExecutor statefulQueueOperationExecutor,
+                      QueueConsumer consumer, int numGroups) {
       super(queueName, entryPointers);
+      this.statefulQueueOperationExecutor = statefulQueueOperationExecutor;
       this.consumer = consumer;
       this.numGroups = numGroups;
     }
 
     @Override
-    public void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException {
-      queueTable.unack(queueName, entryPointers, consumer, transaction.getReadPointer());
+    public void execute(final TTQueueTable queueTable, final Transaction transaction) throws OperationException {
+      statefulQueueOperationExecutor.run(queueName, consumer,
+                                         new StatefulQueueOperationExecutor.QueueRunnable() {
+                                           @Override
+                                           public void run(StatefulQueueConsumer statefulQueueConsumer)
+                                             throws OperationException {
+                                             queueTable.unack(queueName, entryPointers, statefulQueueConsumer,
+                                                              transaction.getReadPointer());
+                                           }
+                                         });
     }
   }
 }
