@@ -39,6 +39,7 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
@@ -110,6 +111,10 @@ public class OmidTransactionalOperationExecutor
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
+
+  // Executor that runs all queue operations while managing state.
+  // Also runs all queue operations for a single consumer serially.
+  private static final StatefulQueueOperationExecutor QUEUE_OPERATION_EXECUTOR = new StatefulQueueOperationExecutor();
 
   // Metrics
 
@@ -919,15 +924,23 @@ public class OmidTransactionalOperationExecutor
                                      result.getEntryPointers()));
   }
 
-  WriteTransactionResult write(QueueAck ack, Transaction transaction)
+  WriteTransactionResult write(final QueueAck ack, final Transaction transaction)
     throws  OperationException {
 
     initialize();
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(),
-                                      transaction.getReadPointer());
+      QUEUE_OPERATION_EXECUTOR.run(ack.getKey(), ack.getConsumer(),
+                                   new StatefulQueueOperationExecutor.QueueRunnable() {
+                                     @Override
+                                     public void run(StatefulQueueConsumer statefulQueueConsumer)
+                                       throws OperationException {
+                                       getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
+                                                                       statefulQueueConsumer,
+                                                                       transaction.getReadPointer());
+                                     }
+                                   });
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -935,16 +948,27 @@ public class OmidTransactionalOperationExecutor
       end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), QUEUE_OPERATION_EXECUTOR,
+                                 ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
-  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
+  public DequeueResult execute(OperationContext context, final QueueDequeue dequeue) throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS);
     long begin = begin();
-    TTQueueTable queueTable = getQueueTable(dequeue.getKey());
-    DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(), this.oracle.getReadPointer());
+    final TTQueueTable queueTable = getQueueTable(dequeue.getKey());
+
+    DequeueResult result =
+      QUEUE_OPERATION_EXECUTOR.call(dequeue.getKey(), dequeue.getConsumer(),
+                                    new StatefulQueueOperationExecutor.QueueCallable<DequeueResult>() {
+                                      @Override
+                                      public DequeueResult call(StatefulQueueConsumer statefulQueueConsumer)
+                                        throws OperationException {
+                                        return queueTable.dequeue(dequeue.getKey(), statefulQueueConsumer,
+                                                                  oracle.getReadPointer());
+                                      }
+                                    });
     end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
     return result;
   }
@@ -976,14 +1000,21 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public void execute(OperationContext context, Transaction transaction, QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, Transaction transaction, final QueueAdmin.QueueConfigure configure)
     throws OperationException
   {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
-    TTQueueTable table = getQueueTable(configure.getQueueName());
-    table.configure(configure.getQueueName(), configure.getNewConsumer());
+    final TTQueueTable table = getQueueTable(configure.getQueueName());
+    QUEUE_OPERATION_EXECUTOR.run(configure.getQueueName(), configure.getNewConsumer(),
+                                 new StatefulQueueOperationExecutor.QueueRunnable() {
+                                   @Override
+                                   public void run(StatefulQueueConsumer statefulQueueConsumer)
+                                     throws OperationException {
+                                     table.configure(configure.getQueueName(), statefulQueueConsumer);
+                                   }
+                                 });
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 

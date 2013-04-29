@@ -111,7 +111,7 @@ struct TQueueConsumer {
   5: optional string partitioningKey,
   6: optional TQueueConfig queueConfig,
   7: bool isStateful,
-  8: optional binary queueState,
+  8: bool stateInitialized,
 }
 
 struct TQueueEntryPointer {

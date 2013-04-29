@@ -2,8 +2,6 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -62,8 +60,6 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -71,9 +67,6 @@ import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -748,7 +741,8 @@ public class ConverterUtils {
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize(),
-        consumer.isStateful());
+        consumer.isStateful(),
+        consumer.isStateInitialized());
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
     if (consumer.getQueueConfig() != null)
@@ -756,49 +750,21 @@ public class ConverterUtils {
     if (consumer.getPartitioningKey() != null) {
       tQueueConsumer.setPartitioningKey(consumer.getPartitioningKey());
     }
-    if(consumer.getQueueState() != null) {
-      try{
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ((TTQueueNewOnVCTable.QueueStateImpl) consumer.getQueueState()).encodeTransient(new BinaryEncoder(bos));
-        tQueueConsumer.setQueueState(bos.toByteArray());
-      } catch(IOException e) {
-        String message = String.format("Exception while Serializing QueueStateImpl: %s", e.getMessage());
-        Log.error(message, e);
-        throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
-      }
-    }
+    // No need to serialize queue state since it is now stored in Opex
     return tQueueConsumer;
   }
   /** unwrap a queue consumer */
   QueueConsumer unwrap(TQueueConsumer tQueueConsumer) throws TOperationException {
-    if(tQueueConsumer.isIsStateful()) {
-      StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(
-        tQueueConsumer.getInstanceId(),
-        tQueueConsumer.getGroupId(),
-        tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
-        tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
-        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
-      if(tQueueConsumer.isSetQueueState()) {
-        try {
-          statefulQueueConsumer.setQueueState(
-            TTQueueNewOnVCTable.QueueStateImpl.decodeTransient(new BinaryDecoder(new ByteArrayInputStream(tQueueConsumer.getQueueState()))));
-        } catch (IOException e) {
-          String message = String.format("Exception while deserializing QueueStateImpl: %s", e.getMessage());
-          Log.error(message, e);
-          throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
-        }
-      }
-      return statefulQueueConsumer;
-    } else {
-      return new QueueConsumer(
-        tQueueConsumer.getInstanceId(),
-        tQueueConsumer.getGroupId(),
-        tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
-        tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
-        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
-    }
+    QueueConsumer consumer = new QueueConsumer(
+      tQueueConsumer.getInstanceId(),
+      tQueueConsumer.getGroupId(),
+      tQueueConsumer.getGroupSize(),
+      tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
+      tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
+      tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
+    consumer.setStateInitialized(tQueueConsumer.isStateInitialized());
+    // No need to serialize queue state since it is now stored in Opex
+    return consumer;
   }
 
   /** wrap a queue producer */
@@ -930,8 +896,9 @@ public class ConverterUtils {
       throws OperationException, TOperationException {
     if(tDequeueResult.getConsumer() != null) {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
+      // No need to unwrap queue state, since it is now stored in Opex
       if(retConsumer != null) {
-        consumer.setQueueState(retConsumer.getQueueState());
+        consumer.setStateInitialized(retConsumer.isStateInitialized());
       }
     }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {

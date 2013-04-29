@@ -260,6 +260,7 @@ public class MemoryOracle implements TransactionOracle {
       if (last instanceof QueueUndo.QueueUnack) {
         QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)last;
         return new QueueFinalize(unack.getQueueName(), unack.getEntryPointers(),
+                                 unack.getStatefulQueueOperationExecutor(),
                                  unack.getConsumer(), unack.getNumGroups());
       }
     }
