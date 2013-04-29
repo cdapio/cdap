@@ -1,7 +1,6 @@
 package com.continuuity.performance.benchmark;
 
 public abstract class AgentGroup {
-
   /**
    * Returns the number of times each agent should be called per second.
    * @return a positive integer, or zero for unbounded calls.
@@ -44,7 +43,7 @@ public abstract class AgentGroup {
    * Create a new agent that is ready to run.
    * @return a new agent
    */
-  public abstract Agent newAgent(int agentId);
+  public abstract Agent newAgent(final int agentId, final int numAgents);
 
   public long getGroupMillisDelay() {
     return 0L;

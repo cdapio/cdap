@@ -117,10 +117,10 @@ public class LoadGenerator extends SimpleBenchmark {
           }
 
           @Override
-          public Agent newAgent(int agentId) {
-            return new Agent() {
+          public Agent newAgent(int agentId, final int numAgents) {
+            return new Agent(agentId) {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration)
                   throws BenchmarkException {
 
                 // create a string of random words and length
@@ -139,7 +139,7 @@ public class LoadGenerator extends SimpleBenchmark {
                 String body = builder.toString();
 
                 if (isVerbose()) {
-                  System.out.println(getName() + " " + agentId +
+                  System.out.println(getName() + " " + this.getAgentId() +
                       " sending event number " + iteration + " with body: " +
                       body);
                 }

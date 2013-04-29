@@ -7,35 +7,35 @@ public class BenchmarkThread extends Thread {
 
   Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
 
-  Thread runnerThread;
+  BenchmarkRunner runner;
   int agentId;
   AgentGroup agentGroup;
   BenchmarkMetric globalMetrics;
   boolean useConsole;
 
-  public BenchmarkThread(Thread runnerThread,
+  public BenchmarkThread(BenchmarkRunner runner,
                          AgentGroup group,
                          int agentId,
                          BenchmarkMetric groupMetrics,
                          boolean useConsole) {
-    this.runnerThread = runnerThread;
+    this.runner = runner;
     this.agentGroup = group;
     this.agentId = agentId;
     this.globalMetrics = groupMetrics;
     this.useConsole = useConsole;
   }
 
-  public BenchmarkThread(Thread runnerThread,
+  public BenchmarkThread(BenchmarkRunner runner,
                          AgentGroup group,
                          int agentId,
                          BenchmarkMetric groupMetrics) {
-    this(runnerThread, group, agentId, groupMetrics, true);
+    this(runner, group, agentId, groupMetrics, true);
   }
 
   public void run() {
     String msg;
-    Agent agent = agentGroup.newAgent(agentId);
     int numAgents = agentGroup.getNumAgents();
+    Agent agent = agentGroup.newAgent(agentId, numAgents);
     int totalRuns = agentGroup.getTotalRuns() / numAgents;
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
@@ -68,7 +68,7 @@ public class BenchmarkThread extends Thread {
       long thisTime = System.currentTimeMillis();
       long delta;
       try {
-        delta = agent.runOnce(runs + 1, agentId, numAgents);
+        delta = agent.runOnce(runs + 1);
       } catch (BenchmarkException e) {
         // TODO: better way to report the error
         // TODO: add option to continue
@@ -120,7 +120,7 @@ public class BenchmarkThread extends Thread {
     printConsole(msg);
 
     LOG.debug("Notify BenchmarkRunner thread about completion.");
-    runnerThread.interrupt();
+    runner.agentFinished(agentId);
   }
 
   private void printConsole(String msg) {

@@ -240,10 +240,10 @@ public class QueueBenchmark extends OpexBenchmark {
             return numProducers;
           }
           @Override
-          public Agent newAgent(final int agentId) {
-            return new Agent() {
+          public Agent newAgent(final int agentId, final int numAgents) {
+            return new Agent(agentId) {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException {
+              public long runOnce(long iteration) throws BenchmarkException {
                 return doEnqueue(iteration, agentId);
               }
             };
@@ -260,17 +260,16 @@ public class QueueBenchmark extends OpexBenchmark {
             return numConsumers;
           }
           @Override
-          public Agent newAgent(final int agentId) {
-            return new Agent() {
+          public Agent newAgent(final int agentId, final int numAgents) {
+            return new Agent(agentId) {
               QueueConsumer consumer = new StatefulQueueConsumer(agentId, 0, numConsumers, "x", hashKey, qconfig);
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException {
+              public long runOnce(long iteration) throws BenchmarkException {
                 return doDequeue(agentId, consumer);
               }
             };
           } // newAgent()
         } // new SimpleAgentGroup()
-
     }; // new AgentGroup[]
   } // getAgentGroups()
 

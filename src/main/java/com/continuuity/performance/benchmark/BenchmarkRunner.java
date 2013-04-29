@@ -4,12 +4,17 @@ import com.continuuity.common.conf.CConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 public class BenchmarkRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
+
+//  private Object notificationMonitor = new Object();
+  private final String notifyingAgentMonitor = new String("monitor");
+  private boolean[] finishedAgents;
 
   String benchName = null;
   Benchmark benchmark = null;
@@ -27,6 +32,13 @@ public class BenchmarkRunner {
       }
     } else {
       System.out.println("Use --help --bench <name> for benchmark specific " + "options.");
+    }
+  }
+
+  protected void agentFinished(int agentId) {
+    finishedAgents[agentId] = true;
+    synchronized (notifyingAgentMonitor) {
+      notifyingAgentMonitor.notify();
     }
   }
 
@@ -82,6 +94,16 @@ public class BenchmarkRunner {
     return true;
   }
 
+  private void waitForBenchmarkThreadsToFinish(long time) {
+    synchronized(notifyingAgentMonitor) {
+      try {
+        notifyingAgentMonitor.wait(time);
+      } catch (InterruptedException e) {
+        LOG.debug("InterruptedException caught when waiting for benchmark threads to finish. Ignoring.");
+      }
+    }
+  }
+
   boolean run() throws BenchmarkException {
     // 1. initialize benchmark
 
@@ -92,11 +114,11 @@ public class BenchmarkRunner {
     LOG.debug("Executing benchmark.warmup()");
     benchmark.warmup();
 
-
     // 3. get agent groups and create a thread for each agent
     AgentGroup[] groups = benchmark.getAgentGroups();
     BenchmarkMetric[] groupMetrics = new BenchmarkMetric[groups.length];
     LinkedList<BenchmarkThread> threadList = new LinkedList<BenchmarkThread>();
+    Map<Integer, BenchmarkThread> threadMap = new HashMap<Integer, BenchmarkThread>();
 
     LOG.debug("Executing benchmark.warmup()");
     for (int j = 0; j < groups.length; j++) {
@@ -116,23 +138,35 @@ public class BenchmarkRunner {
 
       groupMetrics[j] = new BenchmarkMetric();
       for (int i = 0; i < group.getNumAgents(); ++i) {
-        threadList.add(new BenchmarkThread(Thread.currentThread(), group, i, groupMetrics[j]));
+        BenchmarkThread bt = new BenchmarkThread(this, group, i, groupMetrics[j]);
+        threadList.add(bt);
+        threadMap.put(i, bt);
       }
     }
+
+    finishedAgents = new boolean[threadList.size()];
 
     BenchmarkThread[] threads =
         threadList.toArray(new BenchmarkThread[threadList.size()]);
     ReportThread consoleReporter = new ReportConsoleThread(groups, groupMetrics, config);
 
     // 4. start the console and other reporter threads
-    LOG.debug("Starting console reporter thread ");
+    LOG.debug("Starting console reporter thread");
     consoleReporter.start();
 
-    ReportThread mensaReporter = null;
+    ReportThread fileReporter = null;
     String reportFile = config.get("reportfile");
     if (reportFile != null && reportFile.length() != 0) {
-      mensaReporter = new ReportWriterThread(benchName, groups, groupMetrics, config);
-      LOG.debug("Starting mensa reporter thread ");
+      fileReporter = new ReportFileAppenderThread(benchName, groups, groupMetrics, config);
+      LOG.debug("Starting file reporter thread");
+      fileReporter.start();
+    }
+
+    ReportThread mensaReporter = null;
+    String mensa = config.get("mensa");
+    if (mensa != null && mensa.length() != 0) {
+      mensaReporter = new ReportMensaWriterThread(benchName, groups, groupMetrics, config, "");
+      LOG.debug("Starting mensa reporter thread");
       mensaReporter.start();
     }
 
@@ -145,45 +179,44 @@ public class BenchmarkRunner {
     // 6. wait for all threads to finish
     int threadsFinished=0;
     LOG.debug("Waiting for all {} benchmark threads to finish...", threadList.size());
-    int checkedThreads=threadList.size();
-    int msJoin = 10000;
-    while (!threadList.isEmpty()) {
-      if (checkedThreads == threadList.size()) {
-        msJoin = 10000;
-      } else {
-        checkedThreads++;
-      }
-      BenchmarkThread thread = threadList.removeFirst();
-      try {
-        LOG.debug("Giving benchmark thread {} ms to finish...", msJoin);
-        thread.join(msJoin);
-      } catch (InterruptedException e1) {
-        checkedThreads = 0;
-        msJoin = 10;
-        LOG.debug("InterruptedException caught during thread.join({}) when trying to wait for a " +
-                    "benchmark thread to finish.", msJoin);
-      }
-      if (thread.isAlive()) {
-        threadList.addLast(thread);
-      } else {
-        threadsFinished++;
-        if (threadsFinished==1) {
-          LOG.debug("Stopping console reporter thread...");
-          stopReporterThread(consoleReporter);
-          if (mensaReporter != null) {
-            LOG.debug("Stopping mensa reporter thread...");
-            stopReporterThread(mensaReporter);
+    while (!threadMap.isEmpty()) {
+      waitForBenchmarkThreadsToFinish(60000);
+      for (int i=0; i < finishedAgents.length; i++) {
+        if (finishedAgents[i] == true) {
+          BenchmarkThread thread = threadMap.get(i);
+          try {
+            thread.join(10);
+          } catch (InterruptedException e) {
+            LOG.debug("InterruptedException when trying to wait for a benchmark thread to finish. Ignoring.");
+          }
+          if (!thread.isAlive()) {
+            finishedAgents[i] = false;
+            threadMap.remove(i);
+            LOG.debug("Another benchmark thread finished. {} benchmark threads are still running.", threadMap.size());
+            threadsFinished++;
+            if (threadsFinished == 1) {
+              LOG.debug("Stopping console reporter thread...");
+              stopReporterThread(consoleReporter);
+              if (fileReporter != null) {
+                LOG.debug("Stopping file reporter thread...");
+                stopReporterThread(fileReporter);
+              }
+              if (mensaReporter != null) {
+                LOG.debug("Stopping mensa reporter thread...");
+                stopReporterThread(mensaReporter);
+              }
+            }
           }
         }
-        LOG.debug("Another benchmark thread finished. {} benchmark threads are still running.", threadList.size());
       }
     }
     LOG.debug("All benchmark threads stopped.");
 
-    Thread.interrupted();
+//    Thread.interrupted();
 
     // 7. Stop reporter thread if still running
     stopReporterThread(consoleReporter);
+    stopReporterThread(fileReporter);
     stopReporterThread(mensaReporter);
     return true;
   }
