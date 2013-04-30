@@ -1082,12 +1082,19 @@ public class OmidTransactionalOperationExecutor
    * In the current implementation the meta data  the stream offsets and queue entry pointers for each streams.
    * This will not work for distributed Opex - and needs to move out to a service of its own
    */
-  private static final class StreamMetaOracle {
+  public static final class StreamMetaOracle {
 
     private final ConcurrentHashMap<byte[], Long> cache = new ConcurrentHashMap <byte[], Long>();
-    //TODO: Make time-offsets configurable
-    private final long offsetWriteIntervalInSecs = 60*60;
-    private final byte [] offsetColumn = "o".getBytes(Charsets.UTF_8); //o for "offset"
+    //TODO: Make time-offsets configurable per stream
+    private static long offsetWriteIntervalInSecs = 60*60;
+
+    /**
+     * Set the interval to write meta data offets for streams
+     * @param durationInSeconds
+     */
+    public static void setOffsetWriteIntervalSeconds(long durationInSeconds){
+        offsetWriteIntervalInSecs = durationInSeconds;
+    }
 
     private void writeMeta(QueueEntryPointer pointer, OrderedVersionedColumnarTable streamTable)
                                                                                throws OperationException {
@@ -1117,7 +1124,8 @@ public class OmidTransactionalOperationExecutor
       if(writeMeta){
         //Write Meta with tablename:offset as key and entrypointer as value
         byte [] rowKey = Stream.StreamMeta.makeStreamMetaRowKey(streamName, offsetToBeWritten);
-        streamTable.put(rowKey, offsetColumn, TransactionOracle.DIRTY_WRITE_VERSION, pointer.getBytes());
+        streamTable.put(rowKey, Stream.StreamMeta.getOffsetColumn(),
+                        TransactionOracle.DIRTY_WRITE_VERSION, pointer.getBytes());
       }
     }
   }

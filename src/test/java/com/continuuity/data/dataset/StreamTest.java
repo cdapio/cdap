@@ -37,13 +37,17 @@ public class StreamTest {
 
 
   @Test
-  public void testStream() throws OperationException {
+  public void testStream() throws OperationException, InterruptedException {
     Stream stream = new Stream("testStream",executor.getTableHandle());
-    stream.setStartPartition(Long.MIN_VALUE);
-    stream.setEndPartition(Long.MAX_VALUE);
+    OmidTransactionalOperationExecutor.StreamMetaOracle.setOffsetWriteIntervalSeconds(1);
+    long startTime = System.currentTimeMillis()/1000;
 
+    long endTime = startTime  + 60*60; // 1hr from startTime
 
-    byte [] streamKeyPrefix = "stream://streamTable".getBytes(Charsets.UTF_8);
+    stream.setStartTime(startTime);
+    stream.setEndTime(endTime);
+
+    byte [] streamKeyPrefix = "stream://testStream".getBytes(Charsets.UTF_8);
 
     List<Split> splits = stream.getSplits();
     assertTrue(0 == splits.size());
@@ -52,8 +56,16 @@ public class StreamTest {
     int count = writeNTimes(10, streamKeyPrefix);
     assertEquals(10, count);
 
+    Thread.sleep(1000);
+
+    //insert n times into streams
+    count = writeNTimes(10, streamKeyPrefix);
+    assertEquals(10, count);
+
+
     splits = stream.getSplits();
     assertEquals(1, splits.size());
+
 
 
   }

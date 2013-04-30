@@ -435,32 +435,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public List<byte[]> getKeysDirty(int limit)  throws OperationException{
-
-    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
-    int returned = 0;
-    try {
-      Scan scan = new Scan();
-      scan.setMaxVersions();
-      ResultScanner scanner = this.readTable.getScanner(scan);
-      Result result;
-      while ((result = scanner.next()) != null) {
-        for (KeyValue kv : result.raw()) {
-          if (returned < limit) {
-            returned++;
-            keys.add(kv.getRow());
-          }
-          if (returned == limit) return keys;
-          break;
-        }
-      }
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    }
-    return keys;
-  }
-
-  @Override
   public long increment(byte[] row, byte[] column, long amount,
                         ReadPointer readPointer, long writeVersion) throws OperationException {
     try {
@@ -530,45 +504,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       this.exceptionHandler.handle(e);
     }
   }
-
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
-    readPointer) throws OperationException {
-    Scan scan = new Scan(row);
-    try {
-      ResultScanner scanner = this.readTable.getScanner(scan);
-      Result result;
-      while ((result = scanner.next()) != null) {
-        for (KeyValue kv : result.raw()) {
-          if (!readPointer.isVisible(kv.getTimestamp())) continue;
-          return new OperationResult<byte[]>(kv.getValue());
-        }
-      }
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
-  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
-    Scan scan = new Scan(row);
-    try {
-      ResultScanner scanner = this.readTable.getScanner(scan);
-      Result result;
-      while ((result = scanner.next()) != null) {
-        for (KeyValue kv : result.raw()) {
-          if (Bytes.equals(column,kv.getQualifier())) {
-            return new OperationResult<byte[]>(kv.getValue());
-          }
-        }
-      }
-    }catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
-
 
   @Override
   public Scanner scanDirty(byte[] startRow, byte[] stopRow) {

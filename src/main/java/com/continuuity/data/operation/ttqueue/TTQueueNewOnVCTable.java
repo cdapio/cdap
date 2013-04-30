@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 // TODO: catch Runtime exception and translate it into OperationException
 // TODO: move all queue state manipulation methods into single class
@@ -2555,7 +2557,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private final Scanner scanner;
     private boolean peeked;
     private QueueEntry currentQueueEntry;
-    private final byte[] validEntryMetaBytes;
     /**
      * Construct new TTQueueNewIterator taking in Table Scanner as a parameter
      * @param scanner Table scanner
@@ -2564,8 +2565,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       this.scanner = scanner;
       this.peeked = false;
       this.currentQueueEntry = null;
-      this.validEntryMetaBytes  = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
-
     }
 
     private QueueEntry getNextValidQueueEntry() throws IOException {
@@ -2582,8 +2581,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }  else {
            byte [] entryMetaValue = value.getSecond().get(ENTRY_META);
            byte [] queueEntryBytes = value.getSecond().get(GLOBAL_DATA_PREFIX);
-           boolean validEntryMeta  = (entryMetaValue != null) ? (Bytes.equals(entryMetaValue, ENTRY_META_VALID))
-                                                              : false;
+           boolean validEntryMeta  = (entryMetaValue != null) && (Arrays.equals(entryMetaValue, ENTRY_META_VALID));
            if ( validEntryMeta && (queueEntryBytes !=null) ) {
                entry  = new QueueEntry(queueEntryBytes);
                done = true;
@@ -2603,7 +2601,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           throw Throwables.propagate(e);
         }
       }
-      return (currentQueueEntry !=null) ? true: false;
+      return (currentQueueEntry != null);
     }
 
     @Override
@@ -2612,14 +2610,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
         peeked = false;
         return currentQueueEntry;
       } else {
-        QueueEntry entry = null;
+        AtomicReference<QueueEntry> entry = new AtomicReference<QueueEntry>();
         try {
-          entry = getNextValidQueueEntry();
+          entry.set(getNextValidQueueEntry());
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
         currentQueueEntry = null;
-        return entry;
+        return entry.get();
       }
     }
 
