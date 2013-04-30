@@ -20,62 +20,64 @@ public abstract class ReportThread extends Thread {
                                                       long millis,
                                                       Map<String, Long> prevMetrics,
                                                       Map<String, Long> latestMetrics,
-                                                      boolean interrupt);
+                                                      boolean interrupt) throws BenchmarkException;
 
-  protected abstract void processGroupMetricsFinal(long unixTime,
-                                                   AgentGroup group);
+  protected abstract void processGroupMetricsFinal(long unixTime, AgentGroup group) throws BenchmarkException;
 
   public final void run() {
-    init();
-
-    long start = System.currentTimeMillis();
-    long unixTime;
-    boolean interrupt = false;
-    ArrayList<Map<String, Long>> previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
-    for (int i = 0; i < groups.length; i++) {
-      previousMetrics.add(null);
-    }
-    long[] previousMillis = new long[groups.length];
-    // wake up every interval (i.e. every minute) to report the metrics
-    for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
-      long wakeup = start + (seconds * 1000);
-      long currentTime = System.currentTimeMillis();
-      unixTime = currentTime / 1000L;
-      try {
-        if (wakeup > currentTime) {
-          Thread.sleep(wakeup - currentTime);
-        }
-      } catch (InterruptedException e) {
-        interrupt = true;
-      }
-      long latestMillis;
-      if (interrupt) {
-        latestMillis = System.currentTimeMillis() - start;
-      } else {
-        latestMillis = seconds * 1000L;
-      }
-      LOG.debug("{} elapsed: ", time2String(latestMillis));
+    try {
+      init();
+      long start = System.currentTimeMillis();
+      long unixTime;
+      boolean interrupt = false;
+      ArrayList<Map<String, Long>> previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
       for (int i = 0; i < groups.length; i++) {
-        Map<String, Long> latestGrpMetrics = groupMetrics[i].list();
-        Map<String, Long> previousGrpMetrics = previousMetrics.get(i);
-
-        processGroupMetricsInterval(unixTime, groups[i], previousMillis[i], latestMillis,
-                                    previousGrpMetrics, latestGrpMetrics, interrupt);
-
-        previousMetrics.set(i, latestGrpMetrics);
-        previousMillis[i] = latestMillis;
+        previousMetrics.add(null);
       }
-    } // each interval
-    LOG.debug("Summarizing collected metrics...");
-    unixTime = System.currentTimeMillis() / 1000L;
-    for (int i=0; i<groups.length; i++) {
-      processGroupMetricsFinal(unixTime, groups[i]);
+      long[] previousMillis = new long[groups.length];
+      // wake up every interval (i.e. every minute) to report the metrics
+      for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
+        long wakeup = start + (seconds * 1000);
+        long currentTime = System.currentTimeMillis();
+        unixTime = currentTime / 1000L;
+        try {
+          if (wakeup > currentTime) {
+            Thread.sleep(wakeup - currentTime);
+          }
+        } catch (InterruptedException e) {
+          interrupt = true;
+        }
+        long latestMillis;
+        if (interrupt) {
+          latestMillis = System.currentTimeMillis() - start;
+        } else {
+          latestMillis = seconds * 1000L;
+        }
+        LOG.debug("{} elapsed: ", time2String(latestMillis));
+        for (int i = 0; i < groups.length; i++) {
+          Map<String, Long> latestGrpMetrics = groupMetrics[i].list();
+          Map<String, Long> previousGrpMetrics = previousMetrics.get(i);
+
+          processGroupMetricsInterval(unixTime, groups[i], previousMillis[i], latestMillis,
+                                      previousGrpMetrics, latestGrpMetrics, interrupt);
+
+          previousMetrics.set(i, latestGrpMetrics);
+          previousMillis[i] = latestMillis;
+        }
+      } // each interval
+      LOG.debug("Summarizing collected metrics...");
+      unixTime = System.currentTimeMillis() / 1000L;
+      for (AgentGroup group : groups) {
+        processGroupMetricsFinal(unixTime, group);
+      }
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    } finally {
+      shutdown();
     }
+}
 
-    shutdown();
-  }
-
-  protected void init() {
+  protected void init() throws BenchmarkException {
   }
 
   protected void shutdown() {

@@ -32,25 +32,26 @@ public class ReportFileAppenderThread extends ReportThread {
     this.groups = groups;
     this.reportInterval = config.getInt("report", reportInterval);
     this.fileName = config.get("reportfile");
-    int pos=benchmarkName.lastIndexOf(".");
-    if (pos!=-1) {
-      this.benchmarkName=benchmarkName.substring(pos + 1, benchmarkName.length());
+    int pos = benchmarkName.lastIndexOf(".");
+    if (pos != -1) {
+      this.benchmarkName = benchmarkName.substring(pos + 1, benchmarkName.length());
     } else {
-      this.benchmarkName=benchmarkName;
+      this.benchmarkName = benchmarkName;
     }
     this.metrics = new HashMap<String,ArrayList<Double>>(groups.length);
-    for (int i=0; i<groups.length; i++) {
-      this.metrics.put(groups[i].getName(), new ArrayList<Double>());
+    for (AgentGroup group : groups) {
+      this.metrics.put(group.getName(), new ArrayList<Double>());
     }
   }
 
   @Override
-  protected void init() {
+  protected void init() throws BenchmarkException {
     reportFile = new File(fileName);
     try {
       bw = new BufferedWriter(new FileWriter(reportFile, true));
     } catch (IOException e) {
-      LOG.error("Error during init.", e);
+      throw new BenchmarkException("Error during init of report file appender when trying to open report file "
+                                     + fileName + ".", e);
     }
   }
 
@@ -76,7 +77,7 @@ public class ReportFileAppenderThread extends ReportThread {
           String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
                                                  benchmarkName, group.getName(),
                                                  Integer.toString(group.getNumAgents()), "");
-          LOG.info("Collected metric {} in memory ", metric);
+          LOG.debug("Collected metric {} in memory ", metric);
         }
       }
     }
@@ -84,12 +85,12 @@ public class ReportFileAppenderThread extends ReportThread {
 
 
   @Override
-  protected void processGroupMetricsFinal(long unixTime, AgentGroup group) {
+  protected void processGroupMetricsFinal(long unixTime, AgentGroup group) throws BenchmarkException {
     List<Double> grpVals = metrics.get(group.getName());
     if (grpVals.size() != 0 ) {
       double sum = 0;
-      for (int j = 0; j < grpVals.size(); j++) {
-        sum += grpVals.get(j);
+      for (Double grpVal : grpVals) {
+        sum += grpVal;
       }
       double avg = sum / grpVals.size();
       String metricValue = String.format("%1.2f", avg);
@@ -100,23 +101,24 @@ public class ReportFileAppenderThread extends ReportThread {
                                              group.getName(),
                                              Integer.toString(group.getNumAgents()),
                                              "");
-      LOG.info("Writing {} to file {}", metric, fileName);
+      LOG.debug("Writing {} to file {}", metric, fileName);
       try {
         bw.write(metric);
         bw.write("\n");
         bw.flush();
       } catch (IOException e) {
-        LOG.error("Error during processing of final group metrics", e);
+        throw new BenchmarkException("Error when trying to write final group metrics to report file" + fileName + ".",
+                                     e);
       }
     }
   }
 
   @Override
   protected void shutdown() {
-    if (bw == null) return;
     try {
       bw.close();
     } catch (IOException e) {
+      LOG.error("Error during shutdown of report file appender when trying to close report file " + fileName + ".", e);
     }
   }
 }

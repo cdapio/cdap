@@ -30,7 +30,7 @@ public class ReportMensaWriterThread extends ReportThread {
     this.groups = groups;
     this.reportInterval = config.getInt("report", reportInterval);
     this.fileName = config.get("reportfile");
-    int pos=benchmarkName.lastIndexOf(".");
+    int pos = benchmarkName.lastIndexOf(".");
     if (pos != -1) {
       this.benchmarkName=benchmarkName.substring(pos + 1, benchmarkName.length());
     } else {
@@ -54,13 +54,13 @@ public class ReportMensaWriterThread extends ReportThread {
       }
     }
     this.metrics = new HashMap<String,ArrayList<Double>>(groups.length);
-    for (int i = 0; i < groups.length; i++) {
-      this.metrics.put(groups[i].getName(), new ArrayList<Double>());
+    for (AgentGroup group : groups) {
+      this.metrics.put(group.getName(), new ArrayList<Double>());
     }
   }
 
   @Override
-  protected void init() {
+  protected void init() throws BenchmarkException {
   }
 
   @Override
@@ -70,7 +70,7 @@ public class ReportMensaWriterThread extends ReportThread {
                                           long millis,
                                           Map<String, Long> prevMetrics,
                                           Map<String, Long> latestMetrics,
-                                          boolean interrupt) {
+                                          boolean interrupt) throws BenchmarkException {
     if (prevMetrics != null) {
       for (Map.Entry<String, Long> singleMetric : prevMetrics.entrySet()) {
         String key = singleMetric.getKey();
@@ -87,10 +87,11 @@ public class ReportMensaWriterThread extends ReportThread {
                                                  Integer.toString(group.getNumAgents()), mensaTags);
           try {
             MensaUtils.uploadMetric(mensaHost, mensaPort, metric);
+            LOG.debug("Uploaded metric put operation \"{}\" to mensa at {}:{}", metric, mensaHost, mensaPort);
           } catch (IOException e) {
-            LOG.error("Error during upload of metric to Mensa", e);
+            throw new BenchmarkException("Error when trying to upload group metric "
+                                           + metric + " to mensa at " + mensaHost + ":" + mensaPort + ".", e);
           }
-          LOG.info("Sent metric with operation \"{}\" to mensa at {}:{}", metric, mensaHost, mensaPort);
         }
       }
     }
