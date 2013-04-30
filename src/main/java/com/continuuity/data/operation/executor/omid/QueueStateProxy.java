@@ -11,11 +11,11 @@ import com.google.common.collect.Maps;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * This executor runs all queue operations while managing queue state for each consumer.
+ * This proxy runs all queue operations while managing queue state for each consumer.
  * It caches the queue state internally, and makes it available for any queue operation run using this executor.
  * It also makes sure to run the queue operations for a single consumer in a serial manner.
  */
-public class StatefulQueueOperationExecutor {
+public class QueueStateProxy {
   private final RowLockTable locks = new RowLockTable();
   private final ConcurrentMap<RowLockTable.Row, StatefulQueueConsumer> statePool = Maps.newConcurrentMap();
 
@@ -71,7 +71,7 @@ public class StatefulQueueOperationExecutor {
 
   /**
    * A QueueCallable is used to define a queue operation that returns a value.
-   * QueueCallable will be run by the StatefulQueueOperationExecutor.
+   * QueueCallable will be run by the QueueStateProxy.
    * @param <T> Type of the return value
    */
   public static abstract class QueueCallable<T> {
@@ -87,7 +87,7 @@ public class StatefulQueueOperationExecutor {
 
     /**
      * If the statefulQueueConsumer changes outside of the JVM during the queue operation then
-     * this method is used let StatefulQueueOperationExecutor know about the change.
+     * this method is used let QueueStateProxy know about the change.
      * @param statefulQueueConsumer Updated statefulQueueConsumer
      */
     @SuppressWarnings("UnusedDeclaration")
@@ -98,7 +98,7 @@ public class StatefulQueueOperationExecutor {
 
   /**
    * A QueueRunnable is used to define a queue operation that does not return a value.
-   * QueueRunnable will be run by the StatefulQueueOperationExecutor.
+   * QueueRunnable will be run by the QueueStateProxy.
    */
   public static abstract class QueueRunnable {
     private volatile StatefulQueueConsumer statefulQueueConsumer = null;
@@ -112,7 +112,7 @@ public class StatefulQueueOperationExecutor {
 
     /**
      * If the statefulQueueConsumer changes outside of the JVM during the queue operation then
-     * this method is used let StatefulQueueOperationExecutor know about the change.
+     * this method is used let QueueStateProxy know about the change.
      * @param statefulQueueConsumer Updated statefulQueueConsumer
      */
     @SuppressWarnings("UnusedDeclaration")

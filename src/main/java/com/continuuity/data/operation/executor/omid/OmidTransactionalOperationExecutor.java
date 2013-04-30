@@ -104,9 +104,9 @@ public class OmidTransactionalOperationExecutor
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
 
-  // Executor that runs all queue operations while managing state.
+  // A proxy that runs all queue operations while managing state.
   // Also runs all queue operations for a single consumer serially.
-  private static final StatefulQueueOperationExecutor QUEUE_OPERATION_EXECUTOR = new StatefulQueueOperationExecutor();
+  private final QueueStateProxy queueStateProxy = new QueueStateProxy();
 
   // Metrics
 
@@ -687,7 +687,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
+      finalize.execute(queueStateProxy, getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -919,16 +919,14 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      QUEUE_OPERATION_EXECUTOR.run(ack.getKey(), ack.getConsumer(),
-                                   new StatefulQueueOperationExecutor.QueueRunnable() {
-                                     @Override
-                                     public void run(StatefulQueueConsumer statefulQueueConsumer)
-                                       throws OperationException {
-                                       getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
-                                                                       statefulQueueConsumer,
-                                                                       transaction.getReadPointer());
-                                     }
-                                   });
+      queueStateProxy.run(ack.getKey(), ack.getConsumer(),
+                          new QueueStateProxy.QueueRunnable() {
+                            @Override
+                            public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                              getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
+                                                              statefulQueueConsumer, transaction.getReadPointer());
+                            }
+                          });
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -936,7 +934,7 @@ public class OmidTransactionalOperationExecutor
       end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), QUEUE_OPERATION_EXECUTOR,
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(),
                                  ack.getConsumer(), ack.getNumGroups()));
   }
 
@@ -948,8 +946,8 @@ public class OmidTransactionalOperationExecutor
     final TTQueueTable queueTable = getQueueTable(dequeue.getKey());
 
     DequeueResult result =
-      QUEUE_OPERATION_EXECUTOR.call(dequeue.getKey(), dequeue.getConsumer(),
-                                    new StatefulQueueOperationExecutor.QueueCallable<DequeueResult>() {
+      queueStateProxy.call(dequeue.getKey(), dequeue.getConsumer(),
+                                    new QueueStateProxy.QueueCallable<DequeueResult>() {
                                       @Override
                                       public DequeueResult call(StatefulQueueConsumer statefulQueueConsumer)
                                         throws OperationException {
@@ -995,14 +993,13 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
     final TTQueueTable table = getQueueTable(configure.getQueueName());
-    QUEUE_OPERATION_EXECUTOR.run(configure.getQueueName(), configure.getNewConsumer(),
-                                 new StatefulQueueOperationExecutor.QueueRunnable() {
-                                   @Override
-                                   public void run(StatefulQueueConsumer statefulQueueConsumer)
-                                     throws OperationException {
-                                     table.configure(configure.getQueueName(), statefulQueueConsumer);
-                                   }
-                                 });
+    queueStateProxy.run(configure.getQueueName(), configure.getNewConsumer(),
+                        new QueueStateProxy.QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            table.configure(configure.getQueueName(), statefulQueueConsumer);
+                          }
+                        });
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 
@@ -1038,7 +1035,7 @@ public class OmidTransactionalOperationExecutor
     for (Undo undo : undos) {
       if (undo instanceof QueueUndo) {
         QueueUndo queueUndo = (QueueUndo)undo;
-        queueUndo.execute(getQueueTable(queueUndo.queueName), transaction);
+        queueUndo.execute(queueStateProxy, transaction, getQueueTable(queueUndo.queueName));
       }
       if (undo instanceof UndoWrite) {
         UndoWrite tableUndo = (UndoWrite)undo;
