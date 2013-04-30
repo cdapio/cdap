@@ -45,8 +45,8 @@ public abstract class QueueUndo implements Undo {
         .toString();
   }
   
-  public abstract void execute(TTQueueTable queueTable,
-      Transaction transaction) throws OperationException;
+  public abstract void execute(QueueStateProxy queueStateProxy, Transaction transaction, TTQueueTable queueTable)
+    throws OperationException;
 
   public static class QueueUnenqueue extends QueueUndo {
     final int sumOfSizes;
@@ -70,14 +70,14 @@ public abstract class QueueUndo implements Undo {
     }
 
     @Override
-    public void execute(TTQueueTable queueTable,
-        Transaction transaction) throws OperationException {
+    public void execute(QueueStateProxy queueStateProxy, Transaction transaction, TTQueueTable queueTable)
+      throws OperationException {
+      // No need to use queueStateProxy since there is no queue state associated with invalidate
       queueTable.invalidate(queueName, entryPointers, transaction.getWriteVersion());
     }
   }
 
   public static class QueueUnack extends QueueUndo {
-    final StatefulQueueOperationExecutor statefulQueueOperationExecutor;
     final QueueConsumer consumer;
     final int numGroups;
 
@@ -89,23 +89,18 @@ public abstract class QueueUndo implements Undo {
       return numGroups;
     }
 
-    public StatefulQueueOperationExecutor getStatefulQueueOperationExecutor() {
-      return statefulQueueOperationExecutor;
-    }
-
     public QueueUnack(final byte[] queueName, QueueEntryPointer [] entryPointers,
-                      StatefulQueueOperationExecutor statefulQueueOperationExecutor,
                       QueueConsumer consumer, int numGroups) {
       super(queueName, entryPointers);
-      this.statefulQueueOperationExecutor = statefulQueueOperationExecutor;
       this.consumer = consumer;
       this.numGroups = numGroups;
     }
 
     @Override
-    public void execute(final TTQueueTable queueTable, final Transaction transaction) throws OperationException {
-      statefulQueueOperationExecutor.run(queueName, consumer,
-                                         new StatefulQueueOperationExecutor.QueueRunnable() {
+    public void execute(QueueStateProxy queueStateProxy, final Transaction transaction, final TTQueueTable queueTable)
+      throws OperationException {
+      queueStateProxy.run(queueName, consumer,
+                                         new QueueStateProxy.QueueRunnable() {
                                            @Override
                                            public void run(StatefulQueueConsumer statefulQueueConsumer)
                                              throws OperationException {
