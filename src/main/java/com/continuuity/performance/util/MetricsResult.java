@@ -68,6 +68,10 @@ final class MetricsResult {
 
     }
 
+    public int getNumDataPoints() {
+      return data.size();
+    }
+
     public double sum() {
       double sum=0;
       for (DataPoint dp : data) {
@@ -75,6 +79,7 @@ final class MetricsResult {
       }
       return sum;
     }
+
     public double sum(int x) {
       if (data.size() == 0) {
         return 0;

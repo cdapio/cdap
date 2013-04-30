@@ -17,6 +17,8 @@ import java.util.Map;
 public class ReportFileAppenderThread extends ReportThread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportFileAppenderThread.class);
+
+  private static final int FILE_APPENDER_METRIC_INTERVAL = 60;
   private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
   private static final String OPS_PER_SEC_AVG = "benchmark.ops.per_sec.avg";
 
@@ -26,11 +28,14 @@ public class ReportFileAppenderThread extends ReportThread {
   Map<String, ArrayList<Double>> metrics;
   BufferedWriter bw;
 
+  @Override
+  public int getInterval() {
+    return FILE_APPENDER_METRIC_INTERVAL;
+  }
+
   public ReportFileAppenderThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
                                   CConfiguration config) {
-    this.groupMetrics = metrics;
-    this.groups = groups;
-    this.reportInterval = config.getInt("report", reportInterval);
+    super(groups, metrics);
     this.fileName = config.get("reportfile");
     int pos = benchmarkName.lastIndexOf(".");
     if (pos != -1) {
@@ -64,12 +69,14 @@ public class ReportFileAppenderThread extends ReportThread {
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) {
     if (prevMetrics != null) {
-      for (Map.Entry<String, Long> singleMetric : prevMetrics.entrySet()) {
+      for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String key = singleMetric.getKey();
         long value = singleMetric.getValue();
         if (!interrupt) {
           Long previousValue = prevMetrics.get(key);
-          if (previousValue == null) previousValue = 0L;
+          if (previousValue == null) {
+            previousValue = 0L;
+          }
           long valueSince = value - previousValue;
           long millisSince = millis - previousMillis;
           metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);

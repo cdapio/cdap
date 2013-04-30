@@ -14,8 +14,9 @@ public class ReportMensaWriterThread extends ReportThread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportMensaWriterThread.class);
 
-  private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
-  private static final String OPS_PER_SEC_AVG = "benchmark.ops.per_sec.avg";
+  private static final int MENSA_METRIC_INTERVAL = 10;
+//  private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
+  private static final String OPS_PER_SEC_10_SEC = "benchmark.ops.per_sec.10s";
 
   String fileName;
   String benchmarkName;
@@ -24,11 +25,14 @@ public class ReportMensaWriterThread extends ReportThread {
   int mensaPort;
   Map<String, ArrayList<Double>> metrics;
 
+  @Override
+  public int getInterval() {
+    return MENSA_METRIC_INTERVAL;
+  }
+
   public ReportMensaWriterThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
                                  CConfiguration config, String extraTags) {
-    this.groupMetrics = metrics;
-    this.groups = groups;
-    this.reportInterval = config.getInt("report", reportInterval);
+    super(groups, metrics);
     this.fileName = config.get("reportfile");
     int pos = benchmarkName.lastIndexOf(".");
     if (pos != -1) {
@@ -72,17 +76,19 @@ public class ReportMensaWriterThread extends ReportThread {
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) throws BenchmarkException {
     if (prevMetrics != null) {
-      for (Map.Entry<String, Long> singleMetric : prevMetrics.entrySet()) {
-        String key = singleMetric.getKey();
-        long value = singleMetric.getValue();
+      for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
+        String metricName = singleMetric.getKey();
+        long latestValue = singleMetric.getValue();
         if (!interrupt) {
-          Long previousValue = prevMetrics.get(key);
-          if (previousValue == null) previousValue = 0L;
-          long valueSince = value - previousValue;
+          Long previousValue = prevMetrics.get(metricName);
+          if (previousValue == null) {
+            previousValue = 0L;
+          }
+          long valueSince = latestValue - previousValue;
           long millisSince = millis - previousMillis;
           metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
           String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
-          String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
+          String metric = MensaUtils.buildMetric(OPS_PER_SEC_10_SEC, Long.toString(unixTime), metricValue,
                                                  benchmarkName, group.getName(),
                                                  Integer.toString(group.getNumAgents()), mensaTags);
           try {

@@ -144,7 +144,7 @@ public class MensaBuildValidator {
     String tags = sb.toString();
     MetricsResult result = queryTSDB(host, port, startts, endts, metric, tags);
     double oldMetricValueAvg = 0;
-    if (result != null && result.getMetrics().size() != 0) {
+    if (result != null && result.getMetrics().size() != 0 && result.getMetric(0).getNumDataPoints() >= 7) {
       oldMetricValueAvg = result.getMetric(0).avg(7);
     }
     if (newMetricValueAvg < 0.95*oldMetricValueAvg) {
