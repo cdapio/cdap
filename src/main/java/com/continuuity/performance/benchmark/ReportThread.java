@@ -10,9 +10,17 @@ public abstract class ReportThread extends Thread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportThread.class);
 
-  int reportInterval = 60;
-  AgentGroup[] groups;
-  BenchmarkMetric[] groupMetrics;
+//  private int reportInterval = 60;
+  private AgentGroup[] groups;
+  private BenchmarkMetric[] groupMetrics;
+
+  public abstract int getInterval();
+
+
+  public ReportThread(AgentGroup[] groups, BenchmarkMetric[] metrics) {
+    this.groupMetrics = metrics;
+    this.groups = groups;
+  }
 
   protected abstract void processGroupMetricsInterval(long unixTime,
                                                       AgentGroup group,
@@ -36,7 +44,8 @@ public abstract class ReportThread extends Thread {
       }
       long[] previousMillis = new long[groups.length];
       // wake up every interval (i.e. every minute) to report the metrics
-      for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
+      int interval = getInterval();
+      for (int seconds = interval; !interrupt; seconds += interval) {
         long wakeup = start + (seconds * 1000);
         long currentTime = System.currentTimeMillis();
         unixTime = currentTime / 1000L;

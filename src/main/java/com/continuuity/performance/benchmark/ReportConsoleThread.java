@@ -6,10 +6,16 @@ import java.util.Map;
 
 public class ReportConsoleThread extends ReportThread {
 
+  private int reportInterval = 60;
+
   public ReportConsoleThread(AgentGroup[] groups, BenchmarkMetric[] metrics, CConfiguration config) {
-    this.groupMetrics = metrics;
-    this.groups = groups;
+    super(groups, metrics);
     this.reportInterval = config.getInt("report", reportInterval);
+  }
+
+  @Override
+  public int getInterval() {
+    return reportInterval;
   }
 
   @Override
