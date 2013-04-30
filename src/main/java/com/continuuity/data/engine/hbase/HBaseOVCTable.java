@@ -903,8 +903,18 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
+    ResultScanner resultScanner = null;
+    try {
+      Scan scan =  new Scan(startRow);
+      scan.setStopRow(stopRow);
+      scan.setTimeRange(0, getMaxStamp(readPointer));
+      scan.setMaxVersions();
+      resultScanner = this.readTable.getScanner(scan);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    return new HBaseScanner(resultScanner, readPointer);
+ }
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
@@ -914,18 +924,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public Scanner scan(ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
-    Scan scan = new Scan(startRow);
-    scan.setStopRow(stopRow);
-    try {
-      ResultScanner resultScanner = this.readTable.getScanner(scan);
-      return new HBaseScanner(resultScanner);
-    } catch (IOException e){
-      throw Throwables.propagate(e);
-    }
   }
 
   public static interface IOExceptionHandler {
@@ -987,9 +985,15 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public class HBaseScanner implements Scanner {
 
     private final ResultScanner scanner ;
+    private final ReadPointer readPointer;
 
     public HBaseScanner(ResultScanner scanner) {
+      this(scanner,null);
+    }
+
+    private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
       this.scanner = scanner;
+      this.readPointer = readPointer;
     }
 
     @Override
@@ -1005,6 +1009,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
         for (KeyValue kv : result.raw()) {
+          //Continue if there is a readPointer and the value is not visible yet
+          if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
+            continue;
+          }
           rowKey = kv.getKey();
           byte[] column = kv.getQualifier();
           byte [] value = removeTypePrefix(kv.getValue());

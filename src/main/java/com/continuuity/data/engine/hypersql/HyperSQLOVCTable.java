@@ -893,33 +893,17 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns,
-      ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
-                                              this.quotedTableName + "  "+ "WHERE rowKey >= ? AND "   +
-                                              "rowKey < ? "  + " " + "ORDER BY rowKey, column ASC," +
-                                              "version DESC, kvtype ASC, id DESC");
+                                               this.quotedTableName + "  "+ "WHERE rowKey >= ? AND "   +
+                                               "rowKey < ? "  + " " + "ORDER BY rowKey, column ASC," +
+                                               "version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, startRow);
       ps.setBytes(2, stopRow);
 
       ResultSet resultSet = ps.executeQuery();
-      return new ResultSetScanner(resultSet);
+      return new ResultSetScanner(resultSet, readPointer);
 
     } catch(SQLException e) {
       throw Throwables.propagate(e);
@@ -932,6 +916,17 @@ implements OrderedVersionedColumnarTable {
         }
       }
     }
+  }
+
+  @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns,
+      ReadPointer readPointer) {
+    throw new UnsupportedOperationException("Scans currently not supported");
+  }
+
+  @Override
+  public Scanner scan(ReadPointer readPointer) {
+    throw new UnsupportedOperationException("Scans currently not supported");
   }
 
   // Private Helper Methods
@@ -1293,8 +1288,9 @@ implements OrderedVersionedColumnarTable {
   /**
    * Implements Scanner using a ResultSet
    * The current implementation first reads all value from result set and stores it in memory
+   * The resultSet expects the following values to be present
+   * - rowkey, column, version, kvtype, id, value
    */
-
   public class ResultSetScanner implements  Scanner {
 
     private Map<byte[], Map<byte[], byte[]>> rowColumnValueMap = new TreeMap<byte[],
@@ -1302,10 +1298,13 @@ implements OrderedVersionedColumnarTable {
     private Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> rowColumnValueIterator;
 
     public ResultSetScanner(ResultSet resultSet) {
-      populateRowColumnValueMap(resultSet);
-      rowColumnValueIterator = this.rowColumnValueMap.entrySet().iterator();
+      this(resultSet, null);
     }
 
+    public ResultSetScanner(ResultSet resultSet, ReadPointer readPointer) {
+      populateRowColumnValueMap(resultSet,readPointer);
+      rowColumnValueIterator = this.rowColumnValueMap.entrySet().iterator();
+    }
 
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
@@ -1317,7 +1316,7 @@ implements OrderedVersionedColumnarTable {
       }
     }
 
-    private void populateRowColumnValueMap(ResultSet result) {
+    private void populateRowColumnValueMap(ResultSet result, ReadPointer readPointer) {
       try {
         if (result == null ) {
           return;
@@ -1329,6 +1328,11 @@ implements OrderedVersionedColumnarTable {
         byte [] lastCol = new byte [0];
 
         while (result.next()) {
+
+          if (readPointer != null && !readPointer.isVisible(result.getLong(3)) ) {
+            continue;
+          }
+
           byte [] rowKey = result.getBytes(1);
           if(!Bytes.equals(lastRow, rowKey)) {
             newRow = true;

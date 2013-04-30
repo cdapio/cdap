@@ -123,9 +123,11 @@ public interface TTQueueTable {
    * @param queueName queuename to iterate on
    * @param start Start QueueEntryPointer
    * @param end  end QueeuEntryPointer
+   * @param ReadPointer readPointer
    * @return Iterator of QueueEntry
    */
-  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end);
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,
+                                          ReadPointer readPointer);
 
   // Old debugging methods
 

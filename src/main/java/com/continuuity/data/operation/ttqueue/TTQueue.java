@@ -130,8 +130,9 @@ public interface TTQueue {
    *
    * @param begin start QueueEntryPointer
    * @param end  end QueueEntryPointer
+   * @param readPointer ReadPointer
    * @return Iterator of QueueEntry
    */
-  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end);
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer);
 
 }

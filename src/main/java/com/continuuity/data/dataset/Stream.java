@@ -181,7 +181,7 @@ public class Stream extends DataSet
   public Iterator<QueueEntry> iterator(QueueEntryPointer start, QueueEntryPointer end) throws OperationException {
     byte [] name = Bytes.toBytes("streams");
     TTQueueTable table = this.handle.getStreamTable(name);
-    return table.getIterator(this.streamTableName, start, end);
+    return table.getIterator(this.streamTableName, start, end, readPointer);
   }
 
 

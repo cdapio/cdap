@@ -2,8 +2,10 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+
 import java.util.Iterator;
 
 /**
@@ -37,8 +39,11 @@ public class TTQueueTableOnVCTable extends TTQueueAbstractTableOnVCTable {
     throws OperationException {
     // Nothing to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
   }
-  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end) {
-    return getQueue(queueName).getIterator(start, end);
+
+  @Override
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,
+                                          ReadPointer readPointer) {
+    return getQueue(queueName).getIterator(start, end, readPointer);
   }
 
 }

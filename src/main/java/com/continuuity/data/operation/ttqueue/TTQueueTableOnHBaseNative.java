@@ -146,8 +146,9 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end) {
-    return getQueue(queueName).getIterator(start,end);
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,
+                                          ReadPointer readPointer) {
+    return getQueue(queueName).getIterator(start, end, readPointer);
   }
 
 }
