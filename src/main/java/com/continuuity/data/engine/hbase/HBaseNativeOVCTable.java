@@ -506,23 +506,32 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
-    Scan scan =  new Scan(startRow);
-    scan.setStopRow(stopRow);
+  public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
+    ResultScanner resultScanner = null;
     try {
-      ResultScanner scanner = this.readTable.getScanner(scan);
-      return new HBaseNativeScanner(scanner);
+      Scan scan =  new Scan(startRow);
+      scan.setStopRow(stopRow);
+      scan.setTimeRange(0, getMaxStamp(readPointer));
+      scan.setMaxVersions();
+      resultScanner = this.readTable.getScanner(scan);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.propagate(e);
     }
+    return new HBaseNativeScanner(resultScanner, readPointer);
   }
 
   public class HBaseNativeScanner implements Scanner {
 
     private final ResultScanner scanner ;
+    private final ReadPointer readPointer;
 
     public HBaseNativeScanner(ResultScanner scanner) {
+      this(scanner, null);
+    }
+
+    public HBaseNativeScanner(ResultScanner scanner, ReadPointer readPointer) {
       this.scanner = scanner;
+      this.readPointer = readPointer;
     }
 
     @Override
@@ -538,6 +547,9 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
         for (KeyValue kv : result.raw()) {
+          if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
+            continue;
+          }
           rowKey = kv.getKey();
           byte[] column = kv.getQualifier();
           byte [] value = kv.getValue();

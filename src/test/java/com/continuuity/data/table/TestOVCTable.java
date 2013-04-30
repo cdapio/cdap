@@ -1210,7 +1210,7 @@ public abstract class TestOVCTable {
 
 
   @Test
-  public void testScanDirty() throws OperationException {
+  public void testScan() throws OperationException {
     final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
@@ -1224,8 +1224,7 @@ public abstract class TestOVCTable {
     byte [] startRow = Bytes.add(row, Bytes.toBytes(100));
     byte [] stopRow = Bytes.add(row, Bytes.toBytes(150));
 
-    Scanner scanner = this.table.scanDirty(startRow,stopRow);
-
+    Scanner scanner = this.table.scan(startRow,stopRow, TransactionOracle.DIRTY_READ_POINTER);
     assertTrue(scanner != null);
 
     int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
@@ -1250,7 +1249,7 @@ public abstract class TestOVCTable {
   }
 
   @Test
-  public void testScanDirtyMid() throws OperationException {
+  public void testScanMid() throws OperationException {
     final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
@@ -1264,7 +1263,7 @@ public abstract class TestOVCTable {
     byte [] startRow = Bytes.add(row, Bytes.toBytes(150));
     byte [] stopRow = Bytes.add(row, Bytes.toBytes(175));
 
-    Scanner scanner = this.table.scanDirty(startRow,stopRow);
+    Scanner scanner = this.table.scan(startRow,stopRow, TransactionOracle.DIRTY_READ_POINTER);
 
     assertTrue(scanner != null);
 
@@ -1290,7 +1289,7 @@ public abstract class TestOVCTable {
   }
 
   @Test
-  public void testScanDirtyNoResult() throws OperationException {
+  public void testScanNoResult() throws OperationException {
     final byte [] row = "scanDirtyTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
@@ -1304,8 +1303,7 @@ public abstract class TestOVCTable {
     byte [] startRow = Bytes.add(row, Bytes.toBytes(210));
     byte [] stopRow = Bytes.add(row, Bytes.toBytes(250));
 
-    Scanner scanner = this.table.scanDirty(startRow,stopRow);
-
+    Scanner scanner = this.table.scan(startRow,stopRow, TransactionOracle.DIRTY_READ_POINTER);
     assertTrue(scanner != null);
 
     int count = 0;

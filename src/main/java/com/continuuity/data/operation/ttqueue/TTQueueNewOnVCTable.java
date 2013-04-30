@@ -942,10 +942,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer) {
     byte [] startRow = makeRowKey(GLOBAL_DATA_PREFIX,begin.getEntryId());
     byte [] endRow = makeRowKey(GLOBAL_DATA_PREFIX,end.getEntryId());
-    Scanner scanner = this.table.scanDirty(startRow,endRow);
+    Scanner scanner = this.table.scan(startRow, endRow, readPointer);
     return new TTQueueNewIterator(scanner);
   }
 

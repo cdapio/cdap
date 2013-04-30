@@ -53,14 +53,4 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @return scanner cursor
    */
   public Scanner scan(ReadPointer readPointer);
-
-  /**
-   * Scans all columns of all rows between the specified start row (inclusive)
-   * and stop row (exclusive).  This scan is dirty - doesn't use read pointer
-   * column.
-   * @param startRow
-   * @param stopRow
-   * @return scanner cursor
-   */
-  public Scanner scanDirty(byte[] startRow, byte[] stopRow);
 }

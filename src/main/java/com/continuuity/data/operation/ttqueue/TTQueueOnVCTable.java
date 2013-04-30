@@ -1091,7 +1091,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer) {
     throw new UnsupportedOperationException("getIterator is not supported on old queues");
   }
 

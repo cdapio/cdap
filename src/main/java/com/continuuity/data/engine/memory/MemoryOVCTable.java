@@ -9,7 +9,6 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -393,22 +392,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     } finally {
       this.locks.unlock(r);
     }
-  }
-
-  /**
-   * Scans all columns of all rows between the specified start row (inclusive)
-   * and stop row (exclusive).  Returns the latest visible version of each
-   * column.
-   *
-   * @param startRow row to start scanning
-   * @param stopRow row to stop the scan. The value corresponding to the stop row will not be included in the result.
-   * @return scanner cursor
-   */
-  @Override
-  public Scanner scanDirty(byte[] startRow, byte[] stopRow) {
-    return new MemoryScanner(this.map.subMap(
-      new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet().iterator(),
-                             new MemoryReadPointer(Long.MAX_VALUE));
   }
 
   private boolean isEmpty(byte[] column) {

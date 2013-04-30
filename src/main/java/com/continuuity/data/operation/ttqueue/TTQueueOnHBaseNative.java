@@ -272,7 +272,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
 
   @Override
-  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end) {
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer) {
     throw new UnsupportedOperationException("Iterator not implemented on TTQueeuOnHbaseNative");
   }
 
