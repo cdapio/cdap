@@ -395,73 +395,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
-    readPointer) throws OperationException {
-    RowLockTable.Row r = new RowLockTable.Row(row);
-
-    Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
-
-    if ( ceilEntry == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-
-    RowLockTable.Row lockedRow = ceilEntry.getKey();
-
-    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
-    if (map == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-    try {
-        byte[] ret =null;
-        NavigableMap<Version, Value> columnMap = getColumn(map, column);
-        ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
-        if (latest != null) {
-          ret = latest.getSecond();
-        }
-      if (ret == null) {
-        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-      } else {
-        return new OperationResult<byte[]>(ret);
-      }
-    } finally {
-      this.locks.unlock(lockedRow);
-    }
-  }
-
-  @Override
-  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column) throws OperationException {
-    RowLockTable.Row r = new RowLockTable.Row(row);
-
-    Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
-
-    if ( ceilEntry == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-
-    RowLockTable.Row lockedRow = ceilEntry.getKey();
-
-    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
-    if (map == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-    try {
-      byte[] ret =null;
-      NavigableMap<Version, Value> columnMap = getColumn(map, column);
-      ImmutablePair<Long, byte[]> latest = filteredLatestDirty(columnMap);
-      if (latest != null) {
-        ret = latest.getSecond();
-      }
-      if (ret == null) {
-        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-      } else {
-        return new OperationResult<byte[]>(ret);
-      }
-    } finally {
-      this.locks.unlock(lockedRow);
-    }
-  }
-
   /**
    * Scans all columns of all rows between the specified start row (inclusive)
    * and stop row (exclusive).  Returns the latest visible version of each
@@ -501,27 +434,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         if (returned == limit) return keys;
       }
     }
-    return keys;
-  }
-
-  /**
-   * Scans the table and returns all row keys according to the specified limit.
-   * @param limit number of keys to get. max value is limited to 1024
-   * @return list of keys
-   */
-  @Override
-  public List<byte[]> getKeysDirty(int limit) throws OperationException {
-    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
-    int returned  = 0;
-    for (Map.Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> entry :
-      this.map.entrySet()) {
-      if (returned < limit) {
-        returned++;
-        keys.add(entry.getKey().getValue());
-      }
-      if (returned==limit) return keys;
-    }
-
     return keys;
   }
 

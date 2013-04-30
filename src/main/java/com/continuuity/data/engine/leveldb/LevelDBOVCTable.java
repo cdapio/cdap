@@ -730,12 +730,6 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-
-  @Override
-  public List<byte[]> getKeysDirty(int limit) throws OperationException {
-   return new ArrayList<byte[]>();
-  }
-
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
@@ -751,81 +745,6 @@ implements OrderedVersionedColumnarTable {
   public Scanner scan(ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
-
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
-                                                                      throws OperationException {
-    DBIterator iterator = db.iterator();
-    iterator.seek(createStartKey(row,column));
-    long lastDelete = -1;
-    long undeleted = -1;
-
-    while( iterator.hasNext()) {
-        byte[] key = iterator.peekNext().getKey();
-        byte [] value = iterator.peekNext().getValue();
-
-        KeyValue kv = createKeyValue(key, value);
-        long curVersion = kv.getTimestamp();
-
-        if (!readPointer.isVisible(curVersion)) {
-          continue;
-        }
-        Type type = Type.codeToType(kv.getType());
-
-        if (type == Type.Delete) {
-          lastDelete = curVersion;
-        } else if (type == Type.UndeleteColumn) {
-          undeleted = curVersion;
-        } else if (type == Type.DeleteColumn) {
-          if (undeleted != curVersion) {
-            break;
-          }
-        } else if (type == Type.Put) {
-          if (curVersion != lastDelete) {
-            // If we get here, this version is visible
-            return new OperationResult<byte[]>(value);
-          }
-       }
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
-
-  @Override
-  public OperationResult<byte[]> getCeilValueDirty(byte[] row, byte[] column)
-    throws OperationException {
-    DBIterator iterator = db.iterator();
-    iterator.seek(createStartKey(row,column));
-    long lastDelete = -1;
-    long undeleted = -1;
-
-    while( iterator.hasNext()) {
-      byte[] key = iterator.peekNext().getKey();
-      byte [] value = iterator.peekNext().getValue();
-
-      KeyValue kv = createKeyValue(key, value);
-      long curVersion = kv.getTimestamp();
-
-      Type type = Type.codeToType(kv.getType());
-
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-      } else if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-      } else if (type == Type.DeleteColumn) {
-        if (undeleted != curVersion) {
-          break;
-        }
-      } else if (type == Type.Put) {
-        if (curVersion != lastDelete) {
-          // If we get here, this version is visible
-          return new OperationResult<byte[]>(value);
-        }
-      }
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
 
   @Override
   public Scanner scanDirty(byte[] startRow, byte[] stopRow) {

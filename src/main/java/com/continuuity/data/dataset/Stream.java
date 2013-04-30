@@ -4,56 +4,79 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.IteratorBasedSplitReader;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.google.common.base.Preconditions;
+import com.continuuity.data.table.Scanner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 
 /**
- * Implementation of Stream as a dataset. Streams are currently backed by queues for data storage
- *
+ * Implementation of Stream as a dataset. In the current implementation Streams are backed by queues for data storage.
+ * Stream metadata is stored in StreamMeta table:
+ *   - Stream Meta RowKey is constructed with streamname and offset - with last 8 bytes used for offset and rest for
+ *      stream name. Offsets are time in seconds when the meta entry is written to StreamMeta table.
+ *   - Value that is stored in column "o" for the row is QueueEntryPointer
+ *   - StreamMeta data is stored in configurable intervals - by default the interval is 1 hour
  */
 public class Stream extends DataSet
                     implements BatchReadable<byte[], QueueEntry>, BatchWritable<byte[], QueueEntry> {
-  //TODO: Use StreamEvent instead of QueueEntry - Using StreamEvent brings in app-fabric dependency to data-fabric
-  private final byte [] streamMetaTable =  Bytes.toBytes("streamMeta"); //"streamMeta".getBytes(Charsets.UTF_8);
-  private final byte [] streamOffsetColumn = org.apache.hadoop.hbase.util.Bytes.toBytes("o") ;
+  //TODO: Move StreamEvent to data-fabric and use StreamEntry instead of queue entry
+  private final byte [] streamMetaTable =  Bytes.toBytes("streamMeta");
   private final byte [] streamTableName ;
-  private long startPartition = Long.MIN_VALUE;
-  private long endPartition = Long.MAX_VALUE;
+  private long startTime = Long.MIN_VALUE;
+  private long endTime = Long.MAX_VALUE;
+  //TODO: Wire in the readPointer from map-reduce job
+  private ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
 
   @Inject
   OVCTableHandle handle;
 
+  /**
+   * Construct Stream with StreamName and Table handle
+   * @param name  String - name of the stream
+   * @param handle OVCTableHandle
+   */
   public Stream(String name, OVCTableHandle handle) {
     super(name);
     this.streamTableName = Bytes.toBytes(String.format("stream://%s",name));
     this.handle = handle;
   }
 
-  public void setStartPartition(long offset) {
-    this.startPartition = offset;
+  /**
+   * Set Start time for streams. Any read operation using stream will use the start time to determine the position
+   * to read from. The first entry that is read from the stream will be greater than or equal to the entry corresponding
+   * to the start time
+   * @param startTime Start timee
+   */
+  public void setStartTime(long startTime) {
+    this.startTime = startTime;
   }
 
-  public void setEndPartition(long offset) {
-    this.endPartition = offset;
+  /**
+   * Set the endTime to stop reading from the streams. Streams will stop reading from the last available endTime that
+   * is available in the StreamMeta table is less than or equal to the endTime - i.e., it will only read complete
+   * partitions.
+   * @param endTime EndTime
+   */
+  public void setEndTime(long endTime) {
+    this.endTime = endTime;
   }
 
   /**
@@ -69,28 +92,39 @@ public class Stream extends DataSet
     List<Split> splits = Lists.newArrayList();
     try {
       OrderedVersionedColumnarTable metaTable  = handle.getTable(streamMetaTable);
+      byte [] startRow = StreamMeta.makeStreamMetaRowKey(streamTableName,startTime);
+      byte [] stopRow = StreamMeta.makeStreamMetaRowKey(streamTableName,endTime);
 
-      List<byte[]> keys = metaTable.getKeysDirty(Integer.MAX_VALUE);
-      List<Long> offsets  = Lists.newArrayList();
-      for (byte [] key : keys) {
-        long offset = StreamMeta.getTimeOffSet(key);
-        if ( offset >= startPartition && offset <= endPartition) {
-          offsets.add(offset);
-        }
+      Scanner scanner = metaTable.scan(startRow,stopRow,readPointer);
+
+      if (scanner == null) {
+        return splits;
       }
-      if (offsets.size() == 1) {
-        StreamInputSplit split = new StreamInputSplit(offsets.get(0), Long.MAX_VALUE);
-        splits.add(split);
-      } else {
-        for (int i = 0; i < offsets.size();i++){
-          if ( i == offsets.size()-1){
-            StreamInputSplit split = new StreamInputSplit(offsets.get(i), Long.MAX_VALUE);
-            splits.add(split);
-          } else {
-            StreamInputSplit split = new StreamInputSplit(offsets.get(i),offsets.get(i+1));
-            splits.add(split);
-          }
+
+      ImmutablePair<byte[], Map<byte[], byte[]>> startEntry = scanner.next();
+
+      if (startEntry == null) {
+        return splits;
+      }
+
+      ImmutablePair<byte[], Map<byte[],byte[]>> nextEntry;
+      while ( (nextEntry=scanner.next()) !=null ) {
+
+        byte [] startQueueEntryBytes  = startEntry.getSecond().get(StreamMeta.getOffsetColumn());
+        byte [] nextQueueEntryBytes  = nextEntry.getSecond().get(StreamMeta.getOffsetColumn());
+
+        if ( startQueueEntryBytes == null || nextQueueEntryBytes == null) {
+          throw new RuntimeException(String.format("QueueEntry pointer not found in stream meta table for stream: %s",
+                                                                                                     this.getName()));
         }
+
+        QueueEntryPointer start = QueueEntryPointer.fromBytes(startQueueEntryBytes);
+        QueueEntryPointer end = QueueEntryPointer.fromBytes(nextQueueEntryBytes);
+        StreamInputSplit split = new StreamInputSplit(start,end);
+        splits.add(split);
+
+        startEntry = nextEntry;
+
       }
     } catch (OperationException e) {
       throw Throwables.propagate(e);
@@ -138,64 +172,46 @@ public class Stream extends DataSet
   }
 
   /**
-   * Iterator of QueueEntry with entries within startOffset to endOffset
-   * @param startTime startOffset
-   * @param endTime endOffset
-   * @return {@code Iterator} of QueueEntries
+   * Iterator of QueueEntry with entries within start to end QueueEntryPointers
+   * @param start QueueEntryPointer
+   * @param end QueueEntryPointer
+   * @return {@code Iterator} of QueueEntrie
    * @throws OperationException
    */
-  public Iterator<QueueEntry> iterator(long startTime, long endTime) throws OperationException {
-
-    OperationResult<byte[]> result  = handle.getTable(this.streamMetaTable)
-                                                      .getCeilValueDirty(StreamMeta.makeStreamMetaRowKey(
-                                                                            this.streamTableName,startTime),
-                                                                          this.streamOffsetColumn) ;
-    QueueEntryPointer begin = null;
-    if ( !result.isEmpty()) {
-      begin = QueueEntryPointer.fromBytes(result.getValue());
-    }
-
-    OperationResult<byte[]> result2  = handle.getTable(this.streamMetaTable)
-                                                      .getCeilValueDirty(StreamMeta.makeStreamMetaRowKey(
-                                                                           this.streamTableName,endTime),
-                                                                         this.streamOffsetColumn);
-    QueueEntryPointer end;
-    if ( !result2.isEmpty()) {
-      end = QueueEntryPointer.fromBytes(result.getValue());
-    }  else {
-      end = new EntryPointer(Long.MAX_VALUE,Long.MAX_VALUE);
-    }
-
+  public Iterator<QueueEntry> iterator(QueueEntryPointer start, QueueEntryPointer end) throws OperationException {
     byte [] name = Bytes.toBytes("streams");
     TTQueueTable table = this.handle.getStreamTable(name);
-    return table.getIterator(this.streamTableName, begin, end);
-
+    return table.getIterator(this.streamTableName, start, end);
   }
 
 
   /**
-   * Defines StreamInputSplit which contains start and endtime
+   * Defines StreamInputSplit which contains Start and end queue entry pointers
    */
   public static final class StreamInputSplit extends Split {
-    private final long startTime;
-    private final long endTime;
 
-    public StreamInputSplit(long startTime, long endTime) {
-      this.startTime = startTime;
-      this.endTime = endTime;
+    private final QueueEntryPointer startQueueEntryPointer;
+    private final QueueEntryPointer endQueueEntryPointer;
+
+    public StreamInputSplit(QueueEntryPointer start, QueueEntryPointer end) {
+      this.startQueueEntryPointer = start;
+      this.endQueueEntryPointer = end;
     }
 
-    public long getStartTime() {
-      return startTime;
+    public QueueEntryPointer getStartQueueEntryPointer() {
+      return startQueueEntryPointer;
     }
 
-    public long getEndTime() {
-      return endTime;
+    public QueueEntryPointer getEndQueueEntryPointer() {
+      return endQueueEntryPointer;
     }
   }
 
 
   public static final class StreamReader extends IteratorBasedSplitReader<byte[], QueueEntry> {
+
+    public static final byte [] dummyKey = new byte[0];
+
     /**
      * Creates iterator to iterate through all records of a given split
      *
@@ -209,7 +225,8 @@ public class Stream extends DataSet
     protected Iterator<QueueEntry> createIterator(BatchReadable dataset, Split split) throws OperationException {
       if(split instanceof StreamInputSplit) {
         StreamInputSplit streamInputSplit = (StreamInputSplit) split;
-        return ((Stream)dataset).iterator(streamInputSplit.getStartTime(),streamInputSplit.getEndTime());
+        return ((Stream)dataset).iterator(streamInputSplit.getStartQueueEntryPointer(),
+                                          streamInputSplit.getEndQueueEntryPointer());
       } else {
         throw new RuntimeException("Only stream input split is expected");
       }
@@ -224,35 +241,22 @@ public class Stream extends DataSet
      */
     @Override
     protected byte[] getKey(QueueEntry streamEntry) {
-      return new byte[0];
+      return dummyKey;
     }
   }
 
   /**
-   * Utility functions for StreamMeta operations
+   * Utility functions for StreamMeta operations that are shared by Streams and StreamMetaOracle
    * - Creating rowKey for storing Stream offsets
-   * - Get offset values from keys
+   * - Get offset columns
    */
   public static class StreamMeta {
 
-    private static final byte [] rowKeySeparator = Bytes.toBytes("--");
 
-    /**
-     * Get time offsets with the given streamMetaKey
-     * @param streamMetaRowkey stream meta key
-     * @return time offset
-     */
-    public static long getTimeOffSet(byte[] streamMetaRowkey) {
-      Preconditions.checkNotNull(streamMetaRowkey);
+    private static final byte [] streamOffsetColumn = org.apache.hadoop.hbase.util.Bytes.toBytes("o") ;
 
-      int index = Bytes.indexOf(streamMetaRowkey,rowKeySeparator);
-      int offsetStartIndex = index + rowKeySeparator.length;
-
-      Preconditions.checkArgument(index != -1, "Row key has invalid format");
-      Preconditions.checkArgument(offsetStartIndex < streamMetaRowkey.length, "Row key has invalid format" );
-
-      byte [] offset = Arrays.copyOfRange(streamMetaRowkey, offsetStartIndex, streamMetaRowkey.length );
-      return Bytes.toLong(offset);
+    public static byte [] getOffsetColumn(){
+      return streamOffsetColumn;
     }
 
     /**
@@ -262,7 +266,7 @@ public class Stream extends DataSet
      * @return byte array of stream meta rowkey
      */
    public static byte[] makeStreamMetaRowKey(byte[] streamName, long offset){
-      return Bytes.add(streamName, rowKeySeparator, Bytes.toBytes(offset));
+      return Bytes.add(streamName, Bytes.toBytes(offset));
     }
   }
 }
