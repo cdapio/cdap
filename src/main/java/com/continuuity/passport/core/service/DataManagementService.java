@@ -221,6 +221,12 @@ public interface DataManagementService {
   public Account getAccountForVPC(String vpcName);
 
 
+  /**
+   * Get all roles and related accounts for the vpc
+   * @param vpcName Name of the vpc
+   * @return Map of Roles and List of related accounts to the role
+   */
+  public Map<String, List<Account>> getAccountRoles(String vpcName);
     /**
      * Register a component with the account- Example: register VPC, Register DataSet
      * TODO: Note: This is not implemented for initial free VPC use case

@@ -10,6 +10,7 @@ import com.continuuity.passport.meta.Role;
 import com.continuuity.passport.meta.VPC;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -39,5 +40,13 @@ public interface VpcDAO {
   public int getVPCCount(String vpcName);
 
   public Account getAccountForVPC(String vpcName);
+
+
+  /**
+   * Get all roles and corresponding accounts for a given vpcName
+   * @param vpcName name of the vpc
+   * @return Map of Role to List of Accounts
+   */
+  public Map<String, List<Account>> getRolesAccounts(String vpcName);
 
   }

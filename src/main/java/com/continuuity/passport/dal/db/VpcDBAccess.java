@@ -11,7 +11,10 @@ import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +24,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -28,7 +32,7 @@ import java.util.List;
 public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   private final DBConnectionPoolManager poolManager ;
-
+  private static final Logger LOG = LoggerFactory.getLogger(VpcDBAccess.class);
   @Inject
   public VpcDBAccess(DBConnectionPoolManager poolManager) {
     this.poolManager = poolManager;
@@ -236,9 +240,14 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   @Override
   public List<VPC> getVPC(String apiKey) {
+    //The VPCs that are returned is a combination of vpcs that is owned by the user with the apiKey and
+    //the VPCs where the user with the apiKey has access to.
+    //This is done using two queries for now.
     Connection connection = null;
     PreparedStatement ps = null;
+    PreparedStatement psRoleBased = null;
     ResultSet rs = null;
+    ResultSet rsRoleBased = null;
     List<VPC> vpcList = new ArrayList<VPC>();
     try {
       connection = this.poolManager.getValidConnection();
@@ -265,9 +274,38 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
                           rs.getString(DBUtils.VPC.VPC_TYPE));
         vpcList.add(vpc);
       }
+
+      String SQLRoleBased =  String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s IN (" +
+                                             "SELECT %s from %s WHERE %s = ? ) ",
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN,
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.LABEL_COLUMN,
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_CREATED_AT,
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_TYPE,   //COLUMNS
+                                           DBUtils.VPC.TABLE_NAME, //FROM
+                                           DBUtils.VPCRole.TABLE_NAME,
+                                           DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN, //CONDITION
+                                           DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.VPC_ID_COLUMN, //CONDITION
+                                           DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN, //WHERE
+                                           DBUtils.AccountTable.TABLE_NAME +"."+ DBUtils.AccountTable.ID_COLUMN,
+                                           DBUtils.AccountTable.TABLE_NAME +"."+ DBUtils.AccountTable.API_KEY_COLUMN);
+
+      psRoleBased = connection.prepareStatement(SQLRoleBased);
+      psRoleBased.setString(1, apiKey);
+      rsRoleBased = psRoleBased.executeQuery();
+
+      while (rsRoleBased.next()) {
+        VPC vpc = new VPC(rs.getInt(DBUtils.VPC.VPC_ID_COLUMN), rs.getString(DBUtils.VPC.NAME_COLUMN),
+                          rs.getString(DBUtils.VPC.LABEL_COLUMN),
+                          DBUtils.timestampToLong(rs.getTimestamp(DBUtils.VPC.VPC_CREATED_AT)),
+                          rs.getString(DBUtils.VPC.VPC_TYPE));
+        vpcList.add(vpc);
+      }
+
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
+      close(null, psRoleBased, rsRoleBased);
       close(connection, ps, rs);
     }
     return vpcList;
@@ -297,6 +335,65 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       close(connection, ps, rs);
     }
     return count;
+  }
+
+  @Override
+  public Map<String, List<Account>> getRolesAccounts(String vpcName){
+
+    Connection connection = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+     connection = this.poolManager.getValidConnection();
+
+      String SQL = String.format("SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM %s " +
+                                 "JOIN %s ON %s = %s " +
+                                 "JOIN %s ON %s = %s " +
+                                 "WHERE %s = ?  ",
+                                 DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,//SELECT
+                                 DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+                                 DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN,
+                                 DBUtils.AccountTable.API_KEY_COLUMN,
+                                 DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+                                 DBUtils.AccountTable.TABLE_NAME,
+                                 DBUtils.VPCRole.TABLE_NAME, //JOIN
+                                 DBUtils.AccountTable.TABLE_NAME + "."+DBUtils.AccountTable.ID_COLUMN,
+                                 DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+                                 DBUtils.VPC.TABLE_NAME, //JOIN
+                                 DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.VPC_ID_COLUMN,
+                                 DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
+                                 DBUtils.VPC.NAME_COLUMN
+                                 );
+      ps = connection.prepareStatement(SQL);
+      ps.setString(1, vpcName);
+      rs = ps.executeQuery();
+      List<Account> accounts = new ArrayList<Account>();
+
+      while(rs.next()){
+        Account account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
+                                      rs.getString( DBUtils.AccountTable.LAST_NAME_COLUMN),
+                                      rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
+                                      rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
+                                      rs.getInt(DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN),
+                                      rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
+                                      rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
+                                      DBUtils.timestampToLong(rs.getTimestamp(
+                                                                DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)));
+        accounts.add(account);
+      }
+
+      Map<String, List<Account>> roleAccountHash = Maps.newHashMap();
+      //TODO: current version sets admin role to all users. ENG-2205 will address role based authorization using shiro
+      roleAccountHash.put("admin", accounts);
+      return roleAccountHash;
+
+    } catch (SQLException e) {
+      LOG.error(String.format("Caught exception while running DB query for getAccountRole. Error %s",e.getMessage()));
+      throw Throwables.propagate(e);
+    } finally {
+      close(connection,ps,rs);
+    }
   }
 
   @Override

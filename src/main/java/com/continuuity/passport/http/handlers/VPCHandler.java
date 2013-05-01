@@ -155,7 +155,6 @@ public class VPCHandler extends PassportHandler {
     Account account = new Account("first","last","continuuity",1);
     String json = String.format("[{\"role\":\"admin\", \"accounts\": [ %s ] } ]",account.toString());
     return Response.ok().entity(json).build();
-
   }
 
   @Path("{vpcName}")
