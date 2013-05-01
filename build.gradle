@@ -28,6 +28,10 @@ dependencies {
     // Integration depends on apiJar
     integrationCompile apiJar.outputs.files
 
+    apiCompile libraries.google_guava
+    apiCompile libraries.google_gson
+    apiCompile libraries.jsr_305
+
     // Self dependencies.
     compile apiJar.outputs.files
 
@@ -40,6 +44,8 @@ dependencies {
     testCompile libraries.mockito_core
     testCompile libraries.junit
 
+    compile libraries.asm
+    compile libraries.jsr_305
     compile libraries.slf4j_api
     compile libraries.google_guava
     compile libraries.google_gson
