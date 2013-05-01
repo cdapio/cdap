@@ -118,21 +118,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
         if(needsBatch) {
           //noinspection unchecked
-          event = (T) Iterators.transform(dataIterator,
-                                      new Function<ByteBuffer, Object>() {
-                                        @Nullable
-                                        @Override
-                                        public Object apply(@Nullable ByteBuffer input) {
-                                          byteBufferInput.reset(input);
-                                          try {
-                                            final Schema sourceSchema = schemaCache.get(input);
-                                            Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
-                                            return datumReader.read(decoder, sourceSchema);
-                                          } catch (IOException e) {
-                                            throw Throwables.propagate(e);
-                                          }
-                                        }
-                                      });
+          event = (T) Iterators.transform(dataIterator, inputDatumTransformFunction);
         } else {
           final ByteBuffer data = dataIterator.next();
           final Schema sourceSchema = schemaCache.get(data);
@@ -244,4 +230,20 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
       txAgent.finish();
     }
   }
+
+  private final Function<ByteBuffer, Object> inputDatumTransformFunction =
+    new Function<ByteBuffer, Object>() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable ByteBuffer input) {
+        byteBufferInput.reset(input);
+        try {
+          final Schema sourceSchema = schemaCache.get(input);
+          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+          return datumReader.read(decoder, sourceSchema);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
 }
