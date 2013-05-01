@@ -16,7 +16,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.InstantiatorFactory;
+import com.continuuity.internal.io.InstantiatorFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

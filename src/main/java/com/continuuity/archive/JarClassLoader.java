@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
- * JarClassLoader extends {@link MultiClassLoader}
+ * JarClassLoader extends {@link com.continuuity.archive.MultiClassLoader}
  */
 public class JarClassLoader extends MultiClassLoader {
   private final JarResources jarResources;
