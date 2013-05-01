@@ -358,4 +358,55 @@ public class SmartTransactionAgentTest {
     return Arrays.asList(ops);
   }
 
+  @Test
+  public void testLimitsTriggerExecution() throws OperationException {
+    final String table = "tLTE";
+    final int sizeLimit = 10 * 1024;
+    final int countLimit = 42;
+
+    // set the size limit low and the count limit high, so we hit the size limit first
+    SmartTransactionAgent agent = newAgent();
+    agent.setSizeLimit(sizeLimit);
+    agent.setCountLimit(100000);
+    agent.start();
+
+    // a write of 1K
+    byte[] zero1000 = new byte[1000];
+    WriteOperation write = new Write(table, a, x, zero1000);
+    int size = write.getSize();
+    int numRounds = sizeLimit / size;
+
+    // verify that this gets executed after numRounds
+    executeNtimes(agent, write, 0, numRounds);
+    // to verify that the limit gets reset after execution, we repeat this
+    executeNtimes(agent, write, numRounds + 1, numRounds);
+
+    // now set the size limit high and the count limit low, so we hit the count limit first
+    agent = newAgent();
+    agent.setSizeLimit(100 * 1024 * 1024);
+    agent.setCountLimit(countLimit);
+    agent.start();
+
+    // an increment of a counter
+    write = new Increment(table, b, x, 1L);
+
+    // verify that this gets executed after numRounds
+    executeNtimes(agent, write, 0, countLimit);
+    // to verify that the limit gets reset after execution, we repeat this
+    executeNtimes(agent, write, countLimit + 1, countLimit);
+  }
+
+  // helper to submit a write n times, verify each time that it weas deferred,
+  // then submit again and verify it got executed
+  private void executeNtimes(SmartTransactionAgent agent, WriteOperation write, int before, int n)
+    throws OperationException {
+    // the first n time, before we hit the limit, the write must not happen
+    for (int i = 0; i < n; i++) {
+      agent.submit(write);
+      Assert.assertEquals(before, agent.getExecutedCount());
+    }
+    // submitting the write again, it should now trigger execution
+    agent.submit(write);
+    Assert.assertEquals(before + n + 1, agent.getExecutedCount());
+  }
 }
