@@ -32,12 +32,10 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
   // Dependencies required by api.
-  apiCompile libraries.jsr_305
 
   // Dependencies required by main.
   compile libraries.slf4j_api
   compile libraries.apache_commons_cli
-  compile libraries.asm
   compile libraries.google_gson
   compile libraries.google_guice
   compile libraries.google_guice_assistedinject
