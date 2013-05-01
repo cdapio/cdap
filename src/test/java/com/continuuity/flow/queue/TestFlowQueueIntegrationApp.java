@@ -23,10 +23,12 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
@@ -90,13 +92,13 @@ public class TestFlowQueueIntegrationApp implements Application {
       final int input = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
       LOG.warn("Writing " + input);
       output.emit(input, HASH_KEY1, input + 1);
-      output1.emit(new Entry1(input), HASH_KEY1, input + 1);
-      output2.emit(new Entry2(input), HASH_KEY2, input + 2);
+      output1.emit(new Entry1(Entry1.id + input), HASH_KEY1, input + 1);
+      output2.emit(new Entry2(Entry2.id + input), HASH_KEY2, input + 2);
 
       // Emit batch output in one shot in the beginning
       if(input == 0) {
         for(int j = 0; j < MAX_ITERATIONS; ++j) {
-          batchOutput.emit(new BatchEntry(j), HASH_KEY1, j);
+          batchOutput.emit(new BatchEntry(BatchEntry.id + j), HASH_KEY1, j);
         }
       }
     }
@@ -176,7 +178,7 @@ public class TestFlowQueueIntegrationApp implements Application {
       if(expectedHash1Iterator == null) {
         expectedHash1Iterator = expectedHash1Lists[first].iterator();
       }
-      verify(actual.i,expectedHash1Iterator, logID);
+      verify(Entry1.id, actual.i, expectedHash1Iterator, logID);
     }
 
     @ProcessInput("entry2")
@@ -194,17 +196,17 @@ public class TestFlowQueueIntegrationApp implements Application {
       if(expectedHash2Iterator == null) {
         expectedHash2Iterator = expectedHash2Lists[first].iterator();
       }
-      verify(actual.i, expectedHash2Iterator, logID);
+      verify(Entry2.id, actual.i, expectedHash2Iterator, logID);
     }
 
-    private void verify(int i, Iterator<Integer> iterator, String logID) {
+    private void verify(int base, int i, Iterator<Integer> iterator, String logID) {
       logID = logID  + " : first=" + first;
       LOG.warn(logID + ": value=" + i);
       if(iterator.hasNext()) {
         int expected = iterator.next();
-        Assert.assertEquals(logID, expected, i);
+        Assert.assertEquals(logID, expected, i - base);
       } else {
-        Assert.fail(logID + ": Not enough inputs!");
+        Assert.fail(logID + ": Got more than expected!");
       }
     }
 
@@ -255,7 +257,7 @@ public class TestFlowQueueIntegrationApp implements Application {
 
     @Override
     public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
-      return FailurePolicy.RETRY;
+      return FailurePolicy.IGNORE;
     }
   }
 
@@ -281,19 +283,19 @@ public class TestFlowQueueIntegrationApp implements Application {
     @ProcessInput("batch_entry")
     @HashPartition(HASH_KEY1)
     @Batch(100)
-    public void foo(Iterator<BatchEntry> it) {
+    public void process(Iterator<BatchEntry> it) {
       List<BatchEntry> actualList = ImmutableList.copyOf(it);
-      LOG.warn("HID:" + id + " values=" + actualList);
+      LOG.warn("HID:" + id + " batch values=" + actualList);
 
       if(first == -1) {
-        first = actualList.get(0).i;
+        first = actualList.get(0).i - BatchEntry.id;
         expectedListIterator = expectedLists[first].iterator();
         for (BatchEntry actual : actualList) {
-          Assert.assertEquals((int)expectedListIterator.next(), actual.i);
+          Assert.assertEquals((int)expectedListIterator.next(), actual.i - BatchEntry.id);
         }
         Assert.assertFalse(expectedListIterator.hasNext());
       } else {
-        Assert.fail("Batch dequeue is not working correctly");
+        Assert.fail("HID:" + id + " Batch dequeue is not working correctly. Got more than one batch - " + actualList);
       }
     }
 
@@ -303,31 +305,57 @@ public class TestFlowQueueIntegrationApp implements Application {
 
     @Override
     public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
-      return FailurePolicy.RETRY;
+      return FailurePolicy.IGNORE;
     }
   }
 
   private static class Entry1 {
     public int i;
+    public static final int id = 200;
 
     private Entry1(int i) {
       this.i = i;
+    }
+
+    @Override
+    public String toString() {
+      return "Entry1{" +
+        "i=" + i +
+        '}';
     }
   }
 
   private static class Entry2 {
     public int i;
+    public static final int id = 500;
 
     private Entry2(int i) {
       this.i = i;
     }
+
+    @Override
+    public String toString() {
+      return "Entry2{" +
+        "i=" + i +
+        '}';
+    }
   }
 
+  @Nonnull
   private static class BatchEntry {
     public int i;
+    public static final int id = 1000;
+    public String batchId = "batchID";
 
     private BatchEntry(int i) {
       this.i = i;
+    }
+
+    @Override
+    public String toString() {
+      return "BatchEntry{" +
+        "i=" + i +
+        '}';
     }
   }
 }
