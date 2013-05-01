@@ -3,10 +3,10 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.zookeeper.DiscoveryServiceClient;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type
