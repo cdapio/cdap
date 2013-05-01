@@ -52,14 +52,14 @@ public class Producer implements Runnable {
       LOG.info(String.format("Producer:%d started", id));
       List<Integer> enqueueBatch = getNextEnqueueBatch();
       while(enqueueBatch != null) {
-        Transaction transaction =  oracle.startTransaction();
+        final Transaction transaction =  oracle.startTransaction();
 
-        EnqueueResult result = queue.enqueue(getEnqueueEntries(enqueueBatch), transaction.getWriteVersion());
+        EnqueueResult result = queue.enqueue(getEnqueueEntries(enqueueBatch), transaction);
         TimeUnit.MILLISECONDS.sleep(testConfig.getEnqueueSleepMs());
 
         if(testConfig.shouldInvalidate()) {
           oracle.abortTransaction(transaction);
-          queue.invalidate(result.getEntryPointers(), transaction.getWriteVersion());
+          queue.invalidate(result.getEntryPointers(), transaction);
           oracle.removeTransaction(transaction);
           invalidList.addAll(enqueueBatch);
           LOG.info(String.format("Producer:%d batchSize=%d invalidBatch=%s", id, enqueueBatch.size(), enqueueBatch));

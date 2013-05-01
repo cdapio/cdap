@@ -213,7 +213,7 @@ public class Consumer implements Runnable {
             return;
           }
           Assert.assertTrue(dequeueResult.isSuccess());
-          queue.ack(dequeueResult.getEntryPointers(), consumer, transaction.getReadPointer());
+          queue.ack(dequeueResult.getEntryPointers(), consumer, transaction);
           oracle.commitTransaction(transaction);
           Iterable<Integer> dequeued = entriesToInt(dequeueResult.getEntries());
           Iterables.addAll(dequeueList, dequeued);
@@ -251,8 +251,7 @@ public class Consumer implements Runnable {
             return;
           }
           if(testConfig.shouldFinalize()) {
-            queue.finalize(dequeueResult.getEntryPointers(), consumer, consumerGroupControl.getSize(),
-                           transaction.getWriteVersion());
+            queue.finalize(dequeueResult.getEntryPointers(), consumer, consumerGroupControl.getSize(), transaction);
           }
         }
       } catch (Exception e) {

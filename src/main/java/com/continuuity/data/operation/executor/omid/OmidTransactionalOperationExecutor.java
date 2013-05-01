@@ -695,7 +695,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(queueStateProxy, getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
+      finalize.execute(queueStateProxy, getQueueTable(finalize.getQueueName()), transaction);
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -913,7 +913,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS);
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
-                                                                   transaction.getWriteVersion());
+                                                                   transaction);
 
     streamMetaOracle.writeMeta(result.getEntryPointer(), this.streamMetaTable);
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
@@ -935,7 +935,7 @@ public class OmidTransactionalOperationExecutor
                             @Override
                             public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
                               getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
-                                                              statefulQueueConsumer, transaction.getReadPointer());
+                                                              statefulQueueConsumer, transaction);
                             }
                           });
     } catch (OperationException e) {

@@ -73,7 +73,7 @@ public abstract class QueueUndo implements Undo {
     public void execute(QueueStateProxy queueStateProxy, Transaction transaction, TTQueueTable queueTable)
       throws OperationException {
       // No need to use queueStateProxy since there is no queue state associated with invalidate
-      queueTable.invalidate(queueName, entryPointers, transaction.getWriteVersion());
+      queueTable.invalidate(queueName, entryPointers, transaction);
     }
   }
 
@@ -105,7 +105,7 @@ public abstract class QueueUndo implements Undo {
                                            public void run(StatefulQueueConsumer statefulQueueConsumer)
                                              throws OperationException {
                                              queueTable.unack(queueName, entryPointers, statefulQueueConsumer,
-                                                              transaction.getReadPointer());
+                                                              transaction);
                                            }
                                          });
     }

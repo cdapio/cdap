@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.omid.QueueStateProxy;
+import com.continuuity.data.operation.executor.Transaction;
 
 /**
 *
@@ -25,7 +26,8 @@ public class QueueFinalize {
     return queueName;
   }
 
-  public void execute(final QueueStateProxy queueStateProxy, final TTQueueTable queueTable, final long writePoint)
+  public void execute(final QueueStateProxy queueStateProxy, final TTQueueTable queueTable,
+                      final Transaction transaction)
     throws OperationException {
     queueStateProxy.run(queueName, consumer,
                                        new QueueStateProxy.QueueRunnable() {
@@ -33,7 +35,7 @@ public class QueueFinalize {
                                          public void run(StatefulQueueConsumer statefulQueueConsumer)
                                            throws OperationException {
                                            queueTable.finalize(queueName, entryPointers, statefulQueueConsumer,
-                                                               totalNumGroups, writePoint);
+                                                               totalNumGroups, transaction);
                                          }
                                        });
   }
