@@ -1,8 +1,8 @@
 package com.continuuity.internal.test;
 
-import com.continuuity.discovery.Discoverable;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.test.ProcedureClient;
+import com.continuuity.zookeeper.Discoverable;
+import com.continuuity.zookeeper.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
