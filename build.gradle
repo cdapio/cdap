@@ -30,6 +30,7 @@ dependencies {
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'weave', version: "${version}", changing: true], "weave")
 
   // Dependencies required by api.
   apiCompile libraries.jsr_305
