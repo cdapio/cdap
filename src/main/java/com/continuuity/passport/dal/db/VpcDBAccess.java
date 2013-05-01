@@ -164,16 +164,23 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     ResultSet rs = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? OR %s IN (" +
+                                   "SELECT %s from %s WHERE %s = ?)",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
         DBUtils.VPC.VPC_CREATED_AT,
         DBUtils.VPC.VPC_TYPE,//COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
-        DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
+        DBUtils.VPC.ACCOUNT_ID_COLUMN,
+        DBUtils.VPC.VPC_ID_COLUMN,
+        DBUtils.VPCRole.VPC_ID_COLUMN,
+        DBUtils.VPCRole.TABLE_NAME,
+        DBUtils.VPCRole.USER_ID_COLUMN
+        );
 
       ps = connection.prepareStatement(SQL);
       ps.setInt(1, accountId);
+      ps.setInt(2, accountId);
       rs = ps.executeQuery();
 
       while (rs.next()) {
