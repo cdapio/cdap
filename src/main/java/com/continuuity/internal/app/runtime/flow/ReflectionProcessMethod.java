@@ -37,43 +37,33 @@ import java.util.concurrent.Executor;
  *
  */
 @NotThreadSafe
-public final class ReflectionProcessMethod<T> implements ProcessMethod {
+public final class ReflectionProcessMethod implements ProcessMethod {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReflectionProcessMethod.class);
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
   private final Method method;
-  private final SchemaCache schemaCache;
   private final DataFabricFacade txAgentSupplier;
   private final OutputSubmitter outputSubmitter;
   private final boolean hasParam;
   private final boolean needsBatch;
   private final boolean needContext;
-  private final ReflectionDatumReader<T> datumReader;
-  private final ByteBufferInputStream byteBufferInput;
-  private final BinaryDecoder decoder;
 
-  public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, BasicFlowletContext flowletContext,
+  public static ReflectionProcessMethod create(Flowlet flowlet, BasicFlowletContext flowletContext,
                                                       Method method,
-                                                      TypeToken<T> dataType,
-                                                      Schema schema, SchemaCache schemaCache,
                                                       DataFabricFacade txAgentSupplier,
                                                       OutputSubmitter outputSubmitter) {
-    return new ReflectionProcessMethod<T>(flowlet, flowletContext, method, dataType, schema,
-                                          schemaCache, txAgentSupplier, outputSubmitter);
+    return new ReflectionProcessMethod(flowlet, flowletContext, method, txAgentSupplier, outputSubmitter);
   }
 
   private ReflectionProcessMethod(Flowlet flowlet, BasicFlowletContext flowletContext,
                                   Method method,
-                                  TypeToken<T> dataType,
-                                  Schema schema, SchemaCache schemaCache,
                                   DataFabricFacade txAgentSupplier,
                                   OutputSubmitter outputSubmitter) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.method = method;
-    this.schemaCache = schemaCache;
     this.txAgentSupplier = txAgentSupplier;
     this.outputSubmitter = outputSubmitter;
 
@@ -81,9 +71,6 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     this.needsBatch = hasParam &&
       TypeToken.of(method.getGenericParameterTypes()[0]).getRawType().equals(Iterator.class);
     this.needContext = method.getGenericParameterTypes().length == 2;
-    this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
-    this.byteBufferInput = new ByteBufferInputStream(null);
-    this.decoder = new BinaryDecoder(byteBufferInput);
 
     if(!this.method.isAccessible()) {
       this.method.setAccessible(true);
@@ -96,8 +83,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
   }
 
   @Override
-  public PostProcess invoke(InputDatum input) {
-    return doInvoke(input);
+  public <T> PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer) {
+    return doInvoke(input, inputDatumTransformer);
   }
 
   @Override
@@ -105,7 +92,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     return flowlet.getClass() + "." + method.toString();
   }
 
-  private PostProcess doInvoke(final InputDatum input) {
+  private <T> PostProcess doInvoke(final InputDatum input, final Function<ByteBuffer, T> inputDatumTransformer) {
     final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
 
     try {
@@ -115,7 +102,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
       T event = null;
       if (hasParam) {
         Iterator<ByteBuffer> inputIterator = input.getData();
-        Iterator<T> dataIterator = Iterators.transform(inputIterator, inputDatumTransformFunction);
+        Iterator<T> dataIterator = Iterators.transform(inputIterator, inputDatumTransformer);
 
         if(needsBatch) {
           //noinspection unchecked
@@ -149,7 +136,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     }
   }
 
-  private PostProcess getPostProcess(final TransactionAgent txAgent,
+  private <T> PostProcess getPostProcess(final TransactionAgent txAgent,
                                      final InputDatum input,
                                      final T event,
                                      final InputContext inputContext) {
@@ -179,7 +166,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     };
   }
 
-  private PostProcess getFailurePostProcess(final Throwable t,
+  private <T> PostProcess getFailurePostProcess(final Throwable t,
                                             final TransactionAgent txAgent,
                                             final InputDatum input,
                                             final T event,
@@ -227,20 +214,4 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
       txAgent.finish();
     }
   }
-
-  private final Function<ByteBuffer, T> inputDatumTransformFunction =
-    new Function<ByteBuffer, T>() {
-      @Nullable
-      @Override
-      public T apply(@Nullable ByteBuffer input) {
-        byteBufferInput.reset(input);
-        try {
-          final Schema sourceSchema = schemaCache.get(input);
-          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
-          return datumReader.read(decoder, sourceSchema);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
 }

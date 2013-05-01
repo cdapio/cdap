@@ -12,6 +12,7 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.PostProcess;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -19,6 +20,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -150,7 +153,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
     // Insert all into priority queue, ordered by next deque time.
     PriorityBlockingQueue<ProcessEntry> processQueue = new PriorityBlockingQueue<ProcessEntry>(processSpecs.size());
-    for (ProcessSpecification spec : processSpecs) {
+    for (ProcessSpecification<?> spec : processSpecs) {
       processQueue.offer(new ProcessEntry(spec));
     }
     List<ProcessEntry> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
@@ -195,10 +198,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
             continue;
           }
 
-          if (processMethod.needsInput()) {
-            flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
-            flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
-          }
           entry.nextDeque = 0;
           if (!entry.isRetry()) {
             // Only increment the inflight count for non-retry entries.
@@ -210,7 +209,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           try {
             invoked = true;
             // Call the process method and commit the transaction
-            processMethod.invoke(input)
+            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
@@ -230,6 +229,19 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     waitForInflight(processQueue);
 
     destroyFlowlet();
+  }
+
+  private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
+                                                        final Function<ByteBuffer, T> inputDatumDecoder) {
+    return new Function<ByteBuffer, T>() {
+      @Nullable
+      @Override
+      public T apply(@Nullable ByteBuffer byteBuffer) {
+        flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
+        flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
+        return inputDatumDecoder.apply(byteBuffer);
+      }
+    };
   }
 
   /**
@@ -255,12 +267,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
           InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
           flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.attempt.read", 1);
-          flowletContext.getSystemMetrics().counter(input.getInputContext().getOrigin() + INPUT_METRIC_POSTFIX, 1);
-          flowletContext.getSystemMetrics().meter(FlowletProcessDriver.class, "tuples.read", 1);
 
           try {
             // Call the process method and commit the transaction
-            processMethod.invoke(input)
+            processMethod.invoke(input, wrapInputDatumDecoder(input, entry.getProcessSpec().getInputDatumDecoder()))
               .commit(transactionExecutor, processMethodCallback(processQueue, entry, input));
 
           } catch (Throwable t) {
@@ -295,8 +305,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry> processQueue,
-                                                     final ProcessEntry processEntry,
+  private <T> PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry> processQueue,
+                                                     final ProcessEntry<T> processEntry,
                                                      final InputDatum input) {
     return new PostProcess.Callback() {
       @Override
@@ -334,8 +344,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         if (failurePolicy == FailurePolicy.RETRY) {
           ProcessEntry retryEntry = processEntry.isRetry() ?
             processEntry :
-            new ProcessEntry(processEntry.getProcessSpec(),
-              new ProcessSpecification(new SingleItemQueueReader(input),
+            new ProcessEntry<T>(processEntry.getProcessSpec(),
+              new ProcessSpecification<T>(new SingleItemQueueReader(input),
+                                       processEntry.getProcessSpec().getInputDatumDecoder(),
                                        processEntry.getProcessSpec().getProcessMethod()));
 
           processQueue.offer(retryEntry);
@@ -361,17 +372,17 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     };
   }
 
-  private static final class ProcessEntry implements Comparable<ProcessEntry> {
-    private final ProcessSpecification processSpec;
-    private final ProcessSpecification retrySpec;
+  private static final class ProcessEntry<T> implements Comparable<ProcessEntry> {
+    private final ProcessSpecification<T> processSpec;
+    private final ProcessSpecification<T> retrySpec;
     private long nextDeque;
     private long currentBackOff = BACKOFF_MIN;
 
-    private ProcessEntry(ProcessSpecification processSpec) {
+    private ProcessEntry(ProcessSpecification<T> processSpec) {
       this(processSpec, null);
     }
 
-    private ProcessEntry(ProcessSpecification processSpec, ProcessSpecification retrySpec) {
+    private ProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
       this.processSpec = processSpec;
       this.retrySpec = retrySpec;
     }
@@ -404,12 +415,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       currentBackOff = Math.min(currentBackOff * BACKOFF_EXP, BACKOFF_MAX);
     }
 
-    public ProcessSpecification getProcessSpec() {
+    public ProcessSpecification<T> getProcessSpec() {
       return retrySpec == null ? processSpec : retrySpec;
     }
 
-    public ProcessEntry resetRetry() {
-      return retrySpec == null ? this : new ProcessEntry(processSpec);
+    public ProcessEntry<T> resetRetry() {
+      return retrySpec == null ? this : new ProcessEntry<T>(processSpec);
     }
   }
 }
