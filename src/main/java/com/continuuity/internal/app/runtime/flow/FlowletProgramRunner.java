@@ -53,7 +53,7 @@ import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.app.runtime.InstantiatorFactory;
+import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.DatumWriterFactory;

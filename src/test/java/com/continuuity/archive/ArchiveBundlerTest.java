@@ -2,22 +2,16 @@ package com.continuuity.archive;
 
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.InputSupplier;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
