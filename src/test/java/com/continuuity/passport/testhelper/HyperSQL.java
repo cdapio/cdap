@@ -34,12 +34,19 @@ public class HyperSQL {
                                                          "vpc_type VARCHAR(30) " +
                                                          ")" ;
 
+  private static final String CREATE_VPC_ROLE_TABLE = "CREATE TABLE vpc_role ( vpc_id INTEGER , " +
+    "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )" ;
+
+
+
   private static final String CREATE_NONCE_TABLE = "CREATE TABLE nonce (nonce_id INTEGER IDENTITY," +
                                                    "id VARCHAR(100), nonce_expires_at TIMESTAMP, UNIQUE (id)" +
                                                    ")";
   private static final String DROP_ACCOUNT_TABLE = "DROP TABLE account";
   private static final String DROP_NONCE_TABLE = "DROP TABLE nonce";
   private static final String DROP_VPC_ACCOUNT_TABLE = "DROP TABLE vpc_account";
+  private static final String DROP_VPC_ROLE_TABLE = "DROP TABLE vpc_role";
+
 
 
 
@@ -64,9 +71,7 @@ public class HyperSQL {
     connection.createStatement().execute(CREATE_ACCOUNT_TABLE);
     connection.createStatement().execute(CREATE_NONCE_TABLE);
     connection.createStatement().execute(CREATE_VPC_ACCOUNT_TABLE);
-
-
-
+    connection.createStatement().execute(CREATE_VPC_ROLE_TABLE);
   }
 
 
@@ -76,6 +81,7 @@ public class HyperSQL {
     connection.createStatement().execute(DROP_ACCOUNT_TABLE);
     connection.createStatement().execute(DROP_NONCE_TABLE);
     connection.createStatement().execute(DROP_VPC_ACCOUNT_TABLE);
+    connection.createStatement().execute(DROP_VPC_ROLE_TABLE);
 
     connection.close();
     server.stop();

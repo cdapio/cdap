@@ -9,6 +9,7 @@ import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -145,6 +146,15 @@ public class VPCHandler extends PassportHandler {
         .entity(Utils.getIdJson("FAILED","xkcd not found for VPC"))
         .build();
     }
+  }
+
+  @GET
+  @Path("{vpcName}/accountRoles")
+  public Response getAccountRoles(@PathParam("vpcName") String vpcName) {
+    //Return Dummy results for early integration
+    Account account = new Account("first","last","continuuity",1);
+    String json = String.format("[{\"role\":\"admin\", \"accounts\": [ %s ] } ]",account.toString());
+    return Response.ok().entity(json).build();
   }
 
   @Path("{vpcName}")

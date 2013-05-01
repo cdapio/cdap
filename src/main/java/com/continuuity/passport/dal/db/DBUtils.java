@@ -74,8 +74,7 @@ public class DBUtils {
 
   /**
    * Roles for VPC
-   * TODO: Note: This is not being used now
-   */
+   * */
   public static class VPCRole {
     public static final String TABLE_NAME = "vpc_role";
     public static final String VPC_ID_COLUMN = "vpc_id";
