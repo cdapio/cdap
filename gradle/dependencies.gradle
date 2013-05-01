@@ -5,7 +5,7 @@ ext {
 
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
-versions.hadoopVersion = '2.0.3-alpha'
+versions.hadoopVersion = '2.0.4-alpha'
 versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
@@ -24,6 +24,7 @@ versions.zookeeperVersion = '3.4.5'
 libraries.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
 libraries.logback_core = "ch.qos.logback:logback-core:1.0.9"
 libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.9"
+libraries.jcl_over_slf4j = "org.slf4j:jcl-over-slf4j:1.6.4"
 
 libraries.mockito_core =  "org.mockito:mockito-core:1.9.5"
 libraries.junit = "junit:junit:4.11"
