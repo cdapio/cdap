@@ -114,17 +114,14 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
 
       T event = null;
       if (hasParam) {
-        Iterator<ByteBuffer> dataIterator = input.getData();
+        Iterator<ByteBuffer> inputIterator = input.getData();
+        Iterator<T> dataIterator = Iterators.transform(inputIterator, inputDatumTransformFunction);
 
         if(needsBatch) {
           //noinspection unchecked
-          event = (T) Iterators.transform(dataIterator, inputDatumTransformFunction);
+          event = (T) dataIterator;
         } else {
-          final ByteBuffer data = dataIterator.next();
-          final Schema sourceSchema = schemaCache.get(data);
-          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
-          byteBufferInput.reset(data);
-          event = datumReader.read(decoder, sourceSchema);
+          event = dataIterator.next();
         }
       }
       InputContext inputContext = input.getInputContext();
@@ -231,11 +228,11 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod {
     }
   }
 
-  private final Function<ByteBuffer, Object> inputDatumTransformFunction =
-    new Function<ByteBuffer, Object>() {
+  private final Function<ByteBuffer, T> inputDatumTransformFunction =
+    new Function<ByteBuffer, T>() {
       @Nullable
       @Override
-      public Object apply(@Nullable ByteBuffer input) {
+      public T apply(@Nullable ByteBuffer input) {
         byteBufferInput.reset(input);
         try {
           final Schema sourceSchema = schemaCache.get(input);
