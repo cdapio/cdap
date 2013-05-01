@@ -843,7 +843,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public Set<Long> getGroupIds() {
-      return groupEvictEntries.keySet();
+      return Collections.unmodifiableSet(groupEvictEntries.keySet());
     }
 
     public Long getGroupEvictEntry(long groupId) {
@@ -1241,7 +1241,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public Map<Long, byte[]> getCachedEntries() {
-      return cachedEntries;
+      return Collections.unmodifiableMap(cachedEntries);
     }
 
     public static TransientWorkingSet addCachedEntries(TransientWorkingSet oldTransientWorkingSet,
