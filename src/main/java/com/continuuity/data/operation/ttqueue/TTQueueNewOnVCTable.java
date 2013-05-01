@@ -420,12 +420,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
     ReadPointer readPointer = transaction.getReadPointer();
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
+    // TODO: check opex crash state
     // Set unack state
-    // TODO: 1. Check if entry was really acked
-    // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
-    //          queue cache. So unack should check whether it is in the cached set and read it if necessary
+    List<Long> unCachedEntries = Lists.newArrayList();
     for (QueueEntryPointer entryPointer : entryPointers) {
       queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
+
+      // If entry is not present in the cache, we'll need it again
+      if(!queueState.getTransientWorkingSet().getCachedEntries().containsKey(entryPointer.getEntryId())) {
+        unCachedEntries.add(entryPointer.getEntryId());
+      }
+    }
+
+    // Read entries that are not cached
+    if(!unCachedEntries.isEmpty()) {
+      QueueStateImpl tempState = new QueueStateImpl();
+      dequeueStrategy.readEntries(tempState, readPointer, unCachedEntries);
+      Map<Long, byte[]> newCachedEntries = tempState.getTransientWorkingSet().getCachedEntries();
+      if(!newCachedEntries.isEmpty()) {
+        TransientWorkingSet oldTransientWorkingSet = queueState.getTransientWorkingSet();
+        queueState.setTransientWorkingSet(TransientWorkingSet.addCachedEntries(oldTransientWorkingSet,
+                                                                               newCachedEntries));
+      }
     }
 
     // Write unack state
@@ -1228,6 +1244,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return cachedEntries;
     }
 
+    public static TransientWorkingSet addCachedEntries(TransientWorkingSet oldTransientWorkingSet,
+                                                       Map<Long, byte[]> moreCachedEntries) {
+      Map<Long, byte[]> newCachedEntries = Maps.newHashMap(oldTransientWorkingSet.getCachedEntries());
+      newCachedEntries.putAll(moreCachedEntries);
+      return new TransientWorkingSet(oldTransientWorkingSet.entryList, oldTransientWorkingSet.curPtr,
+                                     newCachedEntries);
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
@@ -1778,6 +1802,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
 
     /**
+     * method to read queue entries specified in entryIds into queue state
+     * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
+     * consumer past these entries and fetch again.
+     */
+    public boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+      throws OperationException;
+    /**
      * method to save the queue state to storage (dual to readQueueState)
      */
     void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
@@ -1929,7 +1960,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
      * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
      * consumer past these entries and fetch again.
      */
-    protected boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+    @Override
+    public boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
       throws OperationException
     {
       if(LOG.isTraceEnabled()) {
