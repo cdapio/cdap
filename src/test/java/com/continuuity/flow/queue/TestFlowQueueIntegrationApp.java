@@ -16,7 +16,6 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.Callback;
-import com.continuuity.api.flow.flowlet.DataObject;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.InputContext;
@@ -24,7 +23,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,11 +95,9 @@ public class TestFlowQueueIntegrationApp implements Application {
 
       // Emit batch output in one shot in the beginning
       if(input == 0) {
-        List<DataObject<BatchEntry>> dataObjects = Lists.newArrayList();
         for(int j = 0; j < MAX_ITERATIONS; ++j) {
-          dataObjects.add(new DataObject<BatchEntry>(new BatchEntry(j), HASH_KEY1, j));
+          batchOutput.emit(new BatchEntry(j), HASH_KEY1, j);
         }
-        batchOutput.emit(dataObjects);
       }
     }
   }
