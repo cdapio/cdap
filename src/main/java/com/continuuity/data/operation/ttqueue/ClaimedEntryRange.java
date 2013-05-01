@@ -10,7 +10,7 @@ import java.io.IOException;
  * This represents a range of queue entry ids that have been claimed by a queue consumer.
  * Multiple of these can be persisted with the consumer state.
  */
-class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
+public class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
 
   public static final long INVALID_ENTRY_ID = -1L;
 
