@@ -8,15 +8,14 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- *  Creates a StatefulQueueConsumer
+ *  Creates a QueueConsumer
  */
-public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
+public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
   private final OperationExecutor opex;
   private final OperationContext operationCtx;
   private final int instanceId;
@@ -27,9 +26,9 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
   private final boolean sync;
 
   @Inject
-  public StatefulQueueConsumerFactory(OperationExecutor opex, @Assisted Program program, @Assisted int instanceId,
-                                      @Assisted long groupId, @Assisted String groupName, @Assisted QueueName queueName,
-                                      @Assisted QueueInfo queueInfo, @Assisted boolean singleEntry) {
+  public QueueConsumerFactoryImpl(OperationExecutor opex, @Assisted Program program, @Assisted int instanceId,
+                                  @Assisted long groupId, @Assisted String groupName, @Assisted QueueName queueName,
+                                  @Assisted QueueInfo queueInfo, @Assisted boolean singleEntry) {
     this.opex = opex;
     this.operationCtx = new OperationContext(program.getAccountId(), program.getApplicationId());
     this.instanceId = instanceId;
@@ -41,9 +40,9 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
   }
 
   /**
-   * Creates a StatefulQueueConsumer with the given groupSize, runs a QueueConfigure with the new StatefulQueueConsumer.
-   * @param groupSize Size of the group of which the created StatefulQueueConsumer will be part of
-   * @return Created StatefulQueueConsumer
+   * Creates a QueueConsumer with the given groupSize, runs a QueueConfigure with the new QueueConsumer.
+   * @param groupSize Size of the group of which the created QueueConsumer will be part of
+   * @return Created QueueConsumer
    */
   @Override
   public QueueConsumer create(int groupSize) {
@@ -56,8 +55,8 @@ public class StatefulQueueConsumerFactory implements QueueConsumerFactory {
       queueConfig = new QueueConfig(queueInfo.getPartitionerType(), sync);
     }
 
-    StatefulQueueConsumer queueConsumer = new StatefulQueueConsumer(instanceId, groupId, groupSize, groupName,
-                                                                    queueInfo.getPartitionKey(), queueConfig);
+    QueueConsumer queueConsumer = new QueueConsumer(instanceId, groupId, groupSize, groupName,
+                                                    queueInfo.getPartitionKey(), queueConfig);
 
     // configure the queue
     try {
