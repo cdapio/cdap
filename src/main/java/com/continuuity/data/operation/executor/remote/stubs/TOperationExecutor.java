@@ -13791,7 +13791,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map140.size);
                   for (int _i141 = 0; _i141 < _map140.size; ++_i141)
                   {
-                    ByteBuffer _key142; // required
+                    ByteBuffer _key142; // optional
                     long _val143; // required
                     _key142 = iprot.readBinary();
                     _val143 = iprot.readI64();
@@ -13896,7 +13896,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map146.size);
             for (int _i147 = 0; _i147 < _map146.size; ++_i147)
             {
-              ByteBuffer _key148; // required
+              ByteBuffer _key148; // optional
               long _val149; // required
               _key148 = iprot.readBinary();
               _val149 = iprot.readI64();
@@ -14869,7 +14869,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map150.size);
                   for (int _i151 = 0; _i151 < _map150.size; ++_i151)
                   {
-                    ByteBuffer _key152; // required
+                    ByteBuffer _key152; // optional
                     long _val153; // required
                     _key152 = iprot.readBinary();
                     _val153 = iprot.readI64();
@@ -14974,7 +14974,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map156.size);
             for (int _i157 = 0; _i157 < _map156.size; ++_i157)
             {
-              ByteBuffer _key158; // required
+              ByteBuffer _key158; // optional
               long _val159; // required
               _key158 = iprot.readBinary();
               _val159 = iprot.readI64();
@@ -16701,8 +16701,6 @@ public class TOperationExecutor {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);

@@ -426,7 +426,7 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
                 struct.header = new HashMap<String,Integer>(2*_map48.size);
                 for (int _i49 = 0; _i49 < _map48.size; ++_i49)
                 {
-                  String _key50; // required
+                  String _key50; // optional
                   int _val51; // required
                   _key50 = iprot.readString();
                   _val51 = iprot.readI32();
@@ -532,7 +532,7 @@ public class TQueueEntry implements org.apache.thrift.TBase<TQueueEntry, TQueueE
           struct.header = new HashMap<String,Integer>(2*_map54.size);
           for (int _i55 = 0; _i55 < _map54.size; ++_i55)
           {
-            String _key56; // required
+            String _key56; // optional
             int _val57; // required
             _key56 = iprot.readString();
             _val57 = iprot.readI32();
