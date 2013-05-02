@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 
 import static org.junit.Assert.assertTrue;
 
@@ -82,7 +83,7 @@ public class TestAccountHandler {
 
 
   @Test
-  public void testAccounts() throws IOException {
+  public void testAccounts() throws IOException, SQLException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity( new StringEntity( getAccountJson("john.smith@continuuity.com")));
@@ -109,6 +110,8 @@ public class TestAccountHandler {
     assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
     assertTrue("john".equals(account.getFirstName()));
     assertTrue("smith".equals(account.getLastName()));
+    assertTrue(account.getApiKey() != null);
+    String apiKey = account.getApiKey();
 
     endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmPayment", port,id);
     put = new HttpPut(endPoint);
@@ -119,6 +122,37 @@ public class TestAccountHandler {
     assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
     assertTrue("12121".equals(account.getPaymentAccountId()));
 
+    //testAccountRole
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/vpc", port, id);
+    post = new HttpPost(endPoint);
+    post.setEntity( new StringEntity( getVPCJson("Classico","Classico")));
+    post.addHeader("Content-Type", "application/json");
+
+    result = request(post);
+    assertTrue(result != null);
+    VPC vpc = VPC.fromString(result);
+    assertTrue("Classico".equals(vpc.getVpcName()));
+    assertTrue("sandbox".equals(vpc.getVpcType()));
+
+    int vpcId = vpc.getVpcId();
+    endPoint = String.format("http://localhost:%d/passport/v1/account", port);
+    post = new HttpPost(endPoint);
+    post.setEntity( new StringEntity( getAccountJson("free@continuuity.com")));
+    post.addHeader("Content-Type", "application/json");
+    result = request(post);
+    assertTrue(result != null);
+    account =  Account.fromString(result);
+    assertTrue("free@continuuity.com".equals(account.getEmailId()));
+
+    int accountId = account.getAccountId();
+
+    HyperSQL.insertIntoVPCRoleTable(vpcId,accountId);
+
+    endPoint = String.format("http://localhost:%d/passport/v1/vpc/%s/accountRoles", port, vpc.getVpcName());
+    HttpGet get = new HttpGet(endPoint);
+    result = request(get);
+    //TODO: Note there is some error with the Join query in Hypersql - the end point works against mysql
+    assertTrue(result != null);
   }
 
   @Test
@@ -133,10 +167,9 @@ public class TestAccountHandler {
     VPC vpc = VPC.fromString(result);
     assertTrue("MyVPC".equals(vpc.getVpcName()));
     assertTrue("sandbox".equals(vpc.getVpcType()));
-    assertTrue(0 == vpc.getVpcId());
+    int vpcId = vpc.getVpcId();
 
-
-    endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc/0", port);
+    endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc/%d", port, vpcId);
     HttpGet get = new HttpGet(endPoint);
 
     result = request(get);
@@ -145,10 +178,8 @@ public class TestAccountHandler {
     assertTrue("MyVPC".equals(vpc.getVpcName()));
     assertTrue("MyVPC".equals(vpc.getVpcLabel()));
     assertTrue("sandbox".equals(vpc.getVpcType()));
+ }
 
-
-  }
-  
   private String getAccountJson(String emailId){
     JsonObject object = new JsonObject();
     object.addProperty("email_id", emailId);

@@ -72,7 +72,6 @@ public interface AccountDAO {
    */
   public Account getAccount(String emailId) ;
 
-
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo);
 
   public boolean addRoleType(int accountId, Role role);

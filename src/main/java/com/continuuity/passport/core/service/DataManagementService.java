@@ -13,6 +13,7 @@ import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.status.Status;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 
 import java.util.List;
@@ -221,6 +222,12 @@ public interface DataManagementService {
   public Account getAccountForVPC(String vpcName);
 
 
+  /**
+   * Get all roles and related accounts for the vpc
+   * @param vpcName Name of the vpc
+   * @return Instance of {@code RolesAccounts}
+   */
+  public RolesAccounts getAccountRoles(String vpcName);
     /**
      * Register a component with the account- Example: register VPC, Register DataSet
      * TODO: Note: This is not implemented for initial free VPC use case

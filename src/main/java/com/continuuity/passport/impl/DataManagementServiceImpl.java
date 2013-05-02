@@ -17,9 +17,11 @@ import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.commons.lang.NotImplementedException;
 
 import java.util.List;
 import java.util.Map;
@@ -68,51 +70,28 @@ public class DataManagementServiceImpl implements DataManagementService {
     accountDAO.confirmPayment(accountId, paymentId);
   }
 
-  /**
-   * Register a component with the account- Example: register VPC, Register DataSet
-   *
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
-   */
+
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    throw new NotImplementedException("This method is not implemented yet.");
   }
 
-  /**
-   * Unregister a {@code Component} in the system
-   *
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
-   */
+
   @Override
   public Status unRegisterComponent(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
-  /**
-   * Delete an {@code Account} in the system
-   *
-   * @param accountId account to be deleted
-   */
+
   @Override
   public void deleteAccount(int accountId) throws AccountNotFoundException {
     accountDAO.deleteAccount(accountId);
   }
 
-  /**
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
-   */
+
   @Override
   public Status updateComponent(String accountId, Credentials credentials, Component component) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    throw new NotImplementedException("This method is not implemented yet.");
   }
 
   /**
@@ -196,12 +175,6 @@ public class DataManagementServiceImpl implements DataManagementService {
     return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.SESSION);
   }
 
-  /**
-   * Returns if VPC is valid
-   * @param vpcName
-   * @return True if VPC is valid - doesn't already exist in the system and doesn't contain blacklisted words
-   *         False otherwise
-   */
   @Override
   public boolean isValidVPC(String vpcName) {
     return ( ! profanityFilter.isFiltered(vpcName) && vpcDao.getVPCCount(vpcName) == 0 );
@@ -226,22 +199,11 @@ public class DataManagementServiceImpl implements DataManagementService {
     }
   }
 
-  /**
-   * Generate Reset Nonce
-   *
-   * @param id
-   * @return random nonce
-   */
   @Override
   public int getResetNonce(String id) {
     return nonceDAO.getNonce(id, NonceDAO.NONCE_TYPE.RESET);
   }
 
-  /**
-   * Regenerate API Key
-   *
-   * @param accountId
-   */
   @Override
   public void regenerateApiKey(int accountId) {
     accountDAO.regenerateApiKey(accountId);
@@ -258,5 +220,11 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public Account getAccountForVPC(String vpcName) {
     return vpcDao.getAccountForVPC(vpcName);
+  }
+
+
+  @Override
+  public RolesAccounts getAccountRoles(String vpcName) {
+    return vpcDao.getRolesAccounts(vpcName);
   }
 }
