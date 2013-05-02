@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.DataObject;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
@@ -70,14 +69,8 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     emit(new DataObject<T>(data, partitions));
   }
 
-  @Override
   public void emit(DataObject<T> dataObject) {
     dataQueue.add(dataObject);
-  }
-
-  @Override
-  public void emit(List<DataObject<T>> dataObjects) {
-    dataQueue.addAll(dataObjects);
   }
 
   @Override
