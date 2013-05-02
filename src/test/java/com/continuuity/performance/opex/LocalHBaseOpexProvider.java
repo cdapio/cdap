@@ -17,6 +17,8 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +26,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class LocalHBaseOpexProvider extends OpexProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LocalHBaseOpexProvider.class);
 
   /** override this to enable native queues */
   protected boolean useNativeQueues() {
@@ -50,12 +54,11 @@ public class LocalHBaseOpexProvider extends OpexProvider {
   }
 
   @Override
-  void shutdown(OperationExecutor opex) throws BenchmarkException {
+  void shutdown(OperationExecutor opex) {
     try {
       stopHBase();
     } catch (Exception e) {
-      throw new BenchmarkException(
-          "Unable to stop HBase: " + e.getMessage(), e);
+      LOG.error("Unable to stop HBase: {}", e.getMessage(), e);
     }
   }
 

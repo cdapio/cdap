@@ -184,9 +184,9 @@ public class BenchmarkRunner {
     agentThreadPool.shutdown();
   }
 
-  void shutdown() throws BenchmarkException {
+  void shutdown() {
     if (benchmark != null) {
-      LOG.debug("Executing shutdown method of benchmark ");
+      LOG.debug("Executing shutdown method of benchmark.");
       benchmark.shutdown();
     }
   }
@@ -201,17 +201,9 @@ public class BenchmarkRunner {
 
       // run it
       if (ok) runner.run();
-    } catch (Exception e) {
-      LOG.error(e.getMessage());
-      throw e;
     } finally {
       // shut it down
-      try {
-        runner.shutdown();
-      } catch (Exception e) {
-        LOG.error(e.getMessage());
-        throw e;
-      }
+      runner.shutdown();
     }
     LOG.debug("Benchmark executed successfully.");
   }

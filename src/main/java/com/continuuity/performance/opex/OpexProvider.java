@@ -25,8 +25,7 @@ public abstract class OpexProvider {
    * @param opex the operation executor that was previously obtained with
    *             create()
    */
-  void shutdown(OperationExecutor opex) throws BenchmarkException {
+  void shutdown(OperationExecutor opex) {
     // by default, do nothing
   }
-
 }

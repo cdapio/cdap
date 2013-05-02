@@ -211,7 +211,7 @@ public class QueueBenchmark extends OpexBenchmark {
   }
 
   @Override
-  public void shutdown() throws BenchmarkException {
+  public void shutdown() {
     // perform all pending acks to leave the queue in a good state
     for (List<QueueAck> pending : pendingAcks) {
       for (QueueAck ack : pending) {

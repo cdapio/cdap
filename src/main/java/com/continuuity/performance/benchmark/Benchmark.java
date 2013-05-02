@@ -41,7 +41,7 @@ public abstract class Benchmark {
   /**
    * de-initialize, release all resources
    */
-  public void shutdown() throws BenchmarkException {
+  public void shutdown() {
     // by default do nothing
   }
 

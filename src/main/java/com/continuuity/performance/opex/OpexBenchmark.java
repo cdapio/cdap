@@ -81,7 +81,7 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   }
 
   @Override
-  public void shutdown() throws BenchmarkException {
+  public void shutdown() {
     LOG.debug("Shutting down opex provider.");
     this.opexProvider.shutdown(this.opex);
   }
