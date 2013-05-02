@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReportFileAppenderThread extends ReportThread {
+public class FileMetricReporter extends MetricsCollector {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReportFileAppenderThread.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileMetricReporter.class);
 
   private static final int FILE_APPENDER_METRIC_INTERVAL = 60;
   private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
@@ -33,8 +33,8 @@ public class ReportFileAppenderThread extends ReportThread {
     return FILE_APPENDER_METRIC_INTERVAL;
   }
 
-  public ReportFileAppenderThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
-                                  CConfiguration config) {
+  public FileMetricReporter(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
+                            CConfiguration config) {
     super(groups, metrics);
     this.fileName = config.get("reportfile");
     int pos = benchmarkName.lastIndexOf(".");

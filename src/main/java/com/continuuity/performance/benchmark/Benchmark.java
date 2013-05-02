@@ -2,18 +2,10 @@ package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
 
-import java.io.PrintStream;
 import java.util.Map;
 import java.util.TreeMap;
 
 public abstract class Benchmark {
-
-  /**
-   * List the config properties expected by this benchmark
-   */
-  public void usage(PrintStream out) {
-    out.println("Sorry. This benchmark has no documentation yet.");
-  }
 
   /**
    * Configure this benchmark.

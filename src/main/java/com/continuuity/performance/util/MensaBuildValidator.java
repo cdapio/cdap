@@ -28,8 +28,6 @@ import java.util.Properties;
  */
 public class MensaBuildValidator {
   private static final String DUMMY_OP = "avg:";
-  private static final String DEFAULT_OPENTSDB_HOSTNAME = "mon101.ops.sl.continuuity.com";
-  private static final int DEFAULT_OPENTSDB_PORT = 4242;
   private static final String DEFAULT_START_TS = "2000/01/01-00:00:00";
 
   String command;
@@ -131,7 +129,6 @@ public class MensaBuildValidator {
   public boolean validate(String reportLine) {
     String[] split = reportLine.split(" ");
     String metric = split[1];
-    String ts = split[2];
     double newMetricValueAvg = Double.valueOf(split[3]);
     StringBuilder sb = new StringBuilder();
     for (int i = 4; i < split.length; i++) {

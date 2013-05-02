@@ -121,7 +121,7 @@ public class QueueBenchmark extends OpexBenchmark {
 
   Random randomm = new Random(1L);
 
-  long doEnqueue(long iteration, int agentId) throws BenchmarkException {
+  long doEnqueue(long iteration) throws BenchmarkException {
 
     QueueEnqueue enqueue;
     if (enqueueSize <= 1) {
@@ -202,7 +202,7 @@ public class QueueBenchmark extends OpexBenchmark {
     System.out.println("Warmup: Performing " + numEnqueues + " enqueues.");
     for (int i = 0; i < numEnqueues; i++) {
       try {
-        doEnqueue(i, 0);
+        doEnqueue(i);
       } catch (BenchmarkException e) {
         throw new BenchmarkException("Failure after " + i + " enqueues: " + e.getMessage() , e);
       }
@@ -244,7 +244,7 @@ public class QueueBenchmark extends OpexBenchmark {
             return new Agent(agentId) {
               @Override
               public long runOnce(long iteration) throws BenchmarkException {
-                return doEnqueue(iteration, agentId);
+                return doEnqueue(iteration);
               }
             };
           } // newAgent()
