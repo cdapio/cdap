@@ -17,6 +17,7 @@ import com.continuuity.passport.dal.ProfanityFilter;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Component;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -223,7 +224,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
 
   @Override
-  public Map<String, List<Account>> getAccountRoles(String vpcName) {
+  public RolesAccounts getAccountRoles(String vpcName) {
     return vpcDao.getRolesAccounts(vpcName);
   }
 }

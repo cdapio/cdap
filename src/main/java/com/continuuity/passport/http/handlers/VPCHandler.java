@@ -8,6 +8,7 @@ import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -156,14 +157,14 @@ public class VPCHandler extends PassportHandler {
     requestReceived();
     JsonArray accountRoleArray = new JsonArray();
     try{
-      Map<String, List<Account>> accountRoles  = dataManagementService.getAccountRoles(vpcName);
-      for(Map.Entry<String, List<Account>> accountRole : accountRoles.entrySet() ) {
+      RolesAccounts rolesAccounts = dataManagementService.getAccountRoles(vpcName);
+      for(String role : rolesAccounts.getRoles() ) {
         JsonObject entry = new JsonObject();
         JsonArray accountArray = new JsonArray() ;
-        for(Account account : accountRole.getValue()) {
+        for(Account account : rolesAccounts.getAccounts(role)) {
           accountArray.add(account.toJson());
         }
-        entry.addProperty("role",accountRole.getKey());
+        entry.addProperty("role",role);
         entry.add("accounts",accountArray);
         accountRoleArray.add(entry);
       }
