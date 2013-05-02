@@ -100,11 +100,11 @@ public class BenchmarkRunner {
 
   private void run() throws BenchmarkException, InterruptedException, ExecutionException {
     // 1. initialize benchmark
-    LOG.info("Executing benchmark.initialize()");
+    LOG.debug("Executing benchmark.initialize()");
     benchmark.initialize();
 
     // 2. warm up benchmark
-    LOG.info("Executing benchmark.warmup()");
+    LOG.debug("Executing benchmark.warmup()");
     benchmark.warmup();
 
     // 3. get agent groups and create a thread for each agent
@@ -146,41 +146,39 @@ public class BenchmarkRunner {
     CompletionService collectorCompletionPool = new ExecutorCompletionService(collectorThreadPool);
 
     // 4. start the console and other reporter threads
-    LOG.info("Starting console reporter thread");
+    LOG.debug("Starting console reporter thread");
     MetricsCollector consoleReporter = new ConsoleMetricReporter(groups, groupMetrics, config);
     collectorFutureList.add(collectorCompletionPool.submit(consoleReporter, null));
 
     if (StringUtils.isNotEmpty(config.get("reportfile"))) {
-      LOG.info("Starting file reporter thread");
+      LOG.debug("Starting file reporter thread");
       MetricsCollector fileReporter = new FileMetricReporter(benchName, groups, groupMetrics, config);
       collectorFutureList.add(collectorCompletionPool.submit(fileReporter, null));
     }
 
     if (StringUtils.isNotEmpty(config.get("mensa"))) {
-      LOG.info("Starting mensa reporter thread");
+      LOG.debug("Starting mensa reporter thread");
       MensaMetricsCollector mensaCollector = new MensaMetricsCollector(benchName, groups, groupMetrics, config, "");
       collectorFutureList.add(collectorCompletionPool.submit(mensaCollector, null));
     }
 
     // 5. wait for first benchmark thread to finish
-    LOG.info("Waiting for first benchmark thread to finish...");
-    Future finishedFuture = agentCompletionPool.take();
-    finishedFuture.get();
+    LOG.debug("Waiting for first benchmark thread to finish...");
+    agentCompletionPool.take();
 
     // 6. stop all reporter threads
-    LOG.info("Stopping all reporter threads...");
+    LOG.debug("Stopping all reporter threads...");
     for (Future f : collectorFutureList) {
       f.cancel(false);
     }
 
     // 7. wait for first benchmark thread to finish
-    LOG.info("Waiting for remaining benchmark threads to finish...");
+    LOG.debug("Waiting for remaining benchmark threads to finish...");
     for (int i=1; i < totalNumAgents; i++) {
       agentCompletionPool.take();
-      finishedFuture.get();
     }
 
-    LOG.info("All benchmark threads stopped.");
+    LOG.debug("All benchmark threads stopped.");
 
     collectorThreadPool.shutdown();
     agentThreadPool.shutdown();

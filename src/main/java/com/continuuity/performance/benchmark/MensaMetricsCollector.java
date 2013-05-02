@@ -183,7 +183,7 @@ public class MensaMetricsCollector extends MetricsCollector {
    * @param metricPut contains the metric put command to be sent to the server.
    * @return true if successfully put on the queue else false.
    */
-  public boolean write(String metricPut) {
+  private boolean write(String metricPut) {
     Preconditions.checkNotNull(metricPut);
     return queue.offer(metricPut);
   }
