@@ -7,6 +7,7 @@ package com.continuuity.passport.dal;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 
 import java.util.List;
@@ -45,8 +46,8 @@ public interface VpcDAO {
   /**
    * Get all roles and corresponding accounts for a given vpcName
    * @param vpcName name of the vpc
-   * @return Map of Role to List of Accounts
+   * @return Instance of {@code RolesAccounts}
    */
-  public Map<String, List<Account>> getRolesAccounts(String vpcName);
+  public RolesAccounts getRolesAccounts(String vpcName);
 
   }
