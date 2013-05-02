@@ -9,6 +9,7 @@ import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.VPC;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -23,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Defines End point for vpc
@@ -120,7 +122,7 @@ public class VPCHandler extends PassportHandler {
   /**
    * Gets account if for VPC
    * Endpoint is obfuscated on purpose
-   * @param vpcName
+   * @param vpcName VpcName
    * @return Instance of {@code Response}
    */
   @Path("xkcd/{vpcName}")
@@ -130,20 +132,20 @@ public class VPCHandler extends PassportHandler {
       Account account = dataManagementService.getAccountForVPC(vpcName);
       if (account != null) {
         requestSuccess();
-        return Response.ok().entity(Utils.getIdJson(null,account.getAccountId())) .build();
+        return Response.ok().entity(Utils.getIdJson(null, account.getAccountId())) .build();
       } else {
         requestFailed();
         LOG.error(String.format("xkcd not found. Processing endpoint: %s ",
                                 "GET /passport/v1/vpc/xkcd/{vpcName}"));
         return Response.status(Response.Status.NOT_FOUND)
-          .entity(Utils.getIdJson("FAILED","xkcd not found for VPC"))
+          .entity(Utils.getIdJson("FAILED", "xkcd not found for VPC"))
           .build();
       }
     } catch (Exception e) {
       requestFailed();
       LOG.error(String.format("xkcd not found. endpoint: %s %s","GET /passport/v1/xkcd/{vpcName}",e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getIdJson("FAILED","xkcd not found for VPC"))
+        .entity(Utils.getIdJson("FAILED", "xkcd not found for VPC"))
         .build();
     }
   }
@@ -151,11 +153,29 @@ public class VPCHandler extends PassportHandler {
   @GET
   @Path("{vpcName}/accountRoles")
   public Response getAccountRoles(@PathParam("vpcName") String vpcName) {
-    //Return Dummy results for early integration
-    Account account = new Account("first","last","continuuity",1);
-    String json = String.format("[{\"role\":\"admin\", \"accounts\": [ %s ] } ]",account.toString());
-    return Response.ok().entity(json).build();
-  }
+    requestReceived();
+    JsonArray accountRoleArray = new JsonArray();
+    try{
+      Map<String, List<Account>> accountRoles  = dataManagementService.getAccountRoles(vpcName);
+      for(Map.Entry<String, List<Account>> accountRole : accountRoles.entrySet() ) {
+        JsonObject entry = new JsonObject();
+        JsonArray accountArray = new JsonArray() ;
+        for(Account account : accountRole.getValue()) {
+          accountArray.add(account.toJson());
+        }
+        entry.addProperty("role",accountRole.getKey());
+        entry.add("accounts",accountArray);
+        accountRoleArray.add(entry);
+      }
+      requestSuccess();
+      return Response.ok().entity(accountRoleArray.toString()).build();
+    } catch (Exception e) {
+      requestFailed();
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJsonError("VPC delete Failed", e.getMessage()))
+        .build();
+    }
+   }
 
   @Path("{vpcName}")
   @DELETE

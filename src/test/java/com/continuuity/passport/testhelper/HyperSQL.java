@@ -4,6 +4,7 @@ import org.hsqldb.Server;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 
@@ -34,7 +35,7 @@ public class HyperSQL {
                                                          "vpc_type VARCHAR(30) " +
                                                          ")" ;
 
-  private static final String CREATE_VPC_ROLE_TABLE = "CREATE TABLE vpc_role ( vpc_id INTEGER , " +
+  private static final String CREATE_VPC_ROLE_TABLE = "CREATE TABLE vpc_roles ( vpc_id INTEGER , " +
     "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )" ;
 
 
@@ -45,7 +46,7 @@ public class HyperSQL {
   private static final String DROP_ACCOUNT_TABLE = "DROP TABLE account";
   private static final String DROP_NONCE_TABLE = "DROP TABLE nonce";
   private static final String DROP_VPC_ACCOUNT_TABLE = "DROP TABLE vpc_account";
-  private static final String DROP_VPC_ROLE_TABLE = "DROP TABLE vpc_role";
+  private static final String DROP_VPC_ROLE_TABLE = "DROP TABLE vpc_roles";
 
 
 
@@ -87,4 +88,12 @@ public class HyperSQL {
     server.stop();
   }
 
+
+  public static void insertIntoVPCRoleTable(int vpc_id, int account_id) throws SQLException {
+    String SQL = String.format("INSERT INTO vpc_roles (vpc_id, account_id) VALUES (?, ?)", vpc_id,account_id);
+    PreparedStatement ps = connection.prepareStatement(SQL);
+    ps.setInt(1, vpc_id);
+    ps.setInt(2, account_id);
+    ps.execute();
+  }
 }
