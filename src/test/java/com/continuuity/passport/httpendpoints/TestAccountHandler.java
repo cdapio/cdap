@@ -19,6 +19,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -83,7 +84,7 @@ public class TestAccountHandler {
 
 
   @Test
-  public void testAccounts() throws IOException {
+  public void testAccounts() throws IOException, SQLException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity( new StringEntity( getAccountJson("john.smith@continuuity.com")));
@@ -121,57 +122,8 @@ public class TestAccountHandler {
     account = Account.fromString(result);
     assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
     assertTrue("12121".equals(account.getPaymentAccountId()));
-  }
 
-  @Test
-  public void testVPC() throws IOException {
-    String endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc", port);
-    HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getVPCJson("MyVPC","MyVPC")));
-    post.addHeader("Content-Type", "application/json");
-
-    String result = request(post);
-    assertTrue(result != null);
-    VPC vpc = VPC.fromString(result);
-    assertTrue("MyVPC".equals(vpc.getVpcName()));
-    assertTrue("sandbox".equals(vpc.getVpcType()));
-    assertTrue(0 == vpc.getVpcId());
-
-
-    endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc/0", port);
-    HttpGet get = new HttpGet(endPoint);
-
-    result = request(get);
-    assertTrue(result != null);
-    vpc = VPC.fromString(result);
-    assertTrue("MyVPC".equals(vpc.getVpcName()));
-    assertTrue("MyVPC".equals(vpc.getVpcLabel()));
-    assertTrue("sandbox".equals(vpc.getVpcType()));
- }
-
-  @Test
-  public void testAccountRoles() throws IOException, SQLException {
-    String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
-    HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getAccountJson("sree@continuuity.com")));
-    post.addHeader("Content-Type", "application/json");
-
-    String result = request(post);
-    assertTrue(result != null);
-    Account account =  Account.fromString(result);
-    assertTrue("sree@continuuity.com".equals(account.getEmailId()));
-    int id = account.getAccountId();
-
-    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port,id);
-    HttpPut put = new HttpPut(endPoint);
-    put.setEntity(new StringEntity(getAccountJson("john.smith@continuuity.com","john","smith")));
-    put.setHeader("Content-Type","application/json");
-    result = request(put);
-    account = Account.fromString(result);
-
-    String apiKey = account.getApiKey();
-    assertTrue(apiKey != null);
-
+    //testAccountRole
     endPoint = String.format("http://localhost:%d/passport/v1/account/%d/vpc", port, id);
     post = new HttpPost(endPoint);
     post.setEntity( new StringEntity( getVPCJson("Classico","Classico")));
@@ -184,7 +136,6 @@ public class TestAccountHandler {
     assertTrue("sandbox".equals(vpc.getVpcType()));
 
     int vpcId = vpc.getVpcId();
-
     endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     post = new HttpPost(endPoint);
     post.setEntity( new StringEntity( getAccountJson("free@continuuity.com")));
@@ -205,7 +156,31 @@ public class TestAccountHandler {
     assertTrue(result != null);
   }
 
-  
+  @Test
+  public void testVPC() throws IOException {
+    String endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc", port);
+    HttpPost post = new HttpPost(endPoint);
+    post.setEntity( new StringEntity( getVPCJson("MyVPC","MyVPC")));
+    post.addHeader("Content-Type", "application/json");
+
+    String result = request(post);
+    assertTrue(result != null);
+    VPC vpc = VPC.fromString(result);
+    assertTrue("MyVPC".equals(vpc.getVpcName()));
+    assertTrue("sandbox".equals(vpc.getVpcType()));
+    int vpcId = vpc.getVpcId();
+
+    endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc/%d", port, vpcId);
+    HttpGet get = new HttpGet(endPoint);
+
+    result = request(get);
+    assertTrue(result != null);
+    vpc = VPC.fromString(result);
+    assertTrue("MyVPC".equals(vpc.getVpcName()));
+    assertTrue("MyVPC".equals(vpc.getVpcLabel()));
+    assertTrue("sandbox".equals(vpc.getVpcType()));
+ }
+
   private String getAccountJson(String emailId){
     JsonObject object = new JsonObject();
     object.addProperty("email_id", emailId);
