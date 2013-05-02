@@ -513,7 +513,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new Function<ByteBuffer, T>() {
       @Nullable
       @Override
-      public T apply(@Nullable ByteBuffer input) {
+      public T apply(ByteBuffer input) {
         byteBufferInput.reset(input);
         try {
           final Schema sourceSchema = schemaCache.get(input);

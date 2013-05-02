@@ -13,9 +13,9 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-interface ProcessMethod {
+interface ProcessMethod<T> {
 
   boolean needsInput();
 
-  <T> PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer);
+  PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer);
 }
