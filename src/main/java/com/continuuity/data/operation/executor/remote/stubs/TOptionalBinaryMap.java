@@ -488,7 +488,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
                 struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map98.size);
                 for (int _i99 = 0; _i99 < _map98.size; ++_i99)
                 {
-                  ByteBuffer _key100; // required
+                  ByteBuffer _key100; // optional
                   TOptionalBinary _val101; // required
                   _key100 = iprot.readBinary();
                   _val101 = new TOptionalBinary();
@@ -616,7 +616,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map104.size);
           for (int _i105 = 0; _i105 < _map104.size; ++_i105)
           {
-            ByteBuffer _key106; // required
+            ByteBuffer _key106; // optional
             TOptionalBinary _val107; // required
             _key106 = iprot.readBinary();
             _val107 = new TOptionalBinary();
