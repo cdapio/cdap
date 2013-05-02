@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -98,7 +97,7 @@ public class BenchmarkRunner {
     return count;
   }
 
-  private void run() throws BenchmarkException, InterruptedException, ExecutionException {
+  private void run() throws Exception {
     // 1. initialize benchmark
     LOG.debug("Executing benchmark.initialize()");
     benchmark.initialize();

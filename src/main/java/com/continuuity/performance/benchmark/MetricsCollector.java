@@ -68,6 +68,7 @@ public abstract class MetricsCollector implements Runnable {
           }
           elapsedMillis = nextWakeupMillis;
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           interrupt = true;
           elapsedMillis = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
         }

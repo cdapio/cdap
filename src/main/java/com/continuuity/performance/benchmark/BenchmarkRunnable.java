@@ -73,7 +73,8 @@ public class BenchmarkRunnable implements Runnable {
           try {
             Thread.sleep(expectedTime - roundTime);
           } catch (InterruptedException e) {
-            LOG.info("Sleep interrupted. Ignoring.");
+            Thread.currentThread().interrupt();
+            LOG.debug("Sleep interrupted. Ignoring.");
           }
           currentTime = System.currentTimeMillis();
         }

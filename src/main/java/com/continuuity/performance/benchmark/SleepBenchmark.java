@@ -46,6 +46,7 @@ public class SleepBenchmark extends SimpleBenchmark {
                   }
                   Thread.sleep(sleep);
                 } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
                   System.out.println(getName() + " " + agentId +
                       " interrupted when sleeping for the " + iteration +
                       ". time." );
