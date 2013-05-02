@@ -7,6 +7,8 @@ package com.continuuity.passport.meta;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * Defines User account in continuuity
@@ -189,14 +191,26 @@ public class Account {
     return paymentAccountId;
   }
 
+  public JsonElement toJson() {
+    JsonObject object = new JsonObject();
+    object.addProperty("id",getAccountId());
+    object.addProperty("first_name", getFirstName());
+    object.addProperty("last_name", getLastName());
+    object.addProperty("company", getCompany());
+    object.addProperty("email_id", getEmailId());
+    object.addProperty("api_key", getApiKey());
+    return object;
+  }
+
   /**
-   * Serialize account into json object. The field names will be lowercase with underscores where captialized
+   * Serialize account into json string. The field names will be lowercase with underscores where captialized
    * @return Json serialized String representing account
    */
   @Override
   public String toString() {
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.toJson(this);
+
   }
 
 }

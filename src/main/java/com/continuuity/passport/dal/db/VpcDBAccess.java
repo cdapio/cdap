@@ -363,7 +363,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
                                  DBUtils.VPC.TABLE_NAME, //JOIN
                                  DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.VPC_ID_COLUMN,
                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
-                                 DBUtils.VPC.NAME_COLUMN
+                                 DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN
                                  );
       ps = connection.prepareStatement(SQL);
       ps.setString(1, vpcName);
@@ -444,4 +444,5 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     }
     return account;
   }
+
 }
