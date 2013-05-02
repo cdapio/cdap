@@ -61,6 +61,7 @@ import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -71,7 +72,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.jruby.runtime.marshal.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,28 +206,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     } catch(Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  private <T> Function<ByteBuffer, T> createInputDatumTransformer(final TypeToken<T> dataType,
-                                                                  final Schema schema, final SchemaCache schemaCache) {
-    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<T>(schema, dataType);
-    final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(null);
-    final BinaryDecoder decoder = new BinaryDecoder(byteBufferInput);
-
-    return new Function<ByteBuffer, T>() {
-      @Nullable
-      @Override
-      public T apply(@Nullable ByteBuffer input) {
-        byteBufferInput.reset(input);
-        try {
-          final Schema sourceSchema = schemaCache.get(input);
-          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
-          return datumReader.read(decoder, sourceSchema);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {
@@ -487,7 +465,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
     return new ProcessSpecificationFactory() {
       @Override
-      public ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<?> dataType,
+      public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
                                          ProcessMethod method, QueueInfo queueInfo) {
         List<QueueReader> queueReaders = Lists.newLinkedList();
 
@@ -519,9 +497,39 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
         }
 
-        return new ProcessSpecification(new RoundRobinQueueReader(queueReaders),
-                                        createInputDatumTransformer(dataType, schema, schemaCache),
+        return new ProcessSpecification<T>(new RoundRobinQueueReader(queueReaders),
+                                        createInputDatumDecoder(dataType, schema, schemaCache),
                                         method);
+      }
+    };
+  }
+
+  private <T> Function<ByteBuffer, T> createInputDatumDecoder(final TypeToken<T> dataType, final Schema schema,
+                                                              final SchemaCache schemaCache) {
+    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<T>(schema, dataType);
+    final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(null);
+    final BinaryDecoder decoder = new BinaryDecoder(byteBufferInput);
+
+    return new Function<ByteBuffer, T>() {
+      @Nullable
+      @Override
+      public T apply(@Nullable ByteBuffer input) {
+        byteBufferInput.reset(input);
+        try {
+          final Schema sourceSchema = schemaCache.get(input);
+          Preconditions.checkNotNull(sourceSchema, "Fail to find source schema.");
+          return datumReader.read(decoder, sourceSchema);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+
+      @Override
+      public String toString() {
+        return Objects.toStringHelper(this)
+          .add("dataType", dataType)
+          .add("schema", schema)
+          .toString();
       }
     };
   }
@@ -589,7 +597,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessSpecificationFactory {
-    ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<?> dataType, ProcessMethod method,
+    <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType, ProcessMethod method,
                                 QueueInfo queueInfo) throws OperationException;
   }
 }

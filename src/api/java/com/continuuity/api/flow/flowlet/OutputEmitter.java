@@ -6,7 +6,6 @@ package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.api.annotation.Beta;
 
-import java.util.List;
 import java.util.Map;
 
 /**

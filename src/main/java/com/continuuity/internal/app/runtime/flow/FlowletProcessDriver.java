@@ -152,11 +152,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     initFlowlet();
 
     // Insert all into priority queue, ordered by next deque time.
-    PriorityBlockingQueue<ProcessEntry> processQueue = new PriorityBlockingQueue<ProcessEntry>(processSpecs.size());
+    PriorityBlockingQueue<ProcessEntry<?>> processQueue =
+      new PriorityBlockingQueue<ProcessEntry<?>>(processSpecs.size());
     for (ProcessSpecification<?> spec : processSpecs) {
-      processQueue.offer(new ProcessEntry(spec));
+      processQueue.offer(ProcessEntry.create(spec));
     }
-    List<ProcessEntry> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
+    List<ProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
 
     while (isRunning()) {
       CountDownLatch suspendLatch = suspension.get();
@@ -182,7 +183,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processList.clear();
       processQueue.drainTo(processList);
 
-      for (ProcessEntry entry : processList) {
+      for (ProcessEntry<?> entry : processList) {
         boolean invoked = false;
         try {
           if (!entry.shouldProcess()) {
@@ -232,7 +233,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   }
 
   private <T> Function<ByteBuffer, T> wrapInputDatumDecoder(final InputDatum input,
-                                                        final Function<ByteBuffer, T> inputDatumDecoder) {
+                                                            final Function<ByteBuffer, T> inputDatumDecoder) {
     return new Function<ByteBuffer, T>() {
       @Nullable
       @Override
@@ -246,9 +247,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   /**
    * Wait for all inflight processes in the queue.
-   * @param processQueue
+   * @param processQueue list of inflight processes
    */
-  private void waitForInflight(PriorityBlockingQueue<ProcessEntry> processQueue) {
+  private void waitForInflight(PriorityBlockingQueue<ProcessEntry<?>> processQueue) {
     List<ProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
     boolean hasRetry;
 
@@ -257,7 +258,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processList.clear();
       processQueue.drainTo(processList);
 
-      for (ProcessEntry entry : processList) {
+      for (ProcessEntry<?> entry : processList) {
         if (!entry.isRetry()) {
           processQueue.offer(entry);
           continue;
@@ -305,7 +306,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private <T> PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry> processQueue,
+  private <T> PostProcess.Callback processMethodCallback(final PriorityBlockingQueue<ProcessEntry<?>> processQueue,
                                                      final ProcessEntry<T> processEntry,
                                                      final InputDatum input) {
     return new PostProcess.Callback() {
@@ -377,6 +378,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     private final ProcessSpecification<T> retrySpec;
     private long nextDeque;
     private long currentBackOff = BACKOFF_MIN;
+
+    private static <T> ProcessEntry<T> create(ProcessSpecification<T> processSpec) {
+      return new ProcessEntry<T>(processSpec);
+    }
 
     private ProcessEntry(ProcessSpecification<T> processSpec) {
       this(processSpec, null);
