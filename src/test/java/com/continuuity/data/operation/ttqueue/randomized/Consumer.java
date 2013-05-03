@@ -81,8 +81,8 @@ public class Consumer implements Runnable {
         dequeueRunsDone.get() + asyncDegree.get() < consumerControl.getNumDequeueRuns()) {
         if(asyncDegree.get() < maxAsyncDegree) {
           ++runId;
-          listeningExecutorService.submit(new QueueDequeue(runId, 0, listeningExecutorService, consumerHolder));
           asyncDegree.incrementAndGet();
+          listeningExecutorService.submit(new QueueDequeue(runId, 0, listeningExecutorService, consumerHolder));
           TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         } else {
           TimeUnit.MILLISECONDS.sleep(1000);
@@ -181,7 +181,9 @@ public class Consumer implements Runnable {
           QueueConsumer consumer = consumerHolder.getConsumer("dequeue", runId, crashId);
           if(oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
-            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService, consumerHolder));
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
+                                                             consumerHolder));
             return;
           }
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
@@ -190,12 +192,13 @@ public class Consumer implements Runnable {
               stopFlag.incrementAndGet();
             }
             asyncDegree.decrementAndGet();
+            LOG.info(getLogMessage(String.format("Stop flag is true. asyncDegree=%d", asyncDegree.get())));
             return;
           } else {
             stopFlag.set(0);
           }
           Iterable<Integer> dequeued = entriesToInt(result.getEntries());
-          LOG.info(getLogMessage(String.format("intermediate dequeue list=%s", dequeued)));
+          LOG.info(getLogMessage(String.format("Intermediate dequeue list=%s", dequeued)));
           listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder, result,
                                                        transaction));
         }
@@ -239,7 +242,9 @@ public class Consumer implements Runnable {
           QueueConsumer consumer = consumerHolder.getConsumer("ack", runId, crashId);
           if(oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
-            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService, consumerHolder));
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
+                                                             consumerHolder));
             return;
           }
           Assert.assertTrue(dequeueResult.isSuccess());
@@ -260,7 +265,7 @@ public class Consumer implements Runnable {
           }
           Iterable<Integer> dequeued = entriesToInt(dequeueResult.getEntries());
           Iterables.addAll(dequeueList, dequeued);
-          LOG.info(getLogMessage(String.format("acked dequeue list=%s", dequeued)));
+          LOG.info(getLogMessage(String.format("Acked dequeue list=%s", dequeued)));
 
           listeningExecutorService.submit(new QueueFinalize(runId, crashId, consumerHolder, dequeueResult,
                                                             transaction));
@@ -301,6 +306,7 @@ public class Consumer implements Runnable {
           QueueConsumer consumer = consumerHolder.getConsumer("finalize", runId, crashId);
           if(oldConsumerId != consumerHolder.getConsumerId()) {
             // Consumer has crashed!
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
             return;
           }
           if(testConfig.shouldFinalize()) {
@@ -342,7 +348,8 @@ public class Consumer implements Runnable {
     public QueueConsumer getConsumer(String position, int runId, int crashId)
       throws Exception {
       if(testConfig.shouldConsumerCrash()) {
-        LOG.info(getLogMessage(String.format("Crashing consumer before %s runId=%d crashId=%d", position, runId, crashId)));
+        LOG.info(getLogMessage(String.format("Crashing consumer before %s runId=%d crashId=%d",
+                                             position, runId, crashId)));
         createNewConsumer();
       }
       return consumer;
