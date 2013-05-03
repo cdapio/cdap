@@ -244,7 +244,20 @@ public class Consumer implements Runnable {
           }
           Assert.assertTrue(dequeueResult.isSuccess());
           queue.ack(dequeueResult.getEntryPointers(), consumer, transaction);
-          oracle.commitTransaction(transaction);
+
+          if(testConfig.shouldUnack()) {
+            // Note: consumer cannot crash after an ack before txn is committed since Opex runs
+            // all the operations together. However, Opex can crash which is not tested here.
+            LOG.info(getLogMessage(String.format("Unacking list =%s", entriesToInt(dequeueResult.getEntries()))));
+            queue.unack(dequeueResult.getEntryPointers(), consumer, transaction);
+            oracle.abortTransaction(transaction);
+            oracle.removeTransaction(transaction);
+            listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder,
+                                                         dequeueResult, oracle.startTransaction()));
+            return;
+          } else {
+            oracle.commitTransaction(transaction);
+          }
           Iterable<Integer> dequeued = entriesToInt(dequeueResult.getEntries());
           Iterables.addAll(dequeueList, dequeued);
           LOG.info(getLogMessage(String.format("acked dequeue list=%s", dequeued)));
