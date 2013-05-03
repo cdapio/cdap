@@ -24,7 +24,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ public class TTQueueRandomizedTest {
 
   private int numNonFinalizedRuns = 0;
 
-  @Test
+  //@Test
   public void runRandomizedTest() throws Exception {
     for(int i = 0; i < NUM_RUNS; ++i) {
       LOG.info(String.format("**************************** Run %d started *************************************", i));
