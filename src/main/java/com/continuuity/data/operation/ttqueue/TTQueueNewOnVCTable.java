@@ -620,8 +620,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
                        Transaction transaction) throws OperationException {
 
     // Figure out queue entries that can be evicted, and evict them.
-    // Min evict entry is calculated as -
-    // min(uncommitted entries) != INVLALID ? min(uncommitted entries) - 1 : max(committed entries)
+    // The logic that figures out the min evict entry is in
+    // {@link com.continuuity.data.operation.ttqueue.internal.EvictionHelper#getMinEvictionEntry}.
+    // Note: entryPointer is not used in evict entry determination
+
     // The min of such evict entry is determined across all consumers across all groups,
     // and entries till the min evict entry are removed.
 
@@ -791,7 +793,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
     EvictionHelper evictionHelper = queueState.getEvictionHelper();
-    return evictionHelper.getMinEvictionEntry(transaction);
+    return evictionHelper.getMinEvictionEntry(queueState.getConsumerReadPointer(), queueState.getDequeueEntrySet(),
+                                              transaction);
   }
 
   class EvictionState {
@@ -919,6 +922,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       } else {
         // Get the evict info for group with groupId
         entry = evictionState.getGroupEvictEntry(groupId);
+      }
+      if(entry == INVALID_ENTRY_ID) {
+        if(LOG.isTraceEnabled()) {
+          LOG.trace(getLogMessage(
+            String.format("Invalid group evict entry for group %d. Aborting eviction.", groupId)));
+        }
+        return INVALID_ENTRY_ID;
       }
       // Save the least entry
       if(maxEntryToEvict > entry) {
