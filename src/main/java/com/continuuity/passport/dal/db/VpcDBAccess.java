@@ -9,6 +9,7 @@ import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.Role;
+import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -33,6 +34,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
   private final DBConnectionPoolManager poolManager ;
   private static final Logger LOG = LoggerFactory.getLogger(VpcDBAccess.class);
+  private static final String DEFAULT_ROLE= "admin";//TODO(sree): ENG-2205 - resolved by using authorization using shiro
   @Inject
   public VpcDBAccess(DBConnectionPoolManager poolManager) {
     this.poolManager = poolManager;
@@ -338,12 +340,13 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public Map<String, List<Account>> getRolesAccounts(String vpcName){
+  public RolesAccounts getRolesAccounts(String vpcName){
 
     Connection connection = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
 
+    RolesAccounts rolesAccounts = new RolesAccounts();
     try {
      connection = this.poolManager.getValidConnection();
 
@@ -368,7 +371,6 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps = connection.prepareStatement(SQL);
       ps.setString(1, vpcName);
       rs = ps.executeQuery();
-      List<Account> accounts = new ArrayList<Account>();
 
       while(rs.next()){
         Account account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
@@ -380,13 +382,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
                                       rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                                       DBUtils.timestampToLong(rs.getTimestamp(
                                                                 DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)));
-        accounts.add(account);
+        rolesAccounts.addAccountRole(DEFAULT_ROLE, account);
       }
 
-      Map<String, List<Account>> roleAccountHash = Maps.newHashMap();
-      //TODO: current version sets admin role to all users. ENG-2205 will address role based authorization using shiro
-      roleAccountHash.put("admin", accounts);
-      return roleAccountHash;
+      return rolesAccounts;
 
     } catch (SQLException e) {
       LOG.error(String.format("Caught exception while running DB query for getAccountRole. Error %s",e.getMessage()));
