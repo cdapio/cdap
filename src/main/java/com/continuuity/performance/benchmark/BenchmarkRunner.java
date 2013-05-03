@@ -210,6 +210,5 @@ public class BenchmarkRunner {
       runner.shutdown();
     }
     LOG.info("Benchmark executed successfully.");
-    System.out.println("Benchmark executed successfully.");
   }
 }

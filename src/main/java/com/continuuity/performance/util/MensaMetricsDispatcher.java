@@ -224,6 +224,18 @@ public class MensaMetricsDispatcher implements Runnable {
         });
       }
     }
+    // Dispose the connector.
+    if(connector != null) {
+      connector.dispose();
+      connector = null;
+    }
+
+    // Close the session.
+    if(session != null) {
+      session.close(true).awaitUninterruptibly(CONNECT_TIMEOUT);
+      session = null;
+    }
+
     LOG.debug("Mensa metrics dispatcher finished!");
   }
   private boolean connect() throws Exception {
