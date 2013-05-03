@@ -2,7 +2,6 @@ package com.continuuity.performance.util;
 
 import com.continuuity.common.metrics.MetricsClientProtocolHandler;
 import com.continuuity.common.metrics.codec.MetricCodecFactory;
-import com.continuuity.common.utils.StackTraceUtil;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.future.IoFutureListener;
@@ -156,37 +155,30 @@ public class MensaMetricsDispatcher implements Runnable {
       // Try to get a session while session is not created
       // or if created and is not connected.
       while(session == null || !session.isConnected()){
-        try {
-          // Make an attempt to connect, it does so by getting the
-          // latest endpoint from service disocvery and tries to
-          // connect to it.
-          connect();
+        // Make an attempt to connect, it does so by getting the
+        // latest endpoint from service disocvery and tries to
+        // connect to it.
+        connect();
 
-          if(session == null || (session != null && ! session.isConnected())){
-            // Sleep based on how much ever is interval set to.
-            try {
-              LOG.warn("Backing off after unable to connect to metrics " + "collector host {}:{} for {}s.",
-                       hostname, port, interval);
-              Thread.sleep(interval * 1000L);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              break; // Go back to check if we have asked to stop.
-            }
-
-            // Exponentially increase the amount of time to sleep,
-            // untill we reach 30 seconds sleep between reconnects.
-            interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
-          } else {
-            // we are conected and now need to send data.
-            break;
+        if(session == null || (session != null && ! session.isConnected())){
+          // Sleep based on how much ever is interval set to.
+          try {
+            LOG.warn("Backing off after unable to connect to metrics " + "collector host {}:{} for {}s.",
+                     hostname, port, interval);
+            Thread.sleep(interval * 1000L);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break; // Go back to check if we have asked to stop.
           }
-          // If we are here means
-        } catch (Exception e) {
-          LOG.warn("Issue with service discovery. Reason : {}.", e.getMessage());
-          LOG.debug(StackTraceUtil.toStringStackTrace(e));
+
+          // Exponentially increase the amount of time to sleep,
+          // untill we reach 30 seconds sleep between reconnects.
+          interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
+        } else {
+          // we are conected and now need to send data.
+          break;
         }
       }
-
       // We pop the metric to be send from the queue and
       // then attempt to send it over. If we fail and there
       // is space available we write the metric back into
@@ -238,7 +230,7 @@ public class MensaMetricsDispatcher implements Runnable {
 
     LOG.debug("Mensa metrics dispatcher finished!");
   }
-  private boolean connect() throws Exception {
+  private boolean connect() {
     // If we have a session and it's connected to the overlord metrics
     // server, then we return true immediately, else we try connecting
     // to the overlord metrics server.
