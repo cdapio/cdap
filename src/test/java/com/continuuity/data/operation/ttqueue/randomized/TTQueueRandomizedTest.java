@@ -2,7 +2,13 @@ package com.continuuity.data.operation.ttqueue.randomized;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -42,20 +48,28 @@ public class TTQueueRandomizedTest {
 
   public static final String HASH_KEY = "hash_key";
   private static final int NUM_THREADS = 50;
+  private static final int NUM_RUNS = 300;
 
-  //@Test
+  private int numNonFinalizedRuns = 0;
+
+  @Test
   public void runRandomizedTest() throws Exception {
-    for(int i=0; i<30; ++i) {
+    for(int i = 0; i < NUM_RUNS; ++i) {
       LOG.info(String.format("**************************** Run %d started *************************************", i));
       testDriver();
       LOG.info(String.format("**************************** Run %d done *************************************", i));
     }
+
+    // Check if finalziation happened at least once
+    LOG.info(String.format("Number of runs without finalization = %d/%d", numNonFinalizedRuns, NUM_RUNS));
+    //Assert.assertNotEquals(NUM_RUNS, numNonFinalizedRuns);
   }
 
   public void testDriver() throws Exception {
     CConfiguration cConfiguration = new CConfiguration();
-    cConfiguration.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, 5);
-    //cConfiguration.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 4);
+    // Run eviction on every call to finalize
+    cConfiguration.setLong(TTQueueNewOnVCTable.TTQUEUE_EVICT_INTERVAL_SECS, -1);
+    cConfiguration.setInt(TTQueueNewOnVCTable.TTQUEUE_MAX_CRASH_DEQUEUE_TRIES, 40);
     // TODO: delete queue data in the end
     TTQueue ttQueue = createQueue(cConfiguration);
 
@@ -95,12 +109,14 @@ public class TTQueueRandomizedTest {
       producerFutures.add(future);
     }
 
-    // Start consumer groups
+    // Create consumer groups
     List<ListenableFuture<?>> consumerGroupFutures = Lists.newArrayList();
     Map<Integer, Queue<Integer>> dequeueMap = Maps.newConcurrentMap();
+    ConsumerGroupControl consumerGroupControl = new ConsumerGroupControl(numConsumerGroups);
     for(int i = 0; i < numConsumerGroups; ++i) {
       dequeueMap.put(i, new ConcurrentLinkedQueue<Integer>());
-      ConsumerGroup consumerGroup = new ConsumerGroup(i, oracle, listeningExecutorService, testConfig, testController,
+      ConsumerGroup consumerGroup = new ConsumerGroup(i, numConsumerGroups, consumerGroupControl,
+                                                      oracle, listeningExecutorService, testConfig, testController,
                                                       ttQueue, dequeueMap.get(i));
       ListenableFuture<?> future = listeningExecutorService.submit(consumerGroup);
       consumerGroupFutures.add(future);
@@ -121,6 +137,9 @@ public class TTQueueRandomizedTest {
     final Future<?> compositeConsumerFuture = Futures.allAsList(consumerGroupFutures);
     compositeConsumerFuture.get();
 
+    // Make sure no tasks are pending anymore
+    Assert.assertTrue(listeningExecutorService.shutdownNow().isEmpty());
+
     // Verify if all entries were enqueued properly
     List<Integer> actualEnqueued = Lists.newArrayList(Iterables.concat(enqueuesMap.values()));
     Collections.sort(actualEnqueued);
@@ -137,9 +156,9 @@ public class TTQueueRandomizedTest {
     }
 
     for(Map.Entry<Integer, Queue<Integer>> group : dequeueMap.entrySet()) {
-        List<Integer> dequeuedPerGroup = Lists.newArrayList(group.getValue());
-        Collections.sort(dequeuedPerGroup);
-        LOG.info(String.format("Group:%d dequeueList=%s", group.getKey(), dequeuedPerGroup));
+      List<Integer> dequeuedPerGroup = Lists.newArrayList(group.getValue());
+      Collections.sort(dequeuedPerGroup);
+      LOG.info(String.format("Group:%d dequeueList=%s", group.getKey(), dequeuedPerGroup));
     }
 
     LOG.info(String.format("Total entries=%d, Actual enqueued=%d, Invalidated=%d", inputList.size(),
@@ -154,6 +173,8 @@ public class TTQueueRandomizedTest {
                              actualEnqueued.size(), actualDequeuedPerGroup.size()));
       Assert.assertEquals(actualEnqueued, actualDequeuedPerGroup);
     }
+
+    handleNonFinalizedEntries(ttQueue, numConsumerGroups, numEnqueues);
   }
 
   private TTQueue createQueue(CConfiguration conf) {
@@ -161,5 +182,25 @@ public class TTQueueRandomizedTest {
       new MemoryOVCTable(Bytes.toBytes("TestMemoryNewTTQueue")),
       Bytes.toBytes(this.getClass().getCanonicalName() + "-" + new Random(System.currentTimeMillis()).nextLong()),
       oracle, conf);
+  }
+
+  private void handleNonFinalizedEntries(TTQueue ttQueue, long groupId, int numEnqueues) throws Exception {
+    QueueConsumer consumer = new StatefulQueueConsumer(0, groupId, 1,
+                                                       new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
+    ttQueue.configure(consumer);
+    List<Integer> nonFinalized = Lists.newArrayList();
+    while(true) {
+      DequeueResult result = ttQueue.dequeue(consumer, TransactionOracle.DIRTY_READ_POINTER);
+      if(result.isEmpty()) {
+        break;
+      }
+      nonFinalized.add(Bytes.toInt(result.getEntry().getData()));
+      ttQueue.ack(result.getEntryPointer(), consumer, new Transaction(TransactionOracle.DIRTY_WRITE_VERSION,
+                                                                      TransactionOracle.DIRTY_READ_POINTER));
+    }
+    LOG.info("Non-finalized entries - " + nonFinalized);
+    if(nonFinalized.size() == numEnqueues) {
+      ++numNonFinalizedRuns;
+    }
   }
 }
