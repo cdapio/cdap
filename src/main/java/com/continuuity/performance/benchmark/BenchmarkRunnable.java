@@ -32,9 +32,6 @@ public class BenchmarkRunnable implements Runnable {
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
 
-    LOG.info("{} {}  warming up.", agentGroup.getName(), agentId);
-    printConsole(String.format("%s %d  warming up.", agentGroup.getName(), agentId));
-
     LOG.info("{} {} starting.", agentGroup.getName(), agentId);
     printConsole(String.format("%s %d starting.", agentGroup.getName(), agentId));
 

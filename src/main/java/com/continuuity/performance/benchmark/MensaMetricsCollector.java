@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class MensaMetricsCollector extends MetricsCollector {
@@ -71,12 +72,14 @@ public class MensaMetricsCollector extends MetricsCollector {
    */
   private final ExecutorService executorService = Executors.newCachedThreadPool();
 
+  private Future futureDispatcher;
+
   private void parseConfig(CConfiguration config) {
     String mensa = config.get("mensa");
-    if (mensa != null && mensa.length() != 0) {
+    if (StringUtils.isNotEmpty(mensa)) {
       String[] hostPort = mensa.split(":");
-      this.mensaHost = hostPort[0];
-      this.mensaPort = Integer.valueOf(hostPort[1]);
+      mensaHost = hostPort[0];
+      mensaPort = Integer.valueOf(hostPort[1]);
     }
     String extraTags = config.get("extratags");
     if (StringUtils.isNotEmpty(extraTags)) {
@@ -104,15 +107,15 @@ public class MensaMetricsCollector extends MetricsCollector {
   public MensaMetricsCollector(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
                                CConfiguration config, String extraTags) {
     super(groups, metrics);
-    this.mensaTags = new String();
-    this.benchmarkName=getShortBenchmarkName(benchmarkName);
+    mensaTags = new String();
+    this.benchmarkName = getShortBenchmarkName(benchmarkName);
 
     parseConfig(config);
     appendExtraTags(extraTags);
 
-    this.mensaMetrics = new HashMap<String,ArrayList<Double>>(groups.length);
+    mensaMetrics = new HashMap<String,ArrayList<Double>>(groups.length);
     for (AgentGroup group : groups) {
-      this.mensaMetrics.put(group.getName(), new ArrayList<Double>());
+      mensaMetrics.put(group.getName(), new ArrayList<Double>());
     }
 
     // Creates the queue that holds the mensaMetrics to be dispatched
@@ -122,18 +125,8 @@ public class MensaMetricsCollector extends MetricsCollector {
     metricsDispatcher = new MensaMetricsDispatcher(mensaHost, mensaPort, queue);
 
     // Start the metricsDispatcher thread.
-    executorService.submit(metricsDispatcher);
+    futureDispatcher = executorService.submit(metricsDispatcher);
 
-    // Register a shutdown hook.
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      public void run() {
-        // Shutdown the metricsDispatcher thread.
-        metricsDispatcher.stop();
-
-        // Shutdown executor service.
-        executorService.shutdown();
-      }
-    });
   }
 
   @Override
@@ -145,7 +138,7 @@ public class MensaMetricsCollector extends MetricsCollector {
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) throws BenchmarkException {
     if (prevMetrics != null) {
-      LOG.debug("Processing group metrics at Unix time {}.",unixTime);
+      LOG.debug("Processing group metrics at Unix time {}.", unixTime);
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String metricName = singleMetric.getKey();
         long latestValue = singleMetric.getValue();
@@ -175,6 +168,18 @@ public class MensaMetricsCollector extends MetricsCollector {
 
   @Override
   protected void processGroupMetricsFinal(long unixTime, AgentGroup group) throws BenchmarkException {
+  }
+
+  @Override
+  protected void shutdown() {
+    // Shutdown the metricsDispatcher thread.
+    LOG.debug("Stopping metrics dispatcher thread.");
+    metricsDispatcher.stop();
+    futureDispatcher.cancel(true);
+
+    LOG.debug("Shutting down executor service of metrics dispatcher.");
+    // Shutdown executor service.
+    executorService.shutdown();
   }
 
   /**

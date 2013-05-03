@@ -14,8 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -51,12 +49,12 @@ public class MensaMetricsDispatcher implements Runnable {
   /**
    * Hostname to connect to.
    */
-  private static String hostname;
+  private final String hostname;
 
   /**
    * Port to connect to.
    */
-  private static int port;
+  private final int port;
 
   /**
    *
@@ -66,7 +64,7 @@ public class MensaMetricsDispatcher implements Runnable {
   /**
    *
    */
-  private static final StopWatch watcher = new StopWatch();
+  private final StopWatch watcher = new StopWatch();
 
   /**
    * Session associated with the current connection.
@@ -84,19 +82,7 @@ public class MensaMetricsDispatcher implements Runnable {
   private NioSocketConnector connector;
 
   /**
-   * Executor service for running the dispatcher thread.
-   * Overkill right now -- the idea is that in future if
-   * we find that we need to more threads to send then
-   * it can be extended.
-   */
-  private final ExecutorService executorService =
-    Executors.newCachedThreadPool();
-
-  /**
    * Constructs and initializes {@link MensaMetricsDispatcher}.
-   *
-   * @throws Exception thrown when the client is
-   * unable to discovery the service or unable to connect to zookeeper.
    */
   public MensaMetricsDispatcher(String hostname, int port, LinkedBlockingDeque<String> queue) {
 
@@ -180,7 +166,7 @@ public class MensaMetricsDispatcher implements Runnable {
             // Sleep based on how much ever is interval set to.
             try {
               LOG.warn("Backing off after unable to connect to metrics " + "collector host {}:{} for {}s.",
-                       new Object[]{hostname, port, interval});
+                       hostname, port, interval);
               Thread.sleep(interval * 1000L);
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
@@ -206,7 +192,7 @@ public class MensaMetricsDispatcher implements Runnable {
       // is space available we write the metric back into
       // the queue.
       final String cmd;
-      String element = null;
+      String element;
       try {
         // blocking call will wait till there is an element in the queue.
         element = queue.take();
@@ -238,6 +224,7 @@ public class MensaMetricsDispatcher implements Runnable {
         });
       }
     }
+    LOG.debug("Mensa metrics dispatcher finished!");
   }
   private boolean connect() throws Exception {
     // If we have a session and it's connected to the overlord metrics

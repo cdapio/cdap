@@ -15,6 +15,11 @@ public abstract class MetricsCollector implements Runnable {
   /**
    *
    */
+  private volatile boolean interrupt = false;
+
+  /**
+   *
+   */
   private AgentGroup[] groups;
 
   /**
@@ -34,6 +39,10 @@ public abstract class MetricsCollector implements Runnable {
     this.groups = groups;
   }
 
+  public final void stop() {
+    interrupt = true;
+  }
+
   protected abstract void processGroupMetricsInterval(long unixTime,
                                                       AgentGroup group,
                                                       long previousMillis,
@@ -49,7 +58,7 @@ public abstract class MetricsCollector implements Runnable {
       LOG.debug("Initializing metrics collector.");
       init();
       stopwatch.start();
-      boolean interrupt = false;
+
       ArrayList<Map<String, Long>> previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
       for (int i = 0; i < groups.length; i++) {
         previousMetrics.add(i, null);
