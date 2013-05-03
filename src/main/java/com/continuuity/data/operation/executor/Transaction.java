@@ -6,7 +6,7 @@ import com.google.common.base.Objects;
  * This represents a transaction in Omid. It has a transaction id, used as the write timestamp,
  * and a read pointer that provides read (snapshot) isolation.
  */
-public class Transaction implements ReadPointer, WritePointer {
+public final class Transaction implements ReadPointer, WritePointer {
   private final WritePointer writePointer;
   private final ReadPointer readPointer;
 
@@ -34,11 +34,6 @@ public class Transaction implements ReadPointer, WritePointer {
 
   public ReadPointer getReadPointer() {
     return readPointer;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public WritePointer getWritePointer() {
-    return writePointer;
   }
 
   @Override

@@ -23,7 +23,7 @@ public class EvictionHelper {
     this.txnMinAckEntryMap = Maps.newHashMap();
   }
 
-  public EvictionHelper(Map<Long, Long> txnMinAckEntryMap) {
+  private EvictionHelper(Map<Long, Long> txnMinAckEntryMap) {
     this.txnMinAckEntryMap = txnMinAckEntryMap;
   }
 
@@ -55,7 +55,7 @@ public class EvictionHelper {
   public long getMinEvictionEntry(long consumerReadPointer, TTQueueNewOnVCTable.DequeuedEntrySet dequeuedEntrySet,
                                   ReadPointer readPointer) {
     long minUnCommittedAckEntry = Long.MAX_VALUE;
-    long maxCommittedAckEntry = -1;  // TODO: use constant
+    long maxCommittedAckEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
 
     for(Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
       // Finalize runs after a commit, so it is safe to consider ack list from current transaction too
@@ -73,7 +73,7 @@ public class EvictionHelper {
     }
     if(minUnCommittedAckEntry != Long.MAX_VALUE) {
       return minUnCommittedAckEntry - 1;
-    } else if(maxCommittedAckEntry != -1) {
+    } else if(maxCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
       return maxCommittedAckEntry;
     } else if(!dequeuedEntrySet.isEmpty()) {
       return dequeuedEntrySet.min().getEntryId() - 1;
