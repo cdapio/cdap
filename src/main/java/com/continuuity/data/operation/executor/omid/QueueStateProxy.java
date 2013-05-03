@@ -6,9 +6,10 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This proxy runs all queue operations while managing queue state for each consumer.
@@ -17,7 +18,17 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class QueueStateProxy {
   private final RowLockTable locks = new RowLockTable();
-  private final ConcurrentMap<RowLockTable.Row, StatefulQueueConsumer> statePool = Maps.newConcurrentMap();
+  private final Cache<RowLockTable.Row, StatefulQueueConsumer> stateCache;
+
+  public QueueStateProxy() {
+    this.stateCache =
+    CacheBuilder
+      .newBuilder()
+      .initialCapacity(1000)
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .recordStats()
+      .build();
+  }
 
   /**
    * Used to run a queue operation that returns a value
@@ -137,7 +148,8 @@ public class QueueStateProxy {
       // This consumer has state
       // We remove the consumer from pool rather than get, this will reduce state corruption due to exceptions, etc.
       // It is safer to return an empty state rather than a stale one.
-      statefulQueueConsumer = statePool.remove(row);
+      statefulQueueConsumer = stateCache.getIfPresent(row);
+      stateCache.invalidate(row);
       // Note: Even though the consumer says its state is initialized, we may still not be able to find the state
       // in the pool. This could happen if the consumer's previous operation threw an exception and the state was
       // not returned properly.
@@ -174,7 +186,7 @@ public class QueueStateProxy {
     }
 
     // Store the consumer state
-    statePool.put(consumerHolder.row, toReturnConsumer);
+    stateCache.put(consumerHolder.row, toReturnConsumer);
 
     // If lock and row are valid, unlock
     if(consumerHolder.lock != null && consumerHolder.lock.isValid()) {
