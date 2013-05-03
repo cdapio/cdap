@@ -15,8 +15,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,9 +38,6 @@ import static org.junit.Assert.fail;
  */
 public abstract class TestOVCTable {
 
-  // TODO: As part of ENG-211, add testing of HBaseNativeOVCTable
-  private static final Logger Log = LoggerFactory.getLogger(TestOVCTable.class);
-
   protected OrderedVersionedColumnarTable table;
   protected OVCTableHandle tableHandle;
 
@@ -63,6 +58,12 @@ public abstract class TestOVCTable {
 
   protected static final byte [] COL = new byte [] { (byte)0 };
   protected static final MemoryReadPointer RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
+
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection();
 
   @Test
   public void testSimpleReadWrite() throws OperationException {

@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import java.io.IOException;
 import java.util.Random;
@@ -60,6 +61,11 @@ public class TestNativeHBaseTTQueue extends TestTTQueue {
     }
     return new TTQueueOnHBaseNative(table,
         Bytes.toBytes("TestTTQueueName" + rand), TestTTQueue.oracle, conf);
+  }
+
+  @Override @Ignore
+  public void testInjection() throws OperationException {
+    // this test case uses TTQueueOnHBaseNative directly - no need to test it
   }
 
   @Override

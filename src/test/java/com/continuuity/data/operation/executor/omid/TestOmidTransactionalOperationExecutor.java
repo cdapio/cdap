@@ -73,6 +73,12 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor = getOmidExecutor();
   }
 
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection();
+
   @Test
   public void testSimple() throws Exception {
 

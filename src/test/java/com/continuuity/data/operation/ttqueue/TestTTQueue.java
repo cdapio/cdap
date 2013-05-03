@@ -60,6 +60,13 @@ public abstract class TestTTQueue {
     return TransactionOracle.DIRTY_WRITE_VERSION;
   }
 
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection() throws OperationException;
+
+
   @Test
   public void testLotsOfAsyncDequeueing() throws Exception {
     TTQueue queue = createQueue();
@@ -144,7 +151,6 @@ public abstract class TestTTQueue {
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-//    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config);
 
@@ -205,8 +211,6 @@ public abstract class TestTTQueue {
     queueEvict.configure(consumer);
     result = queueEvict.dequeue(consumer, dirtyReadPointer);
     assertTrue(result.toString(), result.isEmpty());
-
-
   }
 
   @Test

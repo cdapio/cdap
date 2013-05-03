@@ -1,13 +1,13 @@
 package com.continuuity.data.table;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTable;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 public class TestLevelDBOVCTable extends TestOVCTable {
 
@@ -26,4 +26,8 @@ public class TestLevelDBOVCTable extends TestOVCTable {
     return injector.getInstance(OVCTableHandle.class);
   }
 
+  @Override
+  public void testInjection() {
+    assertTrue(table instanceof LevelDBOVCTable);
+  }
 }

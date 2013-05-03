@@ -24,6 +24,12 @@ abstract public class MetaDataStoreTest {
   static MetaDataStore mds;
   static OperationContext context = OperationUtil.DEFAULT;
 
+  /**
+   * Every subclass should implement this to verify that injection works and uses the correct table type
+   */
+  @Test
+  public abstract void testInjection();
+
   // test that a write followed by a read returns identity
   void testOneAddGet(boolean update, String account,
                      String application, String type, String id,

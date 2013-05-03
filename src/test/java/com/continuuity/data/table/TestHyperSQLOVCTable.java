@@ -1,8 +1,11 @@
 package com.continuuity.data.table;
 
+import com.continuuity.data.engine.hypersql.HyperSQLOVCTable;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import static org.junit.Assert.assertTrue;
 
 public class TestHyperSQLOVCTable extends TestOVCTable {
 
@@ -13,6 +16,11 @@ public class TestHyperSQLOVCTable extends TestOVCTable {
   @Override
   protected OVCTableHandle injectTableHandle() {
     return injector.getInstance(OVCTableHandle.class);
+  }
+
+  @Override
+  public void testInjection() {
+    assertTrue(table instanceof HyperSQLOVCTable);
   }
 
 }

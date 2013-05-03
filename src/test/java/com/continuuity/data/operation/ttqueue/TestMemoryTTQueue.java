@@ -19,6 +19,11 @@ public class TestMemoryTTQueue extends TestTTQueue {
         TestTTQueue.oracle, conf);
   }
 
+  @Override @Ignore
+  public void testInjection() throws OperationException {
+    // this test case uses MemoryOvcTable directly - no need to test it
+  }
+
   @Override
   protected int getNumIterations() {
     return 250;
