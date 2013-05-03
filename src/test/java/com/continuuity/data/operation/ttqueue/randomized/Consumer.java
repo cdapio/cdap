@@ -11,7 +11,6 @@ import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -21,18 +20,17 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
-*
-*/
+ *
+ */
 public class Consumer implements Runnable {
   private final int id;
   private final TransactionOracle oracle;
-  private final ConsumerGroupControl consumerGroupControl;
+  private final ConsumerControl consumerControl;
+  private final int numGroups;
   private final ListeningExecutorService listeningExecutorService;
   private final TestConfig testConfig;
   private final TestController testController;
@@ -45,54 +43,61 @@ public class Consumer implements Runnable {
   private final AtomicInteger asyncDegree = new AtomicInteger(0);
   private static final int MAX_STOP_TRIES = 3;
 
+  private final ConsumerHolder consumerHolder;
+
   private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
 
-  public Consumer(int id, TransactionOracle oracle, ConsumerGroupControl consumerGroupControl,
+  public Consumer(int id, QueueConsumer queueConsumer, TransactionOracle oracle, ConsumerControl consumerControl,
+                  int numGroups,
                   ListeningExecutorService listeningExecutorService, TestConfig testConfig,
                   TestController testController, TTQueue queue, QueueConfig queueConfig, Queue<Integer> dequeueList) {
     this.id = id;
     this.oracle = oracle;
-    this.consumerGroupControl = consumerGroupControl;
+    this.consumerControl = consumerControl;
+    this.numGroups = numGroups;
     this.listeningExecutorService = listeningExecutorService;
     this.testConfig = testConfig;
     this.testController = testController;
     this.queue = queue;
     this.queueConfig = queueConfig;
     this.dequeueList = dequeueList;
+    this.consumerHolder = new ConsumerHolder(queueConsumer);
   }
 
   @Override
   public void run() {
     try {
-      // Wait for setup to be done
-      testController.waitToStart();
-      LOG.info(getLogMessage(String.format("groupSize:%d started", consumerGroupControl.getSize())));
+      LOG.info(getLogMessage(String.format("groupSize:%d started", consumerControl.getSize())));
 
-      // Note: in this test we have a different batch size for each consumer
+      // Note: in this test we have a different batch size for each consumer of same group
       final int maxAsyncDegree = queueConfig.isSingleEntry() ?  1 : testConfig.getAsyncDegree();
       LOG.info(getLogMessage(String.format("maxAsyncDegree=%d", maxAsyncDegree)));
 
-      // Create consumer and configure queue
-      ConsumerHolder consumerHolder = new ConsumerHolder();
-      consumerGroupControl.doneSingleConfigure();
-      LOG.info(getLogMessage("Configure done, waiting for group configuration to be done..."));
-      consumerGroupControl.waitForGroupConfigure();
-      LOG.info(getLogMessage("Group configuration done, starting dequeues..."));
-
       int stopTries = 0;
       int runId = 0;
+      int msgCtr = 0;
       // Create maxAsyncDegree dequeues at a time
       while(stopTries < MAX_STOP_TRIES &&
-        dequeueRunsDone.get() + asyncDegree.get() < consumerGroupControl.getNumDequeueRuns()) {
-        ++runId;
+        dequeueRunsDone.get() + asyncDegree.get() < consumerControl.getNumDequeueRuns()) {
         if(asyncDegree.get() < maxAsyncDegree) {
-          listeningExecutorService.submit(new QueueDequeue(runId, listeningExecutorService, consumerHolder));
+          ++runId;
+          asyncDegree.incrementAndGet();
+          listeningExecutorService.submit(new QueueDequeue(runId, 0, listeningExecutorService, consumerHolder));
           TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         } else {
           TimeUnit.MILLISECONDS.sleep(1000);
         }
-        LOG.info(getLogMessage(String.format("Async degree=%d, max async degree=%d", asyncDegree.get(),
-                                             maxAsyncDegree)));
+
+        if(msgCtr++ % 200 == 0) {
+          msgCtr = 1;
+          LOG.info(getLogMessage(
+            String.format(
+              "runId=%d, dequeueRunsDone=%d, numDequeueRunsToDo=%d, asyncDegree=%d, maxAsyncDegree=%d, stopTries=%d",
+              runId, dequeueRunsDone.get(), consumerControl.getNumDequeueRuns(), asyncDegree.get(),
+              maxAsyncDegree, stopTries
+            )));
+        }
+
         if(stopFlag.get() > 0) {
           TimeUnit.MILLISECONDS.sleep(100);
           stopTries++;
@@ -101,20 +106,30 @@ public class Consumer implements Runnable {
         }
       }
 
+      TimeUnit.MILLISECONDS.sleep(100);
+
       // Wait for all async calls to complete
+      msgCtr = 0;
       while(asyncDegree.get() > 0) {
+        if(msgCtr++ % 200 == 0) {
+          msgCtr = 1;
+          LOG.info(getLogMessage(String.format("Waiting for pending async calls (%d) to complete...",
+                                               asyncDegree.get())));
+        }
         TimeUnit.MILLISECONDS.sleep(100);
       }
 
       // If all dequeues report empty queue for MAX_STOP_TRIES, then the queue is really empty.
       // Report it to the consumer group.
       if(stopTries >= MAX_STOP_TRIES - 1) {
-        LOG.info(getLogMessage("Stop flag is true."));
-        consumerGroupControl.setConsumersAtQueueEnd(id);
+        LOG.info(getLogMessage("Consumer at queue end."));
+        consumerControl.setConsumersAtQueueEnd(id);
       } else {
-        LOG.info(getLogMessage(String.format("dequeueRunsDone=%d, numDequeueRunsToDo=%d, asyncDegree=%d",
-                                             dequeueRunsDone.get(), consumerGroupControl.getNumDequeueRuns(),
-                                             asyncDegree.get())));
+        LOG.info(getLogMessage(
+          String.format("dequeueRunsDone=%d, numDequeueRunsToDo=%d, asyncDegree=%d, maxAsyncDegree=%d",
+                        dequeueRunsDone.get(), consumerControl.getNumDequeueRuns(), asyncDegree.get(),
+                        maxAsyncDegree
+          )));
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -122,7 +137,7 @@ public class Consumer implements Runnable {
   }
 
   private String getLogMessage(String message) {
-    return String.format("Group:%d Consumer:%d: %s", consumerGroupControl.getId(), id, message);
+    return String.format("Group:%d Consumer:%d: %s", consumerControl.getId(), id, message);
   }
 
   private Iterable<Integer> entriesToInt(QueueEntry[] entries) {
@@ -140,28 +155,35 @@ public class Consumer implements Runnable {
 
   public class QueueDequeue implements Runnable {
     private final int runId;
+    private final int crashId;
     private final ListeningExecutorService listeningExecutorService;
     private final ConsumerHolder consumerHolder;
+    private final int oldConsumerId;
 
-    public QueueDequeue(int runId, ListeningExecutorService listeningExecutorService,
+    private final Logger LOG = LoggerFactory.getLogger(QueueDequeue.class);
+
+    public QueueDequeue(int runId, int crashId, ListeningExecutorService listeningExecutorService,
                         ConsumerHolder consumerHolder) {
       this.runId = runId;
+      this.crashId = crashId;
       this.listeningExecutorService = listeningExecutorService;
       this.consumerHolder = consumerHolder;
+      this.oldConsumerId = consumerHolder.getConsumerId();
     }
 
     @Override
     public void run() {
-      asyncDegree.incrementAndGet();
       Transaction transaction = oracle.startTransaction();
 
       try {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
-          QueueConsumer consumer = consumerHolder.getConsumer("dequeue", runId);
-          if(consumerHolder.hasCrashed(runId)) {
-            listeningExecutorService.submit(new QueueDequeue(runId, listeningExecutorService, consumerHolder));
-            asyncDegree.decrementAndGet();
+          QueueConsumer consumer = consumerHolder.getConsumer("dequeue", runId, crashId);
+          if(oldConsumerId != consumerHolder.getConsumerId()) {
+            // Consumer has crashed!
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
+                                                             consumerHolder));
             return;
           }
           DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
@@ -170,33 +192,44 @@ public class Consumer implements Runnable {
               stopFlag.incrementAndGet();
             }
             asyncDegree.decrementAndGet();
+            LOG.info(getLogMessage(String.format("Stop flag is true. asyncDegree=%d", asyncDegree.get())));
             return;
           } else {
             stopFlag.set(0);
           }
           Iterable<Integer> dequeued = entriesToInt(result.getEntries());
-          LOG.info(getLogMessage(String.format("runId=%d intermediate dequeue list=%s", runId, dequeued)));
-          listeningExecutorService.submit(new QueueAck(runId, listeningExecutorService, consumerHolder, result,
+          LOG.info(getLogMessage(String.format("Intermediate dequeue list=%s", dequeued)));
+          listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder, result,
                                                        transaction));
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
     }
+
+    private String getLogMessage(String message) {
+      return Consumer.this.getLogMessage(String.format("runId=%d, crashId=%d %s", runId, crashId, message));
+    }
   }
 
   public class QueueAck implements Runnable {
     private final int runId;
+    private final int crashId;
     private final ListeningExecutorService listeningExecutorService;
     private final ConsumerHolder consumerHolder;
+    private final int oldConsumerId;
     private final DequeueResult dequeueResult;
     private final Transaction transaction;
 
-    public QueueAck(int runId, ListeningExecutorService listeningExecutorService, ConsumerHolder consumerHolder,
-                    DequeueResult dequeueResult, Transaction transaction) {
+    private final Logger LOG = LoggerFactory.getLogger(QueueAck.class);
+
+    public QueueAck(int runId, int crashId, ListeningExecutorService listeningExecutorService,
+                    ConsumerHolder consumerHolder, DequeueResult dequeueResult, Transaction transaction) {
       this.runId = runId;
+      this.crashId = crashId;
       this.listeningExecutorService = listeningExecutorService;
       this.consumerHolder = consumerHolder;
+      this.oldConsumerId = consumerHolder.getConsumerId();
       this.dequeueResult = dequeueResult;
       this.transaction = transaction;
     }
@@ -206,37 +239,61 @@ public class Consumer implements Runnable {
       try {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
-          QueueConsumer consumer = consumerHolder.getConsumer("ack", runId);
-          if(consumerHolder.hasCrashed(runId)) {
-            listeningExecutorService.submit(new QueueDequeue(runId, listeningExecutorService, consumerHolder));
-            asyncDegree.decrementAndGet();
+          QueueConsumer consumer = consumerHolder.getConsumer("ack", runId, crashId);
+          if(oldConsumerId != consumerHolder.getConsumerId()) {
+            // Consumer has crashed!
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
+            listeningExecutorService.submit(new QueueDequeue(runId, crashId + 1, listeningExecutorService,
+                                                             consumerHolder));
             return;
           }
           Assert.assertTrue(dequeueResult.isSuccess());
           queue.ack(dequeueResult.getEntryPointers(), consumer, transaction);
-          oracle.commitTransaction(transaction);
+
+          if(testConfig.shouldUnack()) {
+            // Note: consumer cannot crash after an ack before txn is committed since Opex runs
+            // all the operations together. However, Opex can crash which is not tested here.
+            LOG.info(getLogMessage(String.format("Unacking list =%s", entriesToInt(dequeueResult.getEntries()))));
+            queue.unack(dequeueResult.getEntryPointers(), consumer, transaction);
+            oracle.abortTransaction(transaction);
+            oracle.removeTransaction(transaction);
+            listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder,
+                                                         dequeueResult, oracle.startTransaction()));
+            return;
+          } else {
+            oracle.commitTransaction(transaction);
+          }
           Iterable<Integer> dequeued = entriesToInt(dequeueResult.getEntries());
           Iterables.addAll(dequeueList, dequeued);
-          LOG.info(getLogMessage(String.format("runId=%d acked dequeue list=%s", runId, dequeued)));
+          LOG.info(getLogMessage(String.format("Acked dequeue list=%s", dequeued)));
 
-          listeningExecutorService.submit(new QueueFinalize(runId, consumerHolder, dequeueResult, transaction));
+          listeningExecutorService.submit(new QueueFinalize(runId, crashId, consumerHolder, dequeueResult,
+                                                            transaction));
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+    }
+
+    private String getLogMessage(String message) {
+      return Consumer.this.getLogMessage(String.format("runId=%d crashId=%d %s", runId, crashId, message));
     }
   }
 
   public class QueueFinalize implements Runnable {
     private final int runId;
+    private final int crashId;
     private final ConsumerHolder consumerHolder;
+    private final int oldConsumerId;
     private final DequeueResult dequeueResult;
     private final Transaction transaction;
 
-    public QueueFinalize(int runId, ConsumerHolder consumerHolder, DequeueResult dequeueResult,
+    public QueueFinalize(int runId, int crashId, ConsumerHolder consumerHolder, DequeueResult dequeueResult,
                          Transaction transaction) {
       this.runId = runId;
+      this.crashId = crashId;
       this.consumerHolder = consumerHolder;
+      this.oldConsumerId = consumerHolder.getConsumerId();
       this.dequeueResult = dequeueResult;
       this.transaction = transaction;
     }
@@ -246,59 +303,60 @@ public class Consumer implements Runnable {
       try {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
         synchronized (consumerHolder) {
-          QueueConsumer consumer = consumerHolder.getConsumer("finalize", runId);
-          if(consumerHolder.hasCrashed(runId)) {
+          QueueConsumer consumer = consumerHolder.getConsumer("finalize", runId, crashId);
+          if(oldConsumerId != consumerHolder.getConsumerId()) {
+            // Consumer has crashed!
+            LOG.info(getLogMessage(String.format("Consumer has crashed for runId=%d crashId=%d.", runId, crashId)));
             return;
           }
           if(testConfig.shouldFinalize()) {
-            queue.finalize(dequeueResult.getEntryPointers(), consumer, consumerGroupControl.getSize(), transaction);
+            queue.finalize(dequeueResult.getEntryPointers(), consumer, numGroups,
+                           transaction);
+            LOG.info(getLogMessage(String.format("finalizing=%s",
+                                                 entriesToInt(dequeueResult.getEntries()))));
           }
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       } finally {
-        asyncDegree.decrementAndGet();
-        dequeueRunsDone.incrementAndGet();
+        final int newAsyncDegree = asyncDegree.decrementAndGet();
+        final int neDequeueRunsDone = dequeueRunsDone.incrementAndGet();
+        LOG.info(getLogMessage(String.format("Decremented values of asyncDegree=%d, dequeueRunsDone=%d",
+                                             newAsyncDegree, neDequeueRunsDone)));
       }
+    }
+
+    private String getLogMessage(String message) {
+      return Consumer.this.getLogMessage(String.format("runId=%d crashId=%d %s", runId, crashId, message));
     }
   }
 
-  public class ConsumerHolder {
+  private class ConsumerHolder {
     private volatile QueueConsumer consumer;
-    private final AtomicBoolean hasCrashed = new AtomicBoolean(false);
-    private Set<Integer> crashInflight = Sets.newHashSet();
-    private Set<Integer> inFlight = Sets.newHashSet();
 
-    public ConsumerHolder() throws Exception {
-      consumer = createConsumer();
+    public ConsumerHolder(QueueConsumer consumer) {
+      this.consumer = consumer;
     }
 
-    private QueueConsumer createConsumer() throws Exception {
-      QueueConsumer consumer = new StatefulQueueConsumer(id, consumerGroupControl.getId(),
-                                                         consumerGroupControl.getSize(),
-                                                         "", TTQueueRandomizedTest.HASH_KEY, queueConfig);
+    private void createNewConsumer() throws Exception {
+      consumer = new StatefulQueueConsumer(consumer.getInstanceId(), consumer.getGroupId(),
+                                                         consumer.getGroupSize(),
+                                                         "", TTQueueRandomizedTest.HASH_KEY, consumer.getQueueConfig());
       queue.configure(consumer);
-      return consumer;
     }
 
-    public QueueConsumer getConsumer(String position, int runId)
+    public QueueConsumer getConsumer(String position, int runId, int crashId)
       throws Exception {
-      inFlight.add(runId);
       if(testConfig.shouldConsumerCrash()) {
-        LOG.info(getLogMessage(String.format("Crashing consumer before %s runId=%d", position, runId)));
-        hasCrashed.set(true);
-        crashInflight.addAll(inFlight);
-        consumer = createConsumer();
-        return consumer;
+        LOG.info(getLogMessage(String.format("Crashing consumer before %s runId=%d crashId=%d",
+                                             position, runId, crashId)));
+        createNewConsumer();
       }
-      hasCrashed.set(false);
       return consumer;
     }
 
-    public boolean hasCrashed(int runId) {
-      boolean crashed = crashInflight.contains(runId);
-      crashInflight.remove(runId);
-      return crashed;
+    public int getConsumerId() {
+      return System.identityHashCode(consumer);
     }
   }
 }

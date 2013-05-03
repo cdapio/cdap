@@ -4,7 +4,7 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
-import com.continuuity.data.operation.ttqueue.ClaimedEntryRange;
+import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
@@ -40,11 +40,20 @@ public class EvictionHelper {
   }
 
   /**
-   * Returns the min entry that can be evicted for a set of acks based on whether the ack has been committed or not
-   * @param readPointer transaction read pointer
-   * @return min entry that can be evicted
+   * Returns the min entry that can be evicted for the consumer based on ack list, dequeue entry set and
+   * consumer read pointer.
+   * Min evict entry is calculated as the first valid of -
+   * 1. min(uncommitted entries) - 1
+   * 2. max(committed entries)
+   * 3. min(dequeue entry set) - 1
+   * 4. consumer read pointer - 1
+   * @param consumerReadPointer consumer read pointer
+   * @param dequeuedEntrySet dequeue entry set
+   * @param readPointer transacition read pointer
+   * @return min entry that can be evicted for the consumer
    */
-  public long getMinEvictionEntry(ReadPointer readPointer) {
+  public long getMinEvictionEntry(long consumerReadPointer, TTQueueNewOnVCTable.DequeuedEntrySet dequeuedEntrySet,
+                                  ReadPointer readPointer) {
     long minUnCommittedAckEntry = Long.MAX_VALUE;
     long maxCommittedAckEntry = -1;  // TODO: use constant
 
@@ -66,8 +75,10 @@ public class EvictionHelper {
       return minUnCommittedAckEntry - 1;
     } else if(maxCommittedAckEntry != -1) {
       return maxCommittedAckEntry;
+    } else if(!dequeuedEntrySet.isEmpty()) {
+      return dequeuedEntrySet.min().getEntryId() - 1;
     } else {
-      return ClaimedEntryRange.INVALID_ENTRY_ID;
+      return consumerReadPointer - 1;
     }
   }
 
