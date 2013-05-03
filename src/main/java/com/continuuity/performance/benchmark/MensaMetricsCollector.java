@@ -137,30 +137,28 @@ public class MensaMetricsCollector extends MetricsCollector {
                                           Map<String, Long> prevMetrics,
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) throws BenchmarkException {
-    if (prevMetrics != null) {
+    if (prevMetrics != null && !interrupt) {
       LOG.debug("Processing group metrics at Unix time {}.", unixTime);
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String metricName = singleMetric.getKey();
         long latestValue = singleMetric.getValue();
-        if (!interrupt) {
-          Long previousValue = prevMetrics.get(metricName);
-          if (previousValue == null) {
-            previousValue = 0L;
-          }
-          long valueSince = latestValue - previousValue;
-          long millisSince = millis - previousMillis;
-          mensaMetrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
-          String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
-          String metricPut = MensaUtils.buildMetric(OPS_PER_SEC_10_SEC, Long.toString(unixTime), metricValue,
-                                                 benchmarkName, group.getName(),
-                                                 Integer.toString(group.getNumAgents()), mensaTags);
+        Long previousValue = prevMetrics.get(metricName);
+        if (previousValue == null) {
+          previousValue = 0L;
+        }
+        long valueSince = latestValue - previousValue;
+        long millisSince = millis - previousMillis;
+        mensaMetrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
+        String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
+        String metricPut = MensaUtils.buildMetric(OPS_PER_SEC_10_SEC, Long.toString(unixTime), metricValue,
+                                                  benchmarkName, group.getName(),
+                                                  Integer.toString(group.getNumAgents()), mensaTags);
 
-          if (write(metricPut) == false) {
-            throw new BenchmarkException("Error when trying to upload group metric "
-                                           + metricPut + " to mensa at " + mensaHost + ":" + mensaPort + ".");
-          } else {
-            LOG.debug("Uploaded metric put operation \"{}\" to mensa at {}:{}", metricPut, mensaHost, mensaPort);
-          }
+        if (write(metricPut) == false) {
+          throw new BenchmarkException("Error when trying to upload group metric "
+                                         + metricPut + " to mensa at " + mensaHost + ":" + mensaPort + ".");
+        } else {
+          LOG.debug("Uploaded metric put operation \"{}\" to mensa at {}:{}", metricPut, mensaHost, mensaPort);
         }
       }
     }

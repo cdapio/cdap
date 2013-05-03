@@ -68,24 +68,22 @@ public class FileMetricReporter extends MetricsCollector {
                                           Map<String, Long> prevMetrics,
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) {
-    if (prevMetrics != null) {
+    if (prevMetrics != null && !interrupt) {
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String key = singleMetric.getKey();
         long value = singleMetric.getValue();
-        if (!interrupt) {
-          Long previousValue = prevMetrics.get(key);
-          if (previousValue == null) {
-            previousValue = 0L;
-          }
-          long valueSince = value - previousValue;
-          long millisSince = millis - previousMillis;
-          metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
-          String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
-          String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
-                                                 benchmarkName, group.getName(),
-                                                 Integer.toString(group.getNumAgents()), "");
-          LOG.debug("Collected metric {} in memory ", metric);
+        Long previousValue = prevMetrics.get(key);
+        if (previousValue == null) {
+          previousValue = 0L;
         }
+        long valueSince = value - previousValue;
+        long millisSince = millis - previousMillis;
+        metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
+        String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
+        String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
+                                               benchmarkName, group.getName(),
+                                               Integer.toString(group.getNumAgents()), "");
+        LOG.debug("Collected metric {} in memory ", metric);
       }
     }
   }
