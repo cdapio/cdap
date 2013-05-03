@@ -1,21 +1,23 @@
 package com.continuuity.passport.meta;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Store and provide roles and accounts corresponding to each of the roles.
  */
-public class RolesAccounts {
+public final class RolesAccounts {
 
-  private Map<String, List<Account>> accountsRoles;
+  private final Multimap<String, Account> accountsRoles;
 
   public RolesAccounts() {
-    this.accountsRoles = Maps.newHashMap();
+    this.accountsRoles = ArrayListMultimap.create();
   }
 
   /**
@@ -24,13 +26,7 @@ public class RolesAccounts {
    * @param account Account
    */
   public void addAccountRole(String role, Account account){
-    if (accountsRoles.containsKey(role)) {
-      accountsRoles.get(role).add(account);
-    } else {
-      List<Account> accounts = Lists.newArrayList();
-      accounts.add(account);
-      accountsRoles.put(role, accounts);
-    }
+    accountsRoles.put(role, account);
   }
 
   /**
@@ -38,19 +34,16 @@ public class RolesAccounts {
    * @return Set of String representing roles
    */
   public Set<String> getRoles() {
-    return accountsRoles.keySet();
+    return Collections.unmodifiableSet(accountsRoles.keySet());
   }
 
   /**
    * getAccounts for role
+   *
    * @param role Role
    * @return List of {@code Account}s
    */
-  public List<Account> getAccounts(String role){
-    if (accountsRoles.containsKey(role)){
-      return accountsRoles.get(role);
-    } else {
-      return Lists.newArrayList();
-    }
+  public Collection<Account> getAccounts(String role){
+    return Collections.unmodifiableCollection(accountsRoles.get(role));
   }
 }

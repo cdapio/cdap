@@ -21,7 +21,6 @@ import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import org.apache.commons.lang.NotImplementedException;
 
 import java.util.List;
 import java.util.Map;
@@ -73,13 +72,13 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component) {
-    throw new NotImplementedException("This method is not implemented yet.");
+    throw new UnsupportedOperationException("This method is not implemented yet.");
   }
 
 
   @Override
   public Status unRegisterComponent(String accountId, Credentials credentials, Component component) {
-    return null;
+    throw new UnsupportedOperationException("This method is not implemented yet.");
   }
 
 
@@ -91,7 +90,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public Status updateComponent(String accountId, Credentials credentials, Component component) {
-    throw new NotImplementedException("This method is not implemented yet.");
+    throw new UnsupportedOperationException("This method is not implemented yet.");
   }
 
   /**
