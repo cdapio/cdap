@@ -14,6 +14,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EvictionHelper;
+import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSortedSet;
@@ -112,8 +113,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
   static final byte [] LAST_EVICT_TIME_IN_SECS = {'T'};           //row <queueName>40C<groupId><consumerId>, column T
 
-  static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
-  static final long FIRST_QUEUE_ENTRY_ID = 1;
+  static final long INVALID_ENTRY_ID = TTQueueNewConstants.INVALID_ENTRY_ID;
+  static final long FIRST_QUEUE_ENTRY_ID = TTQueueNewConstants.FIRST_ENTRY_ID;
 
   private final int DEFAULT_BATCH_SIZE;
   private final long EVICT_INTERVAL_IN_SECS;

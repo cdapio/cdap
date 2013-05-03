@@ -76,9 +76,11 @@ public class Consumer implements Runnable {
       int stopTries = 0;
       int runId = 0;
       int msgCtr = 0;
-      // Create maxAsyncDegree dequeues at a time
+
+      // Run till end of queue or number of runs are done
       while(stopTries < MAX_STOP_TRIES &&
         dequeueRunsDone.get() + asyncDegree.get() < consumerControl.getNumDequeueRuns()) {
+        // Create maxAsyncDegree dequeues at a time
         if(asyncDegree.get() < maxAsyncDegree) {
           ++runId;
           asyncDegree.incrementAndGet();
