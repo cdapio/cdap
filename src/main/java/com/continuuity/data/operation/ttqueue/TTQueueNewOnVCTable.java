@@ -13,7 +13,6 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
-import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -23,6 +22,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicReference;
 // TODO: catch Runtime exception and translate it into OperationException
 // TODO: move all queue state manipulation methods into single class
 // TODO: use common code to decode/encode lists and maps
-// TODO: encode/decode the whole QueueStateImpl object using QueueStateImpl.encode/decode
 // TODO: use raw Get instead of the workaround of incrementAtomicDirtily(0)
 
 /**
@@ -78,45 +77,44 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // Row prefix for columns that don't affect the operation of queue, i.e. groupId generation
   static final byte [] GLOBAL_GENERIC_PREFIX = {50, 'G'}; //row <queueName>50G
 
+  // Column prefix for every configured consumer group
+  static final byte [] GLOBAL_GROUPID_PREFIX = { 'I' }; // row <queueName>50G column I<groupId>
+  // for cocnvenience: stop column that immediately follows the greatest possible consumer group
+  static final byte [] GLOBAL_GROUPID_ENDRANGE = { (byte)(GLOBAL_GROUPID_PREFIX[0] + 1) };
+  // the value we will write to every column. It does not matter what it is
+  static final byte [] GLOBAL_GROUPID_EXISTS_MARKER = { '+' };
+
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
   // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
   // GLOBAL_ENTRYID_COUNTER contains the highest valid entryId for the queue
-  static final byte [] GLOBAL_ENTRYID_COUNTER = {10, 'I'};  //row <queueName>10I, column 10I
+  static final byte [] GLOBAL_ENTRYID_COUNTER = {'I'};  //row <queueName>10I, column I
 
   // GROUP_READ_POINTER is a group counter used by consumers of a FifoDequeueStrategy group to claim queue entries.
   // GROUP_READ_POINTER contains the higest entryId claimed by consumers of a FifoDequeueStrategy group
-  static final byte [] GROUP_READ_POINTER = {10, 'I'}; //row <queueName>10I<groupId>, column 10I
+  static final byte [] GROUP_READ_POINTER = {'I'}; //row <queueName>10I<groupId>, column I
 
   // Columns for row = GLOBAL_DATA_PREFIX (Global data, shared by all consumer groups)
   // ENTRY_META contains the meta data for a queue entry, whether the entry is invalid or not.
-  static final byte [] ENTRY_META = {10, 'M'}; //row  <queueName>20D<entryId>, column 10M
+  static final byte [] ENTRY_META = {'M'}; //row  <queueName>20D<entryId>, column M
   // ENTRY_DATA contains the queue entry.
-  static final byte [] ENTRY_DATA = {20, 'D'}; //row  <queueName>20D<entryId>, column 20D
+  static final byte [] ENTRY_DATA = {'D'}; //row  <queueName>20D<entryId>, column D
   // ENTRY_HEADER contains the partitioning keys of a queue entry.
-  static final byte [] ENTRY_HEADER = {30, 'H'};  //row  <queueName>20D<entryId>, column 30H
+  static final byte [] ENTRY_HEADER = {'H'};  //row  <queueName>20D<entryId>, column H
 
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
   // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
-  static final byte [] GLOBAL_LAST_EVICT_ENTRY = {10, 'L'};   //row  <queueName>30M<groupId>, column 10L
+  static final byte [] GLOBAL_LAST_EVICT_ENTRY = {'L'};   //row  <queueName>30M<groupId>, column L
 
   // Columns for row = GLOBAL_EVICT_META_ROW (Global data, shared by all consumers)
   // GROUP_EVICT_ENTRY contains the entryId upto which the queue entries can be evicted for a group.
   // It means all consumers in the group have acked until GROUP_EVICT_ENTRY
-  static final byte [] GROUP_EVICT_ENTRY = {20, 'E'};     //row  <queueName>30M<groupId>, column 20E
+  static final byte [] GROUP_EVICT_ENTRY = {'E'};     //row  <queueName>30M<groupId>, column 20E
 
   // Columns for row = CONSUMER_META_PREFIX (consumer specific information)
-  // DEQUEUE_ENTRY_SET contains a list of entries dequeued by a consumer, but not yet acked.
-  static final byte [] DEQUEUE_ENTRY_SET = {10, 'A'};              //row <queueName>40C<groupId><consumerId>, column 10A
-  // If CONSUMER_READ_POINTER is valid, CONSUMER_READ_POINTER contains the highest entryId that the consumer has read
-  // (the consumer may not have completed processing the entry).
-  // CONSUMER_READ_POINTER + 1 points to the next entry that the consumer can dequeue.
-  static final byte [] CONSUMER_READ_POINTER = {20, 'R'};     //row <queueName>40C<groupId><consumerId>, column 20R
+  // CONSUMER_STATE contains the entire encoded queue state
+  static final byte [] CONSUMER_STATE = { 'S' };
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
-  static final byte [] CLAIMED_ENTRY_LIST = {30, 'C'};       //row <queueName>40C<groupId><consumerId>, column 30C
-  // LAST_EVICT_TIME_IN_SECS is the time when the last eviction was run by the consumer
-  static final byte [] LAST_EVICT_TIME_IN_SECS = {40, 'T'};           //row <queueName>40C<groupId><consumerId>, column 40T
-  // RECONFIG_PARTITIONER stores the partition information for prior configurations
-  static final byte [] RECONFIG_PARTITIONER = {50, 'P'};     //row <queueName>40C<groupId><consumerId>, column 50P
+  static final byte [] LAST_EVICT_TIME_IN_SECS = {'T'};           //row <queueName>40C<groupId><consumerId>, column T
 
   static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
   static final long FIRST_QUEUE_ENTRY_ID = 1;
@@ -129,7 +127,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   private static final byte[] ENTRY_META_INVALID = new EntryMeta(EntryMeta.EntryState.INVALID).getBytes();
   private static final byte[] ENTRY_META_VALID = new EntryMeta(EntryMeta.EntryState.VALID).getBytes();
 
-  protected TTQueueNewOnVCTable(OrderedVersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
+  public TTQueueNewOnVCTable(OrderedVersionedColumnarTable table, byte[] queueName, TransactionOracle oracle,
                                 final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
@@ -503,7 +501,81 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+
+    // for a new consumer group, add it to the list of configured groups
+    if (oldConsumerCount == 0) {
+      this.table.put(makeRowName(GLOBAL_GENERIC_PREFIX), makeColumnName(GLOBAL_GROUPID_PREFIX, groupId),
+                     TransactionOracle.DIRTY_WRITE_VERSION, GLOBAL_GROUPID_EXISTS_MARKER);
+    }
+
     return oldConsumerCount;
+  }
+
+  // this has package visibility for access from test package
+  List<Long> listAllConfiguredGroups() throws OperationException {
+    // read column range that includes all group ids ['G'..'H'[
+    OperationResult<Map<byte[], byte[]>> result =
+      this.table.get(makeRowName(GLOBAL_GENERIC_PREFIX), GLOBAL_GROUPID_PREFIX, GLOBAL_GROUPID_ENDRANGE,
+                     -1,  TransactionOracle.DIRTY_READ_POINTER);
+    if (result.isEmpty() || result.getValue().isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Long> ids = Lists.newArrayListWithExpectedSize(result.getValue().size());
+    for (byte[] column : result.getValue().keySet()) {
+      if (column.length != Bytes.SIZEOF_LONG + GLOBAL_GROUPID_PREFIX.length) {
+        continue; // this must be something else that ended up in this row
+      }
+      if (!Bytes.startsWith(column, GLOBAL_GROUPID_PREFIX)) {
+        continue; // this must be something else that ended up in this row (but why is it in the range?)
+      }
+      long id = Bytes.toLong(column, GLOBAL_GROUPID_PREFIX.length);
+      ids.add(id);
+    }
+    return ids;
+  }
+
+  @Override
+  public long getGroupID() throws OperationException {
+    List<Long> existing = this.listAllConfiguredGroups();
+    long id;
+    do {
+      id = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
+    } while (existing.contains(id));
+    return id;
+  }
+
+  @Override
+  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
+    List<Long> groupIds = this.listAllConfiguredGroups();
+    Map<Long, List<QueueState>> groupInfos = Maps.newHashMap();
+    for (long groupId : groupIds) {
+      List<QueueState> states = Lists.newArrayList();
+      // iterate over every consumer and retrieve its state
+      for (int consumerId = 0; consumerId < MAX_CONSUMER_COUNT; consumerId++) {
+        final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, groupId, consumerId);
+        OperationResult<byte[]> readResult = table.get(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_READ_POINTER);
+        if (readResult.isEmpty()) {
+          break;
+        }
+        try {
+          states.add(QueueStateImpl.decode(new BinaryDecoder(new ByteArrayInputStream(readResult.getValue()))));
+        } catch (IOException e) {
+          // can't read this group state... ignoring because we want to return all useful info
+        }
+      }
+      groupInfos.put(groupId, states);
+    }
+    Map<String, Object> info = Maps.newHashMap();
+
+    // Read queue write pointer
+    long queueWritePointer = table.incrementAtomicDirtily(
+      makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
+    info.put("writePointer", queueWritePointer);
+    info.put("groups", groupInfos);
+
+    // return the entnire map as a json string
+    Gson gson = new Gson();
+    return new QueueAdmin.QueueInfo(gson.toJson(info));
   }
 
   @Override
@@ -554,6 +626,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
       final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
       QueueStateImpl queueState = getQueueState(consumer, readPointer);
+
+      // if queue state does not have the last evict time (==0), read it from table
+      byte[] rowKey;
+      if (queueState.getLastEvictTimeInSecs() == 0) {
+        rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+        OperationResult<byte[]> result = table.get(rowKey, LAST_EVICT_TIME_IN_SECS, readPointer);
+        if (!result.isEmpty() && result.getValue() != null && result.getValue().length > 0) {
+          queueState.setLastEvictTimeInSecs(Bytes.toLong(result.getValue()));
+        }
+      }
+
       if(evictStartTimeInSecs - queueState.getLastEvictTimeInSecs() < EVICT_INTERVAL_IN_SECS) {
         return;
       }
@@ -574,7 +657,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Find the min entry that can be evicted for the consumer's group
-      final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, entryPointer.getEntryId());
+      final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, queueState, entryPointer.getEntryId());
       // Save the minGroupEvictEntry for the consumer's group
       if(minGroupEvictEntry != INVALID_ENTRY_ID) {
         writeKeys.add(makeRowName(GLOBAL_EVICT_META_ROW));
@@ -591,6 +674,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // all others will save minGroupEvictEntry and return
       // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
       final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
+
       // Save the max of the entries that were evicted now
       if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
         writeKeys.add(makeRowName(GLOBAL_LAST_EVICT_ENTRY));
@@ -612,8 +696,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  private long getMinGroupEvictEntry(QueueConsumer consumer, long currentConsumerFinalizeEntry)
-    throws OperationException {
+  private long getMinGroupEvictEntry(QueueConsumer consumer, QueueStateImpl currentConsumerState,
+                                     long currentConsumerFinalizeEntry) throws OperationException {
     // Find out the min entry that can be evicted across all consumers in the consumer's group
 
     // Read CONSUMER_READ_POINTER and DEQUEUE_ENTRY_SET for all consumers in the group to determine evict entry
@@ -622,8 +706,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
     }
     OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult =
-      table.getAllColumns(rowKeys,
-                          new byte[][]{CONSUMER_READ_POINTER, DEQUEUE_ENTRY_SET}, TransactionOracle.DIRTY_READ_POINTER);
+      table.getAllColumns(rowKeys, new byte[][]{CONSUMER_STATE }, TransactionOracle.DIRTY_READ_POINTER);
     if(operationResult.isEmpty()) {
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(String.format(
@@ -637,7 +720,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // As far as consumer consumerId is concerned, all queue entries before
       // min(min(DEQUEUE_ENTRY_SET), CONSUMER_READ_POINTER) can be evicted
       // The least of such entry is the minGroupEvictEntry to which all queue entries can be evicted for the group
-      long evictEntry = getEvictEntryForConsumer(operationResult, consumerId, consumer, currentConsumerFinalizeEntry);
+      long evictEntry = getEvictEntryForConsumer(operationResult.getValue(), consumerId, consumer,
+                                                 currentConsumerState, currentConsumerFinalizeEntry);
       if(evictEntry == INVALID_ENTRY_ID) {
         minGroupEvictEntry = INVALID_ENTRY_ID;
         break;
@@ -650,58 +734,53 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return minGroupEvictEntry == Long.MAX_VALUE ? INVALID_ENTRY_ID : minGroupEvictEntry;
   }
 
-  private long getEvictEntryForConsumer(OperationResult<Map<byte[], Map<byte[], byte[]>>> operationResult,
-               int consumerId, QueueConsumer consumer, long currentConsumerFinalizeEntry) throws OperationException {
+  private long getEvictEntryForConsumer(Map<byte[], Map<byte[], byte[]>> rows, int consumerId, QueueConsumer consumer,
+                                        QueueStateImpl currentConsumerState, long currentConsumerFinalizeEntry) throws OperationException {
     // evictEntry determination logic:
     // evictEntry = (min(DEQUEUE_ENTRY_SET) != INVALID_ENTRY ? min(DEQUEUE_ENTRY_SET) - 1 : consumerReadPointer - 1)
 
-    // Read the min(DEQUEUE_ENTRY_SET) and CONSUMER_READ_POINTER for the consumer consumerId
-    Map<byte[], byte[]> readPointerMap = operationResult.getValue().get(
-                                              makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId));
-    if(readPointerMap == null) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Not able to fetch readPointer/activeEntry for consumerId %d, groupId %d",
-                                              consumerId, consumer.getGroupId())));
+    // get the queue state for the consumer id
+    QueueStateImpl queueState;
+    if (consumerId == consumer.getInstanceId()) {
+      queueState = currentConsumerState;
+    } else {
+      // different consnumer, must read state from table
+      Map<byte[], byte[]> row = rows.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId));
+      if(row == null) {
+        if(LOG.isTraceEnabled()) {
+          LOG.trace(getLogMessage(String.format("Not able to fetch groupState for consumerId %d, groupId %d",
+                                                consumerId, consumer.getGroupId())));
+        }
+        return INVALID_ENTRY_ID;
       }
-      return INVALID_ENTRY_ID;
-    }
-    final byte[] dequeueEntrySetBytes = readPointerMap.get(DEQUEUE_ENTRY_SET);
-    if(dequeueEntrySetBytes == null) {
-      if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format(
-          "Not able to decode dequeue entry set for consumerId %d, groupId %d", consumerId, consumer.getGroupId())));
+      final byte[] consumerStateBytes = row.get(CONSUMER_STATE);
+      if(consumerStateBytes == null) {
+        if(LOG.isTraceEnabled()) {
+          LOG.trace(getLogMessage(String.format(
+            "Not able to decode dequeue entry set for consumerId %d, groupId %d", consumerId, consumer.getGroupId())));
+        }
+        return INVALID_ENTRY_ID;
       }
-      return INVALID_ENTRY_ID;
+      try {
+        queueState = QueueStateImpl.decode(new BinaryDecoder(new ByteArrayInputStream(consumerStateBytes)));
+      } catch (IOException e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
+          String.format("Exception while deserializing cpnsumer state during finalize for consumerId %d, groupId %d",
+                        consumerId, consumer.getGroupId())), e);
+      }
     }
-    long evictEntry;
-    DequeuedEntrySet dequeueEntrySet;
-    try {
-       dequeueEntrySet = DequeuedEntrySet.decode(new BinaryDecoder(new ByteArrayInputStream(dequeueEntrySetBytes)));
-    } catch (IOException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-        String.format("Exception while deserializing dequeue entry list during finalize for consumerId %d, groupId %d",
-                      consumerId, consumer.getGroupId())), e);
-    }
+    DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
     if(!dequeueEntrySet.isEmpty()) {
-      evictEntry = dequeueEntrySet.min().getEntryId() - 1;
+      return dequeueEntrySet.min().getEntryId() - 1;
     } else {
       // For consumer running the eviction, currentConsumerFinalizeEntry is a better evict entry
       // than CONSUMER_READ_POINTER - 1, since currentConsumerFinalizeEntry > CONSUMER_READ_POINTER - 1
       if(consumerId == consumer.getInstanceId()) {
-        evictEntry = currentConsumerFinalizeEntry;
+        return currentConsumerFinalizeEntry;
       } else {
-        byte[] consumerReadPointerBytes = readPointerMap.get(CONSUMER_READ_POINTER);
-        if(consumerReadPointerBytes == null) {
-          if(LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format(
-              "Not able to decode readPointer for consumerId %d, groupId %d", consumerId, consumer.getGroupId())));
-          }
-          return INVALID_ENTRY_ID;
-        }
-        evictEntry = Bytes.toLong(consumerReadPointerBytes) - 1;
+        return queueState.getConsumerReadPointer() - 1;
       }
     }
-    return evictEntry;
   }
 
   class EvictionState {
@@ -860,17 +939,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
     this.table.deleteDirty(deleteKeys);
 
     return maxEntryToEvict;
-  }
-
-  @Override
-  public long getGroupID() throws OperationException {
-    return this.table.incrementAtomicDirtily(makeRowName(GLOBAL_GENERIC_PREFIX), Bytes.toBytes("GROUP_ID"), 1);
-  }
-
-  @Override
-  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
-    // TODO: implement getQueueInfo()
-    return new QueueAdmin.QueueInfo(new QueueAdmin.QueueMeta(1, 1, new GroupState[0]));
   }
 
   @Override
@@ -1550,9 +1618,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   public static class QueueStateImpl implements QueueState {
+
+    // we use this to mark encoded queue state in the table - when decoding we can verify the correct version
+    final static int encodingVersion = 1;
+
     // Note: QueueStateImpl does not override equals and hashcode,
     // since in some cases we would want to include transient state in comparison and in some other cases not.
 
+    private QueuePartitioner.PartitionerType partitioner;
     private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
     private long consumerReadPointer = INVALID_ENTRY_ID;
@@ -1565,6 +1638,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
       claimedEntryList = new ClaimedEntryList();
+    }
+
+    public QueuePartitioner.PartitionerType getPartitioner() {
+      return partitioner;
+    }
+
+    public void setPartitioner(QueuePartitioner.PartitionerType partitioner) {
+      this.partitioner = partitioner;
     }
 
     public TransientWorkingSet getTransientWorkingSet() {
@@ -1637,12 +1718,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public void encode(Encoder encoder) throws IOException {
-      // TODO: write and read schema
+      // transient working set is not encoded - in case we have to reconstruct the state, we can re-read it
+      // last evict time is not encoded - it is stored in a separate column
+      encoder.writeInt(encodingVersion);
+      partitioner.encode(encoder);
       dequeueEntrySet.encode(encoder);
       encoder.writeLong(consumerReadPointer);
       claimedEntryList.encode(encoder);
       encoder.writeLong(queueWritePointer);
-      encoder.writeLong(lastEvictTimeInSecs);
       reconfigPartitionersList.encode(encoder);
     }
 
@@ -1652,12 +1735,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public static QueueStateImpl decode(Decoder decoder) throws IOException {
+      // transient working set is not encoded - in case we have to reconstruct the state, we can re-read it
+      // last evict time is not encoded - it is stored in a separate column
+      int versionFound = decoder.readInt();
+      if (versionFound != encodingVersion) {
+        throw new IOException("Cannot decode QueueStateImpl with incomatible version " + versionFound);
+      }
       QueueStateImpl queueState = new QueueStateImpl();
+      queueState.setPartitioner(QueuePartitioner.PartitionerType.decode(decoder));
       queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
       queueState.setConsumerReadPointer(decoder.readLong());
       queueState.setClaimedEntryList(ClaimedEntryList.decode(decoder));
       queueState.setQueueWritePointer(decoder.readLong());
-      queueState.setLastEvictTimeInSecs(decoder.readLong());
       queueState.setReconfigPartitionersList(ReconfigPartitionersList.decode(decoder));
       return queueState;
     }
@@ -1666,57 +1755,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueStateImpl queueState = QueueStateImpl.decode(decoder);
       queueState.setTransientWorkingSet(TransientWorkingSet.decode(decoder));
       return queueState;
-    }
-  }
-
-  private static class QueueStateStore {
-    private final VersionedColumnarTable table;
-    private byte[] rowKey;
-    private final List<byte[]> columnNames = Lists.newArrayList();
-    private final List<byte[]> columnValues = Lists.newArrayList();
-
-    private OperationResult<Map<byte[], byte[]>> readResult;
-
-    private QueueStateStore(VersionedColumnarTable table) {
-      this.table = table;
-    }
-
-    public void setRowKey(byte[] rowKey) {
-      this.rowKey = rowKey;
-    }
-
-    public void addColumnName(byte[] columnName) {
-      columnNames.add(columnName);
-    }
-
-    public void addColumnValue(byte[] columnValue) {
-      columnValues.add(columnValue);
-    }
-
-    public void read()
-      throws OperationException{
-      final byte[][] colNamesByteArray = new byte[columnNames.size()][];
-      readResult = table.get(rowKey, columnNames.toArray(colNamesByteArray), TransactionOracle.DIRTY_READ_POINTER);
-      clearParameters();
-    }
-
-    public OperationResult<Map<byte[], byte[]>> getReadResult() {
-      return this.readResult;
-    }
-
-    public void write()
-      throws OperationException {
-      final byte[][] colNamesByteArray = new byte[columnNames.size()][];
-      final byte[][] colValuesByteArray = new byte[columnValues.size()][];
-      table.put(rowKey, columnNames.toArray(colNamesByteArray),
-                TransactionOracle.DIRTY_WRITE_VERSION, columnValues.toArray(colValuesByteArray));
-      clearParameters();
-    }
-
-    public void clearParameters() {
-      rowKey = null;
-      columnNames.clear();
-      columnValues.clear();
     }
   }
 
@@ -1754,8 +1792,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
-    protected final QueueStateStore readQueueStateStore = new QueueStateStore(table);
-    protected final QueueStateStore writeQueueStateStore = new QueueStateStore(table);
     protected SortedSet<Long> droppedEntries = ImmutableSortedSet.of();
 
     /**
@@ -1774,17 +1810,12 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     protected long getLastEvictEntry() throws OperationException {
-      QueueStateStore readEvictState = new QueueStateStore(table);
-      readEvictState.setRowKey(makeRowName(GLOBAL_LAST_EVICT_ENTRY));
-      readEvictState.addColumnName(GLOBAL_LAST_EVICT_ENTRY);
-      readEvictState.read();
-      OperationResult<Map<byte[], byte[]>> evictStateBytes = readEvictState.getReadResult();
 
-      if(!evictStateBytes.isEmpty()) {
-        byte[] lastEvictEntryBytes = evictStateBytes.getValue().get(GLOBAL_LAST_EVICT_ENTRY);
-        if(!isNullOrEmpty(lastEvictEntryBytes)) {
-          return Bytes.toLong(lastEvictEntryBytes);
-        }
+      OperationResult<byte[]> result =
+        table.get(makeRowName(GLOBAL_LAST_EVICT_ENTRY), GLOBAL_LAST_EVICT_ENTRY, TransactionOracle.DIRTY_READ_POINTER);
+
+      if (!result.isEmpty() && !isNullOrEmpty(result.getValue())) {
+        return Bytes.toLong(result.getValue());
       }
       return INVALID_ENTRY_ID;
     }
@@ -1807,54 +1838,30 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return bytes == null || bytes.length == 0;
     }
 
-    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
-                                             ReadPointer readPointer, boolean construct) throws OperationException {
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer,
+                                                         @SuppressWarnings("unused")QueueConfig config,
+                                                         ReadPointer  readPointer, boolean construct)
+      throws OperationException {
+
       // Note: 1. QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
+      // Note: 2. We define deleted queue state as empty bytes or zero length byte array
 
-      // Note: 2. We define a deleted cell as no bytes or no zero length bytes.
-      //          This is to do with limitation of deleteDiry on HBase
-
-      // Note: 3. We define deleted queue state as empty bytes or zero length consumerReadPointerBytes
-
-      readQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
-      readQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
-      readQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
-      readQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
-      readQueueStateStore.read();
-
-      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
-      byte[] consumerReadPointerBytes = null;
-
-      QueueStateImpl queueState = new QueueStateImpl();
-      if(!stateBytes.isEmpty()) {
-        // Read dequeued entries
-        byte[] dequeueEntrySetBytes = stateBytes.getValue().get(DEQUEUE_ENTRY_SET);
-        if(!isNullOrEmpty(dequeueEntrySetBytes)) {
-          ByteArrayInputStream bin = new ByteArrayInputStream(dequeueEntrySetBytes);
-          BinaryDecoder decoder = new BinaryDecoder(bin);
-          // TODO: Read and check schema
-          try {
-            queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
-          } catch (IOException e) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-              "Exception while deserializing dequeue entry list"), e);
-          }
+      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+      OperationResult<byte[]> readResult = table.get(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_READ_POINTER);
+      QueueStateImpl queueState;
+      if (!readResult.isEmpty() && readResult.getValue() != null && readResult.getValue().length > 0) {
+        ByteArrayInputStream bin = new ByteArrayInputStream(readResult.getValue());
+        BinaryDecoder decoder = new BinaryDecoder(bin);
+        try {
+          queueState = QueueStateImpl.decode(decoder);
+        } catch (IOException e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
+            "Exception while deserializing consumer state"), e);
         }
-
-        // Read consumer read pointer
-        consumerReadPointerBytes = stateBytes.getValue().get(CONSUMER_READ_POINTER);
-        if(!isNullOrEmpty(consumerReadPointerBytes)) {
-          queueState.setConsumerReadPointer(Bytes.toLong(consumerReadPointerBytes));
-        }
-
-        // Note: last evict time is read while constructing state, but it is only saved after finalize
-        byte[] lastEvictTimeInSecsBytes = stateBytes.getValue().get(LAST_EVICT_TIME_IN_SECS);
-        if(!isNullOrEmpty(lastEvictTimeInSecsBytes)) {
-          queueState.setLastEvictTimeInSecs(Bytes.toLong(lastEvictTimeInSecsBytes));
-        }
-      }
-
-      if(!construct && (stateBytes.isEmpty() || isNullOrEmpty(consumerReadPointerBytes))) {
+      } else if (construct) {
+        queueState = new QueueStateImpl();
+        queueState.setPartitioner(consumer.getQueueConfig().getPartitionerType());
+      } else {
         throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
           "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
       }
@@ -1889,10 +1896,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                  ReadPointer readPointer) throws OperationException {
-      // Persist the queue state of this consumer
-      writeQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
-
-      writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
+      // possibly adjust the read pointer before saving, to the max entry id that has been dequeued
       long consumerReadPointer = queueState.getConsumerReadPointer();
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         long maxEntryId = queueState.getDequeueEntrySet().max().getEntryId();
@@ -1901,40 +1905,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
         }
       }
       queueState.setConsumerReadPointer(consumerReadPointer);
-      writeQueueStateStore.addColumnValue(Bytes.toBytes(queueState.getConsumerReadPointer()));
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Encoder encoder = new BinaryEncoder(bos);
-      // TODO: add schema
       try {
-        queueState.getDequeueEntrySet().encode(encoder);
+        queueState.encode(encoder);
       } catch(IOException e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                     getLogMessage("Exception while serializing dequeue entry list"), e);
+                                     getLogMessage("Exception while serializing queue state"), e);
       }
-      writeQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
-      writeQueueStateStore.addColumnValue(bos.toByteArray());
 
-
-      // Note: last evict time is read while constructing state, but it is only saved after finalize
-
-      writeQueueStateStore.write();
+      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+      table.put(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_WRITE_VERSION, bos.toByteArray());
     }
 
     public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
       // Delete queue state for the consumer, see notes in constructQueueStateInternal
-
-      // TODO: make delete automatically detect the columns that needs to be empty
-      writeQueueStateStore.setRowKey(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()));
-
-      writeQueueStateStore.addColumnName(DEQUEUE_ENTRY_SET);
-      writeQueueStateStore.addColumnName(CONSUMER_READ_POINTER);
-      writeQueueStateStore.addColumnName(LAST_EVICT_TIME_IN_SECS);
-
-      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
-      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
-      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
-      writeQueueStateStore.write();
+      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+      table.put(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_WRITE_VERSION, Bytes.EMPTY_BYTE_ARRAY);
       // TODO: delete evict information for the consumer
     }
 
@@ -2063,55 +2051,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
-    @Override
-    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
-                                              ReadPointer readPointer, boolean construct) throws OperationException {
-      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
-
-      // Read reconfig partition information
-      readQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-
-      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
-      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
-      if(!stateBytes.isEmpty()) {
-        byte[] configPartitionerBytes = stateBytes.getValue().get(RECONFIG_PARTITIONER);
-        if(!isNullOrEmpty(configPartitionerBytes)) {
-          try {
-            // TODO: Read and check schema
-            ReconfigPartitionersList partitioners = ReconfigPartitionersList.decode(new BinaryDecoder(
-              new ByteArrayInputStream(configPartitionerBytes)));
-            queueState.setReconfigPartitionersList(partitioners);
-          } catch (IOException e) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                         getLogMessage("Exception while deserializing reconfig partitioners"), e);
-          }
-        }
-      }
-      return queueState;
-    }
-
-    @Override
-    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState, ReadPointer readPointer) throws OperationException {
-      // Write reconfig partition information
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      Encoder encoder = new BinaryEncoder(bos);
-      try {
-        queueState.getReconfigPartitionersList().encode(encoder);
-      } catch(IOException e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                     getLogMessage("Exception while serializing reconfig partitioners"), e);
-      }
-      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-      writeQueueStateStore.addColumnValue(bos.toByteArray());
-      super.saveDequeueState(consumer, config, queueState, readPointer);
-    }
-
-    @Override
-    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
-      writeQueueStateStore.addColumnName(RECONFIG_PARTITIONER);
-      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
-      super.deleteDequeueState(consumer);
-    }
 
     @Override
     public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config,
@@ -2335,37 +2274,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
    *  CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END columns
    */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
-    @Override
-    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
-                                              ReadPointer readPointer, boolean construct) throws OperationException {
-      // Note: QueueConfig.groupSize and QueueConfig.partitioningKey will not be set when calling from configure
-
-      // Read CLAIMED_ENTRY_LIST and store it in queueState
-      readQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-
-      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
-      OperationResult<Map<byte[], byte[]>> stateBytes = readQueueStateStore.getReadResult();
-      if(!stateBytes.isEmpty()) {
-        byte[] claimedEntryListBytes = stateBytes.getValue().get(CLAIMED_ENTRY_LIST);
-        if(!isNullOrEmpty(claimedEntryListBytes)) {
-          ClaimedEntryList claimedEntryList;
-          try {
-            // TODO: Read and check schema
-            claimedEntryList = ClaimedEntryList.decode(
-              new BinaryDecoder(new ByteArrayInputStream(claimedEntryListBytes)));
-          } catch (IOException e) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                         getLogMessage("Exception while deserializing CLAIMED_ENTRY_LIST"), e);
-          }
-          queueState.setClaimedEntryList(claimedEntryList);
-        }
-      }
-      return queueState;
-    }
 
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                                  ReadPointer readPointer) throws OperationException {
+
       // We can now move the claimed entry begin pointer to dequeueEntrySet.max() + 1
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         long maxDequeuedEntry = queueState.getDequeueEntrySet().max().getEntryId();
@@ -2378,26 +2291,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if (firstClaimed.isValid() && firstClaimed.getBegin() < queueState.getConsumerReadPointer()) {
         queueState.setConsumerReadPointer(firstClaimed.getBegin());
       }
-      // Add CLAIMED_ENTRY_LIST writeQueueStateStore so that they can be written
-      // to underlying storage by base class saveDequeueState
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      try {
-        queueState.getClaimedEntryList().encode(new BinaryEncoder(bos));
-      } catch (IOException e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                     getLogMessage("Exception while serializing CLAIMED_ENTRY_LIST"), e);
-      }
-      writeQueueStateStore.addColumnValue(bos.toByteArray());
 
       super.saveDequeueState(consumer, config, queueState, readPointer);
-    }
-
-    @Override
-    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
-      writeQueueStateStore.addColumnName(CLAIMED_ENTRY_LIST);
-      writeQueueStateStore.addColumnValue(Bytes.EMPTY_BYTE_ARRAY);
-      super.deleteDequeueState(consumer);
     }
 
     /**
