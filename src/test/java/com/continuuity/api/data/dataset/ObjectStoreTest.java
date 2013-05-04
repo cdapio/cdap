@@ -5,7 +5,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
