@@ -3,11 +3,11 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaTypeAdapter;
-import com.continuuity.internal.api.io.TypeRepresentation;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.SchemaTypeAdapter;
+import com.continuuity.internal.io.TypeRepresentation;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
