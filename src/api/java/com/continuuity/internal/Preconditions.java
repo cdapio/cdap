@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.continuuity.internal.api;
+package com.continuuity.internal;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.VisibleForTesting;

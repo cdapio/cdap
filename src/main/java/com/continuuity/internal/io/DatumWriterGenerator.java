@@ -1,8 +1,6 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.common.io.Encoder;
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaHash;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.continuuity.internal.asm.Signatures;
@@ -870,7 +868,7 @@ final class DatumWriterGenerator {
 
   /**
    * Optionally generates a type cast instruction based on the result of
-   * {@link #getCallTypeToken(com.google.common.reflect.TypeToken, com.continuuity.internal.api.io.Schema)}.
+   * {@link #getCallTypeToken(com.google.common.reflect.TypeToken, Schema)}.
    * @param mg A {@link GeneratorAdapter} for generating instructions
    * @param outputType
    * @param schema

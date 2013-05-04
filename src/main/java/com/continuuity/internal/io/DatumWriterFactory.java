@@ -1,6 +1,5 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.api.io.Schema;
 import com.google.common.reflect.TypeToken;
 
 /**

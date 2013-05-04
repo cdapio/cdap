@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.api.io;
+package com.continuuity.internal.io;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -33,7 +33,7 @@ import java.util.Set;
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
   @Override
-  protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords) throws UnsupportedTypeException {
+  protected com.continuuity.internal.io.Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords) throws com.continuuity.internal.io.UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
     knowRecords.add(recordName);
     Map<String, TypeToken<?>> recordFieldTypes =
@@ -42,20 +42,21 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
         collectByFields(typeToken, Maps.<String, TypeToken<?>>newTreeMap());
 
     // Recursively generate field type schema.
-    ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
+    ImmutableList.Builder<com.continuuity.internal.io.Schema.Field> builder = ImmutableList.builder();
     for(Map.Entry<String, TypeToken<?>> fieldType : recordFieldTypes.entrySet()) {
-      Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords);
+      com.continuuity.internal.io.Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords);
 
       if(!fieldType.getValue().getRawType().isPrimitive()) {
         // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
         if(!typeToken.getRawType().isAnnotationPresent(Nonnull.class)) {
-          fieldSchema = Schema.unionOf(fieldSchema, Schema.of(Schema.Type.NULL));
+          fieldSchema = com.continuuity.internal.io.Schema.unionOf(fieldSchema, com.continuuity.internal.io.Schema.of
+            (com.continuuity.internal.io.Schema.Type.NULL));
         }
       }
-      builder.add(Schema.Field.of(fieldType.getKey(), fieldSchema));
+      builder.add(com.continuuity.internal.io.Schema.Field.of(fieldType.getKey(), fieldSchema));
     }
 
-    return Schema.recordOf(recordName, builder.build());
+    return com.continuuity.internal.io.Schema.recordOf(recordName, builder.build());
   }
 
   private Map<String, TypeToken<?>> collectByFields(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {

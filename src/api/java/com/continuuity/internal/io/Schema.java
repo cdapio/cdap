@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.api.io;
+package com.continuuity.internal.io;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -619,7 +619,7 @@ public final class Schema {
     StringBuilder builder = new StringBuilder();
     JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
     try {
-      new SchemaTypeAdapter().write(writer, this);
+      new com.continuuity.internal.io.SchemaTypeAdapter().write(writer, this);
       writer.close();
       return builder.toString();
     } catch (IOException e) {

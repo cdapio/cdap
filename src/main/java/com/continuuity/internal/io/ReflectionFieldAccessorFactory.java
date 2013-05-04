@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.api.Preconditions;
+import com.continuuity.internal.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

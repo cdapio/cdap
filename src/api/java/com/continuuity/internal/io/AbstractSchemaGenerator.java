@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.api.io;
+package com.continuuity.internal.io;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -146,5 +146,5 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    * @throws UnsupportedTypeException
    */
   protected abstract Schema generateRecord(TypeToken<?> typeToken, Set<String> knownRecords) throws
-                                                                                             UnsupportedTypeException;
+    UnsupportedTypeException;
 }

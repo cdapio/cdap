@@ -1,6 +1,5 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.asm.ByteCodeClassLoader;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.google.common.base.Objects;

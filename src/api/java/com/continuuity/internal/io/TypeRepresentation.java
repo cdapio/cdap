@@ -1,4 +1,4 @@
-package com.continuuity.internal.api.io;
+package com.continuuity.internal.io;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
