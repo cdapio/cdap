@@ -14,11 +14,11 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.api.DefaultApplicationSpecification;
-import com.continuuity.internal.api.Preconditions;
-import com.continuuity.internal.api.batch.DefaultMapReduceSpecification;
-import com.continuuity.internal.api.flow.DefaultFlowSpecification;
-import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
+import com.continuuity.internal.DefaultApplicationSpecification;
+import com.continuuity.internal.Preconditions;
+import com.continuuity.internal.batch.DefaultMapReduceSpecification;
+import com.continuuity.internal.flow.DefaultFlowSpecification;
+import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -4,7 +4,7 @@
 
 package com.continuuity.api.flow.flowlet;
 
-import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
+import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

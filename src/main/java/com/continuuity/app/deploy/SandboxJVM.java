@@ -11,7 +11,7 @@ import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.filesystem.HDFSLocationFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;

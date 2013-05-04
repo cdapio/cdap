@@ -10,7 +10,7 @@ import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.internal.api.io.Schema;
+import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.DatumWriter;
 import com.google.common.base.Function;
