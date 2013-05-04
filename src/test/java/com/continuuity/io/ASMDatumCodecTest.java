@@ -10,7 +10,7 @@ import com.continuuity.internal.io.ASMFieldAccessorFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;

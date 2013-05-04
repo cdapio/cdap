@@ -7,7 +7,7 @@ import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionDatumReader;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
