@@ -66,7 +66,7 @@ import com.continuuity.internal.app.services.legacy.MetaDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.google.common.base.Preconditions;

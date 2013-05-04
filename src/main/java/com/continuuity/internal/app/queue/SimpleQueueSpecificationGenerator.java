@@ -13,7 +13,7 @@ import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

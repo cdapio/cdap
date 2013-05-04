@@ -14,7 +14,7 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.StageContext;
 import org.junit.Assert;
 import org.junit.Test;

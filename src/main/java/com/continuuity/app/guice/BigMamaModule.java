@@ -39,7 +39,7 @@ import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.discovery.InMemoryDiscoveryService;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;

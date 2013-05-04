@@ -7,7 +7,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;

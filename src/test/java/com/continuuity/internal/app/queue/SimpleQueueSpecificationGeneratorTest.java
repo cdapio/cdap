@@ -12,7 +12,7 @@ import com.continuuity.app.DefaultId;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
