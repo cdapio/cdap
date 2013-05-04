@@ -5,7 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.batch.MapReduceSpecification;
-import com.continuuity.internal.api.batch.DefaultMapReduceSpecification;
+import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

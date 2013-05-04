@@ -10,7 +10,7 @@ import com.continuuity.app.DefaultId;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.Test;
