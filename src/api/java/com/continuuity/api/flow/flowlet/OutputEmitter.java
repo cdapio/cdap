@@ -6,7 +6,6 @@ package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.api.annotation.Beta;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,7 +26,7 @@ public interface OutputEmitter<T> {
    * @param partitions mapping from partition key to object, which the {@link Object#hashCode()}
    *                   of the object value would be triggered to compute the actual partition value.
    */
-  @Deprecated
+  @Beta
   void emit(T data, Map<String, Object> partitions);
 
   /**
@@ -40,20 +39,4 @@ public interface OutputEmitter<T> {
    */
   @Beta
   void emit(T data, String partitionKey, Object partitionValue);
-
-  /**
-   * Emits an event of type T, associated with set of partitions hashes for selecting
-   * downstream partitioned consumers ({@link Flowlet}).
-   * @param dataObject Events with partition hashes
-   */
-  @Beta
-  void emit(DataObject<T> dataObject);
-
-  /**
-   * Emits a list of events of type T, associated with set of partitions hashes for selecting
-   * downstream partitioned consumers ({@link Flowlet}).
-   * @param dataObjects List of events with partition hashes
-   */
-  @Beta
-  void emit(List<DataObject<T>> dataObjects);
 }

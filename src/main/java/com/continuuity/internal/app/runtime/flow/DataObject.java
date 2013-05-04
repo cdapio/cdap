@@ -1,4 +1,4 @@
-package com.continuuity.api.flow.flowlet;
+package com.continuuity.internal.app.runtime.flow;
 
 import com.google.common.collect.ImmutableMap;
 

@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.DataObject;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.io.BinaryEncoder;
@@ -70,14 +69,8 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     emit(new DataObject<T>(data, partitions));
   }
 
-  @Override
-  public void emit(DataObject<T> dataObject) {
+  private void emit(DataObject<T> dataObject) {
     dataQueue.add(dataObject);
-  }
-
-  @Override
-  public void emit(List<DataObject<T>> dataObjects) {
-    dataQueue.addAll(dataObjects);
   }
 
   @Override
@@ -98,14 +91,10 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     agent.submit(new QueueEnqueue(queueProducer, queueName.toBytes(), queueEntries));
   }
 
-  class DataObjectToQueueEntry implements Function<DataObject<T>, QueueEntry> {
+  private final class DataObjectToQueueEntry implements Function<DataObject<T>, QueueEntry> {
     @Nullable
     @Override
-    public QueueEntry apply(@Nullable DataObject<T> input) {
-      if(input == null) {
-        return null;
-      }
-
+    public QueueEntry apply(DataObject<T> input) {
       try {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         output.write(schemaHash);
@@ -119,10 +108,10 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     }
   }
 
-  static class PartitionMapTransformer implements Function<Object, Integer> {
+  private  final static class PartitionMapTransformer implements Function<Object, Integer> {
     @Nullable
     @Override
-    public Integer apply(@Nullable Object input) {
+    public Integer apply(Object input) {
       return input == null ? 0 : input.hashCode();
     }
   }
