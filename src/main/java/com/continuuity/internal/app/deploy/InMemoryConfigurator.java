@@ -13,7 +13,7 @@ import com.continuuity.app.program.Archive;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.api.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
