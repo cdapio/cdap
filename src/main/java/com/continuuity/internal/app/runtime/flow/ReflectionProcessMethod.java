@@ -31,7 +31,7 @@ import java.util.concurrent.Executor;
  *
  */
 @NotThreadSafe
-public final class ReflectionProcessMethod implements ProcessMethod {
+public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReflectionProcessMethod.class);
 
@@ -77,7 +77,7 @@ public final class ReflectionProcessMethod implements ProcessMethod {
   }
 
   @Override
-  public <T> PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer) {
+  public PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer) {
     return doInvoke(input, inputDatumTransformer);
   }
 
@@ -86,7 +86,7 @@ public final class ReflectionProcessMethod implements ProcessMethod {
     return flowlet.getClass() + "." + method.toString();
   }
 
-  private <T> PostProcess doInvoke(final InputDatum input, final Function<ByteBuffer, T> inputDatumTransformer) {
+  private PostProcess doInvoke(final InputDatum input, final Function<ByteBuffer, T> inputDatumTransformer) {
     final TransactionAgent txAgent = txAgentSupplier.createAndUpdateTransactionAgentProxy();
 
     try {
@@ -130,7 +130,7 @@ public final class ReflectionProcessMethod implements ProcessMethod {
     }
   }
 
-  private <T> PostProcess getPostProcess(final TransactionAgent txAgent,
+  private PostProcess getPostProcess(final TransactionAgent txAgent,
                                      final InputDatum input,
                                      final T event,
                                      final InputContext inputContext) {
@@ -160,7 +160,7 @@ public final class ReflectionProcessMethod implements ProcessMethod {
     };
   }
 
-  private <T> PostProcess getFailurePostProcess(final Throwable t,
+  private PostProcess getFailurePostProcess(final Throwable t,
                                             final TransactionAgent txAgent,
                                             final InputDatum input,
                                             final T event,

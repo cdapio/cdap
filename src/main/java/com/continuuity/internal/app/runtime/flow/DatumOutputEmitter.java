@@ -69,7 +69,7 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     emit(new DataObject<T>(data, partitions));
   }
 
-  public void emit(DataObject<T> dataObject) {
+  private void emit(DataObject<T> dataObject) {
     dataQueue.add(dataObject);
   }
 
@@ -91,14 +91,10 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     agent.submit(new QueueEnqueue(queueProducer, queueName.toBytes(), queueEntries));
   }
 
-  class DataObjectToQueueEntry implements Function<DataObject<T>, QueueEntry> {
+  private final class DataObjectToQueueEntry implements Function<DataObject<T>, QueueEntry> {
     @Nullable
     @Override
-    public QueueEntry apply(@Nullable DataObject<T> input) {
-      if(input == null) {
-        return null;
-      }
-
+    public QueueEntry apply(DataObject<T> input) {
       try {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         output.write(schemaHash);
@@ -112,10 +108,10 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T>, OutputSubm
     }
   }
 
-  static class PartitionMapTransformer implements Function<Object, Integer> {
+  private  final static class PartitionMapTransformer implements Function<Object, Integer> {
     @Nullable
     @Override
-    public Integer apply(@Nullable Object input) {
+    public Integer apply(Object input) {
       return input == null ? 0 : input.hashCode();
     }
   }
