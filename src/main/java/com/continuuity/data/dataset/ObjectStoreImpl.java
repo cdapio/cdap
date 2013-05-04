@@ -18,10 +18,10 @@ import java.io.IOException;
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
  * implementations of the data APIs.
  */
-public class ObjectStoreImpl<T> extends ObjectStore<T> {
+public final class ObjectStoreImpl<T> extends ObjectStore<T> {
 
-  private DatumWriter<T> datumWriter; // to serialize an object
-  private ReflectionDatumReader<T> datumReader; // to deserialize an object
+  private final DatumWriter<T> datumWriter; // to serialize an object
+  private final ReflectionDatumReader<T> datumReader; // to deserialize an object
 
   /**
    * Given an object store, create an implementation and set that as the delegate for the store.

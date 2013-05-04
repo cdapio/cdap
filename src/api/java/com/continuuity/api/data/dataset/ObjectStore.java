@@ -25,12 +25,12 @@ import java.lang.reflect.Type;
 public class ObjectStore<T> extends DataSet {
 
   // the (write) schema of the objects in the store
-  protected Schema schema;
+  protected final Schema schema;
   // representation of the type of the objects in the store. needed for decoding (we need to tell the decoder what
   // type is should return - otherwise it would have to return an avro generic).
-  protected TypeRepresentation typeRep;
+  protected final TypeRepresentation typeRep;
   // the underlying key/value table that we use to store the objects
-  protected KeyValueTable kvTable;
+  protected final KeyValueTable kvTable;
 
    // this is the dataset that executes the actual operations. using a delegate
    // allows us to inject a different implementation.
@@ -44,11 +44,6 @@ public class ObjectStore<T> extends DataSet {
   public void setDelegate(ObjectStore<T> store) {
     this.delegate = store;
   }
-
-  // helper to serialize / deserialize schemas and types
-  private Gson gson = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
 
   /**
    * Constructor for an object store from its name and the type of the objects it stores.
@@ -65,9 +60,12 @@ public class ObjectStore<T> extends DataSet {
 
   @Override
   public DataSetSpecification configure() {
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
     return new DataSetSpecification.Builder(this)
-      .property("schema", this.gson.toJson(this.schema))
-      .property("type", this.gson.toJson(this.typeRep))
+      .property("schema", gson.toJson(this.schema))
+      .property("type", gson.toJson(this.typeRep))
       .dataset(this.kvTable.configure())
       .create();
   }
@@ -78,8 +76,11 @@ public class ObjectStore<T> extends DataSet {
    */
   public ObjectStore(DataSetSpecification spec) {
     super(spec);
-    this.schema = this.gson.fromJson(spec.getProperty("schema"), Schema.class);
-    this.typeRep = this.gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+    this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
+    this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     this.kvTable = new KeyValueTable(spec.getSpecificationFor(this.getName() + "_kv"));
   }
 
