@@ -2,11 +2,8 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.io;
+package com.continuuity.internal.api.io;
 
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaGenerator;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
