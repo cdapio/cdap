@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -47,21 +48,21 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public EnqueueResult enqueue(byte [] queueName, QueueEntry entry,
-                               long writeVersion) throws OperationException {
-    return getQueue(queueName).enqueue(entry, writeVersion);
+  public EnqueueResult enqueue(byte[] queueName, QueueEntry entry, Transaction transaction)
+    throws OperationException {
+    return getQueue(queueName).enqueue(entry, transaction);
   }
 
   @Override
-  public EnqueueResult enqueue(byte [] queueName, QueueEntry [] entries,
-                               long writeVersion) throws OperationException {
-    return getQueue(queueName).enqueue(entries, writeVersion);
+  public EnqueueResult enqueue(byte[] queueName, QueueEntry[] entries, Transaction transaction)
+    throws OperationException {
+    return getQueue(queueName).enqueue(entries, transaction);
   }
 
   @Override
-  public void invalidate(byte [] queueName, QueueEntryPointer [] entryPointers,
-      long writeVersion) throws OperationException {
-    getQueue(queueName).invalidate(entryPointers, writeVersion);
+  public void invalidate(byte[] queueName, QueueEntryPointer[] entryPointers, Transaction transaction)
+    throws OperationException {
+    getQueue(queueName).invalidate(entryPointers, transaction);
   }
 
   @Override
@@ -71,30 +72,27 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
-                  QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
-    getQueue(queueName).ack(entryPointer, consumer, readPointer);
+    getQueue(queueName).ack(entryPointer, consumer, transaction);
   }
 
   @Override
-  public void ack(byte[] queueName, QueueEntryPointer [] entryPointers,
-                  QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
-    getQueue(queueName).ack(entryPointers, consumer, readPointer);
+    getQueue(queueName).ack(entryPointers, consumer, transaction);
   }
 
   @Override
-  public void finalize(byte[] queueName, QueueEntryPointer [] entryPointers,
-      QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException {
-    getQueue(queueName).finalize(entryPointers, consumer, totalNumGroups, writePoint);
+  public void finalize(byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
+    getQueue(queueName).finalize(entryPointers, consumer, totalNumGroups, transaction);
   }
 
   @Override
-  public void unack(byte[] queueName, QueueEntryPointer [] entryPointers,
-                    QueueConsumer consumer, ReadPointer readPointer)
-    throws OperationException {
-    getQueue(queueName).unack(entryPointers, consumer, readPointer);
+  public void unack(byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer,
+                    Transaction transaction) throws OperationException {
+    getQueue(queueName).unack(entryPointers, consumer, transaction);
   }
 
   @Override

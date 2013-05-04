@@ -3,7 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
-import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -29,17 +29,17 @@ public class TestMemoryTTQueue extends TestTTQueue {
     return 250;
   }
 
-  void enqueuOne(TTQueue queue, int i, long version) throws OperationException {
-    Assert.assertTrue("Enqueue failure!", queue.enqueue(new QueueEntry(Bytes.toBytes(i)), version).isSuccess());
+  void enqueuOne(TTQueue queue, int i, Transaction transaction) throws OperationException {
+    Assert.assertTrue("Enqueue failure!", queue.enqueue(new QueueEntry(Bytes.toBytes(i)), transaction).isSuccess());
   }
 
-  void dequeueOne(TTQueue queue, QueueConsumer consumer, int numConsumers, int i, ReadPointer pointer)
+  void dequeueOne(TTQueue queue, QueueConsumer consumer, int numConsumers, int i, Transaction transaction)
     throws OperationException {
-    DequeueResult result = queue.dequeue(consumer, pointer);
+    DequeueResult result = queue.dequeue(consumer, transaction.getReadPointer());
     Assert.assertFalse("Dequeue returned empty!", result.isEmpty());
     Assert.assertArrayEquals(Bytes.toBytes(i), result.getEntry().getData());
-    queue.ack(result.getEntryPointer(), consumer, pointer);
-    queue.finalize(result.getEntryPointer(), consumer, numConsumers, pointer.getMaximum());
+    queue.ack(result.getEntryPointer(), consumer, transaction);
+    queue.finalize(result.getEntryPointer(), consumer, numConsumers, transaction);
   }
 
   // this enqueues a number of entries and the dequeues them all, repeatedly, with a single consumer
@@ -47,8 +47,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testSingleConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    ReadPointer readPointer = getCleanPointer();
-    long version = readPointer.getMaximum();
+    Transaction transaction = oracle.startTransaction();
 
     int rounds = 1000;
     int entriesPerRound = 10000;
@@ -63,13 +62,13 @@ public class TestMemoryTTQueue extends TestTTQueue {
       // enqueue a whole lotta entries
       long nanoStartRound = System.nanoTime();
       for (int i = 0; i < entriesPerRound; i++) {
-        enqueuOne(queue, i, version);
+        enqueuOne(queue, i, transaction);
       }
       long nanoEnqueue = System.nanoTime();
 
       // dequeue, verify, ack and finalize all of them
       for (int i = 0; i < entriesPerRound; i++) {
-        dequeueOne(queue, consumer, 1, i, readPointer);
+        dequeueOne(queue, consumer, 1, i, transaction);
       }
       long nanoDequeue = System.nanoTime();
 
@@ -87,7 +86,9 @@ public class TestMemoryTTQueue extends TestTTQueue {
       System.out.println("Single avg dequeue time in nano: " + avgDequeue);
 
       // verify queue is empty now
-      Assert.assertTrue("Queue should now be empty!", queue.dequeue(consumer, readPointer).isEmpty());
+      Assert.assertTrue("Queue should now be empty!", queue.dequeue(consumer, getDirtyPointer()).isEmpty());
+
+      oracle.commitTransaction(transaction);
     }
   }
 
@@ -98,8 +99,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testMultiConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    ReadPointer readPointer = getCleanPointer();
-    long version = readPointer.getMaximum();
+    Transaction transaction = oracle.startTransaction();
 
     int rounds = 1000;
     int entriesPerRound = 10000;
@@ -115,17 +115,17 @@ public class TestMemoryTTQueue extends TestTTQueue {
       // enqueue a whole lotta entries
       long nanoStartRound = System.nanoTime();
       for (int i = 0; i < entriesPerRound; i++) {
-        enqueuOne(queue, i, version);
+        enqueuOne(queue, i, transaction);
       }
       long nanoEnqueue = System.nanoTime();
 
       // dequeue, verify, ack and finalize all of them
       for (int i = 0; i < entriesPerRound; i++) {
-        dequeueOne(queue, consumer1, 2, i, readPointer);
+        dequeueOne(queue, consumer1, 2, i, transaction);
       }
       if (round != 0) {
         for (int i = 0; i < entriesPerRound; i++) {
-          dequeueOne(queue, consumer2, 2, i, readPointer);
+          dequeueOne(queue, consumer2, 2, i, transaction);
         }
       }
       long nanoDequeue = System.nanoTime();
@@ -144,7 +144,9 @@ public class TestMemoryTTQueue extends TestTTQueue {
       System.out.println("Single avg dequeue time in nano: " + avgDequeue);
 
       // verify queue is empty now
-      Assert.assertTrue("Queue should now be empty!", queue.dequeue(consumer1, readPointer).isEmpty());
+      Assert.assertTrue("Queue should now be empty!", queue.dequeue(consumer1, getDirtyPointer()).isEmpty());
+
+      oracle.commitTransaction(transaction);
     }
   }
 

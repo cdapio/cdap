@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
@@ -64,20 +65,20 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(QueueEntry[] entries, Transaction transaction) throws OperationException {
     if (entries.length == 1) {
-      return enqueue(entries[0], cleanWriteVersion);
+      return enqueue(entries[0], transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entries.length);
     }
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion)
+  public EnqueueResult enqueue(QueueEntry entry, Transaction transaction)
       throws OperationException {
     if (TRACE)
-      log("Enqueueing (data.len=" + entry.getData().length + ", writeVersion=" +
-          cleanWriteVersion + ")");
+      log("Enqueueing (data.len=" + entry.getData().length + ", transaction=" +
+          transaction + ")");
 
     // Get a read pointer that sees everything (dirty read pointer)
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
@@ -86,7 +87,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     try {
       result = this.table.enqueue(
           new HBQEnqueue(this.queueName, entry.getData(),
-              new HBReadPointer(cleanWriteVersion, dirtyReadVersion), this.shardConfig));
+              new HBReadPointer(transaction.getWriteVersion(), dirtyReadVersion), this.shardConfig));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();
@@ -99,9 +100,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void invalidate(QueueEntryPointer[] entryPointers, long writeVersion) throws OperationException {
+  public void invalidate(QueueEntryPointer[] entryPointers, Transaction transaction) throws OperationException {
     if (entryPointers.length == 1) {
-      invalidate(entryPointers[0], writeVersion);
+      invalidate(entryPointers[0], transaction.getWriteVersion());
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
@@ -141,7 +142,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     try {
       dequeueResult = this.table.dequeue(new HBQDequeue(
           this.queueName, consumer.toHBQ(), config.toHBQ(), new HBReadPointer(
-              memoryPointer.getWritePointer(), memoryPointer.getReadPointer(),
+              memoryPointer.getWriteVersion(), memoryPointer.getReadPointer(),
               memoryPointer.getReadExcludes()),
               this.expirationConfig));
     } catch (IOException e) {
@@ -158,17 +159,17 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
     if (entryPointers.length == 1) {
-      ack(entryPointers[0], consumer, readPointer);
+      ack(entryPointers[0], consumer, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
       throws OperationException {
     if (TRACE) log("Acking " + entryPointer);
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
@@ -186,18 +187,17 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
-    throws OperationException {
+  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
     if (entryPointers.length == 1) {
-      finalize(entryPointers[0], consumer, totalNumGroups, writePoint);
+      finalize(entryPointers[0], consumer, totalNumGroups, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
-  public void finalize(QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups, @SuppressWarnings("unused")long writePoint)
-          throws OperationException {
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
     if (TRACE) log("Finalizing " + entryPointer);
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();
@@ -215,17 +215,17 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer) throws
+  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction) throws
     OperationException {
     if (entryPointers.length == 1) {
-      unack(entryPointers[0], consumer, readPointer);
+      unack(entryPointers[0], consumer, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer,
-                    @SuppressWarnings("unused") ReadPointer readPointer) throws OperationException {
+                    @SuppressWarnings("unused") Transaction transaction) throws OperationException {
     if (TRACE) log("Unacking " + entryPointer);
     long dirtyWriteVersion = TransactionOracle.DIRTY_WRITE_VERSION;
     long dirtyReadVersion = TransactionOracle.DIRTY_READ_POINTER.getMaximum();

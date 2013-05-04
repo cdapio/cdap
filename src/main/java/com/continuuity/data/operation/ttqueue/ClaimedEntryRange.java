@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -10,9 +11,9 @@ import java.io.IOException;
  * This represents a range of queue entry ids that have been claimed by a queue consumer.
  * Multiple of these can be persisted with the consumer state.
  */
-class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
+public final class ClaimedEntryRange implements Comparable<ClaimedEntryRange> {
 
-  public static final long INVALID_ENTRY_ID = -1L;
+  public static final long INVALID_ENTRY_ID = TTQueueNewConstants.INVALID_ENTRY_ID;
 
   private long begin;
   private long end;

@@ -3,10 +3,11 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
-import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
 import java.util.Random;
@@ -46,8 +47,11 @@ public abstract class BenchTTQueue {
     QueueEntry entry = new QueueEntry(data);
     long last = start;
     for (int i=0; i<iterations; i++) {
+      long version = timeOracle.getTimestamp();
+      MemoryReadPointer rp = new MemoryReadPointer(version, version, ImmutableSet.<Long>of());
+      Transaction transaction = new Transaction(rp, rp);
       r.nextBytes(data);
-      assertTrue(queue.enqueue(entry, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(entry, transaction).isSuccess());
       last = printStat(i, last, 1000);
     }
     
@@ -66,8 +70,11 @@ public abstract class BenchTTQueue {
     QueueEntry entry = new QueueEntry(data);
     long last = start;
     for (int i=0; i<iterations; i++) {
+      long version = timeOracle.getTimestamp();
+      MemoryReadPointer rp = new MemoryReadPointer(version, version, ImmutableSet.<Long>of());
+      Transaction transaction = new Transaction(rp, rp);
       r.nextBytes(data);
-      assertTrue(queue.enqueue(entry, timeOracle.getTimestamp()).isSuccess());
+      assertTrue(queue.enqueue(entry, transaction).isSuccess());
       last = printStat(i, last, 1000);
     }
     long end = now();
@@ -80,12 +87,14 @@ public abstract class BenchTTQueue {
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     queue.configure(consumer);
-    ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
     for (int i=0; i<iterations; i++) {
+      long version = timeOracle.getTimestamp();
+      MemoryReadPointer rp = new MemoryReadPointer(version, version, ImmutableSet.<Long>of());
+      Transaction transaction = new Transaction(rp, rp);
       DequeueResult result = queue.dequeue(consumer, rp);
       assertTrue(result.isSuccess());
-      queue.ack(result.getEntryPointer(), consumer, rp);
-      queue.finalize(result.getEntryPointer(), consumer, -1, rp.getMaximum());
+      queue.ack(result.getEntryPointer(), consumer, transaction);
+      queue.finalize(result.getEntryPointer(), consumer, -1, transaction);
       last = printStat(i, last, 1000);
     }
     long dend = now();
