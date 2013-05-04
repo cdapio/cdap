@@ -251,8 +251,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     final QueueConfig config = consumer.getQueueConfig();
     if (LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
-                  "] (" + consumer + ", " + config + ", " + readPointer + ")"));
+      LOG.trace(getLogMessage(consumer, "Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
+                  "] (" + config + ", " + readPointer + ")"));
     }
 
     // Determine what dequeue strategy to use based on the partitioner
@@ -285,8 +285,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
           }
           byte[] entryBytes = cachedEntries.get(returnEntryId);
           if(entryBytes == null) {
-            throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(String.format(
-              "Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
+            throw new OperationException(
+              StatusCode.INTERNAL_ERROR,
+              getLogMessage(consumer,
+                            String.format("Cannot fetch dequeue entry id %d from cached entries", returnEntryId)));
           }
           entries.add(new QueueEntry(entryBytes));
           pointers.add(new QueueEntryPointer(this.queueName, returnEntryId, returnEntry.getTries()));
@@ -310,7 +312,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // If still no queue entries available to dequue, return queue empty
     if(!queueState.getTransientWorkingSet().hasNext()) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage("End of queue reached using " + "read pointer " + readPointer));
+        LOG.trace(getLogMessage(consumer, "End of queue reached using " + "read pointer " + readPointer));
       }
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
@@ -386,8 +388,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(!queueState.getDequeueEntrySet().contains(entryPointer.getEntryId())) {
         throw new OperationException(
           StatusCode.ILLEGAL_ACK,
-          getLogMessage(String.format("Entry %d is not dequeued by this consumer. Current active entries are %s",
-                                      entryPointer.getEntryId(), queueState.getDequeueEntrySet())));
+          getLogMessage(consumer,
+            String.format("Entry %d is not dequeued by this consumer. Current active entries are %s",
+                          entryPointer.getEntryId(), queueState.getDequeueEntrySet())));
       }
       // Set ack state
       queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
@@ -469,13 +472,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long groupId = newConsumer.getGroupId();
 
     if(LOG.isDebugEnabled()) {
-      LOG.trace(getLogMessage(String.format(
+      LOG.trace(getLogMessage(newConsumer, String.format(
         "Running configure with consumer=%s, readPointer= %s", newConsumer, readPointer)));
     }
 
     if(newConsumerCount < 1) {
-      throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
-                        getLogMessage(String.format("New consumer count (%d) should atleast be 1", newConsumerCount)));
+      throw new OperationException(
+        StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+        getLogMessage(newConsumer, String.format("New consumer count (%d) should atleast be 1", newConsumerCount)));
     }
 
     // Determine what dequeue strategy to use based on the partitioner
@@ -525,8 +529,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
     for (int i = 0; i < oldConsumerCount; ++i) {
       QueueStateImpl queueState = queueStates.get(i);
       if(!queueState.getDequeueEntrySet().isEmpty()) {
-        throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
-                                     getLogMessage(String.format("Consumer %d still has inflight entries", i)));
+        throw new OperationException(
+          StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+          getLogMessage(String.format("Consumer (%d, %d) still has inflight entries", newConsumer.getGroupId(), i)));
       }
     }
 
@@ -641,7 +646,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     if(totalNumGroups <= 0) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("totalNumGroups=%d, nothing to be evicted", totalNumGroups)));
+        LOG.trace(getLogMessage(consumer, String.format("totalNumGroups=%d, nothing to be evicted", totalNumGroups)));
       }
       return;
     }
@@ -679,7 +684,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueState.setLastEvictTimeInSecs(evictStartTimeInSecs);
 
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Running eviction for group %d", consumer.getGroupId())));
+        LOG.trace(getLogMessage(consumer, String.format("Running eviction for group %d", consumer.getGroupId())));
       }
 
       // Find the min entry that can be evicted for the consumer's group
@@ -692,7 +697,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format(
+        LOG.trace(getLogMessage(consumer, String.format(
           "minGroupEvictEntry=%d, groupId=%d", minGroupEvictEntry, consumer.getGroupId())));
       }
 
@@ -717,7 +722,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
                 TransactionOracle.DIRTY_WRITE_VERSION, writeValues.toArray(valArray));
 
     } catch (OperationException e) {
-      LOG.warn(getLogMessage(String.format("Eviction for group %d failed with exception", consumer.getGroupId())), e);
+      LOG.warn(getLogMessage(consumer,
+                             String.format("Eviction for group %d failed with exception", consumer.getGroupId())), e);
       // ignore the error, we don't want throw exceptions in finalize()
     }
   }
@@ -735,7 +741,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       table.getAllColumns(rowKeys, new byte[][]{CONSUMER_STATE }, TransactionOracle.DIRTY_READ_POINTER);
     if(operationResult.isEmpty()) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format(
+        LOG.trace(getLogMessage(consumer, String.format(
           "Not able to fetch state of group %d for eviction", consumer.getGroupId())));
       }
       return INVALID_ENTRY_ID;
@@ -772,7 +778,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       Map<byte[], byte[]> row = rows.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId));
       if(row == null) {
         if(LOG.isTraceEnabled()) {
-          LOG.trace(getLogMessage(String.format("Not able to fetch groupState for consumerId %d, groupId %d",
+          LOG.trace(getLogMessage(consumer, String.format("Not able to fetch groupState for consumerId %d, groupId %d",
                                                 consumerId, consumer.getGroupId())));
         }
         return INVALID_ENTRY_ID;
@@ -780,7 +786,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       final byte[] consumerStateBytes = row.get(CONSUMER_STATE);
       if(consumerStateBytes == null) {
         if(LOG.isTraceEnabled()) {
-          LOG.trace(getLogMessage(String.format(
+          LOG.trace(getLogMessage(consumer, String.format(
             "Not able to decode dequeue entry set for consumerId %d, groupId %d", consumerId, consumer.getGroupId())));
         }
         return INVALID_ENTRY_ID;
@@ -788,9 +794,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       try {
         queueState = QueueStateImpl.decode(new BinaryDecoder(new ByteArrayInputStream(consumerStateBytes)));
       } catch (IOException e) {
-        throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-          String.format("Exception while deserializing cpnsumer state during finalize for consumerId %d, groupId %d",
-                        consumerId, consumer.getGroupId())), e);
+        throw new OperationException(
+          StatusCode.INTERNAL_ERROR,
+          getLogMessage(
+            consumer,
+            String.format("Exception while deserializing cpnsumer state during finalize for consumerId %d, groupId %d",
+                          consumerId, consumer.getGroupId())),
+          e);
       }
     }
     EvictionHelper evictionHelper = queueState.getEvictionHelper();
@@ -883,13 +893,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final int numGroupsRead = evictionState.getGroupIds().size();
     if(numGroupsRead < totalNumGroups) {
       if(LOG.isDebugEnabled()) {
-        LOG.trace(getLogMessage(
+        LOG.trace(getLogMessage(consumer,
           String.format("Cannot get eviction information for all %d groups, got only for %d groups. Aborting eviction.",
                         totalNumGroups, numGroupsRead)));
       }
       return INVALID_ENTRY_ID;
     } else if(numGroupsRead > totalNumGroups) {
-      LOG.warn(getLogMessage(
+      LOG.warn(getLogMessage(consumer,
         String.format("Getting eviction information for more groups (%d) than required (%d). %s",
                       numGroupsRead,
                       totalNumGroups,
@@ -903,14 +913,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     Collections.sort(groupIds);
     if(groupIds.get(0) != consumer.getGroupId()) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Min groupId=%d, current consumer groupId=%d. Aborting eviction",
+        LOG.trace(getLogMessage(consumer,
+                                String.format("Min groupId=%d, current consumer groupId=%d. Aborting eviction",
                                               groupIds.get(0), consumer.getGroupId())));
       }
       return INVALID_ENTRY_ID;
     }
 
     if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("Running global eviction..."));
+      LOG.trace(getLogMessage(consumer, "Running global eviction..."));
     }
 
     // Determine the max entry that can be evicted across all groups
@@ -940,7 +951,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     if(maxEntryToEvict < FIRST_QUEUE_ENTRY_ID || maxEntryToEvict <= lastEvictedEntry ||
       maxEntryToEvict == Long.MAX_VALUE) {
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format(
+        LOG.trace(getLogMessage(consumer, String.format(
           "Nothing to evict. Entry to be evicted = %d, lastEvictedEntry = %d", maxEntryToEvict, lastEvictedEntry)));
       }
       return INVALID_ENTRY_ID;
@@ -949,7 +960,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
     final long startEvictEntry = lastEvictedEntry + 1;
 
     if(LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage(String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
+      LOG.trace(getLogMessage(consumer,
+                              String.format("Evicting entries from %d to %d", startEvictEntry, maxEntryToEvict)));
     }
 
     // Evict entries
@@ -975,10 +987,20 @@ public class TTQueueNewOnVCTable implements TTQueue {
     } else {
       if(! (consumer.getQueueState() instanceof QueueStateImpl)) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
-              getLogMessage(String.format(
-                "Don't know how to use QueueState class %s", consumer.getQueueState().getClass())));
+              getLogMessage(consumer,
+                            String.format("Don't know how to use QueueState class %s",
+                                          consumer.getQueueState().getClass())));
       }
       queueState = (QueueStateImpl) consumer.getQueueState();
+    }
+
+    // Check if the partitioner in saved state is compatible with the requested partitioning type
+    if(queueState.getPartitioner() != consumer.getQueueConfig().getPartitionerType()) {
+      throw new OperationException(
+        StatusCode.INVALID_STATE,
+        getLogMessage(consumer, String.format("Saved state partition type=%s, requested partition=%s for consumer %s",
+                                    queueState.getPartitioner(), consumer.getQueueConfig().getPartitionerType(),
+                                    consumer.getInstanceId())));
     }
     consumer.setQueueState(queueState);
     return queueState;
@@ -1010,6 +1032,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   protected String getLogMessage(String message) {
     return String.format("Queue-%s: %s", Bytes.toString(queueName), message);
+  }
+
+  protected String getLogMessage(QueueConsumer consumer, String message) {
+    return String.format("Queue-%s Consumer(%d, %d): %s", Bytes.toString(queueName), consumer.getGroupId(),
+                         consumer.getInstanceId(), message);
   }
 
   public static class DequeueEntry implements Comparable<DequeueEntry> {
@@ -1897,15 +1924,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
         try {
           queueState = QueueStateImpl.decode(decoder);
         } catch (IOException e) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR, getLogMessage(
-            "Exception while deserializing consumer state"), e);
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                       getLogMessage(consumer, "Exception while deserializing consumer state"), e);
         }
       } else if (construct) {
         queueState = new QueueStateImpl();
         queueState.setPartitioner(consumer.getQueueConfig().getPartitionerType());
       } else {
-        throw new OperationException(StatusCode.NOT_CONFIGURED, getLogMessage(String.format(
-          "Cannot find configuration for consumer %d. Is configure method called?", consumer.getInstanceId())));
+        throw new OperationException(
+          StatusCode.NOT_CONFIGURED,
+          getLogMessage(consumer,
+                        String.format("Cannot find configuration for consumer %d. Is configure method called?",
+                                      consumer.getInstanceId())));
       }
 
       // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
@@ -1923,14 +1953,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       if(!queueState.getDequeueEntrySet().isEmpty()) {
         droppedEntries = queueState.getDequeueEntrySet().startNewTry(MAX_CRASH_DEQUEUE_TRIES);
         if(!droppedEntries.isEmpty() && LOG.isWarnEnabled()) {
-          LOG.warn(getLogMessage(String.format("Dropping entries %s after %d tries",
-                                               droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
+          LOG.warn(getLogMessage(consumer, String.format("Dropping entries %s after %d tries",
+                                                         droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
         }
         // Any previously dequeued entries will now need to be dequeued again
         readEntries(queueState, readPointer, queueState.getDequeueEntrySet().getEntryIds());
       }
       if(LOG.isTraceEnabled()) {
-        LOG.trace(getLogMessage(String.format("Constructed new QueueState - %s", queueState)));
+        LOG.trace(getLogMessage(consumer, String.format("Constructed new QueueState - %s", queueState)));
       }
       return queueState;
     }
@@ -1954,7 +1984,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         queueState.encode(encoder);
       } catch(IOException e) {
         throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                     getLogMessage("Exception while serializing queue state"), e);
+                                     getLogMessage(consumer, "Exception while serializing queue state"), e);
       }
 
       final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
@@ -2194,7 +2224,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
             makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 0);
           queueState.setQueueWritePointer(queueWritePointer);
           if(LOG.isTraceEnabled()) {
-            LOG.trace(getLogMessage(String.format("New queueWritePointer = %d", queueWritePointer)));
+            LOG.trace(getLogMessage(consumer, String.format("New queueWritePointer = %d", queueWritePointer)));
           }
           // If still no progress, return empty queue
           if(entryId >= queueState.getQueueWritePointer()) {
@@ -2213,7 +2243,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         final String partitioningKey = consumer.getPartitioningKey();
         if(partitioningKey == null || partitioningKey.isEmpty()) {
           throw new OperationException(StatusCode.INTERNAL_ERROR,
-            getLogMessage("Using Hash Partitioning with null/empty partitioningKey."));
+            getLogMessage(consumer, "Using Hash Partitioning with null/empty partitioningKey."));
         }
         final byte [][] rowKeys = new byte[cacheSize][];
         for(int id = 0; id < cacheSize; ++id) {
@@ -2242,7 +2272,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
               hashKeyMap = QueueEntry.deserializeHashKeys(hashBytes);
             } catch(IOException e) {
               throw new OperationException(StatusCode.INTERNAL_ERROR,
-                                           getLogMessage("Exception while deserializing hash keys"), e);
+                                           getLogMessage(consumer, "Exception while deserializing hash keys"), e);
             }
             Integer hashValue = hashKeyMap.get(partitioningKey);
             if(partitioner.shouldEmit(consumer.getGroupSize(), consumer.getInstanceId(), currentEntryId, hashValue) &&
