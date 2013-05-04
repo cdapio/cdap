@@ -42,10 +42,16 @@ import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+<<<<<<< HEAD
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.api.io.Schema;
 import com.continuuity.internal.api.io.SchemaGenerator;
 import com.continuuity.internal.api.io.UnsupportedTypeException;
+=======
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.SchemaGenerator;
+import com.continuuity.internal.io.UnsupportedTypeException;
+>>>>>>> feature/object-store-ds
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;

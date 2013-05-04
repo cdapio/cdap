@@ -1,4 +1,4 @@
-package com.continuuity.internal.api.flow;
+package com.continuuity.internal.flow;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;

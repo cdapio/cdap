@@ -1,4 +1,4 @@
-package com.continuuity.internal.api;
+package com.continuuity.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;

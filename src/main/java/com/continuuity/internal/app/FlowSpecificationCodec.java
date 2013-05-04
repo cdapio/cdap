@@ -7,7 +7,7 @@ package com.continuuity.internal.app;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.internal.api.flow.DefaultFlowSpecification;
+import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
