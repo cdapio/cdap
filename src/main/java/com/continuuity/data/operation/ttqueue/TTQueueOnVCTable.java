@@ -7,6 +7,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
@@ -123,16 +124,16 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(QueueEntry[] entries, Transaction transaction) throws OperationException {
     if (entries.length == 1) {
-      return enqueue(entries[0], cleanWriteVersion);
+      return enqueue(entries[0], transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entries.length);
     }
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(QueueEntry entry, Transaction transaction) throws OperationException {
     byte[] data;
     try {
       data = QueueEntrySerializer.serialize(entry);
@@ -140,7 +141,7 @@ public class TTQueueOnVCTable implements TTQueue {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Queue entry serialization failed due to IOException", e);
     }
 
-    if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
+    if (TRACE) log("Enqueueing (data.len=" + data.length + ", transaction=" + transaction + ")");
 
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
@@ -228,7 +229,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // If we moved shards, insert end-of-shard entry in previously active shard
     if (movedShards) {
       this.table.put(makeRow(GLOBAL_DATA_HEADER, shardMeta.getShardId() - 1),
-          makeColumn(entryId, ENTRY_META), cleanWriteVersion,
+          makeColumn(entryId, ENTRY_META), transaction.getWriteVersion(),
           new EntryMeta(EntryState.SHARD_END).getBytes());
       log("Moved shard, inserting end-of-shard marker for: " + shardMeta);
     }
@@ -236,7 +237,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Insert entry at active shard
     this.table.put(makeRow(GLOBAL_DATA_HEADER, shardMeta.getShardId()),
                    new byte [][] { makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META) },
-                   cleanWriteVersion,
+                   transaction.getWriteVersion(),
                    new byte [][] { data, new EntryMeta(EntryState.VALID).getBytes() });
 
     // Return success with pointer to entry
@@ -245,9 +246,9 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void invalidate(QueueEntryPointer[] entryPointers, long writeVersion) throws OperationException {
+  public void invalidate(QueueEntryPointer[] entryPointers, Transaction transaction) throws OperationException {
     if (entryPointers.length == 1) {
-      invalidate(entryPointers[0], writeVersion);
+      invalidate(entryPointers[0], transaction.getWriteVersion());
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
@@ -736,17 +737,17 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
     if (entryPointers.length == 1) {
-      ack(entryPointers[0], consumer, readPointer);
+      ack(entryPointers[0], consumer, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
       throws OperationException {
 
     // Do a dirty read of EntryGroupMeta for this entry
@@ -780,19 +781,18 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
-    throws OperationException {
+  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
     if (entryPointers.length == 1) {
-      finalize(entryPointers[0], consumer, totalNumGroups, writePoint);
+      finalize(entryPointers[0], consumer, totalNumGroups, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
   @Override
-  public void finalize(QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups, long writePoint)
-      throws OperationException {
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
     ReadPointer readDirty = TransactionOracle.DIRTY_READ_POINTER;
@@ -840,7 +840,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Evict!
     // Set entry metadata to EVICTED state
     byte [] entryMetaColumn = makeColumn(entryPointer.getEntryId(), ENTRY_META);
-    this.table.put(shardRow, entryMetaColumn, writePoint,
+    this.table.put(shardRow, entryMetaColumn, transaction.getWriteVersion(),
                    new EntryMeta(EntryState.EVICTED).getBytes());
 
     // Delete entry data and group meta entries
@@ -855,7 +855,7 @@ public class TTQueueOnVCTable implements TTQueue {
     byte [] entryDataColumn =
       makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
     groupColumns[totalNumGroups] = entryDataColumn;
-    this.table.deleteDirty(shardRow, groupColumns, writePoint);
+    this.table.deleteDirty(shardRow, groupColumns, transaction.getWriteVersion());
   }
 
   private Set<byte[]> allOtherGroupsFinalized(
@@ -897,17 +897,17 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer) throws
+  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction) throws
     OperationException {
     if (entryPointers.length == 1) {
-      unack(entryPointers[0], consumer, readPointer);
+      unack(entryPointers[0], consumer, transaction);
     } else {
       throw new RuntimeException("Old queues don't support batch - received batch size of " + entryPointers.length);
     }
   }
 
   public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer,
-                    @SuppressWarnings("unused") ReadPointer readPointer) throws OperationException {
+                    @SuppressWarnings("unused") Transaction transaction) throws OperationException {
 
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());

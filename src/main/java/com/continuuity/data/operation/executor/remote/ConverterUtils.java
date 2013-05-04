@@ -989,7 +989,7 @@ public class ConverterUtils {
 
     }
     MemoryReadPointer rp = (MemoryReadPointer)readPointer;
-    return new TReadPointer(rp.getWritePointer(), rp.getReadPointer(), rp.getReadExcludes());
+    return new TReadPointer(rp.getWriteVersion(), rp.getReadPointer(), rp.getReadExcludes());
   }
   /** unwrap a read pointer */
   ReadPointer unwrap(TReadPointer trp) {

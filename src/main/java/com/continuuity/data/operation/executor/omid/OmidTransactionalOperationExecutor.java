@@ -682,7 +682,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
+      finalize.execute(getQueueTable(finalize.getQueueName()), transaction);
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -900,7 +900,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS);
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
-                                                                   transaction.getWriteVersion());
+                                                                   transaction);
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries(), enqueue.getProducer(),
@@ -914,8 +914,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(),
-                                      transaction.getReadPointer());
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), transaction);
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());

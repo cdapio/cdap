@@ -6,7 +6,7 @@ import java.util.concurrent.CountDownLatch;
 *
 */
 public class TestController {
-  private volatile CountDownLatch startLatch = new CountDownLatch(1);
+  private final CountDownLatch startLatch = new CountDownLatch(1);
   private volatile long enqueueDoneTime = 0;
 
   public void waitToStart() throws Exception {
