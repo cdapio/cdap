@@ -26,12 +26,12 @@ import java.util.Set;
 
 /**
  * Shiro Realm that is responsible for Communicating with Database to get the credentials for authentication
- * and authorizations
+ * and authorizations.
  */
 public class JDBCAuthroizingRealm extends AuthorizingRealm {
   private final DBConnectionPoolManager poolManager;
 
-  private final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
+  private static final String SQL_LOOKUP_BY_EMAIL = String.format("SELECT %s, %s, %s, %s, %s, %s," +
     "%s, %s FROM %s WHERE %s = ?",
     DBUtils.AccountTable.FIRST_NAME_COLUMN,
     DBUtils.AccountTable.LAST_NAME_COLUMN,
@@ -44,7 +44,7 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
     DBUtils.AccountTable.TABLE_NAME,
     DBUtils.AccountTable.EMAIL_COLUMN);
 
-  private final String SQL_LOOKUP_BY_APIKEY = String.format("SELECT %s, %s, %s, %s, %s, %s," +
+  private static final String SQL_LOOKUP_BY_APIKEY = String.format("SELECT %s, %s, %s, %s, %s, %s," +
     "%s, %s FROM %s WHERE %s = ?",
     DBUtils.AccountTable.FIRST_NAME_COLUMN,
     DBUtils.AccountTable.LAST_NAME_COLUMN,
@@ -64,15 +64,6 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
     this.poolManager = poolManager;
   }
 
-  /**
-   * Retrieves the AuthorizationInfo for the given principals from the underlying data store.  When returning
-   * an instance from this method, you might want to consider using an instance of
-   * {@link org.apache.shiro.authz.SimpleAuthorizationInfo SimpleAuthorizationInfo}, as it is suitable in most cases.
-   *
-   * @param principals the primary identifying principals of the AuthorizationInfo that should be retrieved.
-   * @return the AuthorizationInfo associated with this principals.
-   * @see org.apache.shiro.authz.SimpleAuthorizationInfo
-   */
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
     Preconditions.checkNotNull(principals);
@@ -86,7 +77,7 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
     SimpleAuthorizationInfo info = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         //SELECT COLS
         DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
         DBUtils.AccountRoleType.TABLE_NAME + "." + DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
@@ -102,7 +93,7 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
         //WHERE CLAUSE
         DBUtils.VPCRole.USER_ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, accountId);
       rs = ps.executeQuery();
 
@@ -140,22 +131,6 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
     return info;
   }
 
-  /**
-   * Retrieves authentication data from RDBMS for the given authentication token.
-   * <p/>
-   * For most datasources, this means just 'pulling' authentication data for an associated subject/user and nothing
-   * more and letting Shiro do the rest.  But in some systems, this method could actually perform EIS specific
-   * log-in logic in addition to just retrieving data - it is up to the Realm implementation.
-   * <p/>
-   * A {@code null} return value means that no account could be associated with the specified token.
-   *
-   * @param token the authentication token containing the user's principal and credentials.
-   * @return an {@link org.apache.shiro.authc.AuthenticationInfo} object containing account data resulting from the
-   *         authentication ONLY if the lookup is successful (i.e. account exists and is valid, etc.)
-   * @throws org.apache.shiro.authc.AuthenticationException
-   *          if there is an error acquiring data or performing
-   *          realm-specific authentication logic for the specified <tt>token</tt>
-   */
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
     UsernamePasswordApiKeyToken upToken = (UsernamePasswordApiKeyToken) token;
@@ -168,16 +143,16 @@ public class JDBCAuthroizingRealm extends AuthorizingRealm {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = null;
+      String sql = null;
       ps = null;
 
       if (upToken.isUseApiKey()) {
-        SQL = SQL_LOOKUP_BY_APIKEY;
-        ps = connection.prepareStatement(SQL);
+        sql = SQL_LOOKUP_BY_APIKEY;
+        ps = connection.prepareStatement(sql);
         ps.setString(1, apiKey);
       } else {
-        SQL = SQL_LOOKUP_BY_EMAIL;
-        ps = connection.prepareStatement(SQL);
+        sql = SQL_LOOKUP_BY_EMAIL;
+        ps = connection.prepareStatement(sql);
         ps.setString(1, emailId);
       }
 

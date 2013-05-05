@@ -49,8 +49,7 @@ public class Component {
   }
 
   /**
-   * getACLs for the component
-   *
+   * getACLs for the component.
    * @return ImmutableSet of ComponentACL
    */
   public Set<ComponentACL> getComponentACLs() {

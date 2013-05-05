@@ -72,7 +72,7 @@ public class TestAccountHandler {
   public void accountCreate() throws IOException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getAccountJson("sree@continuuity.com")));
+    post.setEntity(new StringEntity(getAccountJson("sree@continuuity.com")));
     post.addHeader("Content-Type", "application/json");
 
     String result = request(post);
@@ -86,7 +86,7 @@ public class TestAccountHandler {
   public void testAccounts() throws IOException, SQLException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getAccountJson("john.smith@continuuity.com")));
+    post.setEntity(new StringEntity(getAccountJson("john.smith@continuuity.com")));
     post.addHeader("Content-Type", "application/json");
 
     String result = request(post);
@@ -95,13 +95,13 @@ public class TestAccountHandler {
     assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
     int id = account.getAccountId();
 
-    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port,id);
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmed", port, id);
     HttpPut put = new HttpPut(endPoint);
-    put.setEntity(new StringEntity(getAccountJson("john.smith@continuuity.com","john","smith")));
-    put.setHeader("Content-Type","application/json");
+    put.setEntity(new StringEntity(getAccountJson("john.smith@continuuity.com", "john", "smith")));
+    put.setHeader("Content-Type", "application/json");
     result = request(put);
 
-    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/downloaded", port,id);
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/downloaded", port, id);
     put = new HttpPut(endPoint);
     result = request(put);
     assertTrue(result != null);
@@ -113,10 +113,10 @@ public class TestAccountHandler {
     assertTrue(account.getApiKey() != null);
     String apiKey = account.getApiKey();
 
-    endPoint  = String.format("http://localhost:%d/passport/v1/account/%d/confirmPayment", port,id);
+    endPoint = String.format("http://localhost:%d/passport/v1/account/%d/confirmPayment", port, id);
     put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("{\"payments_account_id\":\"12121\"}"));
-    put.setHeader("Content-Type","application/json");
+    put.setHeader("Content-Type", "application/json");
     result = request(put);
     account = Account.fromString(result);
     assertTrue("john.smith@continuuity.com".equals(account.getEmailId()));
@@ -125,7 +125,7 @@ public class TestAccountHandler {
     //testAccountRole
     endPoint = String.format("http://localhost:%d/passport/v1/account/%d/vpc", port, id);
     post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getVPCJson("Classico","Classico")));
+    post.setEntity(new StringEntity(getVPCJson("Classico", "Classico")));
     post.addHeader("Content-Type", "application/json");
 
     result = request(post);
@@ -137,7 +137,7 @@ public class TestAccountHandler {
     int vpcId = vpc.getVpcId();
     endPoint = String.format("http://localhost:%d/passport/v1/account", port);
     post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getAccountJson("free@continuuity.com")));
+    post.setEntity(new StringEntity(getAccountJson("free@continuuity.com")));
     post.addHeader("Content-Type", "application/json");
     result = request(post);
     assertTrue(result != null);
@@ -146,7 +146,7 @@ public class TestAccountHandler {
 
     int accountId = account.getAccountId();
 
-    HyperSQL.insertIntoVPCRoleTable(vpcId,accountId);
+    HyperSQL.insertIntoVPCRoleTable(vpcId, accountId);
 
     endPoint = String.format("http://localhost:%d/passport/v1/vpc/%s/accountRoles", port, vpc.getVpcName());
     HttpGet get = new HttpGet(endPoint);
@@ -159,7 +159,7 @@ public class TestAccountHandler {
   public void testVPC() throws IOException {
     String endPoint = String.format("http://localhost:%d/passport/v1/account/0/vpc", port);
     HttpPost post = new HttpPost(endPoint);
-    post.setEntity( new StringEntity( getVPCJson("MyVPC","MyVPC")));
+    post.setEntity(new StringEntity(getVPCJson("MyVPC", "MyVPC")));
     post.addHeader("Content-Type", "application/json");
 
     String result = request(post);

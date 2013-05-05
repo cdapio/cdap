@@ -14,7 +14,7 @@ public class TestURI {
   @Test
   public void testUri() throws URISyntaxException, MalformedURLException {
     URI uri  = new URI ("http://foo.bar.com");
-    URI appendedUri = getAppendedURI(uri,"path/to/baz");
+    URI appendedUri = getAppendedURI(uri, "path/to/baz");
     //URI(String scheme, String userInfo, String host, int port, String path, String query, String fragment)
 
     System.out.println(appendedUri.toURL().toString());
@@ -39,7 +39,7 @@ public class TestURI {
 
 
   public URI getAppendedURI(URI uri, String relativePath) throws MalformedURLException, URISyntaxException {
-    return new URI (uri.getScheme(),uri.getUserInfo(),uri.getHost(),uri.getPort(),
-                    uri.getPath()+"/"+relativePath,uri.getQuery(),uri.getFragment());
+    return new URI (uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
+                    uri.getPath() + "/" + relativePath, uri.getQuery(), uri.getFragment());
   }
 }

@@ -5,10 +5,13 @@
 package com.continuuity.passport.core.status;
 
 /**
- * Data management services Status
+ * Data management services Status.
  */
 public class Status {
 
+  /**
+   * DataManagement Service status.
+   */
   public enum Value {
     USER_REGISTERED_OK, USER_REGISTRATION_FAILED, USER_ALREADY_EXISTS,
     USER_DELETE_OK, USER_DELETE_FAILED,

@@ -41,7 +41,7 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
       throw Throwables.propagate(e);
     }
     this.profanityDictionary = ImmutableSet.copyOf(dictionary);
-    LOG.info(String.format("Loaded %d words into profane dictionary",this.profanityDictionary.size()));
+    LOG.info(String.format("Loaded %d words into profane dictionary", this.profanityDictionary.size()));
   }
   /**
    * Filter words based on a set of criteria.
@@ -55,14 +55,14 @@ public class ProfanityFilterFileAccess implements ProfanityFilter {
   @Override
   public boolean isFiltered(String data) {
 
-    Preconditions.checkNotNull(data,"Data passed to profanity filter is null");
+    Preconditions.checkNotNull(data, "Data passed to profanity filter is null");
 
     //1. if the word has special characters other than a-z, A-Z, 0-9 - Filter out
-    if ( ! p.matcher(data).matches()) {
+    if (!p.matcher(data).matches()) {
       return true;
     }
 
-    String numberStripped = data.replaceAll("[^a-zA-Z]","").toLowerCase();
+    String numberStripped = data.replaceAll("[^a-zA-Z]", "").toLowerCase();
     //2. If the word without numbers is in profane dictionary filter it out.
     if (profanityDictionary.contains(numberStripped)) {
       return true;

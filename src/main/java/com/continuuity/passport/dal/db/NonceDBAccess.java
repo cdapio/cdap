@@ -33,11 +33,10 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   /**
-   * Generate a random nonce and update in DB
-   *
-   * @param id
-   * @param expiration
-   * @return
+   * Generate a random nonce and update in DB.
+   * @param id id
+   * @param expiration expiration time in seconds
+   * @return integer random nonce
    */
   private int updateRandomNonce(String id, int expiration) {
     int nonce = NonceUtils.getNonce();
@@ -50,11 +49,10 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   /**
-   * Generate a hashed nonce and update in DB
-   *
-   * @param id
-   * @param expiration
-   * @return
+   * Generate a hashed nonce and update in DB.
+   * @param id id
+   * @param expiration expiration time in seconds
+   * @return integer random nonce
    */
   private int updateHashedNonce(String id, int expiration) {
     int nonce = NonceUtils.getNonce(id);
@@ -69,21 +67,20 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
   }
 
   /**
-   * Update Nonce in DB
-   *
-   * @param id
-   * @param expiration
-   * @param nonce
+   * Update Nonce in DB.
+   * @param id id
+   * @param expiration expiration time in seconds
+   * @return integer random nonce
    */
   private void updateNonce(String id, int expiration, int nonce) {
     Connection connection = null;
     PreparedStatement ps = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("REPLACE INTO %s (%s, %s, %s) VALUES (?,?,?)",
+      String sql = String.format("REPLACE INTO %s (%s, %s, %s) VALUES (?,?,?)",
         DBUtils.Nonce.TABLE_NAME,
         DBUtils.Nonce.NONCE_ID_COLUMN, DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN);
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, nonce);
       ps.setString(2, id);
       ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis() + expiration));
@@ -126,10 +123,10 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("DELETE FROM %s WHERE %s = ?",
+      String sql = String.format("DELETE FROM %s WHERE %s = ?",
         DBUtils.Nonce.TABLE_NAME,
         DBUtils.Nonce.NONCE_ID_COLUMN);
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, nonce);
       ps.executeUpdate();
     } catch (SQLException e) {
@@ -148,13 +145,13 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s FROM %s WHERE %s = ?",
+      String sql = String.format("SELECT %s, %s FROM %s WHERE %s = ?",
         DBUtils.Nonce.ID_COLUMN,
         DBUtils.Nonce.NONCE_EXPIRES_AT_COLUMN,
         DBUtils.Nonce.TABLE_NAME,
         DBUtils.Nonce.NONCE_ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, nonce);
       ResultSet rs = ps.executeQuery();
 
@@ -183,3 +180,4 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
     }
   }
 }
+

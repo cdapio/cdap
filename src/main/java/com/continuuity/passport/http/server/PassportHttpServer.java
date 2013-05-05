@@ -24,7 +24,7 @@ import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 
 /**
- * Jetty based Http Servers
+ * Jetty based Http Server.
  */
 public class PassportHttpServer {
 
@@ -35,13 +35,13 @@ public class PassportHttpServer {
   private final CConfiguration configuration;
   private static final Logger LOG = LoggerFactory.getLogger(PassportHttpServer.class);
 
-  public PassportHttpServer( CConfiguration configuration)  {
-    Preconditions.checkNotNull(configuration,"Configuration should not be null");
+  public PassportHttpServer(CConfiguration configuration)  {
+    Preconditions.checkNotNull(configuration, "Configuration should not be null");
 
     this.port = configuration.getInt(Constants.CFG_SERVER_PORT, Constants.DEFAULT_SERVER_PORT);
     this.gracefulShutdownTime = configuration.getInt(Constants.CFG_GRACEFUL_SHUTDOWN_TIME,
                                                      Constants.DEFAULT_GRACEFUL_SHUTDOWN_TIME);
-    this.maxThreads = configuration.getInt(Constants.CFG_HTTP_MAX_THREADS,Constants.DEFAULT_HTTP_MAX_THREADS);
+    this.maxThreads = configuration.getInt(Constants.CFG_HTTP_MAX_THREADS, Constants.DEFAULT_HTTP_MAX_THREADS);
 
     this.configuration = configuration;
   }
@@ -74,8 +74,8 @@ public class PassportHttpServer {
       mBeanContainer.start();
 
       LOG.info("Starting the server with the following parameters");
-      LOG.info(String.format("Port: %d",port));
-      LOG.info(String.format("Threads: %d",maxThreads));
+      LOG.info(String.format("Port: %d", port));
+      LOG.info(String.format("Threads: %d", maxThreads));
 
       server.start();
       server.join();

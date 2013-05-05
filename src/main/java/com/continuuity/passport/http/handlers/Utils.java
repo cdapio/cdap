@@ -27,7 +27,7 @@ public class Utils {
   }
 
   public static String getJsonError(String error, Account account)  {
-    return String.format("{\"error\": \"%s\", \"reason\":%s}",error, account.toString()) ;
+    return String.format("{\"error\": \"%s\", \"reason\":%s}", error, account.toString());
   }
 
   public static String getJson(String status, String message) {

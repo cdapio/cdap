@@ -19,7 +19,7 @@ public class TestAccount {
     assert ("Raman".equals(account.getLastName()));
     assert("Continuuity".equals(account.getCompany()));
     assert(1 == account.getAccountId());
-    assert( "25b5243627dbf551110cf95884cfa23b11e6e3d8".equals(account.getApiKey()));
+    assert("25b5243627dbf551110cf95884cfa23b11e6e3d8".equals(account.getApiKey()));
     assert("born@to.run".equals(account.getEmailId()));
 
   }

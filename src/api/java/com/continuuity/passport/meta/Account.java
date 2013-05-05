@@ -11,7 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
- * Defines User account in continuuity
+ * Representation of Account entity in the continuuity system.
  */
 public class Account {
 
@@ -36,7 +36,7 @@ public class Account {
   private final String paymentAccountId;
 
   /**
-   * Deserialize Account from jsonString
+   * Deserialize Account from jsonString.
    * @param jsonString json string containing account info
    * @return {@code Account}
    */
@@ -46,7 +46,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId
+   * Construct account object with firstName, lastName, emailId.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId
@@ -56,7 +56,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId , company, accountId
+   * Construct account object with firstName, lastName, emailId , company, accountId.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId
@@ -69,7 +69,7 @@ public class Account {
 
   /**
    * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag
-   * and dev suite downloaded time
+   * and dev suite downloaded time.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId
@@ -81,13 +81,13 @@ public class Account {
    */
   public Account(String firstName, String lastName, String company, String emailId,
                  int accountId, String apiKey, boolean confirmed, long devSuiteDownloadTime) {
-    this(firstName,lastName,company,emailId,accountId,apiKey,confirmed,devSuiteDownloadTime,-1,"");
+    this(firstName, lastName, company, emailId, accountId, apiKey, confirmed, devSuiteDownloadTime, -1, "");
 
   }
 
   /**
    * Construct account object with firstName, lastName, emailId, company, accountId, apiKey, confirmedflag,
-   * dev suite downloaded time, external payment Id and payment info provided time
+   * dev suite downloaded time, external payment Id and payment info provided time.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId
@@ -114,7 +114,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company, accountId
+   * Construct account object with firstName, lastName, emailId, company, accountId.
    * @param firstName firstName
    * @param lastName lastName
    * @param company Company
@@ -125,7 +125,7 @@ public class Account {
   }
 
   /**
-   * Construct account object with firstName, lastName, emailId, company
+   * Construct account object with firstName, lastName, emailId, company.
    * @param firstName firstName
    * @param lastName lastName
    * @param emailId  EmailId
@@ -136,7 +136,7 @@ public class Account {
   }
 
   /**
-   * Get first name of the account holder
+   * Get first name of the account holder.
    * @return String firstName
    */
   public String getFirstName() {
@@ -144,7 +144,7 @@ public class Account {
   }
 
   /**
-   * Get last name of the account holder
+   * Get last name of the account holder.
    * @return String lastName
    */
   public String getLastName() {
@@ -152,7 +152,7 @@ public class Account {
   }
 
   /**
-   * Get Company of the account holder
+   * Get Company of the account holder.
    * @return String company
    */
   public String getCompany() {
@@ -160,7 +160,7 @@ public class Account {
   }
 
   /**
-   * Get EmailId of the account holder
+   * Get EmailId of the account holder.
    * @return String emailId
    */
   public String getEmailId() {
@@ -168,7 +168,7 @@ public class Account {
   }
 
   /**
-   * Get Account ID
+   * Get Account ID.
    * @return account id
    */
   public int getAccountId() {
@@ -176,7 +176,7 @@ public class Account {
   }
 
   /**
-   * Get APIKey of the account
+   * Get APIKey of the account.
    * @return  apiKey
    */
   public String getApiKey() {
@@ -184,16 +184,19 @@ public class Account {
   }
 
   /**
-   * Get Id in the external payment system
+   * Get Id in the external payment system.
    * @return payment ID
    */
   public String getPaymentAccountId() {
     return paymentAccountId;
   }
 
+  /**
+   * @return {@code JsonElement} Json representation of Account object
+   */
   public JsonElement toJson() {
     JsonObject object = new JsonObject();
-    object.addProperty("id",getAccountId());
+    object.addProperty("id", getAccountId());
     object.addProperty("first_name", getFirstName());
     object.addProperty("last_name", getLastName());
     object.addProperty("company", getCompany());
@@ -203,7 +206,7 @@ public class Account {
   }
 
   /**
-   * Serialize account into json string. The field names will be lowercase with underscores where captialized
+   * Serialize account into json string. The field names will be lowercase with underscores where captialized.
    * @return Json serialized String representing account
    */
   @Override

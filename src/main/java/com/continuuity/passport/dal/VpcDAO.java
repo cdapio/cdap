@@ -28,7 +28,7 @@ public interface VpcDAO {
 
   /**
    * Gets the List of VPC for which the account has access to based on the vpcs that the account created
-   * and all other vpcs that the account has access to
+   * and all other vpcs that the account has access.
    * @param accountId accountId of the account
    * @return List of {@code VPC}
    */
@@ -44,7 +44,7 @@ public interface VpcDAO {
 
 
   /**
-   * Get all roles and corresponding accounts for a given vpcName
+   * Get all roles and corresponding accounts for a given vpcName.
    * @param vpcName name of the vpc
    * @return Instance of {@code RolesAccounts}
    */

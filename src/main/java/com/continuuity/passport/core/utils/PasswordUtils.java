@@ -8,7 +8,7 @@ import com.google.common.hash.Hashing;
  *
  */
 public class PasswordUtils {
-  private final static HashFunction hashFunction = Hashing.sha1();
+  private static final HashFunction hashFunction = Hashing.sha1();
 
   public static String generateHashedPassword(String password) {
     HashCode hashCode = hashFunction.newHasher().putString(password).hash();

@@ -48,6 +48,9 @@ public class TestPassportServer {
     server.stop();
   }
 
+  /**
+   *
+   */
   public class MockGuiceContextListener extends GuiceServletContextListener {
 
     private final String connectionString;
