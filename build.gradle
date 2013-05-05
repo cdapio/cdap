@@ -7,6 +7,7 @@ apply from: "gradle/dependencies.gradle"
 apply from: "gradle/maven.gradle"
 apply from: "gradle/sonar.gradle"
 apply from: "gradle/checkstyle.gradle"
+apply from: "gradle/packaging.gradle"
 
 buildscript {
     repositories {
@@ -27,7 +28,8 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
     dependencies {
-        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.9-SNAPSHOT"
+        classpath 'be.thinkerit.gradle:ubuntu-packager-plugin:1.0.9-SNAPSHOT'
+        classpath 'com.kenshoo:gradle-fpm:0.3'
     }
 }
 
