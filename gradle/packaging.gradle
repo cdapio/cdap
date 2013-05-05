@@ -1,4 +1,6 @@
 subprojects {
+  def epoch = (int)System.currentTimeMillis()/1000
+
   /**
    * Prepackager stages the project files into a directory that is then 
    * picked up by FPM packager to create debian or rpm packages. The 
@@ -38,10 +40,14 @@ subprojects {
   packaging {
     baseDir = "$project.buildDir/stage-packaging"
     extraOptions = [
-                     '--name': "continuuity-${project.name}", 
+                     '--name': "continuuity", 
                      '--vendor': 'Continuuity Inc.', 
                      '--maintainer': 'support@continuuity.com',
                      '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
+                     '--description': 'Component of Continuuity Enterprise Reactor",
+                     '--directories': "/opt/continuuity/$project.name",
+                     '--category': 'misc',
+                     '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all'
     ]
   }
@@ -53,4 +59,53 @@ subprojects {
   debian.doLast {
     delete("$buildDir/stage-packaging")
   }
+
+  /**
+   * Creates a sanitized version, if it's a SNAPSHOT, then it replaces
+   * it with unix timestamp or if teamcity build number is available then
+   * uses the teamcity build number.
+   */
+  def getPomVersion = {
+    def v = rootProject.version
+    if(v =~ /-SNAPSHOT/) {
+      def replaceBy = epoch
+      if( project.hasProperty('teamcityBuildNumber')) {
+        replaceBy = teamcityBuildNumber;
+      }
+      v = v.replaceAll('-SNAPSHOT', ".${replaceBy}")
+    }
+    v
+  }
+
+  /**
+   * Uploads packages.
+   */
+  configurations{
+    packages
+  }
+
+  artifacts {
+    destFile = file("$buildDir/linux-package/continuuity_${rootProject.version}_all.deb")
+    packages file: destFile, name: "continuuity-${project.name}"
+  }
+
+  uploadPackages {
+    repositories {
+      repositories.mavenDeployer {
+        repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+          authentication(userName: nexusUsername, password: nexusPassword)
+          pom.groupId = 'com.continuuity.distributions.release'
+          pom.version = getPomVersion()
+        }
+        snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+          authentication(userName: nexusUsername, password: nexusPassword)
+          pom.groupId = 'com.continuuity.distributions.snapshots'
+          pom.version = getPomVersion()
+        }
+      }
+    }
+  }
+
+  uploadPackages.dependsOn debian
+
 }
