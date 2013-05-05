@@ -4,7 +4,7 @@ import com.continuuity.passport.dal.db.JDBCAuthroizingRealm;
 import org.apache.shiro.guice.ShiroModule;
 
 /**
- * Shiro Guice bindings
+ * Shiro Guice bindings.
  */
 public class ShiroGuiceModule extends ShiroModule {
 

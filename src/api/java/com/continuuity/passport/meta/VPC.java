@@ -24,28 +24,28 @@ public class VPC {
   private final String vpcType;
 
   /**
-   * Construct VPC using vpcName, vpc label and vpc Type
+   * Construct VPC using vpcName, vpc label and vpc Type.
    * @param vpcName  VPC Name
    * @param vpcLabel VPC label
    * @param vpcType  VPC type
    */
   public VPC(String vpcName, String vpcLabel, String vpcType) {
-    this(-1, vpcName, vpcLabel,-1,vpcType);
+    this(-1, vpcName, vpcLabel, -1, vpcType);
   }
 
   /**
-   * Construct VPC using vpcName, vpc label and vpc Type
+   * Construct VPC using vpcName, vpc label and vpc Type.
    * @param vpcId   VPC ID
    * @param vpcName  VPC name
    * @param vpcLabel VPC label
    * @param vpcType  VPC type
    */
-  public VPC(int vpcId, String vpcName, String vpcLabel,String vpcType) {
-    this(vpcId,vpcName,vpcLabel,-1,vpcType);
+  public VPC(int vpcId, String vpcName, String vpcLabel, String vpcType) {
+    this(vpcId, vpcName, vpcLabel, -1, vpcType);
   }
 
   /**
-   * Construct VPC using vpcName, vpc label and vpc Type
+   * Construct VPC using vpcName, vpc label and vpc Type.
    * @param vpcId    VPC ID
    * @param vpcName  VPC name
    * @param vpcLabel VPC label
@@ -61,7 +61,7 @@ public class VPC {
   }
 
   /**
-   * Get ID of the VPC
+   * Get ID of the VPC.
    * @return VPC ID
    */
   public int getVpcId() {
@@ -69,7 +69,7 @@ public class VPC {
   }
 
   /**
-   * Get VPC label of vpc
+   * Get VPC label of vpc.
    * @return  VPC label
    */
   public String getVpcLabel() {
@@ -77,7 +77,7 @@ public class VPC {
   }
 
   /**
-   * Get VPC name of the vpc
+   * Get VPC name of the vpc.
    * @return VPC name
    */
   public String getVpcName() {
@@ -85,7 +85,7 @@ public class VPC {
   }
 
   /**
-   * Get VPC type
+   * Get VPC type.
    * @return vpcType
    */
   public String getVpcType() {
@@ -93,7 +93,7 @@ public class VPC {
   }
 
   /**
-   * Serialize VPC into a json serialized string
+   * Serialize VPC into a json serialized string.
    * @return String representing vpc - the field names will be lowercase with underscores seperating camel cased names
    */
   @Override
@@ -103,7 +103,7 @@ public class VPC {
   }
 
   /**
-   * Deserialize VPC from json string
+   * Deserialize VPC from json string.
    * @param jsonString String representing VPC
    * @return instance of {@code VPC}
    */

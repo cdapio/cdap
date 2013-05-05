@@ -7,11 +7,11 @@ package com.continuuity.passport.core.security;
 import org.apache.shiro.authc.UsernamePasswordToken;
 
 /**
- * This is extended from Shiro
+ * Defines UsernamePassword credentials extends shiro UsernamePasswordToken to use shiro for authentication.
  */
 public class UsernamePasswordApiKeyToken extends UsernamePasswordToken implements Credentials {
-  public static final String DUMMY_USER= "continuuity";
-  public static final String DUMMY_PASSWORD= "continuuity";
+  public static final String DUMMY_USER = "continuuity";
+  public static final String DUMMY_PASSWORD = "continuuity";
 
   private final String apiKey;
   private final boolean useApiKey;

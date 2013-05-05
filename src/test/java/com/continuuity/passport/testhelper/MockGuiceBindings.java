@@ -34,13 +34,13 @@ import javax.sql.ConnectionPoolDataSource;
  */
 public class MockGuiceBindings extends JerseyServletModule {
 
-  private final String jdbcType ;
+  private final String jdbcType;
   private final String connectionString;
   private final String profaneWordsPath;
 
 
   public MockGuiceBindings(CConfiguration configuration) {
-    jdbcType =  configuration.get(Constants.CFG_JDBC_TYPE,Constants.DEFAULT_JDBC_TYPE);
+    jdbcType = configuration.get(Constants.CFG_JDBC_TYPE, Constants.DEFAULT_JDBC_TYPE);
     connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING,
       Constants.DEFAULT_JDBC_CONNECTION_STRING);
     profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
@@ -55,15 +55,15 @@ public class MockGuiceBindings extends JerseyServletModule {
 
   private void bindings() {
     Preconditions.checkNotNull(jdbcType, "JDBC type cannot be null");
-    Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE),"Unsupported JDBC type");
+    Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE), "Unsupported JDBC type");
 
-    Preconditions.checkNotNull(connectionString,"Connection String cannot be null");
-    Preconditions.checkNotNull(profaneWordsPath,"Profane words path cannot be null");
+    Preconditions.checkNotNull(connectionString, "Connection String cannot be null");
+    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null");
 
     JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
     System.out.println(connectionString);
     jdbcDataSource.setUrl(connectionString);
-    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource,10);
+    DBConnectionPoolManager connectionPoolManager = new DBConnectionPoolManager(jdbcDataSource, 10);
 
     bind(DBConnectionPoolManager.class)
          .toInstance(connectionPoolManager);

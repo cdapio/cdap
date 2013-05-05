@@ -44,7 +44,6 @@ import java.util.Map;
  * huge. Need to find a work-around.
  */
 
-
 @Path("/passport/v1/account/")
 @Singleton
 public class AccountHandler extends PassportHandler {
@@ -67,14 +66,14 @@ public class AccountHandler extends PassportHandler {
 
     requestReceived();
 
-    try{
+    try {
       Account account = dataManagementService.getAccount(id);
       if (account != null) {
         requestSuccess();
         return Response.ok(account.toString()).build();
       } else {
         requestFailed();
-        LOG.error(String.format("Account not found. Processing endpoint: %s ","GET /passport/v1/account"));
+        LOG.error(String.format("Account not found. Processing endpoint: %s ", "GET /passport/v1/account"));
         return Response.status(Response.Status.NOT_FOUND)
           .entity(Utils.getJsonError("Account not found"))
           .build();
@@ -133,7 +132,7 @@ public class AccountHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Exception while processing endpoint: %s  %s",
-                              "PUT /passport/v1/account/{id}/password",e.getMessage()));
+                              "PUT /passport/v1/account/{id}/password", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Exception processing change password %s", e.getMessage())))
         .build();
@@ -157,7 +156,7 @@ public class AccountHandler extends PassportHandler {
       } else {
         requestFailed(); // Request failed
         LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
-                                "PUT /passport/v1/account/{id}/downloaded","Failed to fetch updated account"));
+                                "PUT /passport/v1/account/{id}/downloaded", "Failed to fetch updated account"));
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
@@ -165,7 +164,7 @@ public class AccountHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
-                              "PUT /passport/v1/account/{id}/downloaded",e.getMessage()));
+                              "PUT /passport/v1/account/{id}/downloaded", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
         .build();
@@ -194,7 +193,7 @@ public class AccountHandler extends PassportHandler {
           .build();
       }
 
-      dataManagementService.confirmPayment(id,paymentAccountId);
+      dataManagementService.confirmPayment(id, paymentAccountId);
       //Contract for the api is to return updated account to avoid a second call from the caller to get the
       // updated account
       Account account = dataManagementService.getAccount(id);
@@ -204,21 +203,20 @@ public class AccountHandler extends PassportHandler {
       } else {
         requestFailed(); // Request failed
         LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
-                                "PUT /passport/v1/account/{id}/downloaded","Failed to fetch updated account"));
+                                "PUT /passport/v1/account/{id}/downloaded", "Failed to fetch updated account"));
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
       }
-    }catch ( JsonParseException e){
+    } catch (JsonParseException e){
       requestFailed();
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Failed to parse Json"))
         .build();
-    }
-     catch (Exception e) {
+    } catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Internal server error while processing endpoint: %s. %s",
-                              "PUT /passport/v1/account/{id}/downloaded",e.getMessage()));
+                              "PUT /passport/v1/account/{id}/downloaded", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", String.format("Download confirmation failed. %s", e.getMessage())))
         .build();
@@ -266,7 +264,7 @@ public class AccountHandler extends PassportHandler {
       } else {
         requestFailed(); // Request failed
         LOG.error(String.format("Internal server error while processing endpoint: %s .%s",
-          "PUT /passport/v1/account/{id}","Failed to get updated account"));
+          "PUT /passport/v1/account/{id}", "Failed to get updated account"));
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get updated account"))
           .build();
@@ -314,7 +312,7 @@ public class AccountHandler extends PassportHandler {
       //If the account already exists - return the existing account so that the caller can take appropriate action
       Account account = dataManagementService.getAccount(emailId);
       requestFailed(); // Request failed
-      LOG.error("Account creation failed endpoint: %s %s","POST /passport/v1/account", "Account already exists");
+      LOG.error("Account creation failed endpoint: %s %s", "POST /passport/v1/account", "Account already exists");
       return Response.status(Response.Status.CONFLICT)
         .entity(Utils.getJsonError("FAILED", account))
         .build();
@@ -325,7 +323,7 @@ public class AccountHandler extends PassportHandler {
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())))
         .build();
-    }catch (Exception e) {
+    } catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Internal server error while processing endpoint: %s %s",
         "POST /passport/v1/account", e.getMessage()));
@@ -416,12 +414,11 @@ public class AccountHandler extends PassportHandler {
       String vpcType = jsonObject.get("vpc_type") == null ? "sandbox" : jsonObject.get("vpc_label").getAsString();
 
       if ((vpcName != null) && (!vpcName.isEmpty()) && (vpcLabel != null) && (!vpcLabel.isEmpty())) {
-        VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel,vpcType));
-        if (vpc !=null ){
+        VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel, vpcType));
+        if (vpc != null){
           requestSuccess();
           return Response.ok(vpc.toString()).build();
-         }
-         else {
+        } else {
           return Response.status(Response.Status.BAD_REQUEST)
             .entity(Utils.getJson("FAILED", String.format("VPC Creation failed. VPC name already exists")))
             .build();
@@ -547,7 +544,7 @@ public class AccountHandler extends PassportHandler {
     if (emailId == null || emailId.isEmpty() || password == null || password.isEmpty()) {
       requestFailed();
       LOG.error(String.format("Bad request error while processing endpoint: %s %s",
-        "POST /passport/v1/account/authenticate","Empty email or password fields" ));
+        "POST /passport/v1/account/authenticate", "Empty email or password fields"));
       return Response.status(Response.Status.BAD_REQUEST).entity(
         Utils.getAuthenticatedJson("Bad Request.", "Username and password can't be null"))
         .build();
@@ -574,7 +571,7 @@ public class AccountHandler extends PassportHandler {
       } else {
         requestFailed(); //Failed request
         LOG.error(String.format("Unauthorized while processing endpoint: %s %s",
-          "POST /passport/v1/account/authenticate","User doesn't exist or password doesn't match"));
+          "POST /passport/v1/account/authenticate", "User doesn't exist or password doesn't match"));
         return Response.status(Response.Status.UNAUTHORIZED).entity(
           Utils.getAuthenticatedJson("Authentication Failed.", "Either user doesn't exist or password doesn't match"))
           .build();
@@ -582,7 +579,7 @@ public class AccountHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Unauthorized while processing endpoint: %s %s",
-        "POST /passport/v1/account/authenticate",e.getMessage()));
+        "POST /passport/v1/account/authenticate", e.getMessage()));
       return Response.status(Response.Status.UNAUTHORIZED).entity(
         Utils.getAuthenticatedJson("Authentication Failed.", e.getMessage())).build();
     }
@@ -609,7 +606,7 @@ public class AccountHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed(); // Request failed
       LOG.error(String.format("Internal server error while processing endpoint: %s %s",
-        "GET /passport/v1/account/{id}/regenerateApiKey",e.getMessage()));
+        "GET /passport/v1/account/{id}/regenerateApiKey", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJson("FAILED", "Failed to get regenerate key"))
         .build();
@@ -629,14 +626,14 @@ public class AccountHandler extends PassportHandler {
     } catch (AccountNotFoundException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Account not found endpoint: %s %s",
-        "DELETE /passport/v1/account/{id}",e.getMessage()));
+        "DELETE /passport/v1/account/{id}", e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("Account not found"))
         .build();
     } catch (RuntimeException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Internal server error while processing endpoint: %s %s",
-        "DELETE /passport/v1/account/{id}",e.getMessage()));
+        "DELETE /passport/v1/account/{id}", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("Account delete Failed", e.getMessage()))
         .build();
@@ -657,14 +654,14 @@ public class AccountHandler extends PassportHandler {
     } catch (VPCNotFoundException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("VPC not found endpoint: %s %s",
-        "DELETE /passport/v1/account/{id}/vpc/{vpcId}",e.getMessage()));
+        "DELETE /passport/v1/account/{id}/vpc/{vpcId}", e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("VPC not found"))
         .build();
     } catch (RuntimeException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Internal server error endpoint: %s %s",
-        "DELETE /passport/v1/account/{id}/vpc/{vpcId}",e.getMessage()));
+        "DELETE /passport/v1/account/{id}/vpc/{vpcId}", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("VPC delete Failed", e.getMessage()))
         .build();

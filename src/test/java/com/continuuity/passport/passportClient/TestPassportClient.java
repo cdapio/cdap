@@ -1,4 +1,4 @@
-package com.continuuity.passport.passportClient;
+package com.continuuity.passport.passportclient;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Testing passport client
+ * Testing passport client.
  */
 public class TestPassportClient {
 
@@ -86,9 +86,9 @@ public class TestPassportClient {
     Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
       "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
-    String INSERT_ACCOUNT = "INSERT INTO account (first_name,last_name,email_id,company,password,api_key) VALUES " +
-      "('john','smith','john@smith.com','continuuity','johnsecure','apiKey1')";
-    connection.prepareStatement(INSERT_ACCOUNT).execute();
+    String insertAccount = "INSERT INTO account (first_name,last_name,email_id,company,password,api_key) VALUES " +
+      "('john', 'smith', 'john@smith.com', 'continuuity', 'johnsecure', 'apiKey1')";
+    connection.prepareStatement(insertAccount).execute();
 
   }
 }

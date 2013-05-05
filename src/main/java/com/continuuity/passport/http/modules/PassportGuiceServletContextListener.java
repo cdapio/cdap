@@ -16,7 +16,7 @@ import javax.servlet.ServletContextEvent;
 
 
 /**
- *  Guice module to glue in Jetty server and bindings
+ *  Guice module to glue in Jetty server and bindings.
  */
 public class PassportGuiceServletContextListener extends GuiceServletContextListener {
 

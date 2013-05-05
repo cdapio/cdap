@@ -69,12 +69,11 @@ public class PassportClient {
   }
 
   /**
-   * Get List of VPC for the apiKey
+   * Get List of VPC for the apiKey.
    * @return List of VPC Names
-   * @throws Exception RunTimeExceptions
    */
-  public List<String> getVPCList(String apiKey) throws RuntimeException {
-    Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
+  public List<String> getVPCList(String apiKey){
+    Preconditions.checkNotNull(apiKey, "ApiKey cannot be null");
     List<String> vpcList = Lists.newArrayList();
 
     try {
@@ -107,21 +106,20 @@ public class PassportClient {
 
 
   /**
-   * Get List of VPC for the apiKey
-   *
+   * Get List of VPC for the apiKey.
    * @return Instance of {@code AccountProvider}
    * */
   public AccountProvider<Account> getAccount(String apiKey) {
-    Preconditions.checkNotNull(apiKey,"ApiKey cannot be null");
+    Preconditions.checkNotNull(apiKey, "ApiKey cannot be null");
 
     try {
       Account account = accountCache.getIfPresent(apiKey);
       if (account == null) {
         String data = httpPost(API_BASE + "account/authenticate", apiKey);
-        if(data != null) {
+        if (data != null) {
           Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
           account = gson.fromJson(data, Account.class);
-          accountCache.put(apiKey,account);
+          accountCache.put(apiKey, account);
           return new AccountProvider<Account>(account);
         }
       } else {
@@ -146,7 +144,7 @@ public class PassportClient {
     URI uri = URI.create(baseUri.toASCIIString() + "/" + api);
     HttpPost post = new HttpPost(uri);
     post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
-    post.addHeader("Content-Type","application/json");
+    post.addHeader("Content-Type", "application/json");
     return request(post);
   }
 
@@ -155,7 +153,7 @@ public class PassportClient {
     HttpClient client = new DefaultHttpClient();
     try {
       HttpResponse response = client.execute(uri);
-      if(response.getStatusLine().getStatusCode() != 200){
+      if (response.getStatusLine().getStatusCode() != 200){
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }

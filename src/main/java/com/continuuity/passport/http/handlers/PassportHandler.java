@@ -8,7 +8,7 @@ import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 
 /**
- *  Abstract class that holds metrics object that will exposed using JMX
+ *  Abstract class that holds metrics object that will exposed using JMX.
  */
 public abstract class PassportHandler  {
 

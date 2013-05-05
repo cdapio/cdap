@@ -28,11 +28,11 @@ import java.sql.Statement;
 import java.util.Map;
 
 /**
- * AccountDAO implementation that uses mysql as the persistence store
+ * AccountDAO implementation that uses mysql as the persistence store.
  */
 public class AccountDBAccess extends DBAccess implements AccountDAO {
   private final DBConnectionPoolManager poolManager;
-  private final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
+  private static final String DB_INTEGRITY_CONSTRAINT_VIOLATION = "23000";
   private final HashFunction hashFunction = Hashing.sha1();
 
   /**
@@ -42,13 +42,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   public AccountDBAccess(DBConnectionPoolManager poolManager) {
     this.poolManager = poolManager;
   }
-  /**
-   * Create Account in the system
-   *
-   * @param account Instance of {@code Account}
-   * @return boolean status of account creation
-   * @throws {@code RetryException}
-   */
+
   @Override
   public Account createAccount(Account account) throws AccountAlreadyExistsException {
     Connection connection = null;
@@ -57,14 +51,14 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (?,?,?,?,?,?)",
+      String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (?,?,?,?,?,?)",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
         DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
         DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.ACCOUNT_CREATED_AT
       );
 
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
       ps.setString(1, account.getEmailId());
       ps.setString(2, account.getFirstName());
       ps.setString(3, account.getLastName());
@@ -101,22 +95,22 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     PreparedStatement updateStatement = null;
     PreparedStatement deleteStatement = null;
 
-    String UPDATE_SQL = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
+    String updateSql = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ?",
       DBUtils.AccountTable.TABLE_NAME,
       DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
       DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
       DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
       DBUtils.AccountTable.ID_COLUMN);
 
-    String DELETE_NONCE_BY_EMAIL = String.format("DELETE FROM %s where %s = ?",
-      DBUtils.Nonce.TABLE_NAME,DBUtils.Nonce.ID_COLUMN);
+    String deleteNonceByEmail = String.format("DELETE FROM %s where %s = ?",
+      DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.ID_COLUMN);
 
     try {
       connection = this.poolManager.getValidConnection();
       // Set Auto commit to false since the update and delete nonce should be one transaction
       connection.setAutoCommit(false);
 
-      updateStatement = connection.prepareStatement(UPDATE_SQL);
+      updateStatement = connection.prepareStatement(updateSql);
       updateStatement.setString(1, PasswordUtils.generateHashedPassword(password));
       updateStatement.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
       updateStatement.setString(3, ApiKey.generateKey(String.valueOf(account.getAccountId())));
@@ -127,8 +121,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
       updateStatement.executeUpdate();
 
-      deleteStatement = connection.prepareStatement(DELETE_NONCE_BY_EMAIL);
-      deleteStatement.setString(1,account.getEmailId());
+      deleteStatement = connection.prepareStatement(deleteNonceByEmail);
+      deleteStatement.setString(1, account.getEmailId());
       deleteStatement.executeUpdate();
 
       //Commit the transaction
@@ -139,7 +133,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e.getMessage(), e.getCause());
     } finally {
-      close(null,deleteStatement);
+      close(null, deleteStatement);
       close(connection, updateStatement);
     }
 
@@ -156,13 +150,13 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s is NULL",
+      String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s is NULL",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
         DBUtils.AccountTable.ID_COLUMN,
         DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
 
       ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
       ps.setInt(2, accountId);
@@ -175,7 +169,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   /**
-   * Confirm payment received and record first time payment is made
+   * Confirm payment received and record first time payment is made.
    * @param accountId
    * @param paymentId id in the external system for payments
    */
@@ -185,13 +179,13 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     PreparedStatement ps = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ?", DBUtils.AccountTable.TABLE_NAME,
+      String sql = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ?", DBUtils.AccountTable.TABLE_NAME,
                                                                       DBUtils.AccountTable.PAYMENT_INFO_PROVIDED_AT,
                                                                       DBUtils.AccountTable.PAYMENT_ACCOUNT_ID,
                                                                       DBUtils.AccountTable.ID_COLUMN);
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
-      ps.setString(2,paymentId);
+      ps.setString(2, paymentId);
       ps.setInt(3, accountId);
       ps.executeUpdate();
       connection.commit();
@@ -203,11 +197,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   /**
-   * Delete Account in the system
-   *
+   * Delete Account in the system.
    * @param accountId AccountId to be deleted
    * @return boolean status of account deletion
-   * @throws {@code AccountNotFoundException}
+   * @throws AccountNotFoundException if account to be deleted doesn't exist
    */
   @Override
   public boolean deleteAccount(int accountId) throws AccountNotFoundException {
@@ -216,10 +209,10 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     Connection connection = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("DELETE FROM %s WHERE %s = ?",
+      String sql = String.format("DELETE FROM %s WHERE %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
 
       ps.setInt(1, accountId);
       int affectedRows = ps.executeUpdate();
@@ -236,8 +229,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   /**
-   * GetAccount
-   *
+   * GetAccount based on accountid.
    * @param accountId id of the account
    * @return null if no entry matches, Instance of {@code Account} otherwise
    */
@@ -251,7 +243,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s, %s FROM %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s, %s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
@@ -260,7 +252,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, accountId);
       rs = ps.executeQuery();
 
@@ -269,7 +261,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         count++;
         account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
                               rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
-                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
                               rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
                               rs.getInt(DBUtils.AccountTable.ID_COLUMN),
                               rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
@@ -290,7 +282,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
   }
 
   /**
-   * GetAccount
+   * GetAccount based on email id.
    *
    * @param emailId emailId requested
    * @return {@code Account}
@@ -305,7 +297,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
         DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
@@ -313,7 +305,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.EMAIL_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, emailId);
       rs = ps.executeQuery();
 
@@ -322,7 +314,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         count++;
         account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
                               rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
-                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
                               rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
                               rs.getInt(DBUtils.AccountTable.ID_COLUMN),
                               rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
@@ -356,7 +348,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       connection = this.poolManager.getValidConnection();
 
 
-      String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
+      String sql = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
         DBUtils.AccountPayment.TABLE_NAME,
         DBUtils.AccountPayment.ACCOUNT_ID_COLUMN,
         DBUtils.AccountPayment.CREDIT_CARD_NAME_COLUMN,
@@ -364,7 +356,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
         DBUtils.AccountPayment.CREDIT_CARD_CVV_COLUMN,
         DBUtils.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
 
       ps.setInt(1, accountId);
       ps.setString(2, billingInfo.getCreditCardName());
@@ -391,13 +383,13 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     PreparedStatement ps = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
+      String sql = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)",
         DBUtils.AccountRoleType.TABLE_NAME,
         DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
         DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
         DBUtils.AccountRoleType.PERMISSIONS_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
 
       ps.setInt(1, accountId);
       ps.setString(2, role.getRoleName());
@@ -478,18 +470,18 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?",
+      String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.PASSWORD_COLUMN,
         DBUtils.AccountTable.ID_COLUMN,
         DBUtils.AccountTable.PASSWORD_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       ps.setInt(2, accountId);
       ps.setString(3, PasswordUtils.generateHashedPassword(oldPassword));
       int count = ps.executeUpdate();
-      Preconditions.checkArgument(count==1,"Update password failed");
+      Preconditions.checkArgument(count == 1, "Update password failed");
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
@@ -513,14 +505,14 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     ResultSet rs = null;
 
     //Update the account table. Joining email id from nonce table
-    String UPDATE_SQL = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
+    String updateSql = String.format("UPDATE %s set %s = ? where %s = (SELECT %s from %s where %s = ?)",
       DBUtils.AccountTable.TABLE_NAME,
       DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
       DBUtils.Nonce.ID_COLUMN, DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN
     );
 
     //Update is successful. now return the account information
-    String SELECT_SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
+    String selectSql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = " +
       "(SELECT %s FROM %s where %s = ?)",
       DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
       DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
@@ -535,27 +527,27 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       DBUtils.Nonce.NONCE_ID_COLUMN
     );
 
-    String DELETE_NONCE = String.format("DELETE FROM %s where %s = ?",
-      DBUtils.Nonce.TABLE_NAME,DBUtils.Nonce.NONCE_ID_COLUMN);
+    String deleteNonce  = String.format("DELETE FROM %s where %s = ?",
+      DBUtils.Nonce.TABLE_NAME, DBUtils.Nonce.NONCE_ID_COLUMN);
 
     try {
       connection = this.poolManager.getValidConnection();
       connection.setAutoCommit(false);
 
-      update = connection.prepareStatement(UPDATE_SQL);
+      update = connection.prepareStatement(updateSql);
       update.setString(1, PasswordUtils.generateHashedPassword(newPassword));
       update.setInt(2, nonce);
       update.executeUpdate();
 
 
 
-      select = connection.prepareStatement(SELECT_SQL);
+      select = connection.prepareStatement(selectSql);
 
       select.setInt(1, nonce);
       rs = select.executeQuery();
 
-      delete = connection.prepareStatement(DELETE_NONCE);
-      delete.setInt(1,nonce);
+      delete = connection.prepareStatement(deleteNonce);
+      delete.setInt(1, nonce);
       delete.executeUpdate();
 
       connection.commit();
@@ -563,7 +555,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
       while (rs.next()) {
         account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
                               rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
-                              rs.getString( DBUtils.AccountTable.COMPANY_COLUMN),
+                              rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
                               rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
                               rs.getInt(DBUtils.AccountTable.ID_COLUMN),
                               rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
@@ -576,8 +568,8 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
-      close(null,update);
-      close(null,delete);
+      close(null, update);
+      close(null, delete);
       close(connection, select, rs);
     }
   }
@@ -589,12 +581,12 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
+      String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.AccountTable.API_KEY_COLUMN,
         DBUtils.AccountTable.ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, ApiKey.generateKey(String.valueOf(accountId)));
       ps.setInt(2, accountId);
 

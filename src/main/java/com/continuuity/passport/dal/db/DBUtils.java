@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 public class DBUtils {
 
   /**
-   * Account Table
+   * Represents schema corresponding to 'account' table in the db.
    */
   public static class AccountTable {
 
@@ -28,14 +28,14 @@ public class DBUtils {
     public static final String ACCOUNT_CREATED_AT = "account_created_at";
     public static final String DEV_SUITE_DOWNLOADED_AT = "dev_suite_downloaded_at";
     public static final String PAYMENT_INFO_PROVIDED_AT = "payment_info_provided_at";
-    public static final String PAYMENT_ACCOUNT_ID ="payment_account_id";
+    public static final String PAYMENT_ACCOUNT_ID = "payment_account_id";
     public static final int ACCOUNT_UNCONFIRMED = 0;
     public static final int ACCOUNT_CONFIRMED = 1;
   }
 
   /**
-   * Account payment table
-   * TODO: This is not being used now
+   * Account payment table.
+   * TODO: (ENG-2215) - Cleanup interfaces
    */
   public static class AccountPayment {
 
@@ -49,8 +49,7 @@ public class DBUtils {
   }
 
   /**
-   * Defines RoleType for account
-   * TODO: This is not being used now
+   * Represents schema corresponding to 'account_role' table in the db.
    */
   public static class AccountRoleType {
     public static final String TABLE_NAME = "account_role";
@@ -60,7 +59,7 @@ public class DBUtils {
   }
 
   /**
-   * Defines VPC
+   * Represents schema corresponding to 'vpc_account' table in the db.
    */
   public static class VPC {
     public static final String TABLE_NAME = "vpc_account";
@@ -73,7 +72,7 @@ public class DBUtils {
   }
 
   /**
-   * Roles for VPC
+   * Represents schema corresponding to 'vpc' table in the db.
    * */
   public static class VPCRole {
     public static final String TABLE_NAME = "vpc_roles";
@@ -85,7 +84,7 @@ public class DBUtils {
   }
 
   /**
-   * Store nonce values for session and activation
+   * Represents schema corresponding to 'nonce' table in the db.
    */
   public static class Nonce {
     public static final String TABLE_NAME = "nonce";
@@ -94,15 +93,6 @@ public class DBUtils {
     public static final String NONCE_EXPIRES_AT_COLUMN = "nonce_expires_at";
 
   }
-
-  /**
-   * Stores list of profane words
-   */
-  public static class Profanity {
-    public static final String TABLE_NAME = "profane_list";
-    public static final String PROFANE_WORDS = "name";
-  }
-
 
   public static long timestampToLong(Timestamp time) {
     if (time == null) {

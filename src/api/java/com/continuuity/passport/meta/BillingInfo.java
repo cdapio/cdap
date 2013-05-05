@@ -5,20 +5,21 @@
 package com.continuuity.passport.meta;
 
 /**
- *  Billing info
+ *  Billing info.
+ *  TODO: (ENG-2214) - Remove this class since we use zurora for billing
  */
 public class BillingInfo {
 
   private final String creditCardName;
   private final String creditCardNumber;
   private final String cvv;
-  private final String expiration_date;
+  private final String expirationDate;
 
   public BillingInfo(String creditCardName, String creditCardNumber, String cvv, String expirationDate) {
     this.creditCardName = creditCardName;
     this.creditCardNumber = creditCardNumber;
     this.cvv = cvv;
-    this.expiration_date = expirationDate;
+    this.expirationDate = expirationDate;
   }
 
   public String getCreditCardName() {
@@ -34,6 +35,6 @@ public class BillingInfo {
   }
 
   public String getExpirationDate() {
-    return expiration_date;
+    return expirationDate;
   }
 }

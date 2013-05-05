@@ -11,13 +11,13 @@ import com.continuuity.passport.meta.Component;
 import com.continuuity.passport.meta.ComponentACL;
 
 /**
- * Authorize Components and ACLs
+ * Authorize Components and ACLs.
  * This is not implemented yet for initial use case
  */
 public interface AuthorizerService {
 
   /**
-   * Authorize component for the user with the request ACLType
+   * Authorize component for the user with the request ACLType.
    * Example: Authorize User: Foo to DataSet: Bar with ACL: READ
    *
    * @param user        User requesting authorization
@@ -31,7 +31,7 @@ public interface AuthorizerService {
                             Credentials credentials) throws RetryException;
 
   /**
-   * DelegationToken class - to grant access to ACLs
+   * DelegationToken class - to grant access to ACLs.
    */
   class DelegationToken {
 

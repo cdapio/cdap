@@ -20,44 +20,39 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service that orchestrates all account and vpc crud operations
+ * Service that orchestrates all account and vpc crud operations.
  */
 public interface DataManagementService {
 
   /**
-   * Register an {@code Account} in the system. Updates underlying data stores. Generates a unique account Id
-   *
+   * Register an {@code Account} in the system. Updates underlying data stores. Generates a unique account Id.
    * @param account Account information
    * @return Instance of {@code Status}
    */
   public Account registerAccount(Account account) throws AccountAlreadyExistsException;
 
   /**
-   * Delete an {@code Account} in the system
-   *
+   * Delete an {@code Account} in the system.
    * @param accountId accountId to be deleted
    * @throws AccountNotFoundException on account to be deleted not found
    */
   public void deleteAccount(int accountId) throws AccountNotFoundException;
 
   /**
-   * Confirms the registration, generates API Key
-   *
+   * Confirms the registration, generates API Key.
    * @param account  Instance of {@code Account}
    * @param password Password to be stored
    */
   public void confirmRegistration(Account account, String password);
 
   /**
-   * Register the fact that the user has downloaded the Dev suite
-   *
+   * Register the fact that the user has downloaded the Dev suite.
    * @param accountId accountId that downloaded dev suite
    */
   public void confirmDownload(int accountId);
 
   /**
-   * Register the fact that the user has provided payment info
-   *
+   * Register the fact that the user has provided payment info.
    * @param accountId accountId
    * @param paymentId id in the external payment system
    */
@@ -65,8 +60,7 @@ public interface DataManagementService {
 
 
   /**
-   * GetAccount object
-   *
+   * GetAccount object.
    * @param accountId lookup account Id of the account
    * @return Instance of {@code Account}
    */
@@ -74,24 +68,21 @@ public interface DataManagementService {
 
 
   /**
-   * Get Account object from the system
-   *
+   * Get Account object from the system.
    * @param emailId look up by emailId
    * @return Instance of {@code Account}
    */
   public Account getAccount(String emailId);
 
   /**
-   * Update account with passed Params
-   *
+   * Update account with passed Params.
    * @param accountId accountId
    * @param params    Map<"keyName", "value">
    */
   public void updateAccount(int accountId, Map<String, Object> params);
 
   /**
-   * Change password for account
-   *
+   * Change password for account.
    * @param accountId   accountId
    * @param oldPassword old password in the system
    * @param newPassword new password in the system
@@ -99,14 +90,12 @@ public interface DataManagementService {
   public void changePassword(int accountId, String oldPassword, String newPassword);
 
   /**
-   * ResetPassword
+   * ResetPassword.
    */
   public Account resetPassword(int nonceId, String password);
 
   /**
    * Add Meta-data for VPC, updates underlying data stores and generates a VPC ID.
-   * TODO: Checks for profanity keywords in vpc name and labels
-   *
    * @param accountId
    * @param vpc
    * @return Instance of {@code VPC}
@@ -114,8 +103,7 @@ public interface DataManagementService {
   public VPC addVPC(int accountId, VPC vpc);
 
   /**
-   * Get VPC - lookup by accountId and VPCID
-   *
+   * Get VPC - lookup by accountId and VPCID.
    * @param accountId
    * @param vpcID
    * @return Instance of {@code VPC}
@@ -123,8 +111,7 @@ public interface DataManagementService {
   public VPC getVPC(int accountId, int vpcID);
 
   /**
-   * Delete VPC
-   *
+   * Delete VPC.
    * @param accountId
    * @param vpcId
    * @throws VPCNotFoundException when VPC is not present in underlying data stores
@@ -132,22 +119,20 @@ public interface DataManagementService {
   public void deleteVPC(int accountId, int vpcId) throws VPCNotFoundException;
 
   /**
-   * Deletes VPC given VPC name
+   * Deletes VPC given VPC name.
    * @param vpcName name of VPC to be deleted
    */
   public void deleteVPC (String vpcName) throws VPCNotFoundException;
 
   /**
-   * Get VPC list for accountID
-   *
+   * Get VPC list for accountID.
    * @param accountId accountId identifying accounts
    * @return List of {@code VPC}
    */
   public List<VPC> getVPC(int accountId);
 
   /**
-   * Get VPC List based on the ApiKey
-   *
+   * Get VPC List based on the ApiKey.
    * @param apiKey apiKey of the account
    * @return List of {@code VPC}
    */
@@ -156,51 +141,48 @@ public interface DataManagementService {
 
   /**
    * Generate a unique id to be used in activation email to enable secure (nonce based) registration process.
-   *
    * @param id Id to be nonced
    * @return random nonce
-   *         TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public int getActivationNonce(String id);
 
   /**
-   * Get id for nonce
-   *
+   * Get id for nonce.
    * @param nonce nonce that was generated.
    * @return id
    * @throws StaleNonceException on nonce that was generated expiring in the system
-   *                             TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public String getActivationId(int nonce) throws StaleNonceException;
 
   /**
    * Generate a nonce that will be used for sessions.
-   *
    * @param id ID to be nonced
    * @return random nonce
-   *         TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public int getSessionNonce(String id);
 
   /**
-   * isValidVPC
+   * Checks if the VPC is valid.
+   * Validity is based on if vpc exists in the system and the vpc name is not in blacklist (profane) dictionary
    * @param vpcName
    * @return True if VPC name doesn't exist in the system and is not profane
    */
   public boolean isValidVPC(String vpcName);
 
   /**
-   * Get id for nonce
-   *
+   * Get id for nonce.
    * @param nonce
    * @return account id for nonce key
    * @throws StaleNonceException on nonce that was generated expiring in the system
-   *                             TODO: note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
+   * TODO: (ENG-2215) - note this method doesn't really belong to account/vpc CRUD. Move to a separate interface
    */
   public String getSessionId(int nonce) throws StaleNonceException;
 
   /**
-   * Generate Reset Nonce
+   * Generate Reset Nonce.
    * @param id Id
    * @return random nonce
    */
@@ -208,14 +190,13 @@ public interface DataManagementService {
 
 
   /**
-   * Regenerate API Key
-   *
+   * Regenerate API Key.
    * @param accountId
    */
   public void regenerateApiKey(int accountId);
 
   /**
-   * GetAccount given a VPC name
+   * GetAccount given a VPC name.
    * @param vpcName
    * @return Instance of {@code Account}
    */
@@ -223,15 +204,14 @@ public interface DataManagementService {
 
 
   /**
-   * Get all roles and related accounts for the vpc
+   * Get all roles and related accounts for the vpc.
    * @param vpcName Name of the vpc
    * @return Instance of {@code RolesAccounts}
    */
   public RolesAccounts getAccountRoles(String vpcName);
     /**
-     * Register a component with the account- Example: register VPC, Register DataSet
-     * TODO: Note: This is not implemented for initial free VPC use case
-     *
+     * Register a component with the account- Example: register VPC, Register DataSet.
+     * TODO: (ENG-2205) - Note: This is not implemented for initial free VPC use case
      * @param accountId
      * @param credentials
      * @param component
@@ -241,8 +221,8 @@ public interface DataManagementService {
                                    Component component);
 
   /**
-   * Unregister a {@code Component} in the system
-   * TODO: Note: This is not implemented for initial free VPC use case
+   * Unregister a {@code Component} in the system.
+   * TODO: (ENG-2205) - This is not implemented for initial free VPC use case
    *
    * @param accountId
    * @param credentials
@@ -254,8 +234,8 @@ public interface DataManagementService {
 
 
   /**
-   * TODO: Note: This is not implemented for initial free VPC use case
-   *
+   * Update components for the account.
+   * TODO: (ENG-2205) - This is not implemented for initial free VPC use case
    * @param accountId
    * @param credentials
    * @param component

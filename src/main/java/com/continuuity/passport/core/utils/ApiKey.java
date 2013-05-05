@@ -10,12 +10,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
- * Utility class to generate API KEY
+ * Utility class to generate API KEY.
  * TODO: Use Guava Hasher.
  */
 public final class ApiKey {
   /**
-   * Generates Random APIKey
+   * Generates Random APIKey.
    *
    * @param data inputdata emailId/accountId
    * @return APIKey
@@ -31,9 +31,9 @@ public final class ApiKey {
 
     byte[] hash = MessageDigest.getInstance("SHA1").digest(raw.getBytes());
     StringBuffer sb = new StringBuffer();
-    for (byte b : hash)
+    for (byte b : hash) {
       sb.append(String.format("%02x", b & 0xff));
-
+    }
     return sb.toString();
   }
 

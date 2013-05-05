@@ -25,7 +25,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
- * Defines end points for Account activation based nonce
+ * Defines end points for Account activation based nonce.
  */
 @Path("/passport/v1")
 @Singleton
@@ -58,7 +58,7 @@ public class ActivationNonceHandler extends PassportHandler {
         return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
-        LOG.error(String.format("Could not generate Nonce. Endpoint %s","GET /passport/v1/generateActivationKey"));
+        LOG.error(String.format("Could not generate Nonce. Endpoint %s", "GET /passport/v1/generateActivationKey"));
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
           .build();
@@ -66,7 +66,7 @@ public class ActivationNonceHandler extends PassportHandler {
     } catch (RuntimeException e) {
       requestFailed();
       LOG.error(String.format("Could not generate Nonce. Endpoint %s .%s",
-                              "GET /passport/v1/generateActivationKey",e.getMessage()));
+                              "GET /passport/v1/generateActivationKey", e.getMessage()));
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
         .build();
@@ -87,7 +87,7 @@ public class ActivationNonceHandler extends PassportHandler {
       } else {
         requestFailed();
         LOG.error(String.format("Could not get activation Id. Endpoint %s",
-                                "GET /passport/v1/getActivationId" ));
+                                "GET /passport/v1/getActivationId"));
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getIdJson("ID not found for nonce", id))
           .build();
@@ -95,7 +95,7 @@ public class ActivationNonceHandler extends PassportHandler {
     } catch (StaleNonceException e) {
       requestFailed();
       LOG.error(String.format("Could not get activation id. Endpoint %s. %s",
-        "GET /passport/v1/getActivationId",e.getMessage() ));
+        "GET /passport/v1/getActivationId", e.getMessage()));
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getIdJson("ID not found for nonce", id))
         .build();
@@ -116,7 +116,7 @@ public class ActivationNonceHandler extends PassportHandler {
       } else {
         requestFailed();
         LOG.error(String.format("Could not get reset key. Endpoint %s",
-          "GET /passport/v1/generateResetKey/{emailId}" ));
+          "GET /passport/v1/generateResetKey/{emailId}"));
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate resetKey", nonce))
           .build();
@@ -124,7 +124,7 @@ public class ActivationNonceHandler extends PassportHandler {
     } catch (RuntimeException e) {
       requestFailed();
       LOG.error(String.format("Could not get reset key. Endpoint %s %s",
-        "GET /passport/v1/generateResetKey/{emailId}", e.getMessage() ));
+        "GET /passport/v1/generateResetKey/{emailId}", e.getMessage()));
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError(String.format("Couldn't generate resetKey for %s", emailId)))
         .build();
@@ -150,7 +150,7 @@ public class ActivationNonceHandler extends PassportHandler {
         requestFailed(); // Request failed
 
         LOG.error(String.format("Could not get reset password. Endpoint %s",
-          "GET /passport/v1/resetPassword/{nonce}" ));
+          "GET /passport/v1/resetPassword/{nonce}"));
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(Utils.getJson("FAILED", "Failed to get reset the password"))
           .build();
@@ -158,7 +158,7 @@ public class ActivationNonceHandler extends PassportHandler {
     } else {
       requestFailed(); // Request failed
       LOG.error(String.format("Bad request. Password empty. Endpoint %s",
-                              "GET /passport/v1/resetPassword/{nonce}" ));
+                              "GET /passport/v1/resetPassword/{nonce}"));
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Must send password in request"))
         .build();
