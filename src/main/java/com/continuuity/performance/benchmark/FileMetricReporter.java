@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReportFileAppenderThread extends ReportThread {
+public class FileMetricReporter extends MetricsCollector {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReportFileAppenderThread.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileMetricReporter.class);
 
   private static final int FILE_APPENDER_METRIC_INTERVAL = 60;
   private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
@@ -33,8 +33,8 @@ public class ReportFileAppenderThread extends ReportThread {
     return FILE_APPENDER_METRIC_INTERVAL;
   }
 
-  public ReportFileAppenderThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
-                                  CConfiguration config) {
+  public FileMetricReporter(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
+                            CConfiguration config) {
     super(groups, metrics);
     this.fileName = config.get("reportfile");
     int pos = benchmarkName.lastIndexOf(".");
@@ -68,24 +68,22 @@ public class ReportFileAppenderThread extends ReportThread {
                                           Map<String, Long> prevMetrics,
                                           Map<String, Long> latestMetrics,
                                           boolean interrupt) {
-    if (prevMetrics != null) {
+    if (prevMetrics != null && !interrupt) {
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String key = singleMetric.getKey();
         long value = singleMetric.getValue();
-        if (!interrupt) {
-          Long previousValue = prevMetrics.get(key);
-          if (previousValue == null) {
-            previousValue = 0L;
-          }
-          long valueSince = value - previousValue;
-          long millisSince = millis - previousMillis;
-          metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
-          String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
-          String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
-                                                 benchmarkName, group.getName(),
-                                                 Integer.toString(group.getNumAgents()), "");
-          LOG.debug("Collected metric {} in memory ", metric);
+        Long previousValue = prevMetrics.get(key);
+        if (previousValue == null) {
+          previousValue = 0L;
         }
+        long valueSince = value - previousValue;
+        long millisSince = millis - previousMillis;
+        metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
+        String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
+        String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
+                                               benchmarkName, group.getName(),
+                                               Integer.toString(group.getNumAgents()), "");
+        LOG.debug("Collected metric {} in memory ", metric);
       }
     }
   }

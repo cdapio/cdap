@@ -9,41 +9,28 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Map;
 import java.util.Properties;
 /**
  *
  */
 public class MensaClient {
   private static final String DUMMY_OP = "avg:";
-  private static final String DEFAULT_OPENTSDB_HOSTNAME = "mon101.ops.sl.continuuity.com";
-  private static final int DEFAULT_OPENTSDB_PORT = 4242;
   private static final String DEFAULT_START_TS = "2000/01/01-00:00:00";
 
   String command;
   String host;
   int port;
-  String reportFileName;
   String metric;
-  long timestamp;
-  double value;
-  String query;
   Properties config;
   Properties tags;
   String function;
@@ -55,50 +42,6 @@ public class MensaClient {
     this.tags = new Properties();
     this.config = new Properties();
     this.now = new org.joda.time.DateTime();
-  }
-
-  private String addTags(String metric) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(metric);
-    for (Map.Entry<Object, Object> tag : tags.entrySet()) {
-      sb.append(" ");
-      sb.append(tag.getKey());
-      sb.append("=");
-      sb.append(tag.getValue());
-    }
-    return sb.toString();
-  }
-
-  private void uploadMetrics() {
-    File reportFile = new File(reportFileName);
-    BufferedReader br = null;
-    DataOutputStream dos = null;
-    DataInputStream dis = null;
-    Socket socket = null;
-    try {
-      socket = new Socket(host, port);
-      dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-      dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-      br = new BufferedReader(new FileReader(reportFile));
-      while (true) {
-        String metric = br.readLine();
-        if (metric == null) {
-          break;
-        }
-        metric = "put " + metric;
-        metric = addTags(metric);
-        metric = metric + "\n";
-        System.out.println(metric);
-        dos.writeUTF(metric);
-      }
-      dos.flush();
-    } catch (IOException e) {
-    } finally {
-      if (dis != null) try { dis.close(); } catch (IOException e) { }
-      if (dos != null) try { dos.close(); } catch (IOException e) { }
-      if (socket != null) try { socket.close(); } catch (IOException e) { }
-      if (br != null) try { br.close(); } catch (IOException e) { }
-    }
   }
 
   private String buildTsdbQuery(String start, String end, String metric) {

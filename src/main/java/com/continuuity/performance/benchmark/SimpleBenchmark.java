@@ -12,8 +12,6 @@ public abstract class SimpleBenchmark extends Benchmark {
     public int numAgents = 1;
     public int numSeconds = 0;
     public int numRunsPerSecond = 0;
-    public int groupMillisDelay = 0;
-    public int nextAgentMillisDelay = 0;
 
     public void configure(CConfiguration config) {
       verbose = config.getBoolean("verbose", verbose);

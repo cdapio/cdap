@@ -3,35 +3,27 @@ package com.continuuity.performance.benchmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BenchmarkThread extends Thread {
+public class BenchmarkRunnable implements Runnable {
 
-  Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
+  private final static Logger LOG = LoggerFactory.getLogger(BenchmarkRunnable.class);
 
-  BenchmarkRunner runner;
-  int agentId;
-  AgentGroup agentGroup;
-  BenchmarkMetric globalMetrics;
-  boolean useConsole;
+  private final int agentId;
+  private final AgentGroup agentGroup;
+  private final BenchmarkMetric globalMetrics;
+  private final boolean useConsole;
 
-  public BenchmarkThread(BenchmarkRunner runner,
-                         AgentGroup group,
-                         int agentId,
-                         BenchmarkMetric groupMetrics,
-                         boolean useConsole) {
-    this.runner = runner;
+  public BenchmarkRunnable(AgentGroup group, int agentId, BenchmarkMetric groupMetrics, boolean useConsole) {
     this.agentGroup = group;
     this.agentId = agentId;
     this.globalMetrics = groupMetrics;
     this.useConsole = useConsole;
   }
 
-  public BenchmarkThread(BenchmarkRunner runner,
-                         AgentGroup group,
-                         int agentId,
-                         BenchmarkMetric groupMetrics) {
-    this(runner, group, agentId, groupMetrics, true);
+  public BenchmarkRunnable(AgentGroup group, int agentId, BenchmarkMetric groupMetrics) {
+    this(group, agentId, groupMetrics, true);
   }
 
+  @Override
   public void run() {
     String msg;
     int numAgents = agentGroup.getNumAgents();
@@ -40,19 +32,8 @@ public class BenchmarkThread extends Thread {
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
 
-    msg = String.format("%s %d  warming up.", agentGroup.getName(), agentId);
-    LOG.info(msg);
-    printConsole(msg);
-
-    try {
-      agent.warmup(agentId, numAgents);
-    } catch (BenchmarkException e) {
-      LOG.error(e.getMessage());
-    }
-
-    msg = String.format("%s %d starting.", agentGroup.getName(), agentId);
-    LOG.info(msg);
-    printConsole(msg);
+    LOG.info("{} {} starting.", agentGroup.getName(), agentId);
+    printConsole(String.format("%s %d starting.", agentGroup.getName(), agentId));
 
     long startTime = System.currentTimeMillis();
     long endTime = timeToRun > 0 ? startTime + 1000 * timeToRun : 0;
@@ -67,14 +48,14 @@ public class BenchmarkThread extends Thread {
       // run one iteration
       long thisTime = System.currentTimeMillis();
       long delta;
+
       try {
         delta = agent.runOnce(runs + 1);
       } catch (BenchmarkException e) {
-        // TODO: better way to report the error
-        // TODO: add option to continue
-        LOG.error(e.getMessage());
-        break;
+        throw new RuntimeException("Execution of runOnce failed", e);
       }
+
+
       globalMetrics.increment("runs", delta);
 
       // if necessary, sleep to throttle runs per second
@@ -89,7 +70,8 @@ public class BenchmarkThread extends Thread {
           try {
             Thread.sleep(expectedTime - roundTime);
           } catch (InterruptedException e) {
-            LOG.info("Sleep interrupted. Ignoring.");
+            Thread.currentThread().interrupt();
+            LOG.debug("Sleep interrupted. Ignoring.");
           }
           currentTime = System.currentTimeMillis();
         }
@@ -119,8 +101,7 @@ public class BenchmarkThread extends Thread {
     LOG.info(msg);
     printConsole(msg);
 
-    LOG.debug("Notify BenchmarkRunner thread about completion.");
-    runner.agentFinished(agentId);
+    LOG.debug("Benchmark agent thread finished.");
   }
 
   private void printConsole(String msg) {

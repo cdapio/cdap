@@ -14,7 +14,7 @@ import java.util.Map;
 
 public abstract class OpexBenchmark extends SimpleBenchmark {
 
-  private static final Logger Log = LoggerFactory.getLogger(OpexBenchmark.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OpexBenchmark.class);
 
   OpexProvider opexProvider;
   OperationExecutor opex;
@@ -81,7 +81,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   }
 
   @Override
-  public void shutdown() throws BenchmarkException {
+  public void shutdown() {
+    LOG.debug("Shutting down opex provider.");
     this.opexProvider.shutdown(this.opex);
   }
 }

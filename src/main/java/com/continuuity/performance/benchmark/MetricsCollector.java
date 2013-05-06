@@ -1,25 +1,46 @@
 package com.continuuity.performance.benchmark;
 
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-public abstract class ReportThread extends Thread {
+public abstract class MetricsCollector implements Runnable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReportThread.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsCollector.class);
 
-//  private int reportInterval = 60;
+  /**
+   *
+   */
+  private volatile boolean interrupt = false;
+
+  /**
+   *
+   */
   private AgentGroup[] groups;
+
+  /**
+   *
+   */
   private BenchmarkMetric[] groupMetrics;
+
+  /**
+   *
+   */
+  private final Stopwatch stopwatch = new Stopwatch();
 
   public abstract int getInterval();
 
-
-  public ReportThread(AgentGroup[] groups, BenchmarkMetric[] metrics) {
+  public MetricsCollector(AgentGroup[] groups, BenchmarkMetric[] metrics) {
     this.groupMetrics = metrics;
     this.groups = groups;
+  }
+
+  public final void stop() {
+    interrupt = true;
   }
 
   protected abstract void processGroupMetricsInterval(long unixTime,
@@ -34,57 +55,59 @@ public abstract class ReportThread extends Thread {
 
   public final void run() {
     try {
+      LOG.debug("Initializing metrics collector.");
       init();
-      long start = System.currentTimeMillis();
-      long unixTime;
-      boolean interrupt = false;
+      stopwatch.start();
+
       ArrayList<Map<String, Long>> previousMetrics = new ArrayList<Map<String, Long>>(groups.length);
       for (int i = 0; i < groups.length; i++) {
-        previousMetrics.add(null);
+        previousMetrics.add(i, null);
       }
-      long[] previousMillis = new long[groups.length];
+      long[] previousElapsedMillis = new long[groups.length];
       // wake up every interval (i.e. every minute) to report the metrics
       int interval = getInterval();
+
+      LOG.debug("Starting to collect metrics every {} seconds.", interval);
       for (int seconds = interval; !interrupt; seconds += interval) {
-        long wakeup = start + (seconds * 1000);
-        long currentTime = System.currentTimeMillis();
-        unixTime = currentTime / 1000L;
+        long nextWakeupMillis = seconds * 1000L;
+        long elapsedMillis = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
         try {
-          if (wakeup > currentTime) {
-            Thread.sleep(wakeup - currentTime);
+          if (nextWakeupMillis > elapsedMillis) {
+            Thread.sleep(nextWakeupMillis - elapsedMillis);
           }
+          elapsedMillis = nextWakeupMillis;
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           interrupt = true;
+          elapsedMillis = stopwatch.elapsedTime(TimeUnit.MILLISECONDS);
         }
-        long latestMillis;
-        if (interrupt) {
-          latestMillis = System.currentTimeMillis() - start;
-        } else {
-          latestMillis = seconds * 1000L;
-        }
-        LOG.debug("{} elapsed: ", time2String(latestMillis));
+
+        //either next wake-up time has been reached or an interrupt happened before that
+        LOG.debug("{} elapsed: ", time2String(elapsedMillis));
+
         for (int i = 0; i < groups.length; i++) {
           Map<String, Long> latestGrpMetrics = groupMetrics[i].list();
           Map<String, Long> previousGrpMetrics = previousMetrics.get(i);
 
-          processGroupMetricsInterval(unixTime, groups[i], previousMillis[i], latestMillis,
+          processGroupMetricsInterval(getCurrentUnixTime(), groups[i], previousElapsedMillis[i], elapsedMillis,
                                       previousGrpMetrics, latestGrpMetrics, interrupt);
 
           previousMetrics.set(i, latestGrpMetrics);
-          previousMillis[i] = latestMillis;
+          previousElapsedMillis[i] = elapsedMillis;
         }
       } // each interval
       LOG.debug("Summarizing collected metrics...");
-      unixTime = System.currentTimeMillis() / 1000L;
       for (AgentGroup group : groups) {
-        processGroupMetricsFinal(unixTime, group);
+        processGroupMetricsFinal(getCurrentUnixTime(), group);
       }
     } catch (Exception e) {
-      LOG.error(e.getMessage(), e);
+      throw new RuntimeException(e);
     } finally {
+      LOG.debug("Shutting down metrics collector.");
+      stopwatch.stop();
       shutdown();
     }
-}
+  }
 
   protected void init() throws BenchmarkException {
   }
@@ -92,11 +115,11 @@ public abstract class ReportThread extends Thread {
   protected void shutdown() {
   }
 
-  private String time2String(long millis) {
-    final long second = 1000;
-    final long minute = 60 * second;
-    final long hour = 60 * minute;
-    final long day = 24 * hour;
+  private static String time2String(long millis) {
+    final long second = 1000L;
+    final long minute = 60L * second;
+    final long hour = 60L * minute;
+    final long day = 24L * hour;
 
     StringBuilder builder = new StringBuilder();
     if (millis > day) {
@@ -115,5 +138,9 @@ public abstract class ReportThread extends Thread {
     builder.append(String.format("%02d:%02d:%02d", hours, minutes, seconds));
     if (millis > 0) builder.append(String.format(".%03d", millis));
     return builder.toString();
+  }
+
+  private static long getCurrentUnixTime() {
+    return System.currentTimeMillis() / 1000L;
   }
 }

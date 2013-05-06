@@ -11,9 +11,6 @@ public class BenchmarkMetric {
 
   private HashMap<String, AtomicLong> metrics = Maps.newHashMap();
 
-  public void increment(String metric) {
-    increment(metric, 1L);
-  }
   public void increment(String metric, long delta) {
       AtomicLong counter = metrics.get(metric);
     if (counter == null) {
