@@ -2,6 +2,8 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
@@ -100,7 +102,7 @@ public abstract class QueueUndo implements Undo {
     public void execute(QueueStateProxy queueStateProxy, final Transaction transaction, final TTQueueTable queueTable)
       throws OperationException {
       queueStateProxy.run(queueName, consumer,
-                                         new QueueStateProxy.QueueRunnable() {
+                                         new QueueRunnable() {
                                            @Override
                                            public void run(StatefulQueueConsumer statefulQueueConsumer)
                                              throws OperationException {

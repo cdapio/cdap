@@ -3,6 +3,7 @@
  */
 package com.continuuity.data.runtime;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -16,6 +17,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
 /**
  * DataFabricModules defines all of the bindings for the different data
@@ -39,10 +41,16 @@ public class DataFabricModules extends RuntimeModule {
       return new AbstractModule() {
       @Override
       protected void configure() {
+        CConfiguration conf = CConfiguration.create();
         bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
         bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
         bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
+
+        // We don't need caching for in-memory
+        conf.setLong(OmidTransactionalOperationExecutor.QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES, 0);
+        bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
+          .toInstance(conf);
       }
     };
   }

@@ -29,7 +29,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final org.apache.thrift.protocol.TField PARTITIONING_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("partitioningKey", org.apache.thrift.protocol.TType.STRING, (short)5);
   private static final org.apache.thrift.protocol.TField QUEUE_CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("queueConfig", org.apache.thrift.protocol.TType.STRUCT, (short)6);
   private static final org.apache.thrift.protocol.TField IS_STATEFUL_FIELD_DESC = new org.apache.thrift.protocol.TField("isStateful", org.apache.thrift.protocol.TType.BOOL, (short)7);
-  private static final org.apache.thrift.protocol.TField STATE_INITIALIZED_FIELD_DESC = new org.apache.thrift.protocol.TField("stateInitialized", org.apache.thrift.protocol.TType.BOOL, (short)8);
+  private static final org.apache.thrift.protocol.TField STATE_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("stateType", org.apache.thrift.protocol.TType.I32, (short)8);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -44,7 +44,11 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   public String partitioningKey; // optional
   public TQueueConfig queueConfig; // optional
   public boolean isStateful; // required
-  public boolean stateInitialized; // required
+  /**
+   * 
+   * @see TQueueStateType
+   */
+  public TQueueStateType stateType; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -55,7 +59,11 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     PARTITIONING_KEY((short)5, "partitioningKey"),
     QUEUE_CONFIG((short)6, "queueConfig"),
     IS_STATEFUL((short)7, "isStateful"),
-    STATE_INITIALIZED((short)8, "stateInitialized");
+    /**
+     * 
+     * @see TQueueStateType
+     */
+    STATE_TYPE((short)8, "stateType");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -84,8 +92,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           return QUEUE_CONFIG;
         case 7: // IS_STATEFUL
           return IS_STATEFUL;
-        case 8: // STATE_INITIALIZED
-          return STATE_INITIALIZED;
+        case 8: // STATE_TYPE
+          return STATE_TYPE;
         default:
           return null;
       }
@@ -130,8 +138,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final int __GROUPID_ISSET_ID = 1;
   private static final int __GROUPSIZE_ISSET_ID = 2;
   private static final int __ISSTATEFUL_ISSET_ID = 3;
-  private static final int __STATEINITIALIZED_ISSET_ID = 4;
-  private BitSet __isset_bit_vector = new BitSet(5);
+  private BitSet __isset_bit_vector = new BitSet(4);
   private _Fields optionals[] = {_Fields.GROUP_NAME,_Fields.PARTITIONING_KEY,_Fields.QUEUE_CONFIG};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -150,8 +157,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConfig.class)));
     tmpMap.put(_Fields.IS_STATEFUL, new org.apache.thrift.meta_data.FieldMetaData("isStateful", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
-    tmpMap.put(_Fields.STATE_INITIALIZED, new org.apache.thrift.meta_data.FieldMetaData("stateInitialized", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.STATE_TYPE, new org.apache.thrift.meta_data.FieldMetaData("stateType", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TQueueStateType.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueConsumer.class, metaDataMap);
   }
@@ -164,7 +171,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     long groupId,
     int groupSize,
     boolean isStateful,
-    boolean stateInitialized)
+    TQueueStateType stateType)
   {
     this();
     this.instanceId = instanceId;
@@ -175,8 +182,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     setGroupSizeIsSet(true);
     this.isStateful = isStateful;
     setIsStatefulIsSet(true);
-    this.stateInitialized = stateInitialized;
-    setStateInitializedIsSet(true);
+    this.stateType = stateType;
   }
 
   /**
@@ -198,7 +204,9 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       this.queueConfig = new TQueueConfig(other.queueConfig);
     }
     this.isStateful = other.isStateful;
-    this.stateInitialized = other.stateInitialized;
+    if (other.isSetStateType()) {
+      this.stateType = other.stateType;
+    }
   }
 
   public TQueueConsumer deepCopy() {
@@ -218,8 +226,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     this.queueConfig = null;
     setIsStatefulIsSet(false);
     this.isStateful = false;
-    setStateInitializedIsSet(false);
-    this.stateInitialized = false;
+    this.stateType = null;
   }
 
   public int getInstanceId() {
@@ -386,27 +393,36 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     __isset_bit_vector.set(__ISSTATEFUL_ISSET_ID, value);
   }
 
-  public boolean isStateInitialized() {
-    return this.stateInitialized;
+  /**
+   * 
+   * @see TQueueStateType
+   */
+  public TQueueStateType getStateType() {
+    return this.stateType;
   }
 
-  public TQueueConsumer setStateInitialized(boolean stateInitialized) {
-    this.stateInitialized = stateInitialized;
-    setStateInitializedIsSet(true);
+  /**
+   * 
+   * @see TQueueStateType
+   */
+  public TQueueConsumer setStateType(TQueueStateType stateType) {
+    this.stateType = stateType;
     return this;
   }
 
-  public void unsetStateInitialized() {
-    __isset_bit_vector.clear(__STATEINITIALIZED_ISSET_ID);
+  public void unsetStateType() {
+    this.stateType = null;
   }
 
-  /** Returns true if field stateInitialized is set (has been assigned a value) and false otherwise */
-  public boolean isSetStateInitialized() {
-    return __isset_bit_vector.get(__STATEINITIALIZED_ISSET_ID);
+  /** Returns true if field stateType is set (has been assigned a value) and false otherwise */
+  public boolean isSetStateType() {
+    return this.stateType != null;
   }
 
-  public void setStateInitializedIsSet(boolean value) {
-    __isset_bit_vector.set(__STATEINITIALIZED_ISSET_ID, value);
+  public void setStateTypeIsSet(boolean value) {
+    if (!value) {
+      this.stateType = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -467,11 +483,11 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       }
       break;
 
-    case STATE_INITIALIZED:
+    case STATE_TYPE:
       if (value == null) {
-        unsetStateInitialized();
+        unsetStateType();
       } else {
-        setStateInitialized((Boolean)value);
+        setStateType((TQueueStateType) value);
       }
       break;
 
@@ -501,8 +517,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     case IS_STATEFUL:
       return Boolean.valueOf(isIsStateful());
 
-    case STATE_INITIALIZED:
-      return Boolean.valueOf(isStateInitialized());
+    case STATE_TYPE:
+      return getStateType();
 
     }
     throw new IllegalStateException();
@@ -529,8 +545,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       return isSetQueueConfig();
     case IS_STATEFUL:
       return isSetIsStateful();
-    case STATE_INITIALIZED:
-      return isSetStateInitialized();
+    case STATE_TYPE:
+      return isSetStateType();
     }
     throw new IllegalStateException();
   }
@@ -611,12 +627,12 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         return false;
     }
 
-    boolean this_present_stateInitialized = true;
-    boolean that_present_stateInitialized = true;
-    if (this_present_stateInitialized || that_present_stateInitialized) {
-      if (!(this_present_stateInitialized && that_present_stateInitialized))
+    boolean this_present_stateType = true && this.isSetStateType();
+    boolean that_present_stateType = true && that.isSetStateType();
+    if (this_present_stateType || that_present_stateType) {
+      if (!(this_present_stateType && that_present_stateType))
         return false;
-      if (this.stateInitialized != that.stateInitialized)
+      if (!this.stateType.equals(that.stateType))
         return false;
     }
 
@@ -706,12 +722,12 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetStateInitialized()).compareTo(typedOther.isSetStateInitialized());
+    lastComparison = Boolean.valueOf(isSetStateType()).compareTo(typedOther.isSetStateType());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStateInitialized()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.stateInitialized, typedOther.stateInitialized);
+    if (isSetStateType()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.stateType, typedOther.stateType);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -782,8 +798,12 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     sb.append(this.isStateful);
     first = false;
     if (!first) sb.append(", ");
-    sb.append("stateInitialized:");
-    sb.append(this.stateInitialized);
+    sb.append("stateType:");
+    if (this.stateType == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.stateType);
+    }
     first = false;
     sb.append(")");
     return sb.toString();
@@ -886,10 +906,10 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 8: // STATE_INITIALIZED
-            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-              struct.stateInitialized = iprot.readBool();
-              struct.setStateInitializedIsSet(true);
+          case 8: // STATE_TYPE
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.stateType = TQueueStateType.findByValue(iprot.readI32());
+              struct.setStateTypeIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -942,9 +962,11 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       oprot.writeFieldBegin(IS_STATEFUL_FIELD_DESC);
       oprot.writeBool(struct.isStateful);
       oprot.writeFieldEnd();
-      oprot.writeFieldBegin(STATE_INITIALIZED_FIELD_DESC);
-      oprot.writeBool(struct.stateInitialized);
-      oprot.writeFieldEnd();
+      if (struct.stateType != null) {
+        oprot.writeFieldBegin(STATE_TYPE_FIELD_DESC);
+        oprot.writeI32(struct.stateType.getValue());
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -984,7 +1006,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetIsStateful()) {
         optionals.set(6);
       }
-      if (struct.isSetStateInitialized()) {
+      if (struct.isSetStateType()) {
         optionals.set(7);
       }
       oprot.writeBitSet(optionals, 8);
@@ -1009,8 +1031,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetIsStateful()) {
         oprot.writeBool(struct.isStateful);
       }
-      if (struct.isSetStateInitialized()) {
-        oprot.writeBool(struct.stateInitialized);
+      if (struct.isSetStateType()) {
+        oprot.writeI32(struct.stateType.getValue());
       }
     }
 
@@ -1048,8 +1070,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         struct.setIsStatefulIsSet(true);
       }
       if (incoming.get(7)) {
-        struct.stateInitialized = iprot.readBool();
-        struct.setStateInitializedIsSet(true);
+        struct.stateType = TQueueStateType.findByValue(iprot.readI32());
+        struct.setStateTypeIsSet(true);
       }
     }
   }

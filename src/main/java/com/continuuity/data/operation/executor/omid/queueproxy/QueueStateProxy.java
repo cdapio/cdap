@@ -1,4 +1,4 @@
-package com.continuuity.data.operation.executor.omid;
+package com.continuuity.data.operation.executor.omid.queueproxy;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -8,6 +8,7 @@ import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.Weigher;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,13 +21,23 @@ public class QueueStateProxy {
   private final RowLockTable locks = new RowLockTable();
   private final Cache<RowLockTable.Row, StatefulQueueConsumer> stateCache;
 
-  public QueueStateProxy() {
+  public QueueStateProxy(final long maxSizeBytes) {
     this.stateCache =
     CacheBuilder
       .newBuilder()
       .initialCapacity(1000)
       .expireAfterAccess(1, TimeUnit.HOURS)
-      .recordStats()
+      .maximumWeight(maxSizeBytes)
+      .weigher(new Weigher<RowLockTable.Row, StatefulQueueConsumer>() {
+        @Override
+        public int weigh(RowLockTable.Row key, StatefulQueueConsumer value) {
+          int weight = 32; // small constant representing key
+          if (value.getQueueState() != null) {
+            weight += value.getQueueState().weight();
+          }
+          return weight;
+        }
+      })
       .build();
   }
 
@@ -41,19 +52,7 @@ public class QueueStateProxy {
    */
   public <T> T call(byte[] queueName, QueueConsumer queueConsumer, QueueCallable<T> op)
     throws OperationException {
-    Preconditions.checkArgument(op != null && queueConsumer != null);
-
-    ConsumerHolder consumerHolder = null;
-    try {
-      consumerHolder = checkout(queueName, queueConsumer);
-      //noinspection ConstantConditions
-      return op.call(consumerHolder.statefulQueueConsumer);
-    } finally {
-      if(consumerHolder != null) {
-        //noinspection ConstantConditions
-        release(consumerHolder, op.statefulQueueConsumer);
-      }
-    }
+    return runOperation(queueName, queueConsumer, op);
   }
 
   /**
@@ -65,70 +64,29 @@ public class QueueStateProxy {
    */
   public void run(byte[] queueName, QueueConsumer queueConsumer, QueueRunnable op)
     throws OperationException {
+    runOperation(queueName, queueConsumer, op);
+  }
+
+  private <T> T runOperation(byte[] queueName, QueueConsumer queueConsumer, QueueOperation<T> op)
+    throws OperationException {
     Preconditions.checkArgument(op != null && queueConsumer != null);
 
     ConsumerHolder consumerHolder = null;
     try {
       consumerHolder = checkout(queueName, queueConsumer);
+      // op is already asserted to be not null!
       //noinspection ConstantConditions
-      op.run(consumerHolder.statefulQueueConsumer);
+      return op.execute(consumerHolder.statefulQueueConsumer);
     } finally {
       if(consumerHolder != null) {
+        // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
+        // op is already asserted to be not null!
         //noinspection ConstantConditions
-        release(consumerHolder, op.statefulQueueConsumer);
+        if(op.statefulQueueConsumer != null) {
+          consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
+        }
+        release(consumerHolder);
       }
-    }
-  }
-
-  /**
-   * A QueueCallable is used to define a queue operation that returns a value.
-   * QueueCallable will be run by the QueueStateProxy.
-   * @param <T> Type of the return value
-   */
-  public static abstract class QueueCallable<T> {
-    private volatile StatefulQueueConsumer statefulQueueConsumer = null;
-
-    /**
-     * The call method will be called when the QueueCallable is executed.
-     * @param statefulQueueConsumer QueueConsumer with state that needs to be passed to all queue methods.
-     * @return Return value of the queue operation
-     * @throws OperationException
-     */
-    public abstract T call(StatefulQueueConsumer statefulQueueConsumer) throws OperationException;
-
-    /**
-     * If the statefulQueueConsumer changes outside of the JVM during the queue operation then
-     * this method is used let QueueStateProxy know about the change.
-     * @param statefulQueueConsumer Updated statefulQueueConsumer
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    public void updateStatefulConsumer(StatefulQueueConsumer statefulQueueConsumer) {
-      this.statefulQueueConsumer = statefulQueueConsumer;
-    }
-  }
-
-  /**
-   * A QueueRunnable is used to define a queue operation that does not return a value.
-   * QueueRunnable will be run by the QueueStateProxy.
-   */
-  public static abstract class QueueRunnable {
-    private volatile StatefulQueueConsumer statefulQueueConsumer = null;
-
-    /**
-     * The run method will be called when the QueueRunnable is executed.
-     * @param statefulQueueConsumer QueueConsumer with state that needs to be passed to all queue methods.
-     * @throws OperationException
-     */
-    public abstract void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException;
-
-    /**
-     * If the statefulQueueConsumer changes outside of the JVM during the queue operation then
-     * this method is used let QueueStateProxy know about the change.
-     * @param statefulQueueConsumer Updated statefulQueueConsumer
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    public void updateStatefulConsumer(StatefulQueueConsumer statefulQueueConsumer) {
-      this.statefulQueueConsumer = statefulQueueConsumer;
     }
   }
 
@@ -144,7 +102,7 @@ public class QueueStateProxy {
     } while (!lock.isValid());
 
     // We now have the lock, get the state
-    if(queueConsumer.isStateInitialized()) {
+    if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
       // This consumer has state
       // We remove the consumer from pool rather than get, this will reduce state corruption due to exceptions, etc.
       // It is safer to return an empty state rather than a stale one.
@@ -164,29 +122,23 @@ public class QueueStateProxy {
                                                         queueConsumer.getGroupName(),
                                                         queueConsumer.getPartitioningKey(),
                                                         queueConsumer.getQueueConfig());
+      // If consumer says state was initialized, then it might have been evicted from cache
+      if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
+        statefulQueueConsumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
+      }
     }
-    queueConsumer.setStateInitialized(true);
+    queueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
     // Note: we still have the lock
     return new ConsumerHolder(row, lock, statefulQueueConsumer);
   }
 
-  private void release(ConsumerHolder consumerHolder, StatefulQueueConsumer statefulQueueConsumer) {
+  private void release(ConsumerHolder consumerHolder) {
     if(consumerHolder == null) {
       return;
     }
 
-    StatefulQueueConsumer toReturnConsumer;
-    /**
-     * If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
-     */
-    if(statefulQueueConsumer != null) {
-      toReturnConsumer = statefulQueueConsumer;
-    } else {
-      toReturnConsumer = consumerHolder.statefulQueueConsumer;
-    }
-
     // Store the consumer state
-    stateCache.put(consumerHolder.row, toReturnConsumer);
+    stateCache.put(consumerHolder.row, consumerHolder.statefulQueueConsumer);
 
     // If lock and row are valid, unlock
     if(consumerHolder.lock != null && consumerHolder.lock.isValid()) {
@@ -203,7 +155,7 @@ public class QueueStateProxy {
   private static class ConsumerHolder {
     private final RowLockTable.Row row;
     private final RowLockTable.RowLock lock;
-    private StatefulQueueConsumer statefulQueueConsumer;
+    private volatile StatefulQueueConsumer statefulQueueConsumer;
 
     private ConsumerHolder(RowLockTable.Row row, RowLockTable.RowLock lock,
                            StatefulQueueConsumer statefulQueueConsumer) {
