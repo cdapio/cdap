@@ -337,7 +337,7 @@ public class TestUtil {
     // prepare the queue consumer
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queueURI, consumer));
+    executor.execute(context, new QueueAdmin.QueueConfigure(queueURI, consumer));
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
