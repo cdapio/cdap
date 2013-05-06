@@ -4,6 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;
@@ -15,6 +16,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ObjectStoreTest extends DataSetTestBase {
 
@@ -115,6 +117,27 @@ public class ObjectStoreTest extends DataSetTestBase {
     } catch (IllegalStateException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testWithCustomClassLoader() {
+
+    // create a dummy class loader that records the name of the class it loaded
+    final AtomicReference<String> lastClassLoaded = new AtomicReference<String>(null);
+    ClassLoader loader = new ClassLoader() {
+      @Override
+      public Class<?> loadClass(String name) throws ClassNotFoundException {
+        lastClassLoaded.set(name);
+        return super.loadClass(name);
+      }
+    };
+    // create an instantiator that uses the dummy class loader
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, proxy, loader);
+    inst.setDataSets(specs);
+    // use that instantiator to get a data set instance
+    inst.getDataSet("customs");
+    // verify the class name was recorded (the dummy class loader was used).
+    Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
   }
 
 }

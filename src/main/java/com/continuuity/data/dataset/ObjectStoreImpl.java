@@ -10,6 +10,7 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.google.common.reflect.TypeToken;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,19 +27,23 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
   /**
    * Given an object store, create an implementation and set that as the delegate for the store.
    * @param store the object store
+   * @param loader the class loader for T, or null to use the bootstrap class loader
    * @param <T> the type of the objects in the store
    */
-  static <T> void setImplementation(ObjectStore<T> store) {
-    ObjectStoreImpl<T> impl = new ObjectStoreImpl<T>(store);
+  static <T> void setImplementation(ObjectStore<T> store, ClassLoader loader) {
+    ObjectStoreImpl<T> impl = new ObjectStoreImpl<T>(store, loader);
     store.setDelegate(impl);
   }
 
   /**
    * Given an object store, create an implementation for that store.
    * @param store the object store
+   * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
+   *               If null, then the bootstrap class loader is used.
    */
-  protected ObjectStoreImpl(ObjectStore<T> store) {
+  protected ObjectStoreImpl(ObjectStore<T> store, @Nullable ClassLoader loader) {
     super(store);
+    this.typeRep.setClassLoader(loader);
     this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
     this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
