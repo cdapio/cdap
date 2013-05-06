@@ -27,10 +27,10 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
   /**
    * Given an object store, create an implementation and set that as the delegate for the store.
    * @param store the object store
-   * @param loader the class loader for T, or null to use the bootstrap class loader
+   * @param loader the class loader for T, or null to use the default class loader
    * @param <T> the type of the objects in the store
    */
-  static <T> void setImplementation(ObjectStore<T> store, ClassLoader loader) {
+  static <T> void setImplementation(ObjectStore<T> store, @Nullable ClassLoader loader) {
     ObjectStoreImpl<T> impl = new ObjectStoreImpl<T>(store, loader);
     store.setDelegate(impl);
   }
@@ -39,7 +39,7 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
    * Given an object store, create an implementation for that store.
    * @param store the object store
    * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
-   *               If null, then the bootstrap class loader is used.
+   *               If null, then the default class loader is used.
    */
   protected ObjectStoreImpl(ObjectStore<T> store, @Nullable ClassLoader loader) {
     super(store);
