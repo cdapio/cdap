@@ -33,10 +33,10 @@ import java.util.List;
 public class DataSetTestBase {
 
   private static OperationExecutor opex;
-  private static DataFabric fabric;
+  protected static DataFabric fabric;
 
   private static TransactionAgent agent;
-  private static final TransactionProxy proxy = new TransactionProxy();
+  protected static final TransactionProxy proxy = new TransactionProxy();
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
