@@ -1,9 +1,11 @@
 package com.continuuity.internal.app.runtime.procedure;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -35,11 +37,12 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final RunId runId;
   private final int instanceId;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final OVCTableHandle tableHandle;
 
   private Thread runThread;
 
   ProcedureHandlerMethodFactory(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory) {
+                                DataFabricFacadeFactory txAgentSupplierFactory,OVCTableHandle tableHandle) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);
@@ -49,13 +52,14 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     this.runId = runId;
     this.instanceId = instanceId;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.tableHandle = tableHandle;
   }
 
   @Override
   public HandlerMethod create() {
     try {
       ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, runId, instanceId,
-                                                                        txAgentSupplierFactory);
+                                                                        txAgentSupplierFactory, tableHandle);
       handlerMethod.init();
 
       procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue), new ProcedureEntry(handlerMethod));
@@ -63,6 +67,8 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       return handlerMethod;
 
     } catch (ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    } catch (OperationException e){
       throw Throwables.propagate(e);
     }
   }
