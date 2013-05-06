@@ -2299,5 +2299,154 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertFalse(info.getJSONString().isEmpty());
     // System.out.println(info.getJSONString());
   }
+
+  @Test
+  public void testEviction() throws Exception {
+    // Eviction should not remove entries dequeued or uncommited acked entries or unacked entries
+    TTQueue queue = createQueue();
+
+    // enqueue 20
+    QueueEntry[] entries = new QueueEntry[20];
+    for(int i = 1; i <= entries.length; ++i) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t);
+    oracle.commitTransaction(t);
+
+    // Create 20 QueueEntryPointers for evicting
+    QueueEntryPointer[] entryPointers = new QueueEntryPointer[entries.length];
+    for(int i = 1; i <= entryPointers.length; ++i) {
+      entryPointers[i - 1] = new QueueEntryPointer("dummyQueueName".getBytes(), i, 0);
+    }
+
+    // Store all transactions for committing later
+    Transaction[] grp1TxnList = new Transaction[entries.length];
+    Transaction[] grp2TxnList = new Transaction[entries.length];
+
+    // Create 2 consumer groups with 2 consumers each, and dequeue
+    QueueConsumer grp1Consumer1 = new StatefulQueueConsumer(0, 0, 2, new QueueConfig(ROUND_ROBIN, true, 5, false));
+    queue.configure(grp1Consumer1, oracle.getReadPointer());
+    QueueConsumer grp1Consumer2 = new StatefulQueueConsumer(1, 0, 2, new QueueConfig(ROUND_ROBIN, true, 5, false));
+    queue.configure(grp1Consumer2, oracle.getReadPointer());
+    QueueConsumer grp2Consumer1 = new StatefulQueueConsumer(0, 1, 2, new QueueConfig(ROUND_ROBIN, true, 5, false));
+    queue.configure(grp2Consumer1, oracle.getReadPointer());
+    QueueConsumer grp2Consumer2 = new StatefulQueueConsumer(1, 1, 2, new QueueConfig(ROUND_ROBIN, true, 5, false));
+    queue.configure(grp2Consumer2, oracle.getReadPointer());
+
+    // Group 2, Consumer 2
+    for(int i = 1; i <= entries.length; i += 2) {
+      t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(grp2Consumer2, t.getReadPointer());
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      // Eviction should not happen due to dequeue entries
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+
+      // Ack
+      queue.ack(result.getEntryPointer(), grp2Consumer2, t);
+      // Eviction should not happen due to uncommitted acks
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+      grp2TxnList[i - 1] = t;
+    }
+
+    // Group 2, Consumer 1
+    for(int i = 2; i <= entries.length; i += 2) {
+      t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(grp2Consumer1, t.getReadPointer());
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      // Eviction should not happen due to dequeue entries
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+
+      // Ack
+      queue.ack(result.getEntryPointer(), grp2Consumer1, t);
+      // Eviction should not happen due to uncommitted acks
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+      grp2TxnList[i - 1] = t;
+    }
+
+    // Group 1, Consumer 2
+    for(int i = 1; i <= entries.length; i += 2) {
+      t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(grp1Consumer2, t.getReadPointer());
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      // Eviction should not happen due to dequeue entries
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+
+      // Ack
+      queue.ack(result.getEntryPointer(), grp1Consumer2, t);
+      // Eviction should not happen due to uncommitted acks
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+      grp1TxnList[i - 1] = t;
+    }
+
+    // Group 1, Consumer 1
+    for(int i = 2; i <= entries.length; i += 2) {
+      t = oracle.startTransaction();
+      DequeueResult result = queue.dequeue(grp1Consumer1, t.getReadPointer());
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
+      // Eviction should not happen due to dequeue entries
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+
+      // Ack
+      queue.ack(result.getEntryPointer(), grp1Consumer1, t);
+      // Eviction should not happen due to uncommitted acks
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+      grp1TxnList[i - 1] = t;
+    }
+
+    // Commit all acks of Group 2
+    for(Transaction t1 : grp2TxnList) {
+      oracle.commitTransaction(t1);
+      // Run finalize again
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      assertFirstEntry(queue, 1);
+    }
+
+    // Commit all acks of Group 1
+    int i = 1;
+    for(Transaction t1 : grp1TxnList) {
+      oracle.commitTransaction(t1);
+      // Run finalize again
+      runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
+      int newFirstEntry = i == entries.length ? i : i + 1;   // Last entry will not get evicted
+      i++;
+      assertFirstEntry(queue, newFirstEntry);
+    }
+  }
+
+  private void assertFirstEntry(TTQueue queue, int expectedEntry) throws OperationException {
+    QueueConsumer consumer = new StatefulQueueConsumer(0, timeOracle.getTimestamp(), 1,
+                                                       new QueueConfig(FIFO, true, 5, false));
+    queue.configure(consumer, oracle.getReadPointer());
+    DequeueResult dequeueResult = queue.dequeue(consumer, oracle.getReadPointer());
+    Assert.assertFalse(dequeueResult.isEmpty());
+    Assert.assertEquals(expectedEntry, Bytes.toInt(dequeueResult.getEntry().getData()));
+  }
+
+  private void runFinalize(TTQueue queue, QueueEntryPointer[] entryPointers, QueueConsumer grp1Consumer1,
+                           QueueConsumer grp1Consumer2, QueueConsumer grp2Consumer1, QueueConsumer grp2Consumer2)
+    throws OperationException {
+    queue.finalize(entryPointers, grp2Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+    queue.finalize(entryPointers, grp2Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+    queue.finalize(entryPointers, grp1Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+
+    // Need to run finalize 2 times, since eviction information gets cleared every time we run configure for
+    // verification, also the previous finalize with grp1Consumer1 wouldn't write the eviction information till
+    // the end of the finalize function, hence (available groups == total groups) check will fail
+    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+  }
 }
 
