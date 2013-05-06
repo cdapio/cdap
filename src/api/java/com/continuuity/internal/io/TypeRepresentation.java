@@ -13,12 +13,12 @@ import java.lang.reflect.Type;
    * This class can be serialized to Json and deserialized back without loss. Because it implements ParametrizedType,
    * this class is compatible with TypeToken and we can use it to decode an encoded object of this type. 
    */
-  public class TypeRepresentation implements ParameterizedType {
+  public final class TypeRepresentation implements ParameterizedType {
 
-    boolean isClass;
-    String rawType;
-    TypeRepresentation enclosingType;
-    TypeRepresentation[] parameters;
+    private final boolean isClass;
+    private final String rawType;
+    private final TypeRepresentation enclosingType;
+    private final TypeRepresentation[] parameters;
 
     /**
      * Constructor from a java Type. For a class, we only remember its name; for a parametrized type, we remember the 
@@ -29,6 +29,8 @@ import java.lang.reflect.Type;
     public TypeRepresentation(Type type) throws UnsupportedTypeException {
       if (type instanceof Class<?>) {
         this.rawType = ((Class)type).getCanonicalName();
+        this.enclosingType = null;
+        this.parameters = null;
         this.isClass = true;
       }
       else if (type instanceof ParameterizedType) {
@@ -40,9 +42,7 @@ import java.lang.reflect.Type;
           throw new UnsupportedTypeException("can't represent type " + type + " (enclosing type is not a class)");
         }
         Type owner = pType.getOwnerType();
-        if (owner != null) {
-          this.enclosingType = new TypeRepresentation(owner);
-        }
+        this.enclosingType = owner == null ?  null : new TypeRepresentation(owner);
         Type[] typeArgs = pType.getActualTypeArguments();
         this.parameters = new TypeRepresentation[typeArgs.length];
         for (int i = 0; i < typeArgs.length; i++) {
