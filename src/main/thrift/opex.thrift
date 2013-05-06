@@ -103,6 +103,12 @@ struct TQueueConfig {
   4: bool returnBatch,
 }
 
+enum TQueueStateType {
+  UNINITIALIZED,
+  INITIALIZED,
+  NOT_FOUND,
+}
+
 struct TQueueConsumer {
   1: i32 instanceId,
   2: i64 groupId,
@@ -111,7 +117,7 @@ struct TQueueConsumer {
   5: optional string partitioningKey,
   6: optional TQueueConfig queueConfig,
   7: bool isStateful,
-  8: bool stateInitialized,
+  8: TQueueStateType stateType,
 }
 
 struct TQueueEntryPointer {

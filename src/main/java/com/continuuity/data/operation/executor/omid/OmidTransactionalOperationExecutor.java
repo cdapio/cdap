@@ -5,6 +5,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
@@ -28,6 +29,9 @@ import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueCallable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
@@ -50,6 +54,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.yammer.metrics.core.MetricName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -114,7 +119,8 @@ public class OmidTransactionalOperationExecutor
 
   // A proxy that runs all queue operations while managing state.
   // Also runs all queue operations for a single consumer serially.
-  private final QueueStateProxy queueStateProxy = new QueueStateProxy();
+  private final QueueStateProxy queueStateProxy;
+  public static final String QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES = "omid.queue.state.proxy.max.size.bytes";
 
   // Metrics
 
@@ -167,6 +173,12 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_GET_GROUP_ID_LATENCY = METRIC_PREFIX + "GetGroupID" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY = METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+
+  @Inject
+  public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
+    // Default cache size is 200 MB
+    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES, 200 * 1024 * 1024));
+  }
 
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
@@ -931,7 +943,7 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     try {
       queueStateProxy.run(ack.getKey(), ack.getConsumer(),
-                          new QueueStateProxy.QueueRunnable() {
+                          new QueueRunnable() {
                             @Override
                             public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
                               getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
@@ -958,7 +970,7 @@ public class OmidTransactionalOperationExecutor
 
     DequeueResult result =
       queueStateProxy.call(dequeue.getKey(), dequeue.getConsumer(),
-                                    new QueueStateProxy.QueueCallable<DequeueResult>() {
+                                    new QueueCallable<DequeueResult>() {
                                       @Override
                                       public DequeueResult call(StatefulQueueConsumer statefulQueueConsumer)
                                         throws OperationException {
@@ -1005,7 +1017,7 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     final TTQueueTable table = getQueueTable(configure.getQueueName());
     queueStateProxy.run(configure.getQueueName(), configure.getNewConsumer(),
-                        new QueueStateProxy.QueueRunnable() {
+                        new QueueRunnable() {
                           @Override
                           public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
                             table.configure(configure.getQueueName(), statefulQueueConsumer, oracle.getReadPointer());

@@ -1,8 +1,9 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.executor.omid.QueueStateProxy;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 
 /**
 *
@@ -30,7 +31,7 @@ public class QueueFinalize {
                       final Transaction transaction)
     throws OperationException {
     queueStateProxy.run(queueName, consumer,
-                                       new QueueStateProxy.QueueRunnable() {
+                                       new QueueRunnable() {
                                          @Override
                                          public void run(StatefulQueueConsumer statefulQueueConsumer)
                                            throws OperationException {

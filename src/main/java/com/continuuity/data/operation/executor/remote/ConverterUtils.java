@@ -42,6 +42,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TQueuePartitioner;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueProducer;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueStateType;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
@@ -735,6 +736,30 @@ public class ConverterUtils {
     return pointers;
   }
 
+  TQueueStateType wrap(QueueConsumer.StateType stateType) throws TOperationException {
+    switch (stateType) {
+      case INITIALIZED:
+        return TQueueStateType.INITIALIZED;
+      case UNINITIALIZED:
+        return TQueueStateType.UNINITIALIZED;
+      case NOT_FOUND:
+        return TQueueStateType.NOT_FOUND;
+    }
+    throw new TOperationException(StatusCode.INTERNAL_ERROR, String.format("Unknown stateType %s", stateType));
+  }
+
+  QueueConsumer.StateType unwrap(TQueueStateType tQueueStateType) throws TOperationException {
+    switch (tQueueStateType) {
+      case INITIALIZED:
+        return QueueConsumer.StateType.INITIALIZED;
+      case UNINITIALIZED:
+        return QueueConsumer.StateType.UNINITIALIZED;
+      case NOT_FOUND:
+        return QueueConsumer.StateType.NOT_FOUND;
+    }
+    throw new TOperationException(StatusCode.INTERNAL_ERROR, String.format("Unknown stateType %s", tQueueStateType));
+  }
+
   /** wrap a queue consumer */
   TQueueConsumer wrap(QueueConsumer consumer) throws TOperationException {
     TQueueConsumer tQueueConsumer=  new TQueueConsumer(
@@ -742,7 +767,7 @@ public class ConverterUtils {
         consumer.getGroupId(),
         consumer.getGroupSize(),
         consumer.isStateful(),
-        consumer.isStateInitialized());
+        wrap(consumer.getStateType()));
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
     if (consumer.getQueueConfig() != null)
@@ -762,7 +787,7 @@ public class ConverterUtils {
       tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
       tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
       tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
-    consumer.setStateInitialized(tQueueConsumer.isStateInitialized());
+    consumer.setStateType(unwrap(tQueueConsumer.getStateType()));
     // No need to serialize queue state since it is now stored in Opex
     return consumer;
   }
@@ -898,7 +923,7 @@ public class ConverterUtils {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
       // No need to unwrap queue state, since it is now stored in Opex
       if(retConsumer != null) {
-        consumer.setStateInitialized(retConsumer.isStateInitialized());
+        consumer.setStateType(retConsumer.getStateType());
       }
     }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {

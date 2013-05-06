@@ -1253,6 +1253,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private final List<DequeueEntry> entryList;
     private int curPtr = -1;
     private final Map<Long, byte[]> cachedEntries;
+    private final int weight;
 
     private static final TransientWorkingSet EMPTY_SET =
       new TransientWorkingSet(Collections.<Long>emptyList(), Collections.<Long, byte[]>emptyMap());
@@ -1262,21 +1263,26 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public TransientWorkingSet(List<Long> entryIds, Map<Long, byte[]> cachedEntries) {
+      int wt = 0;
       List<DequeueEntry> entries = Lists.newArrayListWithCapacity(entryIds.size());
       for(long id : entryIds) {
-        if(!cachedEntries.containsKey(id)) {
+        byte[] entry = cachedEntries.get(id);
+        if(entry == null) {
           throw new IllegalArgumentException(String.format("Cached entries does not contain entry %d", id));
         }
         entries.add(new DequeueEntry(id, 0));
+        wt += entry.length;
       }
       this.entryList = entries;
       this.cachedEntries = cachedEntries;
+      this.weight = wt;
     }
 
-    public TransientWorkingSet(List<DequeueEntry> entryList, int curPtr, Map<Long, byte[]> cachedEntries) {
+    public TransientWorkingSet(List<DequeueEntry> entryList, int curPtr, Map<Long, byte[]> cachedEntries, int weight) {
       this.entryList = entryList;
       this.curPtr = curPtr;
       this.cachedEntries = cachedEntries;
+      this.weight = weight;
     }
 
     public boolean hasNext() {
@@ -1289,6 +1295,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public DequeueEntry peekNext() {
       return fetch(curPtr + 1);
+    }
+
+    public void moveToEnd() {
+      curPtr = entryList.size();
     }
 
     private DequeueEntry fetch(int ptr) {
@@ -1308,7 +1318,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
       Map<Long, byte[]> newCachedEntries = Maps.newHashMap(oldTransientWorkingSet.getCachedEntries());
       newCachedEntries.putAll(moreCachedEntries);
       return new TransientWorkingSet(oldTransientWorkingSet.entryList, oldTransientWorkingSet.curPtr,
-                                     newCachedEntries);
+                                     newCachedEntries, oldTransientWorkingSet.getWeight());
+    }
+
+    public int getWeight() {
+      return weight;
     }
 
     @Override
@@ -1317,6 +1331,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         .add("entryList", entryList)
         .add("curPtr", curPtr)
         .add("cachedEntries", cachedEntries)
+        .add("weight", weight)
         .toString();
     }
 
@@ -1354,14 +1369,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
       int curPtr = decoder.readInt();
 
       int mapSize = decoder.readInt();
+      int weight = 0;
       Map<Long, byte[]> cachedEntries = Maps.newHashMapWithExpectedSize(mapSize);
       while(mapSize > 0) {
         for(int i= 0; i < mapSize; ++i) {
-          cachedEntries.put(decoder.readLong(), decoder.readBytes().array());
+          long id = decoder.readLong();
+          byte[] entry = decoder.readBytes().array();
+          cachedEntries.put(id, entry);
+          weight += entry.length;
         }
         mapSize = decoder.readInt();
       }
-      return new TransientWorkingSet(entries, curPtr, cachedEntries);
+      return new TransientWorkingSet(entries, curPtr, cachedEntries, weight);
     }
 
     @Override
@@ -1785,6 +1804,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public int weight() {
+      return transientWorkingSet.getWeight() + 200;  // Add a small constant for other overhead
+    }
+
+    @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("transientWorkingSet", transientWorkingSet)
@@ -1882,8 +1906,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
-    protected SortedSet<Long> droppedEntries = ImmutableSortedSet.of();
-
     /**
      * This function is used to initialize the read pointer when a consumer first runs.
      * Initial value for the read pointer is max(lastEvictEntry, FIRST_QUEUE_ENTRY_ID - 1)
@@ -1969,16 +1991,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueState.setQueueWritePointer(queueWritePointer);
 
       // If dequeue entries present, read them from storage
-      // This is the crash recovery case, the consumer has stopped processing before acking the previous dequeues
       if(!queueState.getDequeueEntrySet().isEmpty()) {
-        droppedEntries = queueState.getDequeueEntrySet().startNewTry(MAX_CRASH_DEQUEUE_TRIES);
-        if(!droppedEntries.isEmpty() && LOG.isWarnEnabled()) {
-          LOG.warn(getLogMessage(consumer, String.format("Dropping entries %s after %d tries",
-                                                         droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
+        if(consumer.getStateType() == QueueConsumer.StateType.UNINITIALIZED) {
+          // This is the crash recovery case, the consumer has stopped processing before acking the previous dequeues
+          SortedSet<Long> droppedEntries = queueState.getDequeueEntrySet().startNewTry(MAX_CRASH_DEQUEUE_TRIES);
+          if(!droppedEntries.isEmpty() && LOG.isWarnEnabled()) {
+            LOG.warn(getLogMessage(consumer, String.format("Dropping entries %s after %d tries",
+                                                 droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
+          }
         }
-        // Any previously dequeued entries will now need to be dequeued again
+
         readEntries(queueState, readPointer, queueState.getDequeueEntrySet().getEntryIds());
+
+        if(consumer.getStateType() == QueueConsumer.StateType.NOT_FOUND) {
+          // If consumer state is NOT_FOUND, the previously dequeued entries will not need to be dequeued again
+          queueState.getTransientWorkingSet().moveToEnd();
+        }
+        // If consumer state is UNINITIALIZED, any previously dequeued entries will need to be dequeued again
       }
+
+      // Consumer state is now INITIALIZED
+      consumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(consumer, String.format("Constructed new QueueState - %s", queueState)));
       }

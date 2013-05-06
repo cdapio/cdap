@@ -28,6 +28,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final String basePath;
   private final Integer blockSize;
   private final Long cacheSize;
+  private final CConfiguration conf;
 
   public DataFabricLevelDBModule(CConfiguration configuration) {
     String path = configuration.get(Constants.CFG_DATA_LEVELDB_DIR);
@@ -46,8 +47,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
     this.basePath = path;
     this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
                                           Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
-                                           Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+    this.conf = configuration;
   }
 
   public DataFabricLevelDBModule(String basePath, Integer blockSize,
@@ -55,6 +56,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     this.basePath = basePath;
     this.blockSize = blockSize;
     this.cacheSize = cacheSize;
+    this.conf = CConfiguration.create();
   }
 
   @Override
@@ -85,6 +87,9 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(Long.class)
         .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
         .toInstance(cacheSize);
-    
+
+    bind(CConfiguration.class)
+      .annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
+      .toInstance(conf);
   }
 }
