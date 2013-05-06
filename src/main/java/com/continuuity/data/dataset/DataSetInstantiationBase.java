@@ -3,6 +3,7 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
@@ -201,6 +202,11 @@ public class DataSetInstantiationBase {
           "Failed to open table '" + runtimeTable.getName() + "'.", e);
       }
       return;
+    }
+    // for object stores, we set the delegate
+    if (obj instanceof ObjectStore<?>) {
+      ObjectStoreImpl.setImplementation((ObjectStore<?>) obj, this.classLoader);
+      // but do not return yet, continue to inject data fabric into the impl
     }
     // otherwise recur through all fields of type DataSet
     Class<?> objClass = obj.getClass();
