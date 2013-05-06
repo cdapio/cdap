@@ -44,7 +44,7 @@ subprojects {
                      '--vendor': 'Continuuity Inc.', 
                      '--maintainer': 'support@continuuity.com',
                      '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
-                     '--description': 'Component of Continuuity Enterprise Reactor",
+                     '--description': 'Component of Continuuity Enterprise Reactor',
                      '--directories': "/opt/continuuity/$project.name",
                      '--category': 'misc',
                      '--url': 'http://www.continuuity.com/products',
