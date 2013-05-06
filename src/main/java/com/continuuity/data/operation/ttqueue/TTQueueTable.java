@@ -98,9 +98,10 @@ public interface TTQueueTable {
    * Used to configure the queue on start-up, or when consumer instances are changed.
    * @param queueName name of the queue
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @throws OperationException if unsuccessful
    */
-  void configure(byte[] queueName, QueueConsumer newConsumer)
+  void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException;
 
   /**

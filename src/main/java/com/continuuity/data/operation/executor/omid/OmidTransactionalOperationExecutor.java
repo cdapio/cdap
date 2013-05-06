@@ -997,7 +997,7 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public void execute(OperationContext context, Transaction transaction, final QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, final QueueAdmin.QueueConfigure configure)
     throws OperationException
   {
     initialize();
@@ -1008,7 +1008,7 @@ public class OmidTransactionalOperationExecutor
                         new QueueStateProxy.QueueRunnable() {
                           @Override
                           public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
-                            table.configure(configure.getQueueName(), statefulQueueConsumer);
+                            table.configure(configure.getQueueName(), statefulQueueConsumer, oracle.getReadPointer());
                           }
                         });
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);

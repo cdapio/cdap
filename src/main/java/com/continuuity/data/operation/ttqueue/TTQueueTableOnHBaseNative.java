@@ -97,7 +97,8 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer) throws OperationException {
+  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
+    throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
   }
 

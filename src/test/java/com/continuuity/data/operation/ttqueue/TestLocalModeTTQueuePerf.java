@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -75,11 +76,11 @@ public class TestLocalModeTTQueuePerf {
 
     // first test it with the intra-flow queues
     TTQueueTable queueTable = handle.getQueueTable(queueName);
-    queueTable.configure(queueName, consumer);
+    queueTable.configure(queueName, consumer, TransactionOracle.DIRTY_READ_POINTER);
 
     // second test it with the stream queues
     TTQueueTable streamTable = handle.getStreamTable(streamName);
-    streamTable.configure(streamName, consumer);
+    streamTable.configure(streamName, consumer, TransactionOracle.DIRTY_READ_POINTER);
 
     log("Enqueueing to queue table");
     long start = now();

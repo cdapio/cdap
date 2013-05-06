@@ -35,7 +35,7 @@ public class TTQueueTableOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer)
+  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException {
     // Nothing to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
   }

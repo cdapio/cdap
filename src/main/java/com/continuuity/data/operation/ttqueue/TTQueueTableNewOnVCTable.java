@@ -43,9 +43,9 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer)
+  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException {
-    getQueue(queueName).configure(newConsumer);
+    getQueue(queueName).configure(newConsumer, readPointer);
   }
 
   @Override
