@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class MensaMetricsCollector extends MetricsCollector {
+class MensaMetricsCollector extends MetricsCollector {
 
   private static final Logger LOG = LoggerFactory.getLogger(MensaMetricsCollector.class);
 
@@ -55,7 +55,7 @@ public class MensaMetricsCollector extends MetricsCollector {
   private Map<String, ArrayList<Double>> mensaMetrics;
 
   @Override
-  public int getInterval() {
+  protected int getInterval() {
     return MENSA_METRIC_INTERVAL;
   }
 
@@ -104,7 +104,7 @@ public class MensaMetricsCollector extends MetricsCollector {
     }
   }
 
-  public MensaMetricsCollector(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
+  protected MensaMetricsCollector(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
                                CConfiguration config, String extraTags) {
     super(groups, metrics);
     mensaTags = new String();
@@ -130,12 +130,8 @@ public class MensaMetricsCollector extends MetricsCollector {
   }
 
   @Override
-  public void processGroupMetricsInterval(long unixTime,
-                                          AgentGroup group,
-                                          long previousMillis,
-                                          long millis,
-                                          Map<String, Long> prevMetrics,
-                                          Map<String, Long> latestMetrics,
+  protected void processGroupMetricsInterval(long unixTime, AgentGroup group, long previousMillis, long millis,
+                                          Map<String, Long> prevMetrics, Map<String, Long> latestMetrics,
                                           boolean interrupt) throws BenchmarkException {
     if (prevMetrics != null && !interrupt) {
       LOG.debug("Processing group metrics at Unix time {}.", unixTime);

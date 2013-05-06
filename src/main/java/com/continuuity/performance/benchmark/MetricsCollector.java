@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public abstract class MetricsCollector implements Runnable {
+abstract class MetricsCollector implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsCollector.class);
 
@@ -32,24 +32,20 @@ public abstract class MetricsCollector implements Runnable {
    */
   private final Stopwatch stopwatch = new Stopwatch();
 
-  public abstract int getInterval();
+  protected abstract int getInterval();
 
-  public MetricsCollector(AgentGroup[] groups, BenchmarkMetric[] metrics) {
+  protected MetricsCollector(AgentGroup[] groups, BenchmarkMetric[] metrics) {
     this.groupMetrics = metrics;
     this.groups = groups;
   }
 
-  public final void stop() {
+  protected final void stop() {
     interrupt = true;
   }
 
-  protected abstract void processGroupMetricsInterval(long unixTime,
-                                                      AgentGroup group,
-                                                      long previousMillis,
-                                                      long millis,
-                                                      Map<String, Long> prevMetrics,
-                                                      Map<String, Long> latestMetrics,
-                                                      boolean interrupt) throws BenchmarkException;
+  protected abstract void processGroupMetricsInterval(long unixTime, AgentGroup group, long previousMillis, long millis,
+                                          Map<String, Long> prevMetrics, Map<String, Long> latestMetrics,
+                                          boolean interrupt) throws BenchmarkException;
 
   protected abstract void processGroupMetricsFinal(long unixTime, AgentGroup group) throws BenchmarkException;
 

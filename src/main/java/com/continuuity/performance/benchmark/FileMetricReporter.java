@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FileMetricReporter extends MetricsCollector {
+class FileMetricReporter extends MetricsCollector {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileMetricReporter.class);
 
@@ -29,11 +29,11 @@ public class FileMetricReporter extends MetricsCollector {
   BufferedWriter bw;
 
   @Override
-  public int getInterval() {
+  protected int getInterval() {
     return FILE_APPENDER_METRIC_INTERVAL;
   }
 
-  public FileMetricReporter(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
+  protected FileMetricReporter(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
                             CConfiguration config) {
     super(groups, metrics);
     this.fileName = config.get("reportfile");
@@ -61,12 +61,8 @@ public class FileMetricReporter extends MetricsCollector {
   }
 
   @Override
-  public void processGroupMetricsInterval(long unixTime,
-                                          AgentGroup group,
-                                          long previousMillis,
-                                          long millis,
-                                          Map<String, Long> prevMetrics,
-                                          Map<String, Long> latestMetrics,
+  protected void processGroupMetricsInterval(long unixTime, AgentGroup group, long previousMillis, long millis,
+                                          Map<String, Long> prevMetrics, Map<String, Long> latestMetrics,
                                           boolean interrupt) {
     if (prevMetrics != null && !interrupt) {
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
