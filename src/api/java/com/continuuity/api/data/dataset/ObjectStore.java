@@ -1,5 +1,6 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
@@ -22,6 +23,7 @@ import java.lang.reflect.Type;
  * </ul>
  * Interfaces and not-static inner classes are not supported.
  */
+@Beta
 public class ObjectStore<T> extends DataSet {
 
   // the (write) schema of the objects in the store
