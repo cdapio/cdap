@@ -21,6 +21,7 @@ import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -189,7 +190,7 @@ public class QueueBenchmark extends OpexBenchmark {
   public void initialize() throws BenchmarkException {
     super.initialize();
     try {
-      opex.execute(opContext, null,
+      opex.execute(opContext,
                    new QueueAdmin.QueueConfigure(queueBytes, new StatefulQueueConsumer(0, 0, numConsumers, qconfig)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
