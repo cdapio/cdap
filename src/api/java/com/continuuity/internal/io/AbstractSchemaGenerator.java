@@ -4,9 +4,6 @@
 
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.SchemaGenerator;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -149,5 +146,5 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    * @throws UnsupportedTypeException
    */
   protected abstract Schema generateRecord(TypeToken<?> typeToken, Set<String> knownRecords) throws
-                                                                                             UnsupportedTypeException;
+    UnsupportedTypeException;
 }

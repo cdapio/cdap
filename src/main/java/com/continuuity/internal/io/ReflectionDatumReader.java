@@ -2,7 +2,6 @@ package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.Decoder;
-import com.continuuity.internal.api.io.Schema;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

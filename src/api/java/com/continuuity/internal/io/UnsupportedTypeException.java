@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.api.io;
+package com.continuuity.internal.io;
 
 /**
  * Exception to indicate a given type is not supported.

@@ -4,8 +4,8 @@
 
 package com.continuuity.io;
 
-import com.continuuity.internal.api.io.Schema;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.ReflectionDatumReader;
