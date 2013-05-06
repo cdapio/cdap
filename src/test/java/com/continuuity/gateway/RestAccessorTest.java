@@ -550,7 +550,7 @@ public class RestAccessorTest {
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamUri.getBytes(), queueConsumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
@@ -573,7 +573,7 @@ public class RestAccessorTest {
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(context, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
@@ -620,7 +620,7 @@ public class RestAccessorTest {
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(context, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);

@@ -387,7 +387,7 @@ public class RestHandler extends NettyRestHandler {
             QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
             QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
             this.collector.getExecutor()
-              .execute(operationContext, null, new QueueAdmin.QueueConfigure(queueURI.getBytes(), queueConsumer));
+              .execute(operationContext, new QueueAdmin.QueueConfigure(queueURI.getBytes(), queueConsumer));
           } catch (Exception e) {
             LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
             helper.finish(Error);
