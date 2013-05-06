@@ -204,7 +204,7 @@ public class QueueBenchmark extends OpexBenchmark {
   public void initialize() throws BenchmarkException {
     super.initialize();
     try {
-      opex.execute(opContext, null,
+      opex.execute(opContext,
                    new QueueAdmin.QueueConfigure(queueBytes, new QueueConsumer(0, 0, numConsumers, qconfig)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
