@@ -963,14 +963,14 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public void execute(OperationContext context, Transaction transaction, QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure)
     throws OperationException
   {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
     TTQueueTable table = getQueueTable(configure.getQueueName());
-    table.configure(configure.getQueueName(), configure.getNewConsumer());
+    table.configure(configure.getQueueName(), configure.getNewConsumer(), oracle.getReadPointer());
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 

@@ -15,7 +15,6 @@ import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +79,7 @@ public class NoOperationExecutor implements OperationExecutor {
   public Map<byte[], Long> increment(OperationContext context, Increment increment)
     throws OperationException {
     // do nothing and return nothing
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   @Override
@@ -89,7 +88,7 @@ public class NoOperationExecutor implements OperationExecutor {
                                      Increment increment)
     throws OperationException {
     // do nothing and return nothing
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   @Override
@@ -171,7 +170,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(OperationContext context, @Nullable Transaction transaction, QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure)
     throws OperationException {
     // Nothing to do
   }

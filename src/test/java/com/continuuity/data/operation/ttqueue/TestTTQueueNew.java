@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -606,7 +607,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
-      queue.configure(consumers[i]);
+      queue.configure(consumers[i], getDirtyPointer());
     }
 
     // dequeue and verify
@@ -643,7 +644,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer[] consumers = new QueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
-      queue.configure(consumers[i]);
+      queue.configure(consumers[i], getDirtyPointer());
     }
 
     // dequeue and verify
@@ -717,7 +718,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", HASH_KEY, config);
-      queue.configure(consumers[i]);
+      queue.configure(consumers[i], getDirtyPointer());
     }
 
     // dequeue and verify
@@ -757,7 +758,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     StatefulQueueConsumer[] consumers = new StatefulQueueConsumer[numConsumers];
     for (int i = 0; i < numConsumers; i++) {
       consumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
-      queue.configure(consumers[i]);
+      queue.configure(consumers[i], getDirtyPointer());
     }
 
     // dequeue and verify
@@ -845,7 +846,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < numConsumers; i++) {
       statefulQueueConsumers[i] = new StatefulQueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
       queueConsumers[i] = new QueueConsumer(i, consumerGroupId, numConsumers, "group1", config);
-      queue.configure(queueConsumers[i]);
+      queue.configure(queueConsumers[i], getDirtyPointer());
     }
 
     // dequeue and verify
@@ -928,7 +929,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(FIFO, true);
 
-    queue.configure(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config));
+    queue.configure(new StatefulQueueConsumer(instanceId, groupId, groupSize, "", config), getDirtyPointer());
 
     for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES; ++tries) {
       // Simulate consumer crashing by sending in empty state every time and not acking the entry
@@ -954,6 +955,138 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testReconfigChecks() throws Exception {
+    // During reconfigure there should be no dequeued entries and no pending acks for a consumer
+    TTQueue queue = createQueue();
+
+    // Enqueue some entries
+    Transaction t = oracle.startTransaction();
+    for(int i = 1; i < 5; ++i) {
+      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
+    }
+    oracle.commitTransaction(t);
+
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 10, false));
+    queue.configure(consumer, oracle.getReadPointer());
+
+    DequeueResult result = queue.dequeue(consumer, oracle.getReadPointer());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, Bytes.toInt(result.getEntry().getData()));
+
+    // Trying to change configuration when entries are dequeued should throw error
+    try {
+      queue.configure(new StatefulQueueConsumer(0, 0, 2, new QueueConfig(FIFO, true, 8, false)),
+                      oracle.getReadPointer());
+      fail("Configuration change should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE) {
+        throw e;
+      }
+    }
+
+    // Ack entry
+    t = oracle.startTransaction();
+    queue.ack(result.getEntryPointers(), consumer, t);
+
+    // Trying to change configuration when acked entries are not committed should throw error
+    try {
+      queue.configure(new StatefulQueueConsumer(0, 0, 2, new QueueConfig(FIFO, true, 8, false)),
+                      oracle.getReadPointer());
+      fail("Configuration change should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE) {
+        throw e;
+      }
+    }
+
+    oracle.commitTransaction(t);
+
+    // Changing configuration after transaction is committed should not throw any errors
+    consumer = new StatefulQueueConsumer(0, 0, 2, new QueueConfig(FIFO, true, 8, true));
+    queue.configure(consumer, oracle.getReadPointer());
+
+    result = queue.dequeue(consumer, oracle.getReadPointer());
+    assertFalse(result.isEmpty());
+    for(int i = 0; i < 3; ++i) {
+      Assert.assertEquals(i + 2, Bytes.toInt(result.getEntries()[i].getData()));
+    }
+
+    t = oracle.startTransaction();
+    queue.ack(result.getEntryPointers(), consumer, t);
+    oracle.commitTransaction(t);
+  }
+
+  @Test
+  public void testPartitionTypeCompatibilityCheck() throws Exception {
+    // Requested partition type must be same as saved partition type if any
+    TTQueue queue = createQueue();
+
+    // Enqueue some entries
+    Transaction t = oracle.startTransaction();
+    for(int i = 1; i < 5; ++i) {
+      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
+    }
+    oracle.commitTransaction(t);
+
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 10, false));
+    queue.configure(consumer, oracle.getReadPointer());
+
+    // Configuring again with a different partition type should fail
+    try {
+      queue.configure(new QueueConsumer(0, 0, 1, "gkey", "hkey", new QueueConfig(HASH, true, 10, false)),
+                      oracle.getReadPointer());
+      fail("Configuration with different partition type should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.INVALID_STATE) {
+        throw e;
+      }
+    }
+
+    // Configuring again with a different partition type should fail
+    try {
+      queue.configure(new QueueConsumer(0, 0, 1, new QueueConfig(ROUND_ROBIN, true, 10, false)),
+                      oracle.getReadPointer());
+      fail("Configuration with different partition type should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.INVALID_STATE) {
+        throw e;
+      }
+    }
+
+    // Configuring again with same partition type is okay
+    queue.configure(new QueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 10, false)),
+                    oracle.getReadPointer());
+
+    // Dequeue with different partition type should fail
+    try {
+      queue.dequeue(new QueueConsumer(0, 0, 1, new QueueConfig(ROUND_ROBIN, true, 5, false)),
+                                           oracle.getReadPointer());
+      fail("Dequeue should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.INVALID_STATE) {
+        throw e;
+      }
+    }
+
+    // Dequeue with different partition type should fail
+    try {
+      queue.dequeue(new QueueConsumer(0, 0, 1, "gkey", "hkey", new QueueConfig(HASH, true, 5, false)),
+                    oracle.getReadPointer());
+      fail("Dequeue should fail");
+    } catch (OperationException e) {
+      if(e.getStatus() != StatusCode.INVALID_STATE) {
+        throw e;
+      }
+    }
+
+    // Dequeue with same partition type is okay
+    DequeueResult result = queue.dequeue(new QueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 5, false)),
+                                         oracle.getReadPointer());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, Bytes.toInt(result.getEntry().getData()));
   }
 
   @Test
@@ -1021,7 +1154,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Random random = new Random(System.currentTimeMillis());
     StringWriter debugCollector = new StringWriter();
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction transaction = oracle.startTransaction();
 
     List<Integer> expectedEntries = Lists.newArrayList();
     // Enqueue numEntries
@@ -1029,7 +1162,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       expectedEntries.add(i + 1);
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addHashKey(HASH_KEY, i + 1);
-      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, dirtyTxn).isSuccess());
+      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, transaction).isSuccess());
     }
 
     expectedEntries = ImmutableList.copyOf(expectedEntries);
@@ -1059,7 +1192,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
           }
           consumers.add(consumer);
           debugCollector.write(String.format("Running configure...%n"));
-          int oldConsumerCount = queue.configure(consumer);
+          int oldConsumerCount = queue.configure(consumer, getDirtyPointer());
           if(oldConsumerCount >= 0) {
             actualOldConsumerCount = oldConsumerCount;
           }
@@ -1090,7 +1223,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             ++numDequeuesThisRun;
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
             actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
-            queue.ack(result.getEntryPointer(), consumer, dirtyTxn);
+            queue.ack(result.getEntryPointer(), consumer, transaction);
 //            queue.finalize(result.getEntryPointer(), consumer, 1, dirtyTxn);
             assertTrue(debugCollector.toString(),
                        condition.check(
@@ -1118,6 +1251,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         expectedOldConsumerCount = newConsumerCount;
       }
     }
+
+    oracle.commitTransaction(transaction);
 
     // Make sure the queue is empty
     for(QueueConsumer consumer : consumers) {
@@ -1209,7 +1344,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       // stateless consumer requires reconstruction of state every time, like after a crash
       new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
       new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 15 should return entries: 2, 4, .., 30
     t = oracle.startTransaction();
@@ -1310,7 +1445,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     consumer = simulateCrash ?
       new QueueConsumer(0, groupId, 2, groupName, hashKey, config) :
       new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 62, ..., 84
     t = oracle.startTransaction();
@@ -1402,7 +1537,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer consumer2 = simulateCrash ?
       new QueueConsumer(1, groupId, 2, groupName, config) :
       new StatefulQueueConsumer(1, groupId, 2, groupName, config);
-    queue.configure(consumer1);
+    queue.configure(consumer1, oracle.getReadPointer());
 
     // dequeue 15 should return first 15 entries: 1, 2, .., 15
     t = oracle.startTransaction();
@@ -1531,7 +1666,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     consumer2 = simulateCrash ?
       new QueueConsumer(1, groupId, 2, groupName, config) :
       new StatefulQueueConsumer(1, groupId, 2, groupName, config);
-    queue.configure(consumer1);
+    queue.configure(consumer1, oracle.getReadPointer());
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 46, 47, ..., 57
     t = oracle.startTransaction();
@@ -1635,7 +1770,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConfig config = new QueueConfig(partitioner, false, 15, true);
     QueueConsumer consumer0 = new StatefulQueueConsumer(0, groupId, 2, groupName, hashKey, config);
     QueueConsumer consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer0); // we must configure with instance #0
+    queue.configure(consumer0, oracle.getReadPointer()); // we must configure with instance #0
 
     // dequeue 15 -> 1 .. 29
     t = oracle.startTransaction();
@@ -1700,7 +1835,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // start new consumer (simulate crash)
     config = new QueueConfig(partitioner, false, 10, true);
     consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 10 -> 1 .. 19
     t = oracle.startTransaction();
@@ -1768,7 +1903,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // start new consumer (simulate crash)
     config = new QueueConfig(partitioner, false, 20, true);
     consumer = new StatefulQueueConsumer(1, groupId, 2, groupName, hashKey, config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue -> empty
     t = oracle.startTransaction();
@@ -1797,8 +1932,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConfig config = new QueueConfig(FIFO, false, 15, true);
     QueueConsumer consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
     QueueConsumer consumer2 = new StatefulQueueConsumer(1, groupId, 2, groupName, config);
-    queue.configure(consumer1);
-    queue.configure(consumer2);
+    queue.configure(consumer1, oracle.getReadPointer());
+    queue.configure(consumer2, oracle.getReadPointer());
 
     // dequeue 15 with first consumer -> 1 .. 15
     t = oracle.startTransaction();
@@ -2032,7 +2167,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // System.out.println(groupName);
     QueueConfig config = new QueueConfig(partitioner, singleEntry, batchSize, returnBatch);
     QueueConsumer consumer = new StatefulQueueConsumer(0, groupId, 2, groupName, "p", config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     int numDequeued = 0;
     while (true) {
@@ -2070,7 +2205,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueConsumer[] consumers = {
       new StatefulQueueConsumer(0, 17, 2, "or'ly", "non-existent-hash-key", config),
       new StatefulQueueConsumer(1, 17, 2, "or'ly", "non-existent-hash-key", config) };
-    queue.configure(consumers[0]);
+    queue.configure(consumers[0], oracle.getReadPointer());
 
     int numDequeued = 0;
     boolean allEmpty;
@@ -2112,7 +2247,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     QueueConfig config = new QueueConfig(FIFO, true, 20, true);
     QueueConsumer consumer = new StatefulQueueConsumer(0, 432567, 1, "xyz", config);
-    queue.configure(consumer);
+    queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue but don't ack
     t = oracle.startTransaction();
@@ -2125,7 +2260,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 0; i < MAX_CRASH_DEQUEUE_TRIES + 30; i++) {
       config = new QueueConfig(FIFO, true, 20 + i, true); // varying the batch size but nothing else
       consumer = new StatefulQueueConsumer(0, 432567, 1, "xyz", config);
-      queue.configure(consumer);
+      queue.configure(consumer, oracle.getReadPointer());
     }
 
     // dequeue should still return these entries
@@ -2146,7 +2281,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (long id : groupIds) {
       QueueConfig config = new QueueConfig(FIFO, true, 10, false);
       QueueConsumer consumer = new StatefulQueueConsumer(0, id, 1, "xyz", config);
-      queue.configure(consumer);
+      queue.configure(consumer, oracle.getReadPointer());
     }
     List<Long> returnedGroupIds = ((TTQueueNewOnVCTable)queue).listAllConfiguredGroups();
     assertEquals(groupIds.length, returnedGroupIds.size());

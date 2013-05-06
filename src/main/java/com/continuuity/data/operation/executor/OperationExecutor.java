@@ -295,10 +295,8 @@ public interface OperationExecutor
    * Executes a {@link com.continuuity.data.operation.ttqueue.QueueAdmin.QueueConfigure} operation
    * outside a transaction.
    * @param context the operation context
-   * @param transaction QueueConfigure is not executed in a transaction, can be null
    * @param configure the QueueConfigure operation to execute
    * @throws OperationException
    */
-  public void execute(OperationContext context, @Nullable Transaction transaction,
-                      QueueAdmin.QueueConfigure configure) throws OperationException;
+  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure) throws OperationException;
 }

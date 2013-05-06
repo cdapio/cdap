@@ -453,7 +453,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public int configure(QueueConsumer newConsumer) throws OperationException {
+  public int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException {
     // Delete state information of consumer, since it will be no longer valid after the configuration is done.
     newConsumer.setQueueState(null);
 
@@ -466,7 +466,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return -1;
     }
 
-    final ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    final ReadPointer dirtyReadPointer = TransactionOracle.DIRTY_READ_POINTER;
     final QueueConfig config = newConsumer.getQueueConfig();
     final int newConsumerCount = newConsumer.getGroupSize();
     final long groupId = newConsumer.getGroupId();
@@ -494,7 +494,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, MAX_CONSUMER_COUNT, config);
       QueueStateImpl queueState = null;
       try {
-        queueState = dequeueStrategy.readQueueState(consumer, config, readPointer);
+        queueState = dequeueStrategy.readQueueState(consumer, config, dirtyReadPointer);
       } catch(OperationException e) {
         if(e.getStatus() != StatusCode.NOT_CONFIGURED) {
           throw e;
@@ -518,24 +518,38 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return oldConsumerCount;
     }
 
+    // Verify there are no inflight entries, or acked entries not committed yet
+    for (int i = 0; i < oldConsumerCount; ++i) {
+      QueueStateImpl queueState = queueStates.get(i);
+
+      if(!queueState.getDequeueEntrySet().isEmpty()) {
+        throw new OperationException(
+          StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+          getLogMessage(String.format("Consumer (%d, %d) still has %d inflight entries", newConsumer.getGroupId(), i,
+                                      queueState.getDequeueEntrySet().size()))
+        );
+      }
+
+      EvictionHelper evictionHelper = queueState.getEvictionHelper();
+      // Run cleanup to remove committed transactions
+      evictionHelper.cleanup(new Transaction(TransactionOracle.DIRTY_WRITE_VERSION, readPointer));
+      if(evictionHelper.size() > 0) {
+        throw new OperationException(
+          StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
+          getLogMessage(String.format("Consumer (%d, %d) still has %d uncommited transactions",
+                                      newConsumer.getGroupId(), i, evictionHelper.size()))
+        );
+      }
+    }
+
     // Delete eviction information for all groups
     // We get the list of groups to evict from the group eviction information. Whenever there is a configuration change
     // we'll need to delete the eviction information for all groups so that we always maintain eviction information for
     // active groups only
     EvictionState evictionState = new EvictionState(table);
-    evictionState.deleteGroupEvictionState(readPointer, TransactionOracle.DIRTY_WRITE_VERSION);
+    evictionState.deleteGroupEvictionState(dirtyReadPointer, TransactionOracle.DIRTY_WRITE_VERSION);
 
-    // Verify there are no inflight entries
-    for (int i = 0; i < oldConsumerCount; ++i) {
-      QueueStateImpl queueState = queueStates.get(i);
-      if(!queueState.getDequeueEntrySet().isEmpty()) {
-        throw new OperationException(
-          StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
-          getLogMessage(String.format("Consumer (%d, %d) still has inflight entries", newConsumer.getGroupId(), i)));
-      }
-    }
-
-    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, readPointer);
+    dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, dirtyReadPointer);
 
     // for a new consumer group, add it to the list of configured groups
     if (oldConsumerCount == 0) {
@@ -994,14 +1008,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
       queueState = (QueueStateImpl) consumer.getQueueState();
     }
 
-    // Check if the partitioner in saved state is compatible with the requested partitioning type
-    if(queueState.getPartitioner() != consumer.getQueueConfig().getPartitionerType()) {
-      throw new OperationException(
-        StatusCode.INVALID_STATE,
-        getLogMessage(consumer, String.format("Saved state partition type=%s, requested partition=%s for consumer %s",
-                                    queueState.getPartitioner(), consumer.getQueueConfig().getPartitionerType(),
-                                    consumer.getInstanceId())));
-    }
     consumer.setQueueState(queueState);
     return queueState;
   }
@@ -1907,8 +1913,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return bytes == null || bytes.length == 0;
     }
 
-    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer,
-                                                         @SuppressWarnings("unused")QueueConfig config,
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
                                                          ReadPointer  readPointer, boolean construct)
       throws OperationException {
 
@@ -1961,6 +1966,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       if(LOG.isTraceEnabled()) {
         LOG.trace(getLogMessage(consumer, String.format("Constructed new QueueState - %s", queueState)));
+      }
+
+      // Check if the partitioner in saved state is compatible with the requested partitioning type
+      if(queueState.getPartitioner() != config.getPartitionerType()) {
+        throw new OperationException(
+          StatusCode.INVALID_STATE,
+          getLogMessage(consumer, String.format("Saved state partition type=%s, requested partition=%s for consumer %s",
+                                                queueState.getPartitioner(), consumer.getQueueConfig().getPartitionerType(),
+                                                consumer.getInstanceId())));
       }
       return queueState;
     }
