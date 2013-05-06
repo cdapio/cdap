@@ -1,8 +1,8 @@
-package com.continuuity.internal.api.batch;
+package com.continuuity.internal.batch;
 
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceSpecification;
-import com.continuuity.internal.api.ProgramSpecificationHelper;
+import com.continuuity.internal.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

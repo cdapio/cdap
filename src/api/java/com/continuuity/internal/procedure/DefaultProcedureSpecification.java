@@ -1,8 +1,8 @@
-package com.continuuity.internal.api.procedure;
+package com.continuuity.internal.procedure;
 
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.api.ProgramSpecificationHelper;
+import com.continuuity.internal.ProgramSpecificationHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

@@ -1,4 +1,4 @@
-package com.continuuity.internal.api.flowlet;
+package com.continuuity.internal.flowlet;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;

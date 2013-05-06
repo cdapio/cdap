@@ -7,7 +7,7 @@ package com.continuuity.app.guice;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
-import com.continuuity.internal.api.io.SchemaGenerator;
+import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.queue.QueueReader;
