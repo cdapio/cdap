@@ -14,12 +14,14 @@ import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
@@ -46,8 +48,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 public class TestUtil {
 
@@ -248,7 +248,7 @@ public class TestUtil {
     byte[] queueName = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
                                 .toString().getBytes();
     OperationResult<QueueInfo> info = executor.execute(
-        TestUtil.DEFAULT_CONTEXT, new QueueAdmin.GetQueueInfo(queueName));
+        TestUtil.DEFAULT_CONTEXT, new GetQueueInfo(queueName));
     String json = info.isEmpty() ? null : info.getValue().getJSONString();
 
     // get the queue info via HTTP
@@ -337,7 +337,7 @@ public class TestUtil {
     // prepare the queue consumer
     QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    executor.execute(context, new QueueAdmin.QueueConfigure(queueURI, consumer));
+    executor.execute(context, new QueueConfigure(queueURI, consumer));
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
