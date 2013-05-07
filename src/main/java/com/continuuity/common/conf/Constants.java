@@ -42,8 +42,8 @@ public class Constants {
    */
   public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
 
-  // ENG-443 1 MB max read buffer size.
-  public static final int DEFAULT_MAX_READ_BUFFER = 1048576;
+  // ENG-443 16 MB max read buffer size.
+  public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
 
   // ENG-440 Connection URL for location used for storing the flows states
   // and history.
@@ -74,6 +74,13 @@ public class Constants {
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.leveldb.cachesize";
   public static final String CFG_DATA_HSQLDB_CACHE_ROWS = "data.local.hsqldb.cache_rows";
   public static final String CFG_DATA_HSQLDB_CACHE_SIZE = "data.local.hsqldb.cache_size";
+  /** Minimum count of table write ops executed by opex to try to apply batching logic to */
+  public static final String CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = "data.table.ops.batch.min";
+  /** Max puts to perform in one rpc */
+  public static final String CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE = "data.dist.hbase.put.batch_size.max";
+  /** Max threads to use to write into single HBase table */
+  public static final String CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = "data.dist.hbase.table.write_threads_count.max";
+
   /**
    * Defaults for Data Fabric
    */
@@ -82,6 +89,12 @@ public class Constants {
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024*1024*100;
   public static final long DEFAULT_DATA_HSQLDB_CACHE_ROWS = 64000;
   public static final long DEFAULT_DATA_HSQLDB_CACHE_SIZE = 64000;
+  /** I.e. by default do NOT attempt to batch table write ops */
+  public static final int DEFAULT_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = Integer.MAX_VALUE;
+  /** I.e. by default do NOT limit puts count per rpc */
+  public static final int DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE = Integer.MAX_VALUE;
+  /** Use 10 threads per table by default */
+  public static final int DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = 10;
 
   // Disable logging
 
@@ -139,7 +152,7 @@ public class Constants {
    * Constants used by Tuple serializer
    */
   @Deprecated
-  public static final int MAX_SERDE_BUFFER = 1024 * 1024;
+  public static final int MAX_SERDE_BUFFER = 16 * 1024 * 1024;
 
   /**
    * Configuration key names used by flow manager
