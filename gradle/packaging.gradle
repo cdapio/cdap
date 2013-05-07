@@ -18,6 +18,11 @@ subprojects {
       }
 
       copy {
+        from "$rootProject.projectDir/common/bin"
+        into "${installDir}/bin"
+      }
+
+      copy {
         from 'conf'
         into "${installDir}/conf"
       }
@@ -67,7 +72,9 @@ subprojects {
                      '--category': 'misc',
                      '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all',
-                     '--version': "${getPomVersion()}"
+                     '--version': "${getPomVersion()}",
+                     '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
+                     '--template-value': "project=$project.name"
     ]
   }
 
