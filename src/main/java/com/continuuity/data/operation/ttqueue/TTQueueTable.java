@@ -3,10 +3,9 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
 import java.util.Iterator;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -131,7 +130,7 @@ public interface TTQueueTable {
    * @param queueName queuename to iterate on
    * @param start Start QueueEntryPointer
    * @param end  end QueeuEntryPointer
-   * @param ReadPointer readPointer
+   * @param readPointer readPointer
    * @return Iterator of QueueEntry
    */
   public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,

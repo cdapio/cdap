@@ -12,14 +12,15 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * This is an implementation of OperationExecutor that does nothing but
@@ -100,13 +101,13 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public long execute(OperationContext context,
-                      QueueAdmin.GetGroupID getGroupId) {
+                      GetGroupID getGroupId) {
     return 0L;
   }
 
   @Override
   public OperationResult<QueueInfo> execute(OperationContext context,
-                                            QueueAdmin.GetQueueInfo getQueueInfo) {
+                                            GetQueueInfo getQueueInfo) {
     // pretend the queue does not exist
     return new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND);
   }
@@ -170,7 +171,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, QueueConfigure configure)
     throws OperationException {
     // Nothing to do
   }

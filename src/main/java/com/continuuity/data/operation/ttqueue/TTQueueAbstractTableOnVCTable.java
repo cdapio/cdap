@@ -5,11 +5,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link com.continuuity.data.operation.ttqueue.TTQueue}s.  See that API for details.

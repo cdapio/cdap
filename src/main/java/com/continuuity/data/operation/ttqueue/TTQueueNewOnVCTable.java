@@ -13,15 +13,15 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EvictionHelper;
 import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
-import com.continuuity.data.table.VersionedColumnarTable;
-import com.google.common.base.Objects;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data.table.VersionedColumnarTable;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -601,7 +601,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
+  public QueueInfo getQueueInfo() throws OperationException {
     List<Long> groupIds = this.listAllConfiguredGroups();
     Map<Long, List<QueueState>> groupInfos = Maps.newHashMap();
     for (long groupId : groupIds) {
@@ -631,7 +631,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // return the entnire map as a json string
     Gson gson = new Gson();
-    return new QueueAdmin.QueueInfo(gson.toJson(info));
+    return new QueueInfo(gson.toJson(info));
   }
 
   @Override

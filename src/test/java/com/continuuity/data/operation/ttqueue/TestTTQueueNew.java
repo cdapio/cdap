@@ -10,6 +10,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -2304,7 +2305,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertFalse(returnedGroupIds.contains(id));
 
     // get the queue info
-    QueueAdmin.QueueInfo info = queue.getQueueInfo();
+    QueueInfo info = queue.getQueueInfo();
     assertNotNull(info.getJSONString());
     assertFalse(info.getJSONString().isEmpty());
     // System.out.println(info.getJSONString());
