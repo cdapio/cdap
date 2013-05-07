@@ -5,7 +5,7 @@
 /**
  * This package contains all public Data Access APIs.
  *
- * All data access is performed through {@link com.continuuity.api.data.DataSet DataSets}, either system or user defined.
- * 
+ * All data access is performed through {@link com.continuuity.api.data.DataSet DataSets},
+ * either system or user defined.
  */
 package com.continuuity.api.data;

@@ -11,6 +11,8 @@ import com.continuuity.api.data.OperationException;
  * <p>
  *   Iterates over Split data using {@link #fetchNextKeyValue()} method.
  * </p>
+ * @param <KEY> the key type
+ * @param <VALUE> the value type
  */
 public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE> {
   private KEY currentKey;

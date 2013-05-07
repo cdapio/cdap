@@ -12,6 +12,8 @@ import java.util.List;
  *   To feed dataset into batch job it should be splittable in chunks, so that it is possible to process every part in
  *   parallel. Every chunk should be readable as a collection of {key,value} records.
  * </p>
+ * @param <KEY> the key type
+ * @param <VALUE> the value type
  */
 public interface BatchReadable<KEY, VALUE> {
   /**

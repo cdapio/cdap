@@ -15,7 +15,7 @@ public class Swap extends AbstractWriteOperation {
   protected byte[] value;
 
   /**
-   * Get the column to compare and swap
+   * Get the column to compare and swap.
    * @return the column key
    */
   public byte[] getColumn() {

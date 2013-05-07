@@ -14,7 +14,7 @@ public final class SimpleSplit extends Split {
   private Map<String, String> attributes = new HashMap<String, String>();
 
   /**
-   * Sets attribute
+   * Sets an attribute.
    * @param name name of the attribute
    * @param value value of the attribute
    */
@@ -23,19 +23,19 @@ public final class SimpleSplit extends Split {
   }
 
   /**
-   * Gets attribute value
+   * Gets an attribute value.
    * @param name name of the attribute to get value of
-   * @return value of the attribute
+   * @return value of the attribute, or null if not found
    */
   public String get(String name) {
     return get(name, null);
   }
 
   /**
-   * Gets attribute value
+   * Gets an attribute value.
    * @param name name of the attribute to get value of
-   * @param defaultValue
-   * @return
+   * @param defaultValue the value to return if the attribute is not found
+   * @return value of the attribute, or the provided default if not found
    */
   public String get(String name, String defaultValue) {
     String value = attributes.get(name);
