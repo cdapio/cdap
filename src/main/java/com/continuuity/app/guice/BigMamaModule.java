@@ -80,6 +80,7 @@ public class BigMamaModule extends AbstractModule {
     bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
 
     // Bind Discovery service
+    bind(InMemoryDiscoveryService.class).in(Scopes.SINGLETON);
     bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
 

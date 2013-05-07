@@ -44,9 +44,12 @@ dependencies {
   compile libraries.google_guice_assistedinject
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
+  compile libraries.jcl_over_slf4j
   compile libraries.jsr_305
   compile libraries.netty
-  compile libraries.hadoop_minicluster
+  compile (libraries.hadoop_minicluster) {
+    exclude group: 'commons-logging'
+  }
 
 
   // Thrift related stuff.

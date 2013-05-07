@@ -9,19 +9,16 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
@@ -110,37 +107,6 @@ public final class FlowProgramRunner implements ProgramRunner {
   private ProgramController startFlowlet(Program program, ProgramOptions options) {
     return programRunnerFactory.create(ProgramRunnerFactory.Type.FLOWLET)
                                .run(program, options);
-  }
-
-  private final static class FlowletOptions implements ProgramOptions {
-
-    private final String name;
-    private final Arguments arguments;
-    private final Arguments userArguments;
-
-    private FlowletOptions(String name, int instanceId, int instances, RunId runId) {
-      this.name = name;
-      this.arguments = new BasicArguments(
-        ImmutableMap.of("instanceId", Integer.toString(instanceId),
-                        "instances", Integer.toString(instances),
-                        "runId", runId.getId()));
-      this.userArguments = new BasicArguments();
-    }
-
-    @Override
-    public String getName() {
-      return name;
-    }
-
-    @Override
-    public Arguments getArguments() {
-      return arguments;
-    }
-
-    @Override
-    public Arguments getUserArguments() {
-      return userArguments;
-    }
   }
 
   private final class FlowProgramController extends AbstractProgramController {

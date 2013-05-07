@@ -58,8 +58,7 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
-      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
-                                                                                          key.getSchema());
+      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(), key.getSchema());
 
       ClassLoader typeClassloader = key.getType().getRawType().getClassLoader();
       ByteCodeClassLoader classloader = classloaders.get(typeClassloader);

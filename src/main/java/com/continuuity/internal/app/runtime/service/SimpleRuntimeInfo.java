@@ -9,13 +9,13 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 /**
  *
  */
-final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
+public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
 
   private final ProgramController controller;
   private final Type type;
   private final Id.Program programId;
 
-  SimpleRuntimeInfo(ProgramController controller, Program program) {
+  public SimpleRuntimeInfo(ProgramController controller, Program program) {
     this.controller = controller;
     this.type = program.getProcessorType();
     this.programId = Id.Program.from(program.getAccountId(), program.getApplicationId(), program.getProgramName());
