@@ -38,8 +38,7 @@ public final class RolesAccounts {
   }
 
   /**
-   * getAccounts for role
-   *
+   * getAccounts for role.
    * @param role Role
    * @return List of {@code Account}s
    */

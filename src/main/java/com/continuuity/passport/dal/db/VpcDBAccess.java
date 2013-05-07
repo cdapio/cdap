@@ -32,9 +32,9 @@ import java.util.Map;
  */
 public class VpcDBAccess extends DBAccess implements VpcDAO {
 
-  private final DBConnectionPoolManager poolManager ;
+  private final DBConnectionPoolManager poolManager;
   private static final Logger LOG = LoggerFactory.getLogger(VpcDBAccess.class);
-  private static final String DEFAULT_ROLE= "admin";//TODO(sree): ENG-2205 - resolved by using authorization using shiro
+  private static final String DEFAULT_ROLE = "admin"; //TODO: (ENG-2205) - resolved by using authorization using shiro
   @Inject
   public VpcDBAccess(DBConnectionPoolManager poolManager) {
     this.poolManager = poolManager;
@@ -48,7 +48,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
 
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?,?,?,?,?)",
+      String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?)",
         DBUtils.VPC.TABLE_NAME,
         DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
@@ -56,15 +56,15 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         DBUtils.VPC.VPC_TYPE);
 
       Date date = new Date();
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
       ps.setString(3, vpc.getVpcLabel());
       ps.setTimestamp(4, new java.sql.Timestamp(date.getTime()));
-      ps.setString(5,vpc.getVpcType());
+      ps.setString(5, vpc.getVpcType());
 
       ps.executeUpdate();
-      //TODO: Remove connection.commit(). Tests are failing if this is not enabled. Need to investigate hypersql
+      //TODO: (ENG-2215)
       //configuration This is not an issue while working in non-test mode (mysql)
       connection.commit();
       result = ps.getGeneratedKeys();
@@ -72,7 +72,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
-      return new VPC(result.getInt(1), vpc.getVpcName(), vpc.getVpcLabel(),vpc.getVpcType());
+      return new VPC(result.getInt(1), vpc.getVpcName(), vpc.getVpcLabel(), vpc.getVpcType());
     } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
@@ -84,19 +84,19 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   public void removeVPC(String vpcName) throws VPCNotFoundException{
     Connection connection = null;
     PreparedStatement ps = null;
-    String SQL = String.format("DELETE FROM %s where %s = ?",DBUtils.VPC.TABLE_NAME,DBUtils.VPC.NAME_COLUMN);
+    String sql = String.format("DELETE FROM %s where %s = ?", DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
     try {
       connection =  this.poolManager.getValidConnection();
-      ps = connection.prepareStatement(SQL);
-      ps.setString(1,vpcName);
+      ps = connection.prepareStatement(sql);
+      ps.setString(1, vpcName);
       int count = ps.executeUpdate();
-      if (count == 0 ) {
+      if (count == 0){
         throw new VPCNotFoundException("VPC not found");
       }
     } catch (SQLException e){
       throw Throwables.propagate(e);
     } finally {
-      close(connection,ps);
+      close(connection, ps);
     }
   }
 
@@ -108,12 +108,12 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("DELETE FROM %s WHERE %s = ? and %s = ?",
+      String sql = String.format("DELETE FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.TABLE_NAME,
         DBUtils.VPC.VPC_ID_COLUMN,
         DBUtils.VPC.ACCOUNT_ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, vpcId);
       ps.setInt(2, accountId);
 
@@ -138,13 +138,13 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       connection = this.poolManager.getValidConnection();
 
 
-      String SQL = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)",
+      String sql = String.format("INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?, ?, ?, ?, ?)",
         DBUtils.VPCRole.TABLE_NAME,
         DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
         DBUtils.VPCRole.USER_ID_COLUMN, DBUtils.VPCRole.ROLE_TYPE_COLUMN,
         DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
 
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, vpcId);
       ps.setInt(2, accountId);
       ps.setInt(3, userId);
@@ -170,12 +170,12 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     ResultSet rs = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? OR %s IN (" +
+      String sql = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? OR %s IN (" +
                                    "SELECT %s from %s WHERE %s = ?)",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
         DBUtils.VPC.VPC_CREATED_AT,
-        DBUtils.VPC.VPC_TYPE,//COLUMNS
+        DBUtils.VPC.VPC_TYPE, //COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN,
         DBUtils.VPC.VPC_ID_COLUMN,
@@ -184,7 +184,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         DBUtils.VPCRole.USER_ID_COLUMN
         );
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, accountId);
       ps.setInt(2, accountId);
       rs = ps.executeQuery();
@@ -212,16 +212,16 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     ResultSet rs = null;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
+      String sql = String.format("SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ? and %s = ?",
         DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.LABEL_COLUMN,
         DBUtils.VPC.VPC_CREATED_AT,
-        DBUtils.VPC.VPC_TYPE,//COLUMNS
+        DBUtils.VPC.VPC_TYPE, //COLUMNS
         DBUtils.VPC.TABLE_NAME, //FROM
         DBUtils.VPC.ACCOUNT_ID_COLUMN, //WHERE
         DBUtils.VPC.VPC_ID_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setInt(1, accountId);
       ps.setInt(2, vpcId);
       rs = ps.executeQuery();
@@ -253,7 +253,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     List<VPC> vpcList = new ArrayList<VPC>();
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String sql = String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN,
         DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.LABEL_COLUMN,
@@ -265,7 +265,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
         DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.API_KEY_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, apiKey);
       rs = ps.executeQuery();
 
@@ -277,7 +277,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
         vpcList.add(vpc);
       }
 
-      String SQLRoleBased =  String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s IN (" +
+      String sqlRoleBased =  String.format("SELECT %s, %s, %s, %s, %s FROM %s JOIN %s ON %s = %s WHERE %s IN (" +
                                              "SELECT %s from %s WHERE %s = ? ) ",
                                            DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
                                            DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN,
@@ -289,10 +289,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
                                            DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN, //CONDITION
                                            DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.VPC_ID_COLUMN, //CONDITION
                                            DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN, //WHERE
-                                           DBUtils.AccountTable.TABLE_NAME +"."+ DBUtils.AccountTable.ID_COLUMN,
-                                           DBUtils.AccountTable.TABLE_NAME +"."+ DBUtils.AccountTable.API_KEY_COLUMN);
+                                           DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
+                                           DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.API_KEY_COLUMN);
 
-      psRoleBased = connection.prepareStatement(SQLRoleBased);
+      psRoleBased = connection.prepareStatement(sqlRoleBased);
       psRoleBased.setString(1, apiKey);
       rsRoleBased = psRoleBased.executeQuery();
 
@@ -321,10 +321,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     int count = 0;
     try {
       connection = this.poolManager.getValidConnection();
-      String SQL = String.format("SELECT COUNT(%s) FROM %s where %s = ? ",
+      String sql = String.format("SELECT COUNT(%s) FROM %s where %s = ? ",
         DBUtils.VPC.NAME_COLUMN, DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, vpcName);
       rs = ps.executeQuery();
 
@@ -350,34 +350,34 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     try {
      connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM %s " +
+      String sql = String.format("SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM %s " +
                                  "JOIN %s ON %s = %s " +
                                  "JOIN %s ON %s = %s " +
                                  "WHERE %s = ?  ",
-                                 DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,//SELECT
+                                 DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN, //SELECT
                                  DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-                                 DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN,
+                                 DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
                                  DBUtils.AccountTable.API_KEY_COLUMN,
                                  DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
                                  DBUtils.AccountTable.TABLE_NAME,
                                  DBUtils.VPCRole.TABLE_NAME, //JOIN
-                                 DBUtils.AccountTable.TABLE_NAME + "."+DBUtils.AccountTable.ID_COLUMN,
-                                 DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+                                 DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
+                                 DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
                                  DBUtils.VPC.TABLE_NAME, //JOIN
-                                 DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.VPC_ID_COLUMN,
-                                 DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
-                                 DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN
+                                 DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.VPC_ID_COLUMN,
+                                 DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.VPC_ID_COLUMN,
+                                 DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.NAME_COLUMN
                                  );
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, vpcName);
       rs = ps.executeQuery();
 
-      while(rs.next()){
+      while (rs.next()){
         Account account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
-                                      rs.getString( DBUtils.AccountTable.LAST_NAME_COLUMN),
+                                      rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
                                       rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
                                       rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
-                                      rs.getInt(DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN),
+                                      rs.getInt(DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN),
                                       rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
                                       rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                                       DBUtils.timestampToLong(rs.getTimestamp(
@@ -388,10 +388,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       return rolesAccounts;
 
     } catch (SQLException e) {
-      LOG.error(String.format("Caught exception while running DB query for getAccountRole. Error %s",e.getMessage()));
+      LOG.error(String.format("Caught exception while running DB query for getAccountRole. Error %s", e.getMessage()));
       throw Throwables.propagate(e);
     } finally {
-      close(connection,ps,rs);
+      close(connection, ps, rs);
     }
   }
 
@@ -404,20 +404,20 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
     try {
       connection = this.poolManager.getValidConnection();
 
-      String SQL = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+      String sql = String.format("SELECT %s,%s,%s,%s,%s,%s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
         DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
         DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-        DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN,   // Dis-ambiguate id column
+        DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,   // Dis-ambiguate id column
         DBUtils.AccountTable.API_KEY_COLUMN,
         DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT, //SELECT
         DBUtils.AccountTable.TABLE_NAME,
         DBUtils.VPC.TABLE_NAME,   // JOIN
-        DBUtils.AccountTable.TABLE_NAME + "."+DBUtils.AccountTable.ID_COLUMN,
-        DBUtils.VPC.TABLE_NAME + "."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //JOIN Condition
+        DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
+        DBUtils.VPC.TABLE_NAME + "." + DBUtils.VPC.ACCOUNT_ID_COLUMN, //JOIN Condition
         DBUtils.VPC.NAME_COLUMN // WHERE clause
       );
 
-      ps = connection.prepareStatement(SQL);
+      ps = connection.prepareStatement(sql);
       ps.setString(1, vpcName);
       rs = ps.executeQuery();
 
@@ -425,10 +425,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       while (rs.next()) {
         count++;
         account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
-                              rs.getString( DBUtils.AccountTable.LAST_NAME_COLUMN),
+                              rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
                               rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),
                               rs.getString(DBUtils.AccountTable.EMAIL_COLUMN),
-                              rs.getInt(DBUtils.AccountTable.TABLE_NAME+"."+ DBUtils.AccountTable.ID_COLUMN),
+                              rs.getInt(DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN),
                               rs.getString(DBUtils.AccountTable.API_KEY_COLUMN),
                               rs.getBoolean(DBUtils.AccountTable.CONFIRMED_COLUMN),
                               DBUtils.timestampToLong(rs.getTimestamp(DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT)));

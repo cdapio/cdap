@@ -14,17 +14,16 @@ import java.util.Map;
 
 
 /**
- * Data Access interface for account
+ * Data Access interface for account.
  * Manage all account related activity
  */
 public interface AccountDAO {
 
   /**
-   * Create Account in the system
-   *
+   * Create Account in the system.
    * @param account Instance of {@code Account}
-   * @return int account Id that was generated
-   * @throws {@code AccountAlreadyExistsException}
+   * @return instance of {@code Account} that is created
+   * @throws AccountAlreadyExistsException if the account to be created already exists
    */
   public Account createAccount(Account account) throws AccountAlreadyExistsException;
 
@@ -33,44 +32,38 @@ public interface AccountDAO {
 
 
   /**
-   * @param accountId
-   * @throws RuntimeException
+   * Confirm Download when a user downloads developer suite.
+   * @param accountId account id
    */
   public void confirmDownload(int accountId);
 
   /**
-   * @param accountId
+   * @param accountId account id
    * @param paymentId id in the external system
-   * @throws RuntimeException
    */
   public void confirmPayment(int accountId, String paymentId);
 
   /**
-   * Delete Account in the system
-   *
+   * Delete Account in the system.
    * @param accountId AccountId to be deleted
-   * @return boolean status of account deletion
-   * @throws {@code RetryException}
+   * @return boolean status of account deletion, true on successful deletion, false otherwise
+   * @throws AccountNotFoundException if the account to be deleted doesn't exist in the system
    */
-  public boolean deleteAccount(int accountId) throws  AccountNotFoundException;
+  public boolean deleteAccount(int accountId) throws AccountNotFoundException;
 
   /**
-   * GetAccount
-   *
+   * GetAccount.
    * @param accountId AccountId requested
    * @return {@code Account}
-   * @throws {@code RetryException}
    */
   public Account getAccount(int accountId);
 
   /**
-   * GetAccount
-   *
-   * @param emailId emailId requested
-   * @return {@code Account}
-   * @throws {@code RetryException}
+   * GetAccount based on email id.
+   * @param emailId emailId of the account
+   * @return Account
    */
-  public Account getAccount(String emailId) ;
+  public Account getAccount(String emailId);
 
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo);
 

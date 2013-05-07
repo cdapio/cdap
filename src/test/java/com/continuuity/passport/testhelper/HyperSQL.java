@@ -9,8 +9,8 @@ import java.sql.SQLException;
 
 
 /**
- * Test Helper for unit/integration tests
- * Uses HSQLDB instance for testing
+ * Test Helper for unit/integration tests.
+ * Uses HSQLDB instance for testing.
  */
 public class HyperSQL {
 
@@ -33,10 +33,10 @@ public class HyperSQL {
                                                          "account_id INTEGER, vpc_name VARCHAR(100), " +
                                                          "vpc_created_at TIMESTAMP, vpc_label VARCHAR(100), " +
                                                          "vpc_type VARCHAR(30) " +
-                                                         ")" ;
+                                                         ")";
 
   private static final String CREATE_VPC_ROLE_TABLE = "CREATE TABLE vpc_roles ( vpc_id INTEGER , " +
-    "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )" ;
+    "account_id INTEGER, role_type INTEGER, role_overrides VARCHAR(100) )";
 
 
 
@@ -89,11 +89,11 @@ public class HyperSQL {
   }
 
 
-  public static void insertIntoVPCRoleTable(int vpc_id, int account_id) throws SQLException {
-    String SQL = String.format("INSERT INTO vpc_roles (vpc_id, account_id) VALUES (?, ?)", vpc_id,account_id);
-    PreparedStatement ps = connection.prepareStatement(SQL);
-    ps.setInt(1, vpc_id);
-    ps.setInt(2, account_id);
+  public static void insertIntoVPCRoleTable(int vpcId, int accountId) throws SQLException {
+    String sql = String.format("INSERT INTO vpc_roles (vpc_id, account_id) VALUES (?, ?)", vpcId, accountId);
+    PreparedStatement ps = connection.prepareStatement(sql);
+    ps.setInt(1, vpcId);
+    ps.setInt(2, accountId);
     ps.execute();
   }
 }

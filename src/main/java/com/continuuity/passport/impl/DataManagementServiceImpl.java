@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation for Data-management service
+ * Implementation for Data-management service.
  */
 public class DataManagementServiceImpl implements DataManagementService {
   private final AccountDAO accountDAO;
@@ -43,12 +43,6 @@ public class DataManagementServiceImpl implements DataManagementService {
     this.profanityFilter = profanityFilter;
   }
 
-  /**
-   * Register an {@code Account} in the system
-   *
-   * @param account Account information
-   * @return Instance of {@code Status}
-   */
   @Override
   public Account registerAccount(Account account) throws AccountAlreadyExistsException {
     return accountDAO.createAccount(account);
@@ -93,12 +87,6 @@ public class DataManagementServiceImpl implements DataManagementService {
     throw new UnsupportedOperationException("This method is not implemented yet.");
   }
 
-  /**
-   * GetAccount object
-   *
-   * @param accountId Id of the account
-   * @return Instance of {@code Account}
-   */
   @Override
   public Account getAccount(int accountId) {
     return accountDAO.getAccount(accountId);
@@ -129,23 +117,11 @@ public class DataManagementServiceImpl implements DataManagementService {
     return vpcDao.getVPC(accountId);
   }
 
-  /**
-   * Get VPC List based on the ApiKey
-   *
-   * @param apiKey apiKey of the account
-   * @return List of {@code VPC}
-   */
   @Override
   public List<VPC> getVPC(String apiKey) {
    return vpcDao.getVPC(apiKey);
   }
 
-  /**
-   * Update account with passed Params
-   *
-   * @param accountId accountId
-   * @param params    Map<"keyName", "value">
-   */
   @Override
   public void updateAccount(int accountId, Map<String, Object> params) {
     accountDAO.updateAccount(accountId, params);
@@ -156,9 +132,6 @@ public class DataManagementServiceImpl implements DataManagementService {
     accountDAO.changePassword(accountId, oldPassword, newPassword);
   }
 
-  /**
-   * ResetPassword
-   */
   @Override
   public Account resetPassword(int nonceId, String password) {
     return accountDAO.resetPassword(nonceId, password);
@@ -176,7 +149,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   @Override
   public boolean isValidVPC(String vpcName) {
-    return ( ! profanityFilter.isFiltered(vpcName) && vpcDao.getVPCCount(vpcName) == 0 );
+    return (!profanityFilter.isFiltered(vpcName) && vpcDao.getVPCCount(vpcName) == 0);
   }
 
   @Override
@@ -210,7 +183,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
 
   public VPC addVPC(int accountId, VPC vpc) {
-    if ( ! profanityFilter.isFiltered(vpc.getVpcName())) {
+    if (!profanityFilter.isFiltered(vpc.getVpcName())) {
        return vpcDao.addVPC(accountId, vpc);
     }
     return null;

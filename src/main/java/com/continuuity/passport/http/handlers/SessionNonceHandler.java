@@ -18,7 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
- * Handle Nonce operation for Session nonce
+ * Handle Nonce operation for Session nonce.
  */
 @Path("passport/v1/sso/")
 @Singleton
@@ -46,7 +46,7 @@ public class SessionNonceHandler extends PassportHandler {
         return Response.ok(Utils.getNonceJson(null, nonce)).build();
       } else {
         requestFailed();
-        LOG.error(String.format("Failed to generate nonce. Endpoint %s","GET /passport/v1/sso/getNonce/{id}"));
+        LOG.error(String.format("Failed to generate nonce. Endpoint %s", "GET /passport/v1/sso/getNonce/{id}"));
         return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
           .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
           .build();
@@ -54,7 +54,7 @@ public class SessionNonceHandler extends PassportHandler {
     } catch (RuntimeException e) {
       requestFailed();
       LOG.error(String.format("Failed to generate nonce. Endpoint %s %s",
-                              "GET /passport/v1/sso/getNonce/{id}",e.getMessage()));
+                              "GET /passport/v1/sso/getNonce/{id}", e.getMessage()));
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getNonceJson("Couldn't generate nonce", nonce))
         .build();
@@ -83,7 +83,7 @@ public class SessionNonceHandler extends PassportHandler {
     } catch (StaleNonceException e) {
       requestFailed();
       LOG.error(String.format("Failed to generate sessionId. Endpoint %s %s",
-        "GET /passport/v1/sso/getId/{nonce}",e.getMessage()));
+        "GET /passport/v1/sso/getId/{nonce}", e.getMessage()));
       return Response.status(javax.ws.rs.core.Response.Status.NOT_FOUND)
         .entity(Utils.getIdJson("ID not found for nonce", null))
         .build();

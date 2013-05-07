@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Defines End point for vpc
+ * Defines End point for vpc related functions.
  */
 
 @Path("passport/v1/vpc")
@@ -69,7 +69,7 @@ public class VPCHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed();
       LOG.error(String.format("Internal server error processing endpoint: %s %s",
-        "GET /passport/v1/vpc}",e.getMessage()));
+        "GET /passport/v1/vpc}", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError(String.format("VPC get Failed. %s", e)))
         .build();
@@ -88,7 +88,7 @@ public class VPCHandler extends PassportHandler {
     } catch (Exception e) {
       requestFailed();
       LOG.error(String.format("Internal server error processing endpoint: %s %s",
-                              "GET /passport/v1/vpc/valid/{vpcName}",e.getMessage()));
+                              "GET /passport/v1/vpc/valid/{vpcName}", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("FAILED", e.getMessage()))
         .build();
@@ -98,7 +98,7 @@ public class VPCHandler extends PassportHandler {
 
   @Path("{vpcName}")
   @GET
-  public Response getAccountForVPCName(@PathParam("vpcName") String vpcName ) {
+  public Response getAccountForVPCName(@PathParam("vpcName") String vpcName) {
     try {
       Account account = dataManagementService.getAccountForVPC(vpcName);
       if (account != null) {
@@ -106,14 +106,14 @@ public class VPCHandler extends PassportHandler {
         return Response.ok(account.toString()).build();
       } else {
         requestFailed();
-        LOG.error(String.format("Account not found. Processing endpoint: %s ","GET /passport/v1/vpc/{vpcName}"));
+        LOG.error(String.format("Account not found. Processing endpoint: %s ", "GET /passport/v1/vpc/{vpcName}"));
         return Response.status(Response.Status.NOT_FOUND)
           .entity(Utils.getJsonError("Account not found for VPC"))
           .build();
       }
     } catch (Exception e) {
       requestFailed();
-      LOG.error(String.format("Account not found. endpoint: %s %s","GET /passport/v1/vpc/{vpcName}",e.getMessage()));
+      LOG.error(String.format("Account not found. endpoint: %s %s", "GET /passport/v1/vpc/{vpcName}", e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("Account not found for VPC"))
         .build();
@@ -121,19 +121,19 @@ public class VPCHandler extends PassportHandler {
   }
 
   /**
-   * Gets account if for VPC
+   * Gets account if for VPC.
    * Endpoint is obfuscated on purpose
    * @param vpcName VpcName
    * @return Instance of {@code Response}
    */
   @Path("xkcd/{vpcName}")
   @GET
-  public Response getIdForVPC(@PathParam("vpcName") String vpcName ) {
+  public Response getIdForVPC(@PathParam("vpcName") String vpcName) {
     try {
       Account account = dataManagementService.getAccountForVPC(vpcName);
       if (account != null) {
         requestSuccess();
-        return Response.ok().entity(Utils.getIdJson(null, account.getAccountId())) .build();
+        return Response.ok().entity(Utils.getIdJson(null, account.getAccountId())).build();
       } else {
         requestFailed();
         LOG.error(String.format("xkcd not found. Processing endpoint: %s ",
@@ -144,7 +144,7 @@ public class VPCHandler extends PassportHandler {
       }
     } catch (Exception e) {
       requestFailed();
-      LOG.error(String.format("xkcd not found. endpoint: %s %s","GET /passport/v1/xkcd/{vpcName}",e.getMessage()));
+      LOG.error(String.format("xkcd not found. endpoint: %s %s", "GET /passport/v1/xkcd/{vpcName}", e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getIdJson("FAILED", "xkcd not found for VPC"))
         .build();
@@ -156,16 +156,16 @@ public class VPCHandler extends PassportHandler {
   public Response getAccountRoles(@PathParam("vpcName") String vpcName) {
     requestReceived();
     JsonArray accountRoleArray = new JsonArray();
-    try{
+    try {
       RolesAccounts rolesAccounts = dataManagementService.getAccountRoles(vpcName);
-      for(String role : rolesAccounts.getRoles() ) {
+      for (String role : rolesAccounts.getRoles()) {
         JsonObject entry = new JsonObject();
-        JsonArray accountArray = new JsonArray() ;
-        for(Account account : rolesAccounts.getAccounts(role)) {
+        JsonArray accountArray = new JsonArray();
+        for (Account account : rolesAccounts.getAccounts(role)){
           accountArray.add(account.toJson());
         }
-        entry.addProperty("role",role);
-        entry.add("accounts",accountArray);
+        entry.addProperty("role", role);
+        entry.add("accounts", accountArray);
         accountRoleArray.add(entry);
       }
       requestSuccess();
@@ -180,22 +180,22 @@ public class VPCHandler extends PassportHandler {
 
   @Path("{vpcName}")
   @DELETE
-  public Response deleteVPCByName(@PathParam("vpcName") String vpcName ) {
-    try{
+  public Response deleteVPCByName(@PathParam("vpcName") String vpcName) {
+    try {
       requestSuccess();
       dataManagementService.deleteVPC(vpcName);
       return Response.ok().entity(Utils.getJsonOK()).build();
     } catch (VPCNotFoundException e) {
       requestFailed(); //Failed request
       LOG.debug(String.format("VPC not found endpoint: %s %s",
-        "DELETE /passport/v1/vpc/{vpcName}",e.getMessage()));
+        "DELETE /passport/v1/vpc/{vpcName}", e.getMessage()));
       return Response.status(Response.Status.NOT_FOUND)
         .entity(Utils.getJsonError("VPC not found"))
         .build();
     } catch (RuntimeException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Internal server error endpoint: %s %s",
-        "DELETE /passport/v1/{vpcName}",e.getMessage()));
+        "DELETE /passport/v1/{vpcName}", e.getMessage()));
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
         .entity(Utils.getJsonError("VPC delete Failed", e.getMessage()))
         .build();

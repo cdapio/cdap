@@ -31,7 +31,7 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.mortbay.jetty.servlet.DefaultServlet;
 
 /**
- * Guice bindings for passport services
+ * Guice bindings for passport services.
  * Glue together
  * 1) Service to implementations
  * 2) DAO to Implementations
@@ -39,13 +39,13 @@ import org.mortbay.jetty.servlet.DefaultServlet;
  */
 public class PassportGuiceBindings extends JerseyServletModule {
 
-  private final String jdbcType ;
+  private final String jdbcType;
   private final String connectionString;
   private final String profaneWordsPath;
 
 
   public PassportGuiceBindings(CConfiguration configuration) {
-    jdbcType =  configuration.get(Constants.CFG_JDBC_TYPE,Constants.DEFAULT_JDBC_TYPE);
+    jdbcType =  configuration.get(Constants.CFG_JDBC_TYPE, Constants.DEFAULT_JDBC_TYPE);
     connectionString = configuration.get(Constants.CFG_JDBC_CONNECTION_STRING,
                                          Constants.DEFAULT_JDBC_CONNECTION_STRING);
     profaneWordsPath = configuration.get(Constants.CFG_PROFANE_WORDS_FILE_PATH,
@@ -59,11 +59,11 @@ public class PassportGuiceBindings extends JerseyServletModule {
   }
 
   private void bindings() {
-    Preconditions.checkNotNull(jdbcType,"JDBC type cannot be null");
-    Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE),"Unsupported JDBC type");
+    Preconditions.checkNotNull(jdbcType, "JDBC type cannot be null");
+    Preconditions.checkArgument(jdbcType.equals(Constants.DEFAULT_JDBC_TYPE), "Unsupported JDBC type");
 
-    Preconditions.checkNotNull(connectionString,"Connection String cannot be null");
-    Preconditions.checkNotNull(profaneWordsPath,"Profane words path cannot be null");
+    Preconditions.checkNotNull(connectionString, "Connection String cannot be null");
+    Preconditions.checkNotNull(profaneWordsPath, "Profane words path cannot be null");
 
     MysqlConnectionPoolDataSource mysqlDataSource = new MysqlConnectionPoolDataSource();
     mysqlDataSource.setUrl(connectionString);

@@ -15,6 +15,10 @@ import com.continuuity.passport.core.exceptions.StaleNonceException;
  */
 public interface NonceDAO {
 
+  /**
+   * Nonce type - possible values: SESSION - to create nonce to manage session
+   *  ACTIVATION - for account activation, RESET - to reset password.
+   */
   public enum NONCE_TYPE {
     SESSION,
     ACTIVATION,
@@ -22,8 +26,7 @@ public interface NonceDAO {
   }
 
   /**
-   * Generates random nonce for id
-   *
+   * Generates random nonce for id.
    * @param id   id to be nonced
    * @param type Nonce type that determines expiration
    * @return random nonce
@@ -32,8 +35,7 @@ public interface NonceDAO {
   public int getNonce(String id, NONCE_TYPE type);
 
   /**
-   * Get Id for nonce
-   *
+   * Get Id for nonce.
    * @param nonce nonce
    * @param type  Nonce type that validates expiration
    * @return id matchin nonce

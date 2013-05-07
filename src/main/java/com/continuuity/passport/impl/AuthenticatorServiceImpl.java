@@ -14,19 +14,18 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
 /**
- * Implementation of Authentication Service
+ * Implementation of Authentication Service.
  */
 public class AuthenticatorServiceImpl implements AuthenticatorService {
 
   /**
-   * Authenticates User with the Credentials passed
+   * Authenticates User with the Credentials passed.
    *
    * @param credentials UserCredentials that authenticates the user
    * @return {@code AuthenticationStatus}
-   * @throws {@code RetryException}
    */
   @Override
-  public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
+  public AuthenticationStatus authenticate(Credentials credentials) {
     UsernamePasswordApiKeyToken userCredentials = (UsernamePasswordApiKeyToken) credentials;
     Subject currentUser = null;
     try {

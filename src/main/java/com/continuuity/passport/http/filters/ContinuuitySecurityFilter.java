@@ -15,12 +15,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Implements Security filter to filter out requests from unknown sources
+ * Implements Security filter to filter out requests from unknown sources.
  */
 public class ContinuuitySecurityFilter implements Filter {
 
-  private final static String CONTINUUITY_SIGNATURE = "abcdef";
-  private final static String CONTINUUITY_SIGNATURE_HEADER = "X-Continuuity-Signature";
+  private static final String CONTINUUITY_SIGNATURE = "abcdef";
+  private static final String CONTINUUITY_SIGNATURE_HEADER = "X-Continuuity-Signature";
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

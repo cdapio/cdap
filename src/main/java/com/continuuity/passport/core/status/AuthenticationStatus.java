@@ -7,10 +7,14 @@ package com.continuuity.passport.core.status;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * Authentication Status type indicates the status and an optional message
+ * Defines AuthenticationStatus.
  */
 public class AuthenticationStatus {
 
+  /**
+   * Authentication Type - possible values: AUTHENTICATED - if the authentication was successful, AUTHENTICATION_FAILED
+   * - if the Authentication failed.
+   */
   public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED};
 
   private Type type;
