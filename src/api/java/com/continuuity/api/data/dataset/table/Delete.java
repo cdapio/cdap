@@ -9,7 +9,7 @@ public class Delete extends AbstractWriteOperation {
   protected byte[][] columns;
 
   /**
-   * get the columns to delete
+   * Get the columns to delete.
    * @return the column keys of the columns to be deleted
    */
   public byte[][] getColumns() {
@@ -17,7 +17,7 @@ public class Delete extends AbstractWriteOperation {
   }
 
   /**
-   * Delete several columns
+   * Delete several columns.
    * @param row the row key
    * @param columns the column keys of the columns to be deleted
    */
@@ -27,7 +27,7 @@ public class Delete extends AbstractWriteOperation {
   }
 
   /**
-   * Delete a single column
+   * Delete a single column.
    * @param row the row key
    * @param column the column key of the column to be deleted
    */

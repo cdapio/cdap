@@ -1,7 +1,7 @@
 package com.continuuity.api.data;
 
 /**
- * Defines status codes
+ * Defines status codes for use in operation results.
  */
 public class StatusCode {
 

@@ -4,13 +4,13 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.api.data.StatusCode;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class KeyValueTable extends DataSet {
   private Table table;
 
   /**
-   * constructor for configuration
+   * Constructor for configuration time.
    * @param name the name of the table
    */
   public KeyValueTable(String name) {
@@ -37,7 +37,7 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification))
+   * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification)).
    * @param spec the data set spec for this data set
    */
   @SuppressWarnings("unused")
@@ -87,7 +87,7 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * Write a value to a key
+   * Write a value to a key.
    * @param key the key
    * @param value the new value
    * @throws OperationException if the write fails
@@ -108,7 +108,7 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * Delete a key
+   * Delete a key.
    * @param key the key to delete
    * @throws OperationException if the delete fails
    */

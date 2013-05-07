@@ -1,7 +1,7 @@
 package com.continuuity.api.data.dataset.table;
 
 /**
- * A write to a table. It can write one more columns of a row
+ * A write to a table. It can write one more columns of a row.
  */
 public class Write extends AbstractWriteOperation {
   // the columns to write
@@ -10,7 +10,7 @@ public class Write extends AbstractWriteOperation {
   protected byte[][] values;
 
   /**
-   * Get the columns to write
+   * Get the columns to write.
    * @return the keys of the columns to write
    */
   public byte[][] getColumns() {
@@ -18,7 +18,7 @@ public class Write extends AbstractWriteOperation {
   }
 
   /**
-   * Get the values to write
+   * Get the values to write.
    * return the values to write
    */
   public byte[][] getValues() {
@@ -39,7 +39,7 @@ public class Write extends AbstractWriteOperation {
   }
 
   /**
-   * Write a value to one column
+   * Write a value to one column.
    * @param row a row key
    * @param column a column key
    * @param value a new value for the column

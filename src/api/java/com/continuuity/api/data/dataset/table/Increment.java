@@ -14,7 +14,7 @@ public class Increment extends AbstractWriteOperation {
   protected long[] values;
 
   /**
-   * Get the columns to increment
+   * Get the columns to increment.
    * @return the column keys of the columns to be incremented
    */
   public byte[][] getColumns() {
@@ -22,7 +22,7 @@ public class Increment extends AbstractWriteOperation {
   }
 
   /**
-   * Get the increment values
+   * Get the increment values.
    * @return the values by which each row is to be incremented
    */
   public long[] getValues() {

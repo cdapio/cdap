@@ -15,13 +15,14 @@ import com.google.gson.GsonBuilder;
 import java.lang.reflect.Type;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported
+ * This data set allows to store objects of a particular class into a table. The types that are supported are:
  * <ul>
  *   <li>a plain java class</li>
  *   <li>a parametrized class</li>
  *   <li>a static inner class of one of the above</li>
  * </ul>
  * Interfaces and not-static inner classes are not supported.
+ * @param <T> the type of objects in the store
  */
 @Beta
 public class ObjectStore<T> extends DataSet {
@@ -73,7 +74,7 @@ public class ObjectStore<T> extends DataSet {
   }
 
   /**
-   * Constructor from a data set specification
+   * Constructor from a data set specification.
    * @param spec the specification
    */
   public ObjectStore(DataSetSpecification spec) {

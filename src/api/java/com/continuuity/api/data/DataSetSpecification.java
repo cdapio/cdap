@@ -2,8 +2,6 @@ package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -37,7 +35,7 @@ public final class DataSetSpecification {
   private final TreeMap<String, DataSetSpecification> dataSetSpecs;
 
   /**
-   * returns the name of the data set
+   * Returns the name of the data set.
    * @return the name of the data set
    */
   public String getName() {
@@ -45,7 +43,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * returns the class name of the data set
+   * Returns the class name of the data set.
    * @return the class name of the data set
    */
   public String getType() {
@@ -53,7 +51,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * lookup a custom property of the data set
+   * Lookup a custom property of the data set.
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
@@ -62,7 +60,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * get the specification for an embedded data set
+   * Get the specification for an embedded data set.
    * @param dsName the name of the embedded data set
    * @return the specification for the named embedded data set,
    *    or null if not found.
@@ -72,7 +70,8 @@ public final class DataSetSpecification {
   }
 
 
-  /** private constructor, only to be used by the builder
+  /**
+   * Private constructor, only to be used by the builder.
    * @param name the name of the data set
    * @param type the class name of the data set
    * @param properties the custom properties
@@ -88,7 +87,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * Equality
+   * Equality.
    */
   public boolean equals(Object other) {
     if (other == this) {
@@ -97,7 +96,7 @@ public final class DataSetSpecification {
     if (!(other instanceof DataSetSpecification)) {
       return false;
     }
-    DataSetSpecification ds = (DataSetSpecification)other;
+    DataSetSpecification ds = (DataSetSpecification) other;
     return this.getName().equals(ds.getName())
         && this.getType().equals(ds.getType())
         && this.properties.equals(ds.properties)
@@ -105,15 +104,17 @@ public final class DataSetSpecification {
   }
 
   /**
-   * hash value
+   * Hash value.
    */
   @Override
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.dataSetSpecs);
   }
 
-  /** A Builder to construct DataSetSpecification instances */
-  public final static class Builder {
+  /**
+   * A Builder to construct DataSetSpecification instances.
+   */
+  public static final class Builder {
     // private fields
     private String name;
     private String type;
@@ -147,7 +148,7 @@ public final class DataSetSpecification {
     }
 
     /**
-     * Add a custom property
+     * Add a custom property.
      * @param key the name of the custom property
      * @param value the value of the custom property
      * @return this builder object to allow chaining
