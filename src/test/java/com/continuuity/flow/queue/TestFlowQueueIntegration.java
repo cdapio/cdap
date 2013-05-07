@@ -6,6 +6,7 @@ import com.continuuity.test.FlowManager;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,13 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
 
       // Wait for Fifo consumers to finish
       TimeUnit.SECONDS.sleep(1);
+
+      if(flowletMetrics1.getException() > 0) {
+        Assert.fail("QueuePartitionTestFlowlet test failed");
+      }
+      if(flowletMetrics2.getException() > 0) {
+        Assert.fail("QueueBatchTestFlowlet test failed");
+      }
     } finally {
       applicationManager.stopAll();
       clearAppFabric();
