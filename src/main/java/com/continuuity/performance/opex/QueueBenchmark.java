@@ -5,7 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -13,6 +12,7 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -21,6 +21,7 @@ import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -190,7 +191,7 @@ public class QueueBenchmark extends OpexBenchmark {
     super.initialize();
     try {
       opex.execute(opContext,
-                   new QueueAdmin.QueueConfigure(queueBytes, new StatefulQueueConsumer(0, 0, numConsumers, qconfig)));
+                   new QueueConfigure(queueBytes, new StatefulQueueConsumer(0, 0, numConsumers, qconfig)));
     } catch (OperationException e) {
       throw new BenchmarkException("Exception while configuring queue", e);
     }
