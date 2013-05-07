@@ -7,7 +7,7 @@ subprojects {
    * staging is important as we would like to have all the necessary 
    * primary and tertiary dependencies to be pulled in. 
    */
-  task prepackager {
+  task ('prepackager', dependsOn: ['build']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
 
@@ -29,6 +29,8 @@ subprojects {
 
       copy {
         from configurations.runtime
+        from configurations.archives.allArtifacts.files
+        exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
         into "${installDir}/lib"
       }
     }
@@ -72,9 +74,9 @@ subprojects {
                      '--category': 'misc',
                      '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all',
-                     '--version': "${getPomVersion()}",
-                     '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
-                     '--template-value': "project=$project.name"
+                     '--version': "${getPomVersion()}"
+                     // '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
+                     // '--template-value': "project=$project.name"
     ]
   }
 
@@ -110,6 +112,12 @@ subprojects {
           authentication(userName: nexusUsername, password: nexusPassword)
           pom.groupId = 'com.continuuity.distributions.snapshots'
           pom.version = getPomVersion()
+        }
+        pom.whenConfigured { pom ->
+          // Removes groovy dependency and test dependencies from generated pom file
+          pom.dependencies = pom.dependencies.findAll { dep ->
+            dep.artifactId != 'groovy-all' && (dep.scope != 'test' || dep.scope != 'integration' || dep.scope != 'sources')
+          }
         }
       }
     }
