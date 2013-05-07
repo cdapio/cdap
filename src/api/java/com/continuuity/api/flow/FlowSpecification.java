@@ -6,7 +6,7 @@ package com.continuuity.api.flow;
 
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.internal.api.flow.DefaultFlowSpecification;
+import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

@@ -9,7 +9,6 @@ import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.filesystem.Location;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.jar.Manifest;
 

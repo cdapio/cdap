@@ -50,7 +50,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
-import com.continuuity.internal.api.io.UnsupportedTypeException;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;

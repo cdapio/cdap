@@ -5,7 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
+import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

@@ -6,13 +6,16 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.internal.app.runtime.PostProcess;
+import com.google.common.base.Function;
+
+import java.nio.ByteBuffer;
 
 /**
  *
  */
-interface ProcessMethod {
+interface ProcessMethod<T> {
 
   boolean needsInput();
 
-  PostProcess invoke(InputDatum input);
+  PostProcess invoke(InputDatum input, Function<ByteBuffer, T> inputDatumTransformer);
 }

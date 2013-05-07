@@ -6,7 +6,7 @@ package com.continuuity.internal.app;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
+import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

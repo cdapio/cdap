@@ -1,4 +1,4 @@
-package com.continuuity.internal.api;
+package com.continuuity.internal;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
