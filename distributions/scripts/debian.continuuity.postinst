@@ -1,0 +1,37 @@
+#!/bin/bash
+
+
+# post install script for
+set -e
+
+package_name="<%= project%>"
+version="<%= version%>"
+
+function site_configuration() {
+     
+}
+
+case "$1" in
+  configure)
+    mkdir -p /var/log/continuuity/$package_name /var/run/continuuity/$package_name || :
+    echo $version > /opt/continuuity/$package_name/version
+    chmod +x /opt/continuuity/$package_name/bin/service
+    if [[ -h /etc/init.d/svc-$package_name ]]; then
+      unlink /etc/init.d/svc-$package_name
+    fi
+    ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$package_name
+    if [[ ! -d /etc/continuuity/conf.dist ]]; then
+      mkdir -p /etc/continuuity/conf.dist
+      if [[ ! -h /etc/continuuity/conf ]] && [[ ! -d /etc/continuuity/conf ]]; then
+        ln -s /etc/continuuity/conf.dist /etc/continuuity/conf 
+      fi
+    fi
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+esac

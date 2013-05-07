@@ -75,8 +75,10 @@ subprojects {
                      '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all',
                      '--version': "${getPomVersion()}"
-                     // '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
-                     // '--template-value': "project=$project.name"
+                     '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
+                     '--template-value': "project=$project.name",
+                     '--template-value': "version=${getPomVersion()}"
+ 
     ]
   }
 
