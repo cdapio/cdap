@@ -26,10 +26,6 @@ final class MetricsResult {
     }
   }
 
-  public Metric getMetric(String metric) {
-    return metricsMap.get(metric);
-  }
-
   public List<Metric> getMetrics() {
     return metrics;
   }

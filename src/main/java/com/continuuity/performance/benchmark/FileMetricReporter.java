@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReportFileAppenderThread extends ReportThread {
+class FileMetricReporter extends MetricsCollector {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReportFileAppenderThread.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileMetricReporter.class);
 
   private static final int FILE_APPENDER_METRIC_INTERVAL = 60;
   private static final String OPS_PER_SEC_ONE_MIN = "benchmark.ops.per_sec.1m";
@@ -29,12 +29,12 @@ public class ReportFileAppenderThread extends ReportThread {
   BufferedWriter bw;
 
   @Override
-  public int getInterval() {
+  protected int getInterval() {
     return FILE_APPENDER_METRIC_INTERVAL;
   }
 
-  public ReportFileAppenderThread(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
-                                  CConfiguration config) {
+  protected FileMetricReporter(String benchmarkName, AgentGroup[] groups, BenchmarkMetric[] metrics,
+                            CConfiguration config) {
     super(groups, metrics);
     this.fileName = config.get("reportfile");
     int pos = benchmarkName.lastIndexOf(".");
@@ -61,31 +61,25 @@ public class ReportFileAppenderThread extends ReportThread {
   }
 
   @Override
-  public void processGroupMetricsInterval(long unixTime,
-                                          AgentGroup group,
-                                          long previousMillis,
-                                          long millis,
-                                          Map<String, Long> prevMetrics,
-                                          Map<String, Long> latestMetrics,
+  protected void processGroupMetricsInterval(long unixTime, AgentGroup group, long previousMillis, long millis,
+                                          Map<String, Long> prevMetrics, Map<String, Long> latestMetrics,
                                           boolean interrupt) {
-    if (prevMetrics != null) {
+    if (prevMetrics != null && !interrupt) {
       for (Map.Entry<String, Long> singleMetric : latestMetrics.entrySet()) {
         String key = singleMetric.getKey();
         long value = singleMetric.getValue();
-        if (!interrupt) {
-          Long previousValue = prevMetrics.get(key);
-          if (previousValue == null) {
-            previousValue = 0L;
-          }
-          long valueSince = value - previousValue;
-          long millisSince = millis - previousMillis;
-          metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
-          String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
-          String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
-                                                 benchmarkName, group.getName(),
-                                                 Integer.toString(group.getNumAgents()), "");
-          LOG.debug("Collected metric {} in memory ", metric);
+        Long previousValue = prevMetrics.get(key);
+        if (previousValue == null) {
+          previousValue = 0L;
         }
+        long valueSince = value - previousValue;
+        long millisSince = millis - previousMillis;
+        metrics.get(group.getName()).add(valueSince * 1000.0 / millisSince);
+        String metricValue = String.format("%1.2f", valueSince * 1000.0 / millisSince);
+        String metric = MensaUtils.buildMetric(OPS_PER_SEC_ONE_MIN, Long.toString(unixTime), metricValue,
+                                               benchmarkName, group.getName(),
+                                               Integer.toString(group.getNumAgents()), "");
+        LOG.debug("Collected metric {} in memory ", metric);
       }
     }
   }

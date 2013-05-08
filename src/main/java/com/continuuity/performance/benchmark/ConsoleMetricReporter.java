@@ -4,27 +4,23 @@ import com.continuuity.common.conf.CConfiguration;
 
 import java.util.Map;
 
-public class ReportConsoleThread extends ReportThread {
+class ConsoleMetricReporter extends MetricsCollector {
 
   private int reportInterval = 60;
 
-  public ReportConsoleThread(AgentGroup[] groups, BenchmarkMetric[] metrics, CConfiguration config) {
+  protected ConsoleMetricReporter(AgentGroup[] groups, BenchmarkMetric[] metrics, CConfiguration config) {
     super(groups, metrics);
     this.reportInterval = config.getInt("report", reportInterval);
   }
 
   @Override
-  public int getInterval() {
+  protected int getInterval() {
     return reportInterval;
   }
 
   @Override
-  public void processGroupMetricsInterval(long unixTime,
-                                          AgentGroup group,
-                                          long previousMillis,
-                                          long millis,
-                                          Map<String, Long> prevMetrics,
-                                          Map<String, Long> latestMetrics,
+  protected void processGroupMetricsInterval(long unixTime, AgentGroup group, long previousMillis, long millis,
+                                          Map<String, Long> prevMetrics, Map<String, Long> latestMetrics,
                                           boolean interrupt) {
     StringBuilder builder = new StringBuilder();
     builder.setLength(0);

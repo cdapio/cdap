@@ -7,15 +7,7 @@ public abstract class Agent {
     this.agentId = agentId;
   }
 
-  public abstract long runOnce(long iteration) throws BenchmarkException;
-
-  public long warmup(int agentId, int numAgents) throws BenchmarkException {
-    return 0L;
-  }
-
-  public long think(int agentId, int numAgents) throws BenchmarkException {
-    return 0L;
-  }
+  protected abstract long runOnce(long iteration) throws BenchmarkException;
 
   public final int getAgentId() {
     return agentId;
