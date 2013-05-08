@@ -5,6 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+
 import java.util.Iterator;
 
 /**
@@ -40,12 +41,6 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
       throws OperationException {
     // TODO: implement this :)
     return "EntryInfo not supported";
-  }
-
-  @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
-    throws OperationException {
-    getQueue(queueName).configure(newConsumer, readPointer);
   }
 
   @Override

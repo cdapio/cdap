@@ -10,6 +10,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Weigher;
 
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -90,17 +91,56 @@ public class QueueStateProxy {
     }
   }
 
+  /**
+   * Deletes a consumer state from the cache.
+   * This should preferably not run from inside of a
+   * {@link #run(byte[], com.continuuity.data.operation.ttqueue.QueueConsumer, QueueRunnable)} or a
+   * {@link #call(byte[], com.continuuity.data.operation.ttqueue.QueueConsumer, QueueCallable)} as it could lead to
+   * deadlock.
+   * @param queueName Queue name
+   * @param groupId groupId of the consumer that needs to be removed
+   * @param consumerId consumerId of the consumer that nedds to be removed
+   */
+  public void deleteConsumerState(byte[] queueName, long groupId, int consumerId) {
+    RowLockTable.Row row = new RowLockTable.Row(getKey(queueName, groupId, consumerId));
+    lockRow(row);
+
+    stateCache.invalidate(row);
+    locks.unlock(row);
+  }
+
+  /**
+   * Deletes state of all consumers of groupId from the cache.
+   * This should preferably not run from inside of a
+   * {@link #run(byte[], com.continuuity.data.operation.ttqueue.QueueConsumer, QueueRunnable)} or a
+   * {@link #call(byte[], com.continuuity.data.operation.ttqueue.QueueConsumer, QueueCallable)} as it could lead to
+   * deadlock.
+   * @param queueName Queue name
+   * @param groupId groupId of consumers to be removed
+   */
+  public void deleteGroupState(byte[] queueName, long groupId) {
+    // Iterate through all the keys in cache to figure out the consumers for groupId
+    Iterator<RowLockTable.Row> rowIterator = stateCache.asMap().keySet().iterator();
+
+    while (rowIterator.hasNext()) {
+      RowLockTable.Row row = rowIterator.next();
+
+      // If row belongs to group groupId, remove
+      if(ofGroup(row, queueName, groupId)) {
+        lockRow(row);
+        rowIterator.remove();
+        locks.unlock(row);
+      }
+    }
+  }
+
   private ConsumerHolder checkout(byte[] queueName, QueueConsumer queueConsumer) {
-    RowLockTable.Row row = new RowLockTable.Row(getKey(queueName, queueConsumer));
     StatefulQueueConsumer statefulQueueConsumer = null;
 
-    // first obtain the lock
-    RowLockTable.RowLock lock;
-    do {
-      lock = this.locks.lock(row);
-      // obtained a lock, but it may be invalid, loop until valid
-    } while (!lock.isValid());
-
+    RowLockTable.Row row = new RowLockTable.Row(getKey(queueName, queueConsumer.getGroupId(),
+                                                       queueConsumer.getInstanceId()));
+    // Lock the row
+    RowLockTable.RowLock lock = lockRow(row);
     // We now have the lock, get the state
     if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
       // This consumer has state
@@ -132,6 +172,18 @@ public class QueueStateProxy {
     return new ConsumerHolder(row, lock, statefulQueueConsumer);
   }
 
+  private RowLockTable.RowLock lockRow(RowLockTable.Row row) {
+    // first obtain the lock
+    RowLockTable.RowLock lock;
+    do {
+      lock = this.locks.lock(row);
+      // obtained a lock, but it may be invalid, loop until valid
+    } while (!lock.isValid());
+
+    // We now have the lock, return it
+    return lock;
+  }
+
   private void release(ConsumerHolder consumerHolder) {
     if(consumerHolder == null) {
       return;
@@ -146,10 +198,17 @@ public class QueueStateProxy {
     }
   }
 
-  private byte[] getKey(byte[] queueName, QueueConsumer queueConsumer) {
-    return Bytes.add(
-      Bytes.toBytes(queueConsumer.getGroupId()), Bytes.toBytes(queueConsumer.getInstanceId()), queueName
-    );
+  private byte[] getKey(byte[] queueName, long groupId, int consumerId) {
+    return Bytes.add(Bytes.toBytes(groupId), queueName, Bytes.toBytes(consumerId));
+  }
+  
+  private boolean ofGroup(RowLockTable.Row row, byte[] queueName, long groupId) {
+    // If length of queueName does not match return false
+    if(row.getValue().length != queueName.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT) {
+      return false;
+    }
+    // Since length matches, now just seeing whether the row starts with groupId, queueName is sufficient
+    return Bytes.startsWith(row.getValue(), Bytes.add(Bytes.toBytes(groupId), queueName));
   }
 
   private static class ConsumerHolder {

@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -74,6 +75,22 @@ public abstract class TTQueueAbstractTableOnVCTable implements TTQueueTable {
   public void unack(byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer,
                     Transaction transaction) throws OperationException {
     getQueue(queueName).unack(entryPointers, consumer, transaction);
+  }
+
+  @Override
+  public int configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
+    throws OperationException {
+    return getQueue(queueName).configure(newConsumer, readPointer);
+  }
+
+  @Override
+  public List<Long> configureGroups(byte[] queueName, List<Long> groupIds) throws OperationException {
+    return getQueue(queueName).configureGroups(groupIds);
+  }
+
+  @Override
+  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).dropInflightState(consumer, readPointer);
   }
 
   @Override

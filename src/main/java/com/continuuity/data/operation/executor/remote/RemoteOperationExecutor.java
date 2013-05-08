@@ -19,6 +19,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -488,6 +490,32 @@ public class RemoteOperationExecutor
         public Boolean execute(OperationExecutorClient client)
           throws TException, OperationException {
           client.execute(context, configure);
+          return true;
+        }
+      });
+  }
+
+  @Override
+  public void execute(final OperationContext context, final QueueConfigureGroups configure) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("QueueConfigureGroups") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.execute(context, configure);
+          return true;
+        }
+      });
+  }
+
+  @Override
+  public void execute(final OperationContext context, final QueueDropInflight op) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("QueueDropInflight") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.execute(context, op);
           return true;
         }
       });

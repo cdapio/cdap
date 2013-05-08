@@ -16,6 +16,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
 import java.util.Collections;
@@ -174,6 +176,16 @@ public class NoOperationExecutor implements OperationExecutor {
   public void execute(OperationContext context, QueueConfigure configure)
     throws OperationException {
     // Nothing to do
+  }
+
+  @Override
+  public void execute(OperationContext context, QueueConfigureGroups configure) throws OperationException {
+    // Nothing to do
+  }
+
+  @Override
+  public void execute(OperationContext context, QueueDropInflight op) throws OperationException {
+    // Noting to do
   }
 
   @Override

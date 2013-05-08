@@ -34,8 +34,10 @@ import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueAck;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConfig;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigure;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigureGroups;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConsumer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDropInflight;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEnqueue;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEntry;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
@@ -63,6 +65,8 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -959,6 +963,7 @@ public class ConverterUtils {
     }
     return tQueueConfigure;
   }
+
   QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
     if(tQueueConfigure == null) {
       return null;
@@ -966,10 +971,60 @@ public class ConverterUtils {
     QueueConfigure queueConfigure =
       new QueueConfigure(tQueueConfigure.getQueueName(),
                                     unwrap(tQueueConfigure.getNewConsumer()));
-    if (queueConfigure.getMetricName() != null) {
-      tQueueConfigure.setMetric(queueConfigure.getMetricName());
+    if (tQueueConfigure.getMetric() != null) {
+      queueConfigure.setMetricName(tQueueConfigure.getMetric());
     }
     return queueConfigure;
+  }
+  
+  TQueueConfigureGroups wrap(QueueConfigureGroups configure) throws TOperationException {
+    if(configure == null) {
+      return null;
+    }
+    TQueueConfigureGroups tQueueConfigureGroups = new TQueueConfigureGroups(wrap(configure.getQueueName()), 
+                                                                            configure.getGroupIds());
+    if(configure.getMetricName() != null) {
+      tQueueConfigureGroups.setMetric(configure.getMetricName());
+    }
+    return tQueueConfigureGroups;
+  }
+
+  QueueConfigureGroups unwrap(TQueueConfigureGroups tQueueConfigureGroups) throws TOperationException {
+    if(tQueueConfigureGroups == null) {
+      return null;
+    }
+    QueueConfigureGroups configure = new QueueConfigureGroups(tQueueConfigureGroups.getQueueName(),
+                                                              tQueueConfigureGroups.getGroupIds());
+    if(tQueueConfigureGroups.getMetric() != null) {
+      configure.setMetricName(tQueueConfigureGroups.getMetric());
+    }
+    return configure;
+  }
+
+  TQueueDropInflight wrap(QueueDropInflight op) throws TOperationException {
+    if(op == null) {
+      return null;
+    }
+    TQueueDropInflight tOp =
+      new TQueueDropInflight(wrap(op.getQueueName()),
+                          wrap(op.getConsumer()));
+    if (op.getMetricName() != null) {
+      tOp.setMetric(op.getMetricName());
+    }
+    return tOp;
+  }
+
+  QueueDropInflight unwrap(TQueueDropInflight tOp) throws TOperationException {
+    if(tOp == null) {
+      return null;
+    }
+    QueueDropInflight op =
+      new QueueDropInflight(tOp.getQueueName(),
+                         unwrap(tOp.getConsumer()));
+    if (tOp.getMetric() != null) {
+      op.setMetricName(tOp.getMetric());
+    }
+    return op;
   }
 
   /** wrap a read pointer. Only memory read pionters are supported */

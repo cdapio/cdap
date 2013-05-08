@@ -30,8 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1141,6 +1143,17 @@ public class TTQueueOnVCTable implements TTQueue {
   public int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
     return -1;
+  }
+
+  @Override
+  public List<Long> configureGroups(List<Long> groupIds) throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void dropInflightState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
   }
 
   public String getInfo(int groupId) throws OperationException {
