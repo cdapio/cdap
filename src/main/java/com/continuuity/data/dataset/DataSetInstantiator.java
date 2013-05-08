@@ -30,7 +30,7 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
   private TransactionProxy transactionProxy;
 
   /**
-   * a constructor from data fabric and transaction proxy
+   * Constructor from data fabric and transaction proxy.
    * @param fabric the data fabric
    * @param transactionProxy the transaction proxy to use for all data sets
    * @param classLoader the class loader to use for loading data set classes.

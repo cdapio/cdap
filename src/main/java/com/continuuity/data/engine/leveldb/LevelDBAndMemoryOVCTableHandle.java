@@ -3,17 +3,20 @@
  */
 package com.continuuity.data.engine.leveldb;
 
-import java.sql.SQLException;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hbase.util.Bytes;
 
+import java.sql.SQLException;
+
+/**
+ * A hybrid {@link com.continuuity.data.table.OVCTableHandle} that primarily uses LevelDB tables, except
+ * for the queue table, which uses a Memory table. The stream table still uses LevelDB for now.
+ */
 public class LevelDBAndMemoryOVCTableHandle extends LevelDBOVCTableHandle {
 
   @Inject

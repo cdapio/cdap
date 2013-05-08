@@ -12,16 +12,16 @@ import com.google.common.base.Objects;
  */
 public class Increment extends WriteOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The key/row */
+  // The key/row
   private final byte [] key;
 
-  /** The columns to be incremented */
+  // The columns to be incremented
   private final byte [][] columns;
 
-  /** The amounts to increment the columns by */
+  // The amounts to increment the columns by
   private final long [] amounts;
 
   /**
@@ -152,14 +152,16 @@ public class Increment extends WriteOperation {
    */
   public static void checkColumnArgs(final Object [] columns,
       final long [] amounts) {
-    if (columns == null || columns.length == 0)
+    if (columns == null || columns.length == 0) {
       throw new IllegalArgumentException("Must contain at least one column");
-    if (amounts == null || amounts.length == 0)
+    }
+    if (amounts == null || amounts.length == 0) {
       throw new IllegalArgumentException("Must contain at least one amount");
-    if (columns.length != amounts.length)
-      throw new IllegalArgumentException("Number of columns (" +
-          columns.length + ") does not match number of amounts (" +
-          amounts.length + ")");
+    }
+    if (columns.length != amounts.length) {
+      throw new IllegalArgumentException(
+        "Number of columns (" + columns.length + ") does not match number of amounts (" + amounts.length + ")");
+    }
   }
 
   @Override
@@ -183,9 +185,11 @@ public class Increment extends WriteOperation {
 
   @Override
   public int getSize() {
-    if (key == null || columns == null) return 0;
+    if (key == null || columns == null) {
+      return 0;
+    }
     int size = key.length;
-    for (int i=0; i<columns.length; i++) {
+    for (int i = 0; i < columns.length; i++) {
       size += columns[i].length + 8;
     }
     return size;

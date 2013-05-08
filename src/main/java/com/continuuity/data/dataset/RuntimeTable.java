@@ -1,15 +1,15 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.data.DataFabric;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.executor.TransactionAgent;
@@ -24,7 +24,7 @@ public abstract class RuntimeTable extends Table {
 
   /**
    * package-protected constructor, only to be called from @see #setReadOnlyTable()
-   * and @see ReadWriteTable constructor
+   * and @see ReadWriteTable constructor.
    * @param table the original table
    * @param fabric the data fabric
    */
@@ -34,13 +34,13 @@ public abstract class RuntimeTable extends Table {
     this.proxy = proxy;
   }
 
-  /** the data fabric to use for executing synchronous operations */
+   // the data fabric to use for executing synchronous operations.
   private final DataFabric dataFabric;
 
-  /** the transaction proxy for all operations */
+  // the transaction proxy for all operations.
   private final TransactionProxy proxy;
 
-  /** the name to use for metrics collection, typically the name of the enclosing dataset */
+  // the name to use for metrics collection, typically the name of the enclosing dataset
   private String metricName;
 
   /**
@@ -58,7 +58,7 @@ public abstract class RuntimeTable extends Table {
   }
 
   /**
-   * set the name to use for metrics
+   * Set the name to use for metrics.
    * @param metricName the name to use for emitting metrics
    */
   protected void setMetricName(String metricName) {
@@ -66,8 +66,8 @@ public abstract class RuntimeTable extends Table {
   }
 
   /**
-   * open the table in the data fabric, to ensure it exists and is accessible.
-   * @throws com.continuuity.api.data.OperationException if something goes wrong
+   * Open the table in the data fabric, to ensure it exists and is accessible.
+   * @throws OperationException if something goes wrong
    */
   public void open() throws OperationException {
     this.dataFabric.openTable(this.getName());
@@ -101,24 +101,20 @@ public abstract class RuntimeTable extends Table {
   private com.continuuity.data.operation.WriteOperation toOperation(WriteOperation op) {
     com.continuuity.data.operation.WriteOperation operation;
     if (op instanceof Write) {
-      Write write = (Write)op;
+      Write write = (Write) op;
       operation = new com.continuuity.data.operation.Write(
         this.tableName(), write.getRow(), write.getColumns(), write.getValues());
-    }
-    else if (op instanceof Delete) {
-      Delete delete = (Delete)op;
+    } else if (op instanceof Delete) {
+      Delete delete = (Delete) op;
       operation = new com.continuuity.data.operation.Delete(
         this.tableName(), delete.getRow(), delete.getColumns());
-    }
-    else if (op instanceof Increment) {
-      operation = toOperation((Increment)op);
-    }
-    else if (op instanceof Swap) {
-      Swap swap = (Swap)op;
+    } else if (op instanceof Increment) {
+      operation = toOperation((Increment) op);
+    } else if (op instanceof Swap) {
+      Swap swap = (Swap) op;
       operation = new CompareAndSwap(
         this.tableName(), swap.getRow(), swap.getColumn(), swap.getExpected(), swap.getValue());
-    }
-    else { // can't happen but...
+    } else { // can't happen but...
       throw new IllegalArgumentException("Received an operation of unknown type " + op.getClass().getName());
     }
     operation.setMetricName(getMetricName());
@@ -126,7 +122,7 @@ public abstract class RuntimeTable extends Table {
   }
 
   /**
-   * Helper to convert an increment operation
+   * Helper to convert an increment operation.
    * @param increment the table increment
    * @return a corresponding data fabric increment operation
    */

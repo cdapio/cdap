@@ -20,7 +20,6 @@ public class RetryWithBackoff extends RetryStrategy {
   int sleep; // current sleep time
 
   /**
-   * Constructor
    * @param initial the initial sleep time (before first retry)
    * @param backoff the backoff factor by which sleep time is multiplied
    *                after each retry
@@ -56,6 +55,9 @@ public class RetryWithBackoff extends RetryStrategy {
     sleep = sleep * backoffFactor;
   }
 
+  /**
+   * A provider for this retry strategy.
+   */
   public static class Provider implements RetryStrategyProvider {
 
     int initialSleep; // initial sleep time

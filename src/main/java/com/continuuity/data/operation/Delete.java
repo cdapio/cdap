@@ -5,13 +5,13 @@ package com.continuuity.data.operation;
  */
 public class Delete extends WriteOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The key/row */
+  // The key/row
   private final byte [] key;
   
-  /** The columns to be deleted */
+  // The columns to be deleted
   private final byte [][] columns;
 
   /**

@@ -9,19 +9,19 @@ import com.google.common.base.Objects;
  */
 public class ReadColumnRange extends ReadOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The row */
+  // The row
   private final byte [] key;
 
-  /** The start column (null for first column) */
+  // The start column (null for first column)
   private final byte [] startColumn;
 
-  /** The stop column (null for last column) */
+  // The stop column (null for last column)
   private final byte [] stopColumn;
 
-  /** The maximum number of columns to return (CURRENTLY NOT SUPPORTED) */
+  // The maximum number of columns to return (CURRENTLY NOT SUPPORTED)
   private final int limit;
 
   /**

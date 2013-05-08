@@ -10,8 +10,12 @@ public class WriteOperationComparator implements Comparator<WriteOperation> {
 
   @Override
   public int compare(WriteOperation left, WriteOperation right) {
-    if (left.getPriority() == right.getPriority()) return 0;
-    if (left.getPriority() < right.getPriority()) return -1;
+    if (left.getPriority() == right.getPriority()) {
+      return 0;
+    }
+    if (left.getPriority() < right.getPriority()) {
+      return -1;
+    }
     return 1;
   }
 

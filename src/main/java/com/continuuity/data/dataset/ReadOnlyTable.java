@@ -33,8 +33,8 @@ public class ReadOnlyTable extends RuntimeTable {
   }
 
   /**
-   * package-protected constructor, only to be called from @see #setReadOnlyTable()
-   * and @see ReadWriteTable constructor
+   * Package-protected constructor, only to be called from @see #setReadOnlyTable()
+   * and @see ReadWriteTable constructor.
    * @param table the original table
    * @param proxy transaction proxy for all operations
    * @param fabric the data fabric

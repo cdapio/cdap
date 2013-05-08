@@ -94,7 +94,9 @@ public abstract class ElasticPool<T, E extends Exception> {
   public T obtain() throws E {
     T element = getOrCreate();
     while (true) {
-      if (element != null) return element;
+      if (element != null) {
+        return element;
+      }
       synchronized (this) {
         try {
           this.wait();

@@ -18,6 +18,7 @@ import java.io.IOException;
 /**
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
  * implementations of the data APIs.
+ * @param <T> the type of the objects in the store
  */
 public final class ObjectStoreImpl<T> extends ObjectStore<T> {
 
@@ -51,7 +52,7 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
   // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.
   @SuppressWarnings("unchecked")
   private TypeToken<T> getTypeToken() {
-    return (TypeToken<T>)TypeToken.of(this.typeRep.toType());
+    return (TypeToken<T>) TypeToken.of(this.typeRep.toType());
   }
 
   @Override
