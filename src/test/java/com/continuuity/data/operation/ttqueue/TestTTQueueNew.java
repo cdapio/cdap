@@ -2628,13 +2628,22 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
-  public void testConfigureGroups() throws Exception {
+  public void testConfigureGroupsFifo() throws Exception {
+
+    testConfigureGroups(FIFO);
+
+    testConfigureGroups(HASH);
+
+    testConfigureGroups(ROUND_ROBIN);
+  }
+
+  private void testConfigureGroups(PartitionerType partitionerType) throws Exception {
     TTQueue queue = createQueue();
 
     // enqueue 15 entries
     QueueEntry[] entries = new QueueEntry[15];
     for (int i = 1; i <= entries.length; i++) {
-      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+      entries[i - 1] = new QueueEntry(ImmutableMap.of(HASH_KEY, i), Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
     queue.enqueue(entries, t);
@@ -2644,15 +2653,17 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     List<Long> delGroups = queue.configureGroups(Lists.newArrayList(0L, 1L));
     Assert.assertTrue(delGroups.isEmpty()); // There should be no existing groups to delete
 
-    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 0L, 1, "", HASH_KEY,
+                                                        new QueueConfig(partitionerType, true, 3, true));
     queue.configure(consumer1, oracle.getReadPointer());
-    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1L, 1, "", HASH_KEY,
+                                                        new QueueConfig(partitionerType, true, 3, true));
     queue.configure(consumer2, oracle.getReadPointer());
 
     List<Integer> consumer1Dequeues = Lists.newArrayList();
     List<Integer> consumer2Dequeues = Lists.newArrayList();
 
-    // Dequeue 5 using both consumers
+    // Dequeue 3 using both consumers
     t = oracle.startTransaction();
     DequeueResult result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
@@ -2670,10 +2681,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Assert.assertEquals(Collections.singletonList(consumer2.getGroupId()), delGroups);
 
     // Configure consumer1 again
-    consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    consumer1 = new StatefulQueueConsumer(0, 0L, 1, "", HASH_KEY, new QueueConfig(partitionerType, true, 3, true));
     queue.configure(consumer1, oracle.getReadPointer());
 
-    // Dequeue 5 more with consuemr1 only
+    // Dequeue 3 more with consuemr1 only
     t = oracle.startTransaction();
     result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
@@ -2683,7 +2694,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Dequeuing with consumer2 should now throw error
     try {
-      consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+      consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(partitionerType, true, 3, true));
       t = oracle.startTransaction();
       result = queue.dequeue(consumer2, t.getReadPointer());
       fail("Dequeue should throw error");
@@ -2697,19 +2708,19 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Run finalize
     t = oracle.startTransaction();
-    // Note: only 6 will get finalized - max of min committed entries of a txn
+    // Note: only 4 will get finalized - max of min committed entries of a txn
     queue.finalize(result.getEntryPointers(), consumer1, 1, t);
     oracle.commitTransaction(t);
 
     // Now create group1 (consumer2) again
     delGroups = queue.configureGroups(Lists.newArrayList(0L, 1L));
     Assert.assertTrue(delGroups.isEmpty()); // No groups to delete
-    consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    consumer1 = new StatefulQueueConsumer(0, 0L, 1, "", HASH_KEY, new QueueConfig(partitionerType, true, 3, true));
     queue.configure(consumer1, oracle.getReadPointer());
-    consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+    consumer2 = new StatefulQueueConsumer(0, 1L, 1, "", HASH_KEY, new QueueConfig(partitionerType, true, 3, true));
     queue.configure(consumer2, oracle.getReadPointer());
 
-    // Dequeue 5 using both consumers
+    // Dequeue 3 using both consumers
     t = oracle.startTransaction();
     result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
@@ -2722,9 +2733,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Iterables.addAll(consumer2Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
 
     // Consumer 1 should have all 15 entries
-    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15), consumer1Dequeues);
-    // Consumer 2 should not have 6 since it would have gotten finalzied
-    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 4, 5, 7, 8, 9, 10, 11), consumer2Dequeues);
+    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9), consumer1Dequeues);
+    // Consumer 2 should not have 4 since it would have gotten finalized
+    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 5, 6, 7), consumer2Dequeues);
   }
 }
 
