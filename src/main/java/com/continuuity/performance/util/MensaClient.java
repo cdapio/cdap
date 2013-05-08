@@ -1,11 +1,6 @@
 package com.continuuity.performance.util;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -15,44 +10,27 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 /**
  *
  */
 public class MensaClient {
   private static final String DUMMY_OP = "avg:";
-  private static final String DEFAULT_OPENTSDB_HOSTNAME = "mon101.ops.sl.continuuity.com";
-  private static final int DEFAULT_OPENTSDB_PORT = 4242;
   private static final String DEFAULT_START_TS = "2000/01/01-00:00:00";
 
   String command;
   String host;
   int port;
-  String reportFileName;
   String metric;
-  long timestamp;
-  double value;
-  String query;
   Properties config;
   Properties tags;
   String function;
@@ -64,50 +42,6 @@ public class MensaClient {
     this.tags = new Properties();
     this.config = new Properties();
     this.now = new org.joda.time.DateTime();
-  }
-
-  private String addTags(String metric) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(metric);
-    for (Map.Entry<Object, Object> tag : tags.entrySet()) {
-      sb.append(" ");
-      sb.append(tag.getKey());
-      sb.append("=");
-      sb.append(tag.getValue());
-    }
-    return sb.toString();
-  }
-
-  private void uploadMetrics() {
-    File reportFile = new File(reportFileName);
-    BufferedReader br = null;
-    DataOutputStream dos = null;
-    DataInputStream dis = null;
-    Socket socket = null;
-    try {
-      socket = new Socket(host, port);
-      dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-      dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-      br = new BufferedReader(new FileReader(reportFile));
-      while (true) {
-        String metric = br.readLine();
-        if (metric == null) {
-          break;
-        }
-        metric = "put " + metric;
-        metric = addTags(metric);
-        metric = metric + "\n";
-        System.out.println(metric);
-        dos.writeUTF(metric);
-      }
-      dos.flush();
-    } catch (IOException e) {
-    } finally {
-      if (dis != null) try { dis.close(); } catch (IOException e) { }
-      if (dos != null) try { dos.close(); } catch (IOException e) { }
-      if (socket != null) try { socket.close(); } catch (IOException e) { }
-      if (br != null) try { br.close(); } catch (IOException e) { }
-    }
   }
 
   private String buildTsdbQuery(String start, String end, String metric) {
@@ -346,114 +280,7 @@ public class MensaClient {
     mc.parseArgs(args);
     mc.execute();
   }
-  static final class MetricsResult {
-    private final List<Metric> metrics;
-    private final Map<String, Metric> metricsMap;
 
-    public MetricsResult(List<Metric> metrics) {
-      this.metrics = metrics;
-      this.metricsMap = new HashMap<String, Metric>(metrics.size());
-      for (Metric m : metrics) {
-        this.metricsMap.put(m.metric, m);
-      }
-    }
-
-    public Metric getMetric(String metric) {
-      return metricsMap.get(metric);
-    }
-
-    public Metric getMetric(int index) {
-      return metrics.get(index);
-    }
-
-    static final class Metric {
-      private final String metric;
-      private final Map<String, String> tags;
-      private final List<DataPoint> data;
-
-      public Metric(final String metric, final Map<String, String> tags, final List<DataPoint> datapoints) {
-        this.metric = metric;
-        this.tags = tags;
-        this.data = datapoints;
-      }
-
-      public void dump() {
-        for (DataPoint dp : data) {
-          StringBuilder sb = new StringBuilder();
-          sb.append(metric);
-          sb.append(" ");
-          sb.append(dp.ts);
-          sb.append(" ");
-          sb.append(dp.val);
-          for (Map.Entry<String,String> tag : tags.entrySet()) {
-            sb.append(" ");
-            sb.append(tag.getKey());
-            sb.append("=");
-            sb.append(tag.getValue());
-          }
-          System.out.println(sb.toString());
-        }
-
-      }
-
-      public double sum() {
-        double sum=0;
-        for (DataPoint dp : data) {
-          sum +=dp.val;
-        }
-        return sum;
-      }
-      public double sum(int x) {
-        if (data.size() == 0) {
-          return 0;
-        }
-        int num=x;
-        if (num > data.size()) {
-          num = data.size();
-        }
-        double sum=0;
-        for (int i=data.size()-num; i<data.size(); i++) {
-          sum +=data.get(i).val;
-        }
-        return sum;
-      }
-      public double avg() {
-        if (data.size() == 0) {
-          return 0;
-        }
-        return sum() / data.size();
-      }
-      public double avg(int x) {
-        if (data.size() == 0) {
-          return 0;
-        }
-        int num=x;
-        if (num > data.size()) {
-          num = data.size();
-        }
-        return sum(x) / num;
-      }
-      static final class DataPoint {
-        private final long ts;
-        private final double val;
-
-        public DataPoint(final long ts, final double val) {
-          this.ts = ts;
-          this.val = val;
-        }
-      }
-
-      static final class DataPointDeserializer implements JsonDeserializer<DataPoint> {
-        @Override
-        public DataPoint deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-          JsonArray a = json.getAsJsonArray();
-          long ts = a.get(0).getAsLong();
-          double val = a.get(1).getAsDouble();
-          return new DataPoint(ts, val);
-        }
-      }
-    }
-  }
   public class UsageException extends RuntimeException {
     // no message, no cause, on purpose, only default constructor
     public UsageException() { }

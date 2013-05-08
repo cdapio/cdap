@@ -1,26 +1,29 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class BenchmarkRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
 
-  String benchName = null;
-  Benchmark benchmark = null;
-  CConfiguration config = CConfiguration.create();
-
-  static void error(String message) {
-    LOG.error("Error: " + message);
-  }
+  private String benchName = null;
+  private Benchmark benchmark = null;
+  private CConfiguration config = CConfiguration.create();
 
   void usage() {
-    LOG.info("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
+    System.out.println("Usage: BenchmarkRunner --bench <name> [ --report " + "<seconds> ] [ --<key> <value> ... ]");
     if (benchmark != null) {
       Map<String, String> usage = benchmark.usage();
       if (usage != null && !usage.isEmpty()) {
@@ -30,14 +33,15 @@ public class BenchmarkRunner {
         }
       }
     } else {
-      LOG.info("Use --help --bench <name> for benchmark specific " + "options.");
+      System.out.println("Use --help --bench <name> for benchmark specific " + "options.");
     }
   }
 
-  boolean parseOptions(String[] args) throws BenchmarkException {
+  private boolean parseOptions(String[] args) throws BenchmarkException {
     boolean help = false;
 
     // 1. parse command line for --bench, copy everything else into config
+    LOG.debug("Parsing command line options...");
     for (int i = 0; i < args.length; i++) {
       if ("--help".equals(args[i])) {
         help = true;
@@ -48,14 +52,16 @@ public class BenchmarkRunner {
           String key = args[i].substring(2);
           String value = args[++i];
           config.set(key, value);
-          if ("bench".equals(key))
+          if ("bench".equals(key)) {
             benchName = value;
+          }
         } else {
           throw new BenchmarkException("--<key> must have an argument.");
         }
       }
     }
 
+    LOG.debug("Instantiating and configuring benchmark...");
     // 2. instantiate benchmark and configure it
     if (benchName == null) {
       if (help) {
@@ -83,23 +89,39 @@ public class BenchmarkRunner {
     return true;
   }
 
-  boolean run() throws BenchmarkException {
+  private int countAgents(AgentGroup[] groups) {
+    int count = 0;
+    for (AgentGroup group : groups) {
+      count += group.getNumAgents();
+    }
+    return count;
+  }
+
+  private void run() throws Exception {
     // 1. initialize benchmark
+    LOG.debug("Executing benchmark.initialize()");
     benchmark.initialize();
 
     // 2. warm up benchmark
+    LOG.debug("Executing benchmark.warmup()");
     benchmark.warmup();
 
     // 3. get agent groups and create a thread for each agent
     AgentGroup[] groups = benchmark.getAgentGroups();
+    final int totalNumAgents = countAgents(groups);
+
     BenchmarkMetric[] groupMetrics = new BenchmarkMetric[groups.length];
-    LinkedList<BenchmarkThread> threadList = new LinkedList<BenchmarkThread>();
+    List<Future> agentFutureList = new ArrayList<Future>(totalNumAgents);
+
+    ExecutorService agentThreadPool = Executors.newFixedThreadPool(totalNumAgents);
+    CompletionService agentCompletionPool = new ExecutorCompletionService(agentThreadPool);
+
     for (int j = 0; j < groups.length; j++) {
       AgentGroup group = groups[j];
       int numAgents = group.getNumAgents();
       if (numAgents < 1) {
-        throw new BenchmarkException("Number of agents for group " + group
-            .getName() + " must be at leat one but is " + numAgents + ".");
+        throw new BenchmarkException("Number of agents for group " + group.getName()
+                                       + " must be at leat one but is " + numAgents + ".");
       }
       int runsPerAgent = group.getTotalRuns() / numAgents;
       LOG.info("Running " + numAgents + " " + group.getName() + " agents (" +
@@ -110,55 +132,67 @@ public class BenchmarkRunner {
                  " runs per second).");
 
       groupMetrics[j] = new BenchmarkMetric();
+
       for (int i = 0; i < group.getNumAgents(); ++i) {
-        threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
-      }
-    }
-    BenchmarkThread[] threads =
-        threadList.toArray(new BenchmarkThread[threadList.size()]);
-
-    // 4. start a reporter thread
-    ReportThread reporter;
-    String reportFile = config.get("reportfile");
-    if (reportFile != null && reportFile.length() != 0) {
-      reporter = new ReportWriterThread(benchName, groups, groupMetrics, config);
-    } else {
-      reporter = new ReportConsoleThread(groups, groupMetrics, config);
-    }
-    reporter.start();
-
-    // 5. start all threads
-    for (BenchmarkThread thread : threads) {
-      thread.start();
-    }
-
-    // 6. wait for all threads to finish
-    while (!threadList.isEmpty()) {
-      BenchmarkThread thread = threadList.removeFirst();
-      try {
-        thread.join(10);
-      } catch (InterruptedException e) {
-        error("InterruptedException caught in Thread.join(). Ignoring.");
-      }
-      if (thread.isAlive()) {
-        threadList.addLast(thread);
+        BenchmarkRunnable br = new BenchmarkRunnable(group, i, groupMetrics[j]);
+        LOG.debug("Starting thread for benchmark agent {} of group {}", i, j);
+        agentFutureList.add(agentCompletionPool.submit(br, null));
       }
     }
 
-    // 7. Stop reporter thread
-    reporter.interrupt();
-    try {
-      reporter.join();
-    } catch (InterruptedException e) {
-      error("InterruptedException caught in Thread.join(). Ignoring.");
+    List<MetricsCollector> collectorList = new ArrayList<MetricsCollector>(3);
+    List<Future> collectorFutureList = new ArrayList<Future>(3);
+    ExecutorService collectorThreadPool = Executors.newFixedThreadPool(3);
+    CompletionService collectorCompletionPool = new ExecutorCompletionService(collectorThreadPool);
+
+    // 4. start the console and other reporter threads
+    LOG.debug("Starting console reporter thread");
+    MetricsCollector consoleReporter = new ConsoleMetricReporter(groups, groupMetrics, config);
+    collectorList.add(consoleReporter);
+    collectorFutureList.add(collectorCompletionPool.submit(consoleReporter, null));
+
+    if (StringUtils.isNotEmpty(config.get("reportfile"))) {
+      LOG.debug("Starting file reporter thread");
+      MetricsCollector fileReporter = new FileMetricReporter(benchName, groups, groupMetrics, config);
+      collectorList.add(fileReporter);
+      collectorFutureList.add(collectorCompletionPool.submit(fileReporter, null));
     }
 
-    return true;
+    if (StringUtils.isNotEmpty(config.get("mensa"))) {
+      LOG.debug("Starting mensa reporter thread");
+      MensaMetricsCollector mensaCollector = new MensaMetricsCollector(benchName, groups, groupMetrics, config, "");
+      collectorList.add(mensaCollector);
+      collectorFutureList.add(collectorCompletionPool.submit(mensaCollector, null));
+    }
+
+    // 5. wait for first benchmark thread to finish
+    LOG.debug("Waiting for first benchmark thread to finish...");
+    agentCompletionPool.take();
+
+    // 6. stop all reporter threads
+    LOG.debug("Stopping all collector threads...");
+    for (int i = 0; i < collectorList.size(); i++) {
+      collectorList.get(i).stop();
+      collectorFutureList.get(i).cancel(true);
+    }
+
+    // 7. wait for remaining benchmark threads to finish
+    LOG.debug("Waiting for remaining benchmark threads to finish...");
+    for (int i=1; i < totalNumAgents; i++) {
+      agentCompletionPool.take();
+    }
+
+    LOG.debug("All benchmark threads stopped.");
+
+    collectorThreadPool.shutdown();
+    agentThreadPool.shutdown();
   }
 
-  void shutdown() throws BenchmarkException {
-    if (benchmark != null)
+  void shutdown() {
+    if (benchmark != null) {
+      LOG.debug("Executing shutdown method of benchmark.");
       benchmark.shutdown();
+    }
   }
 
   public static void main(String[] args) throws Exception {
@@ -171,17 +205,10 @@ public class BenchmarkRunner {
 
       // run it
       if (ok) runner.run();
-    } catch (Exception e) {
-      error(e.getMessage());
-      throw e;
     } finally {
       // shut it down
-      try {
-        runner.shutdown();
-      } catch (Exception e) {
-        error(e.getMessage());
-        throw e;
-      }
+      runner.shutdown();
     }
+    LOG.info("Benchmark executed successfully.");
   }
 }

@@ -117,11 +117,10 @@ public class LoadGenerator extends SimpleBenchmark {
           }
 
           @Override
-          public Agent newAgent() {
-            return new Agent() {
+          public Agent newAgent(int agentId, final int numAgents) {
+            return new Agent(agentId) {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
-                  throws BenchmarkException {
+              public long runOnce(long iteration) throws BenchmarkException {
 
                 // create a string of random words and length
                 Random rand = new Random(seedRandom.nextLong());
@@ -139,7 +138,7 @@ public class LoadGenerator extends SimpleBenchmark {
                 String body = builder.toString();
 
                 if (isVerbose()) {
-                  System.out.println(getName() + " " + agentId +
+                  System.out.println(getName() + " " + this.getAgentId() +
                       " sending event number " + iteration + " with body: " +
                       body);
                 }
@@ -157,12 +156,12 @@ public class LoadGenerator extends SimpleBenchmark {
                 try {
                   HttpClient client = new DefaultHttpClient();
                   HttpResponse response = client.execute(post);
-                  if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-                    System.err.println(
-                        "Unexpected HTTP response: " + response.getStatusLine());
+                  if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                    throw new BenchmarkException("Unexpected HTTP response: " + response.getStatusLine());
+                  }
                   client.getConnectionManager().shutdown();
                 } catch (IOException e) {
-                  System.err.println("Error sending HTTP request: " + e.getMessage());
+                  throw new BenchmarkException("Error sending HTTP request: " + e.getMessage(), e);
                 }
                 return 1L;
               }

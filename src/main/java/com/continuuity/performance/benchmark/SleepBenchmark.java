@@ -33,10 +33,10 @@ public class SleepBenchmark extends SimpleBenchmark {
           }
 
           @Override
-          public Agent newAgent() {
-            return new Agent() {
+          public Agent newAgent(final int agentId, final int numAgents) {
+            return new Agent(agentId) {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration)
                   throws BenchmarkException {
                 try {
                   if (isVerbose()) {
@@ -46,6 +46,7 @@ public class SleepBenchmark extends SimpleBenchmark {
                   }
                   Thread.sleep(sleep);
                 } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
                   System.out.println(getName() + " " + agentId +
                       " interrupted when sleeping for the " + iteration +
                       ". time." );

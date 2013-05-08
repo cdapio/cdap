@@ -1,14 +1,20 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public abstract class OpexBenchmark extends SimpleBenchmark {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OpexBenchmark.class);
 
   OpexProvider opexProvider;
   OperationExecutor opex;
@@ -67,10 +73,16 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   public void initialize() throws BenchmarkException {
     super.initialize();
     this.opex = this.opexProvider.create();
+    try {
+      this.opex.execute(opContext, new ClearFabric());
+    } catch (OperationException e) {
+      new BenchmarkException("Cannot clear data fabric '" +  e.getMessage());
+    }
   }
 
   @Override
-  public void shutdown() throws BenchmarkException {
+  public void shutdown() {
+    LOG.debug("Shutting down opex provider.");
     this.opexProvider.shutdown(this.opex);
   }
 }

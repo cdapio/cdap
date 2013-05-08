@@ -1,34 +1,39 @@
 package com.continuuity.performance.benchmark;
 
-public class BenchmarkThread extends Thread {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  int agentId;
-  AgentGroup agentGroup;
-  BenchmarkMetric globalMetrics;
+public class BenchmarkRunnable implements Runnable {
 
-  public BenchmarkThread(AgentGroup group, int agentId,
-                         BenchmarkMetric groupMetrics) {
+  private final static Logger LOG = LoggerFactory.getLogger(BenchmarkRunnable.class);
+
+  private final int agentId;
+  private final AgentGroup agentGroup;
+  private final BenchmarkMetric globalMetrics;
+  private final boolean useConsole;
+
+  public BenchmarkRunnable(AgentGroup group, int agentId, BenchmarkMetric groupMetrics, boolean useConsole) {
     this.agentGroup = group;
     this.agentId = agentId;
     this.globalMetrics = groupMetrics;
+    this.useConsole = useConsole;
   }
 
+  public BenchmarkRunnable(AgentGroup group, int agentId, BenchmarkMetric groupMetrics) {
+    this(group, agentId, groupMetrics, true);
+  }
+
+  @Override
   public void run() {
-    Agent agent = agentGroup.newAgent();
+    String msg;
     int numAgents = agentGroup.getNumAgents();
+    Agent agent = agentGroup.newAgent(agentId, numAgents);
     int totalRuns = agentGroup.getTotalRuns() / numAgents;
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
 
-    System.out.println(agentGroup.getName() + " " + agentId + " warming up.");
-
-    try {
-      agent.warmup(agentId, numAgents);
-    } catch (BenchmarkException e) {
-      e.printStackTrace();
-    }
-
-    System.out.println(agentGroup.getName() + " " + agentId + " starting.");
+    LOG.info("{} {} starting.", agentGroup.getName(), agentId);
+    printConsole(String.format("%s %d starting.", agentGroup.getName(), agentId));
 
     long startTime = System.currentTimeMillis();
     long endTime = timeToRun > 0 ? startTime + 1000 * timeToRun : 0;
@@ -43,14 +48,14 @@ public class BenchmarkThread extends Thread {
       // run one iteration
       long thisTime = System.currentTimeMillis();
       long delta;
+
       try {
-        delta = agent.runOnce(runs + 1, agentId, numAgents);
+        delta = agent.runOnce(runs + 1);
       } catch (BenchmarkException e) {
-        // TODO: better way to report the error
-        // TODO: add option to continue
-        e.printStackTrace();
-        break;
+        throw new RuntimeException("Execution of runOnce failed", e);
       }
+
+
       globalMetrics.increment("runs", delta);
 
       // if necessary, sleep to throttle runs per second
@@ -65,7 +70,8 @@ public class BenchmarkThread extends Thread {
           try {
             Thread.sleep(expectedTime - roundTime);
           } catch (InterruptedException e) {
-            System.out.println("Sleep interrupted. Ignoring.");
+            Thread.currentThread().interrupt();
+            LOG.debug("Sleep interrupted. Ignoring.");
           }
           currentTime = System.currentTimeMillis();
         }
@@ -76,14 +82,31 @@ public class BenchmarkThread extends Thread {
         }
       }
       // if time limit is exceeded, break
-      if (endTime > 0 && currentTime >= endTime) break;
+      if (endTime > 0 && currentTime >= endTime) {
+        break;
+      }
     }
 
     long runtime = System.currentTimeMillis() - startTime;
-    System.out.println(agentGroup.getName() + " " + agentId + " done: " +
-        runs + " runs in " + runtime + " ms" +
-        (runtime == 0 ? "" : ", average " + (runs * 1000L / runtime) + "/sec") +
-        (runs == 0 ? "" : ", average " + (accumulatedTime / runs) + " ms/run"));
+
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format("%s %s done: %d  runs in %d ms", agentGroup.getName(), agentId, runs, runtime));
+    if (runtime != 0) {
+      sb.append(String.format(", average %d/sec", (runs * 1000L / runtime)));
+    }
+    if (runs != 0) {
+      sb.append(String.format(", average %d ms/run", (accumulatedTime / runs)));
+    }
+    msg = sb.toString();
+    LOG.info(msg);
+    printConsole(msg);
+
+    LOG.debug("Benchmark agent thread finished.");
   }
 
+  private void printConsole(String msg) {
+    if (useConsole) {
+      System.out.println(msg);
+    }
+  }
 }

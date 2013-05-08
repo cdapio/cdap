@@ -49,7 +49,7 @@ public final class HBaseTool {
 
     if (help
       || prompt
-      || command == null || command.length() == 0
+      || command == null || command.isEmpty()
       || hbConfig.get("hbase.zookeeper.quorum") == null
       || hbConfig.get("hbase.zookeeper.property.clientPort") == null) {
       return false;

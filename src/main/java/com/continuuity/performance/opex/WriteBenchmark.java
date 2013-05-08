@@ -9,10 +9,14 @@ import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.BenchmarkRunner;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
 public class WriteBenchmark extends OpexBenchmark {
+
+  private static final Logger LOG = LoggerFactory.getLogger(WriteBenchmark.class);
 
   long doOneWrite(long iteration, int agentId)
       throws BenchmarkException {
@@ -24,7 +28,7 @@ public class WriteBenchmark extends OpexBenchmark {
     try {
       opex.commit(opContext, write);
     } catch (OperationException e) {
-      System.err.println("Operation " + write + " failed: " + e.getMessage());
+      LOG.error("Operation {} failed: {}", write, e.getMessage());
       throw new BenchmarkException(
           "Operation " + write + " failed: " + e.getMessage());
     }
@@ -34,17 +38,16 @@ public class WriteBenchmark extends OpexBenchmark {
   @Override
   public void warmup() throws BenchmarkException {
     int numWrites = Math.min(100, simpleConfig.numRuns);
-    System.out.println("Warmup: Performing " + numWrites + " writes.");
+    LOG.info("Warmup: Performing {} writes.", numWrites);
     for (int i = 0; i < numWrites; i++) {
       try {
         doOneWrite(i, 0);
       } catch (BenchmarkException e) {
-        System.err.println("Failure after " + i + " writes: " + e.getMessage());
-        throw new BenchmarkException(
-            "Failure after " + i + " writes: " + e.getMessage() , e);
+        LOG.error("Failure after {} writes: ", i, e.getMessage());
+        throw new BenchmarkException("Failure after " + i + " writes: " + e.getMessage() , e);
       }
     }
-    System.out.println("Warmup: Done.");
+    LOG.info("Warmup: Done.");
   }
 
   @Override
@@ -56,10 +59,10 @@ public class WriteBenchmark extends OpexBenchmark {
             return "writer";
           }
           @Override
-          public Agent newAgent() {
-            return new Agent() {
+          public Agent newAgent(final int agentId, int numAgents) {
+            return new Agent(agentId) {
               @Override
-              public long runOnce(long iteration, int agentId, int numAgents)
+              public long runOnce(long iteration)
                   throws BenchmarkException {
                 return doOneWrite(iteration, agentId);
               }

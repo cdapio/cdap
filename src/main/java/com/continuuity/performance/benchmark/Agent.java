@@ -1,14 +1,15 @@
 package com.continuuity.performance.benchmark;
 
 public abstract class Agent {
+  private final int agentId;
 
-  public abstract long runOnce(long iteration, int agentId, int numAgents) throws BenchmarkException;
-
-  public long warmup(int agentId, int numAgents) throws BenchmarkException {
-    return 0L;
+  public Agent(int agentId) {
+    this.agentId = agentId;
   }
 
-  public long think(int agentId, int numAgents) throws BenchmarkException {
-    return 0L;
+  protected abstract long runOnce(long iteration) throws BenchmarkException;
+
+  public final int getAgentId() {
+    return agentId;
   }
 }
