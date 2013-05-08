@@ -34,9 +34,23 @@ subprojects {
         exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
         into "${installDir}/lib"
       }
+    }
+  }
+
+  task ('debianPrepackager', dependsOn: ['prepackager']) {
+    def stageDir = file("$buildDir/stage-packaging")
+    def installDir = file("$stageDir/opt/continuuity/$project.name")
+    def confDir = file("$stageDir/etc/continuuity/conf.dist")
+
+    doLast {
       copy {
-        from "$rootProject.projectDir/singlenode/src/main/resources/continuuity-site.xml"
+        from "$rootProject.projectDir/distributions/src/debian/conf.dist/continuuity-site.xml"
         into "${confDir}"
+      }
+
+      copy {
+        from "$rootProject.projectDir/distributions/src/LICENSE.txt"
+        into "${installDir}"
       }
     }
   }
@@ -80,13 +94,13 @@ subprojects {
                      '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all',
                      '--version': "${getPomVersion()}",
-                     '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
+                     '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                      '--template-value': "project=$project.name"
     ]
   }
 
   // Make the dependency on prepackager.
-  debian.dependsOn prepackager
+  debian.dependsOn debianPrepackager
 
   // clean up any staged files.
   debian.doLast {
