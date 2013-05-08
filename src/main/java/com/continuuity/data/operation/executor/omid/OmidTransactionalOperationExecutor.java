@@ -120,7 +120,7 @@ public class OmidTransactionalOperationExecutor
   // A proxy that runs all queue operations while managing state.
   // Also runs all queue operations for a single consumer serially.
   private final QueueStateProxy queueStateProxy;
-  public static final String QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES = "omid.queue.state.proxy.max.size.bytes";
+  public static final String QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = "queue.state.proxy.max.cache.size.bytes";
 
   // Metrics
 
@@ -185,7 +185,7 @@ public class OmidTransactionalOperationExecutor
   @Inject
   public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
     // Default cache size is 200 MB
-    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES, 200 * 1024 * 1024));
+    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 200 * 1024 * 1024));
   }
 
   private void incMetric(String metric) {

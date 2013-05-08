@@ -72,22 +72,19 @@ public class QueueStateProxy {
     throws OperationException {
     Preconditions.checkArgument(op != null && queueConsumer != null);
 
-    ConsumerHolder consumerHolder = null;
+    ConsumerHolder consumerHolder = checkout(queueName, queueConsumer);
     try {
-      consumerHolder = checkout(queueName, queueConsumer);
       // op is already asserted to be not null!
       //noinspection ConstantConditions
       return op.execute(consumerHolder.statefulQueueConsumer);
     } finally {
-      if(consumerHolder != null) {
-        // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
-        // op is already asserted to be not null!
-        //noinspection ConstantConditions
-        if(op.statefulQueueConsumer != null) {
-          consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
-        }
-        release(consumerHolder);
+      // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
+      // op is already asserted to be not null!
+      //noinspection ConstantConditions
+      if(op.statefulQueueConsumer != null) {
+        consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
       }
+      release(consumerHolder);
     }
   }
 
@@ -103,10 +100,11 @@ public class QueueStateProxy {
    */
   public void deleteConsumerState(byte[] queueName, long groupId, int consumerId) {
     RowLockTable.Row row = new RowLockTable.Row(getKey(queueName, groupId, consumerId));
-    lockRow(row);
+    this.locks.validLock(row);
 
     stateCache.invalidate(row);
-    locks.unlock(row);
+    // Lock is no longer needed, we can remove it
+    locks.unlockAndRemove(row);
   }
 
   /**
@@ -127,9 +125,10 @@ public class QueueStateProxy {
 
       // If row belongs to group groupId, remove
       if(ofGroup(row, queueName, groupId)) {
-        lockRow(row);
+        this.locks.validLock(row);
         rowIterator.remove();
-        locks.unlock(row);
+        // Lock is no longer needed, we can remove it
+        locks.unlockAndRemove(row);
       }
     }
   }
@@ -139,8 +138,9 @@ public class QueueStateProxy {
 
     RowLockTable.Row row = new RowLockTable.Row(getKey(queueName, queueConsumer.getGroupId(),
                                                        queueConsumer.getInstanceId()));
-    // Lock the row
-    RowLockTable.RowLock lock = lockRow(row);
+    // first obtain the lock
+    this.locks.validLock(row);
+
     // We now have the lock, get the state
     if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
       // This consumer has state
@@ -169,19 +169,7 @@ public class QueueStateProxy {
     }
     queueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
     // Note: we still have the lock
-    return new ConsumerHolder(row, lock, statefulQueueConsumer);
-  }
-
-  private RowLockTable.RowLock lockRow(RowLockTable.Row row) {
-    // first obtain the lock
-    RowLockTable.RowLock lock;
-    do {
-      lock = this.locks.lock(row);
-      // obtained a lock, but it may be invalid, loop until valid
-    } while (!lock.isValid());
-
-    // We now have the lock, return it
-    return lock;
+    return new ConsumerHolder(row, statefulQueueConsumer);
   }
 
   private void release(ConsumerHolder consumerHolder) {
@@ -192,10 +180,8 @@ public class QueueStateProxy {
     // Store the consumer state
     stateCache.put(consumerHolder.row, consumerHolder.statefulQueueConsumer);
 
-    // If lock and row are valid, unlock
-    if(consumerHolder.lock != null && consumerHolder.lock.isValid()) {
-      locks.unlock(consumerHolder.row);
-    }
+    // Unlock
+    locks.unlock(consumerHolder.row);
   }
 
   private byte[] getKey(byte[] queueName, long groupId, int consumerId) {
@@ -213,13 +199,10 @@ public class QueueStateProxy {
 
   private static class ConsumerHolder {
     private final RowLockTable.Row row;
-    private final RowLockTable.RowLock lock;
     private volatile StatefulQueueConsumer statefulQueueConsumer;
 
-    private ConsumerHolder(RowLockTable.Row row, RowLockTable.RowLock lock,
-                           StatefulQueueConsumer statefulQueueConsumer) {
+    private ConsumerHolder(RowLockTable.Row row, StatefulQueueConsumer statefulQueueConsumer) {
       this.row = row;
-      this.lock = lock;
       this.statefulQueueConsumer = statefulQueueConsumer;
     }
   }
