@@ -11,9 +11,11 @@ import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -2566,6 +2568,163 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     Assert.assertEquals(expected, actualList);
+  }
+
+  private static final Function<QueueEntry, Integer> QueueEntryToInteger =
+                        new Function<QueueEntry, Integer>() {
+                          @Override
+                          public Integer apply(QueueEntry input) {
+                            return Bytes.toInt(input.getData());
+                          }
+                        };
+
+  @Test
+  public void testDropInflightEntries() throws Exception {
+    TTQueue queue = createQueue();
+
+    // enqueue 20 entries
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t);
+    oracle.commitTransaction(t);
+
+    List<Integer> expectedDequeues = Lists.newArrayList(1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+    List<Integer> actualDequeues = Lists.newArrayList();
+
+    // Dequeue 5 entries in batch, sync mode
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer, oracle.getReadPointer());
+    t = oracle.startTransaction();
+    DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(actualDequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    // Dequeue 5 more
+    t = oracle.startTransaction();
+    queue.dequeue(consumer, t.getReadPointer());
+    // This time drop the entries
+    queue.dropInflightState(consumer, t.getReadPointer());
+    oracle.abortTransaction(t);
+    oracle.removeTransaction(t);
+
+    // Dequeue the remaining
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(actualDequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(actualDequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    Assert.assertEquals(expectedDequeues, actualDequeues);
+  }
+
+  @Test
+  public void testConfigureGroups() throws Exception {
+    TTQueue queue = createQueue();
+
+    // enqueue 15 entries
+    QueueEntry[] entries = new QueueEntry[15];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t);
+    oracle.commitTransaction(t);
+
+    // Dequeue entries in batch, sync mode using 2 consumers of different groups
+    List<Long> delGroups = queue.configureGroups(Lists.newArrayList(0L, 1L));
+    Assert.assertTrue(delGroups.isEmpty()); // There should be no existing groups to delete
+
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer1, oracle.getReadPointer());
+    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer2, oracle.getReadPointer());
+
+    List<Integer> consumer1Dequeues = Lists.newArrayList();
+    List<Integer> consumer2Dequeues = Lists.newArrayList();
+
+    // Dequeue 5 using both consumers
+    t = oracle.startTransaction();
+    DequeueResult result = queue.dequeue(consumer1, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer1, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(consumer1Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer2, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer2, t);
+    oracle.commitTransaction(t);
+    queue.finalize(result.getEntryPointers(), consumer1, 1, t);
+    Iterables.addAll(consumer2Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    // Now delete consumer2 group
+    delGroups = queue.configureGroups(Collections.singletonList(consumer1.getGroupId()));
+    Assert.assertEquals(Collections.singletonList(consumer2.getGroupId()), delGroups);
+
+    // Configure consumer1 again
+    consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer1, oracle.getReadPointer());
+
+    // Dequeue 5 more with consuemr1 only
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer1, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer1, t);
+    oracle.commitTransaction(t);
+    queue.finalize(result.getEntryPointers(), consumer1, 1, t);
+    Iterables.addAll(consumer1Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    // Dequeuing with consumer2 should now throw error
+    try {
+      consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+      t = oracle.startTransaction();
+      result = queue.dequeue(consumer2, t.getReadPointer());
+      fail("Dequeue should throw error");
+    } catch (OperationException e) {
+      oracle.abortTransaction(t);
+      oracle.removeTransaction(t);
+      if(e.getStatus() != StatusCode.NOT_CONFIGURED) {
+        throw e;
+      }
+    }
+
+    // Run finalize
+    t = oracle.startTransaction();
+    // Note: only 6 will get finalized - max of min committed entries of a txn
+    queue.finalize(result.getEntryPointers(), consumer1, 1, t);
+    oracle.commitTransaction(t);
+
+    // Now create group1 (consumer2) again
+    delGroups = queue.configureGroups(Lists.newArrayList(0L, 1L));
+    Assert.assertTrue(delGroups.isEmpty()); // No groups to delete
+    consumer1 = new StatefulQueueConsumer(0, 0L, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer1, oracle.getReadPointer());
+    consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(FIFO, true, 5, true));
+    queue.configure(consumer2, oracle.getReadPointer());
+
+    // Dequeue 5 using both consumers
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer1, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer1, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(consumer1Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+    t = oracle.startTransaction();
+    result = queue.dequeue(consumer2, t.getReadPointer());
+    queue.ack(result.getEntryPointers(), consumer2, t);
+    oracle.commitTransaction(t);
+    Iterables.addAll(consumer2Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
+
+    // Consumer 1 should have all 15 entries
+    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15), consumer1Dequeues);
+    // Consumer 2 should not have 6 since it would have gotten finalzied
+    Assert.assertEquals(Lists.newArrayList(1, 2, 3, 4, 5, 7, 8, 9, 10, 11), consumer2Dequeues);
   }
 }
 

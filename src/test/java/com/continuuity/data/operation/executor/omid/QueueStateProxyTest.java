@@ -381,4 +381,200 @@ public class QueueStateProxyTest {
     Assert.assertEquals(expected.getPartitioningKey(), actual.getPartitioningKey());
     Assert.assertEquals(expected.getQueueConfig(), actual.getQueueConfig());
   }
+
+  @Test
+  public void testDeleteConsumerState() throws Exception {
+    byte[] queueName = "q1".getBytes();
+
+    // Create 2 consumers
+    QueueConsumer consumer1 = new QueueConsumer(0, 0, 3,
+                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+    QueueConsumer consumer2 = new QueueConsumer(1, 0, 3,
+                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+
+    // Add them to proxy cache
+    QueueStateProxy queueStateProxy = new QueueStateProxy(1024 * 1024);
+    queueStateProxy.run(queueName, consumer1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+
+    // Now we should have 2 consumers in cache
+    queueStateProxy.run(queueName, consumer1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+
+    // Delete consumer1
+    queueStateProxy.deleteConsumerState(queueName, consumer1.getGroupId(), consumer1.getInstanceId());
+
+    // Verify that only consumer1 got deleted
+    queueStateProxy.run(queueName, consumer1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.NOT_FOUND,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+  }
+
+  @Test
+  public void testDeleteGroupState() throws Exception {
+    byte[] queueName = "q1".getBytes();
+
+    // Create 2 consumer group, with 2 consumers each
+    QueueConsumer consumer1G0 = new QueueConsumer(0, 0, 3,
+                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+    QueueConsumer consumer2G0 = new QueueConsumer(1, 0, 3,
+                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+    QueueConsumer consumer1G1 = new QueueConsumer(0, 1, 3,
+                                                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+    QueueConsumer consumer2G1 = new QueueConsumer(1, 1, 3,
+                                                  new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true, 10));
+
+    // Add them to proxy cache
+    QueueStateProxy queueStateProxy = new QueueStateProxy(1024 * 1024);
+    queueStateProxy.run(queueName, consumer1G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer1G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.UNINITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                            statefulQueueConsumer.setStateType(QueueConsumer.StateType.INITIALIZED);
+                          }
+                        });
+
+    // Now we should have 2 consumers in cache
+    queueStateProxy.run(queueName, consumer1G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer1G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+
+    // Delete group1
+    queueStateProxy.deleteGroupState(queueName, consumer1G1.getGroupId());
+
+    // Verify that only group1 got deleted
+    queueStateProxy.run(queueName, consumer1G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G0,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.INITIALIZED,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer1G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.NOT_FOUND,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+    queueStateProxy.run(queueName, consumer2G1,
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            Assert.assertEquals(QueueConsumer.StateType.NOT_FOUND,
+                                                statefulQueueConsumer.getStateType());
+                          }
+                        });
+  }
 }

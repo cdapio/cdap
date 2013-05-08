@@ -362,6 +362,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   private DequeueStrategy getDequeueStrategy(QueuePartitioner.PartitionerType partitionerType)
     throws OperationException {
+    if(partitionerType == null) {
+      return new NoDequeueStrategy();
+    }
+
     switch (partitionerType) {
       case HASH:
         return new HashDequeueStrategy();
@@ -599,6 +603,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       for (int consumerId = 0; consumerId < MAX_CONSUMER_COUNT; consumerId++) {
         if(dequeueStrategy.dequeueStateExists(groupId, consumerId)) {
           dequeueStrategy.deleteDequeueState(groupId, consumerId);
+        } else {
+          break;
         }
       }
       // We can now delete the group from the group list
@@ -1957,6 +1963,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
     /**
+     * If true, indicates that this is the first time this consumer is running
+     */
+    protected boolean init = false;
+
+    /**
      * This function is used to initialize the read pointer when a consumer first runs.
      * Initial value for the read pointer is max(lastEvictEntry, FIRST_QUEUE_ENTRY_ID - 1)
      * @return read pointer initial value
@@ -2032,6 +2043,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
       if(queueState.getConsumerReadPointer() == INVALID_ENTRY_ID) {
+        init = true;
         queueState.setConsumerReadPointer(getReadPointerIntialValue());
       }
 
@@ -2239,7 +2251,6 @@ public class TTQueueNewOnVCTable implements TTQueue {
      */
     protected abstract void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
       throws OperationException;
-
   }
 
   /**
@@ -2543,6 +2554,29 @@ public class TTQueueNewOnVCTable implements TTQueue {
    *  CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END columns
    */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                                         ReadPointer readPointer, boolean construct)
+      throws OperationException {
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
+
+      if(init) {
+        // This is the first time a consumer is running, it could be the first time any consumer of the group is running
+        // Make sure the GROUP_READ_POINTER is valid, i.e, not less than GLOBAL_LAST_EVICT_ENTRY
+
+        // Fetch the group read pointer
+        final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
+        long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
+
+        long lastEvictEntry = getLastEvictEntry();
+        if(lastEvictEntry != INVALID_ENTRY_ID) {
+          // Entries have been evicted. Set GROUP_READ_POINTER to GLOBAL_LAST_EVICT_ENTRY
+          table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
+                                    Bytes.toBytes(lastEvictEntry));
+        }
+      }
+      return queueState;
+    }
 
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
@@ -2565,27 +2599,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     /**
-     * Returns the group read pointer for the consumer. This also initializes the group read pointer
-     * when the consumer group is starting for the first time.
+     * Returns the group read pointer for the consumer.
      * @return group read pointer
      * @throws OperationException
      */
     private long getGroupReadPointer(QueueConsumer consumer) throws OperationException {
       // Fetch the group read pointer
       final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
-      long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
 
-      // If read pointer is zero then this the first time the consumer group is running, initialize the read pointer
-      if(groupReadPointer == 0) {
-        long lastEvictEntry = getLastEvictEntry();
-        if(lastEvictEntry != INVALID_ENTRY_ID) {
-          table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
-                                    Bytes.toBytes(lastEvictEntry));
-          // No need to read the group read pointer again, since we are looking for an approximate value anyway.
-          return lastEvictEntry;
-        }
-      }
-      return groupReadPointer;
+      return table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
     }
 
     @Override
