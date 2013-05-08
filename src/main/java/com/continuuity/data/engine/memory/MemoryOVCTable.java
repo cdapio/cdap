@@ -515,7 +515,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = this.rows.next();
       Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
-        if (!this.columnSet.contains(colEntry.getKey().getValue())) {
+        if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue())) {
           continue;
         }
         byte[] value = filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
