@@ -14,7 +14,9 @@ import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -50,6 +52,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,6 +114,7 @@ public class OmidTransactionalOperationExecutor
   private static final String METRIC_PREFIX = "omid-opex-";
 
   public static final String NUMOPS_METRIC_SUFFIX = "-numops";
+  public static final String REQ_TYPE_GET_SPLITS_NUM_OPS = METRIC_PREFIX + "GetSplits" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_ALL_KEYS_NUM_OPS = METRIC_PREFIX + "ReadAllKeys" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_NUM_OPS = METRIC_PREFIX + "Read" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_COLUMN_RANGE_NUM_OPS =
@@ -136,6 +140,7 @@ public class OmidTransactionalOperationExecutor
     METRIC_PREFIX + "QueueConfigure" + NUMOPS_METRIC_SUFFIX;
 
   public static final String LATENCY_METRIC_SUFFIX = "-latency";
+  public static final String REQ_TYPE_GET_SPLITS_LATENCY = METRIC_PREFIX + "GetSplits" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_ALL_KEYS_LATENCY = METRIC_PREFIX + "ReadAllKeys" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_LATENCY = METRIC_PREFIX + "Read" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_READ_COLUMN_RANGE_LATENCY =
@@ -493,6 +498,32 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_READ_ALL_KEYS_LATENCY, begin);
     dataSetMetric_read(readKeys.getMetricName());
     return new OperationResult<List<byte[]>>(result);
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 GetSplits getSplits)
+    throws OperationException {
+    return execute(context, null, getSplits);
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 @Nullable Transaction transaction,
+                                                 GetSplits getSplits)
+    throws OperationException {
+
+    initialize();
+    incMetric(REQ_TYPE_GET_SPLITS_NUM_OPS);
+    long begin = begin();
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, getSplits.getTable());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    List<KeyRange> result = table.getSplits(getSplits.getNumSplits(), getSplits.getStart(), getSplits.getStop(),
+                                            getSplits.getColumns(), pointer);
+    end(REQ_TYPE_GET_SPLITS_LATENCY, begin);
+    dataSetMetric_read(getSplits.getMetricName());
+    return new OperationResult<List<KeyRange>>(result);
   }
 
   @Override

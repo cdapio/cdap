@@ -3,7 +3,9 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
@@ -186,6 +188,76 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
+   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation
+   * in an anonymous (singleton) transaction.
+   *
+   * @param context the operation context
+   * @param readKeys the operation
+   * @return a result object containing a list of keys if found. If no
+   * keys are found, then the result object will be empty and the status
+   * code will be KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation.
+   * If a non-null transaction is passed in, the operation is performed in that
+   * client-side transaction. Otherwise it is performed as an anonymous
+   * transaction.
+   *
+   * @param context the operation context
+   * @param readKeys the operation
+   * @param transaction an existing transaction, or null to perform an anonymous
+   *                    transaction
+   * @return a result object containing a list of keys if none found. If no
+   * keys are found, then the result object will be empty and the status
+   * code will be KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               @Nullable Transaction transaction,
+                                               ReadAllKeys readKeys)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.GetSplits} operation
+   * in an anonymous (singleton) transaction.
+   *
+   * @param context the operation context
+   * @param getSplits the operation
+   * @return a result object containing a list of key ranges, each representing one split.
+   * If no splits are found for the given criteria, then the result object will be empty and the status
+   * code will be KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 GetSplits getSplits)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.GetSplits} operation.
+   * If a non-null transaction is passed in, the operation is performed in that
+   * client-side transaction. Otherwise it is performed as an anonymous
+   * transaction.
+   *
+   * @param context the operation context
+   * @param getSplits the operation
+   * @param transaction an existing transaction, or null to perform an anonymous
+   *                    transaction
+   * @return a result object containing a list of key ranges, each representing one split.
+   * If no splits are found for the given criteria, then the result object will be empty and the status
+   * code will be KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 @Nullable Transaction transaction,
+                                                 GetSplits getSplits)
+    throws OperationException;
+
+  /**
    * Executes a {@link com.continuuity.data.operation.Read} operation.
    *
    * @param context the operation context
@@ -217,41 +289,6 @@ public interface OperationExecutor
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
                                                       @Nullable Transaction transaction,
                                                       Read read)
-    throws OperationException;
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation
-   * in an anonymous (singleton) transaction.
-   *
-   * @param context the operation context
-   * @param readKeys the operation
-   * @return a result object containing a list of keys if none found. If no
-   * keys are found, then the result object will be empty and the status
-   * code will be KEY_NOT_FOUND.
-   * @throws OperationException is something goes wrong
-   */
-  public OperationResult<List<byte[]>> execute(OperationContext context,
-                                               ReadAllKeys readKeys)
-    throws OperationException;
-
-  /**
-   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation.
-   * If a non-null transaction is passed in, the operation is performed in that
-   * client-side transaction. Otherwise it is performed as an anonymous
-   * transaction.
-   *
-   * @param context the operation context
-   * @param readKeys the operation
-   * @param transaction an existing transaction, or null to perform an anonymous
-   *                    transaction
-   * @return a result object containing a list of keys if none found. If no
-   * keys are found, then the result object will be empty and the status
-   * code will be KEY_NOT_FOUND.
-   * @throws OperationException is something goes wrong
-   */
-  public OperationResult<List<byte[]>> execute(OperationContext context,
-                                               @Nullable Transaction transaction,
-                                               ReadAllKeys readKeys)
     throws OperationException;
 
   /**

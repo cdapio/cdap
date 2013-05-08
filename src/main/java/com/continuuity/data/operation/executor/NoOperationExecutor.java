@@ -3,7 +3,9 @@ package com.continuuity.data.operation.executor;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -153,6 +155,21 @@ public class NoOperationExecutor implements OperationExecutor {
                                                ReadAllKeys readKeys)
     throws OperationException {
     return execute(context, readKeys);
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 GetSplits getSplits)
+    throws OperationException {
+      return new OperationResult<List<KeyRange>>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 @Nullable Transaction transaction,
+                                                 GetSplits getSplits)
+    throws OperationException {
+    return execute(context, getSplits);
   }
 
   @Override
