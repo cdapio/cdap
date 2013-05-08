@@ -7,14 +7,13 @@ import com.google.common.base.Objects;
  * A single consumer from a single group.
  */
 public class QueueConsumer {
-  // This object will be used in multi-threaded context. Hence needs to be thread safe.
   private final int instanceId;
   private final long groupId;
   private final int groupSize;
   private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
-  private volatile StateType stateType = StateType.UNINITIALIZED;
+  private StateType stateType = StateType.UNINITIALIZED;
 
   public enum StateType {
     UNINITIALIZED, // Consumer does not have its state, it could be due to consumer's first call or consumer crash

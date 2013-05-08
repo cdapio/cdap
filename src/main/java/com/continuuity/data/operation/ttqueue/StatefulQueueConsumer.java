@@ -6,8 +6,7 @@ import com.google.common.base.Objects;
  *
  */
 public class StatefulQueueConsumer extends QueueConsumer {
-  // This object will be used in multi-threaded context. Hence needs to be thread safe.
-  private volatile QueueState queueState = null;
+  private QueueState queueState = null;
 
   public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     super(instanceId, groupId, groupSize, config);
