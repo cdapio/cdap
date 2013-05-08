@@ -31,18 +31,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-//public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
+/**
+ * This implements the OVCTable for an "improved" HBase that has extensions to handle queues and transactions.
+ */
 public class HBaseNativeOVCTable extends HBaseOVCTable {
 
   public HBaseNativeOVCTable(Configuration conf, final byte[] tableName, final byte[] family,
-                             IOExceptionHandler exceptionHandler) throws OperationException {
+                             IOExceptionHandler exceptionHandler)
+    throws OperationException {
     super(conf, tableName, family, exceptionHandler);
   }
 
   private synchronized HTable getWriteTable() throws IOException {
     HTable writeTable = this.writeTables.pollFirst();
-    return writeTable == null ?
-      new HTable(this.conf, this.tableName) : writeTable;
+    return writeTable == null ? new HTable(this.conf, this.tableName) : writeTable;
   }
 
   private synchronized void returnWriteTable(HTable table) {
@@ -63,7 +65,9 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -75,7 +79,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     try {
       writeTable = getWriteTable();
       List<Put> puts = new ArrayList<Put>(rows.length);
-      for(int i = 0; i < rows.length; i++) {
+      for (int i = 0; i < rows.length; i++) {
         Put put = new Put(rows[i]);
         put.add(this.family, columns[i], version, values[i]);
         puts.add(put);
@@ -84,21 +88,22 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null)  {
+      if (writeTable != null) {
         returnWriteTable(writeTable);
       }
     }
   }
 
   @Override
-  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+    throws OperationException {
     assert (rows.length == columnsPerRow.length);
     assert (rows.length == valuesPerRow.length);
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       List<Put> puts = new ArrayList<Put>(rows.length);
-      for(int i = 0; i < rows.length; i++) {
+      for (int i = 0; i < rows.length; i++) {
         byte[][] columns = columnsPerRow[i];
         byte[][] values = valuesPerRow[i];
         Put put = new Put(rows[i]);
@@ -111,7 +116,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null)  {
+      if (writeTable != null) {
         returnWriteTable(writeTable);
       }
     }
@@ -123,19 +128,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns, long version)
-    throws OperationException {
+  public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       Delete delete = new Delete(row);
-      for (byte [] column : columns)
+      for (byte[] column : columns) {
         delete.deleteColumn(this.family, column, version);
+      }
       writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -145,19 +152,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[][] columns, long version)
-    throws OperationException {
+  public void deleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       Delete delete = new Delete(row);
-      for (byte [] column : columns)
+      for (byte[] column : columns) {
         delete.deleteColumns(this.family, column, version);
+      }
       writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -167,19 +176,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[][] columns, long version)
-    throws OperationException {
+  public void undeleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
       Delete delete = new Delete(row);
-      for (byte [] column : columns)
+      for (byte[] column : columns) {
         delete.undeleteColumns(this.family, column, version);
+      }
       writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
+      if (writeTable != null) {
+        returnWriteTable(writeTable);
+      }
     }
   }
 
@@ -196,18 +207,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.readTable.get(get);
-      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
-        Bytes.BYTES_COMPARATOR);
+      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
       byte[] last = null;
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
-        byte [] column = kv.getQualifier();
-        if (Bytes.equals(last, column)) continue;
+        if (!readPointer.isVisible(version)) {
+          continue;
+        }
+        byte[] column = kv.getQualifier();
+        if (Bytes.equals(last, column)) {
+          continue;
+        }
         map.put(column, kv.getValue());
         last = column;
       }
-      if(map.isEmpty()) {
+      if (map.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
@@ -215,13 +229,11 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       this.exceptionHandler.handle(e);
     }
     // as fall-back return "not found".
-    return new OperationResult<Map<byte[], byte[]>>(
-      StatusCode.COLUMN_NOT_FOUND);
+    return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] row, byte[] column, ReadPointer readPointer)
-    throws OperationException {
+  public OperationResult<byte[]> get(byte[] row, byte[] column, ReadPointer readPointer) throws OperationException {
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);
@@ -230,12 +242,15 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       Result result = this.readTable.get(get);
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
-        byte [] value = kv.getValue();
-        if (value == null || value.length == 0)
+        if (!readPointer.isVisible(version)) {
+          continue;
+        }
+        byte[] value = kv.getValue();
+        if (value == null || value.length == 0) {
           return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-        else
+        } else {
           return new OperationResult<byte[]>(value);
+        }
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -245,8 +260,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public OperationResult<ImmutablePair<byte[], Long>>
-  getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
     throws OperationException {
     try {
       Get get = new Get(row);
@@ -256,22 +270,23 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       Result result = this.readTable.get(get);
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
-        return new OperationResult<ImmutablePair<byte[], Long>>(
-          new ImmutablePair<byte[], Long>(kv.getValue(), kv.getTimestamp()));
+        if (!readPointer.isVisible(version)) {
+          continue;
+        }
+        return new OperationResult<ImmutablePair<byte[], Long>>(new ImmutablePair<byte[], Long>(kv.getValue(),
+                                                                                                kv.getTimestamp()));
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }
     // as fall-back return "not found".
-    return new OperationResult<ImmutablePair<byte[], Long>>(
-      StatusCode.COLUMN_NOT_FOUND);
+    return new OperationResult<ImmutablePair<byte[], Long>>(StatusCode.COLUMN_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
-      ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
+                                                  ReadPointer readPointer)
+    throws OperationException {
     try {
       // prepare a get for hbase
       Get get = new Get(row);
@@ -280,32 +295,40 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       get.setMaxVersions();
 
       // negative limit means unlimited, map that to int.max
-      if (limit <= 0) limit = Integer.MAX_VALUE;
+      if (limit <= 0) {
+        limit = Integer.MAX_VALUE;
+      }
 
       // push down the column range and the limit into the get as a filter
       List<Filter> filters = Lists.newArrayList();
-      if (startColumn != null || stopColumn != null) filters.add(
-        new ColumnRangeFilter(startColumn, true, stopColumn, false));
-      if (limit != Integer.MAX_VALUE) filters.add(
-        new ColumnPaginationFilter(limit, 0));
-      if (filters.size() > 1)
+      if (startColumn != null || stopColumn != null) {
+        filters.add(new ColumnRangeFilter(startColumn, true, stopColumn, false));
+      }
+      if (limit != Integer.MAX_VALUE) {
+        filters.add(new ColumnPaginationFilter(limit, 0));
+      }
+      if (filters.size() > 1) {
         get.setFilter(new FilterList(filters));
-      else if (filters.size() == 1)
+      } else if (filters.size() == 1) {
         get.setFilter(filters.get(0));
+      }
 
       Result result = this.readTable.get(get);
-      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
-        Bytes.BYTES_COMPARATOR);
+      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
       byte[] last = null;
       for (KeyValue kv : result.raw()) {
         // filter out versions that are invisible under current ReadPointer
         long version = kv.getTimestamp();
-        if (!readPointer.isVisible(version)) continue;
+        if (!readPointer.isVisible(version)) {
+          continue;
+        }
         // make sure that we skip repeated occurrences of the same column -
         // they would be older revisions that overwrite the most recent one
         // in the result map!
-        byte [] column = kv.getQualifier();
-        if (Bytes.equals(last, column)) continue;
+        byte[] column = kv.getQualifier();
+        if (Bytes.equals(last, column)) {
+          continue;
+        }
         // add to the result
         map.put(kv.getQualifier(), kv.getValue());
         // and remember this column to be able to filter out older revisions
@@ -313,8 +336,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
         last = column;
       }
       if (map.isEmpty()) {
-        return new
-          OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       } else {
         return new OperationResult<Map<byte[], byte[]>>(map);
       }
@@ -322,24 +344,23 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       this.exceptionHandler.handle(e);
     }
     // as fall-back return "not found".
-    return new OperationResult<Map<byte[], byte[]>>(
-      StatusCode.COLUMN_NOT_FOUND);
+    return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[][] columns,
-      ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns, ReadPointer readPointer)
+    throws OperationException {
     try {
       Get get = new Get(row);
-      for (byte [] column : columns) get.addColumn(this.family, column);
+      for (byte[] column : columns) {
+        get.addColumn(this.family, column);
+      }
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = parseRowResult(result, readPointer);
       if (map.isEmpty()) {
-        return new
-          OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       } else {
         return new OperationResult<Map<byte[], byte[]>>(map);
       }
@@ -347,20 +368,18 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       this.exceptionHandler.handle(e);
     }
     // as fall-back return "not found".
-    return new OperationResult<Map<byte[], byte[]>>(
-      StatusCode.COLUMN_NOT_FOUND);
+    return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
   }
 
   private Map<byte[], byte[]> parseRowResult(Result result, ReadPointer readPointer) {
-    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
-      Bytes.BYTES_COMPARATOR);
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     byte[] last = null;
     for (KeyValue kv : result.raw()) {
       long version = kv.getTimestamp();
       if (!readPointer.isVisible(version)) {
         continue;
       }
-      byte [] column = kv.getQualifier();
+      byte[] column = kv.getQualifier();
       if (Bytes.equals(last, column)) {
         continue;
       }
@@ -371,12 +390,14 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns,
+                                                                         ReadPointer readPointer)
+    throws OperationException {
     try {
       List<Get> gets = new ArrayList<Get>(rows.length);
       for (byte[] row : rows) {
         Get get = new Get(row);
-        for (byte [] column : columns) {
+        for (byte[] column : columns) {
           get.addColumn(this.family, column);
         }
         get.setTimeRange(0, getMaxStamp(readPointer));
@@ -386,7 +407,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       Result[] results = this.readTable.get(gets);
       Map<byte[], Map<byte[], byte[]>> resultMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
       for (Result result : results) {
-        if(!result.isEmpty()) {
+        if (!result.isEmpty()) {
           Map<byte[], byte[]> map = parseRowResult(result, readPointer);
           resultMap.put(result.getRow(), map);
         }
@@ -404,8 +425,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer)
-    throws OperationException {
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) throws OperationException {
     List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
     int returned = 0;
     int skipped = 0;
@@ -417,14 +437,18 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       Result result;
       while ((result = scanner.next()) != null) {
         for (KeyValue kv : result.raw()) {
-          if (!readPointer.isVisible(kv.getTimestamp())) continue;
+          if (!readPointer.isVisible(kv.getTimestamp())) {
+            continue;
+          }
           if (skipped < offset) {
             skipped++;
           } else if (returned < limit) {
             returned++;
             keys.add(kv.getRow());
           }
-          if (returned == limit) return keys;
+          if (returned == limit) {
+            return keys;
+          }
           break;
         }
       }
@@ -435,15 +459,17 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount,
-                        ReadPointer readPointer, long writeVersion) throws OperationException {
+  public long increment(byte[] row, byte[] column, long amount, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     try {
       Increment increment = new Increment(row);
       increment.addColumn(this.family, column, amount);
       increment.setTimeRange(0, getMaxStamp(readPointer));
       increment.setWriteVersion(writeVersion);
       Result result = this.readTable.increment(increment);
-      if (result.isEmpty()) return 0L;
+      if (result.isEmpty()) {
+        return 0L;
+      }
       return Bytes.toLong(result.value());
     } catch (IOException e) {
       // figure out whether this is an illegal increment
@@ -457,19 +483,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
-                                     long[] amounts, ReadPointer readPointer, long writeVersion)
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer,
+                                     long writeVersion)
     throws OperationException {
-    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    Map<byte[], Long> ret = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
     try {
       Increment increment = new Increment(row);
       increment.setTimeRange(0, getMaxStamp(readPointer));
       increment.setWriteVersion(writeVersion);
-      for (int i=0; i<columns.length; i++)
+      for (int i = 0; i < columns.length; i++) {
         increment.addColumn(this.family, columns[i], amounts[i]);
+      }
       Result result = this.readTable.increment(increment);
-      for (KeyValue kv : result.raw())
+      for (KeyValue kv : result.raw()) {
         ret.put(kv.getQualifier(), Bytes.toLong(kv.getValue()));
+      }
       return ret;
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -478,26 +506,21 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void compareAndSwap(byte[] row, byte[] column,
-                             byte[] expectedValue, byte[] newValue,
-                             ReadPointer readPointer,
-                             long writeVersion) throws OperationException {
+  public void compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue,
+                             ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     try {
       if (newValue == null) {
         Delete delete = new Delete(row);
         delete.deleteColumns(this.family, column, writeVersion);
-        if (!this.readTable.checkAndDelete(row, this.family, column,
-                                           expectedValue, readPointer.getMaximum(), delete)) {
-          throw new OperationException(StatusCode.WRITE_CONFLICT,
-                                       "CompareAndSwap expected value mismatch");
+        if (!this.readTable.checkAndDelete(row, this.family, column, expectedValue, readPointer.getMaximum(), delete)) {
+          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
         }
       } else {
         Put put = new Put(row);
         put.add(this.family, column, writeVersion, newValue);
-        if (!this.readTable.checkAndPut(row, this.family, column,
-                                        expectedValue, readPointer.getMaximum(), put)) {
-          throw new OperationException(StatusCode.WRITE_CONFLICT,
-                                       "CompareAndSwap expected value mismatch");
+        if (!this.readTable.checkAndPut(row, this.family, column, expectedValue, readPointer.getMaximum(), put)) {
+          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
         }
       }
     } catch (IOException e) {

@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -70,7 +70,8 @@ public class TestLocalModeTTQueuePerf {
     long version = 10L;
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, new QueueConfig(PartitionerType.FIFO, true));
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    MemoryReadPointer memoryReadPointer = new MemoryReadPointer(version, version, null);
+    Transaction transaction = new Transaction(memoryReadPointer, memoryReadPointer);
 
     // first test it with the intra-flow queues
     TTQueueTable queueTable = handle.getQueueTable(queueName);
@@ -84,7 +85,7 @@ public class TestLocalModeTTQueuePerf {
     long start = now();
     long last = start;
     for (int i=0; i<n; i++) {
-      queueTable.enqueue(queueName, new QueueEntry(data), version);
+      queueTable.enqueue(queueName, new QueueEntry(data), transaction);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -94,9 +95,9 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      DequeueResult result = queueTable.dequeue(queueName, consumer, readPointer);
-      queueTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
-      queueTable.finalize(queueName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
+      DequeueResult result = queueTable.dequeue(queueName, consumer, memoryReadPointer);
+      queueTable.ack(queueName, result.getEntryPointer(), consumer, transaction);
+      queueTable.finalize(queueName, result.getEntryPointers(), consumer, -1, transaction);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -106,7 +107,7 @@ public class TestLocalModeTTQueuePerf {
     start = now();
     last = start;
     for (int i=0; i<n; i++) {
-      streamTable.enqueue(streamName, new QueueEntry(data), version);
+      streamTable.enqueue(streamName, new QueueEntry(data), transaction);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);
@@ -117,9 +118,9 @@ public class TestLocalModeTTQueuePerf {
     last = start;
     for (int i=0; i<n; i++) {
       DequeueResult result =
-          streamTable.dequeue(streamName, consumer, readPointer);
-      streamTable.ack(streamName, result.getEntryPointer(), consumer, readPointer);
-      streamTable.finalize(streamName, result.getEntryPointers(), consumer, -1, readPointer.getMaximum());
+          streamTable.dequeue(streamName, consumer, memoryReadPointer);
+      streamTable.ack(streamName, result.getEntryPointer(), consumer, transaction);
+      streamTable.finalize(streamName, result.getEntryPointers(), consumer, -1, transaction);
       last = printStat(i, last, 1000);
     }
     printReport(start, now(), n);

@@ -1,7 +1,7 @@
 package com.continuuity.api.data;
 
 /**
- * Defines status codes
+ * Defines public status codes for use in operation results or execptions.
  */
 public class StatusCode {
 
@@ -20,6 +20,8 @@ public class StatusCode {
   public static final int COLUMN_NOT_FOUND = 405;
 
   public static final int ILLEGAL_INCREMENT = 2000;
+  public static final int INCOMPATIBLE_TYPE = 2001;
 
   public static final int INTERNAL_ERROR = 5000;
+
 }

@@ -1,11 +1,14 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 
 import java.util.List;
 
+/**
+ * An executor that can execute a batch of operations as a transaction.
+ */
 public interface TransactionalOperationExecutor extends OperationExecutor {
 
   /**

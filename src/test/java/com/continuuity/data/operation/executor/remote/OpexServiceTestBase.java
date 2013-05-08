@@ -79,12 +79,12 @@ public abstract class OpexServiceTestBase {
   
   @Before
   public void disableQueuePayloads() {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
   }
   
   @After
   public void enableQueuePayloads() {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   protected static List<WriteOperation> batch(WriteOperation ... ops) {

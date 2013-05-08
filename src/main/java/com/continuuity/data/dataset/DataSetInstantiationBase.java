@@ -3,6 +3,7 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
@@ -16,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
+ * built-in data sets.
  */
 public class DataSetInstantiationBase {
 
@@ -49,7 +51,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * whether this is a read-only instantiation
+   * Whether this is a read-only instantiation.
    */
   public boolean isReadOnly() {
     return readOnly;
@@ -76,7 +78,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * Find out whether the instantiator has a spec for a named data set
+   * Find out whether the instantiator has a spec for a named data set.
    * @param name the name of the data set
    * @return whether the instantiator knows the spec for the data set
    */
@@ -143,7 +145,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * helper method to cast the created data set object to its correct class.
+   * Helper method to cast the created data set object to its correct class.
    * This method is to isolate the unchecked cast (it has to be unchecked
    * because T is a type parameter, we cannot do instanceof or isAssignableFrom
    * on type parameters...) into a small method, that we can annotate with a
@@ -158,9 +160,8 @@ public class DataSetInstantiationBase {
   private <T extends DataSet> T convert(Object o, String className)
     throws DataSetInstantiationException {
     try {
-      return (T)o;
-    }
-    catch (ClassCastException e) {
+      return (T) o;
+    } catch (ClassCastException e) {
       throw logAndException(e, "Incompatible assignment of com.continuuity.data.dataset of type %s", className);
     }
   }
@@ -192,7 +193,7 @@ public class DataSetInstantiationBase {
       // this sets the delegate table of the Table to a new ReadWriteTable
       RuntimeTable runtimeTable = this.isReadOnly()
         ? ReadOnlyTable.setReadOnlyTable((Table) obj, fabric, metricName, proxy)
-        : ReadWriteTable.setReadWriteTable((Table)obj, fabric, metricName, proxy);
+        : ReadWriteTable.setReadWriteTable((Table) obj, fabric, metricName, proxy);
       // also ensure that the table exists in the data fabric
       try {
         runtimeTable.open();
@@ -201,6 +202,11 @@ public class DataSetInstantiationBase {
           "Failed to open table '" + runtimeTable.getName() + "'.", e);
       }
       return;
+    }
+    // for object stores, we set the delegate
+    if (obj instanceof ObjectStore<?>) {
+      ObjectStoreImpl.setImplementation((ObjectStore<?>) obj, this.classLoader);
+      // but do not return yet, continue to inject data fabric into the impl
     }
     // otherwise recur through all fields of type DataSet
     Class<?> objClass = obj.getClass();

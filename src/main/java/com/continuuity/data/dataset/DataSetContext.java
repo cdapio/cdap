@@ -7,7 +7,7 @@ import com.continuuity.api.data.DataSet;
  */
 public interface DataSetContext {
   /**
-   * Get an instance of the named data set
+   * Get an instance of the named data set.
    * @param name the name of the data set
    * @param <T> the type of the data set
    * @return a new instance of the named data set

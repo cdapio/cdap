@@ -11,6 +11,9 @@ import java.util.List;
  */
 public class ClearFabric extends Operation {
 
+  /**
+   * To specify what to clear.
+   */
   public enum ToClear {
     DATA, META, TABLES, QUEUES, STREAMS, ALL
   }
@@ -22,14 +25,14 @@ public class ClearFabric extends Operation {
   private boolean clearStreams;
 
   /**
-   * clears everything (user data, tables, meta data, queues, and streams).
+   * Clears everything (user data, tables, meta data, queues, and streams).
    */
   public ClearFabric() {
     this(ToClear.ALL);
   }
 
   /**
-   * clears the given scope (user data, tables, meta data, queues,
+   * Clears the given scope (user data, tables, meta data, queues,
    * streams, or all).
    * @param whatToClear a scope to clear
    */
@@ -39,7 +42,7 @@ public class ClearFabric extends Operation {
 
 
   /**
-   * clears the listed scopes (user data, tables, meta data, queues,
+   * Clears the listed scopes (user data, tables, meta data, queues,
    * streams, or all).
    * @param whatToClear list of scopes to clear
    */
@@ -48,11 +51,10 @@ public class ClearFabric extends Operation {
   }
 
   /**
-   * clears the listed scopes (user data, tables, meta data, queues,
+   * Clears the listed scopes (user data, tables, meta data, queues,
    * streams, or all).
    * @param id explicit unique id of this operation
    * @param whatToClear list of scopes to clear
-   *
    */
   public ClearFabric(long id, List<ToClear> whatToClear) {
     super(id);
@@ -114,6 +116,7 @@ public class ClearFabric extends Operation {
     return this.clearStreams;
   }
 
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("clearData", Boolean.toString(clearData))

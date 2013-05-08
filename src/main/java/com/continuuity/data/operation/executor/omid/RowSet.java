@@ -22,7 +22,7 @@ public interface RowSet extends Iterable<RowSet.Row> {
     private byte[] row;
 
     /**
-     * Create a new row from table name and row key
+     * Create a new row from table name and row key.
      * @param table the table name, may be null
      * @param row the row key, must not be null
      */
@@ -65,7 +65,7 @@ public interface RowSet extends Iterable<RowSet.Row> {
         return true;
       }
       if (other instanceof Row) {
-        Row row = (Row)other;
+        Row row = (Row) other;
          return Objects.equal(this.table, row.table) && Bytes.equals(this.row, row.row);
       }
       return false;
@@ -78,13 +78,13 @@ public interface RowSet extends Iterable<RowSet.Row> {
   }
 
   /**
-   * Add a row to this set
+   * Add a row to this set.
    * @param row the new row
    */
   public void addRow(Row row);
 
   /**
-   * Detect write conflicts, that is, at least one common row
+   * Detect write conflicts, that is, at least one common row.
    * @param rows an other row set
    * @return whether the other row set has at least one row in common with this row set
    */

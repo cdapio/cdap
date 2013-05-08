@@ -11,8 +11,11 @@ import com.continuuity.common.utils.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
+import com.continuuity.data.operation.ttqueue.internal.EvictionHelper;
+import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.common.base.Objects;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -116,8 +119,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
   static final byte [] LAST_EVICT_TIME_IN_SECS = {'T'};           //row <queueName>40C<groupId><consumerId>, column T
 
-  static final long INVALID_ENTRY_ID = ClaimedEntryRange.INVALID_ENTRY_ID;
-  static final long FIRST_QUEUE_ENTRY_ID = 1;
+  static final long INVALID_ENTRY_ID = TTQueueNewConstants.INVALID_ENTRY_ID;
+  static final long FIRST_QUEUE_ENTRY_ID = TTQueueNewConstants.FIRST_ENTRY_ID;
 
   private final int DEFAULT_BATCH_SIZE;
   private final long EVICT_INTERVAL_IN_SECS;
@@ -154,10 +157,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry[] entries, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(QueueEntry[] entries, Transaction transaction) throws OperationException {
     int n = entries.length;
     if (LOG.isTraceEnabled()) {
-      LOG.trace(getLogMessage("Enqueueing " + n + " entries, writeVersion=" + cleanWriteVersion + ")"));
+      LOG.trace(getLogMessage("Enqueueing " + n + " entries, transaction=" + transaction + ")"));
     }
 
     // Get our unique entry id
@@ -212,19 +215,19 @@ public class TTQueueNewOnVCTable implements TTQueue {
       returnPointers[i] = new QueueEntryPointer(this.queueName, entryId);
     }
     // write all rows at once
-    this.table.put(rowKeys, allColumnKeys, cleanWriteVersion, allColumnValues);
+    this.table.put(rowKeys, allColumnKeys, transaction.getWriteVersion(), allColumnValues);
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, returnPointers);
   }
 
   @Override
-  public EnqueueResult enqueue(QueueEntry entry, long cleanWriteVersion) throws OperationException {
-    return enqueue(new QueueEntry[] { entry }, cleanWriteVersion);
+  public EnqueueResult enqueue(QueueEntry entry, Transaction transaction) throws OperationException {
+    return enqueue(new QueueEntry[] { entry }, transaction);
   }
 
   @Override
-  public void invalidate(QueueEntryPointer [] entryPointers, long cleanWriteVersion) throws OperationException {
+  public void invalidate(QueueEntryPointer[] entryPointers, Transaction transaction) throws OperationException {
     int n = entryPointers.length;
     if (n == 0) {
       return;
@@ -244,7 +247,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       values[i] = ENTRY_META_INVALID;
     }
 
-    this.table.put(rowNames, columns, cleanWriteVersion, values);
+    this.table.put(rowNames, columns, transaction.getWriteVersion(), values);
     // No need to delete data/headers since they will be cleaned up during eviction later
     if (LOG.isTraceEnabled()) {
       LOG.trace(getLogMessage("Invalidated " + n + " entry pointers"));
@@ -329,7 +332,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
       dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
       this.dequeueReturns.incrementAndGet();
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
-                               new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(), dequeueEntry.getTries()), entry);
+                               new QueueEntryPointer(this.queueName, dequeueEntry.getEntryId(),
+                                                     dequeueEntry.getTries()), entry);
 
     } else {
       // if returnBatch == true, return all remaining transient entries up to the requested batch size
@@ -368,20 +372,22 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
-    ack(new QueueEntryPointer[] { entryPointer }, consumer, readPointer);
+    ack(new QueueEntryPointer[] { entryPointer }, consumer, transaction);
   }
 
   @Override
-  public void ack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
     // Get queue state
+    ReadPointer readPointer = transaction.getReadPointer();
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
+    long minAckEntry = Long.MAX_VALUE;
     for (QueueEntryPointer entryPointer : entryPointers) {
       // Only an entry that has been dequeued by this consumer can be acked
       if(!queueState.getDequeueEntrySet().contains(entryPointer.getEntryId())) {
@@ -392,27 +398,58 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
       // Set ack state
       queueState.getDequeueEntrySet().remove(entryPointer.getEntryId());
+
+      // Determine min ack entry
+      if(entryPointer.getEntryId() < minAckEntry) {
+        minAckEntry = entryPointer.getEntryId();
+      }
     }
+
+    // Clean up acked entries in EvictionHelper, committed acked entries can be removed
+    queueState.getEvictionHelper().cleanup(transaction);
+
+    // Store the minAckEntry in EvictionHelper
+    if(minAckEntry != Long.MAX_VALUE) {
+      queueState.getEvictionHelper().addMinAckEntry(transaction.getWriteVersion(), minAckEntry);
+    }
+
     // Write ack state
     dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
   }
 
   @Override
-  public void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
 
     QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
     final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
 
     // Get queue state
+    ReadPointer readPointer = transaction.getReadPointer();
     QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
+    // TODO: check opex crash state
     // Set unack state
-    // TODO: 1. Check if entry was really acked
-    // TODO: 2. If this is the first call after a consumer crashes, then this entry will not be present in the
-    //          queue cache. So unack should check whether it is in the cached set and read it if necessary
+    List<Long> unCachedEntries = Lists.newArrayList();
     for (QueueEntryPointer entryPointer : entryPointers) {
       queueState.getDequeueEntrySet().add(new DequeueEntry(entryPointer.getEntryId(), entryPointer.getTries()));
+
+      // If entry is not present in the cache, we'll need it again
+      if(!queueState.getTransientWorkingSet().getCachedEntries().containsKey(entryPointer.getEntryId())) {
+        unCachedEntries.add(entryPointer.getEntryId());
+      }
+    }
+
+    // Read entries that are not cached
+    if(!unCachedEntries.isEmpty()) {
+      QueueStateImpl tempState = new QueueStateImpl();
+      dequeueStrategy.readEntries(tempState, readPointer, unCachedEntries);
+      Map<Long, byte[]> newCachedEntries = tempState.getTransientWorkingSet().getCachedEntries();
+      if(!newCachedEntries.isEmpty()) {
+        TransientWorkingSet oldTransientWorkingSet = queueState.getTransientWorkingSet();
+        queueState.setTransientWorkingSet(TransientWorkingSet.addCachedEntries(oldTransientWorkingSet,
+                                                                               newCachedEntries));
+      }
     }
 
     // Write unack state
@@ -579,32 +616,28 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public void finalize(QueueEntryPointer [] entryPointers, QueueConsumer consumer, int totalNumGroups, long writePoint)
-    throws OperationException {
+  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
     // for batch finalize, we don't know whether there are gaps in the sequence of entries getting finalized. So we
     // ignore the current finalize entry set and evict independent of that.
-    finalize(entryPointers[entryPointers.length - 1], consumer, totalNumGroups, writePoint);
+    finalize(entryPointers[entryPointers.length - 1], consumer, totalNumGroups, transaction);
   }
 
   @Override
-  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups, long writePoint)
-    throws OperationException {
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException {
 
     // Figure out queue entries that can be evicted, and evict them.
-    // We are assuming here that for a given consumer all entries up to
-    // min(min(DEQUEUE_ENTRY_SET)-1, CONSUMER_READ_POINTER-1) can be evicted.
+    // The logic that figures out the min evict entry is in
+    // {@link com.continuuity.data.operation.ttqueue.internal.EvictionHelper#getMinEvictionEntry}.
+    // Note: entryPointer is not used in evict entry determination
+
     // The min of such evict entry is determined across all consumers across all groups,
     // and entries till the min evict entry are removed.
 
     // One consumer per consumer group will do the determination of min group evict entry for each group.
     // Finally, one consumer across all groups will get the least of min group evict entries for all groups
     // and does the eviction.
-
-    // NOTE: Using min(min(DEQUEUE_ENTRY_SET)-1, CONSUMER_READ_POINTER-1) to determine evict entry removes the need of
-    // storing/reading the finalized entry for each consumer.
-    // However in this approach the last entry of each consumer may not get evicted.
-    // This limitation should be okay since the number of such entries will be small
-    // (less than or equal to the number of consumers).
 
     // A simple leader election for selecting consumer to run eviction for group
     // Only consumers with id 0 (one per group)
@@ -620,18 +653,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return;
     }
 
-    ReadPointer readPointer = TransactionOracle.DIRTY_READ_POINTER;
+    ReadPointer dirtyReadPointer = TransactionOracle.DIRTY_READ_POINTER;
 
     try {
       // Run eviction only if EVICT_INTERVAL_IN_SECS secs have passed since the last eviction run
       final long evictStartTimeInSecs = System.currentTimeMillis() / 1000;
-      QueueStateImpl queueState = getQueueState(consumer, readPointer);
+      QueueStateImpl queueState = getQueueState(consumer, dirtyReadPointer);
 
       // if queue state does not have the last evict time (==0), read it from table
       byte[] rowKey;
       if (queueState.getLastEvictTimeInSecs() == 0) {
         rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
-        OperationResult<byte[]> result = table.get(rowKey, LAST_EVICT_TIME_IN_SECS, readPointer);
+        OperationResult<byte[]> result = table.get(rowKey, LAST_EVICT_TIME_IN_SECS, dirtyReadPointer);
         if (!result.isEmpty() && result.getValue() != null && result.getValue().length > 0) {
           queueState.setLastEvictTimeInSecs(Bytes.toLong(result.getValue()));
         }
@@ -657,7 +690,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
 
       // Find the min entry that can be evicted for the consumer's group
-      final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, queueState, entryPointer.getEntryId());
+      final long minGroupEvictEntry = getMinGroupEvictEntry(consumer, queueState, transaction);
       // Save the minGroupEvictEntry for the consumer's group
       if(minGroupEvictEntry != INVALID_ENTRY_ID) {
         writeKeys.add(makeRowName(GLOBAL_EVICT_META_ROW));
@@ -673,7 +706,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Only one consumer per queue will run the below eviction algorithm for the queue,
       // all others will save minGroupEvictEntry and return
       // If runEviction returns INVALID_ENTRY_ID, then this consumer did not run eviction
-      final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, readPointer);
+      final long currentMaxEvictedEntry = runEviction(consumer, minGroupEvictEntry, totalNumGroups, dirtyReadPointer);
 
       // Save the max of the entries that were evicted now
       if(currentMaxEvictedEntry != INVALID_ENTRY_ID) {
@@ -697,10 +730,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   private long getMinGroupEvictEntry(QueueConsumer consumer, QueueStateImpl currentConsumerState,
-                                     long currentConsumerFinalizeEntry) throws OperationException {
+                                     Transaction transaction) throws OperationException {
     // Find out the min entry that can be evicted across all consumers in the consumer's group
 
-    // Read CONSUMER_READ_POINTER and DEQUEUE_ENTRY_SET for all consumers in the group to determine evict entry
+    // Read EvictionHelper for all consumers in the group to determine evict entry
     final byte[][] rowKeys = new byte[consumer.getGroupSize()][];
     for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
       rowKeys[consumerId] = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId);
@@ -717,11 +750,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     long minGroupEvictEntry = Long.MAX_VALUE;
     for(int consumerId = 0; consumerId < consumer.getGroupSize(); ++consumerId) {
-      // As far as consumer consumerId is concerned, all queue entries before
-      // min(min(DEQUEUE_ENTRY_SET), CONSUMER_READ_POINTER) can be evicted
-      // The least of such entry is the minGroupEvictEntry to which all queue entries can be evicted for the group
       long evictEntry = getEvictEntryForConsumer(operationResult.getValue(), consumerId, consumer,
-                                                 currentConsumerState, currentConsumerFinalizeEntry);
+                                                 currentConsumerState, transaction);
       if(evictEntry == INVALID_ENTRY_ID) {
         minGroupEvictEntry = INVALID_ENTRY_ID;
         break;
@@ -735,16 +765,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   private long getEvictEntryForConsumer(Map<byte[], Map<byte[], byte[]>> rows, int consumerId, QueueConsumer consumer,
-                                        QueueStateImpl currentConsumerState, long currentConsumerFinalizeEntry) throws OperationException {
+                                        QueueStateImpl currentConsumerState, Transaction transaction)
+    throws OperationException {
     // evictEntry determination logic:
-    // evictEntry = (min(DEQUEUE_ENTRY_SET) != INVALID_ENTRY ? min(DEQUEUE_ENTRY_SET) - 1 : consumerReadPointer - 1)
+    // evictEntry = min of all committed acked entries
 
     // get the queue state for the consumer id
     QueueStateImpl queueState;
     if (consumerId == consumer.getInstanceId()) {
       queueState = currentConsumerState;
     } else {
-      // different consnumer, must read state from table
+      // different consumer, must read state from table
       Map<byte[], byte[]> row = rows.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumerId));
       if(row == null) {
         if(LOG.isTraceEnabled()) {
@@ -769,18 +800,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
                         consumerId, consumer.getGroupId())), e);
       }
     }
-    DequeuedEntrySet dequeueEntrySet = queueState.getDequeueEntrySet();
-    if(!dequeueEntrySet.isEmpty()) {
-      return dequeueEntrySet.min().getEntryId() - 1;
-    } else {
-      // For consumer running the eviction, currentConsumerFinalizeEntry is a better evict entry
-      // than CONSUMER_READ_POINTER - 1, since currentConsumerFinalizeEntry > CONSUMER_READ_POINTER - 1
-      if(consumerId == consumer.getInstanceId()) {
-        return currentConsumerFinalizeEntry;
-      } else {
-        return queueState.getConsumerReadPointer() - 1;
-      }
-    }
+    EvictionHelper evictionHelper = queueState.getEvictionHelper();
+    return evictionHelper.getMinEvictionEntry(queueState.getConsumerReadPointer(), queueState.getDequeueEntrySet(),
+                                              transaction);
   }
 
   class EvictionState {
@@ -832,7 +854,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public Set<Long> getGroupIds() {
-      return groupEvictEntries.keySet();
+      return Collections.unmodifiableSet(groupEvictEntries.keySet());
     }
 
     public Long getGroupEvictEntry(long groupId) {
@@ -908,6 +930,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       } else {
         // Get the evict info for group with groupId
         entry = evictionState.getGroupEvictEntry(groupId);
+      }
+      if(entry == INVALID_ENTRY_ID) {
+        if(LOG.isTraceEnabled()) {
+          LOG.trace(getLogMessage(
+            String.format("Invalid group evict entry for group %d. Aborting eviction.", groupId)));
+        }
+        return INVALID_ENTRY_ID;
       }
       // Save the least entry
       if(maxEntryToEvict > entry) {
@@ -998,7 +1027,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return String.format("Queue-%s: %s", Bytes.toString(queueName), message);
   }
 
-  static class DequeueEntry implements Comparable<DequeueEntry> {
+  public static class DequeueEntry implements Comparable<DequeueEntry> {
     private final long entryId;
     // tries is used to keep track of the number of times the consumer crashed when processing an entry.
     // A consumer is considered to have crashed every time it loses its cached state information,
@@ -1075,7 +1104,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  static class DequeuedEntrySet {
+  public static class DequeuedEntrySet {
     private final SortedSet<DequeueEntry> entrySet;
 
     DequeuedEntrySet() {
@@ -1238,7 +1267,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     public Map<Long, byte[]> getCachedEntries() {
-      return cachedEntries;
+      return Collections.unmodifiableMap(cachedEntries);
+    }
+
+    public static TransientWorkingSet addCachedEntries(TransientWorkingSet oldTransientWorkingSet,
+                                                       Map<Long, byte[]> moreCachedEntries) {
+      Map<Long, byte[]> newCachedEntries = Maps.newHashMap(oldTransientWorkingSet.getCachedEntries());
+      newCachedEntries.putAll(moreCachedEntries);
+      return new TransientWorkingSet(oldTransientWorkingSet.entryList, oldTransientWorkingSet.curPtr,
+                                     newCachedEntries);
     }
 
     @Override
@@ -1628,6 +1665,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private QueuePartitioner.PartitionerType partitioner;
     private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
     private DequeuedEntrySet dequeueEntrySet;
+    private EvictionHelper evictionHelper;
     private long consumerReadPointer = INVALID_ENTRY_ID;
     private long queueWritePointer = FIRST_QUEUE_ENTRY_ID - 1;
     private ClaimedEntryList claimedEntryList;
@@ -1637,6 +1675,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public QueueStateImpl() {
       dequeueEntrySet = new DequeuedEntrySet();
+      evictionHelper = new EvictionHelper();
       claimedEntryList = new ClaimedEntryList();
     }
 
@@ -1662,6 +1701,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public void setDequeueEntrySet(DequeuedEntrySet dequeueEntrySet) {
       this.dequeueEntrySet = dequeueEntrySet;
+    }
+
+    public EvictionHelper getEvictionHelper() {
+      return evictionHelper;
+    }
+
+    public void setEvictionHelper(EvictionHelper evictionHelper) {
+      this.evictionHelper = evictionHelper;
     }
 
     public long getConsumerReadPointer() {
@@ -1709,6 +1756,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       return Objects.toStringHelper(this)
         .add("transientWorkingSet", transientWorkingSet)
         .add("dequeueEntrySet", dequeueEntrySet)
+        .add("evictionHelper", evictionHelper)
         .add("consumerReadPointer", consumerReadPointer)
         .add("claimedEntryList", claimedEntryList)
         .add("queueWritePointer", queueWritePointer)
@@ -1723,6 +1771,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       encoder.writeInt(encodingVersion);
       partitioner.encode(encoder);
       dequeueEntrySet.encode(encoder);
+      evictionHelper.encode(encoder);
       encoder.writeLong(consumerReadPointer);
       claimedEntryList.encode(encoder);
       encoder.writeLong(queueWritePointer);
@@ -1744,6 +1793,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       QueueStateImpl queueState = new QueueStateImpl();
       queueState.setPartitioner(QueuePartitioner.PartitionerType.decode(decoder));
       queueState.setDequeueEntrySet(DequeuedEntrySet.decode(decoder));
+      queueState.setEvictionHelper(EvictionHelper.decode(decoder));
       queueState.setConsumerReadPointer(decoder.readLong());
       queueState.setClaimedEntryList(ClaimedEntryList.decode(decoder));
       queueState.setQueueWritePointer(decoder.readLong());
@@ -1777,6 +1827,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     void fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
                           ReadPointer readPointer) throws OperationException;
 
+    /**
+     * method to read queue entries specified in entryIds into queue state
+     * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
+     * consumer past these entries and fetch again.
+     */
+    public boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+      throws OperationException;
     /**
      * method to save the queue state to storage (dual to readQueueState)
      */
@@ -1923,14 +1980,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Delete queue state for the consumer, see notes in constructQueueStateInternal
       final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
       table.put(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_WRITE_VERSION, Bytes.EMPTY_BYTE_ARRAY);
-      // TODO: delete evict information for the consumer
     }
 
     /**
      * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
      * consumer past these entries and fetch again.
      */
-    protected boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+    @Override
+    public boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
       throws OperationException
     {
       if(LOG.isTraceEnabled()) {

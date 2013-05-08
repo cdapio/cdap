@@ -25,7 +25,7 @@ public class TestConfig {
   }
 
   public int getEnqueueSleepMs() {
-    return selectionFunction.select(100);
+    return selectionFunction.select(1000);
   }
 
   public boolean shouldInvalidate() {

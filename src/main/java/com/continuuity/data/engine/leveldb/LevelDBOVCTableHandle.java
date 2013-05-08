@@ -3,16 +3,18 @@
  */
 package com.continuuity.data.engine.leveldb;
 
-import java.sql.SQLException;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hbase.util.Bytes;
 
+import java.sql.SQLException;
+
+/**
+ * This class implements the table handle for LevelDB.
+ */
 public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
 
   private final String basePath;
@@ -34,8 +36,7 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     LevelDBOVCTable table =
-        new LevelDBOVCTable(basePath, Bytes.toString(tableName),
-            blockSize, cacheSize);
+        new LevelDBOVCTable(basePath, Bytes.toString(tableName), blockSize, cacheSize);
     table.initializeTable();
     return table;
   }
@@ -44,9 +45,12 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
   public OrderedVersionedColumnarTable openTable(byte[] tableName)
       throws OperationException {
     LevelDBOVCTable table =
-        new LevelDBOVCTable(basePath, Bytes.toString(tableName),
-            blockSize, cacheSize);
-    if (table.openTable()) return table; else return null;
+        new LevelDBOVCTable(basePath, Bytes.toString(tableName), blockSize, cacheSize);
+    if (table.openTable()) {
+      return table;
+    } else {
+      return null;
+    }
   }
 
   @Override

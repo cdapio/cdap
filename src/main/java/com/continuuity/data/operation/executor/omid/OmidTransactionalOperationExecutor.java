@@ -106,10 +106,10 @@ public class OmidTransactionalOperationExecutor
   private TTQueueTable queueTable;
   private TTQueueTable streamTable;
 
-  public static boolean DISABLE_QUEUE_PAYLOADS = false;
+  public static boolean disableQueuePayloads = false;
 
-  static int MAX_DEQUEUE_RETRIES = 200;
-  static long DEQUEUE_RETRY_SLEEP = 5;
+  static int maxDequeueRetries = 200;
+  static long dequeueRetrySleep = 5;
 
   // Metrics
 
@@ -161,7 +161,8 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_QUEUE_DEQUEUE_LATENCY = METRIC_PREFIX + "QueueDequeue" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_GET_GROUP_ID_LATENCY = METRIC_PREFIX + "GetGroupID" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
-  public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY = METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY =
+    METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
 
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
@@ -308,7 +309,7 @@ public class OmidTransactionalOperationExecutor
   // 1. table does not exist or is not known -> no entry
   // 2. table is being created -> entry with real name, but null for the table
   // 3. table is known -> entry with name and table
-  ConcurrentMap<ImmutablePair<String,String>,
+  ConcurrentMap<ImmutablePair<String, String>,
       ImmutablePair<byte[], OrderedVersionedColumnarTable>> namedTables;
 
   // method to find - and if necessary create - a table
@@ -316,20 +317,21 @@ public class OmidTransactionalOperationExecutor
 
     // check whether it is one of the default tables these are always
     // pre-loaded at initializaton and we can just return them
-    if (null == name)
+    if (null == name) {
       return this.randomTable;
-    if ("meta".equals(name))
+    }
+    if ("meta".equals(name)) {
       return this.metaTable;
+    }
 
     // look up table in in-memory map. if this returns:
     // an actual name and OVCTable, return that OVCTable
-    ImmutablePair<String, String> tableKey = new
-        ImmutablePair<String, String>(context.getAccount(), name);
-    ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
-        this.namedTables.get(tableKey);
+    ImmutablePair<String, String> tableKey = new ImmutablePair<String, String>(context.getAccount(), name);
+    ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable = this.namedTables.get(tableKey);
     if (nameAndTable != null) {
-      if (nameAndTable.getSecond() != null)
+      if (nameAndTable.getSecond() != null) {
         return nameAndTable.getSecond();
+      }
 
       // an actual name and null for the table, then sleep/repeat until the look
       // up returns non-null for the table. This is the case when some other
@@ -361,8 +363,9 @@ public class OmidTransactionalOperationExecutor
           // If C-a-S failed with write conflict, then some other process (or
           // thread) has concurrently attempted the same and wins.
           return waitForTableToMaterializeInMeta(context, name, newMeta);
+        } else {
+          throw e;
         }
-        else throw e;
       }
       //C-a-S succeeded, add <actual name, null> to MEM to inform other threads
       //in this process to wait (no other thread could have updated in the
@@ -420,34 +423,31 @@ public class OmidTransactionalOperationExecutor
                                                                 MetaDataEntry meta)
     throws OperationException {
 
-    while(true) {
+    while (true) {
       // If this returns: An actual name and status Ready: The table is ready
       // to use, open the table, add it to MEM and return it
       if ("ready".equals(meta.getTextField("status"))) {
         byte[] actualName = meta.getBinaryField("actual");
-        if (actualName == null)
+        if (actualName == null) {
           throw new RuntimeException("Encountered meta data entry of type " +
-              "\"namedTable\" without actual name for table name \"" +
-              name +"\".");
-        OrderedVersionedColumnarTable table =
-            getTableHandle().getTable(actualName);
-        if (table == null)
-          throw new RuntimeException("table handle \"" + getTableHandle()
-              .getName() + "\": getTable returned null for actual table name "
-              + "\"" + new String(actualName) + "\"");
+                                       "\"namedTable\" without actual name for table name \"" +
+                                       name + "\".");
+        }
+        OrderedVersionedColumnarTable table = getTableHandle().getTable(actualName);
+        if (table == null) {
+          throw new RuntimeException("table handle \"" + getTableHandle().getName() + "\": getTable returned null for" +
+                                       " actual table name " + "\"" + new String(actualName) + "\"");
+        }
 
         // update MEM. This can be ordinary put, because even if some other
         // thread updated it in the meantime, it would have put the same table.
-        ImmutablePair<String, String> tableKey = new
-            ImmutablePair<String, String>(context.getAccount(), name);
-        this.namedTables.put(tableKey,
-            new ImmutablePair<byte[], OrderedVersionedColumnarTable>(
-                actualName, table));
+        ImmutablePair<String, String> tableKey = new ImmutablePair<String, String>(context.getAccount(), name);
+        this.namedTables.put(tableKey, new ImmutablePair<byte[], OrderedVersionedColumnarTable>(actualName, table));
         return table;
-      }
-      // An actual name and status Pending: The table is being created. Loop
-      // and repeat MDS read until status is Ready and see previous case
-      else if (!"pending".equals(meta.getTextField("status"))) {
+
+      } else if (!"pending".equals(meta.getTextField("status"))) {
+        // An actual name and status Pending: The table is being created. Loop
+        // and repeat MDS read until status is Ready and see previous case
         throw new RuntimeException("Found meta data entry with unkown status " +
             Objects.toStringHelper(meta.getTextField("status")));
       }
@@ -544,14 +544,12 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_READ_COLUMN_RANGE_NUM_OPS);
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-      this.findRandomTable(context, readColumnRange.getTable());
-    ReadPointer pointer =
-      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
-    OperationResult<Map<byte[], byte[]>> result = table.get(
-      readColumnRange.getKey(), readColumnRange.getStartColumn(),
-      readColumnRange.getStopColumn(), readColumnRange.getLimit(),
-      pointer);
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, readColumnRange.getTable());
+    ReadPointer pointer = transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    OperationResult<Map<byte[], byte[]>> result = table.get(readColumnRange.getKey(),
+                                                            readColumnRange.getStartColumn(),
+                                                            readColumnRange.getStopColumn(),
+                                                            readColumnRange.getLimit(), pointer);
     end(REQ_TYPE_READ_COLUMN_RANGE_LATENCY, begin);
     dataSetMetric_read(readColumnRange.getMetricName());
     return result;
@@ -565,23 +563,28 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_CLEAR_FABRIC_NUM_OPS);
     long begin = begin();
-    if (clearFabric.shouldClearData()) this.randomTable.clear();
+    if (clearFabric.shouldClearData()) {
+      this.randomTable.clear();
+    }
     if (clearFabric.shouldClearTables()) {
-      List<MetaDataEntry> entries = this.metaStore.list(
-          context, context.getAccount(), null, "namedTable", null);
+      List<MetaDataEntry> entries = this.metaStore.list(context, context.getAccount(), null, "namedTable", null);
       for (MetaDataEntry entry : entries) {
         String name = entry.getId();
         OrderedVersionedColumnarTable table = findRandomTable(context, name);
         table.clear();
-        this.namedTables.remove(new ImmutablePair<String,
-            String>(context.getAccount(),name));
-        this.metaStore.delete(context, entry.getAccount(),
-            entry.getApplication(), entry.getType(), entry.getId());
+        this.namedTables.remove(new ImmutablePair<String, String>(context.getAccount(), name));
+        this.metaStore.delete(context, entry.getAccount(), entry.getApplication(), entry.getType(), entry.getId());
       }
     }
-    if (clearFabric.shouldClearMeta()) this.metaTable.clear();
-    if (clearFabric.shouldClearQueues()) this.queueTable.clear();
-    if (clearFabric.shouldClearStreams()) this.streamTable.clear();
+    if (clearFabric.shouldClearMeta()) {
+      this.metaTable.clear();
+    }
+    if (clearFabric.shouldClearQueues()) {
+      this.queueTable.clear();
+    }
+    if (clearFabric.shouldClearStreams()) {
+      this.streamTable.clear();
+    }
     end(REQ_TYPE_CLEAR_FABRIC_LATENCY, begin);
   }
 
@@ -690,24 +693,22 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction.getWriteVersion());
-
+      finalize.execute(getQueueTable(finalize.getQueueName()), transaction);
     }
 
     // emit metrics for the transaction and the queues/streams involved
-    cmetric.meter(
-      METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
+    cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
     // for each queue operation (enqueue or ack)
     for (Undo undo : txResult.getUndos()) {
       if (undo instanceof QueueUndo.QueueUnenqueue) {
-        QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue)undo;
+        QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue) undo;
         QueueProducer producer = unenqueue.producer;
         enqueueMetric(unenqueue.queueName, producer);
         if (isStream(unenqueue.queueName)) {
           streamMetric(unenqueue.queueName, unenqueue.sumOfSizes, unenqueue.numEntries());
         }
       } else if (undo instanceof QueueUndo.QueueUnack) {
-        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)undo;
+        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack) undo;
         QueueConsumer consumer = unack.consumer;
         ackMetric(unack.queueName, consumer);
       }
@@ -775,7 +776,7 @@ public class OmidTransactionalOperationExecutor
     return this.tableHandle;
   }
 
-  static final List<Undo> noUndos = Collections.emptyList();
+  static final List<Undo> NO_UNDOS = Collections.emptyList();
 
   class WriteTransactionResult {
     final boolean success;
@@ -804,7 +805,7 @@ public class OmidTransactionalOperationExecutor
 
     // failure with status code and message, nothing to undo
     WriteTransactionResult(int status, String message) {
-      this(false, status, message, noUndos);
+      this(false, status, message, NO_UNDOS);
     }
   }
 
@@ -815,17 +816,17 @@ public class OmidTransactionalOperationExecutor
       OperationContext context, WriteOperation write,
       Transaction transaction) throws OperationException {
     if (write instanceof Write) {
-      return write(context, (Write)write, transaction);
+      return write(context, (Write) write, transaction);
     } else if (write instanceof Delete) {
-      return write(context, (Delete)write, transaction);
+      return write(context, (Delete) write, transaction);
     } else if (write instanceof Increment) {
-      return write(context, (Increment)write, transaction);
+      return write(context, (Increment) write, transaction);
     } else if (write instanceof CompareAndSwap) {
-      return write(context, (CompareAndSwap)write, transaction);
+      return write(context, (CompareAndSwap) write, transaction);
     } else if (write instanceof QueueEnqueue) {
-      return write((QueueEnqueue)write, transaction);
+      return write((QueueEnqueue) write, transaction);
     } else if (write instanceof QueueAck) {
-      return write((QueueAck)write, transaction);
+      return write((QueueAck) write, transaction);
     }
     return new WriteTransactionResult(StatusCode.INTERNAL_ERROR,
         "Unknown write operation " + write.getClass().getName());
@@ -863,7 +864,7 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_INCREMENT_NUM_OPS);
     long begin = begin();
-    Map<byte[],Long> map;
+    Map<byte[], Long> map;
     try {
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, increment.getTable());
@@ -908,10 +909,9 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_QUEUE_ENQUEUE_NUM_OPS);
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
-                                                                   transaction.getWriteVersion());
-
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(), transaction);
     streamMetaOracle.writeMeta(result.getEntryPointer(), this.streamMetaTable);
+
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
 
     return new WriteTransactionResult(
@@ -926,8 +926,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(),
-                                      transaction.getReadPointer());
+      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), transaction);
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -977,8 +976,7 @@ public class OmidTransactionalOperationExecutor
 
   @Override
   public void execute(OperationContext context, Transaction transaction, QueueAdmin.QueueConfigure configure)
-    throws OperationException
-  {
+    throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
@@ -1018,11 +1016,11 @@ public class OmidTransactionalOperationExecutor
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
     for (Undo undo : undos) {
       if (undo instanceof QueueUndo) {
-        QueueUndo queueUndo = (QueueUndo)undo;
+        QueueUndo queueUndo = (QueueUndo) undo;
         queueUndo.execute(getQueueTable(queueUndo.queueName), transaction);
       }
       if (undo instanceof UndoWrite) {
-        UndoWrite tableUndo = (UndoWrite)undo;
+        UndoWrite tableUndo = (UndoWrite) undo;
         OrderedVersionedColumnarTable table =
             this.findRandomTable(context, tableUndo.getTable());
         if (tableUndo instanceof UndoDelete) {
@@ -1050,10 +1048,12 @@ public class OmidTransactionalOperationExecutor
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {
-    if (Bytes.startsWith(queueName, TTQueue.QUEUE_NAME_PREFIX))
+    if (Bytes.startsWith(queueName, TTQueue.QUEUE_NAME_PREFIX)) {
       return this.queueTable;
-    if (Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX))
+    }
+    if (Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX)) {
       return this.streamTable;
+    }
     // by default, use queue table
     return this.queueTable;
   }

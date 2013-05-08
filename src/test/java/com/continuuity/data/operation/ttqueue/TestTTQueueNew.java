@@ -584,138 +584,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertEquals(0L, actual.getLastEvictTimeInSecs()); // last evict is not encoded
   }
 
-/*  @Override
-  @Test
-  public void testEvictOnAck_ThreeGroups() throws Exception {
-    // Note: for now only consumer with consumerId 0 and groupId 0 can run the evict.
-    TTQueue queue = createQueue();
-    final boolean singleEntry = true;
-    long dirtyVersion = getDirtyWriteVersion();
-    ReadPointer dirtyReadPointer = getDirtyPointer();
-
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, singleEntry);
-    QueueConsumer consumer1 = new QueueConsumer(0, 0, 1, config);
-    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
-    QueueConsumer consumer3 = new QueueConsumer(0, 2, 1, config);
-
-    // enable evict-on-ack for 3 groups
-    int numGroups = 3;
-
-    // enqueue 10 things
-    for (int i=0; i<10; i++) {
-      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), dirtyVersion);
-    }
-
-    // Create consumers for checking if eviction happened
-    QueueConsumer consumerCheck9thPos = new QueueConsumer(0, 3, 1, config);
-    QueueConsumer consumerCheck10thPos = new QueueConsumer(0, 4, 1, config);
-    // Move the consumers to 9th and 10 pos
-    for(int i = 0; i < 8; i++) {
-      DequeueResult result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
-      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
-      queue.ack(result.getEntryPointer(), consumerCheck9thPos, dirtyReadPointer);
-      queue.finalize(result.getEntryPointer(), consumerCheck9thPos, -1, dirtyReadPointer.getMaximum()); // No evict
-    }
-    for(int i = 0; i < 9; i++) {
-      DequeueResult result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
-      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
-      queue.ack(result.getEntryPointer(), consumerCheck10thPos, dirtyReadPointer);
-      queue.finalize(result.getEntryPointer(), consumerCheck10thPos, -1, dirtyReadPointer.getMaximum()); // No evict
-    }
-
-
-    // dequeue/ack/finalize 8 things w/ group1 and numGroups=3
-    for (int i=0; i<8; i++) {
-      DequeueResult result =
-        queue.dequeue(consumer1, dirtyReadPointer);
-      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
-      queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
-      queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
-    }
-
-    // dequeue is not empty, as 9th and 10th entries is still available
-    assertFalse(
-      queue.dequeue(consumer1, dirtyReadPointer).isEmpty());
-
-    // dequeue with consumer2 still has entries (expected)
-    assertFalse(
-      queue.dequeue(consumer2, dirtyReadPointer).isEmpty());
-
-    // dequeue everything with consumer2
-    for (int i=0; i<10; i++) {
-      DequeueResult result =
-        queue.dequeue(consumer2, dirtyReadPointer);
-      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
-      queue.ack(result.getEntryPointer(), consumer2, dirtyReadPointer);
-      queue.finalize(result.getEntryPointer(), consumer2, numGroups, dirtyReadPointer.getMaximum());
-    }
-
-    // dequeue is empty
-    assertTrue(
-      queue.dequeue(consumer2, dirtyReadPointer).isEmpty());
-
-    // dequeue with consumer3 still has entries (expected)
-    assertFalse(
-      queue.dequeue(consumer3, dirtyReadPointer).isEmpty());
-
-    // dequeue everything consumer3
-    for (int i=0; i<10; i++) {
-      DequeueResult result =
-        queue.dequeue(consumer3, dirtyReadPointer);
-      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
-      queue.ack(result.getEntryPointer(), consumer3, dirtyReadPointer);
-      queue.finalize(result.getEntryPointer(), consumer3, numGroups, dirtyReadPointer.getMaximum());
-    }
-
-    // dequeue with consumer3 is empty
-    assertTrue(
-      queue.dequeue(consumer3, dirtyReadPointer).isEmpty());
-
-    // Verify 9th and 10th entries are still present
-    DequeueResult result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
-    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
-    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
-    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
-
-    // dequeue with consumer 1, should get 8 (9th entry)
-    result = queue.dequeue(consumer1, dirtyReadPointer);
-    assertEquals(8, Bytes.toInt(result.getEntry().getData()));
-    queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
-    queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
-
-    // now the first 9 entries should have been physically evicted!
-    // since the 9th entry does not exist anymore, exception will be thrown
-    try {
-    result = queue.dequeue(consumerCheck9thPos, dirtyReadPointer);
-    fail("Dequeue should fail");
-    } catch (OperationException e) {
-      assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
-      result = null;
-    }
-    assertNull(result);
-    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
-    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
-
-    // dequeue with consumer 1, should get 9 (10th entry)
-    result = queue.dequeue(consumer1, dirtyReadPointer);
-    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
-    queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
-    queue.finalize(result.getEntryPointer(), consumer1, numGroups, dirtyReadPointer.getMaximum());
-
-    // Consumer 1 should be empty now
-    assertTrue(queue.dequeue(consumer1, dirtyReadPointer).isEmpty());
-
-    // Now 10th entry should be evicted too!
-    try {
-    result = queue.dequeue(consumerCheck10thPos, dirtyReadPointer);
-    fail("Dequeue should fail");
-    } catch (OperationException e) {
-      assertEquals(StatusCode.INTERNAL_ERROR, e.getStatus());
-      result = null;
-    }
-    assertNull(result);
-  } */
-
   @Test
   public void testSingleConsumerWithHashPartitioning() throws Exception {
     final String HASH_KEY = "hashKey";
@@ -724,13 +592,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = getDirtyWriteVersion();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addHashKey(HASH_KEY, i);
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue it with HASH partitioner
     QueueConfig config = new QueueConfig(PartitionerType.HASH, singleEntry);
@@ -748,7 +616,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + i % numConsumers));
       queueEntry.addHashKey(HASH_KEY, i);
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries);
@@ -761,12 +629,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = getDirtyWriteVersion();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + (i + 1) % numConsumers));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue it with ROUND_ROBIN partitioner
@@ -784,7 +652,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes("value" + (i + 1) % numConsumers));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue and verify
@@ -793,6 +661,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers, int totalEnqueues) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
+
     for (int i = 0; i < numConsumers; i++) {
       for (int j = 0; j < totalEnqueues / (2 * numConsumers); j++) {
         DequeueResult result = queue.dequeue(consumers[i], dirtyReadPointer);
@@ -805,8 +675,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals("value" + i, Bytes.toString(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[i], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyTxn);
 
         // dequeue, should get second value
         result = queue.dequeue(consumers[i], dirtyReadPointer);
@@ -814,8 +684,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals("value" + i, Bytes.toString(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[i], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[i], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[i], -1, dirtyTxn);
       }
 
       // verify queue is empty
@@ -832,13 +702,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = getDirtyWriteVersion();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
       queueEntry.addHashKey(HASH_KEY, i);
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue it with HASH partitioner
     // TODO: test with more batch sizes
@@ -858,7 +728,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
       queueEntry.addHashKey(HASH_KEY, i);
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
     // dequeue and verify
     dequeuePartitionedEntries(queue, consumers, numConsumers, numQueueEntries, numQueueEntries, PartitionerType.HASH);
@@ -872,12 +742,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = getDirtyWriteVersion();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue it with ROUND_ROBIN partitioner
@@ -897,7 +767,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some more entries
     for (int i = numQueueEntries; i < numQueueEntries * 2; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue and verify
@@ -907,6 +777,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
                                          int numQueueEntries, int startQueueEntry, PartitionerType partitionerType) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
         DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
@@ -928,8 +799,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyTxn);
 
         // dequeue, should get second value
         result = queue.dequeue(consumers[consumer], dirtyReadPointer);
@@ -940,8 +811,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyTxn);
       }
 
       // verify queue is empty
@@ -957,12 +828,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    long dirtyVersion = getDirtyWriteVersion();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue it with ROUND_ROBIN partitioner
@@ -983,7 +854,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // enqueue some more entries
     for (int i = numQueueEntries; i < 2 * numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue and verify
@@ -992,7 +863,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Run with stateless QueueConsumer
     for (int i = 2 * numQueueEntries; i < 3 * numQueueEntries; i++) {
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i));
-      assertTrue(queue.enqueue(queueEntry, dirtyVersion).isSuccess());
+      assertTrue(queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     // dequeue and verify
@@ -1003,6 +874,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void dequeueFifoEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers,
                                   int numQueueEntries, int startQueueEntry) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
     int expectedValue = startQueueEntry;
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++, ++expectedValue) {
@@ -1018,8 +890,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyTxn);
 
         // dequeue, should get second value
         result = queue.dequeue(consumers[consumer], dirtyReadPointer);
@@ -1030,8 +902,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         assertEquals(expectedValue, Bytes.toInt(result.getEntry().getData()));
 
         // ack
-        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyReadPointer);
-        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyReadPointer.getMaximum());
+        queue.ack(result.getEntryPointer(), consumers[consumer], dirtyTxn);
+//        queue.finalize(result.getEntryPointer(), consumers[consumer], -1, dirtyTxn);
       }
     }
 
@@ -1048,9 +920,10 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final long groupId = 0;
     final int instanceId = 0;
     final int groupSize = 1;
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
-    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), getDirtyWriteVersion()).isSuccess());
-    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), getDirtyWriteVersion()).isSuccess());
+    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), dirtyTxn).isSuccess());
+    assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), dirtyTxn).isSuccess());
 
     // dequeue it with FIFO partitioner, single entry mode
     QueueConfig config = new QueueConfig(FIFO, true);
@@ -1077,7 +950,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isSuccess());
     assertEquals(2, Bytes.toInt(result.getEntry().getData()));
-    queue.ack(result.getEntryPointer(), statefulQueueConsumer, getDirtyPointer());
+    queue.ack(result.getEntryPointer(), statefulQueueConsumer, dirtyTxn);
 
     result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isEmpty());
@@ -1148,6 +1021,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Random random = new Random(System.currentTimeMillis());
     StringWriter debugCollector = new StringWriter();
     TTQueue queue = createQueue();
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
 
     List<Integer> expectedEntries = Lists.newArrayList();
     // Enqueue numEntries
@@ -1155,7 +1029,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       expectedEntries.add(i + 1);
       QueueEntry queueEntry = new QueueEntry(Bytes.toBytes(i + 1));
       queueEntry.addHashKey(HASH_KEY, i + 1);
-      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, getDirtyWriteVersion()).isSuccess());
+      assertTrue(debugCollector.toString(), queue.enqueue(queueEntry, dirtyTxn).isSuccess());
     }
 
     expectedEntries = ImmutableList.copyOf(expectedEntries);
@@ -1216,8 +1090,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
             ++numDequeuesThisRun;
             actualEntries.add(Bytes.toInt(result.getEntry().getData()));
             actualPrintEntries.add(consumer.getInstanceId() + ":" + Bytes.toInt(result.getEntry().getData()));
-            queue.ack(result.getEntryPointer(), consumer, getDirtyPointer());
-            queue.finalize(result.getEntryPointer(), consumer, 1, getDirtyWriteVersion());
+            queue.ack(result.getEntryPointer(), consumer, dirtyTxn);
+//            queue.finalize(result.getEntryPointer(), consumer, 1, dirtyTxn);
             assertTrue(debugCollector.toString(),
                        condition.check(
                          result.getEntryPointer().getEntryId(),
@@ -1315,6 +1189,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     throws OperationException {
 
     TTQueue queue = createQueue();
+    final int numGroups = 1;
 
     // enqueue 100
     String hashKey = "h";
@@ -1323,7 +1198,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
@@ -1361,8 +1236,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all entries received, and then unack them
     t = oracle.startTransaction();
     QueueEntryPointer[] pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.unack(pointers, consumer, t.getReadPointer());
+    queue.ack(pointers, consumer, t);
+    queue.unack(pointers, consumer, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the same entries
@@ -1379,9 +1254,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all entries received, and then finalize them
     t = oracle.startTransaction();
     pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should now return new ones 32, 34, .. 60
     t = oracle.startTransaction();
@@ -1397,9 +1272,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack 10 + finalize
     t = oracle.startTransaction();
     pointers = Arrays.copyOf(result.getEntryPointers(), 10);
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should return the 5 previous ones again: 52, 54, ..., 60
     t = oracle.startTransaction();
@@ -1415,9 +1290,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack the 5 + finalize
     t = oracle.startTransaction();
     pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should return 15 new ones: 62, ..., 90
     t = oracle.startTransaction();
@@ -1451,9 +1326,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all 12 + finalize
     t = oracle.startTransaction();
     pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 12 again, should return the remaining 3  of previous 15: 86, 88, 90
     t = oracle.startTransaction();
@@ -1469,9 +1344,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all of them + finalize
     t = oracle.startTransaction();
     pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue another 12, should return only 5 remaining: 92, 94, ..., 100
     t = oracle.startTransaction();
@@ -1487,9 +1362,9 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all of them + finalize
     t = oracle.startTransaction();
     pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
+    queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue should return empty
     t = oracle.startTransaction();
@@ -1514,7 +1389,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // we will dequeue with fifo partitioning, two consumers in group, hence returns every other entry
@@ -1555,7 +1430,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     t = oracle.startTransaction();
     QueueEntryPointer[] pointers = result1.getEntryPointers();
     try {
-      queue.ack(pointers, consumer2, t.getReadPointer());
+      queue.ack(pointers, consumer2, t);
       fail("ack sould have failed due to wrong consumer");
     } catch (OperationException e) {
       // expect ILLEGAL_ACK
@@ -1579,8 +1454,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all entries received, and then unack them
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.unack(pointers, consumer1, t.getReadPointer());
+    queue.ack(pointers, consumer1, t);
+    queue.unack(pointers, consumer1, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the same entries
@@ -1597,8 +1472,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all entries received, and then finalize them
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should now return new ones 31, 32, .. 45
@@ -1615,8 +1490,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack 10 + finalize
     t = oracle.startTransaction();
     pointers = Arrays.copyOf(result1.getEntryPointers(), 10);
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the 5 previous ones again: 41, 42, ..., 45
@@ -1633,8 +1508,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack the 5 + finalize
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return 15 new ones: 46, ..., 60
@@ -1683,11 +1558,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all 12 + finalize
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     pointers = result2.getEntryPointers();
-    queue.ack(pointers, consumer2, t.getReadPointer());
-    queue.finalize(pointers, consumer2, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer2, t);
+    queue.finalize(pointers, consumer2, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 12 again, should return the remaining 3  of previous 15: 58, 59, 60
@@ -1715,11 +1590,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack all of them + finalize
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     pointers = result2.getEntryPointers();
-    queue.ack(pointers, consumer2, t.getReadPointer());
-    queue.finalize(pointers, consumer2, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer2, t);
+    queue.finalize(pointers, consumer2, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue another 12, should return some (around 5) of the 15 remaining: 61, 62, ...
@@ -1751,7 +1626,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
@@ -1787,14 +1662,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack second 15 + finalize
     t = oracle.startTransaction();
     QueueEntryPointer[] pointers = result.getEntryPointers();
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
+    queue.finalize(pointers, consumer, 2, t);
     oracle.commitTransaction(t);
 
     // ack second 15 again -> error
     t = oracle.startTransaction();
     try {
-      queue.ack(pointers, consumer, t.getReadPointer());
+      queue.ack(pointers, consumer, t);
       fail("acking for the second time should fail");
     } catch (OperationException e) {
       // expect ILLEGAL_ACK
@@ -1818,8 +1693,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack first 10
     t = oracle.startTransaction();
     pointers = Arrays.copyOf(result.getEntryPointers(), 10);
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
+    queue.finalize(pointers, consumer, 2, t);
     oracle.commitTransaction(t);
 
     // start new consumer (simulate crash)
@@ -1876,8 +1751,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     t = oracle.startTransaction();
     pointers = Arrays.copyOf(pointers1, pointers1.length + 5);
     System.arraycopy(pointers2, 0, pointers, pointers1.length, 5);
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
+    queue.finalize(pointers, consumer, 2, t);
     oracle.commitTransaction(t);
 
     // ack 81 .. 99
@@ -1885,8 +1760,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // note pointers will be out of order
     pointers = Arrays.copyOf(pointers3, pointers3.length + 5);
     System.arraycopy(pointers2, 5, pointers, pointers3.length, 5);
-    queue.ack(pointers, consumer, t.getReadPointer());
-    queue.finalize(pointers, consumer, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer, t);
+    queue.finalize(pointers, consumer, 2, t);
     oracle.commitTransaction(t);
 
     // new consumer
@@ -1913,7 +1788,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // we will dequeue with the given partitioning, two consumers in group, hence returns every other entry
@@ -1962,7 +1837,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     t = oracle.startTransaction();
     QueueEntryPointer[] pointers = result1.getEntryPointers();
     try {
-      queue.ack(pointers, consumer2, t.getReadPointer());
+      queue.ack(pointers, consumer2, t);
       fail("acking with wrong consumer should fail");
     } catch (OperationException e) {
       // expect ILLEGAL_ACK
@@ -1974,14 +1849,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // ack second batch with first consumer -> ok
     t = oracle.startTransaction();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // ack second batch again -> error
     t = oracle.startTransaction();
     try {
-      queue.ack(pointers, consumer1, t.getReadPointer());
+      queue.ack(pointers, consumer1, t);
       fail("acking for the second time should fail");
     } catch (OperationException e) {
       // expect ILLEGAL_ACK
@@ -2009,8 +1884,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack these 10
     t = oracle.startTransaction();
     pointers = result1.getEntryPointers();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 10 with first consumer 11 .. 15
@@ -2050,8 +1925,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // ack previous 15 from first consumer at once
     t = oracle.startTransaction();
-    queue.ack(pointers, consumer1, t.getReadPointer());
-    queue.finalize(pointers, consumer1, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer1, t);
+    queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     pointers = Arrays.copyOf(result2.getEntryPointers(), 30);
@@ -2069,8 +1944,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // ack last two batches with second consumer
     System.arraycopy(result2.getEntryPointers(), 0, pointers, 15, 15);
     t = oracle.startTransaction();
-    queue.ack(pointers, consumer2, t.getReadPointer());
-    queue.finalize(pointers, consumer2, 2, t.getWriteVersion());
+    queue.ack(pointers, consumer2, t);
+    queue.finalize(pointers, consumer2, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 10 with first consumer 86 .. ?, less than 10 (only 15 left in queue)
@@ -2103,7 +1978,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i + 100));
     }
     t = oracle.startTransaction();
-    queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 with second -> 15
@@ -2132,8 +2007,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1].addHashKey("p", i);
     }
     Transaction t = oracle.startTransaction();
-    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
-    queue.invalidate(Arrays.copyOfRange(enqResult.getEntryPointers(), 5, 15), t.getWriteVersion());
+    EnqueueResult enqResult = queue.enqueue(entries, t);
+    queue.invalidate(Arrays.copyOfRange(enqResult.getEntryPointers(), 5, 15), t);
     oracle.commitTransaction(t);
 
     long groupId = 0;
@@ -2169,8 +2044,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       }
       numDequeued += result.getEntries().length;
       t = oracle.startTransaction();
-      queue.ack(result.getEntryPointers(), consumer, t.getReadPointer());
-      queue.finalize(result.getEntryPointers(), consumer, 1, t.getWriteVersion());
+      queue.ack(result.getEntryPointers(), consumer, t);
+      queue.finalize(result.getEntryPointers(), consumer, 1, t);
       oracle.commitTransaction(t);
     }
     int expected = partitioner == FIFO ? 10 : 5;
@@ -2188,7 +2063,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     QueueConfig config = new QueueConfig(HASH, false, 4, true);
@@ -2211,8 +2086,8 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         allEmpty = false;
         numDequeued += result.getEntries().length;
         t = oracle.startTransaction();
-        queue.ack(result.getEntryPointers(), consumer, t.getReadPointer());
-        queue.finalize(result.getEntryPointers(), consumer, 1, t.getWriteVersion());
+        queue.ack(result.getEntryPointers(), consumer, t);
+        queue.finalize(result.getEntryPointers(), consumer, 1, t);
         oracle.commitTransaction(t);
       }
     } while (!allEmpty);
@@ -2232,7 +2107,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
     Transaction t = oracle.startTransaction();
-    EnqueueResult enqResult = queue.enqueue(entries, t.getWriteVersion());
+    queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     QueueConfig config = new QueueConfig(FIFO, true, 20, true);

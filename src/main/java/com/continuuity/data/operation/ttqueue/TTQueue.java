@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Iterator;
@@ -23,31 +24,32 @@ public interface TTQueue {
    * Inserts an entry into the tail of the queue using the specified write
    * version.
    * @param entry the queue entry to be inserted into the queue
+   * @param transaction transaction pointer
    * @return return enqueue result that contains the entry pointer of the new queue entry
    * @throws OperationException if unsuccessful
    */
-  public EnqueueResult enqueue(QueueEntry entry, long writeVersion)
+  public EnqueueResult enqueue(QueueEntry entry, Transaction transaction)
     throws OperationException;
 
   /**
    * Inserts a batch of entries into the tail of the queue using the specified write
    * version.
    * @param entries the queue entries to be inserted into the queue
+   * @param transaction transaction pointer
    * @return return enqueue result that contains the entry pointers of the new queue entries
    * @throws OperationException if unsuccessful
    */
-  public EnqueueResult enqueue(QueueEntry [] entries, long writeVersion)
+  public EnqueueResult enqueue(QueueEntry[] entries, Transaction transaction)
     throws OperationException;
 
   /**
    * Invalidates a batch of entries that were enqueued into the queue.  This is used only
    * as part of a transaction rollback.
    * @param entryPointers the entry pointers of the entries to invalidate
-   * @param writeVersion version entries were written with and version invalidated
-   *                     entries will be written with
+   * @param transaction transaction pointer
    * @throws OperationException if unsuccessful
    */
-  public void invalidate(QueueEntryPointer [] entryPointers, long writeVersion) throws OperationException;
+  public void invalidate(QueueEntryPointer[] entryPointers, Transaction transaction) throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -64,7 +66,7 @@ public interface TTQueue {
    * that is acknowledging is allowed to do so, false if not.
    * @throws OperationException if unsuccessful
    */
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, Transaction transaction)
     throws OperationException;
 
   /**
@@ -72,31 +74,33 @@ public interface TTQueue {
    * that is acknowledging is allowed to do so, false if not.
    * @throws OperationException if unsuccessful
    */
-  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException;
 
   /**
    * Finalizes a batch of acks.
    * @param totalNumGroups total number of groups to use when doing evict-on-ack or -1 to disable
+   * @param transaction transaction pointer
    * @throws OperationException if unsuccessful
    */
-  public void finalize(QueueEntryPointer [] entryPointers,
-                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
+  public void finalize(QueueEntryPointer[] entryPointers, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException;
 
   /**
    * Finalizes an ack.
    * @param totalNumGroups total number of groups to use when doing evict-on-ack or -1 to disable
+   * @param transaction transaction pointer
    * @throws OperationException if unsuccessful
    */
   // TODO remove this
-  public void finalize(QueueEntryPointer entryPointer,
-                       QueueConsumer consumer, int totalNumGroups, long writePoint) throws OperationException;
+  public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups,
+                       Transaction transaction) throws OperationException;
 
   /**
    * Unacknowledges a previously acknowledge batch of acks ack.
    * @throws OperationException if unsuccessful
    */
-  void unack(QueueEntryPointer [] entryPointers, QueueConsumer consumer, ReadPointer readPointer)
+  void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException;
 
   /**

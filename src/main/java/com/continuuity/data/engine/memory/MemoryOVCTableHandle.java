@@ -7,6 +7,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 
+/**
+ * This is an in-memory implementation of the table handle.
+ */
 public class MemoryOVCTableHandle extends SimpleOVCTableHandle {
   
   @Override

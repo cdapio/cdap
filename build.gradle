@@ -54,6 +54,12 @@ test {
     jvmArgs '-Xmx2048m'
 }
 
+checkstyleMain {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+    }
+}
+
 /**
  * Exclude any config xml from jar task
  */

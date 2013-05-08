@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.executor.Transaction;
 
 /**
 *
@@ -23,7 +24,8 @@ public class QueueFinalize {
     return queueName;
   }
 
-  public void execute(TTQueueTable queueTable, long writePoint) throws OperationException {
-    queueTable.finalize(queueName, entryPointers, consumer, totalNumGroups, writePoint);
+  public void execute(TTQueueTable queueTable, Transaction transaction)
+    throws OperationException {
+    queueTable.finalize(queueName, entryPointers, consumer, totalNumGroups, transaction);
   }
 }

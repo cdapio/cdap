@@ -40,17 +40,15 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 /**
  * Implementation of an OVCTable over a LevelDB Database.
  */
-public class LevelDBOVCTable
-implements OrderedVersionedColumnarTable {
+public class LevelDBOVCTable implements OrderedVersionedColumnarTable {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(LevelDBOVCTable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBOVCTable.class);
 
   private static final String dbFilePrefix = "ldb_";
 
-  private static final byte [] FAMILY = new byte [] { 'f' };
-  
-  private static final byte [] NULL_VAL = new byte [0];
+  private static final byte[] FAMILY = new byte[]{'f'};
+
+  private static final byte[] NULL_VAL = new byte[0];
 
   private final String basePath;
 
@@ -68,8 +66,7 @@ implements OrderedVersionedColumnarTable {
   // create a new lock. Therefore we always use validLock() to obtain a lock.
   private final RowLockTable locks = new RowLockTable();
 
-  LevelDBOVCTable(final String basePath, final String tableName,
-                  final Integer blockSize, final Long cacheSize) {
+  LevelDBOVCTable(final String basePath, final String tableName, final Integer blockSize, final Long cacheSize) {
     this.basePath = basePath;
     this.blockSize = blockSize;
     this.cacheSize = cacheSize;
@@ -83,11 +80,10 @@ implements OrderedVersionedColumnarTable {
 
   private String generateDBPath() {
     return basePath + System.getProperty("file.separator") +
-        dbFilePrefix + encodedTableName;
+      dbFilePrefix + encodedTableName;
   }
 
-  private Options generateDBOptions(boolean createIfMissing,
-                                    boolean errorIfExists) {
+  private Options generateDBOptions(boolean createIfMissing, boolean errorIfExists) {
     Options options = new Options();
     options.createIfMissing(createIfMissing);
     options.errorIfExists(errorIfExists);
@@ -99,8 +95,7 @@ implements OrderedVersionedColumnarTable {
 
   synchronized boolean openTable() throws OperationException {
     try {
-      this.db = factory.open(new File(generateDBPath()),
-          generateDBOptions(false, false));
+      this.db = factory.open(new File(generateDBPath()), generateDBOptions(false, false));
       return true;
     } catch (IOException e) {
       return false;
@@ -109,13 +104,15 @@ implements OrderedVersionedColumnarTable {
 
   synchronized void initializeTable() throws OperationException {
     try {
-      this.db = factory.open(new File(generateDBPath()),
-          generateDBOptions(true, false));
+      this.db = factory.open(new File(generateDBPath()), generateDBOptions(true, false));
     } catch (IOException e) {
       throw createOperationException(e, "create");
     }
   }
 
+  /**
+   * A comparator for the keys of HBase key/value pairs.
+   */
   public static class KeyValueDBComparator implements DBComparator {
 
     @Override
@@ -137,55 +134,45 @@ implements OrderedVersionedColumnarTable {
     public String name() {
       return "hbase-kv";
     }
-    
+
   }
 
   // LevelDB specific helpers
 
-  private byte [] createStartKey(byte [] row) {
-    return new KeyValue(
-        row, FAMILY, null, HConstants.LATEST_TIMESTAMP, Type.Maximum)
-        .getKey();
+  private byte[] createStartKey(byte[] row) {
+    return new KeyValue(row, FAMILY, null, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte [] createStartKey(byte [] row, byte [] column) {
-    return new KeyValue(
-        row, FAMILY, column, HConstants.LATEST_TIMESTAMP, Type.Maximum)
-        .getKey();
+  private byte[] createStartKey(byte[] row, byte[] column) {
+    return new KeyValue(row, FAMILY, column, HConstants.LATEST_TIMESTAMP, Type.Maximum).getKey();
   }
 
-  private byte [] createEndKey(byte [] row) {
-    return new KeyValue(
-        row, null, null, HConstants.LATEST_TIMESTAMP, Type.Minimum)
-        .getKey();
+  private byte[] createEndKey(byte[] row) {
+    return new KeyValue(row, null, null, HConstants.LATEST_TIMESTAMP, Type.Minimum).getKey();
   }
 
-  private byte [] createEndKey(byte [] row, byte [] column) {
-    return new KeyValue(
-        row, FAMILY, column, 0L, Type.Minimum)
-        .getKey();
+  private byte[] createEndKey(byte[] row, byte[] column) {
+    return new KeyValue(row, FAMILY, column, 0L, Type.Minimum).getKey();
   }
 
   private byte[] appendByte(final byte[] value, byte b) {
-    byte[] newValue = new byte[value.length+1];
+    byte[] newValue = new byte[value.length + 1];
     System.arraycopy(value, 0, newValue, 0, value.length);
     newValue[value.length] = b;
     return newValue;
   }
 
-  private KeyValue readKeyValueRangeAndGetLatest(byte [] row,
-                                                 byte [] column,
-                                                 ReadPointer readPointer)
+  private KeyValue readKeyValueRangeAndGetLatest(byte[] row, byte[] column, ReadPointer readPointer)
     throws DBException, IOException {
     DBIterator iterator = db.iterator();
     try {
-      byte [] startKey = createStartKey(row, column);
-      byte [] endKey = createEndKey(row, column);
+      byte[] startKey = createStartKey(row, column);
+      byte[] endKey = createEndKey(row, column);
       long lastDelete = -1;
       long undeleted = -1;
       for (iterator.seek(startKey); iterator.hasNext(); iterator.next()) {
-        byte [] key = iterator.peekNext().getKey();
-        byte [] value = iterator.peekNext().getValue();
+        byte[] key = iterator.peekNext().getKey();
+        byte[] value = iterator.peekNext().getValue();
         // If we have reached past the endKey, nothing was found, return null
 
         if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
@@ -223,33 +210,30 @@ implements OrderedVersionedColumnarTable {
     return null;
   }
 
-  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
-                                                            ReadPointer readPointer)
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row, ReadPointer readPointer)
     throws DBException, IOException {
     return readKeyValueRangeAndGetLatest(row, null, null, readPointer, -1);
   }
 
-  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
-                                                            byte[][] columns,
-                                                            ReadPointer readPointer)
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row, byte[][] columns, ReadPointer readPointer)
     throws DBException, IOException {
-    Map<byte[],byte[]>  map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
-    byte [][] orderedColumns = Arrays.copyOf(columns, columns.length);
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    byte[][] orderedColumns = Arrays.copyOf(columns, columns.length);
     Arrays.sort(orderedColumns, Bytes.BYTES_COMPARATOR);
-    byte [] startKey = createStartKey(row, orderedColumns[0]);
-    byte [] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
+    byte[] startKey = createStartKey(row, orderedColumns[0]);
+    byte[] endKey = createEndKey(row, orderedColumns[columns.length - 1]);
     DBIterator iterator = db.iterator();
-    int colIdx=0;
+    int colIdx = 0;
     long lastDelete = -1;
     long undeleted = -1;
 
     try {
       for (iterator.seek(startKey); iterator.hasNext(); ) {
-        byte [] key = iterator.peekNext().getKey();
-        byte [] value = iterator.peekNext().getValue();
+        byte[] key = iterator.peekNext().getKey();
+        byte[] value = iterator.peekNext().getValue();
         // If we have reached past the endKey, nothing was found, return null
 
-        if ( KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
+        if (KeyValue.KEY_COMPARATOR.compare(key, endKey) >= 0) {
           return map;
         }
         KeyValue kv = createKeyValue(key, value);
@@ -272,7 +256,7 @@ implements OrderedVersionedColumnarTable {
         } else if (type == Type.DeleteColumn) {
           //delete of entire column (all cells)
           if (undeleted != curVersion) {
-            if (colIdx == orderedColumns.length-1) {
+            if (colIdx == orderedColumns.length - 1) {
               break;
             }
             iterator.seek(createStartKey(row, orderedColumns[++colIdx]));
@@ -283,7 +267,7 @@ implements OrderedVersionedColumnarTable {
           if (curVersion != lastDelete) {
             // If we get here, this version is visible
             map.put(kv.getQualifier(), kv.getValue());
-            if (colIdx == orderedColumns.length-1) {
+            if (colIdx == orderedColumns.length - 1) {
               break;
             }
             iterator.seek(createStartKey(row, orderedColumns[++colIdx]));
@@ -298,35 +282,32 @@ implements OrderedVersionedColumnarTable {
     return map;
   }
 
-  private byte[] getNextLexicographicalQualifier(byte [] qualifier) {
+  private byte[] getNextLexicographicalQualifier(byte[] qualifier) {
     //appending 0x00 to current qualifier gives you next possible lexicographical
     return appendByte(qualifier, (byte) 0x00);
   }
 
-  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row,
-                                                            byte[] startColumn,
-                                                            byte[] stopColumn,
-                                                            ReadPointer readPointer,
-                                                            int limit)
+  private Map<byte[], byte[]> readKeyValueRangeAndGetLatest(byte[] row, byte[] startColumn, byte[] stopColumn,
+                                                            ReadPointer readPointer, int limit)
     throws DBException, IOException {
     // negative limit means unlimited results
-    if (limit <= 0) limit = Integer.MAX_VALUE;
+    if (limit <= 0) {
+      limit = Integer.MAX_VALUE;
+    }
 
-    byte [] startKey = startColumn == null ?
-      createStartKey(row) : createStartKey(row, startColumn);
-    byte [] endKey = stopColumn == null ?
-      createEndKey(row) : createEndKey(row, stopColumn);
+    byte[] startKey = startColumn == null ? createStartKey(row) : createStartKey(row, startColumn);
+    byte[] endKey = stopColumn == null ? createEndKey(row) : createEndKey(row, stopColumn);
 
-    Map<byte[], byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     DBIterator iterator = db.iterator();
-    byte[] prevColumn=null;
+    byte[] prevColumn = null;
     long lastDelete = -1;
     long undeleted = -1;
 
     try {
       for (iterator.seek(startKey); iterator.hasNext(); ) {
-        byte [] key = iterator.peekNext().getKey();
-        byte [] value = iterator.peekNext().getValue();
+        byte[] key = iterator.peekNext().getKey();
+        byte[] value = iterator.peekNext().getValue();
         // If we have reached past the endKey, nothing was found, return null
         KeyValue kv = createKeyValue(key, value);
         long curVersion = kv.getTimestamp();
@@ -364,7 +345,7 @@ implements OrderedVersionedColumnarTable {
           }
           prevColumn = null;
         } else if (type == Type.Put) {
-          if ( (curVersion == lastDelete) && (Bytes.equals(prevColumn, curColumn)) ) {
+          if ((curVersion == lastDelete) && (Bytes.equals(prevColumn, curColumn))) {
             prevColumn = curColumn;
             iterator.next();
           } else {
@@ -389,7 +370,7 @@ implements OrderedVersionedColumnarTable {
 
   private KeyValue createKeyValue(byte[] key, byte[] value) {
     int len = key.length + value.length + (2 * Bytes.SIZEOF_INT);
-    byte [] kvBytes = new byte[len];
+    byte[] kvBytes = new byte[len];
     int pos = 0;
     pos = Bytes.putInt(kvBytes, pos, key.length);
     pos = Bytes.putInt(kvBytes, pos, value.length);
@@ -414,29 +395,28 @@ implements OrderedVersionedColumnarTable {
   // Simple Write Operations
 
   @Override
-  public void put(byte[] row, byte[] column, long version, byte[] value)
-      throws OperationException {
+  public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
     performInsert(row, column, version, Type.Put, value);
   }
 
   @Override
-  public void put(byte[] row, byte[][] columns, long version, byte[][] values)
-      throws OperationException {
+  public void put(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
     performInsert(row, columns, version, Type.Put, values);
   }
 
   @Override
   public void put(byte[][] rows, byte[][] columns, long version, byte[][] values) throws OperationException {
-    assert(rows.length == columns.length);
-    assert(rows.length == values.length);
+    assert (rows.length == columns.length);
+    assert (rows.length == values.length);
 
-    for(int i = 0; i < rows.length; ++i) {
+    for (int i = 0; i < rows.length; ++i) {
       performInsert(rows[i], columns[i], version, Type.Put, values[i]);
     }
   }
 
   @Override
-  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+    throws OperationException {
     for (int i = 0; i < rows.length; i++) {
       performInsert(rows[i], columnsPerRow[i], version, Type.Put, valuesPerRow[i]);
     }
@@ -445,34 +425,27 @@ implements OrderedVersionedColumnarTable {
 // Delete Operations
 
   @Override
-  public void delete(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void delete(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.Delete, NULL_VAL);
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns, long version)
-      throws OperationException {
-    performInsert(row, columns, version, Type.Delete,
-        generateDeleteVals(columns.length));
+  public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.Delete, generateDeleteVals(columns.length));
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void deleteAll(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.DeleteColumn, NULL_VAL);
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[][] columns, long version)
-      throws OperationException {
-    performInsert(row, columns, version, Type.DeleteColumn,
-        generateDeleteVals(columns.length));
+  public void deleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.DeleteColumn, generateDeleteVals(columns.length));
   }
 
   @Override
-  public void deleteDirty(byte[] row, byte[][] columns, long version)
-    throws OperationException {
+  public void deleteDirty(byte[] row, byte[][] columns, long version) throws OperationException {
     deleteAll(row, columns, version);
   }
 
@@ -498,21 +471,20 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.UndeleteColumn, NULL_VAL);
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[][] columns, long version)
-      throws OperationException {
-    performInsert(row, columns, version, Type.UndeleteColumn,
-        generateDeleteVals(columns.length));
+  public void undeleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.UndeleteColumn, generateDeleteVals(columns.length));
   }
 
   private byte[][] generateDeleteVals(int length) {
-    byte [][] values = new byte[length][];
-    for (int i=0;i<values.length;i++) values[i] = NULL_VAL;
+    byte[][] values = new byte[length][];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = NULL_VAL;
+    }
     return values;
   }
 
@@ -520,11 +492,10 @@ implements OrderedVersionedColumnarTable {
   // Read Operations
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, ReadPointer readPointer) throws OperationException {
     try {
       Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, readPointer);
-      if(latest.isEmpty()) {
+      if (latest.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(latest);
@@ -534,38 +505,31 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<byte[]>
-  get(byte[] row, byte[] column, ReadPointer readPointer)
-      throws OperationException {
-    OperationResult<ImmutablePair<byte[], Long>> res =
-        getWithVersion(row, column, readPointer);
-    if (res.isEmpty())
+  public OperationResult<byte[]> get(byte[] row, byte[] column, ReadPointer readPointer) throws OperationException {
+    OperationResult<ImmutablePair<byte[], Long>> res = getWithVersion(row, column, readPointer);
+    if (res.isEmpty()) {
       return new OperationResult<byte[]>(res.getStatus(), res.getMessage());
-    else
+    } else {
       return new OperationResult<byte[]>(res.getValue().getFirst());
+    }
   }
 
   @Override
-  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
-    throws OperationException {
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column) throws OperationException {
     return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
   }
 
   @Override
-  public OperationResult<ImmutablePair<byte[], Long>>
-  getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
-      throws OperationException {
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
+    throws OperationException {
     try {
-      KeyValue latest = readKeyValueRangeAndGetLatest(row, column,
-                                                      readPointer);
+      KeyValue latest = readKeyValueRangeAndGetLatest(row, column, readPointer);
       if (latest == null) {
-        return new OperationResult<ImmutablePair<byte[], Long>>(
-          StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<ImmutablePair<byte[], Long>>(StatusCode.COLUMN_NOT_FOUND);
       }
 
-      return new OperationResult<ImmutablePair<byte[], Long>>(
-          new ImmutablePair<byte[],Long>(
-              latest.getValue(), latest.getTimestamp()));
+      return new OperationResult<ImmutablePair<byte[], Long>>(new ImmutablePair<byte[], Long>(latest.getValue(),
+                                                                                              latest.getTimestamp()));
 
     } catch (IOException e) {
       throw createOperationException(e, "get");
@@ -573,16 +537,14 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, final byte[] startColumn, final byte[] stopColumn, int limit,
-      ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, final byte[] startColumn, final byte[] stopColumn,
+                                                  int limit, ReadPointer readPointer)
+    throws OperationException {
     try {
-      Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, startColumn, stopColumn,
-                                                                 readPointer, limit);
+      Map<byte[], byte[]> latest = readKeyValueRangeAndGetLatest(row, startColumn, stopColumn, readPointer, limit);
 
       if (latest == null || latest.isEmpty()) {
-        return new OperationResult<Map<byte[], byte[]>>(
-          StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(latest);
     } catch (IOException e) {
@@ -591,16 +553,14 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[][] columns, ReadPointer readPointer)
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns, ReadPointer readPointer)
     throws OperationException {
     try {
       Map<byte[], byte[]> map = readKeyValueRangeAndGetLatest(row, columns, readPointer);
 
       if (map == null || map.isEmpty()) {
 
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(map);
     } catch (IOException e) {
@@ -609,7 +569,9 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns,
+                                                                         ReadPointer readPointer)
+    throws OperationException {
     // TODO: can the below algorithm be improved by doing something like a scan of rows instead of point lookups?
     Map<byte[], Map<byte[], byte[]>> retMap = new TreeMap<byte[], Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     try {
@@ -622,7 +584,7 @@ implements OrderedVersionedColumnarTable {
       // Remove empty rows
       Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> iterator = retMap.entrySet().iterator();
       while (iterator.hasNext()) {
-        if(iterator.next().getValue().isEmpty()) {
+        if (iterator.next().getValue().isEmpty()) {
           iterator.remove();
         }
       }
@@ -639,33 +601,36 @@ implements OrderedVersionedColumnarTable {
   // Scan Operations
 
   @Override
-  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer)
-      throws OperationException {
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) throws OperationException {
     DBIterator iterator = db.iterator();
 
     try {
       List<KeyValue> kvs = new ArrayList<KeyValue>();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-        byte [] key = iterator.peekNext().getKey();
-        byte [] value = iterator.peekNext().getValue();
+        byte[] key = iterator.peekNext().getKey();
+        byte[] value = iterator.peekNext().getValue();
         kvs.add(createKeyValue(key, value));
       }
-      
+
       List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
       int returned = 0;
       int skipped = 0;
       long lastDelete = -1;
       long undeleted = -1;
-      byte [] lastRow = new byte[0];
-      byte [] curRow = new byte[0];
-      byte [] curCol = new byte [0];
-      byte [] lastCol = new byte [0];
+      byte[] lastRow = new byte[0];
+      byte[] curRow = new byte[0];
+      byte[] curCol = new byte[0];
+      byte[] lastCol = new byte[0];
       for (KeyValue kv : kvs) {
-        if (returned >= limit) break;
+        if (returned >= limit) {
+          break;
+        }
 
         // See if we already included this row
-        byte [] row = kv.getRow();
-        if (Bytes.equals(lastRow, row)) continue;
+        byte[] row = kv.getRow();
+        if (Bytes.equals(lastRow, row)) {
+          continue;
+        }
 
         // See if this is a new row (clear col/del tracking if so)
         if (!Bytes.equals(curRow, row)) {
@@ -679,9 +644,11 @@ implements OrderedVersionedColumnarTable {
         // Check visibility of this entry
         long curVersion = kv.getTimestamp();
         // Check if this entry is visible, skip if not
-        if (!readPointer.isVisible(curVersion)) continue;
+        if (!readPointer.isVisible(curVersion)) {
+          continue;
+        }
 
-        byte [] column = kv.getQualifier();
+        byte[] column = kv.getQualifier();
         // Check if this column has been completely deleted
         if (Bytes.equals(lastCol, column)) {
           continue;
@@ -699,8 +666,9 @@ implements OrderedVersionedColumnarTable {
           continue;
         }
         if (type == Type.DeleteColumn) {
-          if (undeleted == curVersion) continue;
-          else {
+          if (undeleted == curVersion) {
+            continue;
+          } else {
             // The rest of this column has been deleted, act like we returned it
             lastCol = column;
             continue;
@@ -710,7 +678,9 @@ implements OrderedVersionedColumnarTable {
           lastDelete = curVersion;
           continue;
         }
-        if (curVersion == lastDelete) continue;
+        if (curVersion == lastDelete) {
+          continue;
+        }
         // Column is valid, therefore row is valid, add row
         lastRow = row;
         if (skipped < offset) {
@@ -736,8 +706,7 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns,
-      ReadPointer readPointer) {
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
@@ -748,8 +717,8 @@ implements OrderedVersionedColumnarTable {
 
   // Private Helper Methods
 
-  private void performInsert(byte [] row, byte [] column,
-      long version,Type type, byte [] value) throws OperationException {
+  private void performInsert(byte[] row, byte[] column, long version, Type type, byte[] value)
+    throws OperationException {
     KeyValue kv = new KeyValue(row, FAMILY, column, version, type, value);
     try {
       WriteOptions options = new WriteOptions();
@@ -760,41 +729,40 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  private void performInsert(byte [] row, byte [][] columns,
-      long version, Type type, byte [][] values) throws OperationException {
-    for (int i=0; i<columns.length; i++) {
+  private void performInsert(byte[] row, byte[][] columns, long version, Type type, byte[][] values)
+    throws OperationException {
+    for (int i = 0; i < columns.length; i++) {
       performInsert(row, columns[i], version, type, values[i]);
     }
   }
 
   /**
-   * Result has (column, version, kvtype, id, value)
+   * Result has (column, version, kvtype, id, value).
+   *
    * @throws DBException
    */
 
   // Read-Modify-Write Operations
-
-  private long internalIncrement(byte[] row, byte[] column, long amount, ReadPointer readPointer,
-                                 long writeVersion) throws OperationException {
+  private long internalIncrement(byte[] row, byte[] column, long amount, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     long newAmount = amount;
     // Read existing value
     OperationResult<byte[]> readResult = get(row, column, readPointer);
     if (!readResult.isEmpty()) {
       try {
         newAmount += Bytes.toLong(readResult.getValue());
-      } catch(IllegalArgumentException e) {
+      } catch (IllegalArgumentException e) {
         throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
       }
     }
     // Write new value
-    performInsert(row, column, writeVersion, Type.Put,
-                  Bytes.toBytes(newAmount));
+    performInsert(row, column, writeVersion, Type.Put, Bytes.toBytes(newAmount));
     return newAmount;
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) throws OperationException {
+  public long increment(byte[] row, byte[] column, long amount, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     RowLockTable.Row r = new RowLockTable.Row(row);
     this.locks.validLock(r);
     long newAmount;
@@ -807,16 +775,15 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
-      long[] amounts, ReadPointer readPointer, long writeVersion)
-      throws OperationException {
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer,
+                                     long writeVersion)
+    throws OperationException {
     RowLockTable.Row r = new RowLockTable.Row(row);
     this.locks.validLock(r);
-    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    Map<byte[], Long> ret = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
     try {
-      for (int i=0; i<columns.length; i++) {
-        ret.put(columns[i], internalIncrement(row, columns[i], amounts[i],
-            readPointer, writeVersion));
+      for (int i = 0; i < columns.length; i++) {
+        ret.put(columns[i], internalIncrement(row, columns[i], amounts[i], readPointer, writeVersion));
       }
     } finally {
       this.locks.unlockAndRemove(r);
@@ -825,30 +792,29 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
-      throws OperationException {
+  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
     return increment(row, column, amount, TransactionOracle.DIRTY_READ_POINTER, TransactionOracle.DIRTY_WRITE_VERSION);
   }
 
   @Override
-  public void compareAndSwap(byte[] row, byte[] column,
-      byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
-      long writeVersion) throws OperationException {
+  public void compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue,
+                             ReadPointer readPointer, long writeVersion)
+    throws OperationException {
 
     RowLockTable.Row r = new RowLockTable.Row(row);
     this.locks.validLock(r);
     try {
       // Read existing value
       OperationResult<byte[]> readResult = get(row, column, readPointer);
-      byte [] existingValue = readResult.getValue();
+      byte[] existingValue = readResult.getValue();
 
       // Handle cases regarding non-existent values
-      if (existingValue == null && expectedValue != null)
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
-      if (existingValue != null && expectedValue == null)
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
+      if (existingValue == null && expectedValue != null) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
+      if (existingValue != null && expectedValue == null) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
 
       // if nothing existed, write data
       if (expectedValue == null) {
@@ -857,9 +823,9 @@ implements OrderedVersionedColumnarTable {
       }
 
       // check if expected == existing, fail if not
-      if (!Bytes.equals(expectedValue, existingValue))
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
+      if (!Bytes.equals(expectedValue, existingValue)) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
 
       // if newValue is null, just delete.
       if (newValue == null) {
@@ -882,9 +848,9 @@ implements OrderedVersionedColumnarTable {
     try {
       // Read existing value
       OperationResult<byte[]> readResult = get(row, column, TransactionOracle.DIRTY_READ_POINTER);
-      byte [] oldValue = readResult.getValue();
+      byte[] oldValue = readResult.getValue();
 
-      if((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
+      if ((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
         // if newValue is null, just delete.
         if (newValue == null) {
           KeyValue kv = new KeyValue(row, FAMILY, column, TransactionOracle.DIRTY_WRITE_VERSION, new byte[0]);
@@ -902,8 +868,8 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  private OperationException createOperationException(Exception e,  String where) {
-    String msg =  "LevelDB exception on " + where + "(error code = " +
+  private OperationException createOperationException(Exception e, String where) {
+    String msg = "LevelDB exception on " + where + "(error code = " +
       e.getMessage() + ")";
     LOG.error(msg, e);
     return new OperationException(StatusCode.SQL_ERROR, msg, e);

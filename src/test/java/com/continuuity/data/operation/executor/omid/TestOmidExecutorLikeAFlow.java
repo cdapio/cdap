@@ -64,8 +64,8 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @BeforeClass
   public static void initializeClass() {
-    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 200;
-    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 5;
+    OmidTransactionalOperationExecutor.maxDequeueRetries = 200;
+    OmidTransactionalOperationExecutor.dequeueRetrySleep = 5;
   }
 
   @Before
@@ -88,7 +88,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @Test
   public void testGetGroupIdAndGetGroupMeta() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
     byte [] queueName = Bytes.toBytes("testGetGroupIdAndGetGroupMeta");
 
     long groupid = this.executor.execute(context, new GetGroupID(queueName));
@@ -113,14 +113,14 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertEquals(1, meta.getValue().getGroups().length);
     assertEquals(1L, meta.getValue().getGroups()[0].getHead().getEntryId());
     */
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   static final byte [] kvcol = Operation.KV_COL;
 
   @Test
   public void testClearFabric() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
     byte [] queueName = Bytes.toBytes("queue://testClearFabric_queue");
     byte [] streamName = Bytes.toBytes("stream://testClearFabric_stream");
     byte [] keyAndValue = Bytes.toBytes("testClearFabric");
@@ -173,12 +173,12 @@ public abstract class TestOmidExecutorLikeAFlow {
     OperationResult<Map<byte[],byte[]>> result =
       this.executor.execute(context, new Read(keyAndValue, kvcol));
     assertTrue(result.isEmpty() || null == result.getValue().get(kvcol));
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
   public void testStandaloneSimpleDequeue() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
     
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
@@ -212,7 +212,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     result = this.executor.execute(context, dequeue);
     assertTrue(result.isEmpty());
     
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   private void assertDequeueResultSuccess(DequeueResult result, byte[] bytes) {
@@ -261,7 +261,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @Test
   public void testWriteBatchJustAck() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
     
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
@@ -301,13 +301,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     result = this.executor.execute(context, dequeue);
     assertTrue(result.isEmpty());
     
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
   public void testWriteBatchWithMultiWritesMultiEnqueuesPlusSuccessfulAck()
       throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     // Verify operations are re-ordered
     // Verify user write operations are stable sorted
@@ -396,14 +396,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(destQueueTwo, consumer, config));
     assertTrue(destDequeueResult.isEmpty());
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
   public void
   testWriteBatchWithMultiWritesMultiEnqueuesPlusUnsuccessfulAckRollback()
       throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
@@ -538,12 +538,12 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(destQueueTwo, consumer, config));
     assertTrue(destDequeueResult.isEmpty());
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
   public void testLotsOfEnqueuesThenDequeues() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
     int numEntries = getNumIterations();
@@ -605,13 +605,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne)).isEmpty());
     assertTrue(this.executor.execute(context, new QueueDequeue(queueName, consumerTwo, configTwo)).isEmpty());
     
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
     final int n = getNumIterations();
@@ -697,18 +697,18 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Should have dequeued n entries
     assertEquals(n, dequeued.size());  // fails expected:<100> but was:<63>
     
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     long MAX_TIMEOUT = 30000;
-    //    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
-    //    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
+    //    OmidTransactionalOperationExecutor.maxDequeueRetries = 100;
+    //    OmidTransactionalOperationExecutor.dequeueRetrySleep = 1;
     ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
       new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
@@ -845,7 +845,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     }
     assertEquals(expectedDequeues, groupTwoTotal);
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   private TTQueueTable getQueueTable() throws OperationException {

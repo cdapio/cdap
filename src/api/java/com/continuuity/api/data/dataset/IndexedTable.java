@@ -39,17 +39,16 @@ public class IndexedTable extends DataSet {
   // the property name for the secondary index column in the data set spec
   private String indexColumnProperty = "colum";
 
-  /**
-   * helper method for both constructors to set the names of the underlying
-   * two tables
-   */
+  // Helper method for both constructors to set the names of the underlying two tables
   private void init(String name, byte[] column) {
     this.tableName = "t_" + name;
     this.indexName = "i_" + name;
     this.column = column;
   }
 
-  /** runtime constructor from data set spec */
+  /**
+   * Runtime constructor from data set spec.
+   */
   @SuppressWarnings("unused")
   public IndexedTable(DataSetSpecification spec) {
     super(spec);
@@ -59,7 +58,7 @@ public class IndexedTable extends DataSet {
   }
 
   /**
-   * configuration time constructor
+   * Configuration time constructor.
    * @param name the name of the table
    * @param columnToIndex the name of the secondary index column
    */
@@ -86,7 +85,7 @@ public class IndexedTable extends DataSet {
   static final byte[] EXISTS = { 'x' };
 
   /**
-   * Read by primary key
+   * Read by primary key.
    * @param read the read operation, as if it were on a non-indexed table
    * @return the result of the read on the underlying primary table
    * @throws OperationException if the operation fails

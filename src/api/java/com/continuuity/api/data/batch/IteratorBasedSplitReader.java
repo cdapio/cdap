@@ -9,14 +9,16 @@ import com.continuuity.api.data.OperationException;
 import java.util.Iterator;
 
 /**
- * Handy implementation of {@link SplitReader} backed by {@link Iterator}
+ * Handy implementation of {@link SplitReader} backed by {@link Iterator}.
+ * @param <KEY> the key type
+ * @param <VALUE> the value type
  */
 public abstract class IteratorBasedSplitReader<KEY, VALUE>
   extends SplitReaderBase<KEY, VALUE> {
   private Iterator<VALUE> iterator;
 
   /**
-   * Creates iterator to iterate through all records of a given split
+   * Creates iterator to iterate through all records of a given split.
    * @param dataset dataset that owns a split
    * @param split split to iterate through
    * @return an instance of {@link Iterator}
@@ -26,7 +28,7 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
                                  final Split split) throws OperationException;
 
   /**
-   * Gets key from the given value provided by iterator
+   * Gets key from the given value provided by iterator.
    * @param value value to get key from
    * @return key
    */
