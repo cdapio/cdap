@@ -10,6 +10,7 @@ subprojects {
   task ('prepackager', dependsOn: ['build']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
+    def confDir = file("$stageDir/etc/continuuity/conf.dist")
 
     doLast {
       copy {
@@ -32,6 +33,10 @@ subprojects {
         from configurations.archives.allArtifacts.files
         exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
         into "${installDir}/lib"
+      }
+      copy {
+        from "$rootProject.projectDir/singlenode/src/main/resources/continuuity-site.xml"
+        into "${confDir}"
       }
     }
   }
@@ -74,11 +79,9 @@ subprojects {
                      '--category': 'misc',
                      '--url': 'http://www.continuuity.com/products',
                      '--architecture': 'all',
-                     '--version': "${getPomVersion()}"
+                     '--version': "${getPomVersion()}",
                      '--after-install': "$rootProject.projectDir/distributions/scripts/debian.continuuity.postinst",
-                     '--template-value': "project=$project.name",
-                     '--template-value': "version=${getPomVersion()}"
- 
+                     '--template-value': "project=$project.name"
     ]
   }
 

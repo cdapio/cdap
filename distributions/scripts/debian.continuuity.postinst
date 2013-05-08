@@ -4,12 +4,8 @@
 # post install script for
 set -e
 
-package_name="<%= project%>"
-version="<%= version%>"
-
-function site_configuration() {
-     
-}
+package_name="<%= project %>"
+version="<%= @version %>"
 
 case "$1" in
   configure)
@@ -20,12 +16,7 @@ case "$1" in
       unlink /etc/init.d/svc-$package_name
     fi
     ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$package_name
-    if [[ ! -d /etc/continuuity/conf.dist ]]; then
-      mkdir -p /etc/continuuity/conf.dist
-      if [[ ! -h /etc/continuuity/conf ]] && [[ ! -d /etc/continuuity/conf ]]; then
-        ln -s /etc/continuuity/conf.dist /etc/continuuity/conf 
-      fi
-    fi
+    update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
   ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)
