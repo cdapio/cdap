@@ -6,7 +6,7 @@ import com.google.common.base.Objects;
  *
  */
 public class StatefulQueueConsumer extends QueueConsumer {
-  private QueueState queueState = null;
+  private volatile QueueState queueState = null;
 
   public StatefulQueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     super(instanceId, groupId, groupSize, config);

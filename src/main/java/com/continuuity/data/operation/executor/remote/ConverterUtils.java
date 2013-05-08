@@ -2,8 +2,6 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -44,6 +42,7 @@ import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TQueuePartitioner;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueProducer;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueStateType;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
@@ -53,7 +52,6 @@ import com.continuuity.data.operation.executor.remote.stubs.TWrite;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -62,8 +60,10 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
-import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -71,15 +71,10 @@ import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 public class ConverterUtils {
 
@@ -666,7 +661,7 @@ public class ConverterUtils {
   }
 
   /** wrap a GetQueueInfo operation */
-  TGetQueueInfo wrap(QueueAdmin.GetQueueInfo getQueueInfo) {
+  TGetQueueInfo wrap(GetQueueInfo getQueueInfo) {
     TGetQueueInfo tGetQueueInfo = new TGetQueueInfo(
         wrap(getQueueInfo.getQueueName()),
         getQueueInfo.getId());
@@ -676,8 +671,8 @@ public class ConverterUtils {
     return tGetQueueInfo;
   }
   /** unwrap a GetQueueInfo operation */
-  QueueAdmin.GetQueueInfo unwrap(TGetQueueInfo tGetQueueInfo) {
-    QueueAdmin.GetQueueInfo getQueueInfo = new QueueAdmin.GetQueueInfo(
+  GetQueueInfo unwrap(TGetQueueInfo tGetQueueInfo) {
+    GetQueueInfo getQueueInfo = new GetQueueInfo(
         tGetQueueInfo.getId(),
         tGetQueueInfo.getQueueName());
     if (tGetQueueInfo.isSetMetric()) {
@@ -687,7 +682,7 @@ public class ConverterUtils {
   }
 
   /** wrap a GetGroupId operation */
-  TGetGroupId wrap(QueueAdmin.GetGroupID getGroupId) {
+  TGetGroupId wrap(GetGroupID getGroupId) {
     TGetGroupId tGetGroupId = new TGetGroupId(wrap(getGroupId.getQueueName()));
     if (getGroupId.getMetricName() != null) {
       tGetGroupId.setMetric(getGroupId.getMetricName());
@@ -695,8 +690,8 @@ public class ConverterUtils {
     return tGetGroupId;
   }
   /** unwrap a GetGroupId operation */
-  QueueAdmin.GetGroupID unwrap(TGetGroupId tGetGroupId) {
-    QueueAdmin.GetGroupID getGroupID = new QueueAdmin.GetGroupID(tGetGroupId.getQueueName());
+  GetGroupID unwrap(TGetGroupId tGetGroupId) {
+    GetGroupID getGroupID = new GetGroupID(tGetGroupId.getQueueName());
     if (tGetGroupId.isSetMetric()) {
       getGroupID.setMetricName(tGetGroupId.getMetric());
     }
@@ -742,13 +737,38 @@ public class ConverterUtils {
     return pointers;
   }
 
+  TQueueStateType wrap(QueueConsumer.StateType stateType) throws TOperationException {
+    switch (stateType) {
+      case INITIALIZED:
+        return TQueueStateType.INITIALIZED;
+      case UNINITIALIZED:
+        return TQueueStateType.UNINITIALIZED;
+      case NOT_FOUND:
+        return TQueueStateType.NOT_FOUND;
+    }
+    throw new TOperationException(StatusCode.INTERNAL_ERROR, String.format("Unknown stateType %s", stateType));
+  }
+
+  QueueConsumer.StateType unwrap(TQueueStateType tQueueStateType) throws TOperationException {
+    switch (tQueueStateType) {
+      case INITIALIZED:
+        return QueueConsumer.StateType.INITIALIZED;
+      case UNINITIALIZED:
+        return QueueConsumer.StateType.UNINITIALIZED;
+      case NOT_FOUND:
+        return QueueConsumer.StateType.NOT_FOUND;
+    }
+    throw new TOperationException(StatusCode.INTERNAL_ERROR, String.format("Unknown stateType %s", tQueueStateType));
+  }
+
   /** wrap a queue consumer */
   TQueueConsumer wrap(QueueConsumer consumer) throws TOperationException {
     TQueueConsumer tQueueConsumer=  new TQueueConsumer(
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize(),
-        consumer.isStateful());
+        consumer.isStateful(),
+        wrap(consumer.getStateType()));
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
     if (consumer.getQueueConfig() != null)
@@ -756,49 +776,21 @@ public class ConverterUtils {
     if (consumer.getPartitioningKey() != null) {
       tQueueConsumer.setPartitioningKey(consumer.getPartitioningKey());
     }
-    if(consumer.getQueueState() != null) {
-      try{
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ((TTQueueNewOnVCTable.QueueStateImpl) consumer.getQueueState()).encodeTransient(new BinaryEncoder(bos));
-        tQueueConsumer.setQueueState(bos.toByteArray());
-      } catch(IOException e) {
-        String message = String.format("Exception while Serializing QueueStateImpl: %s", e.getMessage());
-        Log.error(message, e);
-        throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
-      }
-    }
+    // No need to serialize queue state since it is now stored in Opex
     return tQueueConsumer;
   }
   /** unwrap a queue consumer */
   QueueConsumer unwrap(TQueueConsumer tQueueConsumer) throws TOperationException {
-    if(tQueueConsumer.isIsStateful()) {
-      StatefulQueueConsumer statefulQueueConsumer = new StatefulQueueConsumer(
-        tQueueConsumer.getInstanceId(),
-        tQueueConsumer.getGroupId(),
-        tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
-        tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
-        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
-      if(tQueueConsumer.isSetQueueState()) {
-        try {
-          statefulQueueConsumer.setQueueState(
-            TTQueueNewOnVCTable.QueueStateImpl.decodeTransient(new BinaryDecoder(new ByteArrayInputStream(tQueueConsumer.getQueueState()))));
-        } catch (IOException e) {
-          String message = String.format("Exception while deserializing QueueStateImpl: %s", e.getMessage());
-          Log.error(message, e);
-          throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
-        }
-      }
-      return statefulQueueConsumer;
-    } else {
-      return new QueueConsumer(
-        tQueueConsumer.getInstanceId(),
-        tQueueConsumer.getGroupId(),
-        tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
-        tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
-        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
-    }
+    QueueConsumer consumer = new QueueConsumer(
+      tQueueConsumer.getInstanceId(),
+      tQueueConsumer.getGroupId(),
+      tQueueConsumer.getGroupSize(),
+      tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
+      tQueueConsumer.isSetPartitioningKey() ? tQueueConsumer.getPartitioningKey() : null,
+      tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
+    consumer.setStateType(unwrap(tQueueConsumer.getStateType()));
+    // No need to serialize queue state since it is now stored in Opex
+    return consumer;
   }
 
   /** wrap a queue producer */
@@ -930,8 +922,9 @@ public class ConverterUtils {
       throws OperationException, TOperationException {
     if(tDequeueResult.getConsumer() != null) {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
+      // No need to unwrap queue state, since it is now stored in Opex
       if(retConsumer != null) {
-        consumer.setQueueState(retConsumer.getQueueState());
+        consumer.setStateType(retConsumer.getStateType());
       }
     }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
@@ -954,7 +947,7 @@ public class ConverterUtils {
     }
   }
 
-  TQueueConfigure wrap(QueueAdmin.QueueConfigure configure) throws TOperationException {
+  TQueueConfigure wrap(QueueConfigure configure) throws TOperationException {
     if(configure == null) {
       return null;
     }
@@ -966,12 +959,12 @@ public class ConverterUtils {
     }
     return tQueueConfigure;
   }
-  QueueAdmin.QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
+  QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
     if(tQueueConfigure == null) {
       return null;
     }
-    QueueAdmin.QueueConfigure queueConfigure =
-      new QueueAdmin.QueueConfigure(tQueueConfigure.getQueueName(),
+    QueueConfigure queueConfigure =
+      new QueueConfigure(tQueueConfigure.getQueueName(),
                                     unwrap(tQueueConfigure.getNewConsumer()));
     if (queueConfigure.getMetricName() != null) {
       tQueueConfigure.setMetric(queueConfigure.getMetricName());

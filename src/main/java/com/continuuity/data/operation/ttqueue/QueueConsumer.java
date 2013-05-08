@@ -13,6 +13,11 @@ public class QueueConsumer {
   private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
+  private volatile StateType stateType = StateType.UNINITIALIZED;
+
+  public enum StateType {
+    UNINITIALIZED, INITIALIZED, NOT_FOUND
+  }
 
   /**
    * @param instanceId id of this consumer instance (starts at 0)
@@ -91,6 +96,14 @@ public class QueueConsumer {
     // Nothing to do
   }
 
+  public StateType getStateType() {
+    return stateType;
+  }
+
+  public void setStateType(StateType stateType) {
+    this.stateType = stateType;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -100,6 +113,7 @@ public class QueueConsumer {
         .add("config", this.config)
         .add("name", this.groupName)
         .add("partitioningKey", this.partitioningKey)
+        .add("stateType", this.stateType)
         .toString();
   }
 

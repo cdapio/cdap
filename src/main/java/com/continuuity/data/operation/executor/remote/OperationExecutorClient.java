@@ -33,8 +33,11 @@ import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
 import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -48,8 +51,6 @@ import java.util.Map;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * This class is a wrapper around the thrift opex client, it takes
@@ -297,7 +298,7 @@ public class OperationExecutorClient extends ConverterUtils {
   }
 
   public long execute(OperationContext context,
-                      QueueAdmin.GetGroupID getGroupId)
+                      GetGroupID getGroupId)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper("getid", getGroupId.getQueueName());
@@ -575,7 +576,7 @@ public class OperationExecutorClient extends ConverterUtils {
   }
 
   public void execute(OperationContext context,
-                      QueueAdmin.QueueConfigure configure)
+                      QueueConfigure configure)
     throws TException, OperationException {
 
     MetricsHelper helper = newHelper("configure", configure.getQueueName());

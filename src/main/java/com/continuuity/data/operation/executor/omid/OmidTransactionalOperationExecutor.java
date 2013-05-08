@@ -5,9 +5,11 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.dataset.Stream;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
@@ -27,24 +29,33 @@ import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueCallable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.yammer.metrics.core.MetricName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -57,9 +68,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -92,6 +100,10 @@ public class OmidTransactionalOperationExecutor
 
   private OrderedVersionedColumnarTable metaTable;
   private OrderedVersionedColumnarTable randomTable;
+  private OrderedVersionedColumnarTable streamMetaTable;
+
+
+  private StreamMetaOracle streamMetaOracle = new StreamMetaOracle();
 
   private MetaDataStore metaStore;
 
@@ -102,6 +114,11 @@ public class OmidTransactionalOperationExecutor
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
+
+  // A proxy that runs all queue operations while managing state.
+  // Also runs all queue operations for a single consumer serially.
+  private final QueueStateProxy queueStateProxy;
+  public static final String QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES = "omid.queue.state.proxy.max.size.bytes";
 
   // Metrics
 
@@ -154,6 +171,12 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_GET_GROUP_ID_LATENCY = METRIC_PREFIX + "GetGroupID" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY = METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+
+  @Inject
+  public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
+    // Default cache size is 200 MB
+    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES, 200 * 1024 * 1024));
+  }
 
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
@@ -284,7 +307,7 @@ public class OmidTransactionalOperationExecutor
   private void dataSetMetric_read(String dataSetName) {
     dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
   }
-  
+
   private void dataSetMetric_write(String dataSetName, int dataSize) {
     dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
     dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
@@ -682,7 +705,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction);
+      finalize.execute(queueStateProxy, getQueueTable(finalize.getQueueName()), transaction);
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -901,20 +924,30 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getEntries(),
                                                                    transaction);
+
+    streamMetaOracle.writeMeta(result.getEntryPointer(), this.streamMetaTable);
     end(REQ_TYPE_QUEUE_ENQUEUE_LATENCY, begin);
+
     return new WriteTransactionResult(
         new QueueUndo.QueueUnenqueue(enqueue.getKey(), enqueue.getEntries(), enqueue.getProducer(),
                                      result.getEntryPointers()));
   }
 
-  WriteTransactionResult write(QueueAck ack, Transaction transaction)
+  WriteTransactionResult write(final QueueAck ack, final Transaction transaction)
     throws  OperationException {
 
     initialize();
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), transaction);
+      queueStateProxy.run(ack.getKey(), ack.getConsumer(),
+                          new QueueRunnable() {
+                            @Override
+                            public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                              getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
+                                                              statefulQueueConsumer, transaction);
+                            }
+                          });
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -922,16 +955,27 @@ public class OmidTransactionalOperationExecutor
       end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(),
+                                 ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
-  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
+  public DequeueResult execute(OperationContext context, final QueueDequeue dequeue) throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS);
     long begin = begin();
-    TTQueueTable queueTable = getQueueTable(dequeue.getKey());
-    DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(), this.oracle.getReadPointer());
+    final TTQueueTable queueTable = getQueueTable(dequeue.getKey());
+
+    DequeueResult result =
+      queueStateProxy.call(dequeue.getKey(), dequeue.getConsumer(),
+                                    new QueueCallable<DequeueResult>() {
+                                      @Override
+                                      public DequeueResult call(StatefulQueueConsumer statefulQueueConsumer)
+                                        throws OperationException {
+                                        return queueTable.dequeue(dequeue.getKey(), statefulQueueConsumer,
+                                                                  oracle.getReadPointer());
+                                      }
+                                    });
     end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
     return result;
   }
@@ -948,7 +992,7 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
+  public OperationResult<QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
                                                        throws OperationException
   {
     initialize();
@@ -959,18 +1003,24 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_GET_QUEUE_INFO_LATENCY, begin);
     return queueInfo == null ?
         new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND) :
-        new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
+        new OperationResult<QueueInfo>(queueInfo);
   }
 
   @Override
-  public void execute(OperationContext context, Transaction transaction, QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, final QueueConfigure configure)
     throws OperationException
   {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
-    TTQueueTable table = getQueueTable(configure.getQueueName());
-    table.configure(configure.getQueueName(), configure.getNewConsumer());
+    final TTQueueTable table = getQueueTable(configure.getQueueName());
+    queueStateProxy.run(configure.getQueueName(), configure.getNewConsumer(),
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            table.configure(configure.getQueueName(), statefulQueueConsumer, oracle.getReadPointer());
+                          }
+                        });
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 
@@ -1006,7 +1056,7 @@ public class OmidTransactionalOperationExecutor
     for (Undo undo : undos) {
       if (undo instanceof QueueUndo) {
         QueueUndo queueUndo = (QueueUndo)undo;
-        queueUndo.execute(getQueueTable(queueUndo.queueName), transaction);
+        queueUndo.execute(queueStateProxy, transaction, getQueueTable(queueUndo.queueName));
       }
       if (undo instanceof UndoWrite) {
         UndoWrite tableUndo = (UndoWrite)undo;
@@ -1057,8 +1107,64 @@ public class OmidTransactionalOperationExecutor
       this.randomTable = this.tableHandle.getTable(Bytes.toBytes("random"));
       this.queueTable = this.tableHandle.getQueueTable(Bytes.toBytes("queues"));
       this.streamTable = this.tableHandle.getStreamTable(Bytes.toBytes("streams"));
+      this.streamMetaTable = this.tableHandle.getTable(Bytes.toBytes("streamMeta"));
       this.namedTables = Maps.newConcurrentMap();
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
+
+  /**
+   * StreamMetaOracle maintains the streamMeta data for all the entries written to streams. It is implemented
+   * as a write-through cache.
+   * In the current implementation the meta data  the stream offsets and queue entry pointers for each streams.
+   * This will not work for distributed Opex - and needs to move out to a service of its own
+   */
+  public static final class StreamMetaOracle {
+
+    private final ConcurrentHashMap<byte[], Long> cache = new ConcurrentHashMap <byte[], Long>();
+    //TODO: Make time-offsets configurable per stream
+    private static long offsetWriteIntervalInSecs = 60*60;
+
+    /**
+     * Set the interval to write meta data offets for streams
+     * @param durationInSeconds
+     */
+    public static void setOffsetWriteIntervalSeconds(long durationInSeconds){
+        offsetWriteIntervalInSecs = durationInSeconds;
+    }
+
+    private void writeMeta(QueueEntryPointer pointer, OrderedVersionedColumnarTable streamTable)
+                                                                               throws OperationException {
+      byte [] streamName = pointer.getQueueName();
+      Preconditions.checkNotNull(streamName);
+
+      if (!Bytes.startsWith(streamName, TTQueue.STREAM_NAME_PREFIX)) {
+        return;
+      }
+
+      long offsetToBeWritten  = System.currentTimeMillis()/1000;
+      boolean writeMeta = false;
+
+      if (cache.containsKey(streamName)) {
+        Long existingOffset = cache.get(streamName);
+        //Write offsets if it has been offsetWriteIntervalInSecs time since last time offset was written
+        // or on regular offset boundaries.
+        if( (offsetToBeWritten - existingOffset) >= offsetWriteIntervalInSecs ||
+             (offsetToBeWritten % offsetWriteIntervalInSecs == 0 ) ){
+          writeMeta =true;
+        }
+      } else {
+         writeMeta = true;
+         cache.put(streamName,offsetToBeWritten);
+      }
+
+      if(writeMeta){
+        //Write Meta with tablename:offset as key and entrypointer as value
+        byte [] rowKey = Stream.StreamMeta.makeStreamMetaRowKey(streamName, offsetToBeWritten);
+        streamTable.put(rowKey, Stream.StreamMeta.getOffsetColumn(),
+                        TransactionOracle.DIRTY_WRITE_VERSION, pointer.getBytes());
+      }
+    }
+  }
+
 } // end of OmitTransactionalOperationExecutor

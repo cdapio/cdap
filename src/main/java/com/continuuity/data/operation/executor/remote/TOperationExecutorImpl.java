@@ -35,8 +35,11 @@ import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
 import com.continuuity.data.operation.executor.remote.stubs.TTransaction;
 import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +50,6 @@ import java.util.Map;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * The implementation of a thrift service for operation execution.
@@ -552,7 +554,7 @@ public class TOperationExecutorImpl
 
     try {
       OperationContext context = unwrap(tcontext);
-      QueueAdmin.GetGroupID getGroupID = unwrap(tGetGroupId);
+      GetGroupID getGroupID = unwrap(tGetGroupId);
       long groupId = this.opex.execute(context, getGroupID);
       if (Log.isTraceEnabled()) Log.trace("GetGroupID successful: " + groupId);
       helper.success();
@@ -580,7 +582,7 @@ public class TOperationExecutorImpl
 
     try {
       OperationContext context = unwrap(tcontext);
-      QueueAdmin.GetQueueInfo getQueueInfo = unwrap(tGetQueueInfo);
+      GetQueueInfo getQueueInfo = unwrap(tGetQueueInfo);
       OperationResult<QueueInfo> queueInfo =
           this.opex.execute(context, getQueueInfo);
       if (Log.isTraceEnabled()) Log.trace("GetQueueInfo successful: " +
@@ -639,8 +641,8 @@ public class TOperationExecutorImpl
 
     try {
       OperationContext context = unwrap(tcontext);
-      QueueAdmin.QueueConfigure queueConfigure = unwrap(tQueueConfigure);
-      this.opex.execute(context, null, queueConfigure);
+      QueueConfigure queueConfigure = unwrap(tQueueConfigure);
+      this.opex.execute(context, queueConfigure);
       if (Log.isTraceEnabled()) Log.trace("Queue configure successful.");
       helper.success();
 

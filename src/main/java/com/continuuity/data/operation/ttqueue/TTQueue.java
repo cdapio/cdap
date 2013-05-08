@@ -3,9 +3,10 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+import java.util.Iterator;
 
 /**
  * A Transactional Tabular Queue interface.
@@ -104,10 +105,11 @@ public interface TTQueue {
   /**
    * Used to configure the queue on start-up, or when consumer instances are changed.
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @return the old consumer count
    * @throws OperationException if unsuccessful
    */
-  int configure(QueueConsumer newConsumer) throws OperationException;
+  int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.
@@ -125,4 +127,16 @@ public interface TTQueue {
    * @return global meta information for this queue and its groups
    */
   public QueueInfo getQueueInfo() throws OperationException;
+
+  /**
+   * Scan the queue from QueueEntryPointer begin to end. This scan is dirty i.e., doesn't use ReadPointer to read
+   * filter the entries. Designed to be used by batch operation
+   *
+   * @param begin start QueueEntryPointer
+   * @param end  end QueueEntryPointer
+   * @param readPointer ReadPointer
+   * @return Iterator of QueueEntry
+   */
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer);
+
 }

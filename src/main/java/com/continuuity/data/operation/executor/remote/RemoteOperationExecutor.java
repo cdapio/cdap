@@ -15,21 +15,20 @@ import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * An operation executor that delegates all operations to a remote
@@ -337,7 +336,7 @@ public class RemoteOperationExecutor
 
   @Override
   public long execute(final OperationContext context,
-                      final QueueAdmin.GetGroupID getGroupID)
+                      final GetGroupID getGroupID)
       throws OperationException {
     return this.execute(
         new Operation<Long>("GetGroupID") {
@@ -481,8 +480,8 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context, @Nullable Transaction transaction,
-                      final QueueAdmin.QueueConfigure configure) throws OperationException {
+  public void execute(final OperationContext context, final QueueConfigure configure)
+    throws OperationException {
     this.execute(
       new Operation<Boolean>("QueueConfigure") {
         @Override

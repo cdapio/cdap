@@ -3,8 +3,9 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+import java.util.Iterator;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -96,9 +97,10 @@ public interface TTQueueTable {
    * Used to configure the queue on start-up, or when consumer instances are changed.
    * @param queueName name of the queue
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @throws OperationException if unsuccessful
    */
-  void configure(byte[] queueName, QueueConsumer newConsumer)
+  void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException;
 
   /**
@@ -122,6 +124,17 @@ public interface TTQueueTable {
    * Clears this queue table, completely wiping all queues.
    */
   public void clear() throws OperationException;
+
+  /**
+   * Returns iterator of QueueEntry for the given queue
+   * @param queueName queuename to iterate on
+   * @param start Start QueueEntryPointer
+   * @param end  end QueeuEntryPointer
+   * @param readPointer readPointer
+   * @return Iterator of QueueEntry
+   */
+  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,
+                                          ReadPointer readPointer);
 
   // Old debugging methods
 

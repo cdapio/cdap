@@ -5,6 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.google.common.collect.ImmutableSet;
@@ -86,7 +87,7 @@ public abstract class BenchTTQueue {
     last = dstart;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    queue.configure(consumer);
+    queue.configure(consumer, TransactionOracle.DIRTY_READ_POINTER);
     for (int i=0; i<iterations; i++) {
       long version = timeOracle.getTimestamp();
       MemoryReadPointer rp = new MemoryReadPointer(version, version, ImmutableSet.<Long>of());

@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.hbase.ttqueue.HBQAck;
 import com.continuuity.hbase.ttqueue.HBQDequeue;
 import com.continuuity.hbase.ttqueue.HBQDequeueResult;
@@ -25,9 +26,8 @@ import com.continuuity.hbase.ttqueue.HBReadPointer;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of a single {@link TTQueue} on an HBase table using native
@@ -269,8 +269,14 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
   }
 
+
   @Override
-  public int configure(QueueConsumer newConsumer)
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer) {
+    throw new UnsupportedOperationException("Iterator not implemented on TTQueeuOnHbaseNative");
+  }
+
+  @Override
+  public int configure(QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
     return -1;

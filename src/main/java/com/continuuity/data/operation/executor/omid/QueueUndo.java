@@ -2,10 +2,13 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.google.common.base.Objects;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -44,8 +47,8 @@ public abstract class QueueUndo implements Undo {
         .toString();
   }
   
-  public abstract void execute(TTQueueTable queueTable,
-      Transaction transaction) throws OperationException;
+  public abstract void execute(QueueStateProxy queueStateProxy, Transaction transaction, TTQueueTable queueTable)
+    throws OperationException;
 
   public static class QueueUnenqueue extends QueueUndo {
     final int sumOfSizes;
@@ -69,8 +72,9 @@ public abstract class QueueUndo implements Undo {
     }
 
     @Override
-    public void execute(TTQueueTable queueTable,
-        Transaction transaction) throws OperationException {
+    public void execute(QueueStateProxy queueStateProxy, Transaction transaction, TTQueueTable queueTable)
+      throws OperationException {
+      // No need to use queueStateProxy since there is no queue state associated with invalidate
       queueTable.invalidate(queueName, entryPointers, transaction);
     }
   }
@@ -88,15 +92,24 @@ public abstract class QueueUndo implements Undo {
     }
 
     public QueueUnack(final byte[] queueName, QueueEntryPointer [] entryPointers,
-        QueueConsumer consumer, int numGroups) {
+                      QueueConsumer consumer, int numGroups) {
       super(queueName, entryPointers);
       this.consumer = consumer;
       this.numGroups = numGroups;
     }
 
     @Override
-    public void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException {
-      queueTable.unack(queueName, entryPointers, consumer, transaction);
+    public void execute(QueueStateProxy queueStateProxy, final Transaction transaction, final TTQueueTable queueTable)
+      throws OperationException {
+      queueStateProxy.run(queueName, consumer,
+                                         new QueueRunnable() {
+                                           @Override
+                                           public void run(StatefulQueueConsumer statefulQueueConsumer)
+                                             throws OperationException {
+                                             queueTable.unack(queueName, entryPointers, statefulQueueConsumer,
+                                                              transaction);
+                                           }
+                                         });
     }
   }
 }

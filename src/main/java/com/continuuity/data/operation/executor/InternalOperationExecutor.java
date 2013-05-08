@@ -1,15 +1,15 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OpenTable;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
 public interface InternalOperationExecutor {
 
@@ -23,7 +23,7 @@ public interface InternalOperationExecutor {
                       GetGroupID getGroupId)
       throws OperationException;
 
-  public OperationResult<QueueAdmin.QueueInfo>
+  public OperationResult<QueueInfo>
   execute(OperationContext context, GetQueueInfo getQueueInfo)
       throws OperationException;
 

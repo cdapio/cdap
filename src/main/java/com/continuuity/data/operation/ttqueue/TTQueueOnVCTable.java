@@ -12,7 +12,8 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
@@ -29,12 +30,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of a single {@link TTQueue} on a single
@@ -1089,6 +1089,11 @@ public class TTQueueOnVCTable implements TTQueue {
     return meta == null ? null : new QueueInfo(meta);
   }
 
+  @Override
+  public Iterator<QueueEntry> getIterator(QueueEntryPointer begin, QueueEntryPointer end, ReadPointer readPointer) {
+    throw new UnsupportedOperationException("getIterator is not supported on old queues");
+  }
+
   private QueueMeta getQueueMeta() throws OperationException {
 
     // Get a read pointer _only_ for dirty reads
@@ -1102,13 +1107,15 @@ public class TTQueueOnVCTable implements TTQueue {
     QueueMeta meta = new QueueMeta();
     // because we increment this dirtily im enqueue(), we can only read it the same way!
     // TODO implement a readDirtyCounter() in OVCTable and use that instead
-    meta.globalHeadPointer =
+    long globalHeadPointer =
       this.table.incrementAtomicDirtily(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 0L);
+    meta.setGlobalHeadPointer(globalHeadPointer);
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
-    meta.currentWritePointer = // the current entty lock
+    long currentWritePointer = // the current entty lock
         getCounter(entryWritePointerRow,
             GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, readDirty);
+    meta.setCurrentWritePointer(currentWritePointer);
 
     // Get group state information
     byte [] groupListRow = makeRow(GLOBAL_GROUPS_HEADER, -1);
@@ -1117,20 +1124,21 @@ public class TTQueueOnVCTable implements TTQueue {
     OperationResult<Map<byte[], byte[]>> groups =
         this.table.get(groupListRow, readDirty);
     if (groups.isEmpty() || groups.getValue().isEmpty()) {
-      meta.groups = null;
+      meta.setGroups(null);
       return meta;
     }
-    
-    meta.groups = new GroupState[groups.getValue().size()];
+
+    GroupState[] groupStates = new GroupState[groups.getValue().size()];
     int i=0;
     for (Map.Entry<byte[],byte[]> entry : groups.getValue().entrySet()) {
-      meta.groups[i++] = GroupState.fromBytes(entry.getValue());
+      groupStates[i++] = GroupState.fromBytes(entry.getValue());
     }
+    meta.setGroups(groupStates);
     return meta;
   }
 
   @Override
-  public int configure(QueueConsumer newConsumer) throws OperationException {
+  public int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
     return -1;
   }
