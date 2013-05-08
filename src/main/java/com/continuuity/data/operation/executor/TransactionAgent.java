@@ -66,7 +66,7 @@ public interface TransactionAgent {
   public void submit(List<WriteOperation> operations) throws OperationException;
 
   /**
-   * Execute an increment operation and return the incremented values
+   * Execute an increment operation and return the incremented values.
    * @param increment the operation
    * @return a map from the name of each incremented column to its resulting value
    * @throws OperationException if something goes wrong in data fabric
@@ -98,13 +98,13 @@ public interface TransactionAgent {
   public OperationResult<List<byte[]>> execute(ReadAllKeys read) throws OperationException;
 
   /**
-   * return the number of operations performed successfully in this transaction
+   * return the number of operations performed successfully in this transaction.
    * @return the number of operations
    */
   public int getSucceededCount();
 
   /**
-   * return the number of operations that failed in this transaction
+   * return the number of operations that failed in this transaction.
    * @return the number of operations
    */
   public int getFailedCount();

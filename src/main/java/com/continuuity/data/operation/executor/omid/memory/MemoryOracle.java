@@ -24,13 +24,16 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This implements an in-memory transaction oracle.
+ */
 public class MemoryOracle implements TransactionOracle {
 
   // TODO we must regularly check the in-progress transactions for timeouts.
   // TODO where should that be done? As part of start-transaction? Or as a background thread?
 
   /**
-   * This is the TimeStamp generator for this Oracle
+   * This is the TimeStamp generator for this Oracle.
    */
   @Inject
   private TimestampOracle timeOracle;
@@ -55,9 +58,9 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   /**
-   * This maintains a map of TransactionIDs to its Rows
+   * This maintains a map of TransactionIDs to its Rows.
    */
-  TreeMap<Long, RowSet> rowSets = new TreeMap<Long,RowSet>();
+  TreeMap<Long, RowSet> rowSets = new TreeMap<Long, RowSet>();
 
   /**
    * This class represents an in-progress transaction. It has a timestamp
@@ -99,7 +102,7 @@ public class MemoryOracle implements TransactionOracle {
 
   /**
    * This the list of in progress transactions, each with a time stamp and a
-   * list of undo operations, to rollback any writes performed so far
+   * list of undo operations, to rollback any writes performed so far.
    */
   NavigableMap<Long, InProgress> inProgress = new ConcurrentSkipListMap<Long, InProgress>();
 
@@ -200,9 +203,9 @@ public class MemoryOracle implements TransactionOracle {
       // row sets that have an end time between the start of this transaction (the txid)
       // and the current oracle time.
       long now = this.timeOracle.getTimestamp();
-      NavigableMap<Long,RowSet> rowsToCheck =
+      NavigableMap<Long, RowSet> rowsToCheck =
         this.rowSets.subMap(txid, false, now, false);
-      for (Map.Entry<Long,RowSet> entry : rowsToCheck.entrySet()) {
+      for (Map.Entry<Long, RowSet> entry : rowsToCheck.entrySet()) {
         if (entry.getValue().conflictsWith(rows)) {
           // we have a conflict -> transaction failed
           return abortTransaction(tx);
@@ -258,7 +261,7 @@ public class MemoryOracle implements TransactionOracle {
     if (!undos.isEmpty()) {
       Undo last = undos.get(undos.size() - 1);
       if (last instanceof QueueUndo.QueueUnack) {
-        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)last;
+        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack) last;
         return new QueueFinalize(unack.getQueueName(), unack.getEntryPointers(),
                                  unack.getConsumer(), unack.getNumGroups());
       }

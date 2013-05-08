@@ -110,7 +110,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testClearFabric() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
     byte [] dataKey = Bytes.toBytes("dataKey");
     byte [] queueKey = Bytes.toBytes("queue://queueKey");
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
@@ -192,7 +192,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.execute(context,
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test
@@ -419,7 +419,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testAbortedOperationsWithQueueAck() throws Exception {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
 
     byte [] key = Bytes.toBytes("testAbortedAck");
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
@@ -489,7 +489,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertEquals(5L, Bytes.toLong(
         executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol)));
 
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   @Test

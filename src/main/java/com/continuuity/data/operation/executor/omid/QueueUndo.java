@@ -12,6 +12,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
 
+/**
+ * Represents a queue operation to be undone.
+ */
 public abstract class QueueUndo implements Undo {
 
   @Override
@@ -43,10 +46,18 @@ public abstract class QueueUndo implements Undo {
         .add("entryPointers", Arrays.toString(this.entryPointers))
         .toString();
   }
-  
-  public abstract void execute(TTQueueTable queueTable,
-      Transaction transaction) throws OperationException;
 
+  /**
+   * Perform the undo.
+   * @param queueTable the queue table to perform the undo on
+   * @param transaction the transaction in which the undo must happen
+   * @throws OperationException
+   */
+  public abstract void execute(TTQueueTable queueTable, Transaction transaction) throws OperationException;
+
+  /**
+   * Represents the reverse of an Enqueue operation.
+   */
   public static class QueueUnenqueue extends QueueUndo {
     final int sumOfSizes;
     final QueueProducer producer;
@@ -75,6 +86,9 @@ public abstract class QueueUndo implements Undo {
     }
   }
 
+  /**
+   * Represents the reverse of a Queue ack operation.
+   */
   public static class QueueUnack extends QueueUndo {
     final QueueConsumer consumer;
     final int numGroups;

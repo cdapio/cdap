@@ -1,13 +1,11 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * The result of committing a transaction. Can represent failure along with the operations to be undone, or success.
  */
 public class TransactionResult {
 
@@ -16,7 +14,7 @@ public class TransactionResult {
   private boolean success;
 
   /**
-   * Constructur for failure case, passing in the operations to be undone
+   * Constructur for failure case, passing in the operations to be undone.
    * @param undos the operations to be undone for the rollback
    */
   public TransactionResult(List<Undo> undos) {

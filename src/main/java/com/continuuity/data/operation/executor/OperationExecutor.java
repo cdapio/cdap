@@ -89,7 +89,7 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-   * Start a client-side transaction
+   * Start a client-side transaction.
    * @return the new transaction
    */
   public Transaction startTransaction(OperationContext context)
@@ -146,7 +146,7 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-   * Abort an existing transaction
+   * Abort an existing transaction.
    * @param context the operation context
    * @param transaction the transaction to be committed
    * @throws OperationException if the abort fails for any reason
