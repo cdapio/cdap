@@ -48,7 +48,7 @@ public class DataFabricModules extends RuntimeModule {
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        conf.setLong(OmidTransactionalOperationExecutor.QUEUE_STATE_PROXY_MAX_SIZE_IN_BYTES, 0);
+        conf.setLong(OmidTransactionalOperationExecutor.QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(conf);
       }

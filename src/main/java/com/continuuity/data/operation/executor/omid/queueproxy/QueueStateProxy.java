@@ -71,22 +71,19 @@ public class QueueStateProxy {
     throws OperationException {
     Preconditions.checkArgument(op != null && queueConsumer != null);
 
-    ConsumerHolder consumerHolder = null;
+    ConsumerHolder consumerHolder = checkout(queueName, queueConsumer);
     try {
-      consumerHolder = checkout(queueName, queueConsumer);
       // op is already asserted to be not null!
       //noinspection ConstantConditions
       return op.execute(consumerHolder.statefulQueueConsumer);
     } finally {
-      if(consumerHolder != null) {
-        // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
-        // op is already asserted to be not null!
-        //noinspection ConstantConditions
-        if(op.statefulQueueConsumer != null) {
-          consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
-        }
-        release(consumerHolder);
+      // If the operation sends an update to statefulQueueConsumer,  use it in preference to the one we have
+      // op is already asserted to be not null!
+      //noinspection ConstantConditions
+      if(op.statefulQueueConsumer != null) {
+        consumerHolder.statefulQueueConsumer = op.statefulQueueConsumer;
       }
+      release(consumerHolder);
     }
   }
 
@@ -95,11 +92,7 @@ public class QueueStateProxy {
     StatefulQueueConsumer statefulQueueConsumer = null;
 
     // first obtain the lock
-    RowLockTable.RowLock lock;
-    do {
-      lock = this.locks.lock(row);
-      // obtained a lock, but it may be invalid, loop until valid
-    } while (!lock.isValid());
+    RowLockTable.RowLock lock = this.locks.validLock(row);
 
     // We now have the lock, get the state
     if(queueConsumer.getStateType() == QueueConsumer.StateType.INITIALIZED) {
@@ -140,10 +133,8 @@ public class QueueStateProxy {
     // Store the consumer state
     stateCache.put(consumerHolder.row, consumerHolder.statefulQueueConsumer);
 
-    // If lock and row are valid, unlock
-    if(consumerHolder.lock != null && consumerHolder.lock.isValid()) {
-      locks.unlock(consumerHolder.row);
-    }
+    // Unlock
+    locks.unlock(consumerHolder.row);
   }
 
   private byte[] getKey(byte[] queueName, QueueConsumer queueConsumer) {
