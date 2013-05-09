@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -547,7 +548,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     List<DequeueEntry> dequeueEntryList = Lists.newArrayList(new DequeueEntry(2, 1), new DequeueEntry(3, 0));
     Map<Long, byte[]> cachedEntries = ImmutableMap.of(2L, new byte[]{1, 2}, 3L, new byte[]{4, 5});
 
-    TransientWorkingSet transientWorkingSet = new TransientWorkingSet(dequeueEntryList, 2, cachedEntries);
+    TransientWorkingSet transientWorkingSet = new TransientWorkingSet(dequeueEntryList, 2, cachedEntries, 10);
     queueState.setTransientWorkingSet(transientWorkingSet);
 
     DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet(Sets.newTreeSet(dequeueEntryList));
@@ -950,6 +951,15 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
     DequeueResult result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
     assertTrue(result.isSuccess());
+
+    // No matter how many times a dequeue is repeated with state NOT_FOUND, the same entry needs to be returned
+    for(int tries = 0; tries <= MAX_CRASH_DEQUEUE_TRIES + 10; ++tries) {
+      statefulQueueConsumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
+      result = queue.dequeue(statefulQueueConsumer, getDirtyPointer());
+      assertTrue(result.isSuccess());
+      assertEquals("Tries=" + tries, 2, Bytes.toInt(result.getEntry().getData()));
+    }
+
     assertEquals(2, Bytes.toInt(result.getEntry().getData()));
     queue.ack(result.getEntryPointer(), statefulQueueConsumer, dirtyTxn);
 
@@ -2447,6 +2457,113 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // verification, also the previous finalize with grp1Consumer1 wouldn't write the eviction information till
     // the end of the finalize function, hence (available groups == total groups) check will fail
     queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+  }
+
+    private interface QueueConsumerHolder {
+      QueueConsumer getQueueConsumer(QueueConsumer consumer);
+    }
+
+    @Test
+    public void testQueueStateType() throws Exception {
+      // QueueConsumer.StateType.UNINITIALIZED
+      // This simulates a consumer crash every time
+      List<List<Integer>> expected = Lists.newArrayListWithCapacity(3);
+      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+      testQueueStateType(expected.iterator(),
+                         new QueueConsumerHolder() {
+                           @Override
+                           public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+                             consumer.setQueueState(null);
+                             consumer.setStateType(QueueConsumer.StateType.UNINITIALIZED);
+                             return consumer;
+                           }
+                         });
+
+      // QueueConsumer.StateType.INITIALIZED
+      // The consumer does not crash anytime
+      expected = Lists.newArrayListWithCapacity(3);
+      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+      expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
+      testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
+        @Override
+        public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+          return consumer;
+        }
+      });
+
+      // QueueConsumer.StateType.NOT_FOUND
+      // The consumer does not crash anytime, but cached state disappears!
+      expected = Lists.newArrayListWithCapacity(3);
+      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+      expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
+      testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
+        @Override
+        public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+          consumer.setQueueState(null);
+          consumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
+          return consumer;
+        }
+      });
+    }
+
+  private void testQueueStateType(Iterator<List<Integer>> expectedDequeues, QueueConsumerHolder consumerHolder)
+    throws Exception {
+    TTQueue queue = createQueue();
+
+    // enqueue 20 entries
+    QueueEntry[] entries = new QueueEntry[20];
+    for (int i = 1; i <= entries.length; i++) {
+      entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
+    }
+    Transaction t = oracle.startTransaction();
+    queue.enqueue(entries, t);
+    oracle.commitTransaction(t);
+
+    // Dequeue 5 entries in batch, async mode
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(FIFO, false, 5, true));
+    queue.configure(consumer, oracle.getReadPointer());
+    Transaction t1 = oracle.startTransaction();
+    DequeueResult result1 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t1.getReadPointer());
+    assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
+    assertDequeueEquals(expectedDequeues.next(), result1.getEntries());
+
+    // Dequeue again without acking
+    Transaction t2 = oracle.startTransaction();
+    DequeueResult result2 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t2.getReadPointer());
+    assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
+    assertDequeueEquals(expectedDequeues.next(), result2.getEntries());
+
+    // Ack and commit t2
+    queue.ack(result2.getEntryPointers(), consumerHolder.getQueueConsumer(consumer), t2);
+    oracle.commitTransaction(t2);
+
+    // Dequeue once more
+    Transaction t3 = oracle.startTransaction();
+    DequeueResult result3 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t3.getReadPointer());
+    assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
+    assertDequeueEquals(expectedDequeues.next(), result3.getEntries());
+
+    // Depending on consumer stateType we may have result1 == result2, so no point in acking here
+
+    // Abort transactions t1 and t3
+    oracle.abortTransaction(t1);
+    oracle.removeTransaction(t1);
+    oracle.abortTransaction(t3);
+    oracle.removeTransaction(t3);
+  }
+
+  private void assertDequeueEquals(List<Integer> expected, QueueEntry[] actual) {
+    List<Integer> actualList = Lists.newArrayListWithCapacity(actual.length);
+
+    for (QueueEntry anActual : actual) {
+      actualList.add(Bytes.toInt(anActual.getData()));
+    }
+
+    Assert.assertEquals(expected, actualList);
   }
 }
 

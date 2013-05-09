@@ -23,10 +23,11 @@ import java.util.Properties;
  */
 public class DataFabricLocalModule extends AbstractModule {
 
+  private final CConfiguration conf;
   private final String hyperSqlJDCBString;
 
   public DataFabricLocalModule() {
-    CConfiguration conf = CConfiguration.create();
+    conf = CConfiguration.create();
     this.hyperSqlJDCBString = conf.get("data.local.jdbc",
         "jdbc:hsqldb:file:" +
         System.getProperty("java.io.tmpdir") +
@@ -35,6 +36,7 @@ public class DataFabricLocalModule extends AbstractModule {
 
   public DataFabricLocalModule(String hyperSqlJDBCString,
       @SuppressWarnings("unused") Properties hyperSqlProperties) {
+    this.conf = CConfiguration.create();
     this.hyperSqlJDCBString = hyperSqlJDBCString;
   }
 
@@ -61,6 +63,8 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(Names.named("HyperSQLOVCTableHandleJDBCString"))
         .toInstance(hyperSqlJDCBString);
+
+    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
   }
 
   private void loadHsqlDriver() {

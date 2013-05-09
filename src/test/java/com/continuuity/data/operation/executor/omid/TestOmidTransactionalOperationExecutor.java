@@ -116,9 +116,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, consumer));
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, consumer));
+    QueueConsumer qConsumer = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer sConsumer = new QueueConsumer(0, 0, 1, config);
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, qConsumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, sConsumer));
 
     // insert to all three types
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
@@ -129,9 +130,12 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(Bytes.equals(dataKey,
         executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol)));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
-    assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(queueKey, qConsumer, config)).getEntry().getData()));
+    assertEquals(Bytes.toString(streamKey),
+                 Bytes.toString(executor.execute(context,
+                                                 new QueueDequeue(streamKey, sConsumer, config)).getEntry().getData()));
+//    assertTrue(Bytes.equals(streamKey, executor.execute(context,
+//        new QueueDequeue(streamKey, sConsumer, config)).getEntry().getData()));
 
     // clear data only
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -139,22 +143,22 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // data is gone, queues still there
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(queueKey, qConsumer, config)).getEntry().getData()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(streamKey, sConsumer, config)).getEntry().getData()));
 
     // clear queues and streams
     executor.execute(context, new ClearFabric(Arrays.asList(
         ClearFabric.ToClear.QUEUES, ClearFabric.ToClear.STREAMS)));
 
     // everything is gone
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, consumer));
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, qConsumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, sConsumer));
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).isEmpty());
+        new QueueDequeue(queueKey, qConsumer, config)).isEmpty());
     assertTrue(executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+        new QueueDequeue(streamKey, sConsumer, config)).isEmpty());
 
     // insert data to all three again
     executor.commit(context, new Write(dataKey, kvcol, dataKey));
@@ -164,33 +168,33 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // read data from all three types
     assertArrayEquals(dataKey, executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(queueKey, qConsumer, config)).getEntry().getData()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(streamKey, sConsumer, config)).getEntry().getData()));
 
     // wipe just the streams
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // streams gone, queues and data remain
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamKey, sConsumer));
     assertArrayEquals(dataKey,
         executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).getEntry().getData()));
+        new QueueDequeue(queueKey, qConsumer, config)).getEntry().getData()));
     assertTrue(executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+        new QueueDequeue(streamKey, sConsumer, config)).isEmpty());
 
     // wipe data and queues
     executor.execute(context, new ClearFabric(Arrays.asList(
         ClearFabric.ToClear.DATA, ClearFabric.ToClear.QUEUES)));
 
     // everything is gone
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueKey, qConsumer));
     assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
-        new QueueDequeue(queueKey, consumer, config)).isEmpty());
+        new QueueDequeue(queueKey, qConsumer, config)).isEmpty());
     assertTrue(executor.execute(context,
-        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+        new QueueDequeue(streamKey, sConsumer, config)).isEmpty());
 
     OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }

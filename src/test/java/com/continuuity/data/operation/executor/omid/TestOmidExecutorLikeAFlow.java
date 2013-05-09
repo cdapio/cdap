@@ -132,11 +132,12 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertEquals(1L, groupid);
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
-    QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
+    QueueConsumer qConsumer = new QueueConsumer(0, groupid, 1, config);
+    QueueConsumer sConsumer = new QueueConsumer(0, groupid, 1, config);
 
     // configure queue and stream
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, qConsumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, sConsumer));
 
     // enqueue to queue, stream, and write data
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
@@ -145,17 +146,17 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // verify it can all be read
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(queueName, consumer, config)).isSuccess());
+        new QueueDequeue(queueName, qConsumer, config)).isSuccess());
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(streamName, consumer, config)).isSuccess());
+        new QueueDequeue(streamName, sConsumer, config)).isSuccess());
     assertArrayEquals(keyAndValue, this.executor.execute(context,
         new Read(keyAndValue, kvcol)).getValue().get(kvcol));
 
     // and it can be read twice
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(queueName, consumer, config)).isSuccess());
+        new QueueDequeue(queueName, qConsumer, config)).isSuccess());
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(streamName, consumer, config)).isSuccess());
+        new QueueDequeue(streamName, sConsumer, config)).isSuccess());
     assertArrayEquals(keyAndValue, this.executor.execute(context,
         new Read(keyAndValue, kvcol)).getValue().get(kvcol));
 
@@ -163,13 +164,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(context, new ClearFabric());
 
     // configure queue and stream again
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
-    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, qConsumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, sConsumer));
     // everything is gone!
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(queueName, consumer, config)).isEmpty());
+        new QueueDequeue(queueName, qConsumer, config)).isEmpty());
     assertTrue(this.executor.execute(context,
-        new QueueDequeue(streamName, consumer, config)).isEmpty());
+        new QueueDequeue(streamName, sConsumer, config)).isEmpty());
     OperationResult<Map<byte[],byte[]>> result =
       this.executor.execute(context, new Read(keyAndValue, kvcol));
     assertTrue(result.isEmpty() || null == result.getValue().get(kvcol));
@@ -570,7 +571,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne));
       assertTrue(result.isSuccess());
-      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      assertEquals(i, Bytes.toInt(result.getEntry().getData()));
       this.executor.commit(context, new QueueAck(queueName, result.getEntryPointer(), consumerOne));
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);

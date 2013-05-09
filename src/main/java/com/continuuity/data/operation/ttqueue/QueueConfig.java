@@ -85,6 +85,31 @@ public class QueueConfig {
       .toString();
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    QueueConfig that = (QueueConfig) o;
+
+    return batchSize == that.batchSize && returnBatch == that.returnBatch && singleEntry == that.singleEntry
+      && partitionerType == that.partitionerType;
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = partitionerType != null ? partitionerType.hashCode() : 0;
+    result = 31 * result + (singleEntry ? 1 : 0);
+    result = 31 * result + batchSize;
+    result = 31 * result + (returnBatch ? 1 : 0);
+    return result;
+  }
+
   public HBQConfig toHBQ() {
     // native HBase queues ignore batching
     return new HBQConfig(partitionerType.toHBQ(), singleEntry);

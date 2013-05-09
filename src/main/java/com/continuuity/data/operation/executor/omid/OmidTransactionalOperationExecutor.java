@@ -5,6 +5,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
@@ -27,6 +28,9 @@ import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueCallable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
@@ -37,6 +41,7 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
@@ -45,6 +50,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.yammer.metrics.core.MetricName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -103,6 +109,11 @@ public class OmidTransactionalOperationExecutor
   static int maxDequeueRetries = 200;
   static long dequeueRetrySleep = 5;
 
+  // A proxy that runs all queue operations while managing state.
+  // Also runs all queue operations for a single consumer serially.
+  private final QueueStateProxy queueStateProxy;
+  public static final String QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = "queue.state.proxy.max.cache.size.bytes";
+
   // Metrics
 
   /* -------------------  data fabric system metrics ---------------- */
@@ -155,6 +166,12 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY =
     METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+
+  @Inject
+  public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
+    // Default cache size is 200 MB
+    queueStateProxy = new QueueStateProxy(config.getLongBytes(QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 200 * 1024 * 1024));
+  }
 
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
@@ -685,7 +702,7 @@ public class OmidTransactionalOperationExecutor
     // If the transaction did a queue ack, finalize it
     QueueFinalize finalize = txResult.getFinalize();
     if (finalize != null) {
-      finalize.execute(getQueueTable(finalize.getQueueName()), transaction);
+      finalize.execute(queueStateProxy, getQueueTable(finalize.getQueueName()), transaction);
     }
 
     // emit metrics for the transaction and the queues/streams involved
@@ -908,14 +925,21 @@ public class OmidTransactionalOperationExecutor
                                      result.getEntryPointers()));
   }
 
-  WriteTransactionResult write(QueueAck ack, Transaction transaction)
+  WriteTransactionResult write(final QueueAck ack, final Transaction transaction)
     throws  OperationException {
 
     initialize();
     incMetric(REQ_TYPE_QUEUE_ACK_NUM_OPS);
     long begin = begin();
     try {
-      getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), transaction);
+      queueStateProxy.run(ack.getKey(), ack.getConsumer(),
+                          new QueueRunnable() {
+                            @Override
+                            public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                              getQueueTable(ack.getKey()).ack(ack.getKey(), ack.getEntryPointers(),
+                                                              statefulQueueConsumer, transaction);
+                            }
+                          });
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
@@ -923,16 +947,27 @@ public class OmidTransactionalOperationExecutor
       end(REQ_TYPE_QUEUE_ACK_LATENCY, begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(), ack.getConsumer(), ack.getNumGroups()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointers(),
+                                 ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override
-  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws OperationException {
+  public DequeueResult execute(OperationContext context, final QueueDequeue dequeue) throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_DEQUEUE_NUM_OPS);
     long begin = begin();
-    TTQueueTable queueTable = getQueueTable(dequeue.getKey());
-    DequeueResult result = queueTable.dequeue(dequeue.getKey(), dequeue.getConsumer(), this.oracle.getReadPointer());
+    final TTQueueTable queueTable = getQueueTable(dequeue.getKey());
+
+    DequeueResult result =
+      queueStateProxy.call(dequeue.getKey(), dequeue.getConsumer(),
+                                    new QueueCallable<DequeueResult>() {
+                                      @Override
+                                      public DequeueResult call(StatefulQueueConsumer statefulQueueConsumer)
+                                        throws OperationException {
+                                        return queueTable.dequeue(dequeue.getKey(), statefulQueueConsumer,
+                                                                  oracle.getReadPointer());
+                                      }
+                                    });
     end(REQ_TYPE_QUEUE_DEQUEUE_LATENCY, begin);
     return result;
   }
@@ -964,13 +999,20 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure)
-    throws OperationException {
+  public void execute(OperationContext context, final QueueAdmin.QueueConfigure configure)
+    throws OperationException
+  {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
-    TTQueueTable table = getQueueTable(configure.getQueueName());
-    table.configure(configure.getQueueName(), configure.getNewConsumer(), oracle.getReadPointer());
+    final TTQueueTable table = getQueueTable(configure.getQueueName());
+    queueStateProxy.run(configure.getQueueName(), configure.getNewConsumer(),
+                        new QueueRunnable() {
+                          @Override
+                          public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
+                            table.configure(configure.getQueueName(), statefulQueueConsumer, oracle.getReadPointer());
+                          }
+                        });
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
   }
 
@@ -1005,8 +1047,8 @@ public class OmidTransactionalOperationExecutor
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
     for (Undo undo : undos) {
       if (undo instanceof QueueUndo) {
-        QueueUndo queueUndo = (QueueUndo) undo;
-        queueUndo.execute(getQueueTable(queueUndo.queueName), transaction);
+        QueueUndo queueUndo = (QueueUndo)undo;
+        queueUndo.execute(queueStateProxy, transaction, getQueueTable(queueUndo.queueName));
       }
       if (undo instanceof UndoWrite) {
         UndoWrite tableUndo = (UndoWrite) undo;

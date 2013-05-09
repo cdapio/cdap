@@ -13,6 +13,13 @@ public class QueueConsumer {
   private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
+  private StateType stateType = StateType.UNINITIALIZED;
+
+  public enum StateType {
+    UNINITIALIZED, // Consumer does not have its state, it could be due to consumer's first call or consumer crash
+    INITIALIZED,   // Consumer has its state available
+    NOT_FOUND      // Consumer has its state but the state is not available due to eviction from cache
+  }
 
   /**
    * @param instanceId id of this consumer instance (starts at 0)
@@ -91,6 +98,14 @@ public class QueueConsumer {
     // Nothing to do
   }
 
+  public StateType getStateType() {
+    return stateType;
+  }
+
+  public void setStateType(StateType stateType) {
+    this.stateType = stateType;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -100,6 +115,7 @@ public class QueueConsumer {
         .add("config", this.config)
         .add("name", this.groupName)
         .add("partitioningKey", this.partitioningKey)
+        .add("stateType", this.stateType)
         .toString();
   }
 
