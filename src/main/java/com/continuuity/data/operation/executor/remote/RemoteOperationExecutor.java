@@ -4,7 +4,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -445,11 +447,40 @@ public class RemoteOperationExecutor
     throws OperationException {
     return this.execute(new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
       @Override
-      public OperationResult<List<byte[]>> execute(OperationExecutorClient client) throws OperationException,
-        TException {
+      public OperationResult<List<byte[]>> execute(OperationExecutorClient client)
+        throws OperationException, TException {
         return client.execute(context, transaction, readAllKeys);
       }
     });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, getSplits);
+        }
+      });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final Transaction transaction,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, transaction, getSplits);
+        }
+      });
   }
 
   @Override

@@ -611,14 +611,14 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
           case 2: // POINTERS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
-                struct.pointers = new ArrayList<TQueueEntryPointer>(_list74.size);
-                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
+                org.apache.thrift.protocol.TList _list82 = iprot.readListBegin();
+                struct.pointers = new ArrayList<TQueueEntryPointer>(_list82.size);
+                for (int _i83 = 0; _i83 < _list82.size; ++_i83)
                 {
-                  TQueueEntryPointer _elem76; // required
-                  _elem76 = new TQueueEntryPointer();
-                  _elem76.read(iprot);
-                  struct.pointers.add(_elem76);
+                  TQueueEntryPointer _elem84; // required
+                  _elem84 = new TQueueEntryPointer();
+                  _elem84.read(iprot);
+                  struct.pointers.add(_elem84);
                 }
                 iprot.readListEnd();
               }
@@ -630,14 +630,14 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
           case 3: // ENTRIES
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list77 = iprot.readListBegin();
-                struct.entries = new ArrayList<TQueueEntry>(_list77.size);
-                for (int _i78 = 0; _i78 < _list77.size; ++_i78)
+                org.apache.thrift.protocol.TList _list85 = iprot.readListBegin();
+                struct.entries = new ArrayList<TQueueEntry>(_list85.size);
+                for (int _i86 = 0; _i86 < _list85.size; ++_i86)
                 {
-                  TQueueEntry _elem79; // required
-                  _elem79 = new TQueueEntry();
-                  _elem79.read(iprot);
-                  struct.entries.add(_elem79);
+                  TQueueEntry _elem87; // required
+                  _elem87 = new TQueueEntry();
+                  _elem87.read(iprot);
+                  struct.entries.add(_elem87);
                 }
                 iprot.readListEnd();
               }
@@ -680,9 +680,9 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
           oprot.writeFieldBegin(POINTERS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.pointers.size()));
-            for (TQueueEntryPointer _iter80 : struct.pointers)
+            for (TQueueEntryPointer _iter88 : struct.pointers)
             {
-              _iter80.write(oprot);
+              _iter88.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -694,9 +694,9 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
           oprot.writeFieldBegin(ENTRIES_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.entries.size()));
-            for (TQueueEntry _iter81 : struct.entries)
+            for (TQueueEntry _iter89 : struct.entries)
             {
-              _iter81.write(oprot);
+              _iter89.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -747,18 +747,18 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       if (struct.isSetPointers()) {
         {
           oprot.writeI32(struct.pointers.size());
-          for (TQueueEntryPointer _iter82 : struct.pointers)
+          for (TQueueEntryPointer _iter90 : struct.pointers)
           {
-            _iter82.write(oprot);
+            _iter90.write(oprot);
           }
         }
       }
       if (struct.isSetEntries()) {
         {
           oprot.writeI32(struct.entries.size());
-          for (TQueueEntry _iter83 : struct.entries)
+          for (TQueueEntry _iter91 : struct.entries)
           {
-            _iter83.write(oprot);
+            _iter91.write(oprot);
           }
         }
       }
@@ -777,28 +777,28 @@ public class TDequeueResult implements org.apache.thrift.TBase<TDequeueResult, T
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TList _list84 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.pointers = new ArrayList<TQueueEntryPointer>(_list84.size);
-          for (int _i85 = 0; _i85 < _list84.size; ++_i85)
+          org.apache.thrift.protocol.TList _list92 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.pointers = new ArrayList<TQueueEntryPointer>(_list92.size);
+          for (int _i93 = 0; _i93 < _list92.size; ++_i93)
           {
-            TQueueEntryPointer _elem86; // required
-            _elem86 = new TQueueEntryPointer();
-            _elem86.read(iprot);
-            struct.pointers.add(_elem86);
+            TQueueEntryPointer _elem94; // required
+            _elem94 = new TQueueEntryPointer();
+            _elem94.read(iprot);
+            struct.pointers.add(_elem94);
           }
         }
         struct.setPointersIsSet(true);
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list87 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.entries = new ArrayList<TQueueEntry>(_list87.size);
-          for (int _i88 = 0; _i88 < _list87.size; ++_i88)
+          org.apache.thrift.protocol.TList _list95 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.entries = new ArrayList<TQueueEntry>(_list95.size);
+          for (int _i96 = 0; _i96 < _list95.size; ++_i96)
           {
-            TQueueEntry _elem89; // required
-            _elem89 = new TQueueEntry();
-            _elem89.read(iprot);
-            struct.entries.add(_elem89);
+            TQueueEntry _elem97; // required
+            _elem97 = new TQueueEntry();
+            _elem97.read(iprot);
+            struct.entries.add(_elem97);
           }
         }
         struct.setEntriesIsSet(true);

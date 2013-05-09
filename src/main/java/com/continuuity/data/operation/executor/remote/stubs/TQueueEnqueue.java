@@ -664,14 +664,14 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
           case 2: // ENTRIES
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list58 = iprot.readListBegin();
-                struct.entries = new ArrayList<TQueueEntry>(_list58.size);
-                for (int _i59 = 0; _i59 < _list58.size; ++_i59)
+                org.apache.thrift.protocol.TList _list66 = iprot.readListBegin();
+                struct.entries = new ArrayList<TQueueEntry>(_list66.size);
+                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
                 {
-                  TQueueEntry _elem60; // required
-                  _elem60 = new TQueueEntry();
-                  _elem60.read(iprot);
-                  struct.entries.add(_elem60);
+                  TQueueEntry _elem68; // required
+                  _elem68 = new TQueueEntry();
+                  _elem68.read(iprot);
+                  struct.entries.add(_elem68);
                 }
                 iprot.readListEnd();
               }
@@ -729,9 +729,9 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
         oprot.writeFieldBegin(ENTRIES_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.entries.size()));
-          for (TQueueEntry _iter61 : struct.entries)
+          for (TQueueEntry _iter69 : struct.entries)
           {
-            _iter61.write(oprot);
+            _iter69.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -794,9 +794,9 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       if (struct.isSetEntries()) {
         {
           oprot.writeI32(struct.entries.size());
-          for (TQueueEntry _iter62 : struct.entries)
+          for (TQueueEntry _iter70 : struct.entries)
           {
-            _iter62.write(oprot);
+            _iter70.write(oprot);
           }
         }
       }
@@ -821,14 +821,14 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TList _list63 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.entries = new ArrayList<TQueueEntry>(_list63.size);
-          for (int _i64 = 0; _i64 < _list63.size; ++_i64)
+          org.apache.thrift.protocol.TList _list71 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.entries = new ArrayList<TQueueEntry>(_list71.size);
+          for (int _i72 = 0; _i72 < _list71.size; ++_i72)
           {
-            TQueueEntry _elem65; // required
-            _elem65 = new TQueueEntry();
-            _elem65.read(iprot);
-            struct.entries.add(_elem65);
+            TQueueEntry _elem73; // required
+            _elem73 = new TQueueEntry();
+            _elem73.read(iprot);
+            struct.entries.add(_elem73);
           }
         }
         struct.setEntriesIsSet(true);

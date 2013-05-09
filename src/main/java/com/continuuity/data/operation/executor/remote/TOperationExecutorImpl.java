@@ -7,7 +7,9 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -19,7 +21,9 @@ import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
 import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
 import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
 import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TGetSplits;
 import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
+import com.continuuity.data.operation.executor.remote.stubs.TKeyRange;
 import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
@@ -523,6 +527,65 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
 
     } catch (OperationException e) {
       Log.warn("Increment failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public List<TKeyRange> getSplits(TOperationContext tContext, TGetSplits tGetSplits)
+    throws TOperationException, TException {
+    MetricsHelper helper = newHelper("splits", tGetSplits.getTable());
+
+    if (Log.isTraceEnabled()) {
+      Log.trace("Received TGetSplits: " + tGetSplits);
+    }
+
+    try {
+      OperationContext context = unwrap(tContext);
+      GetSplits getSplits = unwrap(tGetSplits);
+      OperationResult<List<KeyRange>> result = this.opex.execute(context, getSplits);
+      List<TKeyRange> tResult = wrap(result);
+      if (Log.isTraceEnabled()) {
+        Log.trace("GetSplits successful.");
+      }
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return tResult;
+
+    } catch (OperationException e) {
+      Log.warn("GetSplits failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      helper.failure();
+      throw wrap(e);
+    }
+  }
+
+  @Override
+  public List<TKeyRange> getSplitsTx(TOperationContext tContext, TTransaction ttx, TGetSplits tGetSplits)
+    throws TOperationException, TException {
+    MetricsHelper helper = newHelper("splits", tGetSplits.getTable());
+
+    if (Log.isTraceEnabled()) {
+      Log.trace("Received TGetSplits: " + tGetSplits);
+    }
+
+    try {
+      OperationContext context = unwrap(tContext);
+      Transaction tx = unwrap(ttx);
+      GetSplits getSplits = unwrap(tGetSplits);
+      OperationResult<List<KeyRange>> result = this.opex.execute(context, tx, getSplits);
+      List<TKeyRange> tResult = wrap(result);
+      if (Log.isTraceEnabled()) {
+        Log.trace("GetSplits successful.");
+      }
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return tResult;
+
+    } catch (OperationException e) {
+      Log.warn("GetSplits failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
