@@ -2,9 +2,11 @@ package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.List;
+import java.util.Map;
 
 
 public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
@@ -53,4 +55,32 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @return scanner cursor
    */
   public Scanner scan(ReadPointer readPointer);
+
+  /**
+   * Gets the value associated with the least key that is greater than or equal to the given row for
+   * the specified column. Returns empty OperationResult if there is no such value.
+   *
+   * @param row
+   * @param column
+   * @param readPointer
+   * @return Value  of the column that corresponds to the least key that is greater than or equal to
+   * given row. Returns empty OperationResult if there is no such value. Never returns null.
+   * @throws OperationException
+   */
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException;
+
+  /**
+   * Gets the value and version associated with the least key that is less than or equal to the given row.
+   * Returns null if there is no such key
+   * @param row
+   * @param column
+   * @param readPointer
+   * @return Value and version of the column that corresponds to the least key that is less than or equal to
+   * given row. Null if no such key
+   * @throws OperationException
+   */
+//  public OperationResult<ImmutablePair<byte[], Long>> getFloorValueWithVersion( byte[] row, byte[] column,
+//                                                              ReadPointer readPointer) throws OperationException;
+
 }

@@ -394,6 +394,41 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
+  @Override
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    RowLockTable.Row r = new RowLockTable.Row(row);
+
+    Entry<RowLockTable.Row,NavigableMap<Column,NavigableMap<Version,Value>>> ceilEntry = this.map.ceilingEntry(r);
+
+    if ( ceilEntry == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+
+    RowLockTable.Row lockedRow = ceilEntry.getKey();
+
+    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
+    if (map == null) {
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
+    try {
+        byte[] ret =null;
+        NavigableMap<Version, Value> columnMap = getColumn(map, column);
+        ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
+        if (latest != null) {
+          ret = latest.getSecond();
+        }
+      if (ret == null) {
+        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<byte[]>(ret);
+      }
+    } finally {
+      this.locks.unlock(lockedRow);
+    }
+  }
+
   private boolean isEmpty(byte[] column) {
     return column == null || column.length == 0;
   }
@@ -488,7 +523,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           Bytes.BYTES_COMPARATOR);
       for (Map.Entry<Column, NavigableMap<Version,Value>> colEntry :
         rowEntry.getValue().entrySet()) {
-       if (!this.columnSet.contains(colEntry.getKey().getValue()) && !this.columnSet.isEmpty()) continue;
+        if (!this.columnSet.contains(colEntry.getKey().getValue())) continue;
         byte [] value =
             filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
         if (value != null) columns.put(colEntry.getKey().getValue(), value);
@@ -726,34 +761,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
-      if (curVersion.isUndeleteAll()){
-        undeleted = entry.getKey().stamp;
-        continue;
-      }
-      if (curVersion.isDeleteAll()) {
-        if (undeleted == curVersion.stamp) continue;
-        else break;
-      }
-      if (curVersion.isDelete()) {
-        lastDelete = entry.getKey().stamp;
-        continue;
-      }
-      if (curVersion.stamp == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
-    }
-    return null;
-  }
-
-  /**
-   * Returns the latest version of a column within the specified column map,
-   * filtering out deleted values without a readPointer
-   */
-  private ImmutablePair<Long, byte[]> filteredLatestDirty( NavigableMap<Version, Value> columnMap) {
-    if (columnMap == null || columnMap.isEmpty()) return null;
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
-      Version curVersion = entry.getKey();
       if (curVersion.isUndeleteAll()){
         undeleted = entry.getKey().stamp;
         continue;

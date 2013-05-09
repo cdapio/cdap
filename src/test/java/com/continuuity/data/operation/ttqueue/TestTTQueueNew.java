@@ -2203,7 +2203,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   public void testHashWithoutHashKey() throws OperationException {
     TTQueue queue = createQueue();
 
-    // enqueue 20
+    // enqueue 20, then invalidate a batch of 10 in the middle
     QueueEntry[] entries = new QueueEntry[20];
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
@@ -2568,4 +2568,3 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Assert.assertEquals(expected, actualList);
   }
 }
-

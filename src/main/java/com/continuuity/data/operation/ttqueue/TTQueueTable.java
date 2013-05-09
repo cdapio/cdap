@@ -5,8 +5,6 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
-import java.util.Iterator;
-
 /**
  * A table of {@link TTQueue}s.  See that API for details.
  */
@@ -124,17 +122,6 @@ public interface TTQueueTable {
    * Clears this queue table, completely wiping all queues.
    */
   public void clear() throws OperationException;
-
-  /**
-   * Returns iterator of QueueEntry for the given queue
-   * @param queueName queuename to iterate on
-   * @param start Start QueueEntryPointer
-   * @param end  end QueeuEntryPointer
-   * @param readPointer readPointer
-   * @return Iterator of QueueEntry
-   */
-  public Iterator<QueueEntry> getIterator(byte[] queueName, QueueEntryPointer start, QueueEntryPointer end,
-                                          ReadPointer readPointer);
 
   // Old debugging methods
 

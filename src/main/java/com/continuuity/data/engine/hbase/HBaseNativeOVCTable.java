@@ -5,10 +5,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.table.Scanner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -506,68 +503,25 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    ResultScanner resultScanner = null;
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
+    readPointer) throws OperationException {
+
+    Scan scan = new Scan(row);
     try {
-      Scan scan =  new Scan(startRow);
-      scan.setStopRow(stopRow);
-      scan.setTimeRange(0, getMaxStamp(readPointer));
-      scan.setMaxVersions();
-      resultScanner = this.readTable.getScanner(scan);
-    } catch (IOException e) {
-      Throwables.propagate(e);
-    }
-    return new HBaseNativeScanner(resultScanner, readPointer);
-  }
-
-  public class HBaseNativeScanner implements Scanner {
-
-    private final ResultScanner scanner ;
-    private final ReadPointer readPointer;
-
-    public HBaseNativeScanner(ResultScanner scanner) {
-      this(scanner, null);
-    }
-
-    public HBaseNativeScanner(ResultScanner scanner, ReadPointer readPointer) {
-      this.scanner = scanner;
-      this.readPointer = readPointer;
-    }
-
-    @Override
-    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
-      if (scanner == null) {
-        return null;
-      }
-      try {
-        Result result = scanner.next();
-        if(result == null) {
-          return null;
-        }
-        Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-        byte [] rowKey = null;
+      ResultScanner scanner = this.readTable.getScanner(scan);
+      Result result;
+      while ((result = scanner.next()) != null) {
         for (KeyValue kv : result.raw()) {
-          if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
-            continue;
-          }
-          rowKey = kv.getKey();
-          byte[] column = kv.getQualifier();
-          byte [] value = kv.getValue();
-          colValue.put(column, value);
+          if (!readPointer.isVisible(kv.getTimestamp())) continue;
+          return new OperationResult<byte[]>(kv.getValue());
         }
-        if (rowKey == null) {
-          return null;
-        } else {
-          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
-        }
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
       }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
     }
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
 
-    @Override
-    public void close() {
-      scanner.close();
-    }
   }
+
+
 }

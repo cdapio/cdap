@@ -44,7 +44,7 @@ public class DataFabricModules extends RuntimeModule {
         CConfiguration conf = CConfiguration.create();
         bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
         bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
-        bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class).in(Singleton.class);
+        bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
         // We don't need caching for in-memory

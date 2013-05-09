@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A DataSetSpecification is a hierarchical meta data object that contains all
@@ -29,12 +28,10 @@ public final class DataSetSpecification {
   private final String name;
   // the class name of the data set
   private final String type;
-  // the custom properties of the data set.
-  // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
-  private final TreeMap<String, String> properties;
+  // the custom properties of the data set
+  private final Map<String, String> properties;
   // the meta data for embedded data sets
-  // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
-  private final TreeMap<String, DataSetSpecification> dataSetSpecs;
+  private final Map<String, DataSetSpecification> dataSetSpecs;
 
   /**
    * returns the name of the data set
@@ -79,8 +76,8 @@ public final class DataSetSpecification {
    * @param dataSetSpecs the specs of embedded data sets
    */
   private DataSetSpecification(String name, String type,
-                               TreeMap<String, String> properties,
-                               TreeMap<String, DataSetSpecification> dataSetSpecs) {
+                               Map<String, String> properties,
+                               Map<String, DataSetSpecification> dataSetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -117,10 +114,10 @@ public final class DataSetSpecification {
     // private fields
     private String name;
     private String type;
-    private TreeMap<String, String> properties
-        = new TreeMap<String, String>();
-    private TreeMap<String, DataSetSpecification> dataSetSpecs
-        = new TreeMap<String, DataSetSpecification>();
+    private Map<String, String> properties
+        = new HashMap<String, String>();
+    private Map<String, DataSetSpecification> dataSetSpecs
+        = new HashMap<String, DataSetSpecification>();
 
     /**
      * Constructor from the data set that the specification is for,
