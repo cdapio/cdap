@@ -2,7 +2,9 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
@@ -122,6 +124,23 @@ public class SynchronousTransactionAgent extends AbstractTransactionAgent {
     try {
       // execute synchronously
       OperationResult<List<byte[]>> result = this.opex.execute(this.context, read);
+      success = true;
+      return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(GetSplits getSplits) throws OperationException {
+    boolean success = false;
+    try {
+      // execute synchronously
+      OperationResult<List<KeyRange>> result = this.opex.execute(this.context, getSplits);
       success = true;
       return result;
     } finally {

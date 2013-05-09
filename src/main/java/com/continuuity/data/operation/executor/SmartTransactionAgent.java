@@ -2,7 +2,9 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
@@ -324,6 +326,20 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     // now execute the operation and make sure abort in case of failure
     try {
       return succeededOne(this.opex.execute(this.context, this.xaction, read));
+    } catch (OperationException e) {
+      this.failedOne();
+      this.abort();
+      throw e;
+    }
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(GetSplits getSplits) throws OperationException {
+    // check state and get rid of deferred operations
+    executeDeferred();
+    // now execute the operation and make sure abort in case of failure
+    try {
+      return succeededOne(this.opex.execute(this.context, this.xaction, getSplits));
     } catch (OperationException e) {
       this.failedOne();
       this.abort();
