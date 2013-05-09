@@ -965,8 +965,7 @@ public class OmidTransactionalOperationExecutor
 
   @Override
   public void execute(OperationContext context, QueueAdmin.QueueConfigure configure)
-    throws OperationException
-  {
+    throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
