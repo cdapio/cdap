@@ -60,7 +60,7 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
 
     // configure the queue
     try {
-      opex.execute(operationCtx, null, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
+      opex.execute(operationCtx, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
     } catch (OperationException e) {
       // There is nothing much that can be done to resolve this OperationException, propagate it as a runtime exception
       throw Throwables.propagate(e);    // Using throw to suppress warning
