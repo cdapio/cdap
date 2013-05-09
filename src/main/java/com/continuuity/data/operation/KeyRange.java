@@ -1,6 +1,10 @@
 package com.continuuity.data.operation;
 
+import com.continuuity.api.common.Bytes;
+import com.google.common.base.Objects;
+
 import javax.annotation.Nullable;
+import java.util.Arrays;
 
 /**
  * Describes a range of (row) keys.
@@ -30,5 +34,28 @@ public class KeyRange {
    */
   public byte[] getStop() {
     return stop;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(start, stop);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (KeyRange.class != obj.getClass()) {
+      return false;
+    }
+    KeyRange other = (KeyRange) obj;
+    return Arrays.equals(this.start, other.start) && Arrays.equals(this.stop, other.stop);
+  }
+
+  @Override
+  public String toString() {
+    return "(" + (start == null ? "null" : "'" + Bytes.toStringBinary(start)) + "'"
+      + ".." + (stop == null ? "null" : "'" + Bytes.toStringBinary(stop) + "'") + ")";
   }
 }
