@@ -82,7 +82,7 @@ public class NoOperationExecutor implements OperationExecutor {
   public Map<byte[], Long> increment(OperationContext context, Increment increment)
     throws OperationException {
     // do nothing and return nothing
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   @Override
@@ -91,7 +91,7 @@ public class NoOperationExecutor implements OperationExecutor {
                                      Increment increment)
     throws OperationException {
     // do nothing and return nothing
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   @Override
@@ -166,7 +166,7 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public OperationResult<List<KeyRange>> execute(OperationContext context,
-                                                 @Nullable Transaction transaction,
+                                                 Transaction transaction,
                                                  GetSplits getSplits)
     throws OperationException {
     return execute(context, getSplits);
