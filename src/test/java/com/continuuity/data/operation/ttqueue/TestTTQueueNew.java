@@ -10,6 +10,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -2304,7 +2305,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     assertFalse(returnedGroupIds.contains(id));
 
     // get the queue info
-    QueueAdmin.QueueInfo info = queue.getQueueInfo();
+    QueueInfo info = queue.getQueueInfo();
     assertNotNull(info.getJSONString());
     assertFalse(info.getJSONString().isEmpty());
     // System.out.println(info.getJSONString());
@@ -2459,56 +2460,56 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
   }
 
-    private interface QueueConsumerHolder {
-      QueueConsumer getQueueConsumer(QueueConsumer consumer);
-    }
+  private interface QueueConsumerHolder {
+    QueueConsumer getQueueConsumer(QueueConsumer consumer);
+  }
 
-    @Test
-    public void testQueueStateType() throws Exception {
-      // QueueConsumer.StateType.UNINITIALIZED
-      // This simulates a consumer crash every time
-      List<List<Integer>> expected = Lists.newArrayListWithCapacity(3);
-      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
-      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
-      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
-      testQueueStateType(expected.iterator(),
-                         new QueueConsumerHolder() {
-                           @Override
-                           public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
-                             consumer.setQueueState(null);
-                             consumer.setStateType(QueueConsumer.StateType.UNINITIALIZED);
-                             return consumer;
-                           }
-                         });
+  @Test
+  public void testQueueStateType() throws Exception {
+    // QueueConsumer.StateType.UNINITIALIZED
+    // This simulates a consumer crash every time
+    List<List<Integer>> expected = Lists.newArrayListWithCapacity(3);
+    expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+    expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+    expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+    testQueueStateType(expected.iterator(),
+                       new QueueConsumerHolder() {
+                         @Override
+                         public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+                           consumer.setQueueState(null);
+                           consumer.setStateType(QueueConsumer.StateType.UNINITIALIZED);
+                           return consumer;
+                         }
+                       });
 
-      // QueueConsumer.StateType.INITIALIZED
-      // The consumer does not crash anytime
-      expected = Lists.newArrayListWithCapacity(3);
-      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
-      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
-      expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
-      testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
-        @Override
-        public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
-          return consumer;
-        }
-      });
+    // QueueConsumer.StateType.INITIALIZED
+    // The consumer does not crash anytime
+    expected = Lists.newArrayListWithCapacity(3);
+    expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+    expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+    expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
+    testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
+      @Override
+      public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+        return consumer;
+      }
+    });
 
-      // QueueConsumer.StateType.NOT_FOUND
-      // The consumer does not crash anytime, but cached state disappears!
-      expected = Lists.newArrayListWithCapacity(3);
-      expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
-      expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
-      expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
-      testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
-        @Override
-        public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
-          consumer.setQueueState(null);
-          consumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
-          return consumer;
-        }
-      });
-    }
+    // QueueConsumer.StateType.NOT_FOUND
+    // The consumer does not crash anytime, but cached state disappears!
+    expected = Lists.newArrayListWithCapacity(3);
+    expected.add(Lists.newArrayList(1, 2, 3, 4, 5));
+    expected.add(Lists.newArrayList(6, 7, 8, 9, 10));
+    expected.add(Lists.newArrayList(11, 12, 13, 14, 15));
+    testQueueStateType(expected.iterator(), new QueueConsumerHolder() {
+      @Override
+      public QueueConsumer getQueueConsumer(QueueConsumer consumer) {
+        consumer.setQueueState(null);
+        consumer.setStateType(QueueConsumer.StateType.NOT_FOUND);
+        return consumer;
+      }
+    });
+  }
 
   private void testQueueStateType(Iterator<List<Integer>> expectedDequeues, QueueConsumerHolder consumerHolder)
     throws Exception {

@@ -9,7 +9,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -292,11 +292,11 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
-   * Executes a {@link com.continuuity.data.operation.ttqueue.QueueAdmin.QueueConfigure} operation
+   * Executes a {@link com.continuuity.data.operation.ttqueue.admin.QueueConfigure} operation
    * outside a transaction.
    * @param context the operation context
    * @param configure the QueueConfigure operation to execute
    * @throws OperationException
    */
-  public void execute(OperationContext context, QueueAdmin.QueueConfigure configure) throws OperationException;
+  public void execute(OperationContext context, QueueConfigure configure) throws OperationException;
 }

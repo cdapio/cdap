@@ -12,6 +12,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EvictionHelper;
 import com.continuuity.data.operation.ttqueue.internal.TTQueueNewConstants;
@@ -593,7 +594,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   @Override
-  public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
+  public QueueInfo getQueueInfo() throws OperationException {
     List<Long> groupIds = this.listAllConfiguredGroups();
     Map<Long, List<QueueState>> groupInfos = Maps.newHashMap();
     for (long groupId : groupIds) {
@@ -623,7 +624,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     // return the entnire map as a json string
     Gson gson = new Gson();
-    return new QueueAdmin.QueueInfo(gson.toJson(info));
+    return new QueueInfo(gson.toJson(info));
   }
 
   @Override
@@ -1980,7 +1981,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
           // This is the crash recovery case, the consumer has stopped processing before acking the previous dequeues
           SortedSet<Long> droppedEntries = queueState.getDequeueEntrySet().startNewTry(MAX_CRASH_DEQUEUE_TRIES);
           if(!droppedEntries.isEmpty() && LOG.isWarnEnabled()) {
-            LOG.warn(getLogMessage(String.format("Dropping entries %s after %d tries",
+            LOG.warn(getLogMessage(consumer, String.format("Dropping entries %s after %d tries",
                                                  droppedEntries, MAX_CRASH_DEQUEUE_TRIES)));
           }
         }

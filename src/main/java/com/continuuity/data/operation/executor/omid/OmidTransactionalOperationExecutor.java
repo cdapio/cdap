@@ -34,8 +34,6 @@ import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -44,6 +42,10 @@ import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.google.common.base.Objects;
@@ -63,9 +65,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -302,7 +301,7 @@ public class OmidTransactionalOperationExecutor
   private void dataSetMetric_read(String dataSetName) {
     dataSetReadMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
   }
-  
+
   private void dataSetMetric_write(String dataSetName, int dataSize) {
     dataSetWriteMetric.meter(dataSetName == null ? "null" : dataSetName, 1);
     dataSetStorageMetric.meter(dataSetName == null ? "null" : dataSetName, dataSize);
@@ -984,7 +983,7 @@ public class OmidTransactionalOperationExecutor
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
+  public OperationResult<QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
                                                        throws OperationException
   {
     initialize();
@@ -995,11 +994,11 @@ public class OmidTransactionalOperationExecutor
     end(REQ_TYPE_GET_QUEUE_INFO_LATENCY, begin);
     return queueInfo == null ?
         new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND) :
-        new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
+        new OperationResult<QueueInfo>(queueInfo);
   }
 
   @Override
-  public void execute(OperationContext context, final QueueAdmin.QueueConfigure configure)
+  public void execute(OperationContext context, final QueueConfigure configure)
     throws OperationException
   {
     initialize();
