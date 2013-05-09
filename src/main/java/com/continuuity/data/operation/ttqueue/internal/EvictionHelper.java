@@ -99,6 +99,14 @@ public class EvictionHelper {
     }
   }
 
+  /**
+   * Returns the number of transactions present in EvictionHelper
+   * @return number of transactions present in EvictionHelper
+   */
+  public int size() {
+    return txnMinAckEntryMap.size();
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)

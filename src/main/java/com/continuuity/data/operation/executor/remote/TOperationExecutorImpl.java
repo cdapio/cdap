@@ -666,7 +666,7 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
     try {
       OperationContext context = unwrap(tcontext);
       QueueAdmin.QueueConfigure queueConfigure = unwrap(tQueueConfigure);
-      this.opex.execute(context, null, queueConfigure);
+      this.opex.execute(context, queueConfigure);
       if (Log.isTraceEnabled()) {
         Log.trace("Queue configure successful.");
       }

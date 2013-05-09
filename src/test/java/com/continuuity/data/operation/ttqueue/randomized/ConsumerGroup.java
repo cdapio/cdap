@@ -85,7 +85,7 @@ public class ConsumerGroup implements Runnable {
           QueueConsumer consumer =
             new StatefulQueueConsumer(i, id, numConsumers, "", TTQueueRandomizedTest.HASH_KEY, config);
           consumers.add(consumer);
-          queue.configure(consumer);
+          queue.configure(consumer, oracle.getReadPointer());
         }
 
         // Configure done, wait for all groups to finish configuration

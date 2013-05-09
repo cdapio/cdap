@@ -96,7 +96,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
     this.executor.execute(context,
@@ -135,8 +135,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1, config);
 
     // configure queue and stream
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, consumer));
 
     // enqueue to queue, stream, and write data
     this.executor.commit(context, new QueueEnqueue(queueName, new QueueEntry(queueName)));
@@ -163,8 +163,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(context, new ClearFabric());
 
     // configure queue and stream again
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(streamName, consumer));
     // everything is gone!
     assertTrue(this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config)).isEmpty());
@@ -183,7 +183,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -268,7 +268,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     TTQueueOnVCTable.TRACE = true;
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -332,9 +332,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     long expectedVal;
 
     // Configure queues
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
 
     // Go!
 
@@ -429,9 +429,9 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Go!
 
     // Configure queues
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(srcQueueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(destQueueOne, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(destQueueTwo, consumer));
 
     // Add an entry to source queue
     this.executor.commit(context, new QueueEnqueue(srcQueueName, new QueueEntry(srcQueueValue)));
@@ -566,7 +566,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     QueueConfig configOne = new QueueConfig(PartitionerType.FIFO, true);
     // Configure queue
     QueueConsumer consumerOne = new StatefulQueueConsumer(0, 0, 1, configOne);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumerOne));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumerOne));
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerOne, configOne));
       assertTrue(result.isSuccess());
@@ -585,7 +585,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Now consume them all in async mode, no ack
     QueueConfig configTwo = new QueueConfig(PartitionerType.FIFO, false);
     QueueConsumer consumerTwo = new StatefulQueueConsumer(0, 2, 1, configTwo);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumerTwo));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumerTwo));
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result = this.executor.execute(context, new QueueDequeue(queueName, consumerTwo, configTwo));
       assertTrue(result.isSuccess());
@@ -620,7 +620,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Create and start a thread that dequeues in a loop
     final QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(queueName, consumer));
+    this.executor.execute(context, new QueueAdmin.QueueConfigure(queueName, consumer));
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
@@ -737,7 +737,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     for (int i=0;i<p;i++) {
       consumerGroupOne[i]=new Consumer(new QueueConsumer(i, 0, p, config),
                                        config, dequeuedMapOne, producersDone);
-      this.executor.execute(context, null,
+      this.executor.execute(context,
                             new QueueAdmin.QueueConfigure(
                               TestOmidExecutorLikeAFlow.this.threadedQueueName, consumerGroupOne[i].consumer
                             ));
@@ -746,7 +746,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     for (int i=0;i<p;i++) {
       consumerGroupTwo[i]=new Consumer(new QueueConsumer(i, 1, p, config),
                                        config, dequeuedMapTwo, producersDone);
-      this.executor.execute(context, null,
+      this.executor.execute(context,
                             new QueueAdmin.QueueConfigure(
                               TestOmidExecutorLikeAFlow.this.threadedQueueName, consumerGroupTwo[i].consumer
                             ));

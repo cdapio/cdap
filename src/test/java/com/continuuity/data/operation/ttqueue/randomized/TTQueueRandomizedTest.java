@@ -186,7 +186,7 @@ public class TTQueueRandomizedTest {
   private void handleNonFinalizedEntries(TTQueue ttQueue, long groupId, int numEnqueues) throws Exception {
     QueueConsumer consumer = new StatefulQueueConsumer(0, groupId, 1,
                                                        new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
-    ttQueue.configure(consumer);
+    ttQueue.configure(consumer, oracle.getReadPointer());
     List<Integer> nonFinalized = Lists.newArrayList();
     while(true) {
       DequeueResult result = ttQueue.dequeue(consumer, TransactionOracle.DIRTY_READ_POINTER);

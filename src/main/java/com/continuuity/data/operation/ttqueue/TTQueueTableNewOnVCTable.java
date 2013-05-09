@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.VersionedColumnarTable;
 
@@ -41,9 +42,9 @@ public class TTQueueTableNewOnVCTable extends TTQueueAbstractTableOnVCTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer)
+  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException {
-    getQueue(queueName).configure(newConsumer);
+    getQueue(queueName).configure(newConsumer, readPointer);
   }
 
   @Override

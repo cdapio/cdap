@@ -104,10 +104,11 @@ public interface TTQueue {
   /**
    * Used to configure the queue on start-up, or when consumer instances are changed.
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @return the old consumer count
    * @throws OperationException if unsuccessful
    */
-  int configure(QueueConsumer newConsumer) throws OperationException;
+  int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.

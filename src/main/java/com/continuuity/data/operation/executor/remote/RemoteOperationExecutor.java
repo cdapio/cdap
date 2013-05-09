@@ -23,7 +23,6 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -482,8 +481,8 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context, @Nullable Transaction transaction,
-                      final QueueAdmin.QueueConfigure configure) throws OperationException {
+  public void execute(final OperationContext context, final QueueAdmin.QueueConfigure configure)
+    throws OperationException {
     this.execute(
       new Operation<Boolean>("QueueConfigure") {
         @Override
