@@ -7,7 +7,7 @@ subprojects {
    * staging is important as we would like to have all the necessary 
    * primary and tertiary dependencies to be pulled in. 
    */
-  task ('prepackager', dependsOn: ['jar']) {
+  task ('prepackager', dependsOn : ['build']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
     def confDir = file("$stageDir/etc/continuuity/conf.dist")
