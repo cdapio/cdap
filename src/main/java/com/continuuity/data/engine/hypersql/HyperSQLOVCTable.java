@@ -28,11 +28,9 @@ import java.util.TreeMap;
 /**
  * Implementation of an OVCTable over a HyperSQL table.
  */
-public class HyperSQLOVCTable
-implements OrderedVersionedColumnarTable {
+public class HyperSQLOVCTable implements OrderedVersionedColumnarTable {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(HyperSQLOVCTable.class);
+  private static final Logger Log = LoggerFactory.getLogger(HyperSQLOVCTable.class);
 
   private final String tableName;
   private final String quotedTableName;
@@ -41,7 +39,7 @@ implements OrderedVersionedColumnarTable {
   HyperSQLOVCTable(final String tableName, Connection connection) {
     // quoting the table name to ensure that arbitrary characters are legal
     this.tableName = tableName;
-    this.quotedTableName = "\""+ tableName + "\"";
+    this.quotedTableName = "\"" + tableName + "\"";
     this.connection = connection;
   }
 
@@ -51,42 +49,48 @@ implements OrderedVersionedColumnarTable {
   private static final String TYPE_TYPE = "INT";
   private static final String VALUE_TYPE = "VARBINARY(1048576)";
 
-  private static final byte [] NULL_VAL = new byte [0];
+  private static final byte[] NULL_VAL = new byte[0];
 
   private enum Type {
-    UNDELETE_ALL (0),
-    DELETE_ALL   (1),
-    DELETE       (2),
-    VALUE        (3);
+    UNDELETE_ALL(0),
+    DELETE_ALL(1),
+    DELETE(2),
+    VALUE(3);
     int i;
+
     Type(int i) {
       this.i = i;
     }
+
     static Type from(int i) {
       switch (i) {
-        case 0: return UNDELETE_ALL;
-        case 1: return DELETE_ALL;
-        case 2: return DELETE;
-        case 3: return VALUE;
+        case 0:
+          return UNDELETE_ALL;
+        case 1:
+          return DELETE_ALL;
+        case 2:
+          return DELETE;
+        case 3:
+          return VALUE;
       }
       return null;
     }
+
     boolean isUndeleteAll() {
       return this == UNDELETE_ALL;
     }
+
     boolean isDeleteAll() {
       return this == DELETE_ALL;
     }
+
     boolean isDelete() {
       return this == DELETE;
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
-          .add("name", name())
-          .add("int", this.i)
-          .toString();
+      return Objects.toStringHelper(this).add("name", name()).add("int", this.i).toString();
     }
   }
 
@@ -106,16 +110,16 @@ implements OrderedVersionedColumnarTable {
 
   void initializeTable() throws OperationException {
     String createStatement = "CREATE CACHED TABLE " + this.quotedTableName + " (" +
-        "rowkey " + ROW_TYPE + " NOT NULL, " +
-        "column " + COLUMN_TYPE + " NOT NULL, " +
-        "version " + VERSION_TYPE + " NOT NULL, " +
-        "kvtype " + TYPE_TYPE + " NOT NULL, " +
-        "id BIGINT IDENTITY, " +
-        "value " + VALUE_TYPE + " NOT NULL," +
-        "UNIQUE (rowkey, column, version, kvtype, id)) ";
+      "rowkey " + ROW_TYPE + " NOT NULL, " +
+      "column " + COLUMN_TYPE + " NOT NULL, " +
+      "version " + VERSION_TYPE + " NOT NULL, " +
+      "kvtype " + TYPE_TYPE + " NOT NULL, " +
+      "id BIGINT IDENTITY, " +
+      "value " + VALUE_TYPE + " NOT NULL," +
+      "UNIQUE (rowkey, column, version, kvtype, id)) ";
     String indexStatement = "CREATE INDEX \"theBigIndex" +
       this.tableName + "\" ON " +
-        this.quotedTableName + " (rowkey, column, version DESC, kvtype, id DESC)";
+      this.quotedTableName + " (rowkey, column, version DESC, kvtype, id DESC)";
 
     Statement stmt = null;
     try {
@@ -128,7 +132,7 @@ implements OrderedVersionedColumnarTable {
       // fail silent if table/index already exists
       // SQL state for determining the duplicate table create exception
       // http://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html
-      if(!e.getSQLState().equalsIgnoreCase("42504")) {
+      if (!e.getSQLState().equalsIgnoreCase("42504")) {
         throw createOperationException(e, "create");
       }
     } finally {
@@ -166,14 +170,12 @@ implements OrderedVersionedColumnarTable {
   // Simple Write Operations
 
   @Override
-  public void put(byte[] row, byte[] column, long version, byte[] value)
-      throws OperationException {
+  public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
     performInsert(row, column, version, Type.VALUE, value);
   }
 
   @Override
-  public void put(byte[] row, byte[][] columns, long version, byte[][] values)
-      throws OperationException {
+  public void put(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
     performInsert(row, columns, version, Type.VALUE, values);
   }
 
@@ -183,41 +185,35 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow) throws OperationException {
+  public void put(byte[][] rows, byte[][][] columnsPerRow, long version, byte[][][] valuesPerRow)
+    throws OperationException {
     performInsert(rows, columnsPerRow, version, Type.VALUE, valuesPerRow);
   }
 
   // Delete Operations
 
   @Override
-  public void delete(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void delete(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.DELETE, NULL_VAL);
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns, long version)
-      throws OperationException {
-    performInsert(row, columns, version, Type.DELETE,
-        generateDeleteVals(columns.length));
+  public void delete(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.DELETE, generateDeleteVals(columns.length));
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void deleteAll(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.DELETE_ALL, NULL_VAL);
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[][] columns, long version)
-    throws OperationException {
-    performInsert(row, columns, version, Type.DELETE_ALL,
-                  generateDeleteVals(columns.length));
+  public void deleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.DELETE_ALL, generateDeleteVals(columns.length));
   }
 
   @Override
-  public void deleteDirty(byte[] row, byte[][] columns, long version)
-    throws OperationException {
+  public void deleteDirty(byte[] row, byte[][] columns, long version) throws OperationException {
     deleteAll(row, columns, version);
   }
 
@@ -225,10 +221,9 @@ implements OrderedVersionedColumnarTable {
   public void deleteDirty(byte[][] rows) throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-        "DELETE FROM " + this.quotedTableName +
-          " WHERE rowkey = ? ");
-      for (int i=0; i<rows.length; i++) {
+      ps = this.connection.prepareStatement("DELETE FROM " + this.quotedTableName +
+                                              " WHERE rowkey = ? ");
+      for (int i = 0; i < rows.length; i++) {
         ps.setBytes(1, rows[i]);
         ps.executeUpdate();
       }
@@ -246,49 +241,45 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[] column, long version)
-      throws OperationException {
+  public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
     performInsert(row, column, version, Type.UNDELETE_ALL, NULL_VAL);
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[][] columns, long version)
-      throws OperationException {
-    performInsert(row, columns, version, Type.UNDELETE_ALL,
-        generateDeleteVals(columns.length));
+  public void undeleteAll(byte[] row, byte[][] columns, long version) throws OperationException {
+    performInsert(row, columns, version, Type.UNDELETE_ALL, generateDeleteVals(columns.length));
   }
 
   private byte[][] generateDeleteVals(int length) {
-    byte [][] values = new byte[length][];
-    for (int i=0;i<values.length;i++) values[i] = NULL_VAL;
+    byte[][] values = new byte[length][];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = NULL_VAL;
+    }
     return values;
   }
 
   // Read-Modify-Write Operations
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) throws OperationException {
+  public long increment(byte[] row, byte[] column, long amount, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     PreparedStatement ps = null;
     long newAmount = amount;
     try {
       try {
-        ps = this.connection.prepareStatement(
-            "SELECT version, kvtype, id, value " +
-                "FROM " + this.quotedTableName + " " +
-                "WHERE rowkey = ? AND column = ? " +
-                "ORDER BY version DESC, kvtype ASC, id DESC");
+        ps = this.connection.prepareStatement("SELECT version, kvtype, id, value " +
+                                                "FROM " + this.quotedTableName + " " +
+                                                "WHERE rowkey = ? AND column = ? " +
+                                                "ORDER BY version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, row);
         ps.setBytes(2, column);
         ResultSet result = ps.executeQuery();
-        ImmutablePair<Long, byte[]> latest =
-            filteredLatest(result, readPointer);
+        ImmutablePair<Long, byte[]> latest = filteredLatest(result, readPointer);
         if (latest != null) {
           try {
             newAmount += Bytes.toLong(latest.getSecond());
-          } catch(IllegalArgumentException e) {
-            throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                         e.getMessage(), e);
+          } catch (IllegalArgumentException e) {
+            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
           }
         }
         ps.close();
@@ -296,10 +287,9 @@ implements OrderedVersionedColumnarTable {
         throw createOperationException(e, "select");
       }
       try {
-        ps = this.connection.prepareStatement(
-            "INSERT INTO " + this.quotedTableName +
-                " (rowkey, column, version, kvtype, value) " +
-                "VALUES ( ? , ? , ? , ? , ?)");
+        ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                                " (rowkey, column, version, kvtype, value) " +
+                                                "VALUES ( ? , ? , ? , ? , ?)");
         ps.setBytes(1, row);
         ps.setBytes(2, column);
         ps.setLong(3, writeVersion);
@@ -322,14 +312,13 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
-      long[] amounts, ReadPointer readPointer, long writeVersion)
-      throws OperationException {
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts, ReadPointer readPointer,
+                                     long writeVersion)
+    throws OperationException {
     // TODO: This is not atomic across columns, it just loops over them
-    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-    for (int i=0; i<columns.length; i++) {
-      ret.put(columns[i], increment(row, columns[i], amounts[i],
-          readPointer, writeVersion));
+    Map<byte[], Long> ret = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
+    for (int i = 0; i < columns.length; i++) {
+      ret.put(columns[i], increment(row, columns[i], amounts[i], readPointer, writeVersion));
     }
     return ret;
   }
@@ -341,11 +330,10 @@ implements OrderedVersionedColumnarTable {
       //Execute select/insert update in one transaction.
       this.connection.setAutoCommit(false);
 
-      ps = this.connection.prepareStatement(
-             "SELECT version, kvtype, id, value " +
-             "FROM " + this.quotedTableName + " " +
-             "WHERE rowkey = ? AND column = ? " +
-             "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? AND column = ? " +
+                                              "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
 
@@ -355,10 +343,10 @@ implements OrderedVersionedColumnarTable {
       ImmutablePair<Long, byte[]> latest = latest(result);
       long newAmount = amount;
 
-      if(latest == null) {
-        ps = this.connection.prepareStatement(
-              "INSERT INTO " + this.quotedTableName +
-              " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
+      if (latest == null) {
+        ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                                " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , " +
+                                                "? )");
         ps.setBytes(1, row);
         ps.setBytes(2, column);
         ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
@@ -366,11 +354,9 @@ implements OrderedVersionedColumnarTable {
         ps.setBytes(5, Bytes.toBytes(newAmount));
         ps.executeUpdate();
       } else {
-        ps = this.connection.prepareStatement(
-              "UPDATE " + this.quotedTableName +
-              " SET value = ? " +
-              " WHERE rowkey = ? AND column = ? AND version = ? "
-        );
+        ps = this.connection.prepareStatement("UPDATE " + this.quotedTableName +
+                                                " SET value = ? " +
+                                                " WHERE rowkey = ? AND column = ? AND version = ? ");
         newAmount = Bytes.toLong(latest.getSecond()) + amount;
         ps.setBytes(1, Bytes.toBytes(newAmount));
         ps.setBytes(2, row);
@@ -395,30 +381,30 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void compareAndSwap(byte[] row, byte[] column,
-                             byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
-                             long writeVersion) throws OperationException {
+  public void compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue,
+                             ReadPointer readPointer, long writeVersion)
+    throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-          "SELECT version, kvtype, id, value " +
-          "FROM " + this.quotedTableName + " " +
-          "WHERE rowkey = ? AND column = ? " +
-          "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? AND column = ? " +
+                                              "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
       ResultSet result = ps.executeQuery();
       ImmutablePair<Long, byte[]> latest = filteredLatest(result, readPointer);
-      byte [] existingValue = latest == null ? null : latest.getSecond();
-      ps.close(); ps = null;
+      byte[] existingValue = latest == null ? null : latest.getSecond();
+      ps.close();
+      ps = null;
 
       // handle invalid cases regarding non-existent values
-      if (existingValue == null && expectedValue != null)
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
-      if (existingValue != null && expectedValue == null)
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
+      if (existingValue == null && expectedValue != null) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
+      if (existingValue != null && expectedValue == null) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
 
       // if nothing existed, just write
       // TODO: this is not atomic and thus is broken?  how to make it atomic?
@@ -428,9 +414,9 @@ implements OrderedVersionedColumnarTable {
       }
 
       // check if expected == existing, fail if not
-      if (!Bytes.equals(expectedValue, existingValue))
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
-            "CompareAndSwap expected value mismatch");
+      if (!Bytes.equals(expectedValue, existingValue)) {
+        throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      }
 
       // if newValue is null, just delete.
       // TODO: this can't be rolled back!
@@ -440,9 +426,8 @@ implements OrderedVersionedColumnarTable {
       }
 
       // Perform update!
-      ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.quotedTableName +
-          " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
+      ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                              " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
       ps.setLong(3, writeVersion);
@@ -476,36 +461,34 @@ implements OrderedVersionedColumnarTable {
       this.connection.setAutoCommit(false);
       this.connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 
-      ps = this.connection.prepareStatement(
-        "SELECT version, kvtype, id, value " +
-          "FROM " + this.quotedTableName + " " +
-          "WHERE rowkey = ? AND column = ? " +
-          "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? AND column = ? " +
+                                              "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
       ResultSet result = ps.executeQuery();
       ImmutablePair<Long, byte[]> latest = latest(result);
-      byte [] existingValue = latest == null ? null : latest.getSecond();
-      ps.close(); ps = null;
+      byte[] existingValue = latest == null ? null : latest.getSecond();
+      ps.close();
+      ps = null;
 
-      if((existingValue == null && expectedValue == null) || Bytes.equals(existingValue, expectedValue)) {
+      if ((existingValue == null && expectedValue == null) || Bytes.equals(existingValue, expectedValue)) {
         // if newValue is null, just delete.
-        if(newValue == null || newValue.length == 0) {
+        if (newValue == null || newValue.length == 0) {
           deleteAll(row, column, latest.getFirst());
-          ps = this.connection.prepareStatement(
-            "DELETE from " + this.quotedTableName + " " +
-              "WHERE rowkey = ? AND column = ? AND version = ? "
-          );
+          ps = this.connection.prepareStatement("DELETE from " + this.quotedTableName + " " +
+                                                  "WHERE rowkey = ? AND column = ? AND version = ? ");
           ps.setBytes(1, row);
           ps.setBytes(2, column);
           ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
           ps.executeUpdate();
         } else {
           // Perform update!
-          if(existingValue == null) {
-            ps = this.connection.prepareStatement(
-              "INSERT INTO " + this.quotedTableName +
-                " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
+          if (existingValue == null) {
+            ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                                    " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , " +
+                                                    "? , ? )");
             ps.setBytes(1, row);
             ps.setBytes(2, column);
             ps.setLong(3, TransactionOracle.DIRTY_WRITE_VERSION);
@@ -513,11 +496,9 @@ implements OrderedVersionedColumnarTable {
             ps.setBytes(5, newValue);
             ps.executeUpdate();
           } else {
-            ps = this.connection.prepareStatement(
-              "UPDATE " + this.quotedTableName +
-                " SET value = ? " +
-                " WHERE rowkey = ? AND column = ? AND version = ? "
-            );
+            ps = this.connection.prepareStatement("UPDATE " + this.quotedTableName +
+                                                    " SET value = ? " +
+                                                    " WHERE rowkey = ? AND column = ? AND version = ? ");
             ps.setBytes(1, newValue);
             ps.setBytes(2, row);
             ps.setBytes(3, column);
@@ -535,14 +516,14 @@ implements OrderedVersionedColumnarTable {
     } finally {
       try {
         // Release the read lock
-        if(oldAutoCommitValue != null) {
+        if (oldAutoCommitValue != null) {
           this.connection.setAutoCommit(oldAutoCommitValue);
         }
-        if(oldTransactionIsolation != null) {
+        if (oldTransactionIsolation != null) {
           this.connection.setTransactionIsolation(oldTransactionIsolation);
         }
         if (ps != null) {
-            ps.close();
+          ps.close();
         }
       } catch (SQLException e) {
         throw createOperationException(e, "close");
@@ -552,19 +533,17 @@ implements OrderedVersionedColumnarTable {
 // Read Operations
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, ReadPointer readPointer) throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-          "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.quotedTableName + " " +
-              "WHERE rowkey = ? " +
-          "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT column, version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? " +
+                                              "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ResultSet result = ps.executeQuery();
       Map<byte[], byte[]> resMap = filteredLatestColumns(result, readPointer, -1);
-      if(resMap.isEmpty()) {
+      if (resMap.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
       return new OperationResult<Map<byte[], byte[]>>(resMap);
@@ -583,42 +562,37 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<byte[]>
-  get(byte[] row, byte[] column, ReadPointer readPointer)
-      throws OperationException {
+  public OperationResult<byte[]> get(byte[] row, byte[] column, ReadPointer readPointer) throws OperationException {
 
-    OperationResult<ImmutablePair<byte[], Long>> res =
-        getWithVersion(row, column, readPointer);
-    if (res.isEmpty())
+    OperationResult<ImmutablePair<byte[], Long>> res = getWithVersion(row, column, readPointer);
+    if (res.isEmpty()) {
       return new OperationResult<byte[]>(res.getStatus(), res.getMessage());
-    else
+    } else {
       return new OperationResult<byte[]>(res.getValue().getFirst());
+    }
   }
 
   @Override
-  public OperationResult<ImmutablePair<byte[], Long>>
-  getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
-      throws OperationException {
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(byte[] row, byte[] column, ReadPointer readPointer)
+    throws OperationException {
 
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-          "SELECT version, kvtype, id, value " +
-              "FROM " + this.quotedTableName + " " +
-              "WHERE rowkey = ? AND column = ? " +
-          "ORDER BY version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? AND column = ? " +
+                                              "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
       ResultSet result = ps.executeQuery();
-      ImmutablePair<Long,byte[]> latest = filteredLatest(result, readPointer);
+      ImmutablePair<Long, byte[]> latest = filteredLatest(result, readPointer);
 
-      if (latest == null)
-        return new OperationResult<ImmutablePair<byte[], Long>>(
-            StatusCode.KEY_NOT_FOUND);
+      if (latest == null) {
+        return new OperationResult<ImmutablePair<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+      }
 
-      return new OperationResult<ImmutablePair<byte[], Long>>(
-          new ImmutablePair<byte[],Long>(
-              latest.getSecond(), latest.getFirst()));
+      return new OperationResult<ImmutablePair<byte[], Long>>(new ImmutablePair<byte[], Long>(latest.getSecond(),
+                                                                                              latest.getFirst()));
 
     } catch (SQLException e) {
       throw createOperationException(e, "select", ps);
@@ -634,22 +608,25 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
-      ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
+                                                  ReadPointer readPointer)
+    throws OperationException {
 
     PreparedStatement ps = null;
     try {
       String columnChecks = "";
-      if (startColumn != null) columnChecks += " AND column >= ?";
-      if (stopColumn != null) columnChecks += " AND column < ?";
+      if (startColumn != null) {
+        columnChecks += " AND column >= ?";
+      }
+      if (stopColumn != null) {
+        columnChecks += " AND column < ?";
+      }
       // we cannot push down the limit into the SQL, because we post-filter
       // by timestamp, hence we can't know the correct limit pre-filtering.
-      ps = this.connection.prepareStatement(
-          "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.quotedTableName + " " +
-              "WHERE rowkey = ?" + columnChecks + " " +
-          "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT column, version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ?" + columnChecks + " " +
+                                              "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       int idx = 2;
       if (startColumn != null) {
@@ -661,14 +638,11 @@ implements OrderedVersionedColumnarTable {
       }
       ResultSet result = ps.executeQuery();
       if (result == null) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.KEY_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
-      Map<byte[], byte[]> filtered =
-          filteredLatestColumns(result, readPointer, limit);
+      Map<byte[], byte[]> filtered = filteredLatestColumns(result, readPointer, limit);
       if (filtered.isEmpty()) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       } else {
         return new OperationResult<Map<byte[], byte[]>>(filtered);
       }
@@ -686,37 +660,33 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[][] columns, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns, ReadPointer readPointer)
+    throws OperationException {
     PreparedStatement ps = null;
     try {
-      String [] columnChecks = new String[columns.length];
+      String[] columnChecks = new String[columns.length];
       String columnCheck = "column = ?";
-      for (int i=0; i<columnChecks.length; i++) {
+      for (int i = 0; i < columnChecks.length; i++) {
         columnChecks[i] = columnCheck;
       }
       columnCheck = StringUtils.join(columnChecks, " OR ");
 
-      ps = this.connection.prepareStatement(
-          "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.quotedTableName + " " +
-              "WHERE rowkey = ? AND (" + columnCheck + ") " +
-          "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT column, version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey = ? AND (" + columnCheck + ") " +
+                                              "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       int idx = 2;
-      for (byte [] column : columns) {
+      for (byte[] column : columns) {
         ps.setBytes(idx++, column);
       }
       ResultSet result = ps.executeQuery();
       if (result == null) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.KEY_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
       }
-      Map<byte[], byte[]> filtered =
-          filteredLatestColumns(result, readPointer, -1);
+      Map<byte[], byte[]> filtered = filteredLatestColumns(result, readPointer, -1);
       if (filtered.isEmpty()) {
-        return new OperationResult<Map<byte[], byte[]>>(
-            StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
       } else {
         return new OperationResult<Map<byte[], byte[]>>(filtered);
       }
@@ -734,52 +704,49 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<byte[]> getDirty(byte[] row, byte[] column)
-    throws OperationException {
+  public OperationResult<byte[]> getDirty(byte[] row, byte[] column) throws OperationException {
     return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
   }
 
   @Override
-  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns, ReadPointer readPointer) throws OperationException {
+  public OperationResult<Map<byte[], Map<byte[], byte[]>>> getAllColumns(byte[][] rows, byte[][] columns,
+                                                                         ReadPointer readPointer)
+    throws OperationException {
     PreparedStatement ps = null;
     try {
-      final String [] rowConditions = new String[rows.length];
+      final String[] rowConditions = new String[rows.length];
       String rowConditionStr = " rowKey = ? ";
-      for (int i=0; i<rows.length; ++i) {
+      for (int i = 0; i < rows.length; ++i) {
         rowConditions[i] = rowConditionStr;
       }
       rowConditionStr = StringUtils.join(rowConditions, " OR ");
 
-      final String [] colConditions = new String[columns.length];
+      final String[] colConditions = new String[columns.length];
       String colConditionStr = " column = ? ";
-      for (int i=0; i<columns.length; ++i) {
+      for (int i = 0; i < columns.length; ++i) {
         colConditions[i] = colConditionStr;
       }
       colConditionStr = StringUtils.join(colConditions, " OR ");
 
-      ps = this.connection.prepareStatement(
-        "SELECT rowkey, column, version, kvtype, id, value " +
-          "FROM " + this.quotedTableName + " " +
-          "WHERE (" + rowConditionStr + ") AND ( " + colConditionStr + " ) " +
-          "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE (" + rowConditionStr + ") AND ( " + colConditionStr + " ) " +
+                                              "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
 
-      int  idx = 1;
-      for(int i = 0; i < rows.length; ++i) {
+      int idx = 1;
+      for (int i = 0; i < rows.length; ++i) {
         ps.setBytes(idx++, rows[i]);
       }
-      for(int i = 0; i < columns.length; ++i) {
+      for (int i = 0; i < columns.length; ++i) {
         ps.setBytes(idx++, columns[i]);
       }
       ResultSet result = ps.executeQuery();
       if (result == null) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(
-          StatusCode.KEY_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.KEY_NOT_FOUND);
       }
-      Map<byte[], Map<byte[], byte[]>> filtered =
-        filteredLatestColumnsWithKey(result, readPointer, -1);
+      Map<byte[], Map<byte[], byte[]>> filtered = filteredLatestColumnsWithKey(result, readPointer, -1);
       if (filtered.isEmpty()) {
-        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(
-          StatusCode.COLUMN_NOT_FOUND);
+        return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(StatusCode.COLUMN_NOT_FOUND);
       } else {
         return new OperationResult<Map<byte[], Map<byte[], byte[]>>>(filtered);
       }
@@ -799,28 +766,28 @@ implements OrderedVersionedColumnarTable {
   // Scan Operations
 
   @Override
-  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer)
-      throws OperationException {
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-          "SELECT rowkey, column, version, kvtype, id " +
-              "FROM " + this.quotedTableName + " " +
-          "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
+      ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
       ResultSet result = ps.executeQuery();
       List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
       int returned = 0;
       int skipped = 0;
       long lastDelete = -1;
       long undeleted = -1;
-      byte [] lastRow = new byte[0];
-      byte [] curRow = new byte[0];
-      byte [] curCol = new byte [0];
-      byte [] lastCol = new byte [0];
+      byte[] lastRow = new byte[0];
+      byte[] curRow = new byte[0];
+      byte[] curCol = new byte[0];
+      byte[] lastCol = new byte[0];
       while (result.next() && returned < limit) {
         // See if we already included this row
-        byte [] row = result.getBytes(1);
-        if (Bytes.equals(lastRow, row)) continue;
+        byte[] row = result.getBytes(1);
+        if (Bytes.equals(lastRow, row)) {
+          continue;
+        }
 
         // See if this is a new row (clear col/del tracking if so)
         if (!Bytes.equals(curRow, row)) {
@@ -834,9 +801,11 @@ implements OrderedVersionedColumnarTable {
         // Check visibility of this entry
         long curVersion = result.getLong(3);
         // Check if this entry is visible, skip if not
-        if (!readPointer.isVisible(curVersion)) continue;
+        if (!readPointer.isVisible(curVersion)) {
+          continue;
+        }
 
-        byte [] column = result.getBytes(2);
+        byte[] column = result.getBytes(2);
         // Check if this column has been completely deleted
         if (Bytes.equals(lastCol, column)) {
           continue;
@@ -854,8 +823,9 @@ implements OrderedVersionedColumnarTable {
           continue;
         }
         if (type.isDeleteAll()) {
-          if (undeleted == curVersion) continue;
-          else {
+          if (undeleted == curVersion) {
+            continue;
+          } else {
             // The rest of this column has been deleted, act like we returned it
             lastCol = column;
             continue;
@@ -865,7 +835,9 @@ implements OrderedVersionedColumnarTable {
           lastDelete = curVersion;
           continue;
         }
-        if (curVersion == lastDelete) continue;
+        if (curVersion == lastDelete) {
+          continue;
+        }
         // Column is valid, therefore row is valid, add row
         lastRow = row;
         if (skipped < offset) {
@@ -895,8 +867,7 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns,
-      ReadPointer readPointer) {
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
@@ -906,20 +877,19 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
-    readPointer) throws OperationException {
+  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
+    throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-        "SELECT  version, kvtype, rowKey, value " +
-          "FROM " + this.quotedTableName + " " +
-          "WHERE rowkey >= ? AND column = ? " +
-          "ORDER BY rowKey ASC LIMIT 1");
+      ps = this.connection.prepareStatement("SELECT  version, kvtype, rowKey, value " +
+                                              "FROM " + this.quotedTableName + " " +
+                                              "WHERE rowkey >= ? AND column = ? " +
+                                              "ORDER BY rowKey ASC LIMIT 1");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
       ResultSet result = ps.executeQuery();
 
-      ImmutablePair<Long,byte[]> latest = filteredLatest(result, readPointer);
+      ImmutablePair<Long, byte[]> latest = filteredLatest(result, readPointer);
       if (latest == null) {
         return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
       } else {
@@ -927,8 +897,7 @@ implements OrderedVersionedColumnarTable {
       }
     } catch (SQLException e) {
       throw createOperationException(e, "select", ps);
-    }
-    finally {
+    } finally {
       if (ps != null) {
         try {
           ps.close();
@@ -941,22 +910,21 @@ implements OrderedVersionedColumnarTable {
 
   // Private Helper Methods
 
-  private void performInsert(byte [] row, byte [] column, long version,
-                             Type type, byte [] value) throws OperationException {
-    performInsert(new byte [][] {row}, new byte [][]{column}, version, type, new byte [][]{value});
+  private void performInsert(byte[] row, byte[] column, long version, Type type, byte[] value)
+    throws OperationException {
+    performInsert(new byte[][]{row}, new byte[][]{column}, version, type, new byte[][]{value});
   }
 
-  private void performInsert(byte [][] rows, byte [][] columns, long version,
-                             Type type, byte [][] values) throws OperationException {
+  private void performInsert(byte[][] rows, byte[][] columns, long version, Type type, byte[][] values)
+    throws OperationException {
     assert (rows.length == columns.length);
     assert (rows.length == values.length);
 
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-        "INSERT INTO " + this.quotedTableName +
-          " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
-      for(int i = 0; i < rows.length; ++i) {
+      ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                              " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
+      for (int i = 0; i < rows.length; ++i) {
         ps.setBytes(1, rows[i]);
         ps.setBytes(2, columns[i]);
         ps.setLong(3, version);
@@ -977,16 +945,15 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  private void performInsert(byte [][] rows, byte [][][] columnsPerRow, long version,
-                             Type type, byte [][][] valuesPerRow) throws OperationException {
+  private void performInsert(byte[][] rows, byte[][][] columnsPerRow, long version, Type type, byte[][][] valuesPerRow)
+    throws OperationException {
     assert (rows.length == columnsPerRow.length);
     assert (rows.length == valuesPerRow.length);
 
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-        "INSERT INTO " + this.quotedTableName +
-          " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
+      ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                              " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
       for (int i = 0; i < rows.length; ++i) {
         byte[][] columns = columnsPerRow[i];
         byte[][] values = valuesPerRow[i];
@@ -1012,14 +979,13 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  private void performInsert(byte [] row, byte [][] columns, long version,
-      Type type, byte [][] values) throws OperationException {
+  private void performInsert(byte[] row, byte[][] columns, long version, Type type, byte[][] values)
+    throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.quotedTableName +
-          " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
-      for (int i=0; i<columns.length; i++) {
+      ps = this.connection.prepareStatement("INSERT INTO " + this.quotedTableName +
+                                              " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
+      for (int i = 0; i < columns.length; i++) {
         ps.setBytes(1, row);
         ps.setBytes(2, columns[i]);
         ps.setLong(3, version);
@@ -1041,11 +1007,14 @@ implements OrderedVersionedColumnarTable {
   }
 
   /**
-   * Result has (version, kvtype, id, value)
+   * Result has (version, kvtype, id, value).
+   *
    * @throws SQLException
    */
   private ImmutablePair<Long, byte[]> latest(ResultSet result) throws SQLException {
-    if (result == null) return null;
+    if (result == null) {
+      return null;
+    }
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
@@ -1056,72 +1025,92 @@ implements OrderedVersionedColumnarTable {
         continue;
       }
       if (type.isDeleteAll()) {
-        if (undeleted == curVersion) continue;
-        else break;
+        if (undeleted == curVersion) {
+          continue;
+        } else {
+          break;
+        }
       }
       if (type.isDelete()) {
         lastDelete = curVersion;
         continue;
       }
-      if (curVersion == lastDelete) continue;
+      if (curVersion == lastDelete) {
+        continue;
+      }
       return new ImmutablePair<Long, byte[]>(curVersion, result.getBytes(4));
     }
     return null;
   }
 
   /**
-   * Result has (version, kvtype, id, value)
+   * Result has (version, kvtype, id, value).
+   *
    * @throws SQLException
    */
-  private ImmutablePair<Long, byte[]> filteredLatest(
-      ResultSet result, ReadPointer readPointer) throws SQLException {
-    if (result == null) return null;
+  private ImmutablePair<Long, byte[]> filteredLatest(ResultSet result, ReadPointer readPointer) throws SQLException {
+    if (result == null) {
+      return null;
+    }
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
       long curVersion = result.getLong(1);
-      if (!readPointer.isVisible(curVersion)) continue;
+      if (!readPointer.isVisible(curVersion)) {
+        continue;
+      }
       Type type = Type.from(result.getInt(2));
       if (type.isUndeleteAll()) {
         undeleted = curVersion;
         continue;
       }
       if (type.isDeleteAll()) {
-        if (undeleted == curVersion) continue;
-        else break;
+        if (undeleted == curVersion) {
+          continue;
+        } else {
+          break;
+        }
       }
       if (type.isDelete()) {
         lastDelete = curVersion;
         continue;
       }
-      if (curVersion == lastDelete) continue;
-      return new ImmutablePair<Long, byte[]>(curVersion,
-          result.getBytes(4));
+      if (curVersion == lastDelete) {
+        continue;
+      }
+      return new ImmutablePair<Long, byte[]>(curVersion, result.getBytes(4));
     }
     return null;
   }
 
   /**
-   * Result has (column, version, kvtype, id, value)
+   * Result has (column, version, kvtype, id, value).
+   *
    * @throws SQLException
    */
-  private Map<byte[], byte[]> filteredLatestColumns(ResultSet result,
-      ReadPointer readPointer, int limit) throws SQLException {
+  private Map<byte[], byte[]> filteredLatestColumns(ResultSet result, ReadPointer readPointer, int limit)
+    throws SQLException {
 
     // negative limit means unlimited results
-    if (limit <= 0) limit = Integer.MAX_VALUE;
+    if (limit <= 0) {
+      limit = Integer.MAX_VALUE;
+    }
 
-    Map<byte[],byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
-    if (result == null) return map;
-    byte [] curCol = new byte [0];
-    byte [] lastCol = new byte [0];
+    Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    if (result == null) {
+      return map;
+    }
+    byte[] curCol = new byte[0];
+    byte[] lastCol = new byte[0];
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
       long curVersion = result.getLong(2);
       // Check if this entry is visible, skip if not
-      if (!readPointer.isVisible(curVersion)) continue;
-      byte [] column = result.getBytes(1);
+      if (!readPointer.isVisible(curVersion)) {
+        continue;
+      }
+      byte[] column = result.getBytes(1);
       // Check if this column has already been included in result, skip if so
       if (Bytes.equals(lastCol, column)) {
         continue;
@@ -1139,8 +1128,9 @@ implements OrderedVersionedColumnarTable {
         continue;
       }
       if (type.isDeleteAll()) {
-        if (undeleted == curVersion) continue;
-        else {
+        if (undeleted == curVersion) {
+          continue;
+        } else {
           // The rest of this column has been deleted, act like we returned it
           lastCol = column;
           continue;
@@ -1150,22 +1140,28 @@ implements OrderedVersionedColumnarTable {
         lastDelete = curVersion;
         continue;
       }
-      if (curVersion == lastDelete) continue;
+      if (curVersion == lastDelete) {
+        continue;
+      }
       lastCol = column;
       map.put(column, result.getBytes(5));
 
       // break out if limit reached
-      if (map.size() >= limit) break;
+      if (map.size() >= limit) {
+        break;
+      }
     }
     return map;
   }
 
   /**
-   * Result has (row, column, version, kvtype, id, value)
+   * Result has (row, column, version, kvtype, id, value).
+   *
    * @throws SQLException
    */
-  private Map<byte[], Map<byte[], byte[]>> filteredLatestColumnsWithKey(ResultSet result,
-                                                    ReadPointer readPointer, int limit) throws SQLException {
+  private Map<byte[], Map<byte[], byte[]>> filteredLatestColumnsWithKey(ResultSet result, ReadPointer readPointer,
+                                                                        int limit)
+    throws SQLException {
 
     // negative limit means unlimited results
     if (limit <= 0) {
@@ -1178,15 +1174,15 @@ implements OrderedVersionedColumnarTable {
     }
 
     boolean newRow = true;
-    byte [] lastRow = new byte[0];
+    byte[] lastRow = new byte[0];
 
-    byte [] curCol = new byte [0];
-    byte [] lastCol = new byte [0];
+    byte[] curCol = new byte[0];
+    byte[] lastCol = new byte[0];
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
-      byte [] rowKey = result.getBytes(1);
-      if(!Bytes.equals(lastRow, rowKey)) {
+      byte[] rowKey = result.getBytes(1);
+      if (!Bytes.equals(lastRow, rowKey)) {
         newRow = true;
         lastRow = rowKey;
       }
@@ -1196,7 +1192,7 @@ implements OrderedVersionedColumnarTable {
       if (!readPointer.isVisible(curVersion)) {
         continue;
       }
-      byte [] column = result.getBytes(2);
+      byte[] column = result.getBytes(2);
       // Check if this column has already been included in result, skip if so
       if (!newRow && Bytes.equals(lastCol, column)) {
         continue;
@@ -1216,8 +1212,7 @@ implements OrderedVersionedColumnarTable {
       if (type.isDeleteAll()) {
         if (undeleted == curVersion) {
           continue;
-        }
-        else {
+        } else {
           // The rest of this column has been deleted, act like we returned it
           lastCol = column;
           continue;
@@ -1233,7 +1228,7 @@ implements OrderedVersionedColumnarTable {
       lastCol = column;
 
       Map<byte[], byte[]> colMap = map.get(rowKey);
-      if(colMap == null) {
+      if (colMap == null) {
         colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
         map.put(rowKey, colMap);
       }
@@ -1241,7 +1236,9 @@ implements OrderedVersionedColumnarTable {
       colMap.put(column, result.getBytes(6));
 
       // break out if limit reached
-      if (map.size() >= limit) break;
+      if (map.size() >= limit) {
+        break;
+      }
     }
     return map;
   }
@@ -1255,8 +1252,8 @@ implements OrderedVersionedColumnarTable {
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
 
-  private OperationException createOperationException (SQLException e, String where,
-                                  PreparedStatement ps) throws OperationException {
+  private OperationException createOperationException(SQLException e, String where, PreparedStatement ps)
+    throws OperationException {
     String msg = "HyperSQL exception on " + where + "(error code = " +
       e.getErrorCode() + ") (statement = " + ps.toString() + ")";
     Log.error(msg, e);

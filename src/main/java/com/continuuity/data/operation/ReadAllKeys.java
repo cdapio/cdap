@@ -9,13 +9,13 @@ import com.google.common.base.Objects;
  */
 public class ReadAllKeys extends ReadOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The number of keys to offset by */
+  // The number of keys to offset by
   private final int offset;
 
-  /** The maximum number of keys to return */
+  // The maximum number of keys to return
   private final int limit;
 
   /**
@@ -65,18 +65,28 @@ public class ReadAllKeys extends ReadOperation {
     this.limit = limit;
   }
 
+  /**
+   * @return the table name
+   */
   public String getTable() {
     return this.table;
   }
 
+  /**
+   * @return the offset (nth key in the table) to start at
+   */
   public int getOffset() {
     return this.offset;
   }
 
+  /**
+   * @return the limit for the number of keys to return
+   */
   public int getLimit() {
     return this.limit;
   }
 
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("offset", Integer.toString(offset))

@@ -6,7 +6,7 @@ import com.continuuity.data.operation.OperationContext;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
+ * Provides default implementation for some of the TransactionAgent methods.
  */
 public abstract class AbstractTransactionAgent implements TransactionAgent {
 
@@ -57,14 +57,14 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   }
 
   /**
-   * Add 1 to the number of succeeded operations
+   * Add 1 to the number of succeeded operations.
    */
   protected void succeededOne() {
     succeeded.incrementAndGet();
   }
 
   /**
-   * Add a delta to the number of succeeded operations
+   * Add a delta to the number of succeeded operations.
    * @param count how many operations succeeded
    */
   protected void succeededSome(int count) {
@@ -72,14 +72,14 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   }
 
   /**
-   * Add 1 to the number of failed operations
+   * Add 1 to the number of failed operations.
    */
   protected void failedOne() {
     failed.incrementAndGet();
   }
 
   /**
-   * Add a delta to the number of failed operations
+   * Add a delta to the number of failed operations.
    * @param count how many operations failed
    */
   protected void failedSome(int count) {

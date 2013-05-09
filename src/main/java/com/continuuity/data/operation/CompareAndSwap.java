@@ -21,19 +21,19 @@ import java.util.Arrays;
  */
 public class CompareAndSwap extends ConditionalWriteOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The key/row */
+  // The key/row.
   private final byte [] key;
 
-  /** The column, if a columnar operation */
+  // The column, if a columnar operation
   private final byte [] column;
 
-  /** The expected value */
+  // The expected value
   private final byte [] expectedValue;
 
-  /** The new value */
+  // The new value
   private final byte [] newValue;
 
   /**
@@ -141,10 +141,13 @@ public class CompareAndSwap extends ConditionalWriteOperation {
 
   @Override
   public int getSize() {
-    if (newValue == null || newValue.length == 0) return 0;
-    int diff = newValue.length -
-        (expectedValue == null ? 0 : expectedValue.length);
-    if (diff < 0) return 0;
+    if (newValue == null || newValue.length == 0) {
+      return 0;
+    }
+    int diff = newValue.length - (expectedValue == null ? 0 : expectedValue.length);
+    if (diff < 0) {
+      return 0;
+    }
     return diff;
   }
 }

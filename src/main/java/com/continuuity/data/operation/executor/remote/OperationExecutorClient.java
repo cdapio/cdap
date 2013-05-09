@@ -60,42 +60,56 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  */
 public class OperationExecutorClient extends ConverterUtils {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(OperationExecutorClient.class);
+  private static final Logger Log = LoggerFactory.getLogger(OperationExecutorClient.class);
 
-  /** The thrift transport layer. We need this when we close the connection */
+  /**
+   * The thrift transport layer. We need this when we close the connection.
+   */
   TTransport transport;
 
-  /** The actual thrift client */
+  /**
+   * The actual thrift client.
+   */
   TOperationExecutor.Client client;
 
-  /** The metrics collection client */
+  /**
+   * The metrics collection client.
+   */
   CMetrics metrics = new CMetrics(MetricType.System);
 
-  /** helper method to create a metrics helper */
+  /**
+   * helper method to create a metrics helper.
+   */
   MetricsHelper newHelper(String method) {
-    return new MetricsHelper(
-        this.getClass(), this.metrics, "opex.client", method);
+    return new MetricsHelper(this.getClass(), this.metrics, "opex.client", method);
   }
+
   MetricsHelper newHelper(String method, byte[] scope) {
     MetricsHelper helper = newHelper(method);
     setScope(helper, scope);
     return helper;
   }
+
   MetricsHelper newHelper(String method, String scope) {
     MetricsHelper helper = newHelper(method);
     setScope(helper, scope);
     return helper;
   }
+
   void setScope(MetricsHelper helper, byte[] scope) {
-    if (scope != null) helper.setScope(scope);
+    if (scope != null) {
+      helper.setScope(scope);
+    }
   }
+
   void setScope(MetricsHelper helper, String scope) {
-    if (scope != null) helper.setScope(scope);
+    if (scope != null) {
+      helper.setScope(scope);
+    }
   }
 
   /**
-   * Constructor from an existing, connected thrift transport
+   * Constructor from an existing, connected thrift transport.
    *
    * @param transport the thrift transport layer. It must already be comnnected
    */
@@ -107,22 +121,28 @@ public class OperationExecutorClient extends ConverterUtils {
     this.client = new TOperationExecutor.Client(protocol);
   }
 
-  /** close this client. may be called multiple times */
+  /**
+   * close this client. may be called multiple times
+   */
   public void close() {
-    if (this.transport.isOpen())
+    if (this.transport.isOpen()) {
       this.transport.close();
+    }
   }
 
-  public Transaction startTransaction(OperationContext context)
-    throws OperationException, TException {
+  public Transaction startTransaction(OperationContext context) throws OperationException, TException {
 
     MetricsHelper helper = newHelper("startTransaction");
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received StartTransaction");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received StartTransaction");
+      }
       TOperationContext tcontext = wrap(context);
       TTransaction ttx = client.start(tcontext);
-      if (Log.isTraceEnabled()) Log.trace("StartTransaction successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("StartTransaction successful.");
+      }
       Transaction tx = unwrap(ttx);
       helper.finish(Success);
       return tx;
@@ -137,21 +157,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(OperationContext context,
-                      List<WriteOperation> writes)
-      throws OperationException, TException {
+  public void execute(OperationContext context, List<WriteOperation> writes) throws OperationException, TException {
 
     MetricsHelper helper = newHelper("batch");
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
+    }
 
     try {
       TOperationContext tcontext = wrap(context);
 
-      if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending Batch.");
+      }
       client.batch(tcontext, wrapBatch(writes));
-      if (Log.isTraceEnabled()) Log.trace("Batch successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Batch successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -164,22 +187,25 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public Transaction execute(OperationContext context,
-                             Transaction transaction,
-                             List<WriteOperation> writes)
+  public Transaction execute(OperationContext context, Transaction transaction, List<WriteOperation> writes)
     throws OperationException, TException {
 
     MetricsHelper helper = newHelper("executeBatch");
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
+    }
 
     try {
       TOperationContext tcontext = wrap(context);
 
-      if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending Batch.");
+      }
       TTransaction ttx = client.execute(tcontext, wrap(transaction), wrapBatch(writes));
-      if (Log.isTraceEnabled()) Log.trace("Batch successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Batch successful.");
+      }
       helper.success();
       return unwrap(ttx);
 
@@ -193,22 +219,25 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void commit(OperationContext context,
-                     Transaction transaction,
-                     List<WriteOperation> writes)
+  public void commit(OperationContext context, Transaction transaction, List<WriteOperation> writes)
     throws OperationException, TException {
 
     MetricsHelper helper = newHelper("commmitBatch");
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
+    }
 
     try {
       TOperationContext tcontext = wrap(context);
 
-      if (Log.isTraceEnabled()) Log.trace("Committing Batch.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Committing Batch.");
+      }
       client.finish(tcontext, wrap(transaction), wrapBatch(writes));
-      if (Log.isTraceEnabled()) Log.trace("Batch and commit successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Batch and commit successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -221,19 +250,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void commit(OperationContext context,
-                     Transaction transaction)
-    throws OperationException, TException {
+  public void commit(OperationContext context, Transaction transaction) throws OperationException, TException {
 
     MetricsHelper helper = newHelper("Commit");
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received Commit");
+    }
 
     try {
       TOperationContext tcontext = wrap(context);
       client.commit(tcontext, wrap(transaction));
-      if (Log.isTraceEnabled()) Log.trace("Commit successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Commit successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -246,18 +276,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void abort(OperationContext context, Transaction transaction)
-    throws OperationException, TException {
+  public void abort(OperationContext context, Transaction transaction) throws OperationException, TException {
 
     MetricsHelper helper = newHelper("Abort");
 
-    if (Log.isTraceEnabled())
+    if (Log.isTraceEnabled()) {
       Log.trace("Received Abort");
+    }
 
     try {
       TOperationContext tcontext = wrap(context);
       client.abort(tcontext, wrap(transaction));
-      if (Log.isTraceEnabled()) Log.trace("Abort successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Abort successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -270,19 +302,23 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public DequeueResult execute(OperationContext context,
-                               QueueDequeue dequeue)
-      throws TException, OperationException {
+  public DequeueResult execute(OperationContext context, QueueDequeue dequeue) throws TException, OperationException {
 
     MetricsHelper helper = newHelper("dequeue", dequeue.getKey());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + dequeue);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + dequeue);
+      }
       TOperationContext tcontext = wrap(context);
       TQueueDequeue tDequeue = wrap(dequeue);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tDequeue);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tDequeue);
+      }
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
-      if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TDequeue successful.");
+      }
       DequeueResult dequeueResult = unwrap(tDequeueResult, dequeue.getConsumer());
       helper.finish(dequeueResult.isEmpty() ? NoData : Success);
       return dequeueResult;
@@ -297,19 +333,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public long execute(OperationContext context,
-                      GetGroupID getGroupId)
-      throws TException, OperationException {
+  public long execute(OperationContext context, GetGroupID getGroupId)
+    throws TException, OperationException {
 
     MetricsHelper helper = newHelper("getid", getGroupId.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + getGroupId);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + getGroupId);
+      }
       TOperationContext tcontext = wrap(context);
       TGetGroupId tGetGroupId = wrap(getGroupId);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetGroupId);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tGetGroupId);
+      }
       long result = client.getGroupId(tcontext, tGetGroupId);
-      if (Log.isTraceEnabled()) Log.trace("Result of TGetGroupId: " + result);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Result of TGetGroupId: " + result);
+      }
       helper.success();
       return result;
 
@@ -323,19 +364,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<QueueInfo> execute(OperationContext context,
-                                            GetQueueInfo getQueueInfo)
-      throws TException, OperationException {
+  public OperationResult<QueueInfo> execute(OperationContext context, GetQueueInfo getQueueInfo)
+    throws TException, OperationException {
 
     MetricsHelper helper = newHelper("info", getQueueInfo.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + getQueueInfo);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + getQueueInfo);
+      }
       TOperationContext tcontext = wrap(context);
       TGetQueueInfo tGetQueueInfo = wrap(getQueueInfo);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetQueueInfo);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tGetQueueInfo);
+      }
       TQueueInfo tQueueInfo = client.getQueueInfo(tcontext, tGetQueueInfo);
-      if (Log.isTraceEnabled()) Log.trace("TGetQueueInfo successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TGetQueueInfo successful.");
+      }
       OperationResult<QueueInfo> queueInfo = unwrap(tQueueInfo);
 
       helper.finish(queueInfo.isEmpty() ? NoData : Success);
@@ -351,19 +397,23 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(OperationContext context,
-                      ClearFabric clearFabric)
-      throws TException, OperationException {
+  public void execute(OperationContext context, ClearFabric clearFabric) throws TException, OperationException {
 
     MetricsHelper helper = newHelper("clear");
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + clearFabric);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + clearFabric);
+      }
       TOperationContext tContext = wrap(context);
       TClearFabric tClearFabric = wrap(clearFabric);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tClearFabric);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tClearFabric);
+      }
       client.clearFabric(tContext, tClearFabric);
-      if (Log.isTraceEnabled()) Log.trace("ClearFabric successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("ClearFabric successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -376,18 +426,23 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(OperationContext context, OpenTable openTable)
-      throws TException, OperationException {
+  public void execute(OperationContext context, OpenTable openTable) throws TException, OperationException {
 
     MetricsHelper helper = newHelper("open", openTable.getTableName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + openTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + openTable);
+      }
       TOperationContext tContext = wrap(context);
       TOpenTable tOpenTable = wrap(openTable);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tOpenTable);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tOpenTable);
+      }
       client.openTable(tContext, tOpenTable);
-      if (Log.isTraceEnabled()) Log.trace("OpenTable successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("OpenTable successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -400,19 +455,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Read read)
-      throws OperationException, TException {
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
+    throws OperationException, TException {
 
     MetricsHelper helper = newHelper("read", read.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + read);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + read);
+      }
       TOperationContext tcontext = wrap(context);
       TRead tRead = wrap(read);
-      if (Log.isTraceEnabled()) Log.trace("Sending TRead." + tRead);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TRead." + tRead);
+      }
       TOptionalBinaryMap tResult = client.read(tcontext, tRead);
-      if (Log.isTraceEnabled()) Log.trace("TRead successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TRead successful.");
+      }
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -428,21 +488,25 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Transaction transaction,
-                                                      Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Transaction transaction, Read read)
     throws OperationException, TException {
 
 
     MetricsHelper helper = newHelper("read", read.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + read);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + read);
+      }
       TOperationContext tcontext = wrap(context);
       TRead tRead = wrap(read);
-      if (Log.isTraceEnabled()) Log.trace("Sending TRead." + tRead);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TRead." + tRead);
+      }
       TOptionalBinaryMap tResult = client.readTx(tcontext, wrap(transaction), tRead);
-      if (Log.isTraceEnabled()) Log.trace("TRead successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TRead successful.");
+      }
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -459,48 +523,24 @@ public class OperationExecutorClient extends ConverterUtils {
   }
 
 
-  public OperationResult<List<byte[]>> execute(OperationContext context,
-                                               ReadAllKeys readKeys)
-      throws OperationException, TException {
-
-    MetricsHelper helper = newHelper("listkeys", readKeys.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + readKeys);
-      TOperationContext tcontext = wrap(context);
-      TReadAllKeys tReadAllKeys = wrap(readKeys);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tReadAllKeys);
-      TOptionalBinaryList tResult = client.readAllKeys(tcontext, tReadAllKeys);
-      if (Log.isTraceEnabled()) Log.trace("TReadAllKeys successful.");
-      OperationResult<List<byte[]>> result = unwrap(tResult);
-
-      helper.finish(result.isEmpty() ? NoData : Success);
-      return result;
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public OperationResult<List<byte[]>> execute(OperationContext context,
-                                               Transaction transaction,
-                                               ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context, ReadAllKeys readKeys)
     throws OperationException, TException {
 
     MetricsHelper helper = newHelper("listkeys", readKeys.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + readKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + readKeys);
+      }
       TOperationContext tcontext = wrap(context);
       TReadAllKeys tReadAllKeys = wrap(readKeys);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tReadAllKeys);
-      TOptionalBinaryList tResult = client.readAllKeysTx(tcontext, wrap(transaction), tReadAllKeys);
-      if (Log.isTraceEnabled()) Log.trace("TReadAllKeys successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tReadAllKeys);
+      }
+      TOptionalBinaryList tResult = client.readAllKeys(tcontext, tReadAllKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadAllKeys successful.");
+      }
       OperationResult<List<byte[]>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -516,20 +556,57 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      ReadColumnRange readColumnRange)
-      throws TException, OperationException {
+  public OperationResult<List<byte[]>> execute(OperationContext context, Transaction transaction, ReadAllKeys readKeys)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("listkeys", readKeys.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + readKeys);
+      }
+      TOperationContext tcontext = wrap(context);
+      TReadAllKeys tReadAllKeys = wrap(readKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tReadAllKeys);
+      }
+      TOptionalBinaryList tResult = client.readAllKeysTx(tcontext, wrap(transaction), tReadAllKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadAllKeys successful.");
+      }
+      OperationResult<List<byte[]>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, ReadColumnRange readColumnRange)
+    throws TException, OperationException {
 
     MetricsHelper helper = newHelper("range", readColumnRange.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received ReadColumnRange.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received ReadColumnRange.");
+      }
       TOperationContext tcontext = wrap(context);
       TReadColumnRange tReadColumnRange = wrap(readColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
-      TOptionalBinaryMap tResult =
-          client.readColumnRange(tcontext, tReadColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TReadColumnRange.");
+      }
+      TOptionalBinaryMap tResult = client.readColumnRange(tcontext, tReadColumnRange);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadColumnRange successful.");
+      }
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -545,21 +622,25 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Transaction transaction,
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Transaction transaction,
                                                       ReadColumnRange readColumnRange)
     throws TException, OperationException {
 
     MetricsHelper helper = newHelper("range", readColumnRange.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received ReadColumnRange.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received ReadColumnRange.");
+      }
       TOperationContext tcontext = wrap(context);
       TReadColumnRange tReadColumnRange = wrap(readColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
-      TOptionalBinaryMap tResult =
-        client.readColumnRangeTx(tcontext, wrap(transaction), tReadColumnRange);
-      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TReadColumnRange.");
+      }
+      TOptionalBinaryMap tResult = client.readColumnRangeTx(tcontext, wrap(transaction), tReadColumnRange);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadColumnRange successful.");
+      }
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -575,19 +656,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(OperationContext context,
-                      QueueConfigure configure)
+  public void execute(OperationContext context, QueueConfigure configure)
     throws TException, OperationException {
 
     MetricsHelper helper = newHelper("configure", configure.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + configure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + configure);
+      }
       TOperationContext tContext = wrap(context);
       TQueueConfigure tQueueConfigure = wrap(configure);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueConfigure);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tQueueConfigure);
+      }
       client.configureQueue(tContext, tQueueConfigure);
-      if (Log.isTraceEnabled()) Log.trace("QueueConfigure successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("QueueConfigure successful.");
+      }
       helper.success();
 
     } catch (TOperationException te) {
@@ -606,12 +692,18 @@ public class OperationExecutorClient extends ConverterUtils {
     MetricsHelper helper = newHelper("increment", increment.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received Increment.");
+      }
       TOperationContext tcontext = wrap(context);
       TIncrement tIncrement = wrap(increment);
-      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TIncrement.");
+      }
       Map<ByteBuffer, Long> tResult = client.incrementTx(tcontext, wrap(transaction), tIncrement);
-      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TIncrement successful.");
+      }
       Map<byte[], Long> result = unwrapLongMap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
@@ -627,19 +719,24 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public Map<byte[], Long> increment(OperationContext context,
-                                     Increment increment)
+  public Map<byte[], Long> increment(OperationContext context, Increment increment)
     throws TException, OperationException {
 
     MetricsHelper helper = newHelper("increment", increment.getTable());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received Increment.");
+      }
       TOperationContext tcontext = wrap(context);
       TIncrement tIncrement = wrap(increment);
-      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending TIncrement.");
+      }
       Map<ByteBuffer, Long> tResult = client.increment(tcontext, tIncrement);
-      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("TIncrement successful.");
+      }
       Map<byte[], Long> result = unwrapLongMap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);

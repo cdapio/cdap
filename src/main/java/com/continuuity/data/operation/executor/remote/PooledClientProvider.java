@@ -5,6 +5,9 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This is an opex client provider that uses a bounded size pool of connections.
+ */
 public class PooledClientProvider extends AbstractClientProvider {
 
   private static final Logger Log =

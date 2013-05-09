@@ -13,7 +13,6 @@ public class RetryNTimes extends RetryStrategy {
   int limit;
 
   /**
-   * Constructor
    * @param maxAttempts the number of attempts after which to stop
    */
   protected RetryNTimes(int maxAttempts) {
@@ -26,6 +25,9 @@ public class RetryNTimes extends RetryStrategy {
     return attempts < limit;
   }
 
+  /**
+   * A retry strategy provider for this strategy.
+   */
   public static class Provider implements RetryStrategyProvider {
 
     int nTimes;

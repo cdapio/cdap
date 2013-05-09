@@ -1,5 +1,8 @@
 package com.continuuity.data.operation;
 
+/**
+ * Defines internal status codes for use in operation results or execptions.
+ */
 public class StatusCode extends com.continuuity.api.data.StatusCode {
 
   public static final int QUEUE_NOT_FOUND = 1000;

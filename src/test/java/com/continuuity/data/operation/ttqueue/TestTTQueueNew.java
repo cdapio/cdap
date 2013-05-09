@@ -2203,7 +2203,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   public void testHashWithoutHashKey() throws OperationException {
     TTQueue queue = createQueue();
 
-    // enqueue 20, then invalidate a batch of 10 in the middle
+    // enqueue 20
     QueueEntry[] entries = new QueueEntry[20];
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
@@ -2458,7 +2458,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // verification, also the previous finalize with grp1Consumer1 wouldn't write the eviction information till
     // the end of the finalize function, hence (available groups == total groups) check will fail
     queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
-
   }
 
   private interface QueueConsumerHolder {
@@ -2568,3 +2567,4 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Assert.assertEquals(expected, actualList);
   }
 }
+

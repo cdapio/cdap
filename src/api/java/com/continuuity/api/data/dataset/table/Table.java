@@ -25,7 +25,7 @@ public class Table extends DataSet {
   private Table delegate = null;
 
   /**
-   * Constructor by name
+   * Constructor by name.
    * @param name the name of the table
    */
   public Table(String name) {
@@ -33,7 +33,7 @@ public class Table extends DataSet {
   }
 
   /**
-   * Runtime initialization, only calls the super class
+   * Runtime initialization, only calls the super class.
    * @param spec the data set spec for this data set
    */
   public Table(DataSetSpecification spec) {
@@ -46,7 +46,7 @@ public class Table extends DataSet {
   }
 
   /**
-   * helper to return the name of the physical table. currently the same as
+   * Helper to return the name of the physical table. Currently the same as
    * the name of the (Table) data set.
    * @return the name of the underlying table in the data fabric
    */
@@ -55,7 +55,7 @@ public class Table extends DataSet {
   }
 
   /**
-   * sets the Table to which all operations are delegated. This can be used
+   * Sets the Table to which all operations are delegated. This can be used
    * to inject different implementations.
    * @param table the implementation to delegate to
    */

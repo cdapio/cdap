@@ -13,10 +13,12 @@ public class QueueConsumer {
   private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
-  private volatile StateType stateType = StateType.UNINITIALIZED;
+  private StateType stateType = StateType.UNINITIALIZED;
 
   public enum StateType {
-    UNINITIALIZED, INITIALIZED, NOT_FOUND
+    UNINITIALIZED, // Consumer does not have its state, it could be due to consumer's first call or consumer crash
+    INITIALIZED,   // Consumer has its state available
+    NOT_FOUND      // Consumer has its state but the state is not available due to eviction from cache
   }
 
   /**

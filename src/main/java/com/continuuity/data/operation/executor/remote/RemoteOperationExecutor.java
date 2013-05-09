@@ -117,25 +117,25 @@ public class RemoteOperationExecutor
    */
   abstract static class Operation<T> {
 
-    /* the name of the operation */
+    /** the name of the operation. */
     String name;
 
-    /** constructor with name of operation */
+    /** constructor with name of operation. */
     Operation(String name) {
       this.name = name;
     }
 
-    /** return the name of the operation */
+    /** return the name of the operation. */
     String getName() {
       return name;
     }
 
-    /** execute the operation, given an opex client */
+    /** execute the operation, given an opex client. */
     abstract T execute(OperationExecutorClient client)
         throws TException, OperationException;
   }
 
-  /** see execute(operation, client) */
+  /** see execute(operation, client). */
   private <T> T execute(Operation<T> operation) throws OperationException {
     return execute(operation, null);
   }
@@ -201,8 +201,9 @@ public class RemoteOperationExecutor
       } finally {
         // in case any other exception happens (other than TException), and
         // also in case of succeess, the client must be returned to the pool.
-        if (client != null)
+        if (client != null) {
           provider.returnClient(client);
+        }
       }
     }
   }
@@ -397,7 +398,7 @@ public class RemoteOperationExecutor
                                                       final Read read)
     throws OperationException {
     return this.execute(
-        new Operation<OperationResult<Map<byte[],byte[]>>>("Read") {
+        new Operation<OperationResult<Map<byte[], byte[]>>>("Read") {
           @Override
           public OperationResult<Map<byte[], byte[]>>
           execute(OperationExecutorClient client)
@@ -455,7 +456,7 @@ public class RemoteOperationExecutor
                                                       final ReadColumnRange readColumnRange)
     throws OperationException {
     return this.execute(new Operation<
-      OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
+      OperationResult<Map<byte[], byte[]>>>("ReadColumnRange") {
       @Override
       public OperationResult<Map<byte[], byte[]>>
       execute(OperationExecutorClient client)

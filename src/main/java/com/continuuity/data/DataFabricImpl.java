@@ -16,6 +16,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Simple implementation of the DataFabric interface.
+ */
 public class DataFabricImpl implements DataFabric {
 
   private OperationExecutor opex;

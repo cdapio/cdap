@@ -1,7 +1,6 @@
 package com.continuuity.data.engine.hypersql;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;

@@ -25,7 +25,7 @@ public abstract class DataSet {
   private final String name;
 
   /**
-   * Get the name of this data set
+   * Get the name of this data set.
    * @return the name of the data set
    */
   public final String getName() {
@@ -33,7 +33,7 @@ public abstract class DataSet {
   }
 
   /**
-   * Base constructor that only sets the name of the data set
+   * Base constructor that only sets the name of the data set.
    * @param name the name of the data set
    */
   public DataSet(String name) {
@@ -41,7 +41,7 @@ public abstract class DataSet {
   }
 
   /**
-   * Constructor to instantiate the data set at runtime
+   * Constructor to instantiate the data set at runtime.
    * @param spec the data set specification for this data set
    */
   public DataSet(DataSetSpecification spec) {

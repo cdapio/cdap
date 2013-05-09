@@ -2,8 +2,7 @@ package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A DataSetSpecification is a hierarchical meta data object that contains all
@@ -28,13 +27,15 @@ public final class DataSetSpecification {
   private final String name;
   // the class name of the data set
   private final String type;
-  // the custom properties of the data set
-  private final Map<String, String> properties;
+  // the custom properties of the data set.
+  // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
+  private final TreeMap<String, String> properties;
   // the meta data for embedded data sets
-  private final Map<String, DataSetSpecification> dataSetSpecs;
+  // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
+  private final TreeMap<String, DataSetSpecification> dataSetSpecs;
 
   /**
-   * returns the name of the data set
+   * Returns the name of the data set.
    * @return the name of the data set
    */
   public String getName() {
@@ -42,7 +43,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * returns the class name of the data set
+   * Returns the class name of the data set.
    * @return the class name of the data set
    */
   public String getType() {
@@ -50,7 +51,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * lookup a custom property of the data set
+   * Lookup a custom property of the data set.
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
@@ -59,7 +60,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * get the specification for an embedded data set
+   * Get the specification for an embedded data set.
    * @param dsName the name of the embedded data set
    * @return the specification for the named embedded data set,
    *    or null if not found.
@@ -69,15 +70,16 @@ public final class DataSetSpecification {
   }
 
 
-  /** private constructor, only to be used by the builder
+  /**
+   * Private constructor, only to be used by the builder.
    * @param name the name of the data set
    * @param type the class name of the data set
    * @param properties the custom properties
    * @param dataSetSpecs the specs of embedded data sets
    */
   private DataSetSpecification(String name, String type,
-                               Map<String, String> properties,
-                               Map<String, DataSetSpecification> dataSetSpecs) {
+                               TreeMap<String, String> properties,
+                               TreeMap<String, DataSetSpecification> dataSetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -85,7 +87,7 @@ public final class DataSetSpecification {
   }
 
   /**
-   * Equality
+   * Equality.
    */
   public boolean equals(Object other) {
     if (other == this) {
@@ -94,7 +96,7 @@ public final class DataSetSpecification {
     if (!(other instanceof DataSetSpecification)) {
       return false;
     }
-    DataSetSpecification ds = (DataSetSpecification)other;
+    DataSetSpecification ds = (DataSetSpecification) other;
     return this.getName().equals(ds.getName())
         && this.getType().equals(ds.getType())
         && this.properties.equals(ds.properties)
@@ -102,22 +104,24 @@ public final class DataSetSpecification {
   }
 
   /**
-   * hash value
+   * Hash value.
    */
   @Override
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.dataSetSpecs);
   }
 
-  /** A Builder to construct DataSetSpecification instances */
-  public final static class Builder {
+  /**
+   * A Builder to construct DataSetSpecification instances.
+   */
+  public static final class Builder {
     // private fields
     private String name;
     private String type;
-    private Map<String, String> properties
-        = new HashMap<String, String>();
-    private Map<String, DataSetSpecification> dataSetSpecs
-        = new HashMap<String, DataSetSpecification>();
+    private TreeMap<String, String> properties
+        = new TreeMap<String, String>();
+    private TreeMap<String, DataSetSpecification> dataSetSpecs
+        = new TreeMap<String, DataSetSpecification>();
 
     /**
      * Constructor from the data set that the specification is for,
@@ -144,7 +148,7 @@ public final class DataSetSpecification {
     }
 
     /**
-     * Add a custom property
+     * Add a custom property.
      * @param key the name of the custom property
      * @param value the value of the custom property
      * @return this builder object to allow chaining

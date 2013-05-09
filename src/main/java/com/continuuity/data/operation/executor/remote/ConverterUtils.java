@@ -76,55 +76,79 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility methods to convert to thrift and back.
+ */
 public class ConverterUtils {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(ConverterUtils.class);
+  private static final Logger Log = LoggerFactory.getLogger(ConverterUtils.class);
 
-  /** wrap an operation context into a thrift object */
+  /**
+   * wrap an operation context into a thrift object.
+   */
   TOperationContext wrap(OperationContext context) {
     TOperationContext tcontext = new TOperationContext(context.getAccount());
-    if (context.getApplication() != null) tcontext.setApplication(context
-        .getApplication());
+    if (context.getApplication() != null) {
+      tcontext.setApplication(context.getApplication());
+    }
     return tcontext;
   }
 
-  /** unwrap an operation context */
+  /**
+   * unwrap an operation context.
+   */
   OperationContext unwrap(TOperationContext tcontext) {
-    return new OperationContext(
-        tcontext.getAccount(), tcontext.getApplication());
+    return new OperationContext(tcontext.getAccount(), tcontext.getApplication());
   }
 
-  /** wrap an array of longs into a list of Long objects */
+  /**
+   * wrap an array of longs into a list of Long objects.
+   */
   List<Long> wrap(long[] array) {
     List<Long> list = new ArrayList<Long>(array.length);
-    for (long num : array) list.add(num);
+    for (long num : array) {
+      list.add(num);
+    }
     return list;
   }
-  /** unwrap an array of longs from a list of Long objects */
+
+  /**
+   * unwrap an array of longs from a list of Long objects.
+   */
   long[] unwrapAmounts(List<Long> list) {
     long[] longs = new long[list.size()];
     int i = 0;
-    for (Long value : list)
+    for (Long value : list) {
       longs[i++] = value;
+    }
     return longs;
   }
-  /** wrap a byte array into a byte buffer */
+
+  /**
+   * wrap a byte array into a byte buffer.
+   */
   ByteBuffer wrap(byte[] bytes) {
-    if (bytes == null)
+    if (bytes == null) {
       return null;
-    else
+    } else {
       return ByteBuffer.wrap(bytes);
-  }
-  /** unwrap a byte array from a byte buffer */
-  byte[] unwrap(ByteBuffer buf) {
-    if (buf == null)
-      return null;
-    else
-      return TBaseHelper.byteBufferToByteArray(buf);
+    }
   }
 
-  /** wrap a byte array into an optional binary */
+  /**
+   * unwrap a byte array from a byte buffer.
+   */
+  byte[] unwrap(ByteBuffer buf) {
+    if (buf == null) {
+      return null;
+    } else {
+      return TBaseHelper.byteBufferToByteArray(buf);
+    }
+  }
+
+  /**
+   * wrap a byte array into an optional binary.
+   */
   TOptionalBinary wrapBinary(byte[] bytes) {
     TOptionalBinary binary = new TOptionalBinary();
     if (bytes != null) {
@@ -132,47 +156,66 @@ public class ConverterUtils {
     }
     return binary;
   }
-  /** unwrap a byte array from an optional binary */
+
+  /**
+   * unwrap a byte array from an optional binary.
+   */
   OperationResult<byte[]> unwrap(TOptionalBinary binary) {
     if (binary.isSetValue()) {
       return new OperationResult<byte[]>(binary.getValue());
     } else {
-      return new OperationResult<byte[]>(binary.getStatus(),
-          binary.getMessage());
+      return new OperationResult<byte[]>(binary.getStatus(), binary.getMessage());
     }
   }
 
-  /** wrap an array of byte arrays into a list of byte buffers */
+  /**
+   * wrap an array of byte arrays into a list of byte buffers.
+   */
   List<ByteBuffer> wrap(byte[][] arrays) {
     List<ByteBuffer> buffers = new ArrayList<ByteBuffer>(arrays.length);
-    for (byte[] array : arrays)
+    for (byte[] array : arrays) {
       buffers.add(wrap(array));
+    }
     return buffers;
   }
-  /** wrap an list of byte arrays into a list of byte buffers */
+
+  /**
+   * wrap an list of byte arrays into a list of byte buffers.
+   */
   List<ByteBuffer> wrap(List<byte[]> arrays) {
     List<ByteBuffer> buffers = new ArrayList<ByteBuffer>(arrays.size());
-    for (byte[] array : arrays)
+    for (byte[] array : arrays) {
       buffers.add(wrap(array));
+    }
     return buffers;
   }
-  /** unwrap an array of byte arrays from a list of byte buffers */
+
+  /**
+   * unwrap an array of byte arrays from a list of byte buffers.
+   */
   byte[][] unwrap(List<ByteBuffer> buffers) {
     byte[][] arrays = new byte[buffers.size()][];
     int i = 0;
-    for (ByteBuffer buffer : buffers)
+    for (ByteBuffer buffer : buffers) {
       arrays[i++] = unwrap(buffer);
-    return arrays;
-  }
-  /** unwrap an array of byte arrays from a list of byte buffers */
-  List<byte[]> unwrapList(List<ByteBuffer> buffers) {
-    List<byte[]> arrays = new ArrayList<byte[]>(buffers.size());
-    for (ByteBuffer buffer : buffers)
-      arrays.add(unwrap(buffer));
+    }
     return arrays;
   }
 
-  /** wrap a map of byte arrays into an optional map of byte buffers */
+  /**
+   * unwrap an array of byte arrays from a list of byte buffers.
+   */
+  List<byte[]> unwrapList(List<ByteBuffer> buffers) {
+    List<byte[]> arrays = new ArrayList<byte[]>(buffers.size());
+    for (ByteBuffer buffer : buffers) {
+      arrays.add(unwrap(buffer));
+    }
+    return arrays;
+  }
+
+  /**
+   * wrap a map of byte arrays into an optional map of byte buffers.
+   */
   TOptionalBinaryList wrapList(OperationResult<List<byte[]>> result) {
     TOptionalBinaryList opt = new TOptionalBinaryList();
     if (result.isEmpty()) {
@@ -183,51 +226,71 @@ public class ConverterUtils {
     }
     return opt;
   }
-  /** unwrap an optional map of byte buffers */
+
+  /**
+   * unwrap an optional map of byte buffers.
+   */
   OperationResult<List<byte[]>> unwrap(TOptionalBinaryList opt) {
     if (opt.isSetTheList()) {
       return new OperationResult<List<byte[]>>(unwrapList(opt.getTheList()));
     } else {
-      return new OperationResult<List<byte[]>>(opt.getStatus(),
-          opt.getMessage());
+      return new OperationResult<List<byte[]>>(opt.getStatus(), opt.getMessage());
     }
   }
 
-  /** wrap a map of byte arrays to long into a map of byte buffers to long */
+  /**
+   * wrap a map of byte arrays to long into a map of byte buffers to long.
+   */
   Map<ByteBuffer, Long> wrapLongMap(Map<byte[], Long> map) {
-    if (map == null)
+    if (map == null) {
       return null;
+    }
     Map<ByteBuffer, Long> result = Maps.newHashMap();
-    for(Map.Entry<byte[], Long> entry : map.entrySet())
+    for (Map.Entry<byte[], Long> entry : map.entrySet()) {
       result.put(wrap(entry.getKey()), entry.getValue());
+    }
     return result;
   }
-  /** unwrap a map of byte arrays to long from a map of byte buffers to long */
+
+  /**
+   * unwrap a map of byte arrays to long from a map of byte buffers to long.
+   */
   Map<byte[], Long> unwrapLongMap(Map<ByteBuffer, Long> map) {
     Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for(Map.Entry<ByteBuffer, Long> entry : map.entrySet())
+    for (Map.Entry<ByteBuffer, Long> entry : map.entrySet()) {
       result.put(unwrap(entry.getKey()), entry.getValue());
+    }
     return result;
   }
 
-  /** wrap a map of byte arrays into a map of byte buffers */
+  /**
+   * wrap a map of byte arrays into a map of byte buffers.
+   */
   Map<ByteBuffer, TOptionalBinary> wrap(Map<byte[], byte[]> map) {
-    if (map == null)
+    if (map == null) {
       return null;
+    }
     Map<ByteBuffer, TOptionalBinary> result = Maps.newHashMap();
-    for(Map.Entry<byte[], byte[]> entry : map.entrySet())
+    for (Map.Entry<byte[], byte[]> entry : map.entrySet()) {
       result.put(wrap(entry.getKey()), wrapBinary(entry.getValue()));
+    }
     return result;
   }
-  /** unwrap a map of byte arrays from a map of byte buffers */
+
+  /**
+   * unwrap a map of byte arrays from a map of byte buffers.
+   */
   Map<byte[], byte[]> unwrap(Map<ByteBuffer, TOptionalBinary> map) {
     Map<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for(Map.Entry<ByteBuffer, TOptionalBinary> entry : map.entrySet())
+    for (Map.Entry<ByteBuffer, TOptionalBinary> entry : map.entrySet()) {
       result.put(unwrap(entry.getKey()), unwrap(entry.getValue()).getValue());
+    }
     return result;
   }
 
-  /** wrap a map of byte arrays into an optional map of byte buffers */
+  /**
+   * wrap a map of byte arrays into an optional map of byte buffers.
+   */
   TOptionalBinaryMap wrapMap(OperationResult<Map<byte[], byte[]>> result) {
     TOptionalBinaryMap opt = new TOptionalBinaryMap();
     if (result.isEmpty()) {
@@ -238,38 +301,51 @@ public class ConverterUtils {
     }
     return opt;
   }
-  /** unwrap an optional map of byte buffers */
+
+  /**
+   * unwrap an optional map of byte buffers.
+   */
   OperationResult<Map<byte[], byte[]>> unwrap(TOptionalBinaryMap opt) {
     if (opt.isSetTheMap()) {
       return new OperationResult<Map<byte[], byte[]>>(unwrap(opt.getTheMap()));
     } else {
-      return new OperationResult<Map<byte[], byte[]>>(
-          opt.getStatus(), opt.getMessage());
+      return new OperationResult<Map<byte[], byte[]>>(opt.getStatus(), opt.getMessage());
     }
   }
 
-  /** wrap a ClearFabric operation */
+  /**
+   * wrap a ClearFabric operation.
+   */
   TClearFabric wrap(ClearFabric clearFabric) {
-    TClearFabric tClearFabric = new TClearFabric(
-        clearFabric.shouldClearData(),
-        clearFabric.shouldClearMeta(),
-        clearFabric.shouldClearTables(),
-        clearFabric.shouldClearQueues(),
-        clearFabric.shouldClearStreams(),
-        clearFabric.getId());
+    TClearFabric tClearFabric = new TClearFabric(clearFabric.shouldClearData(), clearFabric.shouldClearMeta(),
+                                                 clearFabric.shouldClearTables(), clearFabric.shouldClearQueues(),
+                                                 clearFabric.shouldClearStreams(), clearFabric.getId());
     if (clearFabric.getMetricName() != null) {
       tClearFabric.setMetric(clearFabric.getMetricName());
     }
     return tClearFabric;
   }
-  /** unwrap a ClearFabric operation */
+
+  /**
+   * unwrap a ClearFabric operation.
+   */
   ClearFabric unwrap(TClearFabric tClearFabric) {
     ArrayList<ClearFabric.ToClear> toClear = Lists.newArrayList();
-    if (tClearFabric.isClearData()) toClear.add(ClearFabric.ToClear.DATA);
-    if (tClearFabric.isClearMeta()) toClear.add(ClearFabric.ToClear.META);
-    if (tClearFabric.isClearTables()) toClear.add(ClearFabric.ToClear.TABLES);
-    if (tClearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
-    if (tClearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
+    if (tClearFabric.isClearData()) {
+      toClear.add(ClearFabric.ToClear.DATA);
+    }
+    if (tClearFabric.isClearMeta()) {
+      toClear.add(ClearFabric.ToClear.META);
+    }
+    if (tClearFabric.isClearTables()) {
+      toClear.add(ClearFabric.ToClear.TABLES);
+    }
+    if (tClearFabric.isClearQueues()) {
+      toClear.add(ClearFabric.ToClear.QUEUES);
+    }
+    if (tClearFabric.isClearStreams()) {
+      toClear.add(ClearFabric.ToClear.STREAMS);
+    }
     ClearFabric clearFabric = new ClearFabric(tClearFabric.getId(), toClear);
     if (tClearFabric.isSetMetric()) {
       clearFabric.setMetricName(tClearFabric.getMetric());
@@ -277,7 +353,9 @@ public class ConverterUtils {
     return clearFabric;
   }
 
-  /** wrap an OpenTable operation */
+  /**
+   * wrap an OpenTable operation.
+   */
   public TOpenTable wrap(OpenTable openTable) {
     TOpenTable tOpenTable = new TOpenTable(openTable.getTableName(), openTable.getId());
     if (openTable.getMetricName() != null) {
@@ -285,7 +363,10 @@ public class ConverterUtils {
     }
     return tOpenTable;
   }
-  /** unwrap an OpenTable operation */
+
+  /**
+   * unwrap an OpenTable operation.
+   */
   public OpenTable unwrap(TOpenTable tOpenTable) {
     OpenTable openTable = new OpenTable(tOpenTable.getId(), tOpenTable.getTable());
     if (tOpenTable.isSetMetric()) {
@@ -294,13 +375,11 @@ public class ConverterUtils {
     return openTable;
   }
 
-  /** wrap a Write operation */
+  /**
+   * wrap a Write operation.
+   */
   TWrite wrap(Write write) {
-    TWrite tWrite = new TWrite(
-        wrap(write.getKey()),
-        wrap(write.getColumns()),
-        wrap(write.getValues()),
-        write.getId());
+    TWrite tWrite = new TWrite(wrap(write.getKey()), wrap(write.getColumns()), wrap(write.getValues()), write.getId());
     if (write.getTable() != null) {
       tWrite.setTable(write.getTable());
     }
@@ -309,26 +388,24 @@ public class ConverterUtils {
     }
     return tWrite;
   }
-  /** unwrap a Write operation */
+
+  /**
+   * unwrap a Write operation.
+   */
   Write unwrap(TWrite tWrite) {
-    Write write = new Write(
-        tWrite.getId(),
-        tWrite.isSetTable() ? tWrite.getTable() : null,
-        tWrite.getKey(),
-        unwrap(tWrite.getColumns()),
-        unwrap(tWrite.getValues()));
+    Write write = new Write(tWrite.getId(), tWrite.isSetTable() ? tWrite.getTable() : null, tWrite.getKey(),
+                            unwrap(tWrite.getColumns()), unwrap(tWrite.getValues()));
     if (tWrite.isSetMetric()) {
       write.setMetricName(tWrite.getMetric());
     }
     return write;
   }
 
-  /** wrap a Delete operation */
+  /**
+   * wrap a Delete operation.
+   */
   TDelete wrap(Delete delete) {
-    TDelete tDelete = new TDelete(
-        wrap(delete.getKey()),
-        wrap(delete.getColumns()),
-        delete.getId());
+    TDelete tDelete = new TDelete(wrap(delete.getKey()), wrap(delete.getColumns()), delete.getId());
     if (delete.getTable() != null) {
       tDelete.setTable(delete.getTable());
     }
@@ -337,26 +414,25 @@ public class ConverterUtils {
     }
     return tDelete;
   }
-  /** unwrap a Delete operation */
+
+  /**
+   * unwrap a Delete operation.
+   */
   Delete unwrap(TDelete tDelete) {
-    Delete delete = new Delete(
-        tDelete.getId(),
-        tDelete.isSetTable() ? tDelete.getTable() : null,
-        tDelete.getKey(),
-        unwrap(tDelete.getColumns()));
+    Delete delete = new Delete(tDelete.getId(), tDelete.isSetTable() ? tDelete.getTable() : null, tDelete.getKey(),
+                               unwrap(tDelete.getColumns()));
     if (tDelete.isSetMetric()) {
       delete.setMetricName(tDelete.getMetric());
     }
     return delete;
   }
 
-  /** wrap an Increment operation */
+  /**
+   * wrap an Increment operation.
+   */
   TIncrement wrap(Increment increment) {
-    TIncrement tIncrement = new TIncrement(
-        wrap(increment.getKey()),
-        wrap(increment.getColumns()),
-        wrap(increment.getAmounts()),
-        increment.getId());
+    TIncrement tIncrement = new TIncrement(wrap(increment.getKey()), wrap(increment.getColumns()),
+                                           wrap(increment.getAmounts()), increment.getId());
     if (increment.getTable() != null) {
       tIncrement.setTable(increment.getTable());
     }
@@ -365,28 +441,28 @@ public class ConverterUtils {
     }
     return tIncrement;
   }
-  /** unwrap an Increment operation */
+
+  /**
+   * unwrap an Increment operation.
+   */
   Increment unwrap(TIncrement tIncrement) {
-    Increment increment = new Increment(
-        tIncrement.getId(),
-        tIncrement.isSetTable() ? tIncrement.getTable() : null,
-        tIncrement.getKey(),
-        unwrap(tIncrement.getColumns()),
-        unwrapAmounts(tIncrement.getAmounts()));
+    Increment increment = new Increment(tIncrement.getId(), tIncrement.isSetTable() ? tIncrement.getTable() : null,
+                                        tIncrement.getKey(), unwrap(tIncrement.getColumns()),
+                                        unwrapAmounts(tIncrement.getAmounts()));
     if (tIncrement.isSetMetric()) {
       increment.setMetricName(tIncrement.getMetric());
     }
     return increment;
   }
 
-  /** wrap a CompareAndSwap operation */
+  /**
+   * wrap a CompareAndSwap operation.
+   */
   TCompareAndSwap wrap(CompareAndSwap compareAndSwap) {
-    TCompareAndSwap tCompareAndSwap = new TCompareAndSwap(
-        wrap(compareAndSwap.getKey()),
-        wrap(compareAndSwap.getColumn()),
-        wrap(compareAndSwap.getExpectedValue()),
-        wrap(compareAndSwap.getNewValue()),
-        compareAndSwap.getId());
+    TCompareAndSwap tCompareAndSwap = new TCompareAndSwap(wrap(compareAndSwap.getKey()),
+                                                          wrap(compareAndSwap.getColumn()),
+                                                          wrap(compareAndSwap.getExpectedValue()),
+                                                          wrap(compareAndSwap.getNewValue()), compareAndSwap.getId());
     if (compareAndSwap.getTable() != null) {
       tCompareAndSwap.setTable(compareAndSwap.getTable());
     }
@@ -395,84 +471,89 @@ public class ConverterUtils {
     }
     return tCompareAndSwap;
   }
-  /** unwrap a CompareAndSwap operation */
+
+  /**
+   * unwrap a CompareAndSwap operation.
+   */
   CompareAndSwap unwrap(TCompareAndSwap tCompareAndSwap) {
-    CompareAndSwap compareAndSwap = new CompareAndSwap(
-        tCompareAndSwap.getId(),
-        tCompareAndSwap.isSetTable() ? tCompareAndSwap.getTable() : null,
-        tCompareAndSwap.getKey(),
-        tCompareAndSwap.getColumn(),
-        tCompareAndSwap.getExpectedValue(),
-        tCompareAndSwap.getNewValue());
+    CompareAndSwap compareAndSwap = new CompareAndSwap(tCompareAndSwap.getId(),
+                                                       tCompareAndSwap.isSetTable() ? tCompareAndSwap.getTable() :
+                                                         null, tCompareAndSwap.getKey(), tCompareAndSwap.getColumn(),
+                                                       tCompareAndSwap.getExpectedValue(),
+                                                       tCompareAndSwap.getNewValue());
     if (tCompareAndSwap.isSetMetric()) {
       compareAndSwap.setMetricName(tCompareAndSwap.getMetric());
     }
     return compareAndSwap;
   }
 
-  /** wrap a batch of write operations */
+  /**
+   * wrap a batch of write operations.
+   */
   List<TWriteOperation> wrapBatch(List<WriteOperation> writes) throws TOperationException {
     List<TWriteOperation> tWrites = Lists.newArrayList();
     for (WriteOperation writeOp : writes) {
-      if (Log.isTraceEnabled())
+      if (Log.isTraceEnabled()) {
         Log.trace("  WriteOperation: " + writeOp.toString());
+      }
       TWriteOperation tWriteOp = new TWriteOperation();
-      if (writeOp instanceof Write)
-        tWriteOp.setWrite(wrap((Write)writeOp));
-      else if (writeOp instanceof Delete)
-        tWriteOp.setDelet(wrap((Delete)writeOp));
-      else if (writeOp instanceof Increment)
+      if (writeOp instanceof Write) {
+        tWriteOp.setWrite(wrap((Write) writeOp));
+      } else if (writeOp instanceof Delete) {
+        tWriteOp.setDelet(wrap((Delete) writeOp));
+      } else if (writeOp instanceof Increment) {
         tWriteOp.setIncrement(wrap((Increment) writeOp));
-      else if (writeOp instanceof CompareAndSwap)
+      } else if (writeOp instanceof CompareAndSwap) {
         tWriteOp.setCompareAndSwap(wrap((CompareAndSwap) writeOp));
-      else if (writeOp instanceof QueueEnqueue)
+      } else if (writeOp instanceof QueueEnqueue) {
         tWriteOp.setQueueEnqueue(wrap((QueueEnqueue) writeOp));
-      else if (writeOp instanceof QueueAck)
+      } else if (writeOp instanceof QueueAck) {
         tWriteOp.setQueueAck(wrap((QueueAck) writeOp));
-      else {
-        Log.error("Internal Error: Received an unknown WriteOperation of class "
-                    + writeOp.getClass().getName() + ".");
+      } else {
+        Log.error("Internal Error: Received an unknown WriteOperation of class " + writeOp.getClass().getName() + ".");
         continue;
       }
       tWrites.add(tWriteOp);
     }
     return tWrites;
   }
-  /** unwrap a batch of write operations */
+
+  /**
+   * unwrap a batch of write operations.
+   */
   List<WriteOperation> unwrapBatch(List<TWriteOperation> batch) throws TOperationException {
     List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
     for (TWriteOperation tWriteOp : batch) {
       WriteOperation writeOp;
-      if (tWriteOp.isSetWrite())
-       writeOp = unwrap(tWriteOp.getWrite());
-      else if (tWriteOp.isSetDelet())
+      if (tWriteOp.isSetWrite()) {
+        writeOp = unwrap(tWriteOp.getWrite());
+      } else if (tWriteOp.isSetDelet()) {
         writeOp = unwrap(tWriteOp.getDelet());
-      else if (tWriteOp.isSetIncrement())
+      } else if (tWriteOp.isSetIncrement()) {
         writeOp = unwrap(tWriteOp.getIncrement());
-      else if (tWriteOp.isSetCompareAndSwap())
+      } else if (tWriteOp.isSetCompareAndSwap()) {
         writeOp = unwrap(tWriteOp.getCompareAndSwap());
-      else if (tWriteOp.isSetQueueEnqueue())
+      } else if (tWriteOp.isSetQueueEnqueue()) {
         writeOp = unwrap(tWriteOp.getQueueEnqueue());
-      else if (tWriteOp.isSetQueueAck())
+      } else if (tWriteOp.isSetQueueAck()) {
         writeOp = unwrap(tWriteOp.getQueueAck());
-      else {
-        Log.error("Internal Error: Unkown TWriteOperation "
-                    + tWriteOp.toString() + " in batch. Skipping.");
+      } else {
+        Log.error("Internal Error: Unkown TWriteOperation " + tWriteOp.toString() + " in batch. Skipping.");
         continue;
       }
-      if (Log.isTraceEnabled())
+      if (Log.isTraceEnabled()) {
         Log.trace("Operation in batch: " + writeOp);
+      }
       writes.add(writeOp);
     }
     return writes;
   }
 
-  /** wrap a Read operation */
+  /**
+   * wrap a Read operation.
+   */
   TRead wrap(Read read) {
-    TRead tRead = new TRead(
-        wrap(read.getKey()),
-        wrap(read.getColumns()),
-        read.getId());
+    TRead tRead = new TRead(wrap(read.getKey()), wrap(read.getColumns()), read.getId());
     if (read.getTable() != null) {
       tRead.setTable(read.getTable());
     }
@@ -481,25 +562,24 @@ public class ConverterUtils {
     }
     return tRead;
   }
-  /** unwrap a Read operation */
+
+  /**
+   * unwrap a Read operation.
+   */
   Read unwrap(TRead tRead) {
-    Read read = new Read(
-        tRead.getId(),
-        tRead.isSetTable() ? tRead.getTable() : null,
-        tRead.getKey(),
-        unwrap(tRead.getColumns()));
+    Read read = new Read(tRead.getId(), tRead.isSetTable() ? tRead.getTable() : null, tRead.getKey(),
+                         unwrap(tRead.getColumns()));
     if (tRead.isSetMetric()) {
       read.setMetricName(tRead.getMetric());
     }
     return read;
   }
 
-  /** wrap a ReadAllKeys operation */
+  /**
+   * wrap a ReadAllKeys operation.
+   */
   TReadAllKeys wrap(ReadAllKeys readAllKeys) {
-    TReadAllKeys tReadAllKeys = new TReadAllKeys(
-        readAllKeys.getOffset(),
-        readAllKeys.getLimit(),
-        readAllKeys.getId());
+    TReadAllKeys tReadAllKeys = new TReadAllKeys(readAllKeys.getOffset(), readAllKeys.getLimit(), readAllKeys.getId());
     if (readAllKeys.getTable() != null) {
       tReadAllKeys.setTable(readAllKeys.getTable());
     }
@@ -508,27 +588,27 @@ public class ConverterUtils {
     }
     return tReadAllKeys;
   }
-  /** unwrap a ReadAllKeys operation */
+
+  /**
+   * unwrap a ReadAllKeys operation.
+   */
   ReadAllKeys unwrap(TReadAllKeys tReadAllKeys) {
-    ReadAllKeys readAllKeys = new ReadAllKeys(
-        tReadAllKeys.getId(),
-        tReadAllKeys.isSetTable() ? tReadAllKeys.getTable() : null,
-        tReadAllKeys.getOffset(),
-        tReadAllKeys.getLimit());
+    ReadAllKeys readAllKeys = new ReadAllKeys(tReadAllKeys.getId(), tReadAllKeys.isSetTable() ? tReadAllKeys.getTable
+      () : null, tReadAllKeys.getOffset(), tReadAllKeys.getLimit());
     if (tReadAllKeys.isSetMetric()) {
       readAllKeys.setMetricName(tReadAllKeys.getMetric());
     }
     return readAllKeys;
   }
 
-  /** wrap a ReadColumnRange operation */
+  /**
+   * wrap a ReadColumnRange operation.
+   */
   TReadColumnRange wrap(ReadColumnRange readColumnRange) {
-    TReadColumnRange tReadColumnRange = new TReadColumnRange(
-        wrap(readColumnRange.getKey()),
-        wrap(readColumnRange.getStartColumn()),
-        wrap(readColumnRange.getStopColumn()),
-        readColumnRange.getLimit(),
-        readColumnRange.getId());
+    TReadColumnRange tReadColumnRange = new TReadColumnRange(wrap(readColumnRange.getKey()),
+                                                             wrap(readColumnRange.getStartColumn()),
+                                                             wrap(readColumnRange.getStopColumn()),
+                                                             readColumnRange.getLimit(), readColumnRange.getId());
     if (readColumnRange.getTable() != null) {
       tReadColumnRange.setTable(readColumnRange.getTable());
     }
@@ -537,33 +617,42 @@ public class ConverterUtils {
     }
     return tReadColumnRange;
   }
-  /** unwrap a ReadColumnRange operation */
+
+  /**
+   * unwrap a ReadColumnRange operation.
+   */
   ReadColumnRange unwrap(TReadColumnRange tReadColumnRange) {
-    ReadColumnRange readColumnRange = new ReadColumnRange(
-        tReadColumnRange.getId(),
-        tReadColumnRange.isSetTable() ? tReadColumnRange.getTable() : null,
-        tReadColumnRange.getKey(),
-        tReadColumnRange.getStartColumn(),
-        tReadColumnRange.getStopColumn(),
-        tReadColumnRange.getLimit());
+    ReadColumnRange readColumnRange = new ReadColumnRange(tReadColumnRange.getId(),
+                                                          tReadColumnRange.isSetTable() ? tReadColumnRange.getTable()
+                                                            : null, tReadColumnRange.getKey(),
+                                                          tReadColumnRange.getStartColumn(),
+                                                          tReadColumnRange.getStopColumn(),
+                                                          tReadColumnRange.getLimit());
     if (tReadColumnRange.isSetMetric()) {
       readColumnRange.setMetricName(tReadColumnRange.getMetric());
     }
     return readColumnRange;
   }
 
-  /** wrap a queue entry */
+  /**
+   * wrap a queue entry.
+   */
   TQueueEntry wrap(QueueEntry entry) {
     TQueueEntry tQueueEntry = new TQueueEntry(wrap(entry.getData()));
     tQueueEntry.setHeader(entry.getHashKeys());
     return tQueueEntry;
   }
-  /** unwrap a queue entry */
+
+  /**
+   * unwrap a queue entry.
+   */
   QueueEntry unwrap(TQueueEntry entry) {
     return new QueueEntry(entry.getHeader(), entry.getData());
   }
 
-  /** wrap a batch of queue entries */
+  /**
+   * wrap a batch of queue entries.
+   */
   List<TQueueEntry> wrap(QueueEntry[] entries) {
     List<TQueueEntry> tQueueEntries = Lists.newArrayListWithCapacity(entries.length);
     for (QueueEntry entry : entries) {
@@ -571,7 +660,10 @@ public class ConverterUtils {
     }
     return tQueueEntries;
   }
-  /** unwrap a batch of queue entries */
+
+  /**
+   * unwrap a batch of queue entries.
+   */
   QueueEntry[] unwrap(List<TQueueEntry> tEntries) {
     QueueEntry[] entries = new QueueEntry[tEntries.size()];
     int index = 0;
@@ -581,12 +673,12 @@ public class ConverterUtils {
     return entries;
   }
 
-  /** wrap an Enqueue operation */
+  /**
+   * wrap an Enqueue operation.
+   */
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
-    TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
-        wrap(enqueue.getKey()),
-        wrap(enqueue.getEntries()),
-        enqueue.getId());
+    TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(wrap(enqueue.getKey()), wrap(enqueue.getEntries()),
+                                                    enqueue.getId());
     if (enqueue.getProducer() != null) {
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
     }
@@ -595,93 +687,93 @@ public class ConverterUtils {
     }
     return tQueueEnqueue;
   }
-  /** unwrap an Enqueue operation */
+
+  /**
+   * unwrap an Enqueue operation.
+   */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
-    QueueEnqueue enqueue = new QueueEnqueue(
-        tEnqueue.getId(),
-        unwrap(tEnqueue.getProducer()),
-        tEnqueue.getQueueName(),
-        unwrap(tEnqueue.getEntries()));
+    QueueEnqueue enqueue = new QueueEnqueue(tEnqueue.getId(), unwrap(tEnqueue.getProducer()),
+                                            tEnqueue.getQueueName(), unwrap(tEnqueue.getEntries()));
     if (tEnqueue.isSetMetric()) {
       enqueue.setMetricName(tEnqueue.getMetric());
     }
     return enqueue;
   }
 
-  /** wrap a DequeuePayload operation */
+  /**
+   * wrap a DequeuePayload operation.
+   */
   TQueueDequeue wrap(QueueDequeue dequeue) throws TOperationException {
-    TQueueDequeue tQueueDequeue = new TQueueDequeue(
-        wrap(dequeue.getKey()),
-        wrap(dequeue.getConsumer()),
-        wrap(dequeue.getConfig()),
-        dequeue.getId());
+    TQueueDequeue tQueueDequeue = new TQueueDequeue(wrap(dequeue.getKey()), wrap(dequeue.getConsumer()),
+                                                    wrap(dequeue.getConfig()), dequeue.getId());
     if (dequeue.getMetricName() != null) {
       tQueueDequeue.setMetric(dequeue.getMetricName());
     }
     return tQueueDequeue;
   }
-  /** unwrap a DequeuePayload operation */
+
+  /**
+   * unwrap a DequeuePayload operation.
+   */
   QueueDequeue unwrap(TQueueDequeue tDequeue) throws TOperationException {
-    QueueDequeue dequeue =new QueueDequeue(
-        tDequeue.getId(),
-        tDequeue.getQueueName(),
-        unwrap(tDequeue.getConsumer()),
-        unwrap(tDequeue.getConfig()));
+    QueueDequeue dequeue = new QueueDequeue(tDequeue.getId(), tDequeue.getQueueName(),
+                                            unwrap(tDequeue.getConsumer()), unwrap(tDequeue.getConfig()));
     if (tDequeue.isSetMetric()) {
       dequeue.setMetricName(tDequeue.getMetric());
     }
     return dequeue;
   }
 
-  /** wrap a QueueAck operation */
+  /**
+   * wrap a QueueAck operation.
+   */
   TQueueAck wrap(QueueAck ack) throws TOperationException {
-    TQueueAck tAck = new TQueueAck(
-        wrap(ack.getKey()),
-        wrap(ack.getEntryPointers()),
-        wrap(ack.getConsumer()),
-        ack.getNumGroups(),
-        ack.getId());
+    TQueueAck tAck = new TQueueAck(wrap(ack.getKey()), wrap(ack.getEntryPointers()), wrap(ack.getConsumer()),
+                                   ack.getNumGroups(), ack.getId());
     if (ack.getMetricName() != null) {
       tAck.setMetric(ack.getMetricName());
     }
     return tAck;
   }
-  /** unwrap a QueueAck operation */
-  QueueAck unwrap(TQueueAck tQueueAck) throws TOperationException{
-    QueueAck ack = new QueueAck(
-        tQueueAck.getId(),
-        tQueueAck.getQueueName(),
-        unwrap(tQueueAck.getEntryPointers()),
-        unwrap(tQueueAck.getConsumer()),
-        tQueueAck.getNumGroups());
+
+  /**
+   * unwrap a QueueAck operation.
+   */
+  QueueAck unwrap(TQueueAck tQueueAck) throws TOperationException {
+    QueueAck ack = new QueueAck(tQueueAck.getId(), tQueueAck.getQueueName(), unwrap(tQueueAck.getEntryPointers()),
+                                unwrap(tQueueAck.getConsumer()), tQueueAck.getNumGroups());
     if (tQueueAck.isSetMetric()) {
       ack.setMetricName(tQueueAck.getMetric());
     }
     return ack;
   }
 
-  /** wrap a GetQueueInfo operation */
+  /**
+   * wrap a GetQueueInfo operation.
+   */
   TGetQueueInfo wrap(GetQueueInfo getQueueInfo) {
-    TGetQueueInfo tGetQueueInfo = new TGetQueueInfo(
-        wrap(getQueueInfo.getQueueName()),
-        getQueueInfo.getId());
+    TGetQueueInfo tGetQueueInfo = new TGetQueueInfo(wrap(getQueueInfo.getQueueName()), getQueueInfo.getId());
     if (getQueueInfo.getMetricName() != null) {
       tGetQueueInfo.setMetric(getQueueInfo.getMetricName());
     }
     return tGetQueueInfo;
   }
-  /** unwrap a GetQueueInfo operation */
+
+  /**
+   * unwrap a GetQueueInfo operation.
+   */
   GetQueueInfo unwrap(TGetQueueInfo tGetQueueInfo) {
-    GetQueueInfo getQueueInfo = new GetQueueInfo(
-        tGetQueueInfo.getId(),
-        tGetQueueInfo.getQueueName());
+    GetQueueInfo getQueueInfo = new GetQueueInfo(tGetQueueInfo.getId(),
+                                                                       tGetQueueInfo.getQueueName());
     if (tGetQueueInfo.isSetMetric()) {
       getQueueInfo.setMetricName(tGetQueueInfo.getMetric());
     }
     return getQueueInfo;
   }
 
-  /** wrap a GetGroupId operation */
+  /**
+   * wrap a GetGroupId operation.
+   */
   TGetGroupId wrap(GetGroupID getGroupId) {
     TGetGroupId tGetGroupId = new TGetGroupId(wrap(getGroupId.getQueueName()));
     if (getGroupId.getMetricName() != null) {
@@ -689,7 +781,10 @@ public class ConverterUtils {
     }
     return tGetGroupId;
   }
-  /** unwrap a GetGroupId operation */
+
+  /**
+   * unwrap a GetGroupId operation.
+   */
   GetGroupID unwrap(TGetGroupId tGetGroupId) {
     GetGroupID getGroupID = new GetGroupID(tGetGroupId.getQueueName());
     if (tGetGroupId.isSetMetric()) {
@@ -698,28 +793,31 @@ public class ConverterUtils {
     return getGroupID;
   }
 
-  /** wrap a queue entry pointer */
+  /**
+   * wrap a queue entry pointer.
+   */
   TQueueEntryPointer wrap(QueueEntryPointer entryPointer) {
-    if (entryPointer == null)
+    if (entryPointer == null) {
       return null;
-    return new TQueueEntryPointer(
-        wrap(entryPointer.getQueueName()),
-        entryPointer.getEntryId(),
-        entryPointer.getShardId(),
-        entryPointer.getTries());
-  }
-  /** unwrap a queue entry pointer */
-  QueueEntryPointer unwrap(TQueueEntryPointer tPointer) {
-    if (tPointer == null)
-      return null;
-    return new QueueEntryPointer(
-        tPointer.getQueueName(),
-        tPointer.getEntryId(),
-        tPointer.getShardId(),
-        tPointer.getTries());
+    }
+    return new TQueueEntryPointer(wrap(entryPointer.getQueueName()), entryPointer.getEntryId(),
+                                  entryPointer.getShardId(), entryPointer.getTries());
   }
 
-  /** wrap a batch of queue entry pointers */
+  /**
+   * unwrap a queue entry pointer.
+   */
+  QueueEntryPointer unwrap(TQueueEntryPointer tPointer) {
+    if (tPointer == null) {
+      return null;
+    }
+    return new QueueEntryPointer(tPointer.getQueueName(), tPointer.getEntryId(), tPointer.getShardId(),
+                                 tPointer.getTries());
+  }
+
+  /**
+   * wrap a batch of queue entry pointers.
+   */
   List<TQueueEntryPointer> wrap(QueueEntryPointer[] entryPointers) {
     List<TQueueEntryPointer> tPointers = Lists.newArrayListWithCapacity(entryPointers.length);
     for (QueueEntryPointer pointer : entryPointers) {
@@ -727,7 +825,10 @@ public class ConverterUtils {
     }
     return tPointers;
   }
-  /** wrap a batch of queue entry pointers */
+
+  /**
+   * wrap a batch of queue entry pointers.
+   */
   QueueEntryPointer[] unwrap(List<TQueueEntryPointer> tPointers) {
     QueueEntryPointer[] pointers = new QueueEntryPointer[tPointers.size()];
     int index = 0;
@@ -761,7 +862,9 @@ public class ConverterUtils {
     throw new TOperationException(StatusCode.INTERNAL_ERROR, String.format("Unknown stateType %s", tQueueStateType));
   }
 
-  /** wrap a queue consumer */
+  /**
+   * wrap a queue consumer.
+   */
   TQueueConsumer wrap(QueueConsumer consumer) throws TOperationException {
     TQueueConsumer tQueueConsumer=  new TQueueConsumer(
         consumer.getInstanceId(),
@@ -769,17 +872,22 @@ public class ConverterUtils {
         consumer.getGroupSize(),
         consumer.isStateful(),
         wrap(consumer.getStateType()));
-    if (consumer.getGroupName() != null)
+    if (consumer.getGroupName() != null) {
       tQueueConsumer.setGroupName(consumer.getGroupName());
-    if (consumer.getQueueConfig() != null)
+    }
+    if (consumer.getQueueConfig() != null) {
       tQueueConsumer.setQueueConfig(wrap(consumer.getQueueConfig()));
+    }
     if (consumer.getPartitioningKey() != null) {
       tQueueConsumer.setPartitioningKey(consumer.getPartitioningKey());
     }
     // No need to serialize queue state since it is now stored in Opex
     return tQueueConsumer;
   }
-  /** unwrap a queue consumer */
+
+  /**
+   * unwrap a queue consumer.
+   */
   QueueConsumer unwrap(TQueueConsumer tQueueConsumer) throws TOperationException {
     QueueConsumer consumer = new QueueConsumer(
       tQueueConsumer.getInstanceId(),
@@ -793,16 +901,24 @@ public class ConverterUtils {
     return consumer;
   }
 
-  /** wrap a queue producer */
+  /**
+   * wrap a queue producer.
+   */
   TQueueProducer wrap(QueueProducer producer) {
     TQueueProducer tQueueProducer = new TQueueProducer();
-    if (producer != null && producer.getProducerName() != null)
+    if (producer != null && producer.getProducerName() != null) {
       tQueueProducer.setName(producer.getProducerName());
+    }
     return tQueueProducer;
   }
-  /** unwrap a queue producer */
+
+  /**
+   * unwrap a queue producer.
+   */
   QueueProducer unwrap(TQueueProducer tQueueProducer) {
-    if (tQueueProducer == null) return null;
+    if (tQueueProducer == null) {
+      return null;
+    }
     return new QueueProducer(tQueueProducer.getName());
   }
 
@@ -814,53 +930,57 @@ public class ConverterUtils {
    * by data fabric, we log an error and default to random.
    */
   TQueuePartitioner wrap(PartitionerType partitioner) {
-    if (PartitionerType.HASH.equals(partitioner))
+    if (PartitionerType.HASH.equals(partitioner)) {
       return TQueuePartitioner.HASH;
-    if (PartitionerType.FIFO.equals(partitioner))
+    }
+    if (PartitionerType.FIFO.equals(partitioner)) {
       return TQueuePartitioner.FIFO;
-    if (PartitionerType.ROUND_ROBIN.equals(partitioner))
+    }
+    if (PartitionerType.ROUND_ROBIN.equals(partitioner)) {
       return TQueuePartitioner.ROBIN;
+    }
     Log.error("Internal Error: Received an unknown QueuePartitioner with " +
-        "class " + partitioner + ". Defaulting to RANDOM.");
+                "class " + partitioner + ". Defaulting to RANDOM.");
     return TQueuePartitioner.FIFO;
   }
+
   /**
    * unwrap a queue partitioner. We can only do this for the known
    * instances of the Thrift enum. If we encounter something else,
    * we log an error and fall back to random.
    */
   PartitionerType unwrap(TQueuePartitioner tPartitioner) {
-    if (TQueuePartitioner.HASH.equals(tPartitioner))
+    if (TQueuePartitioner.HASH.equals(tPartitioner)) {
       return PartitionerType.HASH;
-    if (TQueuePartitioner.FIFO.equals(tPartitioner))
+    }
+    if (TQueuePartitioner.FIFO.equals(tPartitioner)) {
       return PartitionerType.FIFO;
-    if (TQueuePartitioner.ROBIN.equals(tPartitioner))
+    }
+    if (TQueuePartitioner.ROBIN.equals(tPartitioner)) {
       return PartitionerType.ROUND_ROBIN;
+    }
     Log.error("Internal Error: Received unknown QueuePartitioner " +
-        tPartitioner + ". Defaulting to " + PartitionerType.FIFO + ".");
+                tPartitioner + ". Defaulting to " + PartitionerType.FIFO + ".");
     return PartitionerType.FIFO;
   }
 
-  /** wrap a queue config */
+  /**
+   * wrap a queue config.
+   */
   TQueueConfig wrap(QueueConfig config) {
-    return new TQueueConfig(
-        wrap(config.getPartitionerType()),
-        config.isSingleEntry(),
-        config.getBatchSize(),
-        config.returnsBatch());
+    return new TQueueConfig(wrap(config.getPartitionerType()), config.isSingleEntry(), config.getBatchSize(),
+                            config.returnsBatch());
   }
-  /** unwrap a queue config */
+
+  /**
+   * unwrap a queue config.
+   */
   QueueConfig unwrap(TQueueConfig config) {
-    if(config.getBatchSize() < 0) {
-      return new QueueConfig(
-        unwrap(config.getPartitioner()),
-               config.isSingleEntry());
+    if (config.getBatchSize() < 0) {
+      return new QueueConfig(unwrap(config.getPartitioner()), config.isSingleEntry());
     } else {
-      return new QueueConfig(
-          unwrap(config.getPartitioner()),
-          config.isSingleEntry(),
-          config.getBatchSize(),
-          config.isReturnBatch());
+      return new QueueConfig(unwrap(config.getPartitioner()), config.isSingleEntry(), config.getBatchSize(),
+                             config.isReturnBatch());
     }
   }
 
@@ -873,16 +993,18 @@ public class ConverterUtils {
       return new TQueueInfo(true);
     } else {
       return new TQueueInfo(false).
-          setJson(info.getValue().getJSONString());
+        setJson(info.getValue().getJSONString());
     }
   }
-  /** wrap a queue meta */
+
+  /**
+   * wrap a queue meta.
+   */
   OperationResult<QueueInfo> unwrap(TQueueInfo tQueueInfo) {
     if (tQueueInfo.isEmpty()) {
       return new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND);
     } else {
-      return new OperationResult<QueueInfo>(
-          new QueueInfo(tQueueInfo.getJson()));
+      return new OperationResult<QueueInfo>(new QueueInfo(tQueueInfo.getJson()));
     }
   }
 
@@ -897,8 +1019,7 @@ public class ConverterUtils {
     } else if (DequeueResult.DequeueStatus.SUCCESS.equals(result.getStatus())) {
       status = TDequeueStatus.SUCCESS;
     } else {
-      String message = "Internal Error: Received an unknown dequeue status of "
-          + result.getStatus() + ".";
+      String message = "Internal Error: Received an unknown dequeue status of " + result.getStatus() + ".";
       Log.error(message);
       throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
     }
@@ -909,18 +1030,19 @@ public class ConverterUtils {
     if (result.getEntries() != null) {
       tQueueResult.setEntries(wrap(result.getEntries()));
     }
-    if(consumer != null) {
+    if (consumer != null) {
       tQueueResult.setConsumer(wrap(consumer));
     }
     return tQueueResult;
   }
+
   /**
-   * unwrap a dequeue result
+   * unwrap a dequeue result.
    * If the status is unknown, return failure status and appropriate message.
    */
   DequeueResult unwrap(TDequeueResult tDequeueResult, QueueConsumer consumer)
-      throws OperationException, TOperationException {
-    if(tDequeueResult.getConsumer() != null) {
+    throws OperationException, TOperationException {
+    if (tDequeueResult.getConsumer() != null) {
       QueueConsumer retConsumer = unwrap(tDequeueResult.getConsumer());
       // No need to unwrap queue state, since it is now stored in Opex
       if(retConsumer != null) {
@@ -928,18 +1050,15 @@ public class ConverterUtils {
       }
     }
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
-      return new DequeueResult(
-        DequeueResult.DequeueStatus.SUCCESS,
-        unwrap(tDequeueResult.getPointers()),
-        unwrap(tDequeueResult.getEntries()));
+      return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS, unwrap(tDequeueResult.getPointers()),
+                               unwrap(tDequeueResult.getEntries()));
     } else {
       DequeueResult.DequeueStatus status;
       TDequeueStatus tStatus = tDequeueResult.getStatus();
       if (TDequeueStatus.EMPTY.equals(tStatus)) {
         status = DequeueResult.DequeueStatus.EMPTY;
       } else {
-        String message =
-            "Internal Error: Received an unknown dequeue status of " + tStatus;
+        String message = "Internal Error: Received an unknown dequeue status of " + tStatus;
         Log.error(message);
         throw new OperationException(StatusCode.INTERNAL_ERROR, message);
       }
@@ -948,31 +1067,32 @@ public class ConverterUtils {
   }
 
   TQueueConfigure wrap(QueueConfigure configure) throws TOperationException {
-    if(configure == null) {
+    if (configure == null) {
       return null;
     }
     TQueueConfigure tQueueConfigure =
-      new TQueueConfigure(wrap(configure.getQueueName()),
-                          wrap(configure.getNewConsumer()));
+      new TQueueConfigure(wrap(configure.getQueueName()), wrap(configure.getNewConsumer()));
     if (configure.getMetricName() != null) {
       tQueueConfigure.setMetric(configure.getMetricName());
     }
     return tQueueConfigure;
   }
+
   QueueConfigure unwrap(TQueueConfigure tQueueConfigure) throws TOperationException {
-    if(tQueueConfigure == null) {
+    if (tQueueConfigure == null) {
       return null;
     }
-    QueueConfigure queueConfigure =
-      new QueueConfigure(tQueueConfigure.getQueueName(),
-                                    unwrap(tQueueConfigure.getNewConsumer()));
+    QueueConfigure queueConfigure = new QueueConfigure(
+      tQueueConfigure.getQueueName(), unwrap(tQueueConfigure.getNewConsumer()));
     if (queueConfigure.getMetricName() != null) {
       tQueueConfigure.setMetric(queueConfigure.getMetricName());
     }
     return queueConfigure;
   }
 
-  /** wrap a read pointer. Only memory read pionters are supported */
+  /**
+   * wrap a read pointer. Only memory read pionters are supported.
+   */
   TReadPointer wrap(ReadPointer readPointer) throws TOperationException {
     if (!(readPointer instanceof MemoryReadPointer)) {
       String message = String.format("Unsupported readPointer implementation %s, only MemortReadPointer is supported",
@@ -981,15 +1101,20 @@ public class ConverterUtils {
       throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
 
     }
-    MemoryReadPointer rp = (MemoryReadPointer)readPointer;
+    MemoryReadPointer rp = (MemoryReadPointer) readPointer;
     return new TReadPointer(rp.getWriteVersion(), rp.getReadPointer(), rp.getReadExcludes());
   }
-  /** unwrap a read pointer */
+
+  /**
+   * unwrap a read pointer.
+   */
   ReadPointer unwrap(TReadPointer trp) {
     return new MemoryReadPointer(trp.getWritePoint(), trp.getReadPoint(), trp.getExcludes());
   }
 
-  /** wrap a transaction */
+  /**
+   * wrap a transaction.
+   */
   TTransaction wrap(Transaction tx) throws TOperationException {
     if (tx == null) {
       return new TTransaction(true);
@@ -999,19 +1124,23 @@ public class ConverterUtils {
     ttx.setTxid(tx.getWriteVersion());
     return ttx;
   }
-  /** unwrap a transaction */
+
+  /**
+   * unwrap a transaction.
+   */
   Transaction unwrap(TTransaction ttx) {
     return ttx.isIsNull() ? null : new Transaction(ttx.getTxid(), unwrap(ttx.getReadPointer()));
   }
 
   /**
-   * wrap an operation exception
+   * wrap an operation exception.
    */
   TOperationException wrap(OperationException e) {
     return new TOperationException(e.getStatus(), e.getMessage());
   }
+
   /**
-   * unwrap an operation exception
+   * unwrap an operation exception.
    */
   OperationException unwrap(TOperationException te) {
     return new OperationException(te.getStatus(), te.getMessage());

@@ -1,7 +1,7 @@
 package com.continuuity.data.operation;
 
 /**
- * Defines Operation Context
+ * Defines Operation Context.
  */
 public class OperationContext {
 
@@ -10,25 +10,27 @@ public class OperationContext {
   private String account;
 
   /**
-   * Constructor for operation context
+   * Constructor for operation context.
    * @param account  account Id
    * @param application application id
    */
   public OperationContext(String account, String application) {
 
-    if (account == null)
+    if (account == null) {
       throw new IllegalArgumentException("account cannot be null");
-    if (account.isEmpty())
+    }
+    if (account.isEmpty()) {
       throw new IllegalArgumentException("account cannot be empty");
-    if (application != null && application.isEmpty())
+    }
+    if (application != null && application.isEmpty()) {
       throw new IllegalArgumentException("application cannot be empty");
-
+    }
     this.account = account;
     this.application = application;
   }
 
   /**
-   * Constructor for operation context
+   * Constructor for operation context.
    * @param account  account Id
    */
   public OperationContext(String account) {
@@ -36,7 +38,6 @@ public class OperationContext {
   }
 
   /**
-   * getApplicationId
    * @return String application id
    */
   public String getApplication() {
@@ -44,12 +45,9 @@ public class OperationContext {
   }
 
   /**
-   * getAccountId
    * @return String account Id
    */
   public String getAccount() {
     return account;
   }
-
-  // TODO: Move to test sources. Should not be used outside of unit-tests
 }

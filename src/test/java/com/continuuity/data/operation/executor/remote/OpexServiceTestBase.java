@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -79,12 +78,12 @@ public abstract class OpexServiceTestBase {
   
   @Before
   public void disableQueuePayloads() {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = true;
   }
   
   @After
   public void enableQueuePayloads() {
-    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+    OmidTransactionalOperationExecutor.disableQueuePayloads = false;
   }
 
   protected static List<WriteOperation> batch(WriteOperation ... ops) {

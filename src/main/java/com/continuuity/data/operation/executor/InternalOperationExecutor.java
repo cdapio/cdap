@@ -11,6 +11,9 @@ import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
+/**
+ * An executor that can perform operations not exposed to developers.
+ */
 public interface InternalOperationExecutor {
 
   // TTQueues

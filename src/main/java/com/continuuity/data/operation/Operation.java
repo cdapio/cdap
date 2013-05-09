@@ -28,22 +28,22 @@ public abstract class Operation {
   public static Random random = new Random();
 
   /**
-   * Constructor without id - it is generated automatically
+   * Constructor without id - it is generated automatically.
    */
   protected Operation() {
     this.id = random.nextLong();
   }
 
   /**
-   * Constructor with id - typically used for deserialization
+   * Constructor with id - typically used for deserialization.
    */
   protected Operation(long id) {
     this.id = id;
   }
 
   /**
-   * set a name to use for the data metrics - ypically the name of
-   * the data set that emitted the operation
+   * set a name to use for the data metrics - typically the name of
+   * the data set that emitted the operation.
    * @param name the name to use
    */
   public void setMetricName(String name) {
@@ -54,7 +54,8 @@ public abstract class Operation {
    * @return a name to use for the data metrics - ypically the name of
    *         the data set that emitted the operation
    */
-  public @Nullable String getMetricName() {
+  @Nullable
+  public String getMetricName() {
     return this.metricName;
   }
 }

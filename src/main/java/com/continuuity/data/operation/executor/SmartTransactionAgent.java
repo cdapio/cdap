@@ -99,8 +99,8 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
   }
 
   /**
-   * Set the limit for the number of deferred operations
-   * May not be called after the transaction has started
+   * Set the limit for the number of deferred operations.
+   * May not be called after the transaction has started.
    * @param countLimit the new limit
    */
   public void setCountLimit(int countLimit) {
@@ -270,8 +270,7 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
         this.state = State.Aborted;
         throw e;
       }
-    }
-    else if (this.xaction == null) {
+    } else if (this.xaction == null) {
       this.xaction = opex.startTransaction(this.context);
     }
   }

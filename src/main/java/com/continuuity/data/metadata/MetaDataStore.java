@@ -1,32 +1,32 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.OperationContext;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Interface that defines CRUD opertions on MetaDataStore
+ * Interface that defines CRUD opertions on MetaDataStore.
  */
 public interface MetaDataStore {
 
   public final int DEFAULT_RETRIES_ON_CONFLICT = 3;
 
   /**
-   * adds a new entry with conflict resolution.
+   * Adds a new entry with conflict resolution.
    * @param context the OperationContext of the caller
    * @param entry the meta data entry to write
-   * @throws com.continuuity.api.data.OperationException with status WRITE_CONFLICT if an entry with
-   * the name and type already exists for the same account and app,
-   * also throws OperationException for other data fabric problems.
+   * @throws OperationException with status WRITE_CONFLICT if an entry with
+   *    the name and type already exists for the same account and app,
+   *    also throws OperationException for other data fabric problems.
    */
   public void add(OperationContext context,
                   MetaDataEntry entry) throws OperationException;
 
   /**
-   * adds a new entry with the option of conflict resolution.
+   * Adds a new entry with the option of conflict resolution.
    * @param context the OperationContext of the caller
    * @param entry the meta data entry to write
    * @param resolve if true, write conflicts are resolved by reading the
@@ -34,8 +34,8 @@ public interface MetaDataStore {
    *                entry to be written. If they are the same, then the
    *                write conflict is ignored silently.
    * @throws OperationException with status WRITE_CONFLICT if an entry with
-   * the name and type already exists for the same account and app,
-   * also throws OperationException for other data fabric problems.
+   *    the name and type already exists for the same account and app,
+   *    also throws OperationException for other data fabric problems.
    */
   public void add(OperationContext context,
                   MetaDataEntry entry,
@@ -43,17 +43,18 @@ public interface MetaDataStore {
       throws OperationException;
 
   /**
-   * updates an existing entry with conflict resolution.
+   * Updates an existing entry with conflict resolution.
    * @param context the OperationContext of the caller
    * @param entry the meta data entry to write
    * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
-   * the that name and type does not exist for the given account and app.
-   * also throws OperationException for other data fabric problems.
+   *    that name and type does not exist for the given account and app.
+   *    also throws OperationException for other data fabric problems.
    */
   public void update(OperationContext context,
                      MetaDataEntry entry) throws OperationException;
 
-  /** updates an existing entry with the option of conflict resolution.
+  /**
+   * Updates an existing entry with the option of conflict resolution.
    * @param context the OperationContext of the caller
    * @param entry the meta data entry to write
    * @param resolve if true, write conflicts are resolved by reading the
@@ -61,21 +62,21 @@ public interface MetaDataStore {
    *                entry to be written. If they are the same, then the
    *                write conflict is ignored silently.
    * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
-   * the that name and type does not exist for the given account and app.
-   * also throws OperationException for other data fabric problems.
+   *    the name and type does not exist for the given account and app.
+   *    also throws OperationException for other data fabric problems.
    */
   public void update(OperationContext context,
                      MetaDataEntry entry,
                      boolean resolve) throws OperationException;
 
   /**
-   * swaps an existing entry with conflict resolution.
+   * Swaps an existing entry with conflict resolution.
    * @param context the OperationContext of the caller
    * @param expected the expected meta data entry before the write
    * @param entry the meta data entry to write
    * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
-   * the that name and type does not exist for the given account and app.
-   * also throws OperationException for other data fabric problems.
+   *    the name and type does not exist for the given account and app.
+   *    also throws OperationException for other data fabric problems.
    */
   public void swap(OperationContext context,
                    MetaDataEntry expected,
@@ -95,9 +96,9 @@ public interface MetaDataStore {
    * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
-   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
-   * number of retries after write conflict is exhausted, the status code is
-   * WRITE_CONFLICT.
+   *    entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   *    number of retries after write conflict is exhausted, the status code is
+   *    WRITE_CONFLICT.
    */
   public void updateField(OperationContext context,
                           String account, String application,
@@ -120,9 +121,9 @@ public interface MetaDataStore {
    * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
-   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
-   * number of retries after write conflict is exhausted, the status code is
-   * WRITE_CONFLICT.
+   *    entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   *    number of retries after write conflict is exhausted, the status code is
+   *    WRITE_CONFLICT.
    */
   public void updateField(OperationContext context,
                           String account, String application,
@@ -145,9 +146,9 @@ public interface MetaDataStore {
    * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
-   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
-   * number of retries after write conflict is exhausted, the status code is
-   * WRITE_CONFLICT.
+   *    entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   *    number of retries after write conflict is exhausted, the status code is
+   *    WRITE_CONFLICT.
    */
   public void swapField(OperationContext context,
                         String account, String application,
@@ -170,9 +171,9 @@ public interface MetaDataStore {
    * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
-   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
-   * number of retries after write conflict is exhausted, the status code is
-   * WRITE_CONFLICT.
+   *    entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   *    number of retries after write conflict is exhausted, the status code is
+   *    WRITE_CONFLICT.
    */
   public void swapField(OperationContext context,
                         String account, String application,
@@ -204,7 +205,6 @@ public interface MetaDataStore {
    * @param id The unique id of the entry (per account, app, type), non-null
    * @return the named entry, or null if it does not exist.
    * @throws OperationException for data fabric errors
-   *
    */
   public MetaDataEntry get(OperationContext context,
                            String account, String application,
@@ -212,7 +212,7 @@ public interface MetaDataStore {
       throws OperationException;
 
   /**
-   * List all entries of a given type
+   * List all entries of a given type.
    * @param context The operation context of the caller.
    * @param account The account of the entry, must not be null
    * @param application The application of the entry, may be null
@@ -230,7 +230,7 @@ public interface MetaDataStore {
       throws OperationException;
 
   /**
-   * delete all entries for an account or application within an account.
+   * Delete all entries for an account or application within an account.
    * @param context The operation context of the caller.
    * @param account The account of the entry, must not be null
    * @param application The application of the entry, may be null
