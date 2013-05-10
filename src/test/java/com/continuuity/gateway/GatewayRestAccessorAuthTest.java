@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.continuuity.zookeeper.DiscoveryService;
-import com.continuuity.zookeeper.DiscoveryServiceClient;
+import com.continuuity.discovery.DiscoveryService;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

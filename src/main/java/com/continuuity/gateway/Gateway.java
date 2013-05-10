@@ -14,7 +14,7 @@ import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.zookeeper.DiscoveryServiceClient;
+import com.continuuity.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
