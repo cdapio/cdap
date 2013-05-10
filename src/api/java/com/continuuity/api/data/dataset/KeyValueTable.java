@@ -160,8 +160,12 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
     return new KeyValueScanner(split);
   }
 
+  /**
+   * The split reader for key/value is reading table split using the underlying Table's split reader.
+   */
   public class KeyValueScanner extends SplitReader<byte[], byte[]> {
 
+    // the underlying table's split reader
     private SplitReader<byte[], Map<byte[], byte[]>> reader;
 
     public KeyValueScanner(Split split) {

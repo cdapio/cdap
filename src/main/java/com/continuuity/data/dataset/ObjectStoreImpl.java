@@ -94,6 +94,14 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
     }
   }
 
+  /**
+   * Returns splits for a range of keys in the table.
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param stop If non-null, the returned splits will only cover keys that are less.
+   * @return list of {@link Split}
+   */
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
     return this.kvTable.getSplits(numSplits, start, stop);
   }
@@ -108,8 +116,12 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
     return new ObjectScanner(split);
   }
 
+  /**
+   * The split reader for objects is reading a table split using the underlying KeyValuyeTable's split reader.
+   */
   public class ObjectScanner extends SplitReader<byte[],T> {
 
+    // the underlying KeyValueTable's split reader
     private SplitReader<byte[], byte[]> reader;
 
     public ObjectScanner(Split split) {
@@ -133,6 +145,7 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
 
     @Override
     public T getCurrentValue() throws InterruptedException, OperationException {
+      // get the current value as a byte array and decode it into an object of type T
       return decode(this.reader.getCurrentValue());
     }
 

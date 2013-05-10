@@ -188,6 +188,9 @@ public abstract class RuntimeTable extends Table {
     this.write(new Write(key, columns, values));
   }
 
+  /**
+   * Table splits are simply a start and stop key.
+   */
   public static class TableSplit extends Split {
     private final byte[] start, stop;
 
@@ -205,22 +208,28 @@ public abstract class RuntimeTable extends Table {
     }
   }
 
+  /**
+   * Implements a split reader for a key range of a table, based on the Scanner implementation of the underlying
+   * table implementation.
+   */
   public class TableScanner extends SplitReader<byte[], Map<byte[], byte[]>> {
 
+    // the underlying scanner
     private Scanner scanner;
+    // the current key
     private byte[] key = null;
+    // the current row, that is, a map from column key to value
     private Map<byte[], byte[]> row = null;
 
     @Override
     public void initialize(Split split) throws InterruptedException, OperationException {
       TableSplit tableSplit = (TableSplit) split;
-      byte[] start = tableSplit.getStart();
-      byte[] stop = tableSplit.getStop();
-      this.scanner = getTransactionAgent().scan(new Scan(tableName(), start, stop));
+      this.scanner = getTransactionAgent().scan(new Scan(tableName(), tableSplit.getStart(), tableSplit.getStop()));
     }
 
     @Override
     public boolean nextKeyValue() throws InterruptedException, OperationException {
+      // call the underlying scanner, and depending on whether there it returns something, set current key and row.
       ImmutablePair<byte[], Map<byte[], byte[]>> next = this.scanner.next();
       if (next == null) {
         this.key = null;
