@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-# post install script for
+# post install script for <%= project %>
 set -e
 
 package_name="<%= project %>"
@@ -9,7 +9,7 @@ version="<%= @version %>"
 
 case "$1" in
   configure)
-    mkdir -p /var/log/continuuity/$package_name /var/run/continuuity/$package_name || :
+    mkdir -p /var/log/continuuity || :
     echo $version > /opt/continuuity/$package_name/version
     chmod +x /opt/continuuity/$package_name/bin/service
     for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | cut -d'-' -f1` ; do
