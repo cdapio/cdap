@@ -15,13 +15,14 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
@@ -445,10 +446,10 @@ public class DatasetRestAccessorTest {
   }
 
   boolean dequeueOne(String queue) throws Exception {
-    long groupId = executor.execute(context, new QueueAdmin.GetGroupID(queue.getBytes()));
+    long groupId = executor.execute(context, new GetGroupID(queue.getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, groupId, 1,
                                                new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true));
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queue.getBytes(), consumer));
+    executor.execute(context, new QueueConfigure(queue.getBytes(), consumer));
     DequeueResult result = executor.execute(context,
                                             new QueueDequeue(queue.getBytes(), consumer, consumer.getQueueConfig()));
     return !result.isEmpty();
