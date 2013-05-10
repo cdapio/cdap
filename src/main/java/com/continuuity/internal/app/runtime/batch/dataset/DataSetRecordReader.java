@@ -31,7 +31,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     try {
-      splitReader.initialize(dataset, inputSplit.getSplit());
+      splitReader.initialize(inputSplit.getSplit());
     } catch(OperationException e) {
       throw Throwables.propagate(e);
     }

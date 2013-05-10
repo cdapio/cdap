@@ -244,7 +244,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext)
+    throws OperationException {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getInputDataset() != null) {
