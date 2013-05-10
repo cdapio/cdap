@@ -14,11 +14,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-<<<<<<< HEAD
-=======
-import java.util.Iterator;
 import java.util.List;
->>>>>>> feature/queue-config-groups
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
