@@ -1,5 +1,8 @@
 package com.continuuity.performance.benchmark;
 
+/**
+ * Group of simple agents.
+ */
 public abstract class SimpleAgentGroup extends AgentGroup {
 
   SimpleBenchmark.SimpleConfig config;

@@ -6,16 +6,11 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
- *
+ * Tool to upload metrics to Mensa.
  */
 public class MensaUtils {
-  public static String buildMetric(String metric,
-                                   String timestamp,
-                                   String value,
-                                   String benchmark,
-                                   String operation,
-                                   String threadCount,
-                                   String extraTags) {
+  public static String buildMetric(String metric, String timestamp, String value, String benchmark, String operation,
+                                   String threadCount, String extraTags) {
     StringBuilder builder = new StringBuilder();
     builder.append("put");
     builder.append(" ");
@@ -48,8 +43,16 @@ public class MensaUtils {
       dos.writeBytes(metric);
       dos.flush();
     } finally {
-      if (dos != null) try { dos.close(); } catch (IOException e) { }
-      if (socket != null) try { socket.close(); } catch (IOException e) { }
+      if (dos != null) {
+        try { dos.close();
+        } catch (IOException e) {
+        }
+      }
+      if (socket != null) {
+        try { socket.close();
+        } catch (IOException e) {
+        }
+      }
     }
   }
 }

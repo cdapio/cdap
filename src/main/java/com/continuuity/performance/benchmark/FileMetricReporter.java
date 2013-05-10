@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Metrics collector that writes metrics to file.
+ */
 class FileMetricReporter extends MetricsCollector {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileMetricReporter.class);
@@ -43,7 +46,7 @@ class FileMetricReporter extends MetricsCollector {
     } else {
       this.benchmarkName = benchmarkName;
     }
-    this.metrics = new HashMap<String,ArrayList<Double>>(groups.length);
+    this.metrics = new HashMap<String, ArrayList<Double>>(groups.length);
     for (AgentGroup group : groups) {
       this.metrics.put(group.getName(), new ArrayList<Double>());
     }
@@ -88,7 +91,7 @@ class FileMetricReporter extends MetricsCollector {
   @Override
   protected void processGroupMetricsFinal(long unixTime, AgentGroup group) throws BenchmarkException {
     List<Double> grpVals = metrics.get(group.getName());
-    if (grpVals.size() != 0 ) {
+    if (grpVals.size() != 0) {
       double sum = 0;
       for (Double grpVal : grpVals) {
         sum += grpVal;

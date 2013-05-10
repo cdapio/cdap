@@ -1,5 +1,8 @@
 package com.continuuity.performance.benchmark;
 
+/**
+ * Agent that executes benchmark code.
+ */
 public abstract class Agent {
   private final int agentId;
 

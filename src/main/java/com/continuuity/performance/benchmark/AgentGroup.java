@@ -1,5 +1,8 @@
 package com.continuuity.performance.benchmark;
 
+/**
+ * Group of agents that execute the same benchmark code.
+ */
 public abstract class AgentGroup {
   /**
    * Returns the number of times each agent should be called per second.
@@ -26,7 +29,7 @@ public abstract class AgentGroup {
   }
 
   /**
-   * The name of this agent group, to use in statistics and progress
+   * The name of this agent group, to use in statistics and progress.
    */
   public abstract String getName();
 

@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Abstract metrics collector class.
+ */
 abstract class MetricsCollector implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsCollector.class);
@@ -132,7 +135,9 @@ abstract class MetricsCollector implements Runnable {
     millis = millis % second;
 
     builder.append(String.format("%02d:%02d:%02d", hours, minutes, seconds));
-    if (millis > 0) builder.append(String.format(".%03d", millis));
+    if (millis > 0) {
+      builder.append(String.format(".%03d", millis));
+    }
     return builder.toString();
   }
 

@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * Benchmark for generating load by sending REST calls.
+ */
 public class LoadGenerator extends SimpleBenchmark {
 
   String apikey = null;
@@ -69,22 +72,22 @@ public class LoadGenerator extends SimpleBenchmark {
     boolean ssl = apikey != null;
 
     // determine the base url for the GET request
-    if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
+    if (baseUrl == null) {
+      baseUrl = Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
+    }
     if (baseUrl == null) {
       throw new BenchmarkException(
           "Can't figure out gateway URL. Please specify --base");
     } else {
-      if (super.simpleConfig.verbose)
+      if (super.simpleConfig.verbose) {
         System.out.println("Using base URL: " + baseUrl);
+      }
     }
-
-    if (destination == null)
-      throw new BenchmarkException(
-          "Destination stream must be specified via --stream");
-    else
+    if (destination == null) {
+      throw new BenchmarkException("Destination stream must be specified via --stream");
+    } else {
       requestUrl = baseUrl + destination;
-
+    }
     if (file != null) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -95,15 +98,12 @@ public class LoadGenerator extends SimpleBenchmark {
         }
         reader.close();
         wordList = words.toArray(new String[words.size()]);
-        System.out.println("Using word list in " + file + " (" + words.size()
-            + " words).");
+        System.out.println("Using word list in " + file + " (" + words.size() + " words).");
       } catch (IOException e) {
-        throw new BenchmarkException("Cannot read word list from file " +
-            file + ": " + e.getMessage(), e);
+        throw new BenchmarkException("Cannot read word list from file " + file + ": " + e.getMessage(), e);
       }
     } else {
-      System.out.println("Using built-in word list of 100 most frequent " +
-          "english words.");
+      System.out.println("Using built-in word list of 100 most frequent " + "english words.");
     }
   }
 
@@ -138,9 +138,8 @@ public class LoadGenerator extends SimpleBenchmark {
                 String body = builder.toString();
 
                 if (isVerbose()) {
-                  System.out.println(getName() + " " + this.getAgentId() +
-                      " sending event number " + iteration + " with body: " +
-                      body);
+                  System.out.println(getName() + " " + this.getAgentId() + " sending event number " + iteration
+                                       + " with body: " + body);
                 }
 
                 // create an HttpPost

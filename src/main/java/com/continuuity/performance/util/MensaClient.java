@@ -21,7 +21,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 /**
- *
+ * Client to read data from Mensa.
  */
 public class MensaClient {
   private static final String DUMMY_OP = "avg:";
@@ -49,18 +49,18 @@ public class MensaClient {
     StringBuilder sb = new StringBuilder();
     sb.append("/q?");
     if (start != null && start.length() != 0) {
-      sb.append("start="+start);
+      sb.append("start=" + start);
       sb.append("&");
     }
     if (end != null && end.length() != 0) {
-      sb.append("end="+end);
+      sb.append("end=" + end);
       sb.append("&");
     }
     sb.append("m=");
     sb.append(DUMMY_OP);
     sb.append(metric);
-    if (tags != null && tags.size() != 0 ) {
-      sb.append(tags.toString().replaceAll(" ",""));
+    if (tags != null && tags.size() != 0) {
+      sb.append(tags.toString().replaceAll(" ", ""));
     }
     sb.append("&");
     sb.append("ascii");
@@ -71,8 +71,8 @@ public class MensaClient {
 
   private HttpGet buildHttpGet(String hostname, int port, String query) {
     try {
-      URL url = new URL("http://"+hostname+":"+port+query);
-      URI uri = new URI(url.getProtocol(), url.getHost()+":"+url.getPort(), url.getPath(), url.getQuery(), null);
+      URL url = new URL("http://" + hostname + ":" + port + query);
+      URI uri = new URI(url.getProtocol(), url.getHost() + ":" + url.getPort(), url.getPath(), url.getQuery(), null);
       HttpGet get = new HttpGet(uri);
       get.addHeader("accept", "application/json");
       return get;
@@ -102,7 +102,7 @@ public class MensaClient {
         HttpGet get = buildHttpGet(host, port, tsdbQuery);
 
         response = client.execute(get);
-        HttpEntity entity=response.getEntity();
+        HttpEntity entity = response.getEntity();
         MetricsResult result;
         if (entity != null) {
           InputStream is = entity.getContent();
@@ -118,13 +118,15 @@ public class MensaClient {
               if ("raw".equals(function)) {
                 result.getMetric(0).dump();
               } else {
-                System.out.println(function+"="+round(result.getMetric(0).avg(Integer.valueOf(function.substring(3)))));
+                System.out.println(function + "="
+                                     + round(result.getMetric(0).avg(Integer.valueOf(function.substring(3)))));
               }
             } else if (function.startsWith("avg")) {
               if ("avg".equals(function)) {
-                System.out.println(function+"="+round(result.getMetric(0).avg()));
+                System.out.println(function + "=" + round(result.getMetric(0).avg()));
               } else {
-                System.out.println(function+"="+round(result.getMetric(0).avg(Integer.valueOf(function.substring(3)))));
+                System.out.println(function + "="
+                                     + round(result.getMetric(0).avg(Integer.valueOf(function.substring(3)))));
               }
             }
           } catch (RuntimeException ex) {
@@ -142,9 +144,7 @@ public class MensaClient {
 
     } else if ("delete".equals(command)) {
       return "OK.";
-    }
-
-    else if ("list".equals(command)) {
+    } else if ("list".equals(command)) {
       return "OK.";
     }
     return "OK.";
@@ -166,14 +166,16 @@ public class MensaClient {
   }
 
   private void parseTag(String tag, Properties tags) {
-    String[] tagCatVal=tag.split("=");
+    String[] tagCatVal = tag.split("=");
     tags.setProperty(tagCatVal[0], tagCatVal[1]);
   }
 
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = "mensa-client";
-    if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
+    if (System.getProperty("script") != null) {
+      name = System.getProperty("script").replaceAll("[./]", "");
+    }
     out.println("Usage: ");
     out.println("  " + name + " read <metric id> [ <option> ... ]");
     out.println("Options:");
@@ -198,8 +200,10 @@ public class MensaClient {
   }
 
   private boolean parseArgs(String[] args) {
-    if (args.length == 0) usage(true);
-    int pos=0;
+    if (args.length == 0) {
+      usage(true);
+    }
+    int pos = 0;
     String arg = args[pos];
 
     if ("--help".equals(arg)) {
@@ -210,40 +214,52 @@ public class MensaClient {
     command = arg;
     //parse command
     if ("read".equals(command)) {
-      if ((pos + 1) >= args.length) usage(true);
-      metric = args[++pos];
+      if ((pos + 1) >= args.length) {
+        usage(true);
+      }
+      metric = args[ ++pos ];
 
     } else {
       command = null;
     }
 
     //parse options
-    while (pos < args.length-1) {
-      arg = args[++pos];
+    while (pos < args.length - 1) {
+      arg = args[ ++pos ];
       if ("--tag".equals(arg)) {
         //--tag name=value
-        if ((pos + 1) >= args.length) usage(true);
-        parseTag(args[++pos], tags);
+        if ((pos + 1) >= args.length) {
+          usage(true);
+        }
+        parseTag(args[ ++pos ], tags);
 
       } else if ("--tags".equals(arg)) {
         //--tags name1=value1,name2=value2,name3=value3
-        if ((pos + 1) >= args.length) usage(true);
-        parseTags(args[++pos], ",", tags);
+        if ((pos + 1) >= args.length) {
+          usage(true);
+        }
+        parseTags(args[ ++pos ], ",", tags);
 
       } else if ("--startts".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         startts = args[pos];
 
       } else if ("--endts".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         endts = args[pos];
 
       } else if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) { usage(true); }
         host = args[pos];
 
       } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
@@ -251,7 +267,9 @@ public class MensaClient {
         }
 
       } else if ("--function".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         function = args[pos];
 
       } else { // unkown argument
@@ -269,7 +287,7 @@ public class MensaClient {
       endts = fmt.print(now);
     }
 
-    if (command == null || command.length() == 0 || host == null || host.length()==0 || port == 0) {
+    if (command == null || command.length() == 0 || host == null || host.length() == 0 || port == 0) {
       return false;
     }
     return true;
@@ -281,6 +299,9 @@ public class MensaClient {
     mc.execute();
   }
 
+  /**
+   * UsageException.
+   */
   public class UsageException extends RuntimeException {
     // no message, no cause, on purpose, only default constructor
     public UsageException() { }

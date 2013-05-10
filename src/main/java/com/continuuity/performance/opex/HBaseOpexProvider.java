@@ -12,6 +12,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 
+/**
+ * OpexProvider for benchmarks that use HBase.
+ */
 public class HBaseOpexProvider extends OpexProvider {
 
   String zkQuorum = null;
@@ -24,8 +27,9 @@ public class HBaseOpexProvider extends OpexProvider {
   @Override
   public OperationExecutor create() {
     Configuration hbaseConf = HBaseConfiguration.create();
-    if (zkQuorum != null)
+    if (zkQuorum != null) {
       hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
+    }
     hbaseConf.set("hbase.defaults.for.version.skip", "true");
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
