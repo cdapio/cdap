@@ -12,6 +12,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -19,6 +20,7 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.table.Scanner;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.TException;
@@ -524,6 +526,12 @@ public class RemoteOperationExecutor
           return true;
         }
       });
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    throw new UnsupportedOperationException("Remote operation executor does not support scans.");
   }
 
   @Override

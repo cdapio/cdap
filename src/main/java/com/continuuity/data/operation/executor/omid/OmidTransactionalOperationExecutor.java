@@ -22,6 +22,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
@@ -43,6 +44,7 @@ import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -138,6 +140,8 @@ public class OmidTransactionalOperationExecutor
     METRIC_PREFIX + "CommitTransaction" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS =
     METRIC_PREFIX + "QueueConfigure" + NUMOPS_METRIC_SUFFIX;
+  private static final String REQ_TYPE_SCAN_NUM_OPS = METRIC_PREFIX + "Scan" + NUMOPS_METRIC_SUFFIX;
+
 
   public static final String LATENCY_METRIC_SUFFIX = "-latency";
   public static final String REQ_TYPE_GET_SPLITS_LATENCY = METRIC_PREFIX + "GetSplits" + LATENCY_METRIC_SUFFIX;
@@ -160,6 +164,7 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY =
     METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_SCAN_LATENCY = METRIC_PREFIX + "Scan" + LATENCY_METRIC_SUFFIX;
 
   private void incMetric(String metric) {
     cmetric.meter(metric, 1);
@@ -1003,6 +1008,20 @@ public class OmidTransactionalOperationExecutor
     TTQueueTable table = getQueueTable(configure.getQueueName());
     table.configure(configure.getQueueName(), configure.getNewConsumer());
     end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    initialize();
+    incMetric(REQ_TYPE_SCAN_NUM_OPS);
+    long begin = begin();
+    ReadPointer pointer = transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, scan.getTable());
+    Scanner scanner = table.scan(scan.getStart(), scan.getStop(), scan.getColumns(), pointer);
+    end(REQ_TYPE_SCAN_LATENCY, begin);
+    dataSetMetric_read(scan.getMetricName());
+    return scanner;
   }
 
   Transaction startTransaction() {

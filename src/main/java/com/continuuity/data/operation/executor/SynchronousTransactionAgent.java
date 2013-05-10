@@ -9,7 +9,9 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.table.Scanner;
 
 import java.util.List;
 import java.util.Map;
@@ -143,6 +145,23 @@ public class SynchronousTransactionAgent extends AbstractTransactionAgent {
       OperationResult<List<KeyRange>> result = this.opex.execute(this.context, getSplits);
       success = true;
       return result;
+    } finally {
+      if (success) {
+        succeededOne();
+      } else {
+        failedOne();
+      }
+    }
+  }
+
+  @Override
+  public Scanner scan(Scan scan) throws OperationException {
+    boolean success = false;
+    try {
+      // execute synchronously
+      Scanner scanner = this.opex.scan(this.context, null, scan);
+      success = true;
+      return scanner;
     } finally {
       if (success) {
         succeededOne();

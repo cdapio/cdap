@@ -16,10 +16,9 @@ public abstract class SplitReader<KEY, VALUE> {
   /**
    * Called once at initialization.
    * @param split the split that defines the range of records to read
-   * @param <T> the data set type
    * @throws InterruptedException
    */
-  public abstract <T extends BatchReadable> void initialize(T dataset, Split split)
+  public abstract void initialize(Split split)
     throws InterruptedException, OperationException;
 
   /**

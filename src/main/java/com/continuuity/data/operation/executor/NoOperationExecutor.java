@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
@@ -11,11 +12,13 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -191,6 +194,21 @@ public class NoOperationExecutor implements OperationExecutor {
   public void execute(OperationContext context, @Nullable Transaction transaction, QueueAdmin.QueueConfigure configure)
     throws OperationException {
     // Nothing to do
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    return new Scanner() {
+      @Override
+      public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+        return null;
+      }
+      @Override
+      public void close() {
+        // nothing to do
+      }
+    };
   }
 
   @Override

@@ -405,7 +405,7 @@ public class SimpleTimeseriesTable extends DataSet
   /////// Methods for using DataSet as input for MapReduce job
 
   private static final class InputSplit extends Split {
-    private byte key[];
+    private byte[] key;
     private long startTime;
     private long endTime;
     private byte[][] tags;
@@ -421,13 +421,8 @@ public class SimpleTimeseriesTable extends DataSet
   /**
    * Defines input selection for Batch job.
    * @param splitsCount number of parts to split the data selection into. Each piece
-   * @param key
-   * @param startTime
-   * @param endTime
-   * @param tags
-   * @return
    */
-  public List<Split> getInput(int splitsCount, byte key[], long startTime, long endTime, byte[]... tags) {
+  public List<Split> getInput(int splitsCount, byte[] key, long startTime, long endTime, byte[]... tags) {
     long timeIntervalPerSplit = (endTime - startTime) / splitsCount;
     // we don't want splits to be empty
     timeIntervalPerSplit = timeIntervalPerSplit > 0 ? timeIntervalPerSplit : 1;
@@ -460,16 +455,15 @@ public class SimpleTimeseriesTable extends DataSet
   /**
    * A record reader for time series.
    */
-  public static final class TimeseriesTableRecordsReader
+  public final class TimeseriesTableRecordsReader
     extends IteratorBasedSplitReader<byte[], Entry> {
     @Override
-    public Iterator<Entry> createIterator(final BatchReadable dataset,
-                                          final Split split) throws OperationException {
+    public Iterator<Entry> createIterator(final Split split) throws OperationException {
 
       InputSplit s = (InputSplit) split;
 
       // TODO: avoid reading all data at once :)
-      List<TimeseriesTable.Entry> data = ((TimeseriesTable) dataset).read(s.key, s.startTime, s.endTime, s.tags);
+      List<TimeseriesTable.Entry> data = SimpleTimeseriesTable.this.read(s.key, s.startTime, s.endTime, s.tags);
       return data.iterator();
     }
 

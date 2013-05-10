@@ -19,13 +19,11 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
 
   /**
    * Creates iterator to iterate through all records of a given split.
-   * @param dataset dataset that owns a split
    * @param split split to iterate through
    * @return an instance of {@link Iterator}
    * @throws OperationException if there's an error during reading the split
    */
-  protected abstract Iterator<VALUE> createIterator(final BatchReadable dataset,
-                                 final Split split) throws OperationException;
+  protected abstract Iterator<VALUE> createIterator(final Split split) throws OperationException;
 
   /**
    * Gets key from the given value provided by iterator.
@@ -35,10 +33,9 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
   protected abstract KEY getKey(VALUE value);
 
   @Override
-  public void initialize(final BatchReadable table,
-                         final Split split) throws InterruptedException, OperationException {
+  public void initialize(final Split split) throws InterruptedException, OperationException {
 
-    iterator = createIterator(table, split);
+    iterator = createIterator(split);
   }
 
   @Override
@@ -47,7 +44,6 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
       return false;
     } else {
       VALUE next = iterator.next();
-      // TODO: is there a way to enforce VALUE to be "extends <WithKey<KEY>>"?
       KEY key = getKey(next);
       setCurrentKeyValue(key, next);
       return true;

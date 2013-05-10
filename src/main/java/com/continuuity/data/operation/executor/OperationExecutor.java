@@ -10,8 +10,10 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -334,8 +336,20 @@ public interface OperationExecutor
    * @param context the operation context
    * @param transaction QueueConfigure is not executed in a transaction, can be null
    * @param configure the QueueConfigure operation to execute
-   * @throws OperationException
+   * @throws OperationException in case of errors
    */
   public void execute(OperationContext context, @Nullable Transaction transaction,
                       QueueAdmin.QueueConfigure configure) throws OperationException;
+
+  /**
+   * Returns a scanner for the given table. Note: Some implementations may not support this operation. For example,
+   * because a scanner has a stateful API, a remote operation executor may not support this (the scanner should
+   * connect directly to the data-fabric, not go through a network connection for every call).
+   * @param context the operation context
+   * @param transaction QueueConfigure is not executed in a transaction, can be null
+   * @param scan the Scan operation
+   * @throws OperationException in case of errors
+   */
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException;
 }
