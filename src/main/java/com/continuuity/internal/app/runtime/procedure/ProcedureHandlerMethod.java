@@ -45,15 +45,14 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final BasicProcedureContext context;
 
   ProcedureHandlerMethod(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory, OVCTableHandle tableHandle)
-                         throws ClassNotFoundException, OperationException {
+                                DataFabricFacadeFactory txAgentSupplierFactory) throws ClassNotFoundException {
 
     DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
     DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
 
     ProcedureSpecification procedureSpec = program.getSpecification().getProcedures().get(program.getProgramName());
     context = new BasicProcedureContext(program, runId, instanceId,
-                                        DataSets.createDataSets(dataSetContext, tableHandle, procedureSpec.getDataSets()),
+                                        DataSets.createDataSets(dataSetContext, procedureSpec.getDataSets()),
                                         procedureSpec);
 
     TypeToken<? extends Procedure> procedureType = (TypeToken<? extends Procedure>)TypeToken.of(program.getMainClass());

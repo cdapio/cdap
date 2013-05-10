@@ -62,7 +62,7 @@ public class MapReduceProgramRunnerTest {
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
-    injector = TestHelper.injector;
+    injector = Guice.createInjector(new DataFabricLevelDBModule(configuration), new BigMamaModule(configuration));
   }
 
   @Test

@@ -36,16 +36,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final MapReduceRuntimeService mapReduceRuntimeService;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
-  private final OVCTableHandle tableHandle;
 
   @Inject
   public MapReduceProgramRunner(MapReduceRuntimeService mapReduceRuntimeService,
                                 DataFabricFacadeFactory txAgentSupplierFactory,
-                                LogWriter logWriter, OVCTableHandle tableHandle) {
+                                LogWriter logWriter) {
 
     this.mapReduceRuntimeService = mapReduceRuntimeService;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
-    this.tableHandle = tableHandle;
     CAppender.logWriter = logWriter;
   }
 
@@ -76,7 +74,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       RunId runId = RunId.generate();
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, DataSets.createDataSets(dataSetContext, tableHandle, spec.getDataSets()), spec);
+        new BasicMapReduceContext(program, runId, DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
 
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
       context.injectFields(job);

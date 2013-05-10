@@ -1,14 +1,10 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
-import com.continuuity.data.table.OVCTableHandle;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

@@ -91,20 +91,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
-  private final OVCTableHandle tableHandle;
-
 
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory, LogWriter logWriter, OVCTableHandle tableHandle) {
+                              QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
-    this.tableHandle = tableHandle;
     CAppender.logWriter = logWriter;
     queueConsumerSuppliers = ImmutableList.of();
   }
@@ -154,7 +151,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,
                                                                          instanceCount,
-                                                                   DataSets.createDataSets(dataSetContext, tableHandle,
+                                                                   DataSets.createDataSets(dataSetContext,
                                                                                            flowletDef.getDatasets()),
                                                                    flowletDef.getFlowletSpec(),
                                                                    flowletClass.isAnnotationPresent(Async.class));

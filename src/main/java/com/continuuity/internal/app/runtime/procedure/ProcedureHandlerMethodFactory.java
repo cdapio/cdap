@@ -37,12 +37,11 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final RunId runId;
   private final int instanceId;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
-  private final OVCTableHandle tableHandle;
 
   private Thread runThread;
 
   ProcedureHandlerMethodFactory(Program program, RunId runId, int instanceId,
-                                DataFabricFacadeFactory txAgentSupplierFactory,OVCTableHandle tableHandle) {
+                                DataFabricFacadeFactory txAgentSupplierFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);
@@ -52,14 +51,13 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     this.runId = runId;
     this.instanceId = instanceId;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
-    this.tableHandle = tableHandle;
   }
 
   @Override
   public HandlerMethod create() {
     try {
       ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, runId, instanceId,
-                                                                        txAgentSupplierFactory, tableHandle);
+                                                                        txAgentSupplierFactory);
       handlerMethod.init();
 
       procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue), new ProcedureEntry(handlerMethod));
@@ -67,8 +65,6 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       return handlerMethod;
 
     } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (OperationException e){
       throw Throwables.propagate(e);
     }
   }
