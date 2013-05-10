@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.dataset.DataSetContext;
 import com.google.common.collect.ImmutableMap;
 
