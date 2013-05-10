@@ -514,7 +514,6 @@ public class TableTest extends DataSetTestBase {
     verifyColumns(result, makeColumns(8, 9), makeValues(8, 9));
   }
 
-
   @Test
   public void testBatchReads() throws OperationException, InterruptedException {
     Table t = instantiator.getDataSet("tBatch");
