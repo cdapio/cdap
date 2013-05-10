@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.dataset.DataSetContext;
 import com.google.common.collect.ImmutableMap;
 
@@ -17,9 +16,7 @@ public final class DataSets {
     ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
 
     for (String dataset : datasets) {
-      if (context.hasDataSet(dataset)){
         builder.put(dataset, context.getDataSet(dataset));
-      }
     }
     return builder.build();
   }
