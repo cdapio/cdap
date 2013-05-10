@@ -6,26 +6,21 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBinaryList, TOptionalBinaryList._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinaryList");
@@ -487,13 +482,13 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
           case 1: // THE_LIST
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list90 = iprot.readListBegin();
-                struct.theList = new ArrayList<ByteBuffer>(_list90.size);
-                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
+                org.apache.thrift.protocol.TList _list98 = iprot.readListBegin();
+                struct.theList = new ArrayList<ByteBuffer>(_list98.size);
+                for (int _i99 = 0; _i99 < _list98.size; ++_i99)
                 {
-                  ByteBuffer _elem92; // required
-                  _elem92 = iprot.readBinary();
-                  struct.theList.add(_elem92);
+                  ByteBuffer _elem100; // required
+                  _elem100 = iprot.readBinary();
+                  struct.theList.add(_elem100);
                 }
                 iprot.readListEnd();
               }
@@ -538,9 +533,9 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
           oprot.writeFieldBegin(THE_LIST_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.theList.size()));
-            for (ByteBuffer _iter93 : struct.theList)
+            for (ByteBuffer _iter101 : struct.theList)
             {
-              oprot.writeBinary(_iter93);
+              oprot.writeBinary(_iter101);
             }
             oprot.writeListEnd();
           }
@@ -590,9 +585,9 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
       if (struct.isSetTheList()) {
         {
           oprot.writeI32(struct.theList.size());
-          for (ByteBuffer _iter94 : struct.theList)
+          for (ByteBuffer _iter102 : struct.theList)
           {
-            oprot.writeBinary(_iter94);
+            oprot.writeBinary(_iter102);
           }
         }
       }
@@ -610,13 +605,13 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
       BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TList _list95 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.theList = new ArrayList<ByteBuffer>(_list95.size);
-          for (int _i96 = 0; _i96 < _list95.size; ++_i96)
+          org.apache.thrift.protocol.TList _list103 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.theList = new ArrayList<ByteBuffer>(_list103.size);
+          for (int _i104 = 0; _i104 < _list103.size; ++_i104)
           {
-            ByteBuffer _elem97; // required
-            _elem97 = iprot.readBinary();
-            struct.theList.add(_elem97);
+            ByteBuffer _elem105; // required
+            _elem105 = iprot.readBinary();
+            struct.theList.add(_elem105);
           }
         }
         struct.setTheListIsSet(true);

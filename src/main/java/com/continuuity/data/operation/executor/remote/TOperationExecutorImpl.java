@@ -27,7 +27,9 @@ import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigure;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigureGroups;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDropInflight;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
@@ -39,6 +41,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -677,6 +681,60 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
     } catch (OperationException e) {
       helper.failure();
       Log.warn("Queue configure failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      throw wrap(e);
+    }
+  }
+
+  // configureQueueGroups is safe as it returns nothing
+
+  @Override
+  public void configureQueueGroups(TOperationContext tcontext,
+                                   TQueueConfigureGroups tQueueConfigure)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("configureQueueGroups", tQueueConfigure.getQueueName());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueConfigureGroups: " + tQueueConfigure);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      QueueConfigureGroups queueConfigure = unwrap(tQueueConfigure);
+      this.opex.execute(context, queueConfigure);
+      if (Log.isTraceEnabled()) Log.trace("Queue configure groups successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      helper.failure();
+      Log.warn("Queue configure groups failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
+      throw wrap(e);
+    }
+  }
+
+  // queueDropInflight is safe as it returns nothing
+
+  @Override
+  public void queueDropInflight(TOperationContext tcontext,
+                                TQueueDropInflight tOp)
+    throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper("queueDropInflight", tOp.getQueueName());
+
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueDropInflight: " + tOp);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      QueueDropInflight op = unwrap(tOp);
+      this.opex.execute(context, op);
+      if (Log.isTraceEnabled()) Log.trace("Queue drop inflight is successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      helper.failure();
+      Log.warn("Queue drop inflight failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }

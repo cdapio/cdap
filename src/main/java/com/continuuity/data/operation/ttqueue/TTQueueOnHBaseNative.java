@@ -26,6 +26,8 @@ import com.continuuity.hbase.ttqueue.HBReadPointer;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -274,6 +276,18 @@ public class TTQueueOnHBaseNative implements TTQueue {
     // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
     return -1;
   }
+
+  @Override
+  public List<Long> configureGroups(List<Long> groupIds) throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void dropInflightState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+  }
+
 // Private helpers
 
   public static boolean TRACE = false;

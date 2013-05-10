@@ -173,6 +173,18 @@ struct TQueueConfigure {
   3: optional string metric,
 }
 
+struct TQueueConfigureGroups {
+  1: binary queueName,
+  2: list<i64> groupIds,
+  3: optional string metric,
+}
+
+struct TQueueDropInflight {
+  1: binary queueName,
+  2: TQueueConsumer consumer,
+  3: optional string metric,
+}
+
 // we add a virtual field "nulled" to indicate a null object
 struct TQueueInfo {
   1: bool empty,
@@ -271,5 +283,7 @@ service TOperationExecutor {
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
   void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
   void configureQueue(1: TOperationContext context, 2: TQueueConfigure configure) throws (1: TOperationException ex),
+  void configureQueueGroups(1: TOperationContext context, 2: TQueueConfigureGroups configure) throws (1: TOperationException ex),
+  void queueDropInflight(1: TOperationContext context, 2: TQueueDropInflight op) throws (1: TOperationException ex),
 
 }

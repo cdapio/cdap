@@ -45,6 +45,8 @@ import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -144,6 +146,10 @@ public class OmidTransactionalOperationExecutor
     METRIC_PREFIX + "CommitTransaction" + NUMOPS_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS =
     METRIC_PREFIX + "QueueConfigure" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_CONFIGURE_GRPS_NUM_OPS =
+    METRIC_PREFIX + "QueueConfigureGroups" + NUMOPS_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_DROP_INFLIGHT_OPS =
+    METRIC_PREFIX + "QueueDropInflight" + NUMOPS_METRIC_SUFFIX;
 
   public static final String LATENCY_METRIC_SUFFIX = "-latency";
   public static final String REQ_TYPE_READ_ALL_KEYS_LATENCY = METRIC_PREFIX + "ReadAllKeys" + LATENCY_METRIC_SUFFIX;
@@ -165,6 +171,10 @@ public class OmidTransactionalOperationExecutor
   public static final String REQ_TYPE_GET_QUEUE_INFO_LATENCY = METRIC_PREFIX + "GetQueueInfo" + LATENCY_METRIC_SUFFIX;
   public static final String REQ_TYPE_QUEUE_CONFIGURE_LATENCY =
     METRIC_PREFIX + "QueueConfigure" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_CONFIGURE_GRPS_LATENCY =
+    METRIC_PREFIX + "QueueConfigureGroups" + LATENCY_METRIC_SUFFIX;
+  public static final String REQ_TYPE_QUEUE_DROP_INFLIGHT_LATENCY =
+    METRIC_PREFIX + "QueueDropInflight" + LATENCY_METRIC_SUFFIX;
 
   @Inject
   public OmidTransactionalOperationExecutor(@Named("DataFabricOperationExecutorConfig")CConfiguration config) {
@@ -999,20 +1009,61 @@ public class OmidTransactionalOperationExecutor
 
   @Override
   public void execute(OperationContext context, final QueueConfigure configure)
-    throws OperationException
-  {
+    throws OperationException {
     initialize();
     incMetric(REQ_TYPE_QUEUE_CONFIGURE_NUM_OPS);
     long begin = begin();
     final TTQueueTable table = getQueueTable(configure.getQueueName());
-    queueStateProxy.run(configure.getQueueName(), configure.getNewConsumer(),
+    int oldConsumerCount = queueStateProxy.call(configure.getQueueName(), configure.getNewConsumer(),
+                                                new QueueCallable<Integer>() {
+                                                  @Override
+                                                  public Integer call(StatefulQueueConsumer statefulQueueConsumer)
+                                                    throws OperationException {
+                                                    return table.configure(configure.getQueueName(),
+                                                                           statefulQueueConsumer,
+                                                                           oracle.getReadPointer());
+                                                  }
+                                                });
+
+    // Delete the cache state of any removed consumers
+    for (int i = configure.getNewConsumer().getGroupSize(); i < oldConsumerCount; ++i) {
+      queueStateProxy.deleteConsumerState(configure.getQueueName(), configure.getNewConsumer().getGroupId(), i);
+    }
+    end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
+  }
+
+  @Override
+  public void execute(OperationContext context, final QueueConfigureGroups configure)
+    throws OperationException {
+    initialize();
+    incMetric(REQ_TYPE_QUEUE_CONFIGURE_GRPS_NUM_OPS);
+    long begin = begin();
+    final TTQueueTable table = getQueueTable(configure.getQueueName());
+    List<Long> removedGroups = table.configureGroups(configure.getQueueName(), configure.getGroupIds());
+
+    // Delete the cache state of any removed groups
+    for(Long groupId : removedGroups) {
+      queueStateProxy.deleteGroupState(configure.getQueueName(), groupId);
+    }
+    end(REQ_TYPE_QUEUE_CONFIGURE_GRPS_LATENCY, begin);
+  }
+
+  @Override
+  public void execute(OperationContext context, final QueueDropInflight op)
+    throws OperationException {
+    initialize();
+    incMetric(REQ_TYPE_QUEUE_DROP_INFLIGHT_OPS);
+    long begin = begin();
+    final TTQueueTable table = getQueueTable(op.getQueueName());
+    queueStateProxy.run(op.getQueueName(), op.getConsumer(),
                         new QueueRunnable() {
                           @Override
                           public void run(StatefulQueueConsumer statefulQueueConsumer) throws OperationException {
-                            table.configure(configure.getQueueName(), statefulQueueConsumer, oracle.getReadPointer());
+                            table.dropInflightState(op.getQueueName(), op.getConsumer(), oracle.getReadPointer());
                           }
                         });
-    end(REQ_TYPE_QUEUE_CONFIGURE_LATENCY, begin);
+
+    end(REQ_TYPE_QUEUE_DROP_INFLIGHT_LATENCY, begin);
   }
 
   Transaction startTransaction() {

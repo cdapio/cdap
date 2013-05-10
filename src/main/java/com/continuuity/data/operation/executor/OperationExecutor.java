@@ -10,6 +10,8 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -299,4 +301,21 @@ public interface OperationExecutor
    * @throws OperationException
    */
   public void execute(OperationContext context, QueueConfigure configure) throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups} operation
+   * outside a transaction.
+   * @param context the operation context
+   * @param configure the QueueConfigureGroups operation to execute
+   * @throws OperationException
+   */
+  public void execute(OperationContext context, final QueueConfigureGroups configure) throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.ttqueue.admin.QueueDropInflight} operation outside a transaction.
+   * @param context the operation context
+   * @param op the QueueDropInflight context
+   * @throws OperationException
+   */
+  public void execute(OperationContext context, final QueueDropInflight op) throws OperationException;
 }

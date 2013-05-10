@@ -14,6 +14,11 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+<<<<<<< HEAD
+=======
+import java.util.Iterator;
+import java.util.List;
+>>>>>>> feature/queue-config-groups
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -95,9 +100,19 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
+  public int configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException {
-    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+    return getQueue(queueName).configure(newConsumer, readPointer);
+  }
+
+  @Override
+  public List<Long> configureGroups(byte[] queueName, List<Long> groupIds) throws OperationException {
+    return getQueue(queueName).configureGroups(groupIds);
+  }
+
+  @Override
+  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).dropInflightState(consumer, readPointer);
   }
 
   @Override

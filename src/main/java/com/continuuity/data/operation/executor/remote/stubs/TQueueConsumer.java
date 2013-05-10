@@ -487,7 +487,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (value == null) {
         unsetStateType();
       } else {
-        setStateType((TQueueStateType) value);
+        setStateType((TQueueStateType)value);
       }
       break;
 

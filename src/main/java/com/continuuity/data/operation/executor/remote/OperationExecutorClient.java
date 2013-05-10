@@ -26,7 +26,9 @@ import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
 import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigure;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfigureGroups;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDropInflight;
 import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
 import com.continuuity.data.operation.executor.remote.stubs.TRead;
 import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
@@ -37,6 +39,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -674,6 +678,56 @@ public class OperationExecutorClient extends ConverterUtils {
       if (Log.isTraceEnabled()) {
         Log.trace("QueueConfigure successful.");
       }
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void execute(OperationContext context,
+                      QueueConfigureGroups configure)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("configureGroup", configure.getQueueName());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received " + configure);
+      TOperationContext tContext = wrap(context);
+      TQueueConfigureGroups tQueueConfigure = wrap(configure);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueConfigure);
+      client.configureQueueGroups(tContext, tQueueConfigure);
+      if (Log.isTraceEnabled()) Log.trace("QueueConfigureGroups successful.");
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void execute(OperationContext context,
+                      QueueDropInflight op)
+    throws TException, OperationException {
+
+    MetricsHelper helper = newHelper("QueueDropInFlight", op.getQueueName());
+
+    try {
+      if (Log.isTraceEnabled()) Log.trace("Received " + op);
+      TOperationContext tContext = wrap(context);
+      TQueueDropInflight tOp = wrap(op);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tOp);
+      client.queueDropInflight(tContext, tOp);
+      if (Log.isTraceEnabled()) Log.trace("QueueDropInFlight successful.");
       helper.success();
 
     } catch (TOperationException te) {

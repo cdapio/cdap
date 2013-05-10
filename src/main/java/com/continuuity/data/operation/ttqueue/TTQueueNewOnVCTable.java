@@ -82,7 +82,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] GLOBAL_GROUPID_EXISTS_MARKER = { '+' };
 
   // Columns for row = GLOBAL_ENTRY_ID_PREFIX
-  // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation. There is only one such counter for a queue.
+  // GLOBAL_ENTRYID_COUNTER contains the counter to generate entryIds during enqueue operation.
+  // There is only one such counter for a queue.
   // GLOBAL_ENTRYID_COUNTER contains the highest valid entryId for the queue
   static final byte [] GLOBAL_ENTRYID_COUNTER = {'I'};  //row <queueName>10I, column I
 
@@ -99,7 +100,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   static final byte [] ENTRY_HEADER = {'H'};  //row  <queueName>20D<entryId>, column H
 
   // GLOBAL_LAST_EVICT_ENTRY contains the entryId of the max evicted entry of the queue.
-  // if GLOBAL_LAST_EVICT_ENTRY is not invalid, GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
+  // if GLOBAL_LAST_EVICT_ENTRY is not invalid,
+  // GLOBAL_LAST_EVICT_ENTRY + 1 points to the first queue entry that can be dequeued.
   static final byte [] GLOBAL_LAST_EVICT_ENTRY = {'L'};   //row  <queueName>30M<groupId>, column L
 
   // Columns for row = GLOBAL_EVICT_META_ROW (Global data, shared by all consumers)
@@ -110,7 +112,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
   // Columns for row = CONSUMER_META_PREFIX (consumer specific information)
   // CONSUMER_STATE contains the entire encoded queue state
   static final byte [] CONSUMER_STATE = { 'S' };
-  // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify the start entryId of the batch of entries claimed by it.
+  // CLAIMED_ENTRY_BEGIN is used by a consumer of FifoDequeueStrategy to specify
+  // the start entryId of the batch of entries claimed by it.
   static final byte [] LAST_EVICT_TIME_IN_SECS = {'T'};           //row <queueName>40C<groupId><consumerId>, column T
 
   static final long INVALID_ENTRY_ID = TTQueueNewConstants.INVALID_ENTRY_ID;
@@ -256,7 +259,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Determine what dequeue strategy to use based on the partitioner
-    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType());
     final QueueStateImpl queueState = getQueueState(consumer, readPointer);
 
     // If single entry mode return the previously dequeued entry that was not acked, otherwise dequeue the next entry
@@ -350,20 +353,22 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
   }
 
-  private DequeueStrategy getDequeueStrategy(QueuePartitioner queuePartitioner) throws OperationException {
-    DequeueStrategy dequeueStrategy;
-    if(queuePartitioner instanceof QueuePartitioner.HashPartitioner) {
-      dequeueStrategy = new HashDequeueStrategy();
-    } else if(queuePartitioner instanceof QueuePartitioner.RoundRobinPartitioner) {
-      dequeueStrategy = new RoundRobinDequeueStrategy();
-    } else if(queuePartitioner instanceof QueuePartitioner.FifoPartitioner) {
-      dequeueStrategy = new FifoDequeueStrategy();
-    } else {
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-         getLogMessage(String.format("Cannot figure out the dequeue strategy to use for partitioner %s",
-                                     queuePartitioner.getClass())));
+  private DequeueStrategy getDequeueStrategy(QueuePartitioner.PartitionerType partitionerType)
+    throws OperationException {
+    if(partitionerType == null) {
+      return new NoDequeueStrategy();
     }
-    return dequeueStrategy;
+
+    switch (partitionerType) {
+      case HASH:
+        return new HashDequeueStrategy();
+      case ROUND_ROBIN:
+        return new RoundRobinDequeueStrategy();
+      case FIFO:
+        return new FifoDequeueStrategy();
+      default:
+        return new NoDequeueStrategy();
+    }
   }
 
   @Override
@@ -375,8 +380,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void ack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
-    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
-    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(consumer.getQueueConfig().getPartitionerType());
 
     // Get queue state
     ReadPointer readPointer = transaction.getReadPointer();
@@ -416,9 +420,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
   @Override
   public void unack(QueueEntryPointer[] entryPointers, QueueConsumer consumer, Transaction transaction)
     throws OperationException {
-
-    QueuePartitioner partitioner = consumer.getQueueConfig().getPartitionerType().getPartitioner();
-    final DequeueStrategy dequeueStrategy = getDequeueStrategy(partitioner);
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(consumer.getQueueConfig().getPartitionerType());
 
     // Get queue state
     ReadPointer readPointer = transaction.getReadPointer();
@@ -483,7 +485,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     // Determine what dequeue strategy to use based on the partitioner
-    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType());
 
     // Read queue state for all consumers of the group to find the number of previous consumers
     int oldConsumerCount = 0;
@@ -551,11 +553,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     dequeueStrategy.configure(consumers, queueStates, config, groupId, oldConsumerCount, newConsumerCount, dirtyReadPointer);
 
-    // for a new consumer group, add it to the list of configured groups
-    if (oldConsumerCount == 0) {
-      this.table.put(makeRowName(GLOBAL_GENERIC_PREFIX), makeColumnName(GLOBAL_GROUPID_PREFIX, groupId),
-                     TransactionOracle.DIRTY_WRITE_VERSION, GLOBAL_GROUPID_EXISTS_MARKER);
-    }
+    // Add it to the list of configured groups
+    this.table.put(makeRowName(GLOBAL_GENERIC_PREFIX), makeColumnName(GLOBAL_GROUPID_PREFIX, groupId),
+                   TransactionOracle.DIRTY_WRITE_VERSION, GLOBAL_GROUPID_EXISTS_MARKER);
 
     return oldConsumerCount;
   }
@@ -581,6 +581,30 @@ public class TTQueueNewOnVCTable implements TTQueue {
       ids.add(id);
     }
     return ids;
+  }
+
+  @Override
+  public List<Long> configureGroups(List<Long> groupIds) throws OperationException {
+    List<Long> toDeleteGroups = Lists.newLinkedList(listAllConfiguredGroups());
+    toDeleteGroups.removeAll(groupIds);
+
+    // Note: this dequeue strategy is a NoDequeueStrategy and cannot perform all operations of DequeueStrategy
+    DequeueStrategy dequeueStrategy = getDequeueStrategy(null);
+
+    for (long groupId : toDeleteGroups) {
+      // iterate over every consumer and delete its state
+      for (int consumerId = 0; consumerId < MAX_CONSUMER_COUNT; consumerId++) {
+        if(dequeueStrategy.dequeueStateExists(groupId, consumerId)) {
+          dequeueStrategy.deleteDequeueState(groupId, consumerId);
+        } else {
+          break;
+        }
+      }
+      // We can now delete the group from the group list
+      table.delete(makeRowName(GLOBAL_GENERIC_PREFIX), makeColumnName(GLOBAL_GROUPID_PREFIX, groupId),
+                   TransactionOracle.DIRTY_WRITE_VERSION);
+    }
+    return toDeleteGroups;
   }
 
   @Override
@@ -989,10 +1013,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     return maxEntryToEvict;
   }
 
+  @Override
+  public void dropInflightState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    QueueStateImpl queueState = getQueueState(consumer, readPointer);
+    queueState.clearInflight();
+
+    DequeueStrategy dequeueStrategy = getDequeueStrategy(consumer.getQueueConfig().getPartitionerType());
+    dequeueStrategy.saveDequeueState(consumer, consumer.getQueueConfig(), queueState, readPointer);
+  }
+
   private QueueStateImpl getQueueState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     // Determine what dequeue strategy to use based on the partitioner
-    final DequeueStrategy dequeueStrategy =
-      getDequeueStrategy(consumer.getQueueConfig().getPartitionerType().getPartitioner());
+    final DequeueStrategy dequeueStrategy = getDequeueStrategy(consumer.getQueueConfig().getPartitionerType());
 
     QueueStateImpl queueState;
     // If QueueState is null, read the queue state from underlying storage.
@@ -1171,6 +1203,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public List<DequeueEntry> getEntryList() {
       return Lists.newArrayList(entrySet);
+    }
+
+    public void clear() {
+      entrySet.clear();
     }
 
     public SortedSet<Long> startNewTry(final long maxCrashDequeueTries) {
@@ -1700,7 +1736,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
     // since in some cases we would want to include transient state in comparison and in some other cases not.
 
     private QueuePartitioner.PartitionerType partitioner;
-    private TransientWorkingSet transientWorkingSet = TransientWorkingSet.emptySet();
+    private TransientWorkingSet transientWorkingSet;
     private DequeuedEntrySet dequeueEntrySet;
     private EvictionHelper evictionHelper;
     private long consumerReadPointer = INVALID_ENTRY_ID;
@@ -1708,12 +1744,18 @@ public class TTQueueNewOnVCTable implements TTQueue {
     private ClaimedEntryList claimedEntryList;
     private long lastEvictTimeInSecs = 0;
 
-    private ReconfigPartitionersList reconfigPartitionersList = ReconfigPartitionersList.getEmptyList();
+    private ReconfigPartitionersList reconfigPartitionersList;
 
     public QueueStateImpl() {
+      initCollections();
+    }
+
+    private void initCollections() {
+      transientWorkingSet = TransientWorkingSet.EMPTY_SET;
       dequeueEntrySet = new DequeuedEntrySet();
       evictionHelper = new EvictionHelper();
       claimedEntryList = new ClaimedEntryList();
+      reconfigPartitionersList = ReconfigPartitionersList.EMPTY_RECONFIGURATION_PARTITIONERS_LIST;
     }
 
     public QueuePartitioner.PartitionerType getPartitioner() {
@@ -1786,6 +1828,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public void setReconfigPartitionersList(ReconfigPartitionersList reconfigPartitionersList) {
       this.reconfigPartitionersList = reconfigPartitionersList;
+    }
+
+    public void clearInflight() {
+      initCollections();
     }
 
     @Override
@@ -1888,9 +1934,24 @@ public class TTQueueNewOnVCTable implements TTQueue {
     void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
                    long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
       throws OperationException;
+
+    /**
+     * Deletes the dequeue state of consumer (groupId, instanceId)
+     */
+    void deleteDequeueState(long groupId, int instanceId) throws OperationException;
+
+    /**
+     * Returns true if state of consumer (groupId, instanceId) exists
+     */
+    boolean dequeueStateExists(long groupId, int instanceId) throws OperationException;
   }
 
   abstract class AbstractDequeueStrategy implements DequeueStrategy {
+    /**
+     * If true, indicates that this is the first time this consumer is running
+     */
+    protected boolean init = false;
+
     /**
      * This function is used to initialize the read pointer when a consumer first runs.
      * Initial value for the read pointer is max(lastEvictEntry, FIRST_QUEUE_ENTRY_ID - 1)
@@ -1967,6 +2028,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // If read pointer is invalid then this the first time the consumer is running, initialize the read pointer
       if(queueState.getConsumerReadPointer() == INVALID_ENTRY_ID) {
+        init = true;
         queueState.setConsumerReadPointer(getReadPointerIntialValue());
       }
 
@@ -2039,9 +2101,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
       table.put(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_WRITE_VERSION, bos.toByteArray());
     }
 
-    public void deleteDequeueState(QueueConsumer consumer) throws OperationException {
+    public void deleteDequeueState(long groupId, int instanceId) throws OperationException {
       // Delete queue state for the consumer, see notes in constructQueueStateInternal
-      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId());
+      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, groupId, instanceId);
       table.put(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_WRITE_VERSION, Bytes.EMPTY_BYTE_ARRAY);
     }
 
@@ -2155,6 +2217,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
       }
     }
 
+    @Override
+    public boolean dequeueStateExists(long groupId, int instanceId) throws OperationException {
+      final byte[] rowKey = makeRowKey(CONSUMER_META_PREFIX, groupId, instanceId);
+      OperationResult<byte[]> readResult = table.get(rowKey, CONSUMER_STATE, TransactionOracle.DIRTY_READ_POINTER);
+      return !readResult.isEmpty() && readResult.getValue() != null && readResult.getValue().length > 0;
+    }
+
     /**
      * claim the next batch of entries from the queue using the partitioner, without reading the entry data yet
      */
@@ -2167,7 +2236,83 @@ public class TTQueueNewOnVCTable implements TTQueue {
      */
     protected abstract void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
       throws OperationException;
+  }
 
+  /**
+   * A dequeue strategy that supports only 2 operations - dequeueStateExists and deleteDequeueState
+   */
+  class NoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    protected List<Long> claimNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                          ReadPointer readPointer) throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    protected void ignoreInvalidEntries(QueueStateImpl queueState, List<Long> invalidEntryIds)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
+                          long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    protected long getReadPointerIntialValue() throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    protected long getLastEvictEntry() throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public QueueStateImpl readQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public QueueStateImpl constructQueueState(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                                         ReadPointer readPointer, boolean construct)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                 ReadPointer readPointer) throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public boolean readEntries(QueueStateImpl queueState, ReadPointer readPointer, List<Long> entryIds)
+      throws OperationException {
+      throw getException();
+    }
+
+    @Override
+    public void fetchNextEntries(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
+                                 ReadPointer readPointer) throws OperationException {
+      throw getException();
+    }
+
+    private RuntimeException getException() {
+      return new UnsupportedOperationException(
+        getLogMessage(String.format("%s does not support this operation!",
+                                    NoDequeueStrategy.class.getCanonicalName())));
+    }
   }
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
@@ -2198,7 +2343,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         reconfigPartitioner.add(consumer.getInstanceId(), ackedEntryId);
       }
 
-      DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+      DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType());
 
       // Consumer zero is never deleted, so read partitioning information from consumer zero
       ReconfigPartitionersList oldReconfigPartitionerList = queueStates.isEmpty() ?
@@ -2244,7 +2389,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
       // Delete queue state for removed consumers, if any
       for(int j = newConsumerCount; j < currentConsumerCount; ++j) {
         QueueConsumer consumer = currentConsumers.get(j);
-        deleteDequeueState(consumer);
+        deleteDequeueState(consumer.getGroupId(), consumer.getInstanceId());
       }
     }
 
@@ -2394,6 +2539,29 @@ public class TTQueueNewOnVCTable implements TTQueue {
    *  CLAIMED_ENTRY_BEGIN and CLAIMED_ENTRY_END columns
    */
   class FifoDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    protected QueueStateImpl constructQueueStateInternal(QueueConsumer consumer, QueueConfig config,
+                                                         ReadPointer readPointer, boolean construct)
+      throws OperationException {
+      QueueStateImpl queueState = super.constructQueueStateInternal(consumer, config, readPointer, construct);
+
+      if(init) {
+        // This is the first time a consumer is running, it could be the first time any consumer of the group is running
+        // Make sure the GROUP_READ_POINTER is valid, i.e, not less than GLOBAL_LAST_EVICT_ENTRY
+
+        // Fetch the group read pointer
+        final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
+        long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
+
+        long lastEvictEntry = getLastEvictEntry();
+        if(lastEvictEntry != INVALID_ENTRY_ID) {
+          // Entries have been evicted. Set GROUP_READ_POINTER to GLOBAL_LAST_EVICT_ENTRY
+          table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
+                                    Bytes.toBytes(lastEvictEntry));
+        }
+      }
+      return queueState;
+    }
 
     @Override
     public void saveDequeueState(QueueConsumer consumer, QueueConfig config, QueueStateImpl queueState,
@@ -2416,27 +2584,15 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     /**
-     * Returns the group read pointer for the consumer. This also initializes the group read pointer
-     * when the consumer group is starting for the first time.
+     * Returns the group read pointer for the consumer.
      * @return group read pointer
      * @throws OperationException
      */
     private long getGroupReadPointer(QueueConsumer consumer) throws OperationException {
       // Fetch the group read pointer
       final byte[] rowKey = makeRowKey(GROUP_READ_POINTER, consumer.getGroupId());
-      long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
 
-      // If read pointer is zero then this the first time the consumer group is running, initialize the read pointer
-      if(groupReadPointer == 0) {
-        long lastEvictEntry = getLastEvictEntry();
-        if(lastEvictEntry != INVALID_ENTRY_ID) {
-          table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
-                                    Bytes.toBytes(lastEvictEntry));
-          // No need to read the group read pointer again, since we are looking for an approximate value anyway.
-          return lastEvictEntry;
-        }
-      }
-      return groupReadPointer;
+      return table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
     }
 
     @Override
@@ -2515,7 +2671,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           QueueConfig config, final long groupId, final int currentConsumerCount,
                           final int newConsumerCount, ReadPointer readPointer) throws OperationException {
       if(newConsumerCount >= currentConsumerCount) {
-        DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType().getPartitioner());
+        DequeueStrategy dequeueStrategy = getDequeueStrategy(config.getPartitionerType());
         for(int i = currentConsumerCount; i < newConsumerCount; ++i) {
           StatefulQueueConsumer consumer = new StatefulQueueConsumer(i, groupId, newConsumerCount, config);
           QueueStateImpl queueState = dequeueStrategy.constructQueueState(consumer, config, readPointer);
@@ -2558,7 +2714,8 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       // Delete the state of removed consumers
       for(int i = newConsumerCount; i < currentConsumerCount; ++i) {
-        deleteDequeueState(currentConsumers.get(i));
+        QueueConsumer c = currentConsumers.get(i);
+        deleteDequeueState(c.getGroupId(), c.getInstanceId());
       }
     }
   }
