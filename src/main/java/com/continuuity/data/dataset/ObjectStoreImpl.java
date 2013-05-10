@@ -2,6 +2,8 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
@@ -14,6 +16,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
@@ -73,6 +76,10 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
   @Override
   public T read(byte[] key) throws OperationException {
     byte[] bytes = this.kvTable.read(key);
+    return decode(bytes);
+  }
+
+  private T decode(byte[] bytes) throws OperationException {
     if (bytes == null) {
       return null;
     }
@@ -84,6 +91,54 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
     } catch (IOException e) {
       throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
                                    "Failed to decode the read object: " + e.getMessage(), e);
+    }
+  }
+
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
+    return this.kvTable.getSplits(numSplits, start, stop);
+  }
+
+  @Override
+  public List<Split> getSplits() throws OperationException {
+    return this.kvTable.getSplits();
+  }
+
+  @Override
+  public SplitReader<byte[], T> createSplitReader(Split split) {
+    return new ObjectScanner(split);
+  }
+
+  public class ObjectScanner extends SplitReader<byte[],T> {
+
+    private SplitReader<byte[], byte[]> reader;
+
+    public ObjectScanner(Split split) {
+      this.reader = kvTable.createSplitReader(split);
+    }
+
+    @Override
+    public void initialize(Split split) throws InterruptedException, OperationException {
+      this.reader.initialize(split);
+    }
+
+    @Override
+    public boolean nextKeyValue() throws InterruptedException, OperationException {
+      return this.reader.nextKeyValue();
+    }
+
+    @Override
+    public byte[] getCurrentKey() throws InterruptedException {
+      return this.reader.getCurrentKey();
+    }
+
+    @Override
+    public T getCurrentValue() throws InterruptedException, OperationException {
+      return decode(this.reader.getCurrentValue());
+    }
+
+    @Override
+    public void close() {
+      this.reader.close();
     }
   }
 }

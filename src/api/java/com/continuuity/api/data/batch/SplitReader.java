@@ -40,7 +40,7 @@ public abstract class SplitReader<KEY, VALUE> {
    * @return the object that was read
    * @throws InterruptedException
    */
-  public abstract VALUE getCurrentValue() throws InterruptedException;
+  public abstract VALUE getCurrentValue() throws InterruptedException, OperationException;
 
   /**
    * The current progress of the record reader through its data.

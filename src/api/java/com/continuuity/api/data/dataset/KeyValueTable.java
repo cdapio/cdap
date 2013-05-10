@@ -184,7 +184,7 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
     }
 
     @Override
-    public byte[] getCurrentValue() throws InterruptedException {
+    public byte[] getCurrentValue() throws InterruptedException, OperationException {
       return this.reader.getCurrentValue().get(KEY_COLUMN);
     }
 
