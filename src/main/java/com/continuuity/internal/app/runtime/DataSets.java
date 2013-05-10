@@ -17,9 +17,7 @@ public final class DataSets {
     ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
 
     for (String dataset : datasets) {
-      if (context.hasDataSet(dataset)){
         builder.put(dataset, context.getDataSet(dataset));
-      }
     }
     return builder.build();
   }
