@@ -30,10 +30,10 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
                                       TestFlowQueueIntegrationApp.QueuePartitionTestFlowlet.NUM_INSTANCES);
 
       RuntimeMetrics flowletMetrics2 = RuntimeStats.getFlowletMetrics("TestFlowQueueIntegrationApp",
-                                                                           "QueuePartitionFlow", "QueueBatchTestFlowlet");
+                                                                      "QueuePartitionFlow", "QueueBatchTestFlowlet");
       flowManager.setFlowletInstances("QueueBatchTestFlowlet",
                                       TestFlowQueueIntegrationApp.QueueBatchTestFlowlet.NUM_INSTANCES);
-      for(int i = 0; i < TestFlowQueueIntegrationApp.MAX_ITERATIONS; i++) {
+      for (int i = 0; i < TestFlowQueueIntegrationApp.MAX_ITERATIONS; i++) {
         s1.send(String.valueOf(i));
       }
 
@@ -45,10 +45,10 @@ public class TestFlowQueueIntegration extends AppFabricTestBase {
       // Wait for Fifo consumers to finish
       TimeUnit.SECONDS.sleep(1);
 
-      if(flowletMetrics1.getException() > 0) {
+      if (flowletMetrics1.getException() > 0) {
         Assert.fail("QueuePartitionTestFlowlet test failed");
       }
-      if(flowletMetrics2.getException() > 0) {
+      if (flowletMetrics2.getException() > 0) {
         Assert.fail("QueueBatchTestFlowlet test failed");
       }
     } finally {

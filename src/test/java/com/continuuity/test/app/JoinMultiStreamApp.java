@@ -25,6 +25,9 @@ import java.io.IOException;
  */
 public class JoinMultiStreamApp implements Application {
 
+  /**
+   *
+   */
   public static final class Entry {
     byte[] name;
     byte[] value;
@@ -49,6 +52,9 @@ public class JoinMultiStreamApp implements Application {
       .build();
   }
 
+  /**
+   *
+   */
   public static class JoinMultiFlow implements Flow {
 
     @Override
@@ -72,6 +78,9 @@ public class JoinMultiStreamApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class StreamSource extends AbstractFlowlet {
 
     private OutputEmitter<Entry> output;
@@ -85,6 +94,9 @@ public class JoinMultiStreamApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Terminal extends AbstractFlowlet {
     @UseDataSet("mytable")
     private KeyValueTable table;
@@ -94,6 +106,9 @@ public class JoinMultiStreamApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Query extends AbstractProcedure {
     @UseDataSet("mytable")
     private KeyValueTable table;

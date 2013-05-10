@@ -1,12 +1,12 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
