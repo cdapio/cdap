@@ -1013,23 +1013,45 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       if (scanner == null) {
         return null;
       }
+
       try {
-        Result result = scanner.next();
-        if(result == null) {
-          return null;
-        }
+
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
-        for (KeyValue kv : result.raw()) {
-          //Continue if there is a readPointer and the value is not visible yet
-          if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
-            continue;
+        boolean gotNext = false;
+
+        while(!gotNext) {
+          Result result = scanner.next();
+          if(result == null) {
+            gotNext = true;
+          } else {
+            Set<Long> deleted = Sets.newHashSet();
+            for (KeyValue kv : result.raw()) {
+              long version = kv.getTimestamp();
+              if ((readPointer != null && !readPointer.isVisible(version)) ||
+                deleted.contains(version)) {
+                continue;
+              }
+              byte[] value = kv.getValue();
+              byte typePrefix = value[0];
+              switch (typePrefix) {
+                case DATA:
+                  colValue.put(kv.getQualifier(), removeTypePrefix(kv.getValue()));
+                  rowKey = kv.getKey();
+                  break;
+                case DELETE_VERSION:
+                  deleted.add(version);
+                  break;
+                case DELETE_ALL:
+                  return null;
+              }
+            }
+            if (rowKey != null ){
+              gotNext = true;
+            }
           }
-          rowKey = kv.getKey();
-          byte[] column = kv.getQualifier();
-          byte [] value = removeTypePrefix(kv.getValue());
-          colValue.put(column, value);
         }
+
         if (rowKey == null) {
           return null;
         } else {

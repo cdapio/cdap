@@ -875,6 +875,9 @@ public class LevelDBOVCTable implements OrderedVersionedColumnarTable {
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
 
+  /**
+   * Scanner on top of levelDB dbiterator.
+   */
   public class LevelDBScanner implements Scanner {
 
     private final DBIterator iterator;
@@ -900,61 +903,77 @@ public class LevelDBOVCTable implements OrderedVersionedColumnarTable {
       }
     }
 
-    private Map<byte[], byte[]> getAllColumnValues( KeyValue keyValue, DBIterator iterator) {
-
-      Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      columnValues.put(keyValue.getQualifier(),keyValue.getValue());
-
-      boolean gotAllColumnsForCurrentRow = false;
-
-      while(!gotAllColumnsForCurrentRow) {
-        this.iterator.next();
-        Map.Entry<byte[],byte[]> entry = iterator.peekNext();
-        if ( entry == null) {
-          // we have reached the end
-          gotAllColumnsForCurrentRow = true;
-        }  else {
-          KeyValue kv = createKeyValue(entry.getKey(),entry.getValue());
-          // Check if we are still on the current Row
-          if ( Arrays.equals(kv.getKey(),keyValue.getRow()) ) {
-            if (isVisible(keyValue) ) {
-              columnValues.put(kv.getQualifier(),kv.getValue());
-            }
-            this.iterator.next();
-          } else {
-            gotAllColumnsForCurrentRow = true;
-          }
-        }
-      }
-      return columnValues;
-    }
-
-
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
       //From the current iterator do one of the following:
       // a) get all columns for current visible row if it is not the endRow
       // b) return null if we have reached endRow
       // c) return null if there are no more entries
-      if (! iterator.hasNext()) {
+
+      long lastDelete = -1;
+      long undeleted = -1;
+      byte[] lastRow = new byte[0];
+
+      Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+      boolean gotNext = false;
+      while(!gotNext) {
+        if (!iterator.hasNext()) {
+          //No more items. Break.
+          break;
+        }
+
+        Map.Entry<byte[], byte[]> entry = iterator.peekNext();
+        KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
+
+        if (Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
+          //already reached the end. So break.
+          break;
+        }
+
+        if(!Bytes.equals(lastRow, keyValue.getRow())) {
+          lastDelete = -1;
+          undeleted = -1;
+          if (columnValues.size() > 0 ){
+            //If we have reached here. We have read all columns for a single row - since current row is not the same
+            // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
+            break;
+          }
+        }
+
+        lastRow = keyValue.getRow();
+
+        if (!isVisible(keyValue)) {
+          continue;
+        }
+
+        long curVersion = keyValue.getTimestamp();
+        Type type = Type.codeToType(keyValue.getType());
+
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+        } else if (type == Type.DeleteColumn) {
+          if (undeleted != curVersion) {
+            break;
+          }
+        } else if (type == Type.Put) {
+          if (curVersion != lastDelete) {
+            // If we get here, this version is visible - so add it!
+            columnValues.put(keyValue.getQualifier(), keyValue.getValue());
+          }
+        }
+        iterator.next();
+      }
+      if (columnValues.size() == 0) {
         return null;
-      }
+      } else {
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow,columnValues);
 
-     while (iterator.hasNext()) {
-       Map.Entry<byte[],byte[]> entry = iterator.peekNext();
-       KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
-       if  ( Bytes.compareTo(keyValue.getRow(),endRow) >= 0) {
-         return null;
-       }
-       if (!isVisible(keyValue)) {
-        continue;
-       }
-       Map<byte[], byte[]> columnValues = getAllColumnValues(keyValue,iterator);
-       return new ImmutablePair<byte[], Map<byte[], byte[]>>(keyValue.getRow(),columnValues);
       }
-
-      return null;
     }
+
 
     @Override
     public void close() {
@@ -964,6 +983,5 @@ public class LevelDBOVCTable implements OrderedVersionedColumnarTable {
         throw Throwables.propagate(e);
       }
     }
-
   }
 }

@@ -1288,7 +1288,8 @@ public class HyperSQLOVCTable implements OrderedVersionedColumnarTable {
    * Implements Scanner using a ResultSet
    * The current implementation first reads all value from result set and stores it in memory
    * The resultSet expects the following values to be present
-   * - rowkey, column, version, kvtype, id, value
+   *
+   * - rowkey(index=1), column(index=2), version(index=3), kvtype(index=4), id(index=5), value(index=6)
    */
   public class ResultSetScanner implements  Scanner {
 
@@ -1316,45 +1317,81 @@ public class HyperSQLOVCTable implements OrderedVersionedColumnarTable {
     }
 
     private void populateRowColumnValueMap(ResultSet result, ReadPointer readPointer) {
+
       try {
         if (result == null ) {
           return;
         }
-        boolean newRow = true;
-        byte [] lastRow = new byte[0];
 
+        byte [] lastRow = new byte[0];
         byte [] curCol = new byte [0];
         byte [] lastCol = new byte [0];
+        byte [] curRow = new byte[0];
+        long lastDelete = -1;
+        long undeleted = -1;
 
         while (result.next()) {
+          long curVersion = result.getLong(3);
 
-          if (readPointer != null && !readPointer.isVisible(result.getLong(3)) ) {
+          if (readPointer != null && !readPointer.isVisible(curVersion)) {
             continue;
           }
 
-          byte [] rowKey = result.getBytes(1);
-          if(!Bytes.equals(lastRow, rowKey)) {
-            newRow = true;
-            lastRow = rowKey;
+          byte[] row = result.getBytes(1);
+
+          // See if this is a new row (clear col/del tracking if so)
+          if (!Bytes.equals(curRow, row)) {
+            lastCol = new byte[0];
+            curCol = new byte[0];
+            lastDelete = -1;
+            undeleted = -1;
           }
-          byte [] column = result.getBytes(2);
-          // Check if this column has already been included in result, skip if so
-          if (!newRow && Bytes.equals(lastCol, column)) {
+
+          curRow = row;
+
+          byte[] column = result.getBytes(2);
+          // Check if this column has been completely deleted
+          if (Bytes.equals(lastCol, column)) {
             continue;
           }
-          // Check if this is a new column
-          if (newRow || !Bytes.equals(curCol, column)) {
+
+          // Check if this is a new column, reset delete pointers if so
+          if (!Bytes.equals(curCol, column)) {
             curCol = column;
+            lastDelete = -1;
+            undeleted = -1;
           }
 
+          // Check if type is a delete and execute accordingly
           Type type = Type.from(result.getInt(4));
-          if (type.isDelete() || type.isDeleteAll() ) {
+          if (type.isUndeleteAll()) {
+            undeleted = curVersion;
             continue;
           }
-          Map<byte[], byte[]> colMap = rowColumnValueMap.get(rowKey);
+
+          if (type.isDeleteAll()) {
+            if (undeleted == curVersion) {
+              continue;
+            } else {
+              // The rest of this column has been deleted, act like we returned it
+              lastCol = column;
+              continue;
+            }
+          }
+          if (type.isDelete()) {
+            lastDelete = curVersion;
+            continue;
+          }
+          if (curVersion == lastDelete) {
+            continue;
+          }
+          // Column is valid, therefore row is valid, add row
+          lastRow = row;
+
+          Map<byte[], byte[]> colMap = rowColumnValueMap.get(row);
           if(colMap == null) {
             colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-            rowColumnValueMap.put(rowKey, colMap);
+            rowColumnValueMap.put(row, colMap);
           }
           colMap.put(column, result.getBytes(6));
         }

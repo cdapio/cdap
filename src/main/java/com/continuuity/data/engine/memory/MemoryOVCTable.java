@@ -477,18 +477,34 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       if (!this.rows.hasNext()) {
         return null;
       }
-      Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = this.rows.next();
+
       Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
-        if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue())) {
-          continue;
-        }
-        byte[] value = filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
-        if (value != null) {
-          columns.put(colEntry.getKey().getValue(), value);
+      Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = null;
+      boolean done = false;
+      while(!done){
+        if (this.rows.hasNext()){
+          rowEntry = this.rows.next();
+          for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
+            if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue() )) {
+              continue;
+            }
+            ImmutablePair<Long, byte[]> latest = filteredLatest(colEntry.getValue(), readPointer);
+            if (latest != null){
+              columns.put(colEntry.getKey().getValue(),latest.getSecond());
+            }
+          }
+          if ( columns.size() > 0 ) {
+            done =  true;
+          }
+        } else {
+          done = true;
         }
       }
-      return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey().getValue(), columns);
+      if ( columns.size() > 0) {
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey().getValue(), columns);
+      } else {
+        return null;
+      }
     }
 
     @Override
@@ -747,34 +763,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       if (curVersion.stamp == lastDelete) {
         continue;
       }
-      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
-    }
-    return null;
-  }
-
-  /**
-   * Returns the latest version of a column within the specified column map,
-   * filtering out deleted values without a readPointer
-   */
-  private ImmutablePair<Long, byte[]> filteredLatestDirty( NavigableMap<Version, Value> columnMap) {
-    if (columnMap == null || columnMap.isEmpty()) return null;
-    long lastDelete = -1;
-    long undeleted = -1;
-    for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
-      Version curVersion = entry.getKey();
-      if (curVersion.isUndeleteAll()){
-        undeleted = entry.getKey().stamp;
-        continue;
-      }
-      if (curVersion.isDeleteAll()) {
-        if (undeleted == curVersion.stamp) continue;
-        else break;
-      }
-      if (curVersion.isDelete()) {
-        lastDelete = entry.getKey().stamp;
-        continue;
-      }
-      if (curVersion.stamp == lastDelete) continue;
       return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().getValue());
     }
     return null;

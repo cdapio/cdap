@@ -2558,18 +2558,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     @Override
     public QueueEntry next() {
-      if(peeked) {
-        peeked = false;
-        return currentQueueEntry;
-      } else {
-        AtomicReference<QueueEntry> entry = new AtomicReference<QueueEntry>();
-        try {
-          entry.set(getNextValidQueueEntry());
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
+      try{
+        if(peeked) {
+          peeked = false;
+          return currentQueueEntry;
+        } else {
+          return getNextValidQueueEntry();
         }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      } finally {
         currentQueueEntry = null;
-        return entry.get();
       }
     }
 

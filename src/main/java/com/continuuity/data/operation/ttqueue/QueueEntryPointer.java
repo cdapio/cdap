@@ -1,10 +1,14 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.hbase.ttqueue.HBQEntryPointer;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -93,22 +97,15 @@ public class QueueEntryPointer {
    * @return serialized byte array containing entryId, shardId and queueName
    */
   public byte [] getBytes() {
-    return ( Bytes.add(Bytes.toBytes(this.entryId), Bytes.toBytes(this.shardId), this.queueName));
-
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    BinaryEncoder binaryEncoder = new BinaryEncoder(bos);
+    try {
+      binaryEncoder.writeLong(this.entryId);
+      binaryEncoder.writeLong(this.shardId);
+      binaryEncoder.writeBytes(this.queueName);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    return bos.toByteArray();
   }
-
-  /**
-   * De-serializes QueueEntryPointer from bytes
-   * @param bytes serialized byte array
-   * @return instance of {@code QueueEntryPointer}
-   */
-  public static QueueEntryPointer fromBytes(byte [] bytes) {
-    Preconditions.checkNotNull(bytes);
-    long entryId = Bytes.toLong(bytes,0);
-    long shardId = Bytes.toLong(bytes,8);
-    byte [] queueName = Arrays.copyOfRange(bytes,16,bytes.length);
-    return new QueueEntryPointer(queueName,entryId,shardId);
-
-  }
-
 }
