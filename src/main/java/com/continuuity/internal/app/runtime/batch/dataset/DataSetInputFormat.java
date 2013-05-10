@@ -55,7 +55,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     BatchReadable<KEY, VALUE> dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
     SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
 
-    return new DataSetRecordReader<KEY, VALUE>(dataset, splitReader, mrContext);
+    return new DataSetRecordReader<KEY, VALUE>(splitReader, mrContext);
   }
 
   private DataSetSpecification getInputDataSetSpec(Configuration conf) {
