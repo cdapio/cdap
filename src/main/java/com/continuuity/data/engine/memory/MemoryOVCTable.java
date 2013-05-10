@@ -466,18 +466,31 @@ public class MemoryOVCTable extends AbstractOVCTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet
-      ().iterator(), readPointer);
-  }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet().iterator(), columns, readPointer);
+    return scan(startRow, stopRow, null, readPointer);
   }
 
   @Override
   public Scanner scan(ReadPointer readPointer) {
-    return new MemoryScanner(this.map.entrySet().iterator(), readPointer);
+    return scan(null, null, null, readPointer);
+  }
+
+  @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
+    ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
+    if (startRow != null) {
+      if (stopRow != null) {
+        submap = this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
+      } else {
+        submap = this.map.tailMap(new RowLockTable.Row(startRow));
+      }
+    } else {
+      if (stopRow != null) {
+        submap = this.map.headMap(new RowLockTable.Row(stopRow));
+      } else {
+        submap = this.map;
+      }
+    }
+    return new MemoryScanner(submap.entrySet().iterator(), columns, readPointer);
   }
 
   /**
