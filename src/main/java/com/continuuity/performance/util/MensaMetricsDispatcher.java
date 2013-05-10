@@ -71,7 +71,7 @@ public class MensaMetricsDispatcher implements Runnable {
   private IoSession session = null;
 
   /**
-   * Queue that holds metrics
+   * Queue that holds metrics.
    */
   private final LinkedBlockingDeque<String> queue;
 
@@ -121,13 +121,13 @@ public class MensaMetricsDispatcher implements Runnable {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         // Dispose the connector.
-        if(connector != null) {
+        if (connector != null) {
           connector.dispose();
           connector = null;
         }
 
         // Close the session.
-        if(session != null) {
+        if (session != null) {
           session.close(true).awaitUninterruptibly(CONNECT_TIMEOUT);
           session = null;
         }
@@ -151,16 +151,16 @@ public class MensaMetricsDispatcher implements Runnable {
 
     // While we are not asked to stop and queue
     // is not empty, we keep on going.
-    while(keepRunning) {
+    while (keepRunning) {
       // Try to get a session while session is not created
       // or if created and is not connected.
-      while(session == null || !session.isConnected()){
+      while (session == null || !session.isConnected()){
         // Make an attempt to connect, it does so by getting the
         // latest endpoint from service disocvery and tries to
         // connect to it.
         connect();
 
-        if(session == null || (session != null && ! session.isConnected())){
+        if (session == null || (session != null && !session.isConnected())) {
           // Sleep based on how much ever is interval set to.
           try {
             LOG.warn("Backing off after unable to connect to metrics " + "collector host {}:{} for {}s.",
@@ -173,7 +173,7 @@ public class MensaMetricsDispatcher implements Runnable {
 
           // Exponentially increase the amount of time to sleep,
           // untill we reach 30 seconds sleep between reconnects.
-          interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
+          interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT);
         } else {
           // we are conected and now need to send data.
           break;
@@ -196,7 +196,7 @@ public class MensaMetricsDispatcher implements Runnable {
 
       // Make sure we have not received a null object. This is
       // just a precaution.
-      if(element == null) {
+      if (element == null) {
         continue;
       }
       cmd = element;
@@ -204,11 +204,11 @@ public class MensaMetricsDispatcher implements Runnable {
       // Write the command to the session and attach a future for reporting
       // any issues seen.
       WriteFuture future = session.write(cmd);
-      if(future != null) {
+      if (future != null) {
         future.addListener(new IoFutureListener<WriteFuture>() {
           @Override
           public void operationComplete(WriteFuture future) {
-            if(! future.isWritten()) {
+            if (!future.isWritten()) {
               LOG.warn("Attempted to send metric to overlord, " +
                          "failed " + "due to session failures. [ {} ]", cmd);
             }
@@ -217,13 +217,13 @@ public class MensaMetricsDispatcher implements Runnable {
       }
     }
     // Dispose the connector.
-    if(connector != null) {
+    if (connector != null) {
       connector.dispose();
       connector = null;
     }
 
     // Close the session.
-    if(session != null) {
+    if (session != null) {
       session.close(true).awaitUninterruptibly(CONNECT_TIMEOUT);
       session = null;
     }
@@ -234,7 +234,7 @@ public class MensaMetricsDispatcher implements Runnable {
     // If we have a session and it's connected to the overlord metrics
     // server, then we return true immediately, else we try connecting
     // to the overlord metrics server.
-    if(session != null && session.isConnected()) {
+    if (session != null && session.isConnected()) {
       return true;
     }
 
@@ -246,7 +246,7 @@ public class MensaMetricsDispatcher implements Runnable {
     cf.awaitUninterruptibly();
 
     // Check if we are connected.
-    if(cf.isConnected()) {
+    if (cf.isConnected()) {
       LOG.info("Successfully connected to endpoint {}:{}", hostname, port);
       session = cf.getSession();
       return true;

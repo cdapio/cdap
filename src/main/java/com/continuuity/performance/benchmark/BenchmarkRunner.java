@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * Class that manages the execution of a benchmark.
+ */
 public class BenchmarkRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRunner.class);
@@ -46,8 +48,7 @@ public class BenchmarkRunner {
       if ("--help".equals(args[i])) {
         help = true;
         continue;
-      }
-      else if (args[i].startsWith("--")) {
+      } else if (args[i].startsWith("--")) {
         if (i + 1 < args.length) {
           String key = args[i].substring(2);
           String value = args[++i];
@@ -75,7 +76,7 @@ public class BenchmarkRunner {
       benchName = this.getClass().getPackage().getName() + "." + benchName;
     }
     try {
-      benchmark = (Benchmark)Class.forName(benchName).newInstance();
+      benchmark = (Benchmark) Class.forName(benchName).newInstance();
     } catch (Exception e) {
       throw new BenchmarkException("Unable to instantiate benchmark '" +
           benchName + "': " + e.getMessage(), e);
@@ -178,7 +179,7 @@ public class BenchmarkRunner {
 
     // 7. wait for remaining benchmark threads to finish
     LOG.debug("Waiting for remaining benchmark threads to finish...");
-    for (int i=1; i < totalNumAgents; i++) {
+    for (int i = 1; i < totalNumAgents; i++) {
       agentCompletionPool.take();
     }
 
@@ -204,7 +205,9 @@ public class BenchmarkRunner {
       boolean ok = runner.parseOptions(args);
 
       // run it
-      if (ok) runner.run();
+      if (ok) {
+        runner.run();
+      }
     } finally {
       // shut it down
       runner.shutdown();

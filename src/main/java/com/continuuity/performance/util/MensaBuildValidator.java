@@ -24,7 +24,7 @@ import java.net.URL;
 import java.util.Properties;
 
 /**
- *
+ * Tool to compare results from latest with previous benchmarks.
  */
 public class MensaBuildValidator {
   private static final String DUMMY_OP = "avg:";
@@ -51,11 +51,11 @@ public class MensaBuildValidator {
     StringBuilder sb = new StringBuilder();
     sb.append("/q?");
     if (start != null && start.length() != 0) {
-      sb.append("start="+start);
+      sb.append("start=" + start);
       sb.append("&");
     }
     if (end != null && end.length() != 0) {
-      sb.append("end="+end);
+      sb.append("end=" + end);
       sb.append("&");
     }
     sb.append("m=");
@@ -75,8 +75,8 @@ public class MensaBuildValidator {
 
   private HttpGet buildHttpGet(String hostname, int port, String query) {
     try {
-      URL url = new URL("http://"+hostname+":"+port+query);
-      URI uri = new URI(url.getProtocol(), url.getHost()+":"+url.getPort(), url.getPath(), url.getQuery(), null);
+      URL url = new URL("http://" + hostname + ":" + port + query);
+      URI uri = new URI(url.getProtocol(), url.getHost() + ":" + url.getPort(), url.getPath(), url.getQuery(), null);
       HttpGet get = new HttpGet(uri);
       get.addHeader("accept", "application/json");
       return get;
@@ -89,7 +89,7 @@ public class MensaBuildValidator {
   }
 
   public MetricsResult queryTSDB(String host, int port, String startts, String endts, String metric, String tags) {
-    MetricsResult result=null;
+    MetricsResult result = null;
     HttpClient client = new DefaultHttpClient();
     HttpResponse response;
 
@@ -98,7 +98,7 @@ public class MensaBuildValidator {
       HttpGet get = buildHttpGet(host, port, tsdbQuery);
 
       response = client.execute(get);
-      HttpEntity entity=response.getEntity();
+      HttpEntity entity = response.getEntity();
 
       if (entity != null) {
         InputStream is = entity.getContent();
@@ -118,7 +118,7 @@ public class MensaBuildValidator {
         client.getConnectionManager().shutdown();
       }
     } catch (IOException e) {
-      System.err.println("Error sending HTTP request: " + e.getMessage());
+      System.err.println("Error sending HTTP request: "  +  e.getMessage());
       return null;
     }
 
@@ -144,9 +144,9 @@ public class MensaBuildValidator {
     if (result != null && result.getMetrics().size() != 0 && result.getMetric(0).getNumDataPoints() >= 7) {
       oldMetricValueAvg = result.getMetric(0).avg(7);
     }
-    if (newMetricValueAvg < 0.95*oldMetricValueAvg) {
-      System.out.println("Mensa build validation failure! old avg metric value is "+oldMetricValueAvg
-                           +", new avg value is "+newMetricValueAvg);
+    if (newMetricValueAvg < 0.95 * oldMetricValueAvg) {
+      System.out.println("Mensa build validation failure! old avg metric value is " + oldMetricValueAvg
+                         + ", new avg value is " + newMetricValueAvg);
       return false;
     } else {
       return true;
@@ -174,7 +174,9 @@ public class MensaBuildValidator {
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = "mensa-build-validator";
-    if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
+    if (System.getProperty("script") != null) {
+      name = System.getProperty("script").replaceAll("[./]", "");
+    }
     out.println("Usage: ");
     out.println("  " + name + " validate <build report file name> [ <option> ... ]");
     out.println("Options:");
@@ -187,8 +189,10 @@ public class MensaBuildValidator {
   }
 
   private boolean parseArgs(String[] args) {
-    if (args.length == 0) usage(true);
-    int pos=0;
+    if (args.length == 0) {
+      usage(true);
+    }
+    int pos = 0;
     String arg = args[pos];
 
     if ("--help".equals(arg)) {
@@ -199,21 +203,27 @@ public class MensaBuildValidator {
     command = arg;
     //parse command
     if ("validate".equals(command)) {
-      if ((pos + 1) >= args.length) usage(true);
-      reportFileName = args[++pos];
+      if ((pos + 1) >= args.length) {
+        usage(true);
+      }
+      reportFileName = args[ ++pos ];
     } else {
       command = null;
     }
 
     //parse options
-    while (pos < args.length-1) {
-      arg = args[++pos];
+    while (pos < args.length - 1) {
+      arg = args[ ++pos ];
       if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         host = args[pos];
 
       } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
@@ -235,7 +245,7 @@ public class MensaBuildValidator {
       endts = fmt.print(now);
     }
 
-    if (command == null || command.length() == 0 || host == null || host.length()==0 || port == 0) {
+    if (command == null || command.length() == 0 || host == null || host.length() == 0 || port == 0) {
       return false;
     }
     return true;
@@ -249,6 +259,9 @@ public class MensaBuildValidator {
     }
   }
 
+  /**
+   * UsageException.
+   */
   public class UsageException extends RuntimeException {
     // no message, no cause, on purpose, only default constructor
     public UsageException() { }

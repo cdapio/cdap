@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Class for Mensa metrics.
  */
 final class MetricsResult {
   private final List<Metric> metrics;
@@ -53,7 +53,7 @@ final class MetricsResult {
         sb.append(dp.ts);
         sb.append(" ");
         sb.append(dp.val);
-        for (Map.Entry<String,String> tag : tags.entrySet()) {
+        for (Map.Entry<String, String> tag : tags.entrySet()) {
           sb.append(" ");
           sb.append(tag.getKey());
           sb.append("=");
@@ -69,9 +69,9 @@ final class MetricsResult {
     }
 
     public double sum() {
-      double sum=0;
+      double sum = 0;
       for (DataPoint dp : data) {
-        sum +=dp.val;
+        sum += dp.val;
       }
       return sum;
     }
@@ -80,27 +80,29 @@ final class MetricsResult {
       if (data.size() == 0) {
         return 0;
       }
-      int num=x;
+      int num = x;
       if (num > data.size()) {
         num = data.size();
       }
-      double sum=0;
-      for (int i=data.size()-num; i<data.size(); i++) {
-        sum +=data.get(i).val;
+      double sum = 0;
+      for (int i = data.size() - num; i < data.size(); i++) {
+        sum += data.get(i).val;
       }
       return sum;
     }
+
     public double avg() {
       if (data.size() == 0) {
         return 0;
       }
       return sum() / data.size();
     }
+
     public double avg(int x) {
       if (data.size() == 0) {
         return 0;
       }
-      int num=x;
+      int num = x;
       if (num > data.size()) {
         num = data.size();
       }
@@ -118,7 +120,8 @@ final class MetricsResult {
 
     static final class DataPointDeserializer implements JsonDeserializer<DataPoint> {
       @Override
-      public DataPoint deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      public DataPoint deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+        throws JsonParseException {
         JsonArray a = json.getAsJsonArray();
         long ts = a.get(0).getAsLong();
         double val = a.get(1).getAsDouble();

@@ -4,6 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
 
+/**
+ * Abstract class for OpexProvider.
+ */
 public abstract class OpexProvider {
 
   /**
@@ -15,13 +18,13 @@ public abstract class OpexProvider {
   }
 
   /**
-   * Create an operation executor
+   * Create an operation executor.
    * @return the operation executor
    */
   abstract OperationExecutor create() throws BenchmarkException;
 
   /**
-   * Shutdown the operation executor
+   * Shutdown the operation executor.
    * @param opex the operation executor that was previously obtained with
    *             create()
    */

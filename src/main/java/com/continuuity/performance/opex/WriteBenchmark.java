@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
+/**
+ * Benchmark implementation that measures Opex write performance.
+ */
 public class WriteBenchmark extends OpexBenchmark {
 
   private static final Logger LOG = LoggerFactory.getLogger(WriteBenchmark.class);

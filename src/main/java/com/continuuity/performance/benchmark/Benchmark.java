@@ -1,10 +1,12 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
-
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Abstract class to be sub-classed by all Benchmark classes.
+ */
 public abstract class Benchmark {
 
   /**
@@ -15,8 +17,7 @@ public abstract class Benchmark {
   }
 
   /**
-   * This method is used to inform the command line about the expected
-   * options for configure()
+   * This method is used to inform the command line about the expected options for configure().
    * @return A map of option name to a description of the option.
    */
   public Map<String, String> usage() {
@@ -25,21 +26,21 @@ public abstract class Benchmark {
   }
 
   /**
-   * Initialize the benchmark
+   * Initialize the benchmark.
    */
   public void initialize() throws BenchmarkException {
     // by default do nothing
   }
 
   /**
-   * Warm up the benchmark. This is done exactly once per benchmark
+   * Warm up the benchmark. This is done exactly once per benchmark.
    */
   public void warmup() throws BenchmarkException {
     // by default do nothing
   }
 
   /**
-   * de-initialize, release all resources
+   * De-initialize, release all resources.
    */
   public void shutdown() {
     // by default do nothing
@@ -50,5 +51,6 @@ public abstract class Benchmark {
    * @return an array of agent groups
    */
   public abstract AgentGroup[] getAgentGroups();
-
 }
+
+
