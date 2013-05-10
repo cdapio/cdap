@@ -1,26 +1,19 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.queue.QueueName;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 

@@ -22,7 +22,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -31,9 +31,12 @@ import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,7 +65,18 @@ public class MapReduceProgramRunnerTest {
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
-    injector = TestHelper.injector;
+    final Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+
+    injector = Guice.createInjector(new DataFabricModules().getSingleNodeModules(),
+                                    new BigMamaModule(configuration),
+                                    new Module() {
+                                      @Override
+                                      public void configure(Binder binder) {
+                                        binder.bind(Configuration.class).toInstance(hConf);
+                                      }
+                                    });
   }
 
   @Test
@@ -124,6 +138,10 @@ public class MapReduceProgramRunnerTest {
     expected.put("tag1", 18L);
     expected.put("tag2", 3L);
     expected.put("tag3", 18L);
+    // this is a hack for making writes of MR visible here. Should go away when integrated with long-running tx
+    // TODO: is the fact that we have to do this hack actually means there's a bug? With SynchronousTransactionAgent
+    //       all should be visible right away
+    table.write(new TimeseriesTable.Entry(Bytes.toBytes("foo"), Bytes.toBytes("bar"), 0L));
     List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
     Assert.assertEquals(expected.size(), agg.size());
     for (TimeseriesTable.Entry entry : agg) {
