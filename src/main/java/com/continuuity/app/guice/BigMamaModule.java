@@ -29,7 +29,6 @@ import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
@@ -95,9 +94,6 @@ public class BigMamaModule extends AbstractModule {
 
     // Bind runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
-
-    // Bind MapReduce runtime service
-    bind(MapReduceRuntimeService.class).to(InMemoryMapReduceRuntimeService.class).in(Scopes.SINGLETON);
 
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
 

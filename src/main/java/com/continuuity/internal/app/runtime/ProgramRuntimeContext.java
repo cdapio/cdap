@@ -5,8 +5,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -19,16 +17,12 @@ import java.util.Map;
  * Base class for program runtime context
  */
 public abstract class ProgramRuntimeContext {
-  private final String accountId;
-  private final String applicationId;
-  private final String programName;
+  private final Program program;
   private final RunId runId;
   private final Map<String, DataSet> datasets;
 
   public ProgramRuntimeContext(Program program, RunId runId, Map<String, DataSet> datasets) {
-    this.accountId = program.getAccountId();
-    this.applicationId = program.getApplicationId();
-    this.programName = program.getProgramName();
+    this.program = program;
     this.runId = runId;
     this.datasets = ImmutableMap.copyOf(datasets);
   }
@@ -38,7 +32,7 @@ public abstract class ProgramRuntimeContext {
   @Override
   public String toString() {
     return String.format("accountId=%s, applicationId=%s, program=%s, runid=%s",
-                         accountId, applicationId, programName, runId);
+                         getAccountId(), getApplicationId(), getProgramName(), runId);
   }
 
   public <T extends DataSet> T getDataSet(String name) {
@@ -49,15 +43,19 @@ public abstract class ProgramRuntimeContext {
   }
 
   public String getAccountId() {
-    return accountId;
+    return program.getAccountId();
   }
 
   public String getApplicationId() {
-    return applicationId;
+    return program.getApplicationId();
   }
 
   public String getProgramName() {
-    return programName;
+    return program.getProgramName();
+  }
+
+  public Program getProgram() {
+    return program;
   }
 
   public RunId getRunId() {

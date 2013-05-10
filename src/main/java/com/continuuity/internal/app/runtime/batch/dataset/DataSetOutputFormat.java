@@ -4,7 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
-import com.continuuity.internal.app.runtime.batch.inmemory.MapReduceContextAccessor;
+import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -28,7 +28,8 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
   public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
     throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    BasicMapReduceContext mrContext = MapReduceContextAccessor.getContext(conf);
+    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context);
+    BasicMapReduceContext mrContext = contextProvider.get();
     @SuppressWarnings("unchecked")
     BatchWritable<KEY, VALUE> dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());
 
