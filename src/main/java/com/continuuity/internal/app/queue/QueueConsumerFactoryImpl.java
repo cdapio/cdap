@@ -5,9 +5,9 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -60,7 +60,7 @@ public class QueueConsumerFactoryImpl implements QueueConsumerFactory {
 
     // configure the queue
     try {
-      opex.execute(operationCtx, new QueueAdmin.QueueConfigure(queueName.toBytes(), queueConsumer));
+      opex.execute(operationCtx, new QueueConfigure(queueName.toBytes(), queueConsumer));
     } catch (OperationException e) {
       // There is nothing much that can be done to resolve this OperationException, propagate it as a runtime exception
       throw Throwables.propagate(e);    // Using throw to suppress warning
