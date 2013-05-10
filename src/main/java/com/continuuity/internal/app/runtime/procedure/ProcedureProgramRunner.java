@@ -62,16 +62,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private Channel serverChannel;
   private ChannelGroup channelGroup;
   private BasicProcedureContext procedureContext;
-  private final OVCTableHandle tableHandle;
 
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
                                 DiscoveryService discoveryService,
-                                LogWriter logWriter, OVCTableHandle tableHandle) {
+                                LogWriter logWriter) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.discoveryService = discoveryService;
     CAppender.logWriter = logWriter;
-    this.tableHandle = tableHandle;
   }
 
   @Override
@@ -97,8 +95,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
                                                    procedureSpec);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId,
-                                                               txAgentSupplierFactory, tableHandle);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, runId, instanceId, txAgentSupplierFactory);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();

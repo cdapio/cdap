@@ -45,7 +45,6 @@ public class TestHelper {
     configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
     configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
     //injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
-    injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricLevelDBModule(configuration));
   }
 
   public static Injector getInjector() {
@@ -68,7 +67,8 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager(Injector injector, CConfiguration configuration) {
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager(Injector injector,
+                                                                           CConfiguration configuration) {
     if (injector == null) {
     injector = Guice.createInjector(new BigMamaModule(configuration),
                                                    new DataFabricModules().getInMemoryModules());
