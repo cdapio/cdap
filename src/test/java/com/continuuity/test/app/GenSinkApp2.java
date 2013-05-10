@@ -28,7 +28,9 @@ public final class GenSinkApp2 implements Application {
       .build();
   }
 
-
+  /**
+   *
+   */
   public static final class GenSinkFlow implements Flow {
 
     @Override
@@ -45,6 +47,9 @@ public final class GenSinkApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class GenFlowlet extends AbstractFlowlet implements GeneratorFlowlet {
 
     private OutputEmitter<String> output;
@@ -62,6 +67,9 @@ public final class GenSinkApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class SinkFlowlet extends AbstractFlowlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);

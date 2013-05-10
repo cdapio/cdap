@@ -48,7 +48,7 @@ public class WordCountApp2 implements Application {
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -63,6 +63,9 @@ public class WordCountApp2 implements Application {
       .withProcedures().add(new WordFrequency()).build();
   }
 
+  /**
+   *
+   */
   public static final class MyRecord {
 
     private final String title;
@@ -97,6 +100,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordCountFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -113,6 +119,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class StreamSource extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
@@ -132,6 +141,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
@@ -159,6 +171,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
 //  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
@@ -193,6 +208,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private MyKeyValueTable counters;

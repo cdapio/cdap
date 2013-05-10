@@ -10,7 +10,6 @@ import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.archive.JarClassLoader;
-import com.continuuity.archive.JarResources;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -102,7 +101,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            appFabricServer.setInstances(token, flowId, flowletName, (short)instances);
+            appFabricServer.setInstances(token, flowId, flowletName, (short) instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }

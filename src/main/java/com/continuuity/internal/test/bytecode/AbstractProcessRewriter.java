@@ -35,7 +35,7 @@ import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.RETURN;
 
 /**
- * Generate a new flowlet class by copying an existing one
+ * Generate a new flowlet class by copying an existing one.
  */
 public abstract class AbstractProcessRewriter {
 
@@ -102,7 +102,8 @@ public abstract class AbstractProcessRewriter {
       boolean initialized;
 
       @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      public void visit(int version, int access, String name, String signature, String superName,
+                        String[] interfaces) {
         className = name;
         superClassName = superName;
         cw.visit(version, access, name, signature, superName, interfaces);
@@ -110,7 +111,8 @@ public abstract class AbstractProcessRewriter {
       }
 
       @Override
-      public MethodVisitor visitMethod(int access, final String name, final String desc, String signature, String[] exceptions) {
+      public MethodVisitor visitMethod(int access, final String name, final String desc, String signature,
+                                       String[] exceptions) {
         MethodVisitor mv = cw.visitMethod(access, name, desc, signature, exceptions);
         final int argumentSize = new org.objectweb.asm.commons.Method(name, desc).getArgumentTypes().length;
 
@@ -170,7 +172,8 @@ public abstract class AbstractProcessRewriter {
               generateLogStats(className, mv, statsMiddle, "exception");
 
               mv.visitVarInsn(ALOAD, argumentSize + 1);
-              mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate", "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
+              mv.visitMethodInsn(INVOKESTATIC, "com/google/common/base/Throwables", "propagate",
+                                 "(Ljava/lang/Throwable;)Ljava/lang/RuntimeException;");
               mv.visitInsn(ATHROW);
               mv.visitLabel(endCatchLabel);
               mv.visitFrame(F_SAME, 0, null, 0, null);       // Ignored by COMPUTE_FRAME
@@ -184,12 +187,13 @@ public abstract class AbstractProcessRewriter {
       @Override
       public void visitEnd() {
         if (!initialized) {
-          MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "initialize", "(" + internalNameToDesc(context)+ ")V", null, initExceptions);
+          MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "initialize", "(" + internalNameToDesc(context) + ")V", null,
+                                            initExceptions);
           mv.visitCode();
           if (superClassName != null) {
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 1);
-            mv.visitMethodInsn(INVOKESPECIAL, superClassName, "initialize", "(" + internalNameToDesc(context) +")V");
+            mv.visitMethodInsn(INVOKESPECIAL, superClassName, "initialize", "(" + internalNameToDesc(context) + ")V");
           }
           mv.visitVarInsn(ALOAD, 0);
           mv.visitVarInsn(ALOAD, 1);

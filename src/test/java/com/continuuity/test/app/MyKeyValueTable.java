@@ -28,7 +28,7 @@ public class MyKeyValueTable extends DataSet {
   private Table table;
 
   /**
-   * constructor for configuration
+   * Constructor for configuration of key-value table.
    * @param name the name of the table
    */
   public MyKeyValueTable(String name) {
@@ -37,7 +37,7 @@ public class MyKeyValueTable extends DataSet {
   }
 
   /**
-   * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification))
+   * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification)).
    * @param spec the data set spec for this data set
    */
   @SuppressWarnings("unused")
@@ -87,7 +87,7 @@ public class MyKeyValueTable extends DataSet {
   }
 
   /**
-   * Write a value to a key
+   * Write a value to a key.
    * @param key the key
    * @param value the new value
    * @throws com.continuuity.api.data.OperationException if the write fails
@@ -108,7 +108,7 @@ public class MyKeyValueTable extends DataSet {
   }
 
   /**
-   * Delete a key
+   * Delete a key.
    * @param key the key to delete
    * @throws com.continuuity.api.data.OperationException if the delete fails
    */

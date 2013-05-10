@@ -23,7 +23,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +34,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Application for testing flow and queue integration.
+ */
 public class TestFlowQueueIntegrationApp implements Application {
 
   public static final int MAX_ITERATIONS = 20;
@@ -45,7 +47,7 @@ public class TestFlowQueueIntegrationApp implements Application {
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -60,6 +62,9 @@ public class TestFlowQueueIntegrationApp implements Application {
       .noProcedure().build();
   }
 
+  /**
+   * Queue partitioning flow.
+   */
   public static class QueuePartitionFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -76,7 +81,9 @@ public class TestFlowQueueIntegrationApp implements Application {
     }
   }
 
-
+  /**
+   * StreamReader flowlet.
+   */
   public static class StreamReader extends AbstractFlowlet {
     @Output("int")
     private OutputEmitter<Integer> output;
@@ -92,18 +99,21 @@ public class TestFlowQueueIntegrationApp implements Application {
       final int input = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
       LOG.warn("Writing " + input);
       output.emit(input, HASH_KEY1, input + 1);
-      output1.emit(new Entry1(Entry1.id + input), HASH_KEY1, input + 1);
-      output2.emit(new Entry2(Entry2.id + input), HASH_KEY2, input + 2);
+      output1.emit(new Entry1(Entry1.ID + input), HASH_KEY1, input + 1);
+      output2.emit(new Entry2(Entry2.ID + input), HASH_KEY2, input + 2);
 
       // Emit batch output in one shot in the beginning
-      if(input == 0) {
-        for(int j = 0; j < MAX_ITERATIONS; ++j) {
-          batchOutput.emit(new BatchEntry(BatchEntry.id + j), HASH_KEY1, j);
+      if (input == 0) {
+        for (int j = 0; j < MAX_ITERATIONS; ++j) {
+          batchOutput.emit(new BatchEntry(BatchEntry.ID + j), HASH_KEY1, j);
         }
       }
     }
   }
 
+  /**
+   * Flowlet to test queue partitioning.
+   */
   public static class QueuePartitionTestFlowlet extends AbstractFlowlet implements Callback {
     public static final int NUM_INSTANCES = 3;
     private final int id = new Random(System.currentTimeMillis()).nextInt(100);
@@ -150,12 +160,12 @@ public class TestFlowQueueIntegrationApp implements Application {
     @RoundRobin
     public void roundRobin(int actual) {
       LOG.warn("RID:" + id + " value=" + actual);
-      if(expectedRoundRobinIterator == null) {
+      if (expectedRoundRobinIterator == null) {
         expectedRoundRobinIterator = expectedRoundRobinLists[actual].iterator();
         first = actual;
         latch.countDown();
       }
-      if(expectedRoundRobinIterator.hasNext()) {
+      if (expectedRoundRobinIterator.hasNext()) {
         int expected = expectedRoundRobinIterator.next();
         Assert.assertEquals(expected, actual);
       } else {
@@ -175,10 +185,10 @@ public class TestFlowQueueIntegrationApp implements Application {
         Assert.fail(logID + ": Interrupted latch wait");
       }
 
-      if(expectedHash1Iterator == null) {
+      if (expectedHash1Iterator == null) {
         expectedHash1Iterator = expectedHash1Lists[first].iterator();
       }
-      verify(Entry1.id, actual.i, expectedHash1Iterator, logID);
+      verify(Entry1.ID, actual.i, expectedHash1Iterator, logID);
     }
 
     @ProcessInput("entry2")
@@ -193,16 +203,16 @@ public class TestFlowQueueIntegrationApp implements Application {
         Assert.fail(logID + ": Interrupted latch wait");
       }
 
-      if(expectedHash2Iterator == null) {
+      if (expectedHash2Iterator == null) {
         expectedHash2Iterator = expectedHash2Lists[first].iterator();
       }
-      verify(Entry2.id, actual.i, expectedHash2Iterator, logID);
+      verify(Entry2.ID, actual.i, expectedHash2Iterator, logID);
     }
 
     private void verify(int base, int i, Iterator<Integer> iterator, String logID) {
       logID = logID  + " : first=" + first;
       LOG.warn(logID + ": value=" + i);
-      if(iterator.hasNext()) {
+      if (iterator.hasNext()) {
         int expected = iterator.next();
         Assert.assertEquals(logID, expected, i - base);
       } else {
@@ -221,7 +231,7 @@ public class TestFlowQueueIntegrationApp implements Application {
               fifoLeader = true;
             }
           }
-          LOG.warn("*****FID:" + id + " fifoLeader=" + fifoLeader + " value=" + entry.i);
+          LOG.warn("*****FID:" + ID + " fifoLeader=" + fifoLeader + " value=" + entry.i);
           if(!fifoLeader) {
             try {
               TimeUnit.MILLISECONDS.sleep(50);
@@ -261,6 +271,9 @@ public class TestFlowQueueIntegrationApp implements Application {
     }
   }
 
+  /**
+   * Flowlet to test queue batches.
+   */
   public static class QueueBatchTestFlowlet extends AbstractFlowlet implements Callback {
     public static final int NUM_INSTANCES = 5;
     private int id = new Random(System.currentTimeMillis()).nextInt(100);
@@ -287,11 +300,11 @@ public class TestFlowQueueIntegrationApp implements Application {
       List<BatchEntry> actualList = ImmutableList.copyOf(it);
       LOG.warn("HID:" + id + " batch values=" + actualList);
 
-      if(first == -1) {
-        first = actualList.get(0).i - BatchEntry.id;
+      if (first == -1) {
+        first = actualList.get(0).i - BatchEntry.ID;
         expectedListIterator = expectedLists[first].iterator();
         for (BatchEntry actual : actualList) {
-          Assert.assertEquals((int)expectedListIterator.next(), actual.i - BatchEntry.id);
+          Assert.assertEquals((int) expectedListIterator.next(), actual.i - BatchEntry.ID);
         }
         Assert.assertFalse(expectedListIterator.hasNext());
       } else {
@@ -311,7 +324,7 @@ public class TestFlowQueueIntegrationApp implements Application {
 
   private static class Entry1 {
     public int i;
-    public static final int id = 200;
+    public static final int ID = 200;
 
     private Entry1(int i) {
       this.i = i;
@@ -327,7 +340,7 @@ public class TestFlowQueueIntegrationApp implements Application {
 
   private static class Entry2 {
     public int i;
-    public static final int id = 500;
+    public static final int ID = 500;
 
     private Entry2(int i) {
       this.i = i;
@@ -344,7 +357,7 @@ public class TestFlowQueueIntegrationApp implements Application {
   @Nonnull
   private static class BatchEntry {
     public int i;
-    public static final int id = 1000;
+    public static final int ID = 1000;
     public String batchId = "batchID";
 
     private BatchEntry(int i) {

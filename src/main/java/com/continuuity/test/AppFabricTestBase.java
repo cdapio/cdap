@@ -9,7 +9,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
@@ -40,7 +39,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.apache.thrift.TException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -105,7 +103,7 @@ public class AppFabricTestBase {
         token, new ResourceInfo(accountId, "", applicationId, 0, System.currentTimeMillis()));
 
       // Upload the jar file to remote location.
-      BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100*1024);
+      BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
       try {
         byte[] chunk = is.read();
         while (chunk.length > 0) {
@@ -121,7 +119,7 @@ public class AppFabricTestBase {
       // Deploy the app
       appFabricServer.deploy(token, id);
       int status = appFabricServer.dstatus(token, id).getOverall();
-      while(status == 3) {
+      while (status == 3) {
         status = appFabricServer.dstatus(token, id).getOverall();
         TimeUnit.MILLISECONDS.sleep(100);
       }
@@ -222,7 +220,7 @@ public class AppFabricTestBase {
     Collections.addAll(queue, dir.listFiles());
 
     // Find all flowlet classes (flowlet class => flowId)
-    // FIXME: Limitation now is that the same flowlet class can be used in one flow only (can have multiple names)
+    // Todo: Limitation now is that the same flowlet class can be used in one flow only (can have multiple names)
     Map<String, String> flowletClassNames = Maps.newHashMap();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
@@ -287,7 +285,7 @@ public class AppFabricTestBase {
     String classFile = clz.getName().replace('.', '/') + ".class";
 
     try {
-      for(Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements(); ) {
+      for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements(); ) {
         URI uri = itr.nextElement().toURI();
         if (uri.getScheme().equals("file")) {
           File baseDir = new File(uri).getParentFile();
@@ -306,7 +304,7 @@ public class AppFabricTestBase {
           return new File(uri.getPath());
         }
       }
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
     return null;
