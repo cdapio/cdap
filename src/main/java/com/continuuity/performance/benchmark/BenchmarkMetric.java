@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Class for benchmark metrics.
+ */
 public class BenchmarkMetric {
 
   private HashMap<String, AtomicLong> metrics = Maps.newHashMap();
@@ -29,7 +32,9 @@ public class BenchmarkMetric {
     return list(null);
   }
   public Map<String, Long> list(Set<String> keys) {
-    if (keys == null) keys = metrics.keySet();
+    if (keys == null) {
+      keys = metrics.keySet();
+    }
     HashMap<String, Long> result = new HashMap<String, Long>(keys.size());
     for (String key : keys) {
       AtomicLong counter = metrics.get(key);

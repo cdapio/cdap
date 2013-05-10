@@ -4,8 +4,14 @@ import com.continuuity.common.conf.CConfiguration;
 
 import java.util.Map;
 
+/**
+ * Simple benchmark.
+ */
 public abstract class SimpleBenchmark extends Benchmark {
 
+  /**
+   * SimpleConfig.
+   */
   public class SimpleConfig {
     public boolean verbose = false;
     public int numRuns = 0;

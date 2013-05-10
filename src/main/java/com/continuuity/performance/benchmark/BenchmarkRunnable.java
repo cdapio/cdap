@@ -3,9 +3,12 @@ package com.continuuity.performance.benchmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Runnable for threads that execute benchmark code.
+ */
 public class BenchmarkRunnable implements Runnable {
 
-  private final static Logger LOG = LoggerFactory.getLogger(BenchmarkRunnable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BenchmarkRunnable.class);
 
   private final int agentId;
   private final AgentGroup agentGroup;

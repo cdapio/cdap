@@ -4,6 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 
 import java.util.Map;
 
+/**
+ * Metrics collector that reports metrics on console.
+ */
 class ConsoleMetricReporter extends MetricsCollector {
 
   private int reportInterval = 60;
@@ -24,7 +27,7 @@ class ConsoleMetricReporter extends MetricsCollector {
                                           boolean interrupt) {
     StringBuilder builder = new StringBuilder();
     builder.setLength(0);
-    builder.append("Group " );
+    builder.append("Group ");
     builder.append(group.getName());
     String sep = ": ";
 
@@ -37,7 +40,9 @@ class ConsoleMetricReporter extends MetricsCollector {
                                    value * 1000.0 / millis / group.getNumAgents()));
       if (!interrupt && prevMetrics != null) {
         Long previousValue = prevMetrics.get(key);
-        if (previousValue == null) previousValue = 0L;
+        if (previousValue == null) {
+          previousValue = 0L;
+        }
         long valueSince = value - previousValue;
         long millisSince = millis - previousMillis;
         builder.append(String.format(", %d since last (%1.1f/sec, %1.1f/sec/thread)", valueSince,

@@ -10,13 +10,13 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 
 /**
- *
+ * HBase client tool that helps with preparing and analyzing benchmark runs.
  */
 public final class HBaseTool {
   private Configuration hbConfig;
   private HBaseAdmin hba;
   private String command;
-  private boolean prompt=true;
+  private boolean prompt = true;
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTool.class);
 
@@ -29,15 +29,15 @@ public final class HBaseTool {
         help = true;
         continue;
       } else if ("--dropAllTables".equals(args[i])) {
-        command="dropAllTables";
+        command = "dropAllTables";
         continue;
       } else if ("--noPrompt".equals(args[i])) {
-        prompt=false;
+        prompt = false;
         continue;
       } else if (args[i].startsWith("--")) {
         if (i + 1 < args.length) {
           String key = args[i].substring(2);
-          String value = args[++i];
+          String value = args[ ++i ];
           if ("zkQuorum".equals(key)) {
             hbConfig.set("hbase.zookeeper.quorum", value);
           } else if ("zkPort".equals(key)) {
@@ -82,7 +82,7 @@ public final class HBaseTool {
       try {
         hbt.execute();
       } catch (IOException e) {
-        ok=false;
+        ok = false;
       }
     }
     if (!ok) {

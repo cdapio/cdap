@@ -25,11 +25,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * OpexProvider class that can be used to run benchmarks against Mini-HBase.
+ */
 public class LocalHBaseOpexProvider extends OpexProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalHBaseOpexProvider.class);
 
-  /** override this to enable native queues */
+  /** Override this to enable native queues. */
   protected boolean useNativeQueues() {
     return false;
   }

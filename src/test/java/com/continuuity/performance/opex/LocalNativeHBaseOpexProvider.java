@@ -4,6 +4,9 @@ import com.continuuity.performance.benchmark.BenchmarkRunner;
 
 import java.util.Arrays;
 
+/**
+ * OpexProvider class that can be used to run benchmarks against patched Mini-HBase.
+ */
 public class LocalNativeHBaseOpexProvider extends LocalHBaseOpexProvider {
 
   @Override

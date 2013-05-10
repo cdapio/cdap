@@ -19,6 +19,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 class MensaMetricsCollector extends MetricsCollector {
 
+  /**
+   * Metrics collector that uploads metrics to mensa server.
+   */
   private static final Logger LOG = LoggerFactory.getLogger(MensaMetricsCollector.class);
 
   /**
@@ -60,7 +63,7 @@ class MensaMetricsCollector extends MetricsCollector {
   }
 
   /**
-   * Queue that
+   * Queue that holds metrics information.
    */
   private final LinkedBlockingDeque<String> queue;
 
@@ -83,7 +86,7 @@ class MensaMetricsCollector extends MetricsCollector {
     }
     String extraTags = config.get("extratags");
     if (StringUtils.isNotEmpty(extraTags)) {
-      extraTags = extraTags.replace(","," ");
+      extraTags = extraTags.replace(",", " ");
       appendExtraTags(extraTags);
     }
   }
@@ -113,7 +116,7 @@ class MensaMetricsCollector extends MetricsCollector {
     parseConfig(config);
     appendExtraTags(extraTags);
 
-    mensaMetrics = new HashMap<String,ArrayList<Double>>(groups.length);
+    mensaMetrics = new HashMap<String, ArrayList<Double>>(groups.length);
     for (AgentGroup group : groups) {
       mensaMetrics.put(group.getName(), new ArrayList<Double>());
     }

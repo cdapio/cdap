@@ -5,6 +5,9 @@ import com.continuuity.common.conf.CConfiguration;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Benchmark with lazy agents that just like to sleep all day long. Do not interrupt them!
+ */
 public class SleepBenchmark extends SimpleBenchmark {
 
   int sleep = 10;
@@ -18,8 +21,7 @@ public class SleepBenchmark extends SimpleBenchmark {
   @Override
   public Map<String, String> usage() {
     Map<String, String> usage = super.usage();
-    usage.put("--sleep <millis>",
-        "Number of milliseconds to sleep in each run. Default is 10 ms.");
+    usage.put("--sleep <millis>",  "Number of milliseconds to sleep in each run. Default is 10 ms.");
     return usage;
   }
 
@@ -40,16 +42,14 @@ public class SleepBenchmark extends SimpleBenchmark {
                   throws BenchmarkException {
                 try {
                   if (isVerbose()) {
-                    System.out.println(getName() + " " + agentId +
-                        " going to sleep for " + sleep + " ms for the " +
-                        iteration + ". time." );
+                    System.out.println(getName() + " " + agentId + " going to sleep for " + sleep + " ms for the " +
+                        iteration + ". time.");
                   }
                   Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
-                  System.out.println(getName() + " " + agentId +
-                      " interrupted when sleeping for the " + iteration +
-                      ". time." );
+                  System.out.println(getName() + " " + agentId + " interrupted when sleeping for the " + iteration
+                                       + ". time.");
                 }
                 return 1L;
               }

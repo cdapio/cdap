@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+/**
+ * Abstract class for benchmarks that use Opex.
+ */
 public abstract class OpexBenchmark extends SimpleBenchmark {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpexBenchmark.class);
@@ -55,11 +58,11 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
     } else {
       // consider opexName the class name of an opex provider
       // if it is not a fully qualified class name, add package to it
-      if (!opexName.startsWith("com.continuuity"))
+      if (!opexName.startsWith("com.continuuity")) {
         opexName = this.getClass().getPackage().getName() + "." + opexName;
+      }
       try {
-        this.opexProvider =
-            (OpexProvider)Class.forName(opexName).newInstance();
+        this.opexProvider = (OpexProvider) Class.forName(opexName).newInstance();
       } catch (Exception e) {
         throw new BenchmarkException(
             "Cannot instantiate opex provider '" + opexName + "': " +

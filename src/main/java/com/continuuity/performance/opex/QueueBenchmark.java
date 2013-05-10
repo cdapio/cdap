@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * Benchmark implementation that tests the queue operations enqueue and dequeue.
+ */
 public class QueueBenchmark extends OpexBenchmark {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueueBenchmark.class);
