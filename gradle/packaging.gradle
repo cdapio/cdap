@@ -10,7 +10,6 @@ subprojects {
   task ('prepackager', dependsOn : ['build']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
-    //def confDir = file("$stageDir/etc/continuuity/conf.dist")
 
     doLast {
       copy {
@@ -41,14 +40,8 @@ subprojects {
   task ('debianPrepackager', dependsOn: ['prepackager']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
-    //def confDir = file("$stageDir/etc/continuuity/conf.dist")
 
     doLast {
-      //copy {
-      //  from "$rootProject.projectDir/distributions/src/debian/conf.dist/continuuity-site.xml"
-      //  into "${confDir}"
-      //}
-
       copy {
         from "$rootProject.projectDir/distributions/src/LICENSE.txt"
         into "${installDir}"
@@ -59,14 +52,8 @@ subprojects {
   task ('rpmPrepackager', dependsOn: ['prepackager']) {
     def stageDir = file("$buildDir/stage-packaging")
     def installDir = file("$stageDir/opt/continuuity/$project.name")
-    //def confDir = file("$stageDir/etc/continuuity/conf.dist")
 
     doLast {
-      //copy {
-      //  from "$rootProject.projectDir/distributions/src/rpm/conf.dist/continuuity-site.xml"
-      //  into "${confDir}"
-      //}
-
       copy {
         from "$rootProject.projectDir/distributions/src/LICENSE.txt"
         into "${installDir}"
