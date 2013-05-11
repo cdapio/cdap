@@ -34,6 +34,10 @@ dependencies {
   compile libraries.flume_ng_sdk
 }
 
+test {
+    jvmArgs '-Xmx2048m'
+}
+
 /**
  * Exclude any config xml from jar task
  */
