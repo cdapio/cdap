@@ -474,30 +474,28 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
-      if (!this.rows.hasNext()) {
-        return null;
-      }
-
       Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
       Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = null;
-      boolean done = false;
-      while(!done){
-        if (this.rows.hasNext()){
-          rowEntry = this.rows.next();
-          for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
-            if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue() )) {
-              continue;
-            }
-            ImmutablePair<Long, byte[]> latest = filteredLatest(colEntry.getValue(), readPointer);
-            if (latest != null){
-              columns.put(colEntry.getKey().getValue(),latest.getSecond());
-            }
+      boolean gotNext = false;
+
+      while(!gotNext){
+        if (!this.rows.hasNext()){
+          break;
+        }
+        rowEntry = this.rows.next();
+        //Try to read all columns for this row
+        for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
+          if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue() )) {
+            continue;
           }
-          if ( columns.size() > 0 ) {
-            done =  true;
+          ImmutablePair<Long, byte[]> latest = filteredLatest(colEntry.getValue(), readPointer);
+          if (latest != null){
+            columns.put(colEntry.getKey().getValue(),latest.getSecond());
           }
-        } else {
-          done = true;
+        }
+        if ( columns.size() > 0 ) {
+          //there is alteast one valid col for row. Exit the loop. If not try next row
+          gotNext =  true;
         }
       }
       if ( columns.size() > 0) {
