@@ -52,7 +52,6 @@ public class DataSetTestBase {
     // use Guice to inject an in-memory opex
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
-      // Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
     fabric = new DataFabricImpl(opex, OperationUtil.DEFAULT);

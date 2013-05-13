@@ -7,7 +7,10 @@ import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.List;
 
-
+/**
+ * This adds ordering of keys to the versioned columnar tables. Keys are ordered in ascending lexicographic byte
+ * order. The table (or a subrange of the table) can then be scanned in the order of the keys.
+ */
 public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
 
   /**

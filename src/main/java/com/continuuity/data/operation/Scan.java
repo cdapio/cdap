@@ -11,7 +11,7 @@ public class Scan extends ReadOperation {
   private final String table;
 
   // the start and the end of the input range
-  private final byte[] start, stop;
+  private final byte[] startRow, stopRow;
 
   // the columns to read
   private final byte[][] columns;
@@ -27,11 +27,11 @@ public class Scan extends ReadOperation {
   /**
    * Scan a range of rows in a table.
    * @param table the table name
-   * @param start the start of the range, or null to include all rows from the beginning
-   * @param stop the end of the range or null to include all rows up to the end
+   * @param startRow the start of the range, or null to include all rows from the beginning
+   * @param stopRow the end of the range or null to include all rows up to the end
    */
-  public Scan(String table, byte[] start, byte[] stop) {
-    this(table, start, stop, null);
+  public Scan(String table, byte[] startRow, byte[] stopRow) {
+    this(table, startRow, stopRow, null);
   }
 
   /**
@@ -46,14 +46,14 @@ public class Scan extends ReadOperation {
   /**
    * Scan a range of rows in a table, reading only a subset of the columns.
    * @param table the table name
-   * @param start the start of the range, or null to include all rows from the beginning
-   * @param stop the end of the range or null to include all rows up to the end
+   * @param startRow the start of the range, or null to include all rows from the beginning
+   * @param stopRow the end of the range or null to include all rows up to the end
    * @param columns the columns to read
    */
-  public Scan(String table, byte[] start, byte[] stop, byte[][] columns) {
+  public Scan(String table, byte[] startRow, byte[] stopRow, byte[][] columns) {
     this.table = table;
-    this.start = start;
-    this.stop = stop;
+    this.startRow = startRow;
+    this.stopRow = stopRow;
     this.columns = columns;
   }
 
@@ -61,12 +61,12 @@ public class Scan extends ReadOperation {
     return table;
   }
 
-  public byte[] getStart() {
-    return start;
+  public byte[] getStartRow() {
+    return startRow;
   }
 
-  public byte[] getStop() {
-    return stop;
+  public byte[] getStopRow() {
+    return stopRow;
   }
 
   public byte[][] getColumns() {
@@ -75,11 +75,20 @@ public class Scan extends ReadOperation {
 
   @Override
   public String toString() {
+    StringBuilder builder = new StringBuilder();
+    char sep = '[';
+    for (byte[] column : this.columns) {
+      builder.append(sep);
+      builder.append(new String(column));
+      sep = ',';
+    }
+    builder.append(']');
+    String columnsStr = builder.toString();
     return "Scan{" +
       "table='" + table + '\'' +
-      ", start=" + Arrays.toString(start) +
-      ", stop=" + Arrays.toString(stop) +
-      ", columns=" + Arrays.toString(columns) +
+      ", startRow=" + Arrays.toString(startRow) +
+      ", stop=" + Arrays.toString(stopRow) +
+      ", columns=" + columnsStr +
       '}';
   }
 }

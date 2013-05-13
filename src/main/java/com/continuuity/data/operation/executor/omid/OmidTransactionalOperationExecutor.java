@@ -1018,7 +1018,7 @@ public class OmidTransactionalOperationExecutor
     long begin = begin();
     ReadPointer pointer = transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, scan.getTable());
-    Scanner scanner = table.scan(scan.getStart(), scan.getStop(), scan.getColumns(), pointer);
+    Scanner scanner = table.scan(scan.getStartRow(), scan.getStopRow(), scan.getColumns(), pointer);
     end(REQ_TYPE_SCAN_LATENCY, begin);
     dataSetMetric_read(scan.getMetricName());
     return scanner;

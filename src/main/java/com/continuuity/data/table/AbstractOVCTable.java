@@ -14,12 +14,20 @@ import java.util.List;
 public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable {
 
   /**
-   * Fallback implementation of getSplits, @see #primitiveGetSplits()
+   * Fallback implementation of getSplits, @see #primitiveGetSplits().
    */
   @Override
   public List<KeyRange> getSplits(int numSplits, byte[] start, byte[] stop, byte[][] columns, ReadPointer pointer) {
     return primitiveGetSplits(numSplits, start, stop);
   }
+
+  /**
+   * If the number of splits is not given, and we have no hints from the table structure (that can be implemented in
+   * overriding implementations, though), the primitive getSplits methos will return up to this many splits. Note that
+   * we cannot read this number from configuration, because the current OVCTable(Handle) does not pass configuration
+   * down into the tables anywhere. See ENG-2395 for the fix.
+   */
+  static final int DEFAULT_NUMBER_OF_SPLITS = 8;
 
   /**
    * Simplest possible implementation of getSplits. Takes the given start and end and divides the key space in
@@ -31,7 +39,7 @@ public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable 
       return Collections.emptyList();
     }
     if (numSplits <= 0) {
-      numSplits = 8;
+      numSplits = DEFAULT_NUMBER_OF_SPLITS;
     }
     // for simplicity, we construct a long from the begin and end, divide the resulting long range into approximately
     // even splits, and convert the boundaries back to nyte array keys.
@@ -60,11 +68,13 @@ public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable 
     return ranges;
   }
 
-  // helper method to approximate a row key as a long value
+  // helper method to approximate a row key as a long value. Takes the first 7 bytes from the key and prepends a 0x0;
+  // if the key is less than 7 bytes, pads it with zeros to the right.
   static long longForKey(byte[] key, boolean isStop) {
     if (key == null) {
       return isStop ? 0xffffffffffffffL : 0L;
     } else {
+      // leading zero helps avoid negative long values for keys beginning with a byte > 0x80
       final byte[] leadingZero = { 0x00 };
       byte[] x;
       if (key.length >= Bytes.SIZEOF_LONG - 1) {
@@ -76,7 +86,10 @@ public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable 
     }
   }
 
-  // helper method to convert a long approximation of a long key into a range bound
+  // helper method to convert a long approximation of a long key into a range bound.
+  // the following invariant holds: keyForBound(longForKey(key)) == removeTrailingZeros(key).
+  // removing the trailing zeros is ok in the context that this is used (only for split bounds)
+  // this is called keyForBound on purpose, and not keyForLong.
   static byte[] keyForBound(long value) {
     byte[] bytes = Bytes.tail(Bytes.toBytes(value), Bytes.SIZEOF_LONG - 1);
     int lastNonZero = bytes.length - 1;

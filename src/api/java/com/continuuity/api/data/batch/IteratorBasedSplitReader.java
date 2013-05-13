@@ -23,7 +23,7 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
    * @return an instance of {@link Iterator}
    * @throws OperationException if there's an error during reading the split
    */
-  protected abstract Iterator<VALUE> createIterator(final Split split) throws OperationException;
+  protected abstract Iterator<VALUE> createIterator(Split split) throws OperationException;
 
   /**
    * Gets key from the given value provided by iterator.

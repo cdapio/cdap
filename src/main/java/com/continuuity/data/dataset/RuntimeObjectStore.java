@@ -23,7 +23,7 @@ import java.util.List;
  * implementations of the data APIs.
  * @param <T> the type of the objects in the store
  */
-public final class ObjectStoreImpl<T> extends ObjectStore<T> {
+public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   private final DatumWriter<T> datumWriter; // to serialize an object
   private final ReflectionDatumReader<T> datumReader; // to deserialize an object
@@ -35,7 +35,7 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
    * @param <T> the type of the objects in the store
    */
   static <T> void setImplementation(ObjectStore<T> store, @Nullable ClassLoader loader) {
-    ObjectStoreImpl<T> impl = new ObjectStoreImpl<T>(store, loader);
+    RuntimeObjectStore<T> impl = new RuntimeObjectStore<T>(store, loader);
     store.setDelegate(impl);
   }
 
@@ -45,7 +45,7 @@ public final class ObjectStoreImpl<T> extends ObjectStore<T> {
    * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
    *               If null, then the default class loader is used.
    */
-  protected ObjectStoreImpl(ObjectStore<T> store, @Nullable ClassLoader loader) {
+  protected RuntimeObjectStore(ObjectStore<T> store, @Nullable ClassLoader loader) {
     super(store);
     this.typeRep.setClassLoader(loader);
     this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
