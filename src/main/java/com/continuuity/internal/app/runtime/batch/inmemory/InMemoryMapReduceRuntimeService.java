@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.base.Cancellable;
@@ -113,7 +114,8 @@ public class InMemoryMapReduceRuntimeService implements MapReduceRuntimeService 
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext)
+    throws OperationException {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getInputDataset() != null) {
