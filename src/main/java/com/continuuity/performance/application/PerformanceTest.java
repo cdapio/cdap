@@ -2,7 +2,6 @@ package com.continuuity.performance.application;
 
 import com.continuuity.performance.benchmark.StreamRunner;
 import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.performance.RemoteAppFabricTestBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
