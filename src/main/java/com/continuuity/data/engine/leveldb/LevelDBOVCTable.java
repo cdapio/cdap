@@ -9,6 +9,8 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -713,44 +715,6 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
-    throws OperationException {
-    DBIterator iterator = db.iterator();
-    iterator.seek(createStartKey(row, column));
-    long lastDelete = -1;
-    long undeleted = -1;
-
-    while (iterator.hasNext()) {
-      byte[] key = iterator.peekNext().getKey();
-      byte[] value = iterator.peekNext().getValue();
-
-      KeyValue kv = createKeyValue(key, value);
-      long curVersion = kv.getTimestamp();
-
-      if (!readPointer.isVisible(curVersion)) {
-        continue;
-      }
-      Type type = Type.codeToType(kv.getType());
-
-      if (type == Type.Delete) {
-        lastDelete = curVersion;
-      } else if (type == Type.UndeleteColumn) {
-        undeleted = curVersion;
-      } else if (type == Type.DeleteColumn) {
-        if (undeleted != curVersion) {
-          break;
-        }
-      } else if (type == Type.Put) {
-        if (curVersion != lastDelete) {
-          // If we get here, this version is visible
-          return new OperationResult<byte[]>(value);
-        }
-      }
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
   // Private Helper Methods
 
   private void performInsert(byte[] row, byte[] column, long version, Type type, byte[] value)
@@ -909,5 +873,115 @@ public class LevelDBOVCTable extends AbstractOVCTable {
       e.getMessage() + ")";
     LOG.error(msg, e);
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
+
+  /**
+   * Scanner on top of levelDB dbiterator.
+   */
+  public class LevelDBScanner implements Scanner {
+
+    private final DBIterator iterator;
+    private final byte [] endRow;
+    private final ReadPointer readPointer;
+
+    public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow) {
+     this(iterator, startRow, endRow,null);
+    }
+
+    public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow, ReadPointer readPointer) {
+      this.iterator = iterator;
+      this.iterator.seek(createStartKey(startRow));
+      this.endRow = endRow;
+      this.readPointer = readPointer;
+    }
+
+    private boolean isVisible(KeyValue keyValue) {
+      if ( readPointer != null && !readPointer.isVisible(keyValue.getTimestamp())) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      //From the current iterator do one of the following:
+      // a) get all columns for current visible row if it is not the endRow
+      // b) return null if we have reached endRow
+      // c) return null if there are no more entries
+
+      long lastDelete = -1;
+      long undeleted = -1;
+      byte[] lastRow = new byte[0];
+
+      Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+      boolean gotNext = false;
+      while(!gotNext) {
+        if (!iterator.hasNext()) {
+          //No more items. Break.
+          break;
+        }
+
+        Map.Entry<byte[], byte[]> entry = iterator.peekNext();
+        KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
+
+        if (Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
+          //already reached the end. So break.
+          break;
+        }
+
+        if(!Bytes.equals(lastRow, keyValue.getRow())) {
+          lastDelete = -1;
+          undeleted = -1;
+          if (columnValues.size() > 0 ){
+            //If we have reached here. We have read all columns for a single row - since current row is not the same
+            // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
+            break;
+          }
+        }
+
+        lastRow = keyValue.getRow();
+
+        if (!isVisible(keyValue)) {
+          continue;
+        }
+
+        long curVersion = keyValue.getTimestamp();
+        Type type = Type.codeToType(keyValue.getType());
+
+        if (type == Type.Delete) {
+          lastDelete = curVersion;
+        } else if (type == Type.UndeleteColumn) {
+          undeleted = curVersion;
+        } else if (type == Type.DeleteColumn) {
+          if (undeleted != curVersion) {
+            break;
+          }
+        } else if (type == Type.Put) {
+          if (curVersion != lastDelete) {
+            // If we get here, this version is visible - so add it!
+            columnValues.put(keyValue.getQualifier(), keyValue.getValue());
+          }
+        }
+        iterator.next();
+      }
+      if (columnValues.size() == 0) {
+        return null;
+      } else {
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow,columnValues);
+
+      }
+    }
+
+
+    @Override
+    public void close() {
+      try {
+        iterator.close();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 }

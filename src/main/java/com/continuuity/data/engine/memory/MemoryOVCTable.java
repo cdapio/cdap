@@ -392,40 +392,6 @@ public class MemoryOVCTable extends AbstractOVCTable {
     }
   }
 
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
-    throws OperationException {
-
-    RowLockTable.Row r = new RowLockTable.Row(row);
-
-    Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> ceilEntry = this.map.ceilingEntry(r);
-
-    if (ceilEntry == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-
-    RowLockTable.Row lockedRow = ceilEntry.getKey();
-
-    NavigableMap<Column, NavigableMap<Version, Value>> map = getAndLockExistingRow(lockedRow);
-    if (map == null) {
-      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-    }
-    try {
-      byte[] ret = null;
-      NavigableMap<Version, Value> columnMap = getColumn(map, column);
-      ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
-      if (latest != null) {
-        ret = latest.getSecond();
-      }
-      if (ret == null) {
-        return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-      } else {
-        return new OperationResult<byte[]>(ret);
-      }
-    } finally {
-      this.locks.unlock(lockedRow);
-    }
-  }
 
   private boolean isEmpty(byte[] column) {
     return column == null || column.length == 0;
@@ -466,12 +432,13 @@ public class MemoryOVCTable extends AbstractOVCTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    return scan(startRow, stopRow, null, readPointer);
+    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet
+      ().iterator(), readPointer);
   }
 
   @Override
   public Scanner scan(ReadPointer readPointer) {
-    return scan(null, null, null, readPointer);
+    return new MemoryScanner(this.map.entrySet().iterator(), readPointer);
   }
 
   @Override
@@ -521,21 +488,35 @@ public class MemoryOVCTable extends AbstractOVCTable {
 
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
-      if (!this.rows.hasNext()) {
+      Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+      Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = null;
+      boolean gotNext = false;
+
+      while(!gotNext){
+        if (!this.rows.hasNext()){
+          break;
+        }
+        rowEntry = this.rows.next();
+        //Try to read all columns for this row
+        for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
+          if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue() )) {
+            continue;
+          }
+          ImmutablePair<Long, byte[]> latest = filteredLatest(colEntry.getValue(), readPointer);
+          if (latest != null){
+            columns.put(colEntry.getKey().getValue(),latest.getSecond());
+          }
+        }
+        if ( columns.size() > 0 ) {
+          //there is alteast one valid col for row. Exit the loop. If not try next row
+          gotNext =  true;
+        }
+      }
+      if ( columns.size() > 0) {
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey().getValue(), columns);
+      } else {
         return null;
       }
-      Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = this.rows.next();
-      Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-      for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
-        if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue())) {
-          continue;
-        }
-        byte[] value = filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
-        if (value != null) {
-          columns.put(colEntry.getKey().getValue(), value);
-        }
-      }
-      return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey().getValue(), columns);
     }
 
     @Override

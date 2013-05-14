@@ -8,6 +8,7 @@ import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -1085,32 +1086,6 @@ public abstract class TestOVCTable {
     }
   }
 
-  @Test
-  public void testCeilValue() throws OperationException {
-    final byte[] col = Bytes.toBytes("c");
-    final int MAX = 10;
-
-    byte [] [] rows = new byte[MAX][];
-    byte [] [] cols = new byte[MAX][];
-    byte [] [] values = new byte[MAX][];
-
-    for ( int i = 0; i<MAX;i++) {
-      rows[i] = Bytes.toBytes(100*i);
-      cols[i] = col;
-      values[i] = Bytes.toBytes(100*i);
-    }
-    this.table.put(rows, cols, 1L, values);
-
-    byte [] testRow = Bytes.toBytes(90);
-    OperationResult<byte []> result = this.table.getCeilValue(testRow,col,RP_MAX);
-    assertFalse(result.isEmpty());
-    assertEquals(100, Bytes.toInt(result.getValue()) );
-
-    byte [] testNonExistingRow = Bytes.toBytes(1000);
-    result = this.table.getCeilValue(testNonExistingRow,col,RP_MAX);
-    assertTrue(result.isEmpty());
-
-  }
 
   @Test
   public void testCompareAndSwapDirty() throws OperationException {
@@ -1232,5 +1207,219 @@ public abstract class TestOVCTable {
     Map<byte[], Long> value = this.table.increment(row, new byte[][]{ c1 }, new long[]{ 4L }, outside,
                                                    outside.getMaximum());
     assertEquals(new Long(4L), value.get(c1));
+  }
+
+
+
+  @Test
+  public void testScan() throws OperationException {
+    final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(100));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(150));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(100, firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[], byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+     }
+    }
+
+    assertEquals(50,count); // checks if we got required amount of entry
+    assertEquals(149,lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+  @Test
+  public void testScanMid() throws OperationException {
+    final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(150));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(175));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(150,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(25, count); // checks if we got required amount of entry
+    assertEquals(174, lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+  @Test
+  public void testScanNoResult() throws OperationException {
+    final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(210));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(250));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+    assertTrue(scanner != null);
+
+    int count = 0;
+    while(scanner.next() != null) {
+      count++;
+    }
+
+    assertEquals(0,count);
+  }
+
+  @Test
+  public void testScanWithDeletes() throws OperationException {
+    final byte [] row = "scanTestsWithDeletes".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] deleteKey1 = Bytes.add(row, Bytes.toBytes(101));
+    byte [] deleteKey2 = Bytes.add(row, Bytes.toBytes(130));
+    byte [] deleteKey3 = Bytes.add(row, Bytes.toBytes(148));
+    byte [] deleteKey4 = Bytes.add(row, Bytes.toBytes(150));
+
+
+    this.table.delete(deleteKey1, col, tx.getWriteVersion());
+    this.table.delete(deleteKey2, col, tx.getWriteVersion());
+    this.table.delete(deleteKey3, col, tx.getWriteVersion());
+    this.table.delete(deleteKey4, col, tx.getWriteVersion());
+
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(100));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(150));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(100, firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(47,count);
+    assertEquals(149,lastEntry);
+  }
+
+  @Test
+  public void testScansWithMultipleColumns() throws OperationException{
+    final byte [] row = "scanTestsWithTwoColumns".getBytes(Charsets.UTF_8);
+    final byte [] col1 = "c1".getBytes(Charsets.UTF_8);
+    final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col1, tx.getWriteVersion(), Bytes.toBytes(i));
+      this.table.put(rowKey, col2, tx.getWriteVersion(), Bytes.toBytes(2*i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(100));
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(150));
+
+    OperationResult<Map<byte[], byte[]>> result = this.table.get(startRow, tx.getReadPointer());
+
+    assertEquals(100,Bytes.toInt(result.getValue().get(col1)));
+    assertEquals(200,Bytes.toInt(result.getValue().get(col2)));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+    assertTrue(scanner != null);
+
+    ImmutablePair<byte[], Map<byte[], byte[]>> firstResult = scanner.next();
+
+    int firstColEntry = Bytes.toInt(firstResult.getSecond().get(col1));
+    assertEquals(100, firstColEntry);
+
+    int secondColEntry = Bytes.toInt(firstResult.getSecond().get(col2));
+    assertEquals(200, secondColEntry);
+
+    int count = 1;  //count is set to one since we already read one entry
+    int lastEntryCol1 = -1 ;
+    int lastEntryCol2 = -1 ;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntryCol1 = Bytes.toInt(r.getSecond().get(col1));
+        lastEntryCol2 = Bytes.toInt(r.getSecond().get(col2));
+        assertEquals(2*lastEntryCol1, lastEntryCol2);
+        count++;
+      }
+    }
+
+    assertEquals(50, count);
+    assertEquals(149, lastEntryCol1);
+    assertEquals(2*149, lastEntryCol2);
   }
 }

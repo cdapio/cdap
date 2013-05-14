@@ -7,7 +7,9 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -915,62 +917,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
-    throws OperationException {
 
-    Scan scan = new Scan(row);
-    try {
-      ResultScanner scanner = this.readTable.getScanner(scan);
-      Result result;
-      boolean fastForwardToNextColumn = false;  // due to DeleteAll tombstone
-      boolean fastForwardToNextRow = false;
-      byte[] previousRow = null;
-      byte[] previousColumn = null;
-      Set<Long> deletedCellsWithinRow = Sets.newHashSet();
-      int skippedRow = 0;
-
-      while ((result = scanner.next()) != null) {
-        for (KeyValue kv : result.raw()) {
-          byte[] rowKey = kv.getRow();
-          if (Bytes.equals(previousRow, row) && fastForwardToNextRow) {
-            continue;
-          }
-          fastForwardToNextRow = false;
-          if (Bytes.equals(previousColumn, column) && fastForwardToNextColumn) {
-            continue;
-          }
-          fastForwardToNextColumn = false;
-          long version = kv.getTimestamp();
-          if (!readPointer.isVisible(version)) {
-            continue;
-          }
-          if (deletedCellsWithinRow.contains(version)) {
-            deletedCellsWithinRow.remove(version);
-            continue;
-          }
-          byte[] value = kv.getValue();
-          byte typePrefix = value[0];
-          if (typePrefix == DATA) {
-            //found row with at least one cell with DATA
-            return new OperationResult<byte[]>(removeTypePrefix(value));
-          }
-          if (typePrefix == DELETE_ALL) {
-            fastForwardToNextColumn = true;
-            deletedCellsWithinRow.clear();
-          }
-          if (typePrefix == DELETE_VERSION) {
-            deletedCellsWithinRow.add(version);
-          }
-          previousColumn = column;
-          previousRow = row;
-        }
-      }
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
 
   /**
    * Interface to handle exceptions from HBase.
@@ -1035,6 +982,80 @@ public class HBaseOVCTable extends AbstractOVCTable {
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    }
+  }
+
+  public class HBaseScanner implements Scanner {
+
+    private final ResultScanner scanner ;
+    private final ReadPointer readPointer;
+
+    public HBaseScanner(ResultScanner scanner) {
+      this(scanner,null);
+    }
+
+    private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
+      this.scanner = scanner;
+      this.readPointer = readPointer;
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      if (scanner == null) {
+        return null;
+      }
+
+      try {
+
+        Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        byte [] rowKey = null;
+        boolean gotNext = false;
+
+        while(!gotNext) {
+          Result result = scanner.next();
+          if(result == null) {
+            gotNext = true;
+          } else {
+            Set<Long> deleted = Sets.newHashSet();
+            for (KeyValue kv : result.raw()) {
+              long version = kv.getTimestamp();
+              if ((readPointer != null && !readPointer.isVisible(version)) ||
+                deleted.contains(version)) {
+                continue;
+              }
+              byte[] value = kv.getValue();
+              byte typePrefix = value[0];
+              switch (typePrefix) {
+                case DATA:
+                  colValue.put(kv.getQualifier(), removeTypePrefix(kv.getValue()));
+                  rowKey = kv.getKey();
+                  break;
+                case DELETE_VERSION:
+                  deleted.add(version);
+                  break;
+                case DELETE_ALL:
+                  return null;
+              }
+            }
+            if (rowKey != null ){
+              gotNext = true;
+            }
+          }
+        }
+
+        if (rowKey == null) {
+          return null;
+        } else {
+          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+      scanner.close();
     }
   }
 }

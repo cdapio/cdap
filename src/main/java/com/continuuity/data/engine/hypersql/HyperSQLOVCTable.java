@@ -9,6 +9,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -876,38 +878,6 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     throw new UnsupportedOperationException("Scans currently not supported");
   }
 
-  @Override
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer readPointer)
-    throws OperationException {
-    PreparedStatement ps = null;
-    try {
-      ps = this.connection.prepareStatement("SELECT  version, kvtype, rowKey, value " +
-                                              "FROM " + this.quotedTableName + " " +
-                                              "WHERE rowkey >= ? AND column = ? " +
-                                              "ORDER BY rowKey ASC LIMIT 1");
-      ps.setBytes(1, row);
-      ps.setBytes(2, column);
-      ResultSet result = ps.executeQuery();
-
-      ImmutablePair<Long, byte[]> latest = filteredLatest(result, readPointer);
-      if (latest == null) {
-        return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-      } else {
-        return new OperationResult<byte[]>(latest.getSecond());
-      }
-    } catch (SQLException e) {
-      throw createOperationException(e, "select", ps);
-    } finally {
-      if (ps != null) {
-        try {
-          ps.close();
-        } catch (SQLException e) {
-          throw createOperationException(e, "close");
-        }
-      }
-    }
-  }
-
   // Private Helper Methods
 
   private void performInsert(byte[] row, byte[] column, long version, Type type, byte[] value)
@@ -1260,5 +1230,126 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     return new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
 
+  /**
+   * Implements Scanner using a ResultSet
+   * The current implementation first reads all value from result set and stores it in memory
+   * The resultSet expects the following values to be present
+   *
+   * - rowkey(index=1), column(index=2), version(index=3), kvtype(index=4), id(index=5), value(index=6)
+   */
+  public class ResultSetScanner implements  Scanner {
+
+    private Map<byte[], Map<byte[], byte[]>> rowColumnValueMap = new TreeMap<byte[],
+      Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
+    private Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> rowColumnValueIterator;
+
+    public ResultSetScanner(ResultSet resultSet) {
+      this(resultSet, null);
+    }
+
+    public ResultSetScanner(ResultSet resultSet, ReadPointer readPointer) {
+      populateRowColumnValueMap(resultSet,readPointer);
+      rowColumnValueIterator = this.rowColumnValueMap.entrySet().iterator();
+    }
+
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+      if (rowColumnValueIterator.hasNext()){
+        Map.Entry<byte[], Map<byte[], byte[]>> entry  = rowColumnValueIterator.next();
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(entry.getKey(),entry.getValue());
+      } else {
+        return null;
+      }
+    }
+
+    private void populateRowColumnValueMap(ResultSet result, ReadPointer readPointer) {
+
+      try {
+        if (result == null ) {
+          return;
+        }
+
+        byte [] lastRow = new byte[0];
+        byte [] curCol = new byte [0];
+        byte [] lastCol = new byte [0];
+        byte [] curRow = new byte[0];
+        long lastDelete = -1;
+        long undeleted = -1;
+
+        while (result.next()) {
+          long curVersion = result.getLong(3);
+
+          if (readPointer != null && !readPointer.isVisible(curVersion)) {
+            continue;
+          }
+
+          byte[] row = result.getBytes(1);
+
+          // See if this is a new row (clear col/del tracking if so)
+          if (!Bytes.equals(curRow, row)) {
+            lastCol = new byte[0];
+            curCol = new byte[0];
+            lastDelete = -1;
+            undeleted = -1;
+          }
+
+          curRow = row;
+
+          byte[] column = result.getBytes(2);
+          // Check if this column has been completely deleted
+          if (Bytes.equals(lastCol, column)) {
+            continue;
+          }
+
+          // Check if this is a new column, reset delete pointers if so
+          if (!Bytes.equals(curCol, column)) {
+            curCol = column;
+            lastDelete = -1;
+            undeleted = -1;
+          }
+
+          // Check if type is a delete and execute accordingly
+          Type type = Type.from(result.getInt(4));
+          if (type.isUndeleteAll()) {
+            undeleted = curVersion;
+            continue;
+          }
+
+          if (type.isDeleteAll()) {
+            if (undeleted == curVersion) {
+              continue;
+            } else {
+              // The rest of this column has been deleted, act like we returned it
+              lastCol = column;
+              continue;
+            }
+          }
+          if (type.isDelete()) {
+            lastDelete = curVersion;
+            continue;
+          }
+          if (curVersion == lastDelete) {
+            continue;
+          }
+          // Column is valid, therefore row is valid, add row
+          lastRow = row;
+
+          Map<byte[], byte[]> colMap = rowColumnValueMap.get(row);
+          if(colMap == null) {
+            colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+            rowColumnValueMap.put(row, colMap);
+          }
+          colMap.put(column, result.getBytes(6));
+        }
+      }
+      catch(SQLException e){
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+    }
+  }
 
 }

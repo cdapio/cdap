@@ -59,20 +59,6 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
   public Scanner scan(ReadPointer readPointer);
 
   /**
-   * Gets the value associated with the least key that is greater than or equal to the given row for
-   * the specified column. Returns empty OperationResult if there is no such value.
-   *
-   * @param row
-   * @param column
-   * @param readPointer
-   * @return Value  of the column that corresponds to the least key that is greater than or equal to
-   * given row. Returns empty OperationResult if there is no such value. Never returns null.
-   * @throws OperationException
-   */
-  public OperationResult<byte[]> getCeilValue(byte[] row, byte[] column, ReadPointer
-    readPointer) throws OperationException;
-
-  /**
    * Returns a list of key ranges that partition the table into approximately evenly sized ranges. If a start or a
    * stop row key are given, then they limit the range covered by the partitions. If a list of columns is given,
    * then they are a hint for the partitioning that only these columns will be read. If a number of splits is

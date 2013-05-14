@@ -1,8 +1,13 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.hbase.ttqueue.HBQEntryPointer;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * A pointer which completely addresses an entry in a queue.
@@ -83,5 +88,22 @@ public class QueueEntryPointer {
 
   public HBQEntryPointer toHBQ() {
     return new HBQEntryPointer(entryId, shardId);
+  }
+
+  /**
+   * Serialize QueueEntry into byte array
+   * @return serialized byte array containing entryId, shardId and queueName
+   */
+  public byte [] getBytes() {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    BinaryEncoder binaryEncoder = new BinaryEncoder(bos);
+    try {
+      binaryEncoder.writeLong(this.entryId);
+      binaryEncoder.writeLong(this.shardId);
+      binaryEncoder.writeBytes(this.queueName);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    return bos.toByteArray();
   }
 }
