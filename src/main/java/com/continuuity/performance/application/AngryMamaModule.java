@@ -28,8 +28,6 @@ import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
-import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
-import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
@@ -95,9 +93,6 @@ public class AngryMamaModule extends AbstractModule {
     // Bind runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
 
-    // Bind MapReduce runtime service
-    bind(MapReduceRuntimeService.class).to(InMemoryMapReduceRuntimeService.class).in(Scopes.SINGLETON);
-
     bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
 
     bind(LocationFactory.class).to(LocalLocationFactory.class);
@@ -113,8 +108,8 @@ public class AngryMamaModule extends AbstractModule {
       @Override
       protected void configure() {
         install(new FactoryModuleBuilder()
-                .implement(DataFabricFacade.class, SmartDataFabricFacade.class)
-                .build(DataFabricFacadeFactory.class));
+                  .implement(DataFabricFacade.class, SmartDataFabricFacade.class)
+                  .build(DataFabricFacadeFactory.class));
 
         expose(DataFabricFacadeFactory.class);
       }
@@ -122,8 +117,8 @@ public class AngryMamaModule extends AbstractModule {
 
     // For Binding queue stuff
     install(new FactoryModuleBuilder()
-            .implement(QueueReader.class, SingleQueueReader.class)
-            .build(QueueReaderFactory.class));
+              .implement(QueueReader.class, SingleQueueReader.class)
+              .build(QueueReaderFactory.class));
 
     // For binding IO stuff
     install(new IOModule());
@@ -133,15 +128,15 @@ public class AngryMamaModule extends AbstractModule {
   @Singleton
   private static final class InMemoryFlowProgramRunnerFactory implements ProgramRunnerFactory {
 
-    private final Map<Type, Provider<ProgramRunner>> providers;
+    private final Map<ProgramRunnerFactory.Type, Provider<ProgramRunner>> providers;
 
     @Inject
-    private InMemoryFlowProgramRunnerFactory(Map<Type, Provider<ProgramRunner>> providers) {
+    private InMemoryFlowProgramRunnerFactory(Map<ProgramRunnerFactory.Type, Provider<ProgramRunner>> providers) {
       this.providers = providers;
     }
 
     @Override
-    public ProgramRunner create(Type programType) {
+    public ProgramRunner create(ProgramRunnerFactory.Type programType) {
       Provider<ProgramRunner> provider = providers.get(programType);
       Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
       return provider.get();
