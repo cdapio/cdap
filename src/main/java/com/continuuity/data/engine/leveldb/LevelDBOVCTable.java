@@ -702,7 +702,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
+    return new LevelDBScanner(db.iterator(), startRow, stopRow, readPointer);
   }
 
   @Override

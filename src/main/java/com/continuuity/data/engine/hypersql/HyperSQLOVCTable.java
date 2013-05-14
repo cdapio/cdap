@@ -865,8 +865,31 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
+                                               this.quotedTableName + "  "+ "WHERE rowKey >= ? AND "   +
+                                               "rowKey < ? "  + " " + "ORDER BY rowKey, column ASC," +
+                                               "version DESC, kvtype ASC, id DESC");
+      ps.setBytes(1, startRow);
+      ps.setBytes(2, stopRow);
+
+      ResultSet resultSet = ps.executeQuery();
+      return new ResultSetScanner(resultSet, readPointer);
+
+    } catch(SQLException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      if (ps!=null){
+        try {
+          ps.close();
+        } catch (SQLException e){
+          throw Throwables.propagate(e);
+        }
+      }
+    }
   }
+
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
