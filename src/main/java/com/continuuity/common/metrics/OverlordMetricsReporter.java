@@ -121,9 +121,9 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     // the clients to do the check at random max times when max backoff
     // is reached.
     BACKOFF_MAX_TIME = BACKOFF_MIN_TIME +
-        (int)(Math.random() * (BACKOFF_MAX_TIME - BACKOFF_MIN_TIME) + 1);
+        (int) (Math.random() * (BACKOFF_MAX_TIME - BACKOFF_MIN_TIME) + 1);
 
-    if(reporter == null) {
+    if (reporter == null) {
       reporter = new OverlordMetricsReporter(
         Metrics.defaultRegistry(), configuration
       );
@@ -135,9 +135,9 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    * Clears metrics for a given name.
    */
   public static synchronized void clear(String name) {
-    for(Map.Entry<MetricName, Metric> entry :
+    for (Map.Entry<MetricName, Metric> entry :
       Metrics.defaultRegistry().allMetrics().entrySet()) {
-      if(entry.getKey().getGroup().contains(name)) {
+      if (entry.getKey().getGroup().contains(name)) {
         Metrics.defaultRegistry().removeMetric(entry.getKey());
       }
     }
@@ -147,7 +147,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    * Disables the overlord metric reporter.
    */
   public static synchronized void disable() {
-    if(reporter != null) {
+    if (reporter != null) {
       reporter.shutdown();
       reporter = null;
     }
@@ -180,10 +180,22 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    * @return MetricsRegistry
    */
   public static MetricsRegistry getRegistry() {
-    if(reporter != null) {
+    if (reporter != null) {
       reporter.getMetricsRegistry();
     }
     return null;
+  }
+
+  @Override
+  public void shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+    super.shutdown(timeout, unit);
+    client.stop();
+  }
+
+  @Override
+  public void shutdown() {
+    super.shutdown();
+    client.stop();
   }
 
   /**
@@ -194,10 +206,10 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   public void run() {
     // Ensures that the timestamp is the same for all the metrics
     // that are processed.
-    this.timestamp = System.currentTimeMillis()/1000;
+    this.timestamp = System.currentTimeMillis() / 1000;
 
     // Iterate through all the metrics that we have collected.
-    for(Map.Entry<MetricName, Metric> entry :
+    for (Map.Entry<MetricName, Metric> entry :
           getMetricsRegistry().allMetrics().entrySet()) {
       Metric metric = entry.getValue();
       try {
@@ -228,16 +240,16 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     Preconditions.checkNotNull(metricValue);
 
     String tags = null;
-    if(hostname != null && !hostname.isEmpty()) {
+    if (hostname != null && !hostname.isEmpty()) {
       tags = String.format("host=%s", hostname);
     }
 
-    if(scope != null && ! scope.isEmpty() ) {
+    if (scope != null && !scope.isEmpty() ) {
       tags = String.format("%s scope=%s", tags, scope);
     }
 
     String command = "";
-    if(tags != null) {
+    if (tags != null) {
       command = String.format("put %s %s %s %s", metricName,
                      timestamp, metricValue, tags);
     } else {
@@ -245,14 +257,14 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
                               timestamp, metricValue);
     }
 
-    if(client != null) {
+    if (client != null) {
       // Write the command into the client queue.
-      if(! client.write(command)) {
+      if (!client.write(command)) {
         // If we fail then we back-off to a max of BACKOFF_MAX_TIME.
         // While this thread is blocked, a thread in the client is
         // dequeing and trying to make space for more stuff to be add
         // later.
-        interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT)*1000;
+        interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT) * 1000;
         try {
           Thread.sleep(interval);
         } catch (InterruptedException e) {
@@ -270,7 +282,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     Preconditions.checkNotNull(value);
 
     String metricName = "";
-    if(group == null || group.isEmpty()) {
+    if (group == null || group.isEmpty()) {
       metricName = String.format(locale, "%s:%s", type, name);
     } else {
       metricName = String.format(locale, "%s:%s.%s", type, group, name);
