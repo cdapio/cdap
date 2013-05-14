@@ -1,8 +1,11 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
@@ -15,6 +18,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +35,8 @@ public class ObjectStoreTest extends DataSetTestBase {
     DataSet customStore = new ObjectStore<Custom>("customs", Custom.class);
     DataSet innerStore = new ObjectStore<CustomWithInner.Inner<Integer>>(
       "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
-    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore));
+    DataSet batchStore = new ObjectStore<String>("batch", String.class);
+    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore));
     // this test runs all operations synchronously
     newTransaction(Mode.Sync);
   }
@@ -138,6 +144,64 @@ public class ObjectStoreTest extends DataSetTestBase {
     inst.getDataSet("customs");
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+  }
+
+  @Test
+  public void testBatchReads() throws OperationException, InterruptedException {
+    ObjectStore<String> t = instantiator.getDataSet("batch");
+
+    // start a transaction
+    newTransaction(DataSetTestBase.Mode.Smart);
+    // write 1000 random values to the table and remember them in a set
+    SortedSet<Long> keysWritten = Sets.newTreeSet();
+    Random rand = new Random(451);
+    for (int i = 0; i < 1000; i++) {
+      long keyLong = rand.nextLong();
+      byte[] key = Bytes.toBytes(keyLong);
+      t.write(key, Long.toString(keyLong));
+      keysWritten.add(keyLong);
+    }
+    // commit transaction
+    commitTransaction();
+
+    // start a sync transaction
+    newTransaction(DataSetTestBase.Mode.Sync);
+    // get the splits for the table
+    List<Split> splits = t.getSplits();
+    // read each split and verify the keys
+    SortedSet<Long> keysToVerify = Sets.newTreeSet(keysWritten);
+    verifySplits(t, splits, keysToVerify);
+
+    // start a sync transaction
+    newTransaction(DataSetTestBase.Mode.Sync);
+    // get specific number of splits for a subrange
+    keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
+    splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
+    Assert.assertTrue(splits.size() <= 5);
+    // read each split and verify the keys
+    verifySplits(t, splits, keysToVerify);
+  }
+
+  // helper to verify that the split readers for the given splits return exactly a set of keys
+  private void verifySplits(ObjectStore<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
+    throws OperationException, InterruptedException {
+    // read each split and verify the keys, remove all read keys from the set
+    for (Split split : splits) {
+      SplitReader<byte[], String> reader = t.createSplitReader(split);
+      reader.initialize(split);
+      while (reader.nextKeyValue()) {
+        byte[] key = reader.getCurrentKey();
+        String value = reader.getCurrentValue();
+        // verify each row has the two columns written
+        Assert.assertEquals(Long.toString(Bytes.toLong(key)), value);
+        Assert.assertTrue(keysToVerify.remove(Bytes.toLong(key)));
+      }
+    }
+    // verify all keys have been read
+    if (!keysToVerify.isEmpty()) {
+      System.out.println("Remaining [" + keysToVerify.size() + "]: " + keysToVerify);
+    }
+    Assert.assertTrue(keysToVerify.isEmpty());
   }
 
 }

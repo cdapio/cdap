@@ -4,6 +4,9 @@
 
 package com.continuuity.api.data.batch;
 
+import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.data.OperationException;
+
 import java.util.List;
 
 /**
@@ -15,6 +18,7 @@ import java.util.List;
  * @param <KEY> the key type
  * @param <VALUE> the value type
  */
+@Beta
 public interface BatchReadable<KEY, VALUE> {
   /**
    * Returns all splits of the dataset.
@@ -23,7 +27,7 @@ public interface BatchReadable<KEY, VALUE> {
    * </p>
    * @return list of {@link Split}
    */
-  List<Split> getSplits();
+  List<Split> getSplits() throws OperationException;
 
   /**
    * Creates reader for the split of dataset.

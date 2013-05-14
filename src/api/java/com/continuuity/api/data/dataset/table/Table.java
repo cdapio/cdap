@@ -1,7 +1,16 @@
 package com.continuuity.api.data.dataset.table;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,7 +27,8 @@ import java.util.Map;
  * The Table relies on injection of the data fabric by the execution context.
  * (@see DataSet).
  */
-public class Table extends DataSet {
+public class Table extends DataSet implements
+  BatchReadable<byte[], Map<byte[], byte[]>>, BatchWritable<byte[], Map<byte[], byte[]>> {
 
   // this is the Table that executed the actual operations. using a delegate
   // allows us to inject a different implementation.
@@ -69,7 +79,7 @@ public class Table extends DataSet {
    * @return the result of the read
    * @throws OperationException if the operation fails
    */
-  public OperationResult<Map<byte[], byte[]>> read(@SuppressWarnings("unused") Read read) throws
+  public OperationResult<Map<byte[], byte[]>> read(Read read) throws
       OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -81,10 +91,7 @@ public class Table extends DataSet {
    * Perform a write operation in the context of the current transaction.
    * @param op The write operation
    * @throws OperationException if something goes wrong
-   *
-   * TODO this method will be renamed to write() in the new flow system
    */
-  // @Deprecated
   public void write(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -97,8 +104,6 @@ public class Table extends DataSet {
    * @param increment the increment operation
    * @return a map with the incremented values as Long
    * @throws OperationException if something goes wrong
-   *
-   * TODO this method will go away with the new flow system
    */
   public Map<byte[], Long> incrementAndGet(Increment increment) throws OperationException {
     if (null == this.delegate) {
@@ -107,4 +112,40 @@ public class Table extends DataSet {
     return this.delegate.incrementAndGet(increment);
   }
 
+  @Override
+  public List<Split> getSplits() throws OperationException {
+    return getSplits(-1, null, null);
+  }
+
+  /**
+   * Returns splits for a range of keys in the table.
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param stop If non-null, the returned splits will only cover keys that are less.
+   * @return list of {@link Split}
+   */
+  @Beta
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.getSplits(numSplits, start, stop);
+  }
+
+  @Override
+  public SplitReader<byte[], Map<byte[], byte[]>> createSplitReader(Split split) {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.createSplitReader(split);
+  }
+
+  @Override
+  public void write(byte[] key, Map<byte[], byte[]> row) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.write(key, row);
+  }
 }

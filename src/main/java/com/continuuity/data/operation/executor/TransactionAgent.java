@@ -2,11 +2,15 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.table.Scanner;
 
 import java.util.List;
 import java.util.Map;
@@ -96,6 +100,22 @@ public interface TransactionAgent {
    * @throws OperationException if something goes wrong in data fabric
    */
   public OperationResult<List<byte[]>> execute(ReadAllKeys read) throws OperationException;
+
+  /**
+   * Execute a get splits operation and return the result.
+   * @param getSplits the operation
+   * @return a list of key ranges, each describing a split
+   * @throws OperationException if something goes wrong in data fabric
+   */
+  public OperationResult<List<KeyRange>> execute(GetSplits getSplits) throws OperationException;
+
+  /**
+   * Get a scanner for a table.
+   * @param scan the scan to perform
+   * @return a scanner
+   * @throws OperationException if something goes wrong in data fabric
+   */
+  public Scanner scan(Scan scan) throws OperationException;
 
   /**
    * return the number of operations performed successfully in this transaction.

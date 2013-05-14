@@ -6,20 +6,26 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TReadPointer._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TReadPointer");
@@ -496,13 +502,13 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
           case 3: // EXCLUDES
             if (schemeField.type == org.apache.thrift.protocol.TType.SET) {
               {
-                org.apache.thrift.protocol.TSet _set116 = iprot.readSetBegin();
-                struct.excludes = new HashSet<Long>(2*_set116.size);
-                for (int _i117 = 0; _i117 < _set116.size; ++_i117)
+                org.apache.thrift.protocol.TSet _set124 = iprot.readSetBegin();
+                struct.excludes = new HashSet<Long>(2*_set124.size);
+                for (int _i125 = 0; _i125 < _set124.size; ++_i125)
                 {
-                  long _elem118; // required
-                  _elem118 = iprot.readI64();
-                  struct.excludes.add(_elem118);
+                  long _elem126; // required
+                  _elem126 = iprot.readI64();
+                  struct.excludes.add(_elem126);
                 }
                 iprot.readSetEnd();
               }
@@ -536,9 +542,9 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
         oprot.writeFieldBegin(EXCLUDES_FIELD_DESC);
         {
           oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, struct.excludes.size()));
-          for (long _iter119 : struct.excludes)
+          for (long _iter127 : struct.excludes)
           {
-            oprot.writeI64(_iter119);
+            oprot.writeI64(_iter127);
           }
           oprot.writeSetEnd();
         }
@@ -581,9 +587,9 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
       if (struct.isSetExcludes()) {
         {
           oprot.writeI32(struct.excludes.size());
-          for (long _iter120 : struct.excludes)
+          for (long _iter128 : struct.excludes)
           {
-            oprot.writeI64(_iter120);
+            oprot.writeI64(_iter128);
           }
         }
       }
@@ -603,13 +609,13 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TSet _set121 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.excludes = new HashSet<Long>(2*_set121.size);
-          for (int _i122 = 0; _i122 < _set121.size; ++_i122)
+          org.apache.thrift.protocol.TSet _set129 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.excludes = new HashSet<Long>(2*_set129.size);
+          for (int _i130 = 0; _i130 < _set129.size; ++_i130)
           {
-            long _elem123; // required
-            _elem123 = iprot.readI64();
-            struct.excludes.add(_elem123);
+            long _elem131; // required
+            _elem131 = iprot.readI64();
+            struct.excludes.add(_elem131);
           }
         }
         struct.setExcludesIsSet(true);

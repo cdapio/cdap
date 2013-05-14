@@ -6,21 +6,26 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TQueueConfigureGroups implements org.apache.thrift.TBase<TQueueConfigureGroups, TQueueConfigureGroups._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueConfigureGroups");
@@ -504,13 +509,13 @@ public class TQueueConfigureGroups implements org.apache.thrift.TBase<TQueueConf
           case 2: // GROUP_IDS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list90 = iprot.readListBegin();
-                struct.groupIds = new ArrayList<Long>(_list90.size);
-                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
+                org.apache.thrift.protocol.TList _list98 = iprot.readListBegin();
+                struct.groupIds = new ArrayList<Long>(_list98.size);
+                for (int _i99 = 0; _i99 < _list98.size; ++_i99)
                 {
-                  long _elem92; // required
-                  _elem92 = iprot.readI64();
-                  struct.groupIds.add(_elem92);
+                  long _elem100; // required
+                  _elem100 = iprot.readI64();
+                  struct.groupIds.add(_elem100);
                 }
                 iprot.readListEnd();
               }
@@ -551,9 +556,9 @@ public class TQueueConfigureGroups implements org.apache.thrift.TBase<TQueueConf
         oprot.writeFieldBegin(GROUP_IDS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.groupIds.size()));
-          for (long _iter93 : struct.groupIds)
+          for (long _iter101 : struct.groupIds)
           {
-            oprot.writeI64(_iter93);
+            oprot.writeI64(_iter101);
           }
           oprot.writeListEnd();
         }
@@ -600,9 +605,9 @@ public class TQueueConfigureGroups implements org.apache.thrift.TBase<TQueueConf
       if (struct.isSetGroupIds()) {
         {
           oprot.writeI32(struct.groupIds.size());
-          for (long _iter94 : struct.groupIds)
+          for (long _iter102 : struct.groupIds)
           {
-            oprot.writeI64(_iter94);
+            oprot.writeI64(_iter102);
           }
         }
       }
@@ -621,13 +626,13 @@ public class TQueueConfigureGroups implements org.apache.thrift.TBase<TQueueConf
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TList _list95 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.groupIds = new ArrayList<Long>(_list95.size);
-          for (int _i96 = 0; _i96 < _list95.size; ++_i96)
+          org.apache.thrift.protocol.TList _list103 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.groupIds = new ArrayList<Long>(_list103.size);
+          for (int _i104 = 0; _i104 < _list103.size; ++_i104)
           {
-            long _elem97; // required
-            _elem97 = iprot.readI64();
-            struct.groupIds.add(_elem97);
+            long _elem105; // required
+            _elem105 = iprot.readI64();
+            struct.groupIds.add(_elem105);
           }
         }
         struct.setGroupIdsIsSet(true);

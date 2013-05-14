@@ -5,7 +5,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -41,7 +41,7 @@ import java.util.TreeMap;
 /**
  * This implements the OVCTable for HBase.
  */
-public class HBaseOVCTable implements OrderedVersionedColumnarTable {
+public class HBaseOVCTable extends AbstractOVCTable {
   private static final Logger Log = LoggerFactory.getLogger(HBaseOVCTable.class);
 
   //we should use enums :)

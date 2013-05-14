@@ -6,7 +6,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +28,7 @@ import java.util.TreeMap;
 /**
  * Implementation of an OVCTable over a HyperSQL table.
  */
-public class HyperSQLOVCTable implements OrderedVersionedColumnarTable {
+public class HyperSQLOVCTable extends AbstractOVCTable {
 
   private static final Logger Log = LoggerFactory.getLogger(HyperSQLOVCTable.class);
 

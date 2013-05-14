@@ -5,7 +5,9 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -24,7 +26,9 @@ import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
 import com.continuuity.data.operation.executor.remote.stubs.TDequeueStatus;
 import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
 import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TGetSplits;
 import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
+import com.continuuity.data.operation.executor.remote.stubs.TKeyRange;
 import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
@@ -77,6 +81,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -314,6 +319,57 @@ public class ConverterUtils {
       return new OperationResult<Map<byte[], byte[]>>(unwrap(opt.getTheMap()));
     } else {
       return new OperationResult<Map<byte[], byte[]>>(opt.getStatus(), opt.getMessage());
+    }
+  }
+
+  /**
+   * wrap a key range.
+   */
+  TKeyRange wrap(KeyRange range) {
+    TKeyRange tKeyRange = new TKeyRange();
+    if (range.getStart() != null) {
+      tKeyRange.setStart(wrap(range.getStart()));
+    }
+    if (range.getStop() != null) {
+      tKeyRange.setStop(wrap(range.getStop()));
+    }
+    return tKeyRange;
+  }
+
+  /**
+   * unwrap a key range.
+   */
+  KeyRange unwrap(TKeyRange tKeyRange) {
+    return new KeyRange(tKeyRange.getStart(), tKeyRange.getStop());
+  }
+
+  /**
+   * wrap a list of key ranges
+   */
+  List<TKeyRange> wrap(OperationResult<List<KeyRange>> result) {
+    if (result.isEmpty() || result.getValue() == null || result.getValue().isEmpty()) {
+      return Collections.emptyList();
+    } else {
+      List<TKeyRange> tKeyRanges = Lists.newArrayListWithExpectedSize(result.getValue().size());
+      for (KeyRange range : result.getValue()) {
+        tKeyRanges.add(wrap(range));
+      }
+      return tKeyRanges;
+    }
+  }
+
+  /**
+   * unwrap a list of key ranges
+   */
+  OperationResult<List<KeyRange>> unwrap(List<TKeyRange> tKeyRanges) {
+    if (tKeyRanges.isEmpty()) {
+      return new OperationResult<List<KeyRange>>(StatusCode.KEY_NOT_FOUND);
+    } else {
+      List<KeyRange> ranges = Lists.newArrayListWithExpectedSize(tKeyRanges.size());
+      for (TKeyRange tKeyRange : tKeyRanges) {
+        ranges.add(unwrap(tKeyRange));
+      }
+      return new OperationResult<List<KeyRange>>(ranges);
     }
   }
 
@@ -636,6 +692,38 @@ public class ConverterUtils {
       readColumnRange.setMetricName(tReadColumnRange.getMetric());
     }
     return readColumnRange;
+  }
+
+  /**
+   * wrap a getSplits operations
+   */
+  TGetSplits wrap(GetSplits getSplits) {
+    TGetSplits tGetSplits = new TGetSplits(getSplits.getTable(), getSplits.getNumSplits(), getSplits.getId());
+    if (getSplits.getStart() != null) {
+      tGetSplits.setStart(getSplits.getStart());
+    }
+    if (getSplits.getStop() != null) {
+      tGetSplits.setStop(getSplits.getStop());
+    }
+    if (getSplits.getColumns() != null) {
+      tGetSplits.setColumns(wrap(getSplits.getColumns()));
+    }
+    if (getSplits.getMetricName() != null) {
+      tGetSplits.setMetric(getSplits.getMetricName());
+    }
+    return tGetSplits;
+  }
+
+  /**
+   * unwrap a getSplits operations
+   */
+  GetSplits unwrap(TGetSplits tGetSplits) {
+    GetSplits getSplits = new GetSplits(tGetSplits.getId(), tGetSplits.getTable(), tGetSplits.getNumSplits(),
+                                        tGetSplits.getStart(), tGetSplits.getStop(), unwrap(tGetSplits.getColumns()));
+    if (tGetSplits.isSetMetric()) {
+      getSplits.setMetricName(tGetSplits.getMetric());
+    }
+    return getSplits;
   }
 
   /**

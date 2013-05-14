@@ -7,6 +7,10 @@
 package com.continuuity.data.operation.executor.remote.stubs;
 
 
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.thrift.TEnum;
+
 public enum TQueueStateType implements org.apache.thrift.TEnum {
   UNINITIALIZED(0),
   INITIALIZED(1),

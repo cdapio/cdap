@@ -4,12 +4,15 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -22,12 +25,14 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
 import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.continuuity.data.table.Scanner;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -446,11 +451,40 @@ public class RemoteOperationExecutor
     throws OperationException {
     return this.execute(new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
       @Override
-      public OperationResult<List<byte[]>> execute(OperationExecutorClient client) throws OperationException,
-        TException {
+      public OperationResult<List<byte[]>> execute(OperationExecutorClient client)
+        throws OperationException, TException {
         return client.execute(context, transaction, readAllKeys);
       }
     });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, getSplits);
+        }
+      });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final Transaction transaction,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, transaction, getSplits);
+        }
+      });
   }
 
   @Override
@@ -520,6 +554,12 @@ public class RemoteOperationExecutor
           return true;
         }
       });
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    throw new UnsupportedOperationException("Remote operation executor does not support scans.");
   }
 
   @Override

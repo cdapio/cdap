@@ -6,7 +6,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
 import org.apache.hadoop.hbase.HConstants;
@@ -38,7 +38,7 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 /**
  * Implementation of an OVCTable over a LevelDB Database.
  */
-public class LevelDBOVCTable implements OrderedVersionedColumnarTable {
+public class LevelDBOVCTable extends AbstractOVCTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOVCTable.class);
 

@@ -205,7 +205,7 @@ public class DataSetInstantiationBase {
     }
     // for object stores, we set the delegate
     if (obj instanceof ObjectStore<?>) {
-      ObjectStoreImpl.setImplementation((ObjectStore<?>) obj, this.classLoader);
+      RuntimeObjectStore.setImplementation((ObjectStore<?>) obj, this.classLoader);
       // but do not return yet, continue to inject data fabric into the impl
     }
     // otherwise recur through all fields of type DataSet

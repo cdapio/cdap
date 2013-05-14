@@ -2,13 +2,17 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -19,7 +23,9 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
 import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
 import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.continuuity.data.table.Scanner;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +164,21 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 GetSplits getSplits)
+    throws OperationException {
+      return new OperationResult<List<KeyRange>>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(OperationContext context,
+                                                 Transaction transaction,
+                                                 GetSplits getSplits)
+    throws OperationException {
+    return execute(context, getSplits);
+  }
+
+  @Override
   public OperationResult<Map<byte[], byte[]>>
   execute(OperationContext context, ReadColumnRange readColumnRange) {
     // pretend the key does not exists
@@ -186,6 +207,21 @@ public class NoOperationExecutor implements OperationExecutor {
   @Override
   public void execute(OperationContext context, QueueDropInflight op) throws OperationException {
     // Noting to do
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    return new Scanner() {
+      @Override
+      public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+        return null;
+      }
+      @Override
+      public void close() {
+        // nothing to do
+      }
+    };
   }
 
   @Override

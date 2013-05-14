@@ -9,7 +9,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
 import com.google.common.base.Objects;
@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * <p/>
  * This version of MemoryTable is currently NOT sorted by row.
  */
-public class MemoryOVCTable implements OrderedVersionedColumnarTable {
+public class MemoryOVCTable extends AbstractOVCTable {
 
   private final byte[] name;
 
@@ -466,19 +466,31 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet
-      ().iterator(), readPointer);
-  }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet
-      ().iterator(), columns, readPointer);
+    return scan(startRow, stopRow, null, readPointer);
   }
 
   @Override
   public Scanner scan(ReadPointer readPointer) {
-    return new MemoryScanner(this.map.entrySet().iterator(), readPointer);
+    return scan(null, null, null, readPointer);
+  }
+
+  @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
+    ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
+    if (startRow != null) {
+      if (stopRow != null) {
+        submap = this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
+      } else {
+        submap = this.map.tailMap(new RowLockTable.Row(startRow));
+      }
+    } else {
+      if (stopRow != null) {
+        submap = this.map.headMap(new RowLockTable.Row(stopRow));
+      } else {
+        submap = this.map;
+      }
+    }
+    return new MemoryScanner(submap.entrySet().iterator(), columns, readPointer);
   }
 
   /**

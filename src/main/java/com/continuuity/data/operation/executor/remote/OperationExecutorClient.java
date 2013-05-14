@@ -6,7 +6,9 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -18,7 +20,9 @@ import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
 import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
 import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
 import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TGetSplits;
 import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
+import com.continuuity.data.operation.executor.remote.stubs.TKeyRange;
 import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
@@ -579,6 +583,72 @@ public class OperationExecutorClient extends ConverterUtils {
         Log.trace("TReadAllKeys successful.");
       }
       OperationResult<List<byte[]>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public OperationResult<List<KeyRange>> execute(OperationContext context, GetSplits getSplits)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("getsplits", getSplits.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + getSplits);
+      }
+      TOperationContext tcontext = wrap(context);
+      TGetSplits tReadAllKeys = wrap(getSplits);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tReadAllKeys);
+      }
+      List<TKeyRange> tResult = client.getSplits(tcontext, tReadAllKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadAllKeys successful.");
+      }
+      OperationResult<List<KeyRange>> result = unwrap(tResult);
+
+      helper.finish(result.isEmpty() ? NoData : Success);
+      return result;
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public OperationResult<List<KeyRange>> execute(OperationContext context, Transaction tx, GetSplits getSplits)
+    throws OperationException, TException {
+
+    MetricsHelper helper = newHelper("getsplits", getSplits.getTable());
+
+    try {
+      if (Log.isTraceEnabled()) {
+        Log.trace("Received " + getSplits);
+      }
+      TOperationContext tcontext = wrap(context);
+      TGetSplits tReadAllKeys = wrap(getSplits);
+      if (Log.isTraceEnabled()) {
+        Log.trace("Sending " + tReadAllKeys);
+      }
+      List<TKeyRange> tResult = client.getSplitsTx(tcontext, wrap(tx), tReadAllKeys);
+      if (Log.isTraceEnabled()) {
+        Log.trace("TReadAllKeys successful.");
+      }
+      OperationResult<List<KeyRange>> result = unwrap(tResult);
 
       helper.finish(result.isEmpty() ? NoData : Success);
       return result;
