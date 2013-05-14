@@ -103,7 +103,11 @@ start() {
       check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
 
       # Setup classpaths.
-      CLASSPATH=$CLASSPATH:$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      if [ "$CLASSPATH" = "" ]; then
+        CLASSPATH=$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      else
+        CLASSPATH=$CLASSPATH:$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      fi
 
       # sets the JAVA variable.
       set_java
