@@ -17,7 +17,6 @@ examplesJar.dependsOn ':singlenode:createApiJar'
 
 //set task dependencies to integrate into our master gradle build
 build.dependsOn 'examplesJar'
-build.dependsOn 'examplesCheckstyle'
 clean.dependsOn 'examplesClean'
 
 // Bind ant target to gradle
