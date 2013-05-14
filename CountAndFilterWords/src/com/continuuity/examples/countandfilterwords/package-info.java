@@ -15,30 +15,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ *  This package contains the CountAndFilterWords sample application.
+ */
 package com.continuuity.examples.countandfilterwords;
 
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/**
- * Counter Flowlet; increments word count.
- */
-public class Counter extends AbstractFlowlet {
-
-  private static Logger logger = LoggerFactory.getLogger(Counter.class);
-
-  @UseDataSet(CountAndFilterWords.tableName)
-  KeyValueTable counters;
-
-  @ProcessInput("counts")
-  public void process(String counter) throws OperationException {
-    logger.debug("Incrementing counter " + counter);
-    this.counters.increment(Bytes.toBytes(counter), 1L);
-  }
-}
