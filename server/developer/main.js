@@ -147,6 +147,9 @@ app.get('/version', function (req, res) {
 		path: '/version',
 		port: '80'
 	};
+	res.set({
+		'Content-Type': 'application/json'
+	})
 
 	http.request(options, function(response) {
 		var data = '';
@@ -277,7 +280,7 @@ app.on('error', function () {
 	process.exit(1);
 });
 
-function getLocalHost () {
+var getLocalHost = function() {
 
 	var os = require('os');
 	var ifaces = os.networkInterfaces();
@@ -336,3 +339,7 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 
 });
 
+/**
+ * Export express app.
+ */
+module.exports = app;
