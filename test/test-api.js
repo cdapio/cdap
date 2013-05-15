@@ -1,6 +1,5 @@
 /**
  * Copyright (c) 2013 Continuuity, Inc.
- *
  * Tests for api.js.
  */
 var assert = require('chai').assert;
