@@ -39,9 +39,12 @@ public class CountTokens implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("CountTokens")
       .setDescription("Example applicaiton that counts tokens")
-      .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable(TABLE_NAME))
-      .withFlows().add(new CountTokensFlow())
+      .withStreams()
+        .add(new Stream("text"))
+      .withDataSets()
+        .add(new KeyValueTable(TABLE_NAME))
+      .withFlows()
+        .add(new CountTokensFlow())
       .noProcedure()
       .build();
   }

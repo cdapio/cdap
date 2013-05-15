@@ -53,16 +53,16 @@ public class TwitterScanner implements Application {
       .setDescription("Example Twitter application")
       .noStream()
       .withDataSets()
-      .add(new SortedCounterTable(TOP_USERS,
-                                  new SortedCounterTable.SortedCounterConfig()))
-      .add(new SortedCounterTable(TOP_HASH_TAGS,
-                                  new SortedCounterTable.SortedCounterConfig()))
-      .add(new CounterTable(WORD_COUNTS))
-      .add(new CounterTable(HASH_TAG_WORD_ASSOCS))
+        .add(new SortedCounterTable(TOP_USERS,
+                                    new SortedCounterTable.SortedCounterConfig()))
+        .add(new SortedCounterTable(TOP_HASH_TAGS,
+                                    new SortedCounterTable.SortedCounterConfig()))
+        .add(new CounterTable(WORD_COUNTS))
+        .add(new CounterTable(HASH_TAG_WORD_ASSOCS))
       .withFlows()
-      .add(new TwitterFlow())
+        .add(new TwitterFlow())
       .withProcedures()
-      .add(new TwitterProcedure())
+        .add(new TwitterProcedure())
       .build();
   }
 }

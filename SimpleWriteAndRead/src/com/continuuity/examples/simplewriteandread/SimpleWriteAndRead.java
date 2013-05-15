@@ -40,11 +40,11 @@ public class SimpleWriteAndRead implements Application {
       .setName("SimpleWriteAndRead")
       .setDescription("Flow that writes key=value then reads back the key")
       .withStreams()
-      .add(new Stream("keyValues"))
+        .add(new Stream("keyValues"))
       .withDataSets()
-      .add(new KeyValueTable(TABLE_NAME))
+        .add(new KeyValueTable(TABLE_NAME))
       .withFlows()
-      .add(new SimpleWriteAndReadFlow())
+        .add(new SimpleWriteAndReadFlow())
       .noProcedure()
       .build();
   }

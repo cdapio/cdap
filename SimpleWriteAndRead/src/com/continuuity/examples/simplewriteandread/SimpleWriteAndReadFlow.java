@@ -30,13 +30,13 @@ public class SimpleWriteAndReadFlow implements Flow {
       .setName("SimpleWriteAndRead")
       .setDescription("Example flow that writes then reads")
       .withFlowlets()
-      .add("source", new KeyValueSource())
-      .add("writer", new WriterFlowlet())
-      .add("reader", new ReaderFlowlet())
+        .add("source", new KeyValueSource())
+        .add("writer", new WriterFlowlet())
+        .add("reader", new ReaderFlowlet())
       .connect()
-      .fromStream("keyValues").to("source")
-      .from("source").to("writer")
-      .from("writer").to("reader")
+        .fromStream("keyValues").to("source")
+        .from("source").to("writer")
+        .from("writer").to("reader")
       .build();
   }
 

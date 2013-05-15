@@ -93,13 +93,15 @@ public class SocialActionFlow implements Flow {
       .setName(FLOW_NAME)
       .setDescription(FLOW_NAME)
       .withFlowlets()
-      .add("action_parser", new SocialActionParserFlowlet())
-      .add("action_processor", new SocialActionProcessorFlowlet())
-      .add("activity_feed_updater", new ActivityFeedUpdaterFlowlet())
-      .add("popular_feed_updater", new PopularFeedUpdaterFlowlet())
-      .connect().fromStream(LishApp.SOCIAL_ACTION_STREAM).to("action_parser")
-      .from("action_parser").to("action_processor").from("action_processor").to("activity_feed_updater")
-      .from("action_processor").to("popular_feed_updater")
+        .add("action_parser", new SocialActionParserFlowlet())
+        .add("action_processor", new SocialActionProcessorFlowlet())
+        .add("activity_feed_updater", new ActivityFeedUpdaterFlowlet())
+        .add("popular_feed_updater", new PopularFeedUpdaterFlowlet())
+      .connect()
+        .fromStream(LishApp.SOCIAL_ACTION_STREAM).to("action_parser")
+        .from("action_parser").to("action_processor")
+        .from("action_processor").to("activity_feed_updater")
+        .from("action_processor").to("popular_feed_updater")
       .build();
   }
 
