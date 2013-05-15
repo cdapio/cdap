@@ -49,6 +49,8 @@ import org.apache.hadoop.mapreduce.QueueInfo;
 import org.apache.hadoop.mapreduce.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.TaskTrackerInfo;
 import org.apache.hadoop.mapreduce.TaskType;
+import org.apache.hadoop.mapreduce.filecache.ClientDistributedCacheManager;
+import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.apache.hadoop.mapreduce.protocol.ClientProtocol;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.mapreduce.server.jobtracker.JTConfig;
@@ -147,6 +149,12 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       this.localFs = FileSystem.getLocal(conf);
       this.localJobDir = localFs.makeQualified(conf.getLocalPath(jobDir));
       this.localJobFile = new Path(this.localJobDir, id + ".xml");
+
+      // This is another fix for LocalJobRunner bug: job jar is not added to classpath.
+      // Alternatively to doing it here, we could use job.addFileToClassPath(jobJar) before submitting job in client
+      // code, but we don't want to mess with "correct" distributed execution (which adds job jar in classpath).
+      DistributedCache.addFileToClassPath(new Path(conf.getJar()), conf, FileSystem.get(conf));
+      ClientDistributedCacheManager.determineTimestampsAndCacheVisibilities(conf);
 
       // Manage the distributed cache.  If there are files to be copied,
       // this will trigger localFile to be re-written again.

@@ -106,6 +106,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
       context.injectFields(job);
 
+      // note: this sets logging context on the thread level
+      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce job: " + context.toString());
@@ -171,6 +174,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       public void run() {
         boolean success = false;
         try {
+          // note: this sets logging context on the thread level
           LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
           try {
             LOG.info("Submitting mapreduce job {}", context.toString());

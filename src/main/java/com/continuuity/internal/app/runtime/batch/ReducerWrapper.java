@@ -21,7 +21,7 @@ public class ReducerWrapper extends Reducer {
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-    Reducer delegate = createReducerInstance(userReducer);
+    Reducer delegate = createReducerInstance(context, userReducer);
 
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
@@ -34,9 +34,9 @@ public class ReducerWrapper extends Reducer {
     delegate.run(context);
   }
 
-  private Reducer createReducerInstance(String userReducer) {
+  private Reducer createReducerInstance(Context context, String userReducer) {
     try {
-      return (Reducer) Class.forName(userReducer).newInstance();
+      return (Reducer) context.getConfiguration().getClassLoader().loadClass(userReducer).newInstance();
     } catch (Exception e) {
       LOG.error("Failed to create instance of the user-defined Reducer class: " + userReducer);
       throw Throwables.propagate(e);
