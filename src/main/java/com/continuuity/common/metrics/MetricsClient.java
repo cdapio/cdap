@@ -123,7 +123,9 @@ final class MetricsClient extends AbstractExecutionThreadService {
 
     while (isRunning()) {
       Channel writeChannel = writeChannelRef.get();
+      // Try to establish connection to collection server if not yet connected/disconnected.
       if (writeChannel == null || !writeChannel.isConnected()) {
+        // Calculate the sleepTime. It's for backing off reconnection attempt.
         long nanoTime = System.nanoTime();
         long sleepTime = nextConnectTime - nanoTime;
         if (sleepTime > 0) {
@@ -131,6 +133,10 @@ final class MetricsClient extends AbstractExecutionThreadService {
         }
         connect(writeChannelRef);
 
+        // Regardless of connection result, always update the nextConnectTime and increase the interval.
+        // Assumption is that after connection is established, the connection will be used at least once,
+        // hence resetting the interval to BACKOFF_MIN_TIME (in the else part).
+        // Otherwise, the interval will be exponential increased until it reaches BACKOFF_MAX_TIME.
         nextConnectTime = nanoTime + interval;
         interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT);
 
@@ -143,6 +149,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
               if (!future.isSuccess()) {
+                future.getChannel().close();
                 LOG.warn("Attempted to send metric to overlord, failed due to session failures. [ {} ]",
                          cmd, future.getCause());
               }
