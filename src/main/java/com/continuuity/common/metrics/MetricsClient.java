@@ -50,6 +50,12 @@ import java.util.concurrent.atomic.AtomicReference;
 final class MetricsClient extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsClient.class);
+
+  /**
+   * Connection timeout.
+   */
+  private static final long CONNECT_TIMEOUT = 100 * 1000L;
+
   /**
    * Specifies the maximum back-off time (in seconds).
    */
@@ -92,6 +98,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
     bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newSingleThreadExecutor(threadFactory),
                                                                       Executors.newFixedThreadPool(4, threadFactory)));
     bootstrap.setPipelineFactory(new MetricClientPipelineFactory());
+    bootstrap.setOption("connectTimeoutMillis", CONNECT_TIMEOUT);
 
     serviceDiscovery = new ServiceDiscoveryClient(
       configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
