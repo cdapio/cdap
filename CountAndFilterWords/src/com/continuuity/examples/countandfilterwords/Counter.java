@@ -33,7 +33,7 @@ public class Counter extends AbstractFlowlet {
 
   private static Logger logger = LoggerFactory.getLogger(Counter.class);
 
-  @UseDataSet(CountAndFilterWords.tableName)
+  @UseDataSet(CountAndFilterWords.TABLE_NAME)
   KeyValueTable counters;
 
   @ProcessInput("counts")

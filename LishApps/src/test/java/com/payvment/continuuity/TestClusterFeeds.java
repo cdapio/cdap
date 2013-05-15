@@ -1,8 +1,37 @@
+/*
+ * Copyright (c) 2013, Continuuity Inc
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are not permitted
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.payvment.continuuity;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import com.continuuity.api.data.OperationException;
+import com.continuuity.test.AppFabricTestBase;
+import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.StreamWriter;
+import com.payvment.continuuity.data.ActivityFeed;
+import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ActivityFeedTable;
+import com.payvment.continuuity.data.ClusterFeedReader;
+import com.payvment.continuuity.data.ClusterTable;
+import com.payvment.continuuity.data.PopularFeed;
+import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
+import com.payvment.continuuity.data.SortedCounterTable;
+import com.payvment.continuuity.entity.SocialAction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,22 +42,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.payvment.continuuity.data.SortedCounterTable;
-import com.continuuity.api.data.OperationException;
-import com.payvment.continuuity.data.ActivityFeed;
-import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
-import com.payvment.continuuity.data.ActivityFeedTable;
-import com.payvment.continuuity.data.ClusterFeedReader;
-import com.payvment.continuuity.data.ClusterTable;
-import com.payvment.continuuity.data.PopularFeed;
-import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
-import com.payvment.continuuity.entity.SocialAction;
-import com.continuuity.test.RuntimeStats;
-import com.continuuity.test.AppFabricTestBase;
-import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.RuntimeMetrics;
-import com.continuuity.test.StreamWriter;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Complete end-to-end testing of Lish Activity and Popular Feeds.
@@ -61,7 +76,10 @@ public class TestClusterFeeds extends AppFabricTestBase {
     }
 
     // Get ClusterWriter instance / metrics
-    RuntimeMetrics m1 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, ClusterWriterFlow.FLOW_NAME, ClusterWriterFlow.WRITER_FLOWLET_NAME);
+    RuntimeMetrics m1 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
+                                                       ClusterWriterFlow.FLOW_NAME,
+                                                       ClusterWriterFlow.WRITER_FLOWLET_NAME);
+
     System.out.println("Waiting for Cluster Writer flow to process");
     m1.waitForProcessed(numClusterEntries, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, m1.getException());
@@ -80,18 +98,27 @@ public class TestClusterFeeds extends AppFabricTestBase {
       System.out.println(e.getLocalizedMessage());
     }
 
-    RuntimeMetrics  clusterSourceParserMetrics = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "action_parser");
+    RuntimeMetrics clusterSourceParserMetrics = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
+                                                                               SocialActionFlow.FLOW_NAME,
+                                                                               "action_parser");
+
     clusterSourceParserMetrics.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
     System.out.println("SoclialActionFlow.ClusterSourceParser processed: " + clusterSourceParserMetrics.getProcessed());
-    assertTrue( clusterSourceParserMetrics.getProcessed() == numActions);
+    assertTrue(clusterSourceParserMetrics.getProcessed() == numActions);
 
-    RuntimeMetrics m2 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "popular_feed_updater");
+    RuntimeMetrics m2 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
+                                                       SocialActionFlow.FLOW_NAME,
+                                                       "popular_feed_updater");
+
     System.out.println("Waiting for social action popular updater flowlet");
     m2.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, m2.getException());
     System.out.println("SocialActionFlow.PopularFeedUpdaterFlowlet processed: " + m2.getProcessed());
 
-    RuntimeMetrics m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME, SocialActionFlow.FLOW_NAME, "activity_feed_updater");
+    RuntimeMetrics m3 = RuntimeStats.getFlowletMetrics(LishApp.APP_NAME,
+                                                       SocialActionFlow.FLOW_NAME,
+                                                       "activity_feed_updater");
+
     System.out.println("Waiting for social action activity updater flowlet");
     m3.waitForProcessed(numActions, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, m3.getException());
@@ -110,7 +137,7 @@ public class TestClusterFeeds extends AppFabricTestBase {
     Long thirdHour = 1349132400000L;
 
     // Read first hour.  Should have pop entries all the same score
-    // and activity feed in descending product_id order for clusters 1 and 3.
+    // and activity feed in descending productId order for clusters 1 and 3.
     System.out.println("Validating Activity feed entries...");
 
     try {
@@ -160,22 +187,24 @@ public class TestClusterFeeds extends AppFabricTestBase {
       popFeed = feedReader.getPopularFeed(US, 1, secondHour, 2, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(10, popEntries.size());
-      Long product_id = 10L;
+      Long productId = 10L;
       for (PopularFeedEntry entry : popEntries) {
-        assertEquals(product_id, entry.product_id);
-        Long score = expectedScore + (product_id * likeScore);
-        assertEquals("For product_id " + product_id + ", expected score " + score + " but found score " + entry.score, score, entry.score);
-        product_id--;
+        assertEquals(productId, entry.productId);
+        Long score = expectedScore + (productId * likeScore);
+
+        assertEquals("For productId " + productId + ", expected score " +
+                       score + " but found score " + entry.score, score, entry.score);
+        productId--;
       }
       popFeed = feedReader.getPopularFeed(US, 3, secondHour, 2, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(10, popEntries.size());
-      product_id = 10L;
+      productId = 10L;
       for (PopularFeedEntry entry : popEntries) {
-        assertEquals(product_id, entry.product_id);
-        Long score = expectedScore + (product_id * likeScore);
+        assertEquals(productId, entry.productId);
+        Long score = expectedScore + (productId * likeScore);
         assertEquals(score, entry.score);
-        product_id--;
+        productId--;
       }
 
       // Cluster 1 and 3 activity
@@ -203,12 +232,12 @@ public class TestClusterFeeds extends AppFabricTestBase {
       popFeed = feedReader.getPopularFeed(US, 1, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(10, popEntries.size());
-      product_id = 10L;
+      productId = 10L;
       for (PopularFeedEntry entry : popEntries) {
-        assertEquals(product_id, entry.product_id);
-        Long score = expectedScore + (product_id * likeScore);
+        assertEquals(productId, entry.productId);
+        Long score = expectedScore + (productId * likeScore);
         assertEquals(score, entry.score);
-        product_id--;
+        productId--;
       }
 
       // Cluster 2 is made up of only the third hour of activity categories
@@ -217,8 +246,12 @@ public class TestClusterFeeds extends AppFabricTestBase {
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(2, activityEntries.size());
       assertDescendingTime(activityEntries);
-      assertTrue(activityEntries.get(0).equals(new ActivityFeedEntry(1349132435000L, 230L, 30L, likeScore).addEntry(31L, 12 * likeScore)));
-      assertTrue(activityEntries.get(1).equals(new ActivityFeedEntry(1349132432000L, 220L, 20L, likeScore).addEntry(21L, 12 * likeScore)));
+
+      assertTrue(activityEntries.get(0).equals(
+        new ActivityFeedEntry(1349132435000L, 230L, 30L, likeScore).addEntry(31L, 12 * likeScore)));
+
+      assertTrue(activityEntries.get(1).equals(
+        new ActivityFeedEntry(1349132432000L, 220L, 20L, likeScore).addEntry(21L, 12 * likeScore)));
 
       // Cluster 2 pop has four products, check explicitly
       popFeed = feedReader.getPopularFeed(US, 2, thirdHour, 3, 15, 0);
@@ -245,57 +278,57 @@ public class TestClusterFeeds extends AppFabricTestBase {
       // Now try with different countries
 
       // UK and clusters 1 and 3 should have 1 product, cluster 2 none
-      String UK = "UK";
+      String uk = "UK";
       // pop
-      popFeed = feedReader.getPopularFeed(UK, 1, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(uk, 1, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(1, popEntries.size());
       assertDescendingScore(popEntries);
-      popFeed = feedReader.getPopularFeed(UK, 3, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(uk, 3, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(1, popEntries.size());
       assertDescendingScore(popEntries);
-      popFeed = feedReader.getPopularFeed(UK, 2, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(uk, 2, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(0, popEntries.size());
       // activity
-      activityFeed = feedReader.getActivityFeed(UK, 1, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(uk, 1, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(1, activityEntries.size());
       assertDescendingTime(activityEntries);
-      activityFeed = feedReader.getActivityFeed(UK, 3, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(uk, 3, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(1, activityEntries.size());
       assertDescendingTime(activityEntries);
-      activityFeed = feedReader.getActivityFeed(UK, 2, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(uk, 2, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(0, activityEntries.size());
 
       // JP should have 1 product for cluster 1, 4 for 2, 5 for 3
-      String JP = "JP";
+      String jp = "JP";
       // pop
-      popFeed = feedReader.getPopularFeed(JP, 1, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(jp, 1, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(1, popEntries.size());
       assertDescendingScore(popEntries);
-      popFeed = feedReader.getPopularFeed(JP, 2, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(jp, 2, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(4, popEntries.size());
       assertDescendingScore(popEntries);
-      popFeed = feedReader.getPopularFeed(JP, 3, thirdHour, 3, 15, 0);
+      popFeed = feedReader.getPopularFeed(jp, 3, thirdHour, 3, 15, 0);
       popEntries = popFeed.getFeed(15);
       assertEquals(5, popEntries.size());
       assertDescendingScore(popEntries);
       // activity cluster 2 will only have 2 entries (2 stores), 3 on cluster 3
-      activityFeed = feedReader.getActivityFeed(JP, 1, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(jp, 1, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(1, activityEntries.size());
       assertDescendingTime(activityEntries);
-      activityFeed = feedReader.getActivityFeed(JP, 2, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(jp, 2, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(2, activityEntries.size());
       assertDescendingTime(activityEntries);
-      activityFeed = feedReader.getActivityFeed(JP, 3, 15, Long.MAX_VALUE, firstHour);
+      activityFeed = feedReader.getActivityFeed(jp, 3, 15, Long.MAX_VALUE, firstHour);
       activityEntries = activityFeed.getEntireFeed();
       assertEquals(3, activityEntries.size());
       assertDescendingTime(activityEntries);
@@ -324,15 +357,25 @@ public class TestClusterFeeds extends AppFabricTestBase {
     }
   }
 
-  private int writeFileToStream(String inputFile, StreamWriter stream, String streamName, int limit) throws IOException, OperationException {
+  private int writeFileToStream(String inputFile,
+                                StreamWriter stream,
+                                String streamName,
+                                int limit) throws IOException, OperationException {
+
     System.out.println("Opening file '" + inputFile + "' to write to stream '" +
                          streamName + "'");
-    BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(inputFile)));
+    BufferedReader reader =
+      new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(inputFile)));
+
     String line = null;
     int i = 0;
     while ((line = reader.readLine()) != null && i < limit) {
       System.out.println("\t " + line);
-      if (line.startsWith("cluster") || line.startsWith("#") || line.equals("")) continue;
+
+      if (line.startsWith("cluster") || line.startsWith("#") || line.equals("")) {
+        continue;
+      }
+
       stream.send(line);
       i++;
     }

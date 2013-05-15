@@ -16,21 +16,21 @@ import com.continuuity.api.procedure.ProcedureResponse.Code;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * retrieve Count Procedure.
+ */
 public class RetrieveCounts extends AbstractProcedure {
 
-  byte[] TOTALS_ROW = Bytes.toBytes("totals");
-  byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
-  byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
+  static final byte[] TOTALS_ROW = Bytes.toBytes("totals");
+  static final byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
+  static final byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
 
   @UseDataSet("wordStats")
   private Table wordStatsTable;
-  
   @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;
-  
   @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
-
   @UseDataSet("wordAssocs")
   private AssociationTable associationTable;
 
@@ -41,8 +41,8 @@ public class RetrieveCounts extends AbstractProcedure {
     double averageLength = 0.0;
 
     // Read the total_length and total_words to calculate average length
-    OperationResult<Map<byte[],byte[]>> result =
-      this.wordStatsTable.read(new Read(TOTALS_ROW, new byte[][] { TOTAL_LENGTH, TOTAL_WORDS }));
+    OperationResult<Map<byte[], byte[]>> result =
+      this.wordStatsTable.read(new Read(TOTALS_ROW, new byte[][]{TOTAL_LENGTH, TOTAL_WORDS}));
     if (!result.isEmpty()) {
       // extract the total sum of lengths
       byte[] lengthBytes = result.getValue().get(TOTAL_LENGTH);
@@ -52,7 +52,7 @@ public class RetrieveCounts extends AbstractProcedure {
       totalWords = wordsBytes == null ? 0L : Bytes.toLong(wordsBytes);
       // compute the average length
       if (totalLength != 0 && totalWords != 0) {
-        averageLength = (double)totalLength/(double)totalWords;
+        averageLength = (double) totalLength / (double) totalWords;
         // Read the unique word count
         uniqueWords = this.uniqueCountTable.readUniqueCount();
       }
@@ -85,7 +85,7 @@ public class RetrieveCounts extends AbstractProcedure {
     Long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
 
     // Read the top associated words
-    Map<String,Long> wordsAssocs = this.associationTable.readWordAssocs(word, limit);
+    Map<String, Long> wordsAssocs = this.associationTable.readWordAssocs(word, limit);
 
     // return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
