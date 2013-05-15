@@ -1,4 +1,4 @@
-manager
-=======
+app-fabric
+==========
 
-The next generation of FAR manager + FlowRunner. We may rename the repo later when a better name comes up.
+The app-fabric manages and runs all applications. 
