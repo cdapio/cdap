@@ -9,7 +9,7 @@ apply plugin:'ubuntu'
 
 task javadoc(type: Javadoc, overwrite: true) {
   source = project.parent.subprojects.collect { proj ->
-   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
+   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api") != null){
      return proj.sourceSets.api.allJava.exclude{ print it.file.name }
    }else{
     return []
@@ -31,10 +31,10 @@ task javadoc(type: Javadoc, overwrite: true) {
   }
   group = 'Documentation'
   description = 'Aggregates API javadocs across all projects.'
+  options.windowTitle = "Continuuity Reactor Javadoc ${rootProject.version}"
 
   destinationDir = new File(buildDir, 'javadoc')
   // Might need a classpath
-
 }
 
 task combinedApiJar(type: Jar) {
