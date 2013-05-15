@@ -4,13 +4,15 @@
 
 package com.continuuity.io;
 
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.TypeRepresentation;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -22,6 +24,7 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -267,4 +270,55 @@ public class DatumCodecTest {
     Assert.assertEquals(TestEnum.VALUE3, reader.read(decoder, schema));
     Assert.assertEquals(TestEnum.VALUE2, reader.read(decoder, schema));
   }
+
+  // this tests that the datum reader treats empty fields correctly. It reproduces the issue in ENG-2404.
+  @Test
+  public void testEmptyValue() throws UnsupportedTypeException, IOException {
+    Schema schema = new ReflectionSchemaGenerator().generate(RecordWithString.class);
+    TypeRepresentation typeRep = new TypeRepresentation(RecordWithString.class);
+    DatumWriter<RecordWithString> datumWriter = new ReflectionDatumWriter<RecordWithString>(schema);
+    @SuppressWarnings("unchecked")
+    ReflectionDatumReader<RecordWithString> datumReader = new ReflectionDatumReader<RecordWithString>(
+      schema, (TypeToken<RecordWithString>) TypeToken.of(typeRep.toType()));
+
+    RecordWithString record = new RecordWithString();
+    record.setA(42);
+    record.setTheString("");
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    BinaryEncoder encoder = new BinaryEncoder(bos);
+    datumWriter.encode(record, encoder);
+    byte[] bytes = bos.toByteArray();
+
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    BinaryDecoder decoder = new BinaryDecoder(bis);
+    RecordWithString rec = datumReader.read(decoder, schema);
+
+    Assert.assertEquals(record.getA(), rec.getA());
+    Assert.assertEquals(record.getTheString(), rec.getTheString());
+  }
 }
+
+// dummy class for testEmptyValue()
+class RecordWithString {
+  int a;
+
+  int getA() {
+    return a;
+  }
+
+  void setA(int a) {
+    this.a = a;
+  }
+
+  private String theString;
+
+  String getTheString() {
+    return theString;
+  }
+
+  void setTheString(String theString) {
+    this.theString = theString;
+  }
+}
+
