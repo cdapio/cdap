@@ -12,7 +12,7 @@ case "$1" in
     mkdir -p /var/log/continuuity || :
     echo $version > /opt/continuuity/$package_name/version
     chmod +x /opt/continuuity/$package_name/bin/service
-    for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | cut -d'-' -f1` ; do
+    for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
       if [[ -h /etc/init.d/svc-$svcname ]]; then
         unlink /etc/init.d/svc-$svcname
       fi
