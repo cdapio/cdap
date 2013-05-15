@@ -5,32 +5,25 @@
 package com.continuuity.data.metadata;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.Constants;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.TreeMap;
 
 /**
- * This serializes and deserializes meta data entries using Kryo.
+ * This serializes and deserializes meta data entries using Gson.
+ * This class is thread-safe.
  */
 public final class MetaDataSerializer {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MetaDataSerializer.class);
 
-  private Gson gson ;
+  private ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
+    @Override
+    protected Gson initialValue() {
+      return new Gson();
+    }
+  };
 
   /**
    * Creates a new serializer. This serializer can be reused.
    */
   public MetaDataSerializer() {
-    this.gson = new Gson();
   }
 
   /**
@@ -40,7 +33,7 @@ public final class MetaDataSerializer {
    * @throws MetaDataException if serialization fails
    */
   public byte[] serialize(MetaDataEntry meta) throws MetaDataException {
-    String s = gson.toJson(meta, meta.getClass());
+    String s = gson.get().toJson(meta, meta.getClass());
     return Bytes.toBytes(s);
   }
 
@@ -51,11 +44,11 @@ public final class MetaDataSerializer {
    * @throws MetaDataException if deserialization fails
    */
   public MetaDataEntry deserialize(byte[] bytes) throws MetaDataException {
-    return gson.fromJson(Bytes.toString(bytes), MetaData.class);
+    return gson.get().fromJson(Bytes.toString(bytes), MetaData.class);
   }
 
   /**
-   * This class is needed for Kryo - it requires a default constructor, which MetaDataEntry does not have.
+   * This class is needed for Gson - it requires a default constructor, which MetaDataEntry does not have.
    */
   public static class MetaData extends MetaDataEntry {
     public MetaData() {
