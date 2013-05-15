@@ -20,7 +20,7 @@ public class MapperWrapper extends Mapper {
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
-    Mapper delegate = createMapperInstance(userMapper);
+    Mapper delegate = createMapperInstance(context, userMapper);
 
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
@@ -33,9 +33,9 @@ public class MapperWrapper extends Mapper {
     delegate.run(context);
   }
 
-  private Mapper createMapperInstance(String userMapper) {
+  private Mapper createMapperInstance(Context context, String userMapper) {
     try {
-      return (Mapper) Class.forName(userMapper).newInstance();
+      return (Mapper) context.getConfiguration().getClassLoader().loadClass(userMapper).newInstance();
     } catch (Exception e) {
       LOG.error("Failed to create instance of the user-defined Mapper class: " + userMapper);
       throw Throwables.propagate(e);
