@@ -167,7 +167,7 @@ public class MapReduceContextProvider {
 
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder == null) {
-      String mrFramework = conf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
+      String mrFramework = jobContext.getConfiguration().get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
       if ("local".equals(mrFramework)) {
         contextBuilder = new InMemoryMapReduceContextBuilder(conf);
       } else {

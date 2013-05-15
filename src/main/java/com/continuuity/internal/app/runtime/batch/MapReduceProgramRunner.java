@@ -36,13 +36,18 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -112,7 +117,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
         public void stopping() {
           LOG.info("Stopping mapreduce job: " + context);
           try {
-            jobConf.killJob();
+            if (!jobConf.isComplete()) {
+              jobConf.killJob();
+            }
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -153,8 +160,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
       contextProvider.set(context, cConf);
     }
 
-    // adding job jar to classpath
-    jobConf.addArchiveToClassPath(new Path(jobJarLocation.toURI().getPath()));
+    // TODO: consider using approach that Weave uses: package all jars with submitted job all the time
+    // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
+    addContinuuityJarsToClasspath(jobConf);
+
     jobConf.setJar(jobJarLocation.toURI().getPath());
 
     new Thread() {
@@ -183,6 +192,25 @@ public class MapReduceProgramRunner implements ProgramRunner {
         }
       }
     }.start();
+  }
+
+  private void addContinuuityJarsToClasspath(Job jobConf) throws IOException {
+    // ideally single line commented out below should be enough, but
+    // due to yarn bug (MAPREDUCE-4740) we need to do it the ugly way
+    // jobConf.addArchiveToClassPath(new Path("/continuuity/lib.zip"));
+
+    FileSystem fs = FileSystem.get(hConf);
+
+    Path libDir = new Path("/continuuity/lib");
+    if (!fs.exists(libDir)) {
+      LOG.warn("/continuuity/lib does NOT exist, only job jar is going to be in classpath of mapreduce tasks");
+      return;
+    }
+    RemoteIterator<LocatedFileStatus> it = fs.listFiles(libDir, false);
+    while (it.hasNext()) {
+      LocatedFileStatus file = it.next();
+      jobConf.addFileToClassPath(file.getPath());
+    }
   }
 
   private void wrapMapperClassIfNeeded(Job jobConf) throws ClassNotFoundException {
