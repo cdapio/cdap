@@ -36,7 +36,8 @@ public class ObjectStoreTest extends DataSetTestBase {
     DataSet innerStore = new ObjectStore<CustomWithInner.Inner<Integer>>(
       "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
     DataSet batchStore = new ObjectStore<String>("batch", String.class);
-    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore));
+    DataSet intStore = new IntegerStore("ints");
+    setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore, innerStore, batchStore, intStore));
     // this test runs all operations synchronously
     newTransaction(Mode.Sync);
   }
@@ -202,6 +203,13 @@ public class ObjectStoreTest extends DataSetTestBase {
       System.out.println("Remaining [" + keysToVerify.size() + "]: " + keysToVerify);
     }
     Assert.assertTrue(keysToVerify.isEmpty());
+  }
+
+  @Test
+  public void testSubclass() throws OperationException {
+    IntegerStore ints = instantiator.getDataSet("ints");
+    ints.write(42, 101);
+    Assert.assertEquals((Integer)101, ints.read(42));
   }
 
 }

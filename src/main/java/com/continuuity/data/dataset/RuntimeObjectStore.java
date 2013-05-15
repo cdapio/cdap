@@ -52,6 +52,12 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
+  @Override
+  public void setDelegate(ObjectStore<T> store) {
+    // this should never be called - it should only be called on the base class
+    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
+  }
+
   // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.
   @SuppressWarnings("unchecked")
   private TypeToken<T> getTypeToken() {

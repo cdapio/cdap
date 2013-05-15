@@ -44,7 +44,13 @@ public abstract class RuntimeTable extends Table {
     this.proxy = proxy;
   }
 
-   // the data fabric to use for executing synchronous operations.
+  @Override
+  public void setDelegate(Table delegate) {
+    // this should never be called - it should only be called on the base class
+    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
+  }
+
+  // the data fabric to use for executing synchronous operations.
   private final DataFabric dataFabric;
 
   // the transaction proxy for all operations.

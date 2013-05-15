@@ -7,6 +7,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -203,24 +204,36 @@ public class DataSetInstantiationBase {
       }
       return;
     }
-    // for object stores, we set the delegate
-    if (obj instanceof ObjectStore<?>) {
+    // for object stores (and subclasses), we set the delegate to a RuntimeObjectStore. But RuntimeObjectStore
+    // is a subclass of ObjectStore itself, and there is no point in setting its delegate (it would actually
+    // lead to infinite recursion!).
+    if (obj instanceof ObjectStore<?> && !(obj instanceof RuntimeObjectStore)) {
       RuntimeObjectStore.setImplementation((ObjectStore<?>) obj, this.classLoader);
-      // but do not return yet, continue to inject data fabric into the impl
+      // but do not return yet, continue to inject data fabric into the runtime
     }
-    // otherwise recur through all fields of type DataSet
-    Class<?> objClass = obj.getClass();
-    for (Field field : objClass.getDeclaredFields()) {
-      if (DataSet.class.isAssignableFrom(field.getType())) {
-        field.setAccessible(true);
-        Object fieldValue;
-        try {
-          fieldValue = field.get(obj);
-        } catch (IllegalAccessException e) {
-          throw logAndException(e, "Cannot access field %s of data set class %s",
-                                field.getName(), objClass.getName());
+
+    // otherwise recur through all fields of type DataSet of this class and its super classes
+    // Walk up the hierarchy of this dataset class.
+    for (TypeToken<?> type : TypeToken.of(obj.getClass()).getTypes().classes()) {
+      if (type.getRawType().equals(Object.class)) {
+        break;
+      }
+
+      // Inject OutputEmitter fields.
+      for (Field field : type.getRawType().getDeclaredFields()) {
+        if (DataSet.class.isAssignableFrom(field.getType())) {
+          field.setAccessible(true);
+          Object fieldValue;
+          try {
+            fieldValue = field.get(obj);
+          } catch (IllegalAccessException e) {
+            throw logAndException(e, "Cannot access field %s of data set class %s",
+                                  field.getName(), obj.getClass().getName());
+          }
+          if (fieldValue != null) {
+            injectDataFabric(fieldValue, metricName, fabric, proxy);
+          }
         }
-        injectDataFabric(fieldValue, metricName, fabric, proxy);
       }
     }
   }
