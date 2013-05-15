@@ -1,10 +1,18 @@
 package com.continuuity.common.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.google.common.base.Preconditions;
 import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.*;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Metered;
+import com.yammer.metrics.core.Metric;
+import com.yammer.metrics.core.MetricName;
+import com.yammer.metrics.core.MetricProcessor;
+import com.yammer.metrics.core.MetricsRegistry;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.VirtualMachineMetrics;
 import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.stats.Snapshot;
 import org.slf4j.Logger;
@@ -78,7 +86,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   /**
    * Handler for sending metrics to overlord.
    */
-  private MetricsClient client;
+  private final MetricsClient client;
 
   /**
    * Single instance of metrics overlord report.
@@ -124,9 +132,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
         (int) (Math.random() * (BACKOFF_MAX_TIME - BACKOFF_MIN_TIME) + 1);
 
     if (reporter == null) {
-      reporter = new OverlordMetricsReporter(
-        Metrics.defaultRegistry(), configuration
-      );
+      reporter = new OverlordMetricsReporter(Metrics.defaultRegistry(), configuration);
       reporter.start(period, unit);
     }
   }
@@ -167,12 +173,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     Preconditions.checkNotNull(registry);
     this.vm = VirtualMachineMetrics.getInstance();
     this.hostname = getDefaultHostLabel();
-    try {
-      this.client = new MetricsClient(configuration);
-    } catch (ServiceDiscoveryClientException e) {
-      Log.error("Unable to connect to overlord metric collection service.");
-      this.client = null;
-    }
+    this.client = new MetricsClient(configuration);
   }
 
   /**
@@ -187,15 +188,21 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   }
 
   @Override
+  public void start(long period, TimeUnit unit) {
+    this.client.startAndWait();
+    super.start(period, unit);
+  }
+
+  @Override
   public void shutdown(long timeout, TimeUnit unit) throws InterruptedException {
     super.shutdown(timeout, unit);
-    client.stop();
+    client.stopAndWait();
   }
 
   @Override
   public void shutdown() {
     super.shutdown();
-    client.stop();
+    client.stopAndWait();
   }
 
   /**
@@ -257,19 +264,17 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
                               timestamp, metricValue);
     }
 
-    if (client != null) {
-      // Write the command into the client queue.
-      if (!client.write(command)) {
-        // If we fail then we back-off to a max of BACKOFF_MAX_TIME.
-        // While this thread is blocked, a thread in the client is
-        // dequeing and trying to make space for more stuff to be add
-        // later.
-        interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT) * 1000;
-        try {
-          Thread.sleep(interval);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+    // Write the command into the client queue.
+    if (!client.write(command)) {
+      // If we fail then we back-off to a max of BACKOFF_MAX_TIME.
+      // While this thread is blocked, a thread in the client is
+      // dequeing and trying to make space for more stuff to be add
+      // later.
+      interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT) * 1000;
+      try {
+        Thread.sleep(interval);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
   }
