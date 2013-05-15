@@ -33,4 +33,18 @@
             <arg line="compile"/>
         </exec>
    </target>
+
+    <target name="checkstyle"
+        description="Generates a report of code convention violations.">
+        
+      <taskdef resource="checkstyletask.properties"
+          classpath="../lib/checkstyle-5.6-all.jar"/>
+
+     <checkstyle config="../../gradle/config/checkstyle.xml"
+              failureProperty="checkstyle.failure"
+              failOnViolation="false">
+     <formatter type="xml" tofile="./checkstyle_report.xml"/>
+     <fileset dir="src" includes="**/*.java"/>
+    </checkstyle>
+   </target>
 </project>

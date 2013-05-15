@@ -1,4 +1,29 @@
+/*
+ * Copyright (c) 2013, Continuuity Inc
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are not permitted
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.payvment.continuuity.data;
+
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.StatusCode;
+import com.payvment.continuuity.Helpers;
+import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -6,30 +31,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import com.payvment.continuuity.Helpers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
 //import com.continuuity.api.data.util.Helpers;
-import com.payvment.continuuity.Helpers;
-import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 
 /**
  * Performs activity feed and popular feed read queries.
- * <p>
+ * <p/>
  * For more information on activity feeds, see
  * {@link #getActivityFeed(String, int, long, long)} and {@link ActivityFeed}.
- * <p>
+ * <p/>
  * For more information on popular feeds, see
  * {@link #getPopularFeed(int, int, int, int)} and {@link PopularFeed}.
  */
 public class ClusterFeedReader {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(ClusterFeedReader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ClusterFeedReader.class);
 
   private final ActivityFeedTable activityFeedTable;
 
@@ -38,14 +53,14 @@ public class ClusterFeedReader {
   private final SortedCounterTable topScoreTable;
 
   public ClusterFeedReader(ClusterTable clusterTable,
-      SortedCounterTable topScoreTable, ActivityFeedTable activityFeedTable) {
+                           SortedCounterTable topScoreTable,
+                           ActivityFeedTable activityFeedTable) {
     this.clusterTable = clusterTable;
     this.topScoreTable = topScoreTable;
     this.activityFeedTable = activityFeedTable;
   }
 
-  public ActivityFeed getActivityFeed(String country, int clusterId, int limit)
-      throws OperationException {
+  public ActivityFeed getActivityFeed(String country, int clusterId, int limit) throws OperationException {
     return getActivityFeed(country, clusterId, limit, Long.MAX_VALUE, 0L);
   }
 
@@ -53,20 +68,24 @@ public class ClusterFeedReader {
    * Reads the activity feed for the specified cluster containing entries with
    * timestamps less than the max stamp and greater than the min stamp, up to
    * the specified limit.
-   * <p>
+   * <p/>
    * See {@link ActivityFeed} javadoc for JSON format.
-   * @param country the country code
+   *
+   * @param country   the country code
    * @param clusterId cluster id
-   * @param limit maximum entries
-   * @param maxStamp maximum stamp, exclusive
-   * @param minStamp minimum stamp, exclusive
+   * @param limit     maximum entries
+   * @param maxStamp  maximum stamp, exclusive
+   * @param minStamp  minimum stamp, exclusive
    * @return activity feed of product entries in descending time order
    * @throws OperationException
    */
-  public ActivityFeed getActivityFeed(String country, int clusterId, int limit,
-      long maxStamp, long minStamp) throws OperationException {
+  public ActivityFeed getActivityFeed(String country,
+                                      int clusterId,
+                                      int limit,
+                                      long maxStamp,
+                                      long minStamp) throws OperationException {
     // Read cluster info
-    Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
+    Map<String, Double> clusterInfo = this.clusterTable.readCluster(clusterId);
     if (clusterInfo == null || clusterInfo.isEmpty()) {
       String str = "Cluster not found (id=" + clusterId + ")";
       LOG.warn(str);
@@ -74,23 +93,29 @@ public class ClusterFeedReader {
     }
     // For each category, open caching sorted lists on activity feeds
     // starting from max_stamp to min_stamp (but each reversed)
-    List<CachingActivityFeedScanner> scanners =
-        new ArrayList<CachingActivityFeedScanner>(clusterInfo.size());
-    for (Map.Entry<String,Double> entry : clusterInfo.entrySet()) {
+    List<CachingActivityFeedScanner> scanners = new ArrayList<CachingActivityFeedScanner>(clusterInfo.size());
+    for (Map.Entry<String, Double> entry : clusterInfo.entrySet()) {
       String category = entry.getKey();
       Double weight = entry.getValue(); // TODO: Do something with weight
-      CachingActivityFeedScanner scanner = new CachingActivityFeedScanner(
-          this.activityFeedTable, country, category, weight, maxStamp, minStamp,
-          limit);
+      CachingActivityFeedScanner scanner = new CachingActivityFeedScanner(this.activityFeedTable,
+                                                                          country,
+                                                                          category,
+                                                                          weight,
+                                                                          maxStamp,
+                                                                          minStamp,
+                                                                          limit);
       scanners.add(scanner);
     }
     // Heap merge (PriQueue) across all scanners
-    PriorityQueue<ActivityFeedMergeEntry> headMerge =
-        new PriorityQueue<ActivityFeedMergeEntry>(scanners.size());
+    PriorityQueue<ActivityFeedMergeEntry> headMerge = new PriorityQueue<ActivityFeedMergeEntry>(scanners.size());
     // Initialize priority queue with top entries in each scanner
     for (CachingActivityFeedScanner scanner : scanners) {
       ActivityFeedEntry activityFeedEntry = scanner.next();
-      if (activityFeedEntry == null) continue;
+
+      if (activityFeedEntry == null) {
+        continue;
+      }
+
       headMerge.add(new ActivityFeedMergeEntry(activityFeedEntry, scanner));
     }
     // Initialize activity feed
@@ -99,20 +124,26 @@ public class ClusterFeedReader {
     while (activityFeed.size() < limit) {
       // Grab top entry in priority queue
       ActivityFeedMergeEntry topEntry = headMerge.poll();
+
       // Stop if empty
-      if (topEntry == null) break;
+      if (topEntry == null) {
+        break;
+      }
       // Add entry to activity feed
       ActivityFeedEntry feedEntry = topEntry.getEntry();
       activityFeed.addEntry(feedEntry);
+
       // Grab next entry from current entry scanner and add back to pri queue
       ActivityFeedEntry nextFeedEntry = topEntry.scanner.next();
       if (nextFeedEntry != null) {
-        headMerge.add(new ActivityFeedMergeEntry(nextFeedEntry,
-            topEntry.scanner));
+        headMerge.add(new ActivityFeedMergeEntry(nextFeedEntry, topEntry.scanner));
       }
     }
     // Close scanners (probably a no-op for now)
-    for (CachingActivityFeedScanner scanner : scanners) scanner.close();
+    for (CachingActivityFeedScanner scanner : scanners) {
+      scanner.close();
+    }
+
     return activityFeed;
   }
 
@@ -125,20 +156,24 @@ public class ClusterFeedReader {
    * Reads the popular feed for the specified cluster, determining the most
    * popular products from the number of hours specified.  Resulting list of
    * popular products can be paged using limit and offset.
-   * <p>
+   * <p/>
    * See {@link PopularFeed} javadoc for JSON format.
-   * @param country the country code
+   *
+   * @param country   the country code
    * @param clusterId cluster id
-   * @param numHours number of hours (must be >= 1)
-   * @param limit maximum number of products to return
-   * @param offset number of products offset from most popular to return
+   * @param numHours  number of hours (must be >= 1)
+   * @param limit     maximum number of products to return
+   * @param offset    number of products offset from most popular to return
    * @return feed of products in descending popularity order
    * @throws OperationException
    */
-  public PopularFeed getPopularFeed(String country, int clusterId, int numHours,
-      int limit, int offset) throws OperationException {
-    return getPopularFeed(country, clusterId,
-        Helpers.hour(System.currentTimeMillis()), numHours, limit, offset);
+  public PopularFeed getPopularFeed(String country,
+                                    int clusterId,
+                                    int numHours,
+                                    int limit,
+                                    int offset) throws OperationException {
+
+    return getPopularFeed(country, clusterId, Helpers.hour(System.currentTimeMillis()), numHours, limit, offset);
   }
 
   /**
@@ -146,29 +181,32 @@ public class ClusterFeedReader {
    * popular products from the number of hours specified.  Resulting list of
    * popular products can be paged using limit and offset.  Uses the specified
    * currentHour rather than actual currentHour.
-   * <p>
+   * <p/>
    * See {@link PopularFeed} javadoc for JSON format.
-   * @param country the country code
-   * @param clusterId cluster id
+   *
+   * @param country     the country code
+   * @param clusterId   cluster id
    * @param currentHour the current hour, in epoch millis
-   * @param numHours number of hours (must be >= 1)
-   * @param limit maximum number of products to return
-   * @param offset number of products offset from most popular to return
+   * @param numHours    number of hours (must be >= 1)
+   * @param limit       maximum number of products to return
+   * @param offset      number of products offset from most popular to return
    * @return feed of products in descending popularity order
    * @throws OperationException
    */
-  public PopularFeed getPopularFeed(String country, int clusterId,
-      long currentHour, int numHours, int limit, int offset)
-          throws OperationException {
+  public PopularFeed getPopularFeed(String country,
+                                    int clusterId,
+                                    long currentHour,
+                                    int numHours,
+                                    int limit,
+                                    int offset) throws OperationException {
     int n = limit + offset;
     if (numHours < 1 || limit < 1 || offset < 0) {
-      throw new OperationException(StatusCode.KEY_NOT_FOUND,
-          "Invalid input argument");
+      throw new OperationException(StatusCode.KEY_NOT_FOUND, "Invalid input argument");
     }
     // Construct PopularFeed which handles all aggregation of product scores
     PopularFeed popFeed = new PopularFeed();
     // Read cluster info
-    Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
+    Map<String, Double> clusterInfo = this.clusterTable.readCluster(clusterId);
     if (clusterInfo == null || clusterInfo.isEmpty()) {
       String str = "Cluster not found (id=" + clusterId + ")";
       LOG.warn(str);
@@ -176,19 +214,19 @@ public class ClusterFeedReader {
     }
     // Iterate categories and for each category iterate hours
     // (total iterations = # categories * # hours)
-    for (Map.Entry<String,Double> entry : clusterInfo.entrySet()) {
+    for (Map.Entry<String, Double> entry : clusterInfo.entrySet()) {
       String category = entry.getKey();
-      @SuppressWarnings("unused")
-      Double weight = entry.getValue(); // TODO: Do something with weight
+      @SuppressWarnings("unused") Double weight = entry.getValue(); // TODO: Do something with weight
       List<Long> hours = new ArrayList<Long>(numHours);
-      for (int i=0; i<numHours; i++) {
+      for (int i = 0; i < numHours; i++) {
         hours.add(currentHour - (i * 3600000));
       }
       // Iterate hours
       for (Long hour : hours) {
         // Grab top counters for this category and this hour
-        List<SortedCounterTable.Counter> topCounters = this.topScoreTable.readTopCounters(
-            PopularFeed.makeRow(hour, country, category), n);
+        List<SortedCounterTable.Counter> topCounters =
+          this.topScoreTable.readTopCounters(PopularFeed.makeRow(hour, country, category), n);
+
         for (SortedCounterTable.Counter counter : topCounters) {
           // Add each counter to pop feed
           popFeed.addEntry(Bytes.toLong(counter.getName()), counter.getCount());
@@ -200,19 +238,17 @@ public class ClusterFeedReader {
 
   /**
    * Used in priority queue of activity feed entries.
-   * <p>
+   * <p/>
    * Contains an activity feed entry and the scanner it came from.  Orders by
    * descending time, descending weight, ascending category.
    */
-  private class ActivityFeedMergeEntry
-  implements Comparable<ActivityFeedMergeEntry> {
+  private class ActivityFeedMergeEntry implements Comparable<ActivityFeedMergeEntry> {
 
     ActivityFeedEntry entry;
 
     CachingActivityFeedScanner scanner;
 
-    public ActivityFeedMergeEntry(ActivityFeedEntry feedEntry,
-        CachingActivityFeedScanner scanner) {
+    public ActivityFeedMergeEntry(ActivityFeedEntry feedEntry, CachingActivityFeedScanner scanner) {
       this.entry = feedEntry;
       this.scanner = scanner;
     }
@@ -227,10 +263,23 @@ public class ClusterFeedReader {
      */
     @Override
     public int compareTo(ActivityFeedMergeEntry o) {
-      if (this.entry.timestamp > o.entry.timestamp) return -1;
-      if (this.entry.timestamp < o.entry.timestamp) return 1;
-      if (this.scanner.weight > o.scanner.weight) return -1;
-      if (this.scanner.weight < o.scanner.weight) return 1;
+
+      if (this.entry.timestamp > o.entry.timestamp) {
+        return -1;
+      }
+
+      if (this.entry.timestamp < o.entry.timestamp) {
+        return 1;
+      }
+
+      if (this.scanner.weight > o.scanner.weight) {
+        return -1;
+      }
+
+      if (this.scanner.weight < o.scanner.weight) {
+        return 1;
+      }
+
       return this.scanner.category.compareTo(o.scanner.category);
     }
 
@@ -238,7 +287,7 @@ public class ClusterFeedReader {
 
   /**
    * Scanner of the activity feed of a single category.
-   * <p>
+   * <p/>
    * Caches batches of entries at a time according to a specified page size.
    */
   private class CachingActivityFeedScanner {
@@ -273,12 +322,15 @@ public class ClusterFeedReader {
     /**
      * Cache of activity feed entries.
      */
-    private final LinkedList<ActivityFeedEntry> cache =
-        new LinkedList<ActivityFeedEntry>();
+    private final LinkedList<ActivityFeedEntry> cache = new LinkedList<ActivityFeedEntry>();
 
-    CachingActivityFeedScanner(ActivityFeedTable table, String country,
-        String category, Double weight, long maxStamp, long minStamp, int limit)
-            throws OperationException {
+    CachingActivityFeedScanner(ActivityFeedTable table,
+                               String country,
+                               String category,
+                               Double weight,
+                               long maxStamp,
+                               long minStamp,
+                               int limit) throws OperationException {
       this.table = table;
       this.country = country;
       this.category = category;
@@ -292,14 +344,20 @@ public class ClusterFeedReader {
 
     /**
      * Returns next entry from scanner and moves pointer to next entry.
+     *
      * @return next entry in scanner
      * @throws OperationException
      */
     public ActivityFeedEntry next() throws OperationException {
-      if (this.done) return null;
+
+      if (this.done) {
+        return null;
+      }
+
       if (this.cache.isEmpty()) {
         // Cache empty, attempt to fill
         boolean filled = fillCache();
+
         if (!filled) {
           // Nothing left, scanner is done
           this.done = true;
@@ -310,18 +368,24 @@ public class ClusterFeedReader {
       return this.cache.poll();
     }
 
-    public void close() {}
+    public void close() {
+    }
 
     /**
      * Fills the cache according to the page size.  Will fill cache even if
      * there are existing entries in cache.
+     *
      * @return true if anything was put into cache, false if read was empty
      * @throws OperationException
      */
     private boolean fillCache() throws OperationException {
-      if (cacheFillEnd) return false;
-      List<ActivityFeedEntry> entries = this.table.readEntries(
-          country, category, pageSize, maxStamp, minStamp);
+
+      if (cacheFillEnd) {
+        return false;
+      }
+
+      List<ActivityFeedEntry> entries = this.table.readEntries(country, category, pageSize, maxStamp, minStamp);
+
       if (entries.isEmpty()) {
         cacheFillEnd = true;
         return false;
@@ -336,6 +400,7 @@ public class ClusterFeedReader {
       }
       // Update the maxStamp to point to the timestamp of the last entry
       this.maxStamp = entries.get(entries.size() - 1).timestamp;
+
       return true;
     }
   }

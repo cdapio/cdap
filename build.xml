@@ -31,4 +31,8 @@
     <echo>examples jar'd successfully (target: jar)</echo>
   </target>
 
+  <target name="examplesCheckstyle">
+    <iterate target="checkstyle"/>
+    <echo>examples checkstyle</echo>
+  </target>
 </project>
