@@ -32,7 +32,7 @@ public class CountOddAndEven implements Application {
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
       .setName("CountOddAndEven")
-      .setDescription("Example application that counts odd and even " + "random numbers")
+      .setDescription("Example application that counts odd and even random numbers")
       .noStream()
       .noDataSet()
       .withFlows()
