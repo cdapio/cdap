@@ -1,0 +1,1 @@
+{"errors":["Line: 1 Col: 5 Unexpected start tag (a). Expected DOCTYPE.","Line: 1 Col: 15 Unexpected start tag (a) implies end tag (a).","Line: 1 Col: 15 End tag (a) violates step 1, paragraph 3 of the adoption agency algorithm.","Line: 1 Col: 16 Expected closing tag. Unexpected end of file."]}
