@@ -45,7 +45,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
     try {
       createTable(tableName, FAMILY);
       return createOVCTable(tableName);

@@ -4,38 +4,31 @@
 package com.continuuity.data.engine.leveldb;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.engine.memory.MemoryOVCTable;
+import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
+import com.continuuity.data.table.AbstractOVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.sql.SQLException;
 
 /**
  * A hybrid {@link com.continuuity.data.table.OVCTableHandle} that primarily uses LevelDB tables, except
  * for the queue table, which uses a Memory table. The stream table still uses LevelDB for now.
  */
-public class LevelDBAndMemoryOVCTableHandle extends LevelDBOVCTableHandle {
-
+public class LevelDBAndMemoryOVCTableHandle extends AbstractOVCTableHandle {
   @Inject
-  public LevelDBAndMemoryOVCTableHandle(
-      @Named("LevelDBOVCTableHandleBasePath")String basePath,
-      @Named("LevelDBOVCTableHandleBlockSize")Integer blockSize,
-      @Named("LevelDBOVCTableHandleCacheSize")Long cacheSize)
-          throws SQLException {
-    super(basePath, blockSize, cacheSize);
-  }
+  private LevelDBOVCTableHandle levelDBOVCTableHandle;
+  @Inject
+  private MemoryOVCTableHandle memoryOVCTableHandle;
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  public synchronized OrderedVersionedColumnarTable getTable(byte[] tableName)
       throws OperationException {
     // If this is the queue table, use a memory table, otherwise leveldb
     if (Bytes.equals(tableName, SimpleOVCTableHandle.queueOVCTable)) {
-      return new MemoryOVCTable(tableName);
+      return memoryOVCTableHandle.getTable(tableName);
     }
-    return super.createNewTable(tableName);
+    return levelDBOVCTableHandle.getTable(tableName);
   }
 
   @Override

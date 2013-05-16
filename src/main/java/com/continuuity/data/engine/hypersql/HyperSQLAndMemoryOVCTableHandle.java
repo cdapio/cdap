@@ -26,7 +26,7 @@ public class HyperSQLAndMemoryOVCTableHandle extends HyperSQLOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     // If this is the queue table, use a memory table, otherwise hypersql
     if (Bytes.equals(tableName, SimpleOVCTableHandle.queueOVCTable)) {

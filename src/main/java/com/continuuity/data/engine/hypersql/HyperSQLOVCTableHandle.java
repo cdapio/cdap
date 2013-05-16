@@ -29,7 +29,7 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     HyperSQLOVCTable table = new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
     table.initializeTable();
@@ -37,7 +37,7 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     HyperSQLOVCTable table =
         new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
     if (table.openTable()) {
