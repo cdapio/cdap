@@ -138,6 +138,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       } catch (OperationException ex) {
         throw Throwables.propagate(ex);
       }
+      LOG.error("Failed to run mapreduce job", e);
       throw Throwables.propagate(e);
     }
   }
