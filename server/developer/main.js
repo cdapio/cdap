@@ -13,326 +13,448 @@ var express = require('express'),
 	https = require('https');
 
 var Api = require('../common/api');
-var VERSION;
-try {
-	VERSION = fs.readFileSync(__dirname + '../../../VERSION', 'utf8');
-} catch (e) {
-	VERSION = 'UNKNOWN';
-}
 
+/**
+ * Set environment.
+ */
 process.env.NODE_ENV = 'development';
 
 /**
- * Configure logger.
+ * Set up dev server namespace.
  */
-var LOG_LEVEL = 'INFO';
-log4js.configure({
-	appenders: [
-		{ type : 'console' }
-	]
-});
-var logger = process.logger = log4js.getLogger('Developer UI');
-logger.setLevel(LOG_LEVEL);
+var devServer = devServer || {};
 
 /**
- * Configure Express.
+ * Dev server version.
  */
-var app = express();
-app.use(express.bodyParser());
-if (fs.existsSync(__dirname + '/../client/')) {
-	app.use(express.static(__dirname + '/../client/'));
-} else {
-	app.use(express.static(__dirname + '/../../client/'));
-}
-
-var server = http.createServer(app);
-
-io = require('socket.io').listen(server);
-io.configure('development', function(){
-	io.set('transports', ['websocket', 'xhr-polling']);
-	io.set('log level', 1);
-});
-
-var config = {};
-var socket = null;
+devServer.VERSION = '';
 
 /**
- * SocketIO handlers
+ * Log level for dev server.
  */
-io.sockets.on('connection', function (newSocket) {
+devServer.LOG_LEVEL = 'INFO';
 
-	socket = newSocket;
-	socket.emit('env', {"name": "local", "version": "developer", "credential": Api.credential });
+/**
+ * App framework.
+ */
+devServer.app = express();
 
-	function socketResponse (request, error, response) {
-		socket.emit('exec', error, {
-			method: request.method,
-			params: typeof response === "string" ? JSON.parse(response) : response,
-			id: request.id
-		});
+/**
+ * Server.
+ */
+devServer.server = {};
+
+/**
+ * Socket io.
+ */
+devServer.io = {};
+
+/**
+ * Socket to listen to emit events and data.
+ */
+devServer.socket = null;
+
+/**
+ * Config.
+ */
+devServer.config = {};
+
+/**
+ * Express configured.
+ */
+devServer.expressConfigured = false;
+
+/**
+ * Socket io configured.
+ */
+devServer.ioConfigured = false;
+
+/**
+ * URL routes set.
+ */
+devServer.routesSet = false;
+
+/**
+ * Configuration file pulled in and set.
+ */
+devServer.configSet = false;
+
+/**
+ * Sets version if a version file exists.
+ */
+devServer.setVersion = function() {
+	try {
+		devServer.VERSION = fs.readFileSync(__dirname + '../../../VERSION', 'utf8');
+	} catch (e) {
+		devServer.VERSION = 'UNKNOWN';
 	}
+};
 
-	socket.on('metadata', function (request) {
-		Api.metadata('developer', request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
+/**
+ * Configures logger.
+ * @param {string} opt_appenderType log4js appender type.
+ * @param {string} opt_logger log4js logger name.
+ * @return {Object} instance of logger.
+ */
+devServer.getLogger = function(opt_appenderType, opt_loggerName) {
+	var appenderType = opt_appenderType || 'console';
+	var loggerName = opt_loggerName || 'Developer UI';
+	log4js.configure({
+		appenders: [
+			{type: appenderType}
+		]
 	});
+	var logger = log4js.getLogger(loggerName);
+	logger.setLevel(devServer.LOG_LEVEL);
+	return logger;
+};
 
-	socket.on('far', function (request) {
-		Api.far('developer', request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
+/**
+ * Configures express server.
+ */
+devServer.configureExpress = function() {
+	devServer.app.use(express.bodyParser());
+
+	// Workaround to make static files work on cloud.
+	if (fs.existsSync(__dirname + '/../client/')) {
+		devServer.app.use(express.static(__dirname + '/../client/'));
+	} else {
+		devServer.app.use(express.static(__dirname + '/../../client/'));
+	}
+	devServer.expressConfigured = true;
+};
+
+/**
+ * Creates http server based on app framework.
+ * Currently works only with express.
+ * @param {Object} app framework.
+ * @return {Object} instance of the http server.
+ */
+devServer.getServerInstance = function(app) {
+  return http.createServer(app);
+};
+
+/**
+ * Opens an io socket using the server.
+ * @param {Object} Http server used by application.
+ * @return {Object} instane of io socket listening to server.
+ */
+devServer.getSocketIo = function(server) {
+	var io = require('socket.io').listen(server);
+	io.configure('development', function(){
+		io.set('transports', ['websocket', 'xhr-polling']);
+		io.set('log level', 1);
 	});
+	return io;
+};
 
-	socket.on('gateway', function (request) {
-		Api.gateway('apikey', request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
-		});
+/**
+ * Defines actions in response to a recieving data from a socket.
+ * @param {Object} request a socket request.
+ * @param {Object} error error.
+ * @param {Object} response for hte socket request.
+ */
+devServer.socketResponse = function(request, error, response) {
+	devServer.socket.emit('exec', error, {
+		method: request.method,
+		params: typeof response === "string" ? JSON.parse(response) : response,
+		id: request.id
 	});
+};
 
-	socket.on('monitor', function (request) {
-		Api.monitor('developer', request.method, request.params, function (error, response) {
-			socketResponse(request, error, response);
+/**
+ * Configures socket io handlers.
+ * @param {Object} instance of the socket io.
+ */
+devServer.configureIoHandlers = function(io) {
+	io.sockets.on('connection', function (newSocket) {
+
+		devServer.socket = newSocket;
+		console.log(devServer.socket);
+		devServer.socket.emit('env',
+													{"name": "local", "version": "developer", "credential": Api.credential });
+
+		devServer.socket.on('metadata', function (request) {
+			Api.metadata('developer', request.method, request.params, function (error, response) {
+				devServer.socketResponse(request, error, response);
+			});
 		});
-	});
 
-	socket.on('manager', function (request) {
-		Api.manager('developer', request.method, request.params, function (error, response) {
-			
-			if (response && response.length) {
-				var int64values = {
-					"lastStarted": 1,
-					"lastStopped": 1,
-					"startTime": 1,
-					"endTime": 1
-				};
-				for (var i = 0; i < response.length; i ++) {
-					for (var j in response[i]) {
-						if (j in int64values) {
-							response[i][j] = parseInt(response[i][j].toString(), 10);
+		devServer.socket.on('far', function (request) {
+			Api.far('developer', request.method, request.params, function (error, response) {
+				devServer.socketResponse(request, error, response);
+			});
+		});
+
+		devServer.socket.on('gateway', function (request) {
+			Api.gateway('apikey', request.method, request.params, function (error, response) {
+				devServer.socketResponse(request, error, response);
+			});
+		});
+
+		devServer.socket.on('monitor', function (request) {
+			Api.monitor('developer', request.method, request.params, function (error, response) {
+				devServer.socketResponse(request, error, response);
+			});
+		});
+
+		devServer.socket.on('manager', function (request) {
+			Api.manager('developer', request.method, request.params, function (error, response) {
+				
+				if (response && response.length) {
+					var int64values = {
+						"lastStarted": 1,
+						"lastStopped": 1,
+						"startTime": 1,
+						"endTime": 1
+					};
+					for (var i = 0; i < response.length; i ++) {
+						for (var j in response[i]) {
+							if (j in int64values) {
+								response[i][j] = parseInt(response[i][j].toString(), 10);
+							}
 						}
 					}
 				}
-			}
-
-			socket.emit('exec', error, {
-				method: request.method,
-				params: typeof response === "string" ? JSON.parse(response) : response,
-				id: request.id
+				devServer.socketResponse(request, error, response);
 			});
-			
 		});
 	});
-
-});
-
-/**
- * Upload an Application archive.
- */
-app.post('/upload/:file', function (req, res) {
-
-	var accountID = 'developer';
-	Api.upload(accountID, req, res, req.params.file, socket);				
-	
-});
+	devServer.ioConfigured = true;
+};
 
 /**
- * Check for new version.
- * http://www.continuuity.com/version
+ * Binds individual expressjs routes. Any additional routes should be added here.
  */
-app.get('/version', function (req, res) {
+devServer.bindRoutes = function() {
 
-	var options = {
-		host: 'www.continuuity.com',
-		path: '/version',
-		port: '80'
-	};
+  // Check to see if config is set.
+	if(!devServer.configSet) {
+		devServer.logger.info("Configuration file not set ", devServer.config);
+		return false;
+	}
+	/**
+	 * Upload an Application archive.
+	 */
+	devServer.app.post('/upload/:file', function (req, res) {
+		var accountID = 'developer';
+		Api.upload(accountID, req, res, req.params.file, devServer.socket);				
+	});
 
-	http.request(options, function(response) {
-		var data = '';
-		response.on('data', function (chunk) {
-			data += chunk;
+	/**
+	 * Check for new version.
+	 * http://www.continuuity.com/version
+	 */
+	devServer.app.get('/version', function (req, res) {
+
+		var options = {
+			host: 'www.continuuity.com',
+			path: '/version',
+			port: '80'
+		};
+
+		res.set({
+			'Content-Type': 'application-json'
 		});
 
-		response.on('end', function () {
-			
-			data = data.replace(/\n/g, '');
-
-			res.send(JSON.stringify({
-				current: VERSION,
-				newest: data
-			}));
-			res.end();
-
-		});
-	}).end();
-
-});
-
-/**
- * Get a list of push destinations.
- */
-app.get('/destinations', function  (req, res) {
-
-	fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
-
-		res.on('error', function (e) {
-			logger.trace('/destinations', e);
-		});
-
-		if (error) {
-
-			res.write('false');
-			res.end();
-
-		} else {
-
-			var options = {
-				host: config['accounts-host'],
-				path: '/api/vpc/list/' + result,
-				port: config['accounts-port']
-			};
-
-			var request = https.request(options, function(response) {
-				var data = '';
-				response.on('data', function (chunk) {
-					data += chunk;
-				});
-
-				response.on('end', function () {
-					
-					res.write(data);
-					res.end();
-
-				});
-
-				response.on('error', function () {
-					res.write('network');
-					res.end();
-				});
-
+		http.request(options, function(response) {
+			var data = '';
+			response.on('data', function (chunk) {
+				data += chunk;
 			});
 
-			request.on('error', function () {
+			response.on('end', function () {
+				
+				data = data.replace(/\n/g, '');
 
-				res.write('network');
+				res.send(JSON.stringify({
+					current: devServer.VERSION,
+					newest: data
+				}));
 				res.end();
 
 			});
+		}).end();
 
-			request.on('socket', function (socket) {
-				socket.setTimeout(10000);  
-				socket.on('timeout', function() {
+	});
 
-					request.abort();
-					res.write('network');
-					res.end();
+	/**
+	 * Get a list of push destinations.
+	 */
+	devServer.app.get('/destinations', function  (req, res) {
 
-				});
+		fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
+
+			res.on('error', function (e) {
+				logger.trace('/destinations', e);
 			});
 
-			request.end();
+			if (error) {
 
-		}
+				res.write('false');
+				res.end();
 
+			} else {
+
+				var options = {
+					host: devServer.config['accounts-host'],
+					path: '/api/vpc/list/' + result,
+					port: devServer.config['accounts-port']
+				};
+
+				var request = https.request(options, function(response) {
+					var data = '';
+					response.on('data', function (chunk) {
+						data += chunk;
+					});
+
+					response.on('end', function () {
+						res.write(data);
+						res.end();
+					});
+
+					response.on('error', function () {
+						res.write('network');
+						res.end();
+					});
+				});
+
+				request.on('error', function () {
+					res.write('network');
+					res.end();
+				});
+
+				request.on('socket', function (socket) {
+					socket.setTimeout(10000);  
+					socket.on('timeout', function() {
+
+						request.abort();
+						res.write('network');
+						res.end();
+
+					});
+				});
+				request.end();
+			}
+		});
 	});
 
-});
+	/**
+	 * Save a credential / API Key.
+	 */
+	devServer.app.post('/credential', function (req, res) {
 
-/**
- * Save a credential / API Key.
- */
-app.post('/credential', function (req, res) {
+		var apiKey = req.body.apiKey;
 
-	var apiKey = req.body.apiKey;
+		// Write credentials to file.
+		fs.writeFile(__dirname + '/.credential', apiKey,
+			function (error, result) {
+				if (error) {
 
-	// Write down credentials.
-	fs.writeFile(__dirname + '/.credential', apiKey,
-		function (error, result) {
+					devServer.logger.warn('Could not write to ./.credential', error, result);
+					res.write('Error: Could not write credentials file.');
+					res.end();
 
-		if (error) {
+				} else {
+					Api.credential = apiKey;
 
-			logger.warn('Could not write to ./.credential', error, result);
-			res.write('Error: Could not write credentials file.');
-			res.end();
+					res.write('true');
+					res.end();
 
-		} else {
-
-			Api.credential = apiKey;
-
-			res.write('true');
-			res.end();
-
-		}
-
+				}
+		});
 	});
 
-});
+	/**
+	 * Catch port binding errors.
+	 */
+	devServer.app.on('error', function () {
+		devServer.logger.warn('Port ' + devServer.config['node-port'] + ' is in use.');
+		process.exit(1);
+	});
+
+	devServer.routesSet = true;
+};
 
 /**
- * Catch port binding errors.
+ * Gets the local host.
+ * @return {string} localhost ip address.
  */
-app.on('error', function () {
-	logger.warn('Port ' + config['node-port'] + ' is in use.');
-	process.exit(1);
-});
-
-function getLocalHost () {
-
+devServer.getLocalHost = function() {
 	var os = require('os');
 	var ifaces = os.networkInterfaces();
 	var localhost = '';
 
 	for (var dev in ifaces) {
-		var alias=0;
-		ifaces[dev].forEach(function(details){
-			if (details.family=='IPv4') {
-				++alias;
+		ifaces[dev].forEach(function(details) {
+			if (details.family == 'IPv4') {
 				if (dev === 'lo0') {
 					localhost = details.address;
 				}
 			}
 		});
 	}
-
 	return localhost;
-	
-}
+};
 
 /**
- * Read configuration and start the server.
+ * Sets config data for application server.
+ * @param {Function} opt_callback Callback function to start sever start process.
  */
-fs.readFile(__dirname + '/continuuity-local.xml',
-	function (error, result) {
-
-	var parser = new xml2js.Parser();
-	parser.parseString(result, function (err, result) {
-
-		result = result.property;
-		var localhost = getLocalHost();
-
-		for (var item in result) {
-			item = result[item];
-			config[item.name] = item.value;
-		}
-
-		/**
-		 * Pull in stored credentials.
-		 */
-		fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
-
-			logger.trace('Configuring with', config);
-			Api.configure(config, apiKey || null);
-
-			logger.info('Listening on port',
-				config['node-port']);	
-			server.listen(config['node-port']);
-
-			logger.info(config);
-
+devServer.setConfig = function(opt_callback) {
+	fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
+		var parser = new xml2js.Parser();
+		parser.parseString(result, function(err, result) {
+			result = result.property;
+			var localhost = devServer.getLocalHost();
+			for (var item in result) {
+				item = result[item];
+				devServer.config[item.name] = item.value;
+			}
 		});
-
+		fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
+			devServer.logger.trace('Configuring with', devServer.config);
+			Api.configure(devServer.config, apiKey || null);
+			devServer.configSet = true;
+			if (opt_callback && typeof opt_callback == "function") {
+				opt_callback();
+			}
+		});
 	});
+};
 
-});
+/**
+ * Stars the fully enabled http server.
+ * !Must only be called after configuration is fully done.
+ * @return {boolean} Whether everything started.
+ */
+devServer.startServer = function() {
+	devServer.configureExpress();
+	devServer.bindRoutes();
+	devServer.server = devServer.getServerInstance(devServer.app);
+	devServer.io = devServer.getSocketIo(devServer.server);
+	devServer.configureIoHandlers(devServer.io);
+	if (!devServer.ioConfigured || !devServer.expressConfigured || !devServer.routesSet) {
+		devServer.logger.info('Error starting server, please check config.');
+		return;
+	}
+	devServer.server.listen(devServer.config['node-port']);
+	devServer.logger.info('Listening on port', devServer.config['node-port']);
+	devServer.logger.info(devServer.config);
+};
 
+devServer.init = function() {
+	devServer.logger = devServer.getLogger();
+	devServer.setVersion();
+	devServer.setConfig(devServer.startServer);
+};
+
+/**
+ * Initialize the application.
+ */
+devServer.init();
+
+/**
+ * Export app.
+ */
+module.exports = devServer;

@@ -9,10 +9,11 @@ var assert = require('chai').assert,
 //Changing environment to test.
 process.env.NODE_ENV = "test";
 
-var app = require('../server/developer/main.js');
+var devServer = require('../server/developer/main.js');
+var app = devServer.app;
 
-describe('URL tests', function() {
-  
+describe('Node js tests', function() {
+
   describe('GET /version', function() {
     it('should respond with json', function(done) {
       request(app)
@@ -21,8 +22,9 @@ describe('URL tests', function() {
         .expect('Content-Type', /json/)
         .end(function(err, res) {
           assert.equal(err, null);
-          assert.property(res.body, 'current');
-          assert.property(res.body, 'newest');
+          var responseData = JSON.parse(res.text);
+          assert.property(responseData, 'current');
+          assert.property(responseData, 'newest');
           done();
         });
     });
@@ -57,5 +59,17 @@ describe('URL tests', function() {
     });
   });
 
-});
+  describe('Test devServer', function() {
+  
+    it('should get localhost address', function(done) {
+      assert.equal(devServer.getLocalHost(), '127.0.0.1');
+      done();
+    });
 
+    it('should get logger working correctly', function(done) {
+      assert.equal(devServer.logger.level.levelStr, 'INFO');
+      done();
+    });
+
+  });
+});
