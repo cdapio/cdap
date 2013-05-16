@@ -170,10 +170,9 @@ devServer.configureIoHandlers = function(io) {
 	io.sockets.on('connection', function (newSocket) {
 
 		devServer.socket = newSocket;
-		console.log(devServer.socket);
 		devServer.socket.emit('env',
 													{"name": "local", "version": "developer", "credential": Api.credential });
-
+		
 		devServer.socket.on('metadata', function (request) {
 			Api.metadata('developer', request.method, request.params, function (error, response) {
 				devServer.socketResponse(request, error, response);
@@ -237,6 +236,8 @@ devServer.bindRoutes = function() {
 	 * Upload an Application archive.
 	 */
 	devServer.app.post('/upload/:file', function (req, res) {
+		console.log("the socket is");
+		console.log(devServer.socket);
 		var accountID = 'developer';
 		Api.upload(accountID, req, res, req.params.file, devServer.socket);				
 	});
@@ -372,7 +373,6 @@ devServer.bindRoutes = function() {
 		devServer.logger.warn('Port ' + devServer.config['node-port'] + ' is in use.');
 		process.exit(1);
 	});
-
 	devServer.routesSet = true;
 };
 
@@ -428,12 +428,15 @@ devServer.setConfig = function(opt_callback) {
  * !Must only be called after configuration is fully done.
  * @return {boolean} Whether everything started.
  */
-devServer.startServer = function() {
-	devServer.configureExpress();
-	devServer.bindRoutes();
+devServer.setUpServer = function() {
 	devServer.server = devServer.getServerInstance(devServer.app);
 	devServer.io = devServer.getSocketIo(devServer.server);
 	devServer.configureIoHandlers(devServer.io);
+	devServer.startServer();
+};
+
+devServer.startServer = function() {
+	devServer.bindRoutes();
 	if (!devServer.ioConfigured || !devServer.expressConfigured || !devServer.routesSet) {
 		devServer.logger.info('Error starting server, please check config.');
 		return;
@@ -441,12 +444,14 @@ devServer.startServer = function() {
 	devServer.server.listen(devServer.config['node-port']);
 	devServer.logger.info('Listening on port', devServer.config['node-port']);
 	devServer.logger.info(devServer.config);
+	return;
 };
 
 devServer.init = function() {
 	devServer.logger = devServer.getLogger();
 	devServer.setVersion();
-	devServer.setConfig(devServer.startServer);
+	devServer.configureExpress();
+	devServer.setConfig(devServer.setUpServer);
 };
 
 /**
