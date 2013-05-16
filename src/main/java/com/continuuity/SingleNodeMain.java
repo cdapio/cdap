@@ -199,10 +199,11 @@ public class SingleNodeMain {
       System.exit(-1);
     }
 
-    boolean inMemory = false;
-    boolean levelDBEnabled = true;
+    CConfiguration configuration = CConfiguration.create();
 
-    // We only support 'help' command line options currently
+    // Single node use persistent data fabric by default
+    boolean inMemory = false;
+
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
@@ -210,61 +211,26 @@ public class SingleNodeMain {
       } else if ("--in-memory".equals(args[0])) {
         inMemory = true;
       } else if ("--leveldb-disable".equals(args[0])) {
-        levelDBEnabled = false;
+        // this option overrides a setting that tells if level db can be used for persistence
+        configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, false);
       } else {
         usage(true);
       }
     }
 
-    CConfiguration configuration = CConfiguration.create();
-    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
-
-    boolean inVPC = false;
-    String environment = configuration.get("appfabric.environment", "devsuite");
-    if(environment.equals("vpc")) {
-      System.err.println("AppFabric Environment : " + environment);
-      inVPC = true;
-    }
-
-    boolean levelDBCompatibleOS = false;
-    String OS = System.getProperty("os.name").toLowerCase();
-    if(OS.indexOf("mac") >= 0 || OS.indexOf("nix") >=0  || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0) {
-      levelDBCompatibleOS = true;
-    }
 
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // When BigMamaModule is refactored we may move it into one of the singlenode modules.
-    Module hadoopConfigurationModule = new Module() {
-      @Override
-      public void configure(Binder binder) {
-        Configuration hConf = new Configuration();
-        hConf.addResource("mapred-site-local.xml");
-        hConf.reloadConfiguration();
-        binder.bind(Configuration.class).toInstance(hConf);
-      }
-    };
+    Module hadoopConfModule = getHadoopConfModule();
 
-    ImmutableList<Module> inMemoryModules = ImmutableList.of(
-      new BigMamaModule(configuration),
-      new MetricsModules().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules(),
-      hadoopConfigurationModule
-    );
+    ImmutableList<Module> modules;
+    if (inMemory) {
+      modules = createInMemoryModules(configuration, hadoopConfModule);
+    } else {
+      modules = createPersistentModules(configuration, hadoopConfModule);
+    }
 
-    ImmutableList<Module> singleNodeModules = ImmutableList.of(
-      new BigMamaModule(configuration),
-      new MetricsModules().getSingleNodeModules(),
-      new GatewayModules().getSingleNodeModules(),
-      ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
-        : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules(),
-      hadoopConfigurationModule
-    );
-
-    SingleNodeMain main = inMemory ? new SingleNodeMain(inMemoryModules, configuration)
-      : new SingleNodeMain(singleNodeModules, configuration);
+    SingleNodeMain main = new SingleNodeMain(modules, configuration);
     try {
       main.startUp(args);
     } catch (Exception e) {
@@ -272,6 +238,68 @@ public class SingleNodeMain {
       System.err.println("Failed to start server. " + e.getMessage());
       System.exit(-2);
     }
+  }
 
+  private static Module getHadoopConfModule() {
+    return new Module() {
+        @Override
+        public void configure(Binder binder) {
+          Configuration hConf = new Configuration();
+          hConf.addResource("mapred-site-local.xml");
+          hConf.reloadConfiguration();
+          binder.bind(Configuration.class).toInstance(hConf);
+        }
+      };
+  }
+
+  private static ImmutableList<Module> createInMemoryModules(CConfiguration configuration,
+                                                             Module hadoopConfModule) {
+
+    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
+
+    return ImmutableList.of(
+      new BigMamaModule(configuration),
+      new MetricsModules().getInMemoryModules(),
+      new GatewayModules().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
+      new MetadataModules().getInMemoryModules(),
+      hadoopConfModule
+    );
+  }
+
+  private static ImmutableList<Module> createPersistentModules(CConfiguration configuration, Module hadoopConfModule) {
+    ImmutableList<Module> modules;
+    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
+
+    boolean inVPC = false;
+    String environment =
+      configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
+    if(environment.equals("vpc")) {
+      System.err.println("AppFabric Environment : " + environment);
+      inVPC = true;
+    }
+
+    boolean levelDBCompatibleOS = DataFabricLevelDBModule.isOsLevelDBCompatible();
+    boolean levelDBEnabled =
+      configuration.getBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, Constants.DEFAULT_DATA_LEVELDB_ENABLED);
+
+    boolean useLevelDB = (inVPC || levelDBCompatibleOS) && levelDBEnabled;
+    if (useLevelDB) {
+      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    } else {
+      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.HSQLDB.name());
+    }
+
+    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, levelDBEnabled);
+
+    modules = ImmutableList.of(
+      new BigMamaModule(configuration),
+      new MetricsModules().getSingleNodeModules(),
+      new GatewayModules().getSingleNodeModules(),
+      useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules(),
+      hadoopConfModule
+    );
+    return modules;
   }
 }
