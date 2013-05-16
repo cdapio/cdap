@@ -17,6 +17,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -30,6 +32,8 @@ import java.util.Random;
  * Benchmark for generating load by sending REST calls.
  */
 public class LoadGenerator extends SimpleBenchmark {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LoadGenerator.class);
 
   String apikey = null;
   String hostname = null;
@@ -75,6 +79,9 @@ public class LoadGenerator extends SimpleBenchmark {
     if (baseUrl == null) {
       baseUrl = Util.findBaseUrl(config, RestCollector.class, null, hostname, -1, ssl);
     }
+
+    LOG.info("Base Url = {}", baseUrl);
+
     if (baseUrl == null) {
       throw new BenchmarkException(
           "Can't figure out gateway URL. Please specify --base");
@@ -88,6 +95,9 @@ public class LoadGenerator extends SimpleBenchmark {
     } else {
       requestUrl = baseUrl + destination;
     }
+
+    LOG.info("Request Url = {}", requestUrl);
+
     if (file != null) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(file));

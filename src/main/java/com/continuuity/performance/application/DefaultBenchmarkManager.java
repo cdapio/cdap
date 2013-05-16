@@ -10,6 +10,7 @@ import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.archive.JarClassLoader;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -19,7 +20,6 @@ import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.test.ProcedureClientFactory;
-import com.continuuity.internal.test.StreamWriterFactory;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.ProcedureClient;
@@ -39,9 +39,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
+ * Default Benchmark Manager.
  */
-public class RemoteApplicationManager implements ApplicationManager {
+public class DefaultBenchmarkManager implements ApplicationManager {
 
   private final ConcurrentMap<String, FlowIdentifier> runningProcessses = Maps.newConcurrentMap();
   private final AuthToken token;
@@ -49,15 +49,19 @@ public class RemoteApplicationManager implements ApplicationManager {
   private final String applicationId;
   private final AppFabricService.Iface appFabricServer;
   private final DataSetInstantiator dataSetInstantiator;
-  private final StreamWriterFactory streamWriterFactory;
+  private final BenchmarkStreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
 
   @Inject
-  public RemoteApplicationManager(OperationExecutor opex, StreamWriterFactory streamWriterFactory,
-                                  ProcedureClientFactory procedureClientFactory, @Assisted AuthToken token,
-                                  @Assisted("accountId") String accountId, @Assisted("applicationId") String
-    applicationId, @Assisted AppFabricService.Iface appFabricServer, @Assisted Location deployedJar,
-                                  @Assisted ApplicationSpecification appSpec) {
+  public DefaultBenchmarkManager(OperationExecutor opex,
+                                 BenchmarkStreamWriterFactory streamWriterFactory,
+                                 ProcedureClientFactory procedureClientFactory,
+                                 @Assisted AuthToken token,
+                                 @Assisted("accountId") String accountId,
+                                 @Assisted("applicationId") String applicationId,
+                                 @Assisted AppFabricService.Iface appFabricServer,
+                                 @Assisted Location deployedJar,
+                                 @Assisted ApplicationSpecification appSpec) {
     this.token = token;
     this.accountId = accountId;
     this.applicationId = applicationId;
@@ -71,8 +75,6 @@ public class RemoteApplicationManager implements ApplicationManager {
     proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, ctx));
 
     try {
-      // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
-      // The drawback is we'll not be able to instrument DataSet classes using ASM.
       this.dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy,
                                                          new DataSetClassLoader(new JarClassLoader(deployedJar)));
     } catch (IOException e) {
@@ -160,10 +162,7 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public StreamWriter getStreamWriter(String streamName) {
     QueueName queueName = QueueName.fromStream(Id.Account.from(accountId), streamName);
-
-
-
-    return streamWriterFactory.create(queueName, accountId, applicationId);
+    return streamWriterFactory.create(CConfiguration.create(), queueName, accountId, applicationId);
   }
 
   @Override
@@ -198,3 +197,4 @@ public class RemoteApplicationManager implements ApplicationManager {
     }
   }
 }
+

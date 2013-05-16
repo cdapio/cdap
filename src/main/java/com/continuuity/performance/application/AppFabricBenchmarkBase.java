@@ -20,12 +20,8 @@ import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
-import com.continuuity.internal.test.ApplicationManagerFactory;
-import com.continuuity.internal.test.DefaultApplicationManager;
 import com.continuuity.internal.test.DefaultProcedureClient;
-import com.continuuity.internal.test.DefaultStreamWriter;
 import com.continuuity.internal.test.ProcedureClientFactory;
-import com.continuuity.internal.test.StreamWriterFactory;
 import com.continuuity.internal.test.bytecode.FlowletRewriter;
 import com.continuuity.internal.test.bytecode.ProcedureRewriter;
 import com.continuuity.test.ApplicationManager;
@@ -72,12 +68,11 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
- * Base class to inherit from that provides performance testing functionality for
- * {@link com.continuuity.api.Application}.
+ * Base class to inherit from that provides benchmarking functionality for {@link com.continuuity.api.Application}.
  */
-public class RemoteAppFabricTestBase {
+public class AppFabricBenchmarkBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteAppFabricTestBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricBenchmarkBase.class);
   private static File tmpDir;
   private static AppFabricService.Iface appFabricService;
   private static LocationFactory locationFactory;
@@ -97,12 +92,13 @@ public class RemoteAppFabricTestBase {
   }
 
   public ApplicationManager deployApplication(String appClassName) {
-    Preconditions.checkNotNull(appClassName);
-    return deployApplication(getApplicationClass(appClassName));
+    Preconditions.checkNotNull(appClassName, "Application class cannot be null.");
+    ApplicationManager bam = deployApplication(getApplicationClass(appClassName));
+    return bam;
   }
 
   public ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
-    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+    Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     final String accountId = "developer";
     Application application;
@@ -146,13 +142,15 @@ public class RemoteAppFabricTestBase {
         status = appFabricService.dstatus(token, id).getOverall();
         TimeUnit.MILLISECONDS.sleep(100);
       }
-      Preconditions.checkState(status == 5, "Fail to deploy app.");
+      Preconditions.checkState(status == 5, "Failed to deploy app.");
 
       ApplicationManager mgr
-        = injector.getInstance(ApplicationManagerFactory.class).create(token, accountId, applicationId,
-                                                                       appFabricService, deployedJar, appSpec);
-      Preconditions.checkNotNull(mgr, "Fail to deploy app.");
-      LOG.debug("Suceesfully deployed jar file {} with application.", jarFile.getAbsolutePath());
+        = injector.getInstance(BenchmarkManagerFactory.class).create(token, accountId, applicationId,
+                                                                                appFabricService,
+                                                                                deployedJar, appSpec);
+      Preconditions.checkNotNull(mgr, "Failed to deploy app.");
+      LOG.debug("Succesfully deployed jar file {} with application.", jarFile.getAbsolutePath());
+
       return mgr;
 
     } catch (Exception e) {
@@ -200,11 +198,11 @@ public class RemoteAppFabricTestBase {
                         @Override
                         protected void configure() {
                           install(new FactoryModuleBuilder()
-                                    .implement(ApplicationManager.class, DefaultApplicationManager.class)
-                                    .build(ApplicationManagerFactory.class));
+                                    .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
+                                    .build(BenchmarkManagerFactory.class));
                           install(new FactoryModuleBuilder()
-                                    .implement(StreamWriter.class, DefaultStreamWriter.class)
-                                    .build(StreamWriterFactory.class));
+                                    .implement(StreamWriter.class, BenchmarkStreamWriter.class)
+                                    .build(BenchmarkStreamWriterFactory.class));
                           install(new FactoryModuleBuilder()
                                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
                                     .build(ProcedureClientFactory.class));
@@ -221,7 +219,6 @@ public class RemoteAppFabricTestBase {
     injector.getInstance(DiscoveryService.class).startAndWait();
     locationFactory = injector.getInstance(LocationFactory.class);
   }
-
 
   private File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec) {
     // Creates Manifest
@@ -335,17 +332,26 @@ public class RemoteAppFabricTestBase {
 
     return outputFile;
   }
-  private static AppFabricService.Client getAppFabricClient()
-    throws TTransportException  {
-    CConfiguration configuration = CConfiguration.create();
-    String host = configuration.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
-                                    Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
-    int port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
 
-    LOG.debug("Trying to open connection with remote AppFabric server at {}:{} ", host, port);
-    TTransport transport = new TFramedTransport(new TSocket(host, port));
-    transport.open();
-    TProtocol protocol = new TBinaryProtocol(transport);
-    return new AppFabricService.Client(protocol);
+  private static AppFabricService.Client getAppFabricClient() throws TTransportException  {
+    CConfiguration config = CConfiguration.create();
+    return new AppFabricService.Client(getThriftProtocol(config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS,
+                                                                    Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS),
+                                                         config.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT,
+                                                                       Constants.DEFAULT_APP_FABRIC_SERVER_PORT)));
+  }
+
+  private static TProtocol getThriftProtocol(String serviceHost, int servicePort) throws TTransportException {
+    TTransport transport = new TFramedTransport(new TSocket(serviceHost, servicePort));
+    try {
+      transport.open();
+    } catch (TTransportException e) {
+      String message = String.format("Unable to connect to thrift service at %s:%d. Reason: %s", serviceHost,
+                                     servicePort, e.getMessage());
+      LOG.error(message);
+      throw e;
+    }
+    //now try to connect the thrift client
+    return new TBinaryProtocol(transport);
   }
 }

@@ -54,7 +54,7 @@ import com.google.inject.multibindings.MapBinder;
 import java.util.Map;
 
 /**
- *
+ * This is a temporary module, which has to be removed when the module for distributed AppFabric is available.
  */
 public class AngryMamaModule extends AbstractModule {
 
