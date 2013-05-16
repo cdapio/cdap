@@ -386,13 +386,15 @@ devServer.getLocalHost = function() {
 	var localhost = '';
 
 	for (var dev in ifaces) {
-		ifaces[dev].forEach(function(details) {
+		for (var i = 0, len = ifaces[dev].length; i < len; i++) {
+			var details = ifaces[dev][i];
 			if (details.family == 'IPv4') {
 				if (dev === 'lo0') {
 					localhost = details.address;
+					break;
 				}
 			}
-		});
+		}
 	}
 	return localhost;
 };
