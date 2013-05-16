@@ -1,19 +1,14 @@
 package com.continuuity.performance.benchmark;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.performance.gateway.LoadGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Class that manages the ingestion of data into a stream.
  */
 public class StreamRunner {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamRunner.class);
   private static final String LOAD_GENERATOR_BENCH = LoadGenerator.class.getName();
 
   private final String streamName;
-  private CConfiguration config = CConfiguration.create();
 
   public StreamRunner(String streamName) {
     this.streamName = streamName;

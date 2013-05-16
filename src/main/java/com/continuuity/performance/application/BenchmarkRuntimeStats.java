@@ -14,8 +14,6 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.hsqldb.lib.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +25,8 @@ import java.util.concurrent.TimeoutException;
  * Runtime statistics of an application during a benchmark.
  */
 public final class BenchmarkRuntimeStats {
-  private static Logger LOG = LoggerFactory.getLogger(BenchmarkRuntimeStats.class);
+
+  private static final String ACCOUNT_ID = "developer";
 
   private static MetricsFrontendService.Client metricsClient = getMetricsClient();
 
@@ -95,7 +94,7 @@ public final class BenchmarkRuntimeStats {
   }
 
   public static Counter getCounter(String applicationId, String flowName, String flowletName, String counterName) {
-    FlowArgument arg = new FlowArgument("developer", applicationId, flowName);
+    FlowArgument arg = new FlowArgument(ACCOUNT_ID, applicationId, flowName);
     try {
       List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
       for (Counter counter : counters) {
@@ -114,7 +113,7 @@ public final class BenchmarkRuntimeStats {
   }
 
   public static Map<String, Double> getCounters(String applicationId, String flowName, String flowletName) {
-    FlowArgument arg = new FlowArgument("developer", applicationId, flowName);
+    FlowArgument arg = new FlowArgument(ACCOUNT_ID, applicationId, flowName);
     try {
       List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
       Map<String, Double> counterMap = new HashMap<String, Double>(counters.size());
@@ -152,14 +151,7 @@ public final class BenchmarkRuntimeStats {
 
   private static TProtocol getThriftProtocol(String serviceHost, int servicePort) throws TTransportException {
     TTransport transport = new TFramedTransport(new TSocket(serviceHost, servicePort));
-    try {
-      transport.open();
-    } catch (TTransportException e) {
-      String message = String.format("Unable to connect to thrift service at %s:%d. Reason: %s", serviceHost,
-                                     servicePort, e.getMessage());
-      LOG.error(message);
-      throw e;
-    }
+    transport.open();
     //now try to connect the thrift client
     return new TBinaryProtocol(transport);
   }
