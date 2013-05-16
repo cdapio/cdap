@@ -55,12 +55,19 @@ dependencies {
     compile libraries.netflix_curator_discovery_client
     compile libraries.netflix_curator_discovery_server
     compile libraries.netflix_curator_recipes
-    compile libraries.hadoop_common
+    compile (libraries.hadoop_common) {
+        exclude group: 'commons-logging'
+    }
     compile libraries.hadoop_annotations
-    compile libraries.hadoop_hdfs
+    compile (libraries.hadoop_hdfs) {
+        exclude group: 'commons-logging'
+    }
     compile libraries.hadoop_yarn_common
     compile libraries.hadoop_yarn_api
-    compile libraries.thrift
+    compile (libraries.thrift) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.jcl_over_slf4j
     compile libraries.avro
     compile libraries.avro_ipc
     compile libraries.flume_ng_sdk
