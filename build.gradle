@@ -14,7 +14,7 @@ def executeCommand(command) {
  */
 task jshint << {
   def developer = [
-    "$rootProject.projectDir/tools/jshint/bin/hint",
+    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
     "./client/core/models/", 
     "./client/core/views/", 
     "./client/core/controllers/", 
@@ -29,7 +29,7 @@ task jshint << {
   }
 
   def cloud = [
-    "$rootProject.projectDir/tools/jshint/bin/hint",
+    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
     "./client/core/models/", 
     "./client/core/views/", 
     "./client/core/controllers/", 
@@ -48,7 +48,7 @@ task jshint << {
  */
 task nodeTests << {
   def developer = [
-    "$rootProject.projectDir/test/node_modules/mocha/bin/mocha"
+    "$rootProject.projectDir/web-cloud-app/test/node_modules/mocha/bin/mocha"
   ]
   if(executeCommand(developer) != 0) {
     throw new GradleScriptException("Error running node tests", null)

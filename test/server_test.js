@@ -25,7 +25,6 @@ describe('Node js tests', function() {
           var responseData = JSON.parse(res.text);
           assert.property(responseData, 'current');
           assert.property(responseData, 'newest');
-          assert(false);
           done();
         });
     });
