@@ -24,9 +24,11 @@ import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,12 +232,25 @@ public class SingleNodeMain {
       levelDBCompatibleOS = true;
     }
 
+    // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
+    // When BigMamaModule is refactored we may move it into one of the singlenode modules.
+    Module hadoopConfigurationModule = new Module() {
+      @Override
+      public void configure(Binder binder) {
+        Configuration hConf = new Configuration();
+        hConf.addResource("mapred-site-local.xml");
+        hConf.reloadConfiguration();
+        binder.bind(Configuration.class).toInstance(hConf);
+      }
+    };
+
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
       new BigMamaModule(configuration),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules()
+      new MetadataModules().getInMemoryModules(),
+      hadoopConfigurationModule
     );
 
     ImmutableList<Module> singleNodeModules = ImmutableList.of(
@@ -244,7 +259,8 @@ public class SingleNodeMain {
       new GatewayModules().getSingleNodeModules(),
       ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
         : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules()
+      new MetadataModules().getSingleNodeModules(),
+      hadoopConfigurationModule
     );
 
     SingleNodeMain main = inMemory ? new SingleNodeMain(inMemoryModules, configuration)
