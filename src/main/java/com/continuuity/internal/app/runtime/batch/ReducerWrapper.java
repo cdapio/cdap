@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
