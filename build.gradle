@@ -14,7 +14,7 @@ def executeCommand(command) {
  */
 task jshint << {
   def developer = [
-    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
+    "$rootProject.projectDir/tools/jshint/bin/hint",
     "./client/core/models/", 
     "./client/core/views/", 
     "./client/core/controllers/", 
@@ -29,7 +29,7 @@ task jshint << {
   }
 
   def cloud = [
-    "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
+    "$rootProject.projectDir/tools/jshint/bin/hint",
     "./client/core/models/", 
     "./client/core/views/", 
     "./client/core/controllers/", 
@@ -40,6 +40,18 @@ task jshint << {
   ]
   if(executeCommand(cloud) != 0) {
     throw new GradleScriptException("JSHint reported errors while building cloud app", null)
+  }
+}
+
+/**
+ * Task for running tests for node js.
+ */
+task nodeTests << {
+  def developer = [
+    "$rootProject.projectDir/test/node_modules/mocha/bin/mocha"
+  ]
+  if(executeCommand(developer) != 0) {
+    throw new GradleScriptException("Error running node tests", null)
   }
 }
 
@@ -108,7 +120,7 @@ task cloud(dependsOn: 'jshint') {
   build_edition('cloud')
 }
 
-task developer(dependsOn: 'jshint') {
+task developer(dependsOn: ['jshint', 'nodeTests']) {
   build_edition('developer')
 }
 
