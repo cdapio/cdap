@@ -120,14 +120,16 @@ task developer(dependsOn: 'jshint') {
 task prepackager(dependsOn: 'build', overwrite: true) {
   def stageDir = file("$buildDir/stage-packaging")
   def installDir = file("$stageDir/opt/continuuity/$project.name")
-  build_edition('cloud', 'stage-packaging/opt/continuuity/web-cloud-app')
-  copy {
-    from "$rootProject.projectDir/common/bin"
-    into "${installDir}/bin"
-  }
-  copy {
-    from 'conf'
-    into "${installDir}/conf"
+  doLast {
+    build_edition('developer', 'stage-packaging/opt/continuuity/web-cloud-app')
+    copy {
+      from "$rootProject.projectDir/common/bin"
+      into "${installDir}/bin"
+    }
+    copy {
+      from 'conf'
+      into "${installDir}/conf"
+    }
   }
 }
 
