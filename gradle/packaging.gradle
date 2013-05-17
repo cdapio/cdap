@@ -84,21 +84,15 @@ def getPomVersion = {
   v
 }
 
-def getRPMVersion = {
-  def v = getPomVersion()
-  def n = v.replaceAll('-SNAPSHOT', '')
-  n
-}
-
 
 /**
- * Generates debian package. 
+ * Generates debian package.
  */
 packaging {
   baseDir = "$project.buildDir/stage-packaging"
   extraOptions = [
                    '--name': "continuuity-$project.name",
-                   '--vendor': 'Continuuity Inc.', 
+                   '--vendor': 'Continuuity Inc.',
                    '--maintainer': 'support@continuuity.com',
                    '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
                    '--description': 'Component of Continuuity Enterprise Reactor',
@@ -117,20 +111,13 @@ packaging {
  */
 rpm {
   baseDir = "$project.buildDir/stage-packaging"
-  extraOptions = [
-                   '--name': "continuuity-$project.name",
-                   '--vendor': 'Continuuity Inc.',
-                   '--maintainer': 'support@continuuity.com',
-                   '--license': 'Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.',
-                   '--description': 'Component of Continuuity Enterprise Reactor',
-                   '--directories': "/opt/continuuity/$project.name",
-                   '--category': 'misc',
-                   '--url': 'http://www.continuuity.com/products',
-                   '--architecture': 'all',
-                   '--version': "${getRPMVersion()}",
-                   '--after-install': "$rootProject.projectDir/distributions/src/rpm/scripts/postinst",
-                   '--template-value': "project=$project.name"
-  ]
+}
+
+
+// The packaging extra options do not allow for rpm-specific settings.  As a workaround,
+//   override them directly in the rpm task
+rpm.doFirst {
+  packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postinst"
 }
 
 // Make the dependency on prepackager.
