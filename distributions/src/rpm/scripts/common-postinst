@@ -1,0 +1,14 @@
+# post install script for <%= project %>
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+#mkdir -p /var/log/continuuity/$package_name /var/run/continuuity/$package_name || :
+#echo $version > /opt/continuuity/$package_name/version
+#chmod +x /opt/continuuity/$package_name/bin/service
+#if [[ -h /etc/init.d/svc-$package_name ]]; then
+#  unlink /etc/init.d/svc-$package_name
+#fi
+#ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$package_name
+update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
+

@@ -6,6 +6,7 @@ evaluationDependsOn(':loom')
 
 apply plugin:'maven'
 apply plugin:'ubuntu'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 task javadoc(type: Javadoc, overwrite: true) {
   source = project.parent.subprojects.collect { proj ->
@@ -420,3 +421,40 @@ uploadApiArchives {
     }
   }
 }
+
+
+// common continuuity package
+task prepackager(overwrite: true) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity")
+  doLast {
+    copy {
+      from "$rootProject.projectDir/distributions/src/conf.dist"
+      into "${stageDir}/etc/continuuity/conf.dist"
+    }
+  }
+}
+
+
+// Override some of our base packaging.gradle parameters for common package
+packaging {
+  extraOptions['--name'] = "continuuity"
+  extraOptions['--directories'] = "/opt/continuuity"
+  extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/debian/scripts/common-postinst"
+  extraOptions['--template-value'] = "project=continuuity"
+}
+println '***************************** eval COMMON'
+rpm.doFirst {
+  println '*************************** adding COMMON overrides'
+  packaging.extraOptions['--name'] = "continuuity"
+  packaging.extraOptions['--directories'] = "/opt/continuuity"
+  packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-postinst"
+  packaging.extraOptions['--before-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-preinst"
+  packaging.extraOptions['--template-value'] = "project=continuuity"
+}
+
+
+debianPrepackager.dependsOn prepackager
+rpmPrepackager.dependsOn prepackager
+
+
