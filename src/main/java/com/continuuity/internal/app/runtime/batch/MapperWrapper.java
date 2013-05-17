@@ -23,7 +23,7 @@ public class MapperWrapper extends Mapper {
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
 
     String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
-    Mapper delegate = createMapperInstance(basicMapReduceContext.getProgram().getClassLoader(), userMapper);
+    Mapper delegate = createMapperInstance(context.getConfiguration().getClassLoader(), userMapper);
 
     // injecting runtime components, like datasets, etc.
     basicMapReduceContext.injectFields(delegate);

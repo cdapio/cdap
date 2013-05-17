@@ -23,7 +23,7 @@ public class ReducerWrapper extends Reducer {
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
 
     String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-    Reducer delegate = createReducerInstance(basicMapReduceContext.getProgram().getClassLoader(), userReducer);
+    Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
 
     // injecting runtime components, like datasets, etc.
     basicMapReduceContext.injectFields(delegate);

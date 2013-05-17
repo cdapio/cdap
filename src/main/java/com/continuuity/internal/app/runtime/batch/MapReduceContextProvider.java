@@ -49,6 +49,7 @@ public class MapReduceContextProvider {
       context = getBuilder(conf)
         .build(conf,
                getRunId(),
+               jobContext.getConfiguration().getClassLoader(),
                getProgramLocation(),
                getInputDataSet(),
                getInputSelection(),

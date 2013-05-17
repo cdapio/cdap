@@ -43,13 +43,16 @@ public abstract class AbstractMapReduceContextBuilder {
    * Build the instance of {@link BasicMapReduceContext}.
    * @param conf runtime configuration
    * @param runId program run id
+   * @param classLoader classloader to use
    * @param programLocation program location
    * @param inputDataSetName name of the input dataset if specified for this mapreduce job, null otherwise
    * @param inputSplits input splits if specified for this mapreduce job, null otherwise
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
    * @return instance of {@link BasicMapReduceContext}
    */
-  public BasicMapReduceContext build(CConfiguration conf, String runId, String programLocation,
+  public BasicMapReduceContext build(CConfiguration conf, String runId,
+                                     ClassLoader classLoader,
+                                     String programLocation,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName) {
@@ -73,7 +76,7 @@ public abstract class AbstractMapReduceContextBuilder {
     transactionProxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opexContext));
     DataFabric dataFabric = new DataFabricImpl(opex, opexContext);
     DataSetInstantiator dataSetContext =
-      new DataSetInstantiator(dataFabric, transactionProxy, program.getClassLoader());
+      new DataSetInstantiator(dataFabric, transactionProxy, classLoader);
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
 
     // Creating mapreduce job context
