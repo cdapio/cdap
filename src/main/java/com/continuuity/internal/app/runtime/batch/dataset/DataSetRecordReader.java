@@ -25,6 +25,9 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   @Override
   public void initialize(final InputSplit split, final TaskAttemptContext context) throws IOException,
                                                                                           InterruptedException {
+    // hack: making sure logging constext is set on the thread that accesses the runtime context
+    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
+
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     try {
@@ -32,9 +35,6 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     } catch(OperationException e) {
       throw Throwables.propagate(e);
     }
-
-    // hack: making sure logging constext is set on the thread that accesses the runtime context
-    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
   }
 
   @Override
