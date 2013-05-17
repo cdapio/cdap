@@ -9,6 +9,7 @@ import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.FlowDescriptor;
 import com.continuuity.app.services.FlowIdentifier;
+import com.continuuity.app.services.FlowStatus;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric;
@@ -22,6 +23,7 @@ import com.continuuity.filesystem.Location;
 import com.continuuity.internal.test.ProcedureClientFactory;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
+import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
@@ -37,6 +39,8 @@ import com.google.inject.assistedinject.Assisted;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Default Benchmark Manager.
@@ -160,6 +164,56 @@ public class DefaultBenchmarkManager implements ApplicationManager {
   }
 
   @Override
+  public MapReduceManager startMapReduce(final String jobName) {
+    try {
+      final FlowIdentifier jobId = new FlowIdentifier(accountId, applicationId, jobName, 0);
+      jobId.setType(EntityType.QUERY);
+
+      // mapreduce job can stop by itself, so refreshing info about its state
+      if (!isRunning(jobId)) {
+        runningProcessses.remove(jobName);
+      }
+
+      Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
+                               "MapReduce job %s is already running", jobName);
+      try {
+        appFabricServer.start(token, new FlowDescriptor(jobId, ImmutableList.<String>of()));
+      } catch (Exception e) {
+        runningProcessses.remove(jobName);
+        throw Throwables.propagate(e);
+      }
+
+      return new MapReduceManager() {
+        @Override
+        public void stop() {
+          try {
+            if (runningProcessses.remove(jobName, jobId)) {
+              appFabricServer.stop(token, jobId);
+            }
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+          while (timeout > 0 && isRunning(jobId)) {
+            timeoutUnit.sleep(1);
+            timeout--;
+          }
+
+          if (timeout == 0 && isRunning(jobId)) {
+            throw new TimeoutException("Time limit reached.");
+          }
+
+        }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public StreamWriter getStreamWriter(String streamName) {
     QueueName queueName = QueueName.fromStream(Id.Account.from(accountId), streamName);
     return streamWriterFactory.create(CConfiguration.create(), queueName, accountId, applicationId);
@@ -194,6 +248,16 @@ public class DefaultBenchmarkManager implements ApplicationManager {
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
       return classLoader.loadClass(name);
+    }
+  }
+
+  private boolean isRunning(FlowIdentifier flowId) {
+    try {
+      FlowStatus status = appFabricServer.status(token, flowId);
+      // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
+      return "RUNNING".equals(status.getStatus());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 }
