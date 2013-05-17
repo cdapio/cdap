@@ -44,7 +44,7 @@ task jshint << {
 }
 
 /**
- * Task for running tests for node js.
+ * Runs node js tests.
  */
 task nodeTests << {
   def developer = [
