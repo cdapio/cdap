@@ -434,7 +434,7 @@ public class MemoryOVCTable extends AbstractOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
 
-    if (startRow == null && stopRow ==null ) {
+    if (startRow == null && stopRow == null ) {
       submap = this.map;
     } else if (startRow == null) {
       submap = this.map.headMap(new RowLockTable.Row(stopRow));
