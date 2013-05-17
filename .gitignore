@@ -41,7 +41,6 @@ clover.license
 /web-app
 /unit-test
 /loom
-/weave
 
 # Ignore Node stuff
 npm*
