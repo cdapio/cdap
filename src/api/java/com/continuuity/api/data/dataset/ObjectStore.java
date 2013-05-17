@@ -130,6 +130,16 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     this.delegate.write(key, object);
   }
 
+  protected void writeRaw(byte[] key, byte[] value) throws OperationException {
+    // write to key value table
+    this.kvTable.write(key, value);
+  }
+
+  protected byte[] readRaw(byte[] key) throws OperationException {
+    // read from the key/value table
+    return this.kvTable.read(key);
+  }
+
   /**
    * Returns splits for a range of keys in the table.
    * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
