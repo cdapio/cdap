@@ -60,21 +60,6 @@ devServer.socket = null;
 devServer.config = {};
 
 /**
- * Express configured.
- */
-devServer.expressConfigured = false;
-
-/**
- * Socket io configured.
- */
-devServer.ioConfigured = false;
-
-/**
- * URL routes set.
- */
-devServer.routesSet = false;
-
-/**
  * Configuration file pulled in and set.
  */
 devServer.configSet = false;
@@ -121,7 +106,6 @@ devServer.configureExpress = function() {
 	} else {
 		devServer.app.use(express.static(__dirname + '/../../client/'));
 	}
-	devServer.expressConfigured = true;
 };
 
 /**
@@ -163,7 +147,7 @@ devServer.socketResponse = function(request, error, response) {
 };
 
 /**
- * Configures socket io handlers.
+ * Configures socket io handlers. Async binds socket io methods.
  * @param {Object} instance of the socket io.
  */
 devServer.configureIoHandlers = function(io) {
@@ -219,7 +203,6 @@ devServer.configureIoHandlers = function(io) {
 			});
 		});
 	});
-	devServer.ioConfigured = true;
 };
 
 /**
@@ -373,7 +356,6 @@ devServer.bindRoutes = function() {
 		devServer.logger.warn('Port ' + devServer.config['node-port'] + ' is in use.');
 		process.exit(1);
 	});
-	devServer.routesSet = true;
 };
 
 /**
@@ -403,7 +385,7 @@ devServer.getLocalHost = function() {
  * Sets config data for application server.
  * @param {Function} opt_callback Callback function to start sever start process.
  */
-devServer.setConfig = function(opt_callback) {
+devServer.getConfig = function(opt_callback) {
 	fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
 		var parser = new xml2js.Parser();
 		parser.parseString(result, function(err, result) {
@@ -426,40 +408,33 @@ devServer.setConfig = function(opt_callback) {
 };
 
 /**
- * Stars the fully enabled http server.
- * !Must only be called after configuration is fully done.
- * @return {boolean} Whether everything started.
+ * Setup io, socket and configure handlers.
+ * Gets config and starts the http server.
  */
-devServer.setUpServer = function() {
-	devServer.server = devServer.getServerInstance(devServer.app);
-	devServer.io = devServer.getSocketIo(devServer.server);
-	devServer.configureIoHandlers(devServer.io);
-	devServer.startServer();
+devServer.start = function() {
+	devServer.getConfig(function() {
+		devServer.server = devServer.getServerInstance(devServer.app);
+		devServer.io = devServer.getSocketIo(devServer.server);
+		devServer.configureIoHandlers(devServer.io)
+		devServer.bindRoutes();
+		devServer.server.listen(devServer.config['node-port']);
+		devServer.logger.info('Listening on port', devServer.config['node-port']);
+		devServer.logger.info(devServer.config);;
+	});
 };
 
-devServer.startServer = function() {
-	devServer.bindRoutes();
-	if (!devServer.ioConfigured || !devServer.expressConfigured || !devServer.routesSet) {
-		devServer.logger.info('Error starting server, please check config.');
-		return;
-	}
-	devServer.server.listen(devServer.config['node-port']);
-	devServer.logger.info('Listening on port', devServer.config['node-port']);
-	devServer.logger.info(devServer.config);
-	return;
-};
-
+/**
+ * Entry point into node setup script.
+ */
 devServer.init = function() {
 	devServer.logger = devServer.getLogger();
 	devServer.setVersion();
 	devServer.configureExpress();
-	devServer.setConfig(devServer.setUpServer);
 };
 
-/**
- * Initialize the application.
- */
 devServer.init();
+devServer.start();
+
 
 /**
  * Export app.

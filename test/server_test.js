@@ -64,9 +64,6 @@ describe('Node js tests', function() {
   describe('Test devServer', function() {
 
     it('should test initial state', function(done) {
-      assert.isTrue(devServer.ioConfigured);
-      assert.isTrue(devServer.expressConfigured);
-      assert.isTrue(devServer.routesSet);
       assert.isTrue(devServer.configSet);
       assert.notEqual(devServer.config, {});
       assert.notEqual(devServer.app, {});
