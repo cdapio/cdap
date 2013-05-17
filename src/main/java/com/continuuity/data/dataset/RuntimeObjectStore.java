@@ -76,6 +76,15 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     return decode(bytes);
   }
 
+  private void writeRaw(byte[] key, byte[] value) throws OperationException {
+    // write to key value table
+    this.kvTable.write(key, value);
+  }
+
+  private byte[] readRaw(byte[] key) throws OperationException {
+    // read from the key/value table
+    return this.kvTable.read(key);
+  }
 
   private byte[] encode(T object) throws OperationException {
     // encode T using schema
