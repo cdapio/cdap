@@ -906,8 +906,13 @@ public class HBaseOVCTable extends AbstractOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     ResultScanner resultScanner = null;
     try {
-      Scan scan =  new Scan(startRow);
-      scan.setStopRow(stopRow);
+      Scan scan =  new Scan();
+      if (startRow != null ) {
+        scan.setStartRow(startRow);
+      }
+      if (stopRow != null) {
+        scan.setStopRow(stopRow);
+      }
       scan.setTimeRange(0, getMaxStamp(readPointer));
       scan.setMaxVersions();
       resultScanner = this.readTable.getScanner(scan);
@@ -916,18 +921,6 @@ public class HBaseOVCTable extends AbstractOVCTable {
     }
     return new HBaseScanner(resultScanner, readPointer);
   }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-
 
   /**
    * Interface to handle exceptions from HBase.

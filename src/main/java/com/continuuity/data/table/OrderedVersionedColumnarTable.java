@@ -26,7 +26,8 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
   /**
    * Scans all columns of all rows between the specified start row (inclusive)
    * and stop row (exclusive).  Returns the latest visible version of each
-   * column.
+   * column. If startRow is null the scan starts reading from first available entry.
+   * If stopRow is null, the scan ends until all entries in table are read.
    * @param startRow
    * @param stopRow
    * @param readPointer
@@ -39,7 +40,8 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
   /**
    * Scans the specified columns of all rows between the specified start row
    * (inclusive) and stop row (exclusive).  Returns the latest visible version
-   * of each column.
+   * of each column. If startRow is null the scan starts reading from first available entry.
+   * If stopRow is null, the scan ends until all entries in table are read.
    * @param startRow
    * @param stopRow
    * @param columns

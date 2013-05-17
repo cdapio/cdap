@@ -432,8 +432,18 @@ public class MemoryOVCTable extends AbstractOVCTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    return new MemoryScanner(this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow)).entrySet
-      ().iterator(), readPointer);
+    ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
+
+    if (startRow == null && stopRow ==null ) {
+      submap = this.map;
+    } else if (startRow == null) {
+      submap = this.map.headMap(new RowLockTable.Row(stopRow));
+    } else if (stopRow == null) {
+      submap = this.map.tailMap(new RowLockTable.Row(startRow));
+    } else {
+      submap = this.map.subMap(new RowLockTable.Row(startRow), new RowLockTable.Row(stopRow));
+    }
+    return new MemoryScanner(submap.entrySet().iterator(), readPointer);
   }
 
   @Override

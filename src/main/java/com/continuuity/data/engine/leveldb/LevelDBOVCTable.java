@@ -705,16 +705,6 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     return new LevelDBScanner(db.iterator(), startRow, stopRow, readPointer);
   }
 
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
   // Private Helper Methods
 
   private void performInsert(byte[] row, byte[] column, long version, Type type, byte[] value)
@@ -890,7 +880,11 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
     public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow, ReadPointer readPointer) {
       this.iterator = iterator;
-      this.iterator.seek(createStartKey(startRow));
+      if (startRow == null) {
+        iterator.seekToFirst();
+      } else {
+        this.iterator.seek(createStartKey(startRow));
+      }
       this.endRow = endRow;
       this.readPointer = readPointer;
     }
@@ -915,8 +909,8 @@ public class LevelDBOVCTable extends AbstractOVCTable {
       byte[] lastRow = new byte[0];
 
       Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-
       boolean gotNext = false;
+
       while(!gotNext) {
         if (!iterator.hasNext()) {
           //No more items. Break.
@@ -926,7 +920,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
         Map.Entry<byte[], byte[]> entry = iterator.peekNext();
         KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
 
-        if (Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
+        if ( endRow != null && Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
           //already reached the end. So break.
           break;
         }
