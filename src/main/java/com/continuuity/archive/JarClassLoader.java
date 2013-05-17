@@ -7,7 +7,9 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * JarClassLoader extends {@link com.continuuity.archive.MultiClassLoader}
@@ -51,6 +53,23 @@ public class JarClassLoader extends MultiClassLoader {
   public JarClassLoader(JarResources jarResources, ClassLoader parent) {
     super(parent);
     this.jarResources = jarResources;
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String s) {
+    String entry = s;
+    if (s.startsWith("/")) {
+      entry = entry.substring(1);
+    }
+    byte[] resource = jarResources.getResource(entry);
+    if (resource == null) {
+      ClassLoader parent = getParent();
+      if (parent != null) {
+        return parent.getResourceAsStream(s);
+      }
+      return null;
+    }
+    return new ByteArrayInputStream(resource);
   }
 
   /**
