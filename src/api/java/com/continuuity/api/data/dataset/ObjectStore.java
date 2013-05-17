@@ -161,4 +161,14 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     }
     return this.delegate.createSplitReader(split);
   }
+
+  /**
+   * Return a split reader that exposes the raw byte arrays from the underlying key value store.
+   * @param split the split
+   * @return a byte array split reader
+   */
+  @Beta
+  public SplitReader<byte[], byte[]> createRawSplitReader(Split split) {
+    return this.kvTable.createSplitReader(split);
+  }
 }
