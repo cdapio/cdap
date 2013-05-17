@@ -2,7 +2,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
@@ -46,6 +46,6 @@ public class TestLevelDBOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow 
 
   @Override
   public void testInjection() {
-    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof LevelDBOVCTableHandle);
+    assertTrue(injector.getInstance(OVCTableHandle.class) instanceof LevelDBAndMemoryOVCTableHandle);
   }
 }
