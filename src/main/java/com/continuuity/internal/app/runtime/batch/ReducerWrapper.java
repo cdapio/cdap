@@ -19,11 +19,11 @@ public class ReducerWrapper extends Reducer {
 
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-    Reducer delegate = createReducerInstance(context, userReducer);
-
     MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
     BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+
+    String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
+    Reducer delegate = createReducerInstance(basicMapReduceContext.getProgram().getClassLoader(), userReducer);
 
     // injecting runtime components, like datasets, etc.
     basicMapReduceContext.injectFields(delegate);
@@ -33,9 +33,9 @@ public class ReducerWrapper extends Reducer {
     delegate.run(context);
   }
 
-  private Reducer createReducerInstance(Context context, String userReducer) {
+  private Reducer createReducerInstance(ClassLoader classLoader, String userReducer) {
     try {
-      return (Reducer) context.getConfiguration().getClassLoader().loadClass(userReducer).newInstance();
+      return (Reducer) classLoader.loadClass(userReducer).newInstance();
     } catch (Exception e) {
       LOG.error("Failed to create instance of the user-defined Reducer class: " + userReducer);
       throw Throwables.propagate(e);
