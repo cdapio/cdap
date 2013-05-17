@@ -108,7 +108,8 @@ public class MapReduceContextProvider {
     try {
       // Yes, we know that it implements Split
       @SuppressWarnings("unchecked")
-      Class<? extends Split> splitClass = (Class<? extends Split>) Class.forName(splitClassName);
+      Class<? extends Split> splitClass =
+        (Class<? extends Split>) jobContext.getConfiguration().getClassLoader().loadClass(splitClassName);
       return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
     } catch (ClassNotFoundException e) {
       //todo

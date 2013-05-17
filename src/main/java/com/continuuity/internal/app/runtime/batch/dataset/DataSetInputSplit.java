@@ -46,7 +46,11 @@ class DataSetInputSplit extends InputSplit implements Writable {
   @Override
   public void readFields(final DataInput in) throws IOException {
     try {
-      Class<? extends Split> splitClass = (Class<Split>) Class.forName(Text.readString(in));
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      if (classLoader == null) {
+        classLoader = getClass().getClassLoader();
+      }
+      Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
       split = new Gson().fromJson(Text.readString(in), splitClass);
     } catch(ClassNotFoundException e) {
       throw Throwables.propagate(e);

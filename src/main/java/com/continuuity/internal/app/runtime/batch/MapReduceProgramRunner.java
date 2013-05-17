@@ -169,6 +169,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     addContinuuityJarsToClasspath(jobConf);
 
     jobConf.setJar(jobJarLocation.toURI().getPath());
+    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     new Thread() {
       @Override
