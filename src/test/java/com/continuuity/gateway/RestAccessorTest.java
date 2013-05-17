@@ -8,6 +8,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -71,12 +72,13 @@ public class RestAccessorTest {
    * Set up in-memory data fabric
    */
   @Before
-  public void setup() {
+  public void setup() throws OperationException {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+      new DataFabricModules().getInMemoryModules());
     this.executor = injector.getInstance(OperationExecutor.class);
+    this.executor.execute(TestUtil.context, new ClearFabric(ClearFabric.ToClear.ALL));
 
   } // end of setupGateway
 
