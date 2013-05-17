@@ -3,7 +3,6 @@ package com.continuuity.common.logging;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,14 +23,6 @@ public class LogFileWriter implements LogWriter {
     fileSystem = config.getFileSystem();
     // make sure the base path exists in the file system
     createPath(config.getLogFilePath());
-
-    // TODO how terrible! it defeats the purpose of the FileSystem abstraction
-    // TODO fix this as soon as append works for local fs
-    // Note: append is not working on local file system (it appears to work
-    // for DFS). Hence we roll the log in case of local fs.
-    if (!(fileSystem instanceof DistributedFileSystem)) {
-      roll();
-    }
     // open the file to write to (create or append)
     openFileForWrite(config.getLogFilePath(), makeFileName(0));
   }
