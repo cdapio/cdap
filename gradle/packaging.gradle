@@ -128,7 +128,7 @@ rpm {
                    '--url': 'http://www.continuuity.com/products',
                    '--architecture': 'all',
                    '--version': "${getRPMVersion()}",
-                   '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
+                   '--after-install': "$rootProject.projectDir/distributions/src/rpm/scripts/postinst",
                    '--template-value': "project=$project.name"
   ]
 }
