@@ -28,9 +28,9 @@ testrunner {
 dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
-  compile elastic([group: 'com.continuuity', name: 'weave', version: "${version}", changing: true], "weave")
 
   // Dependencies required by api.
 
@@ -48,7 +48,7 @@ dependencies {
   compile (libraries.hadoop_minicluster) {
     exclude group: 'commons-logging'
   }
-
+  compile libraries.weave_yarn
 
   // Thrift related stuff.
   thriftCompile libraries.thrift

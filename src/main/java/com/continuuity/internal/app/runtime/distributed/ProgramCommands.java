@@ -8,7 +8,7 @@ import com.continuuity.weave.api.Command;
 /**
  * The class carries {@link Command} that are used by the flow system.
  */
-public final class FlowletCommands {
+public final class ProgramCommands {
 
   public static final Command SUSPEND = Command.Builder.of("suspend").build();
   public static final Command RESUME = Command.Builder.of("resume").build();
@@ -17,6 +17,6 @@ public final class FlowletCommands {
     return Command.Builder.of("instances").addOption("count", Integer.toString(instances)).build();
   }
 
-  private FlowletCommands() {
+  private ProgramCommands() {
   }
 }

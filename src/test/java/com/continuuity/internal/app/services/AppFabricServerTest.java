@@ -8,7 +8,6 @@ import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.zookeeper.DiscoveryService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,7 +23,6 @@ import org.junit.Test;
  */
 public class AppFabricServerTest {
   private static AppFabricServer server;
-  private static DiscoveryService discoveryService;
   private static CConfiguration configuration;
 
   @BeforeClass
@@ -40,8 +38,6 @@ public class AppFabricServerTest {
     );
 
     server = injector.getInstance(AppFabricServer.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
-    discoveryService.startAndWait();
   }
 
   @Test

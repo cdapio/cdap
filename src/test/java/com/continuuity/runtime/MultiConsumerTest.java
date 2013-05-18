@@ -35,7 +35,6 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.zookeeper.DiscoveryService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -137,8 +136,6 @@ public class MultiConsumerTest {
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
-
-    injector.getInstance(DiscoveryService.class).startAndWait();
 
     LocalLocationFactory lf = new LocalLocationFactory();
 

@@ -5,6 +5,7 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
@@ -19,14 +20,14 @@ import java.util.Map;
  */
 public final class FlowWeaveApplication implements WeaveApplication {
 
-  private final FlowSpecification flowSpec;
-  private final Location programLocation;
+  private final FlowSpecification spec;
+  private final Program program;
   private final File hConfig;
   private final File cConfig;
 
-  public FlowWeaveApplication(FlowSpecification flowSpec, Location programLocation, File hConfig, File cConfig) {
-    this.flowSpec = flowSpec;
-    this.programLocation = programLocation;
+  public FlowWeaveApplication(Program program, FlowSpecification spec, File hConfig, File cConfig) {
+    this.spec = spec;
+    this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
   }
@@ -34,12 +35,13 @@ public final class FlowWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
-      .setName(flowSpec.getName())
+      .setName(String.format("flow.%s.%s.%s", program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
+    Location programLocation = program.getProgramJarLocation();
     String programName = programLocation.getName();
     WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
-    for (Map.Entry<String, FlowletDefinition> entry  : flowSpec.getFlowlets().entrySet()) {
+    for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
         .setCores(1)
         .setMemory(512, ResourceSpecification.SizeUnit.MEGA)    // TODO(terence): have it exposed to user setting
@@ -47,10 +49,11 @@ public final class FlowWeaveApplication implements WeaveApplication {
         .build();
 
       String flowletName = entry.getKey();
-      runnableSetter = moreRunnable.add(flowletName, new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"))
-                                     .withLocalFiles().add(programName, programLocation.toURI())
-                                                      .add("hConf.xml", hConfig.toURI())
-                                                      .add("cConf.xml", cConfig.toURI()).apply();
+      runnableSetter = moreRunnable.add(flowletName,
+                                        new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"),
+                                        resourceSpec).withLocalFiles().add(programName, programLocation.toURI())
+                                                                      .add("hConf.xml", hConfig.toURI())
+                                                                      .add("cConf.xml", cConfig.toURI()).apply();
     }
 
     Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");

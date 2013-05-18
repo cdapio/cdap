@@ -31,9 +31,8 @@ import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.zookeeper.Discoverable;
-import com.continuuity.zookeeper.DiscoveryService;
-import com.continuuity.zookeeper.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -75,8 +74,6 @@ public class FlowTest {
 
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
-
-    injector.getInstance(DiscoveryService.class).startAndWait();
 
     LocalLocationFactory lf = new LocalLocationFactory();
 
@@ -131,7 +128,6 @@ public class FlowTest {
     // Query
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    discoveryServiceClient.startAndWait();
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency")).iterator().next();

@@ -10,7 +10,7 @@ import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
-import com.continuuity.zookeeper.Cancellable;
+import com.continuuity.weave.common.Cancellable;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;

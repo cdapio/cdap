@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.filesystem.Location;
-import com.continuuity.zookeeper.Cancellable;
+import com.continuuity.weave.common.Cancellable;
 
 /**
  * Performs the actual execution of mapreduce job.

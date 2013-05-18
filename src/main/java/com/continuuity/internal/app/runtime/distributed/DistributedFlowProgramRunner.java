@@ -5,6 +5,7 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
@@ -55,15 +56,16 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     // Launch flowlet program runners
     RunId runId = RunId.generate();
 
-    WeavePreparer preparer = weaveRunner.prepare(
-      new FlowWeaveApplication(flowSpec, program.getProgramJarLocation(), hConfFile, cConfFile))
+    LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + flowSpec.getName());
+
+    WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
                .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))   // TODO(terence): deal with logging
                .withPackages("com.google.inject", "com.continuuity.api");
 
-    for (String flowletName : flowSpec.getFlowlets().keySet()) {
-      preparer.withArguments(flowletName,
+    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
+      preparer.withArguments(entry.getKey(),
                              "--jar", program.getProgramJarLocation().getName(),
-                             "--instances", "1",
+                             "--instances", Integer.toString(entry.getValue().getInstances()),
                              "--runId", runId.getId());
     }
 
@@ -85,12 +87,12 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
     @Override
     protected void doSuspend() throws Exception {
-      controller.sendCommand(FlowletCommands.SUSPEND).get();
+      controller.sendCommand(ProgramCommands.SUSPEND).get();
     }
 
     @Override
     protected void doResume() throws Exception {
-      controller.sendCommand(FlowletCommands.RESUME).get();
+      controller.sendCommand(ProgramCommands.RESUME).get();
     }
 
     @Override

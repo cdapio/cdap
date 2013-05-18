@@ -14,14 +14,14 @@ import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.zookeeper.Cancellable;
-import com.continuuity.zookeeper.Discoverable;
-import com.continuuity.zookeeper.DiscoveryService;
+import com.continuuity.weave.api.ServiceAnnouncer;
+import com.continuuity.weave.common.Cancellable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -52,7 +52,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final int MAX_HANDLER_THREADS = 20;
 
   private final DataFabricFacadeFactory txAgentSupplierFactory;
-  private final DiscoveryService discoveryService;
+  private final ServiceAnnouncer serviceAnnouncer;
+  private final InetAddress hostname;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
 
@@ -64,10 +65,15 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
-                                DiscoveryService discoveryService,
-                                LogWriter logWriter) {
+                                ServiceAnnouncer serviceAnnouncer,
+                                @Named("config.hostname") InetAddress hostname) {
     this.txAgentSupplierFactory = txAgentSupplierFactory;
-    this.discoveryService = discoveryService;
+    this.serviceAnnouncer = serviceAnnouncer;
+    this.hostname = hostname;
+  }
+
+  @Inject(optional = true)
+  void setLogWriter(LogWriter logWriter) {
     CAppender.logWriter = logWriter;
   }
 
@@ -89,7 +95,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       RunId runId = RunId.generate();
 
-      // FIXME: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
+      // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
                                                    procedureSpec);
@@ -103,15 +109,16 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                   procedureContext.getSystemMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
-      serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost().getCanonicalHostName(), 0));
+      serverChannel = bootstrap.bind(new InetSocketAddress(hostname, 0));
 
       channelGroup.add(serverChannel);
 
       LOG.info(String.format("Procedure server started for %s.%s listening on %s",
                              program.getApplicationId(), program.getProgramName(), serverChannel.getLocalAddress()));
 
+      int servicePort = ((InetSocketAddress) serverChannel.getLocalAddress()).getPort();
       return new ProcedureProgramController(program, runId,
-                                            discoveryService.register(createDiscoverable(program, serverChannel)));
+                                            serviceAnnouncer.announce(getServiceName(program), servicePort));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -166,24 +173,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                                        threadFactory, new ThreadPoolExecutor.AbortPolicy()));
   }
 
-  private Discoverable createDiscoverable(Program program, Channel serverChannel) {
-    final String name = String.format("procedure.%s.%s.%s",
-                                      program.getAccountId(),
-                                      program.getApplicationId(),
-                                      program.getProgramName());
-    final InetSocketAddress address = (InetSocketAddress)serverChannel.getLocalAddress();
-
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return name;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return address;
-      }
-    };
+  private String getServiceName(Program program) {
+    return String.format("procedure.%s.%s.%s",
+                         program.getAccountId(), program.getApplicationId(), program.getProgramName());
   }
 
   private final class ProcedureProgramController extends AbstractProgramController {

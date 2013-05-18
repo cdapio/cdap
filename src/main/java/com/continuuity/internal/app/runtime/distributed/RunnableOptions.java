@@ -4,13 +4,13 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 /**
- * Inner class for defining argument options names
+ * Helper class for defining argument options
  */
-final class FlowletOptions {
+final class RunnableOptions {
   static final String JAR = "jar";
   static final String INSTANCES = "instances";
   static final String RUN_ID = "runId";
 
-  private FlowletOptions() {
+  private RunnableOptions() {
   }
 }

@@ -19,7 +19,7 @@ import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.zookeeper.Cancellable;
+import com.continuuity.weave.common.Cancellable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.MoreExecutors;
