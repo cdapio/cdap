@@ -8,7 +8,7 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.Inject;
 
@@ -18,7 +18,7 @@ import com.google.inject.Inject;
 public final class SyncManagerFactory implements ManagerFactory {
   private final CConfiguration configuration;
   private final PipelineFactory<?> pFactory;
-  private final LocationFactory lFactory;
+  private final com.continuuity.weave.filesystem.LocationFactory lFactory;
   private final StoreFactory sFactory;
 
   @Inject

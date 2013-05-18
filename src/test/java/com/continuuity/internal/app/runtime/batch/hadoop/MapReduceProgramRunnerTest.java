@@ -23,11 +23,10 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -186,9 +185,9 @@ public class MapReduceProgramRunnerTest {
   }
 
   private ApplicationWithPrograms deployApp(Class<? extends Application> appClass) throws Exception {
-    LocalLocationFactory lf = new LocalLocationFactory();
+    com.continuuity.weave.filesystem.LocalLocationFactory lf = new LocalLocationFactory();
 
-    Location deployedJar = lf.create(
+    com.continuuity.weave.filesystem.Location deployedJar = lf.create(
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
     deployedJar.deleteOnExit();

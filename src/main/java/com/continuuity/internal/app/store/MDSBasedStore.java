@@ -20,8 +20,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
@@ -68,7 +67,7 @@ public class MDSBasedStore implements Store {
    */
   private final MetadataServiceHelper metadataServiceHelper;
 
-  private final LocationFactory locationFactory;
+  private final com.continuuity.weave.filesystem.LocationFactory locationFactory;
 
   private final CConfiguration configuration;
 
@@ -81,7 +80,7 @@ public class MDSBasedStore implements Store {
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
                        MetadataService.Iface metaDataService,
-                       LocationFactory locationFactory) {
+                       com.continuuity.weave.filesystem.LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
     this.metaDataService = metaDataService;
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
@@ -268,7 +267,7 @@ public class MDSBasedStore implements Store {
     storeAppToArchiveLocationMapping(id, appArchiveLocation);
   }
 
-  private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation)
+  private void storeAppToArchiveLocationMapping(Id.Application id, com.continuuity.weave.filesystem.Location appArchiveLocation)
     throws OperationException {
     // there always be an entry for application
     LOG.trace("Updating id to app archive location mapping: app id: {}, app location: {}",

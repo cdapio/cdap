@@ -48,6 +48,8 @@ dependencies {
   compile (libraries.hadoop_minicluster) {
     exclude group: 'commons-logging'
   }
+  compile libraries.weave_api
+  compile libraries.weave_common
   compile libraries.weave_yarn
 
   // Thrift related stuff.

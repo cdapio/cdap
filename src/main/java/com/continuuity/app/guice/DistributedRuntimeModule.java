@@ -61,12 +61,12 @@ public final class DistributedRuntimeModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    // TODO(terence): Need to refactor it to smaller piece together with DataFabric modules
-
     // Bind configurations
     bind(Configuration.class).toInstance(hConfiguration);
     bind(CConfiguration.class).annotatedWith(Names.named("appfabric.config")).toInstance(cConfiguration);
     bind(YarnConfiguration.class).toInstance(yarnConfiguration);
+
+    // Bind and expose LocationFactory
 
     // Bind ZKClient
     bind(ZKClient.class).toInstance(zkClient);

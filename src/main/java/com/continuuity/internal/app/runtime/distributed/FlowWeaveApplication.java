@@ -6,7 +6,7 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;

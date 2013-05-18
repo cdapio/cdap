@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public final class JarResources {
    * @param jar location of JAR file.
    * @throws IOException
    */
-  public JarResources(Location jar) throws IOException {
+  public JarResources(com.continuuity.weave.filesystem.Location jar) throws IOException {
     manifest = init(jar);
   }
 

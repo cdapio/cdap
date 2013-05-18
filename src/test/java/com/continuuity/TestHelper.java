@@ -16,8 +16,7 @@ import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -66,13 +65,13 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
+  public static Manager<com.continuuity.weave.filesystem.Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
     injector = Guice.createInjector(new BigMamaModule(configuration),
                                                    new DataFabricModules().getInMemoryModules());
 
 
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-    return (Manager<Location, ApplicationWithPrograms>)factory.create();
+    return (Manager<com.continuuity.weave.filesystem.Location, ApplicationWithPrograms>)factory.create();
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
@@ -88,10 +87,10 @@ public class TestHelper {
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    LocationFactory lf = injector.getInstance(LocationFactory.class);
+    LocationFactory lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
 
     // Create a local jar - simulate creation of application archive.
-    Location deployedJar = lf.create(
+    com.continuuity.weave.filesystem.Location deployedJar = lf.create(
       JarFinder.getJar(application, TestHelper.getManifestWithMainClass(application))
     );
     deployedJar.deleteOnExit();

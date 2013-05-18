@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

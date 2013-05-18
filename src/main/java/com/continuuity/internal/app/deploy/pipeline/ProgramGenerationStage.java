@@ -9,8 +9,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.collect.ImmutableList;
@@ -23,10 +22,10 @@ import java.util.Locale;
  *
  */
 public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocation> {
-  private final LocationFactory locationFactory;
+  private final com.continuuity.weave.filesystem.LocationFactory locationFactory;
   private final Configuration configuration;
 
-  public ProgramGenerationStage(Configuration configuration, LocationFactory locationFactory) {
+  public ProgramGenerationStage(Configuration configuration, com.continuuity.weave.filesystem.LocationFactory locationFactory) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.configuration = configuration;
     this.locationFactory = locationFactory;
@@ -41,9 +40,9 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
 
     // Make sure we have a directory to store the original artifact.
-    Location outputDir = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
+    com.continuuity.weave.filesystem.Location outputDir = locationFactory.create(configuration.get(Constants.CFG_APP_FABRIC_OUTPUT_DIR,
                                                                   System.getProperty("java.io.tmpdir")));
-    Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
+    com.continuuity.weave.filesystem.Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {
@@ -53,11 +52,11 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     // Now, we iterate through FlowSpecification and generate programs
     for(FlowSpecification flow : appSpec.getFlows().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.FLOW.toString(), applicationName);
-      Location flowAppDir = newOutputDir.append(name);
+      com.continuuity.weave.filesystem.Location flowAppDir = newOutputDir.append(name);
       if(! flowAppDir.exists()) {
         flowAppDir.mkdirs();
       }
-      Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
+      com.continuuity.weave.filesystem.Location output = flowAppDir.append(String.format("%s.jar", flow.getName()));
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, flow.getName(), flow.getClassName(),
                                          Type.FLOW, appSpec);
       programs.add(new Program(loc));
@@ -66,11 +65,11 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     // Iterate through ProcedureSpecification and generate program
     for(ProcedureSpecification procedure : appSpec.getProcedures().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.PROCEDURE.toString(), applicationName);
-      Location procedureAppDir = newOutputDir.append(name);
+      com.continuuity.weave.filesystem.Location procedureAppDir = newOutputDir.append(name);
       if(! procedureAppDir.exists()) {
         procedureAppDir.mkdirs();
       }
-      Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
+      com.continuuity.weave.filesystem.Location output = procedureAppDir.append(String.format("%s.jar", procedure.getName()));
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, procedure.getName(),
                                          procedure.getClassName(), Type.PROCEDURE, appSpec);
       programs.add(new Program(loc));
@@ -79,11 +78,11 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     // Iterate through MapReduceSpecification and generate program
     for(MapReduceSpecification job : appSpec.getMapReduces().values()) {
       String name = String.format(Locale.ENGLISH, "%s/%s", Type.MAPREDUCE.toString(), applicationName);
-      Location jobAppDir = newOutputDir.append(name);
+      com.continuuity.weave.filesystem.Location jobAppDir = newOutputDir.append(name);
       if(! jobAppDir.exists()) {
         jobAppDir.mkdirs();
       }
-      Location output = jobAppDir.append(String.format("%s.jar", job.getName()));
+      com.continuuity.weave.filesystem.Location output = jobAppDir.append(String.format("%s.jar", job.getName()));
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, job.getName(),
                                          job.getClassName(), Type.MAPREDUCE, appSpec);
       programs.add(new Program(loc));

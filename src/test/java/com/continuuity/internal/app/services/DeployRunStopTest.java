@@ -19,7 +19,6 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeployRunStopTest {
 
   private static AppFabricService.Iface server;
-  private static LocationFactory lf;
+  private static com.continuuity.weave.filesystem.LocationFactory lf;
   private static StoreFactory sFactory;
   private static AtomicInteger instanceCount = new AtomicInteger(0);
   private static AtomicInteger messageCount = new AtomicInteger(0);
@@ -148,7 +147,7 @@ public class DeployRunStopTest {
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    lf = injector.getInstance(LocationFactory.class);
+    lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
 
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);

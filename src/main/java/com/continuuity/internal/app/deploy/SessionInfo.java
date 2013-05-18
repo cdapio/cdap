@@ -7,7 +7,6 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
-import com.continuuity.filesystem.Location;
 import com.google.common.base.Objects;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ public final class SessionInfo {
   /**
    * Location of the archive file.
    */
-  private Location archive;
+  private com.continuuity.weave.filesystem.Location archive;
 
   /**
    * Redundant, but useful resource information.
@@ -63,7 +62,7 @@ public final class SessionInfo {
    *
    * @param info about the resource being uploaded.
    */
-  public SessionInfo(ResourceIdentifier identifier, ResourceInfo info, Location archive, DeployStatus status) {
+  public SessionInfo(ResourceIdentifier identifier, ResourceInfo info, com.continuuity.weave.filesystem.Location archive, DeployStatus status) {
     this.identifier = identifier;
     this.regtime = System.currentTimeMillis()/1000;
     this.filename = info.getFilename();
@@ -111,7 +110,7 @@ public final class SessionInfo {
    * Returns location of the resource.
    * @return Location to the resource.
    */
-  public Location getArchiveLocation() {
+  public com.continuuity.weave.filesystem.Location getArchiveLocation() {
     return archive;
   }
 

@@ -23,12 +23,12 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.weave.discovery.Discoverable;
@@ -75,9 +75,9 @@ public class FlowTest {
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
 
-    LocalLocationFactory lf = new LocalLocationFactory();
+    LocalLocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
 
-    Location deployedJar = lf.create(
+    com.continuuity.weave.filesystem.Location deployedJar = lf.create(
       JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(WordCountApp.class))
     );
     deployedJar.deleteOnExit();
@@ -165,7 +165,7 @@ public class FlowTest {
     Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                              new BigMamaModule(configuration));
 
-    LocalLocationFactory lf = new LocalLocationFactory();
+    com.continuuity.weave.filesystem.LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
       JarFinder.getJar(TestCountRandomApp.class, TestHelper.getManifestWithMainClass(TestCountRandomApp.class))

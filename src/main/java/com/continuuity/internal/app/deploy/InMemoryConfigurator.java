@@ -11,7 +11,6 @@ import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
@@ -38,7 +37,7 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */
-  private final Location archive;
+  private final com.continuuity.weave.filesystem.Location archive;
 
   /**
    * Application which needs to be configured.
@@ -55,7 +54,7 @@ public final class InMemoryConfigurator implements Configurator {
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Id.Account id, Location archive) {
+  public InMemoryConfigurator(Id.Account id, com.continuuity.weave.filesystem.Location archive) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
     this.id = id;

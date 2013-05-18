@@ -8,7 +8,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.Inject;
 
@@ -19,7 +19,7 @@ public class MDSStoreFactory implements StoreFactory {
   private final MetaDataStore store;
   private final MetadataService.Iface mdsService;
   private final CConfiguration configuration;
-  private final LocationFactory lFactory;
+  private final com.continuuity.weave.filesystem.LocationFactory lFactory;
 
   @Inject
   public MDSStoreFactory(CConfiguration configuration,
