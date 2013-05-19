@@ -7,6 +7,7 @@ package com.continuuity.app.program;
 import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
+import com.continuuity.weave.filesystem.Location;
 
 import java.io.IOException;
 import java.util.jar.Manifest;
@@ -23,7 +24,7 @@ public final class Archive {
   private final String mainClassName;
   private final Id.Account id;
 
-  public Archive(Id.Account id, com.continuuity.weave.filesystem.Location location) throws IOException {
+  public Archive(Id.Account id, Location location) throws IOException {
     this(id, new JarResources(location));
   }
 

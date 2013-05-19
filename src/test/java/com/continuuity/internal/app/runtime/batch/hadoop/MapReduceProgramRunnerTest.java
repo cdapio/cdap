@@ -9,7 +9,7 @@ import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -22,7 +22,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
@@ -61,8 +60,7 @@ public class MapReduceProgramRunnerTest {
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
 
-    injector = Guice.createInjector(new DataFabricLevelDBModule(configuration),
-                                             new BigMamaModule(configuration));
+    injector = Guice.createInjector(new AppFabricTestModule(configuration));
   }
 
   @Test

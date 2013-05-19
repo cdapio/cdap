@@ -63,7 +63,7 @@ public final class DistributedRuntimeModule extends PrivateModule {
   protected void configure() {
     // Bind configurations
     bind(Configuration.class).toInstance(hConfiguration);
-    bind(CConfiguration.class).annotatedWith(Names.named("appfabric.config")).toInstance(cConfiguration);
+    bind(CConfiguration.class).toInstance(cConfiguration);
     bind(YarnConfiguration.class).toInstance(yarnConfiguration);
 
     // Bind and expose LocationFactory
@@ -83,11 +83,10 @@ public final class DistributedRuntimeModule extends PrivateModule {
     bind(DiscoveryService.class).to(ZKDiscoveryService.class);
     expose(DiscoveryService.class);
 
+    // Bind and expose DiscoveryServiceClient.
     bind(DiscoveryServiceClient.class)
       .annotatedWith(Names.named("local.discovery.client"))
       .to(ZKDiscoveryService.class);
-    expose(DiscoveryServiceClient.class);
-
     bind(DiscoveryServiceClient.class).to(ProcedureDiscoveryServiceClient.class);
     expose(DiscoveryServiceClient.class);
 
@@ -116,7 +115,7 @@ public final class DistributedRuntimeModule extends PrivateModule {
   @Singleton
   @Provides
   private YarnWeaveRunnerService provideYarnWeaveRunnerService(@Named("config.weave.namespace") String namespace,
-                                                               @Named("appfabric.config") CConfiguration configuration,
+                                                               CConfiguration configuration,
                                                                YarnConfiguration yarnConfiguration) {
     return new YarnWeaveRunnerService(yarnConfiguration, configuration.get("zookeeper.quorum") + namespace);
   }

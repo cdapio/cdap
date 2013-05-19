@@ -4,10 +4,9 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,10 +31,7 @@ public class AppFabricServerTest {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
 
-    Injector injector = Guice.createInjector(
-      new BigMamaModule(configuration),
-      new DataFabricModules().getInMemoryModules()
-    );
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     server = injector.getInstance(AppFabricServer.class);
   }

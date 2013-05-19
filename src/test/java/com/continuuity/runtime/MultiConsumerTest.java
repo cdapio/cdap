@@ -14,7 +14,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
@@ -29,7 +29,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
@@ -134,8 +133,7 @@ public class MultiConsumerTest {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
                                                             + "/app/archive" + UUID.randomUUID());
 
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     LocalLocationFactory lf = new LocalLocationFactory();
 

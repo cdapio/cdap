@@ -6,7 +6,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.deploy.Manager;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -15,7 +15,6 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
@@ -42,7 +41,7 @@ public class TestHelper {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
     configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
-    injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector(new AppFabricTestModule(configuration));
   }
 
   public static Injector getInjector() {
@@ -66,8 +65,7 @@ public class TestHelper {
    * @return Returns an instance of {@link LocalManager}
    */
   public static Manager<com.continuuity.weave.filesystem.Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
-    injector = Guice.createInjector(new BigMamaModule(configuration),
-                                                   new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
 
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);

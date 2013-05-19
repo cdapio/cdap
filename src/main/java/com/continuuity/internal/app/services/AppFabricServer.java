@@ -28,49 +28,28 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricServer extends AbstractExecutionThreadService {
   private static final int THREAD_COUNT = 2;
 
-  private CConfiguration conf;
-  private ExecutorService executor;
-  private AppFabricService.Iface service;
-  private TThreadedSelectorServer server;
-  private Thread runnerThread;
-  private TThreadedSelectorServer.Args options;
+  private final CConfiguration conf;
+  private final AppFabricService.Iface service;
   private final int port;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
 
+  private ExecutorService executor;
+  private TThreadedSelectorServer server;
+  private Thread runnerThread;
+  private TThreadedSelectorServer.Args options;
+
   /**
-   * Construct the AppFabricServer with service factory and configuration coming from factory.
-   *
-   * @param service
-   * @param configuration
-   * @param hostname
+   * Construct the AppFabricServer with service factory and configuration coming from guice injection.
    */
   @Inject
   public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration,
                          DiscoveryService discoveryService, @Named("config.hostname") InetAddress hostname) {
     this.conf = configuration;
     this.hostname = hostname;
-    executor = Executors.newFixedThreadPool(THREAD_COUNT);
     this.service = service;
     this.discoveryService = discoveryService;
-    port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
-  }
-
-  /**
-   * @return Discoverable Object
-   */
-  private Discoverable createDiscoverable() {
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return "app-fabric-service";
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return new InetSocketAddress(port);
-      }
-    };
+    this.port = configuration.getInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Constants.DEFAULT_APP_FABRIC_SERVER_PORT);
   }
 
   /**
@@ -79,7 +58,10 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
 
+    executor = Executors.newFixedThreadPool(THREAD_COUNT);
+
     // Register with discovery service.
+    final InetSocketAddress address = new InetSocketAddress(hostname, port);
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
@@ -88,19 +70,25 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
       @Override
       public InetSocketAddress getSocketAddress() {
-        return new InetSocketAddress(hostname, port);
+        return address;
       }
     });
 
-    options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(new InetSocketAddress(hostname, port)))
+    options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(address))
       .executorService(executor)
-      .processor(new AppFabricService.Processor(service))
+      .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
     runnerThread = Thread.currentThread();
 
     // Start the flow metrics reporter.
     OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    OverlordMetricsReporter.disable();
+    executor.shutdownNow();
   }
 
   /**
@@ -120,5 +108,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   protected void triggerShutdown() {
     runnerThread.interrupt();
+    server.stop();
   }
 }

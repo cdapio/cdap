@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.app.guice.IOModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.ProgramController;

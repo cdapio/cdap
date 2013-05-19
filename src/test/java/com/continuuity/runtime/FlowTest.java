@@ -6,7 +6,7 @@ import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -22,7 +22,6 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
@@ -72,8 +71,7 @@ public class FlowTest {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
                                                               + "/app/archive" + UUID.randomUUID());
 
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     LocalLocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
 
@@ -162,8 +160,7 @@ public class FlowTest {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
                                                             + "/app/archive" + UUID.randomUUID());
 
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     com.continuuity.weave.filesystem.LocalLocationFactory lf = new LocalLocationFactory();
 
@@ -207,8 +204,7 @@ public class FlowTest {
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app/archive" + UUID.randomUUID());
 
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     LocalLocationFactory lf = new LocalLocationFactory();
 

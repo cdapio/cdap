@@ -22,7 +22,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
@@ -32,7 +32,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.metadata.thrift.Account;
@@ -66,8 +65,7 @@ public class MDSBasedStoreTest {
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() {
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new BigMamaModule(configuration));
+    final Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     metadataService = injector.getInstance(MetadataService.Iface.class);
     store = injector.getInstance(MDSBasedStore.class);
