@@ -5,14 +5,14 @@ ext {
 
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
-versions.hadoopVersion = '2.0.4-alpha'
+versions.hadoopVersion = '2.0.0-cdh4.2.0'
 versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.netflixCuratorVersion = '1.1.18'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '1.5'
-versions.snappyVersion = '1.0.4.1'
+versions.weaveVersion = '0.0.1-SNAPSHOT'
 versions.zookeeperVersion = '3.4.5'
 
 //--------------------------------------------------------------------------
@@ -129,8 +129,13 @@ libraries.continuuity_eclipse_plugin  = "com.continuuity:continuuity-eclipse-plu
 // LevelDB
 libraries.leveldb = "org.fusesource.leveldbjni:leveldbjni-all:$versions.leveldbVersion"
 
-// Snappy
-libraries.snappy = "org.xerial.snappy:snappy-java:$versions.snappyVersion"
+// Weave
+libraries.weave_api = "com.continuuity.weave:weave-api:$versions.weaveVersion"
+libraries.weave_common = "com.continuuity.weave:weave-common:$versions.weaveVersion"
+libraries.weave_core = "com.continuuity.weave:weave-core:$versions.weaveVersion"
+libraries.weave_discovery_api = "com.continuuity.weave:weave-discovery-api:$versions.weaveVersion"
+libraries.weave_discovery_core = "com.continuuity.weave:weave-discovery-core:$versions.weaveVersion"
+libraries.weave_yarn = "com.continuuity.weave:weave-yarn:$versions.weaveVersion"
+libraries.weave_zookeeper = "com.continuuity.weave:weave-zookeeper:$versions.weaveVersion"
 
-libraries.jsonsimple = "com.googlecode.json-simple:json-simple:1.1"
 //--------------------------------------------------------------------------
