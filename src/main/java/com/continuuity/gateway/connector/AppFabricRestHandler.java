@@ -11,7 +11,7 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.discovery.Discoverable;
+import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

@@ -12,8 +12,7 @@ import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -46,7 +45,6 @@ public class GatewayRestCollectorTest {
   CConfiguration myConfiguration;
 
   private OperationExecutor executor;
-  private static DiscoveryService discoveryService;
 
   /**
    * Create a new Gateway instance to use in these set of tests. This method
@@ -60,11 +58,8 @@ public class GatewayRestCollectorTest {
     myConfiguration = new CConfiguration();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new BigMamaModule(myConfiguration));
+    Injector injector = Guice.createInjector(new GatewayTestModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -83,7 +78,6 @@ public class GatewayRestCollectorTest {
         Constants.CONFIG_PATH_MIDDLE), path);
 
     // Now create our Gateway
-    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
     theGateway.setDiscoveryServiceClient(

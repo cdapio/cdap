@@ -1,7 +1,10 @@
 package com.continuuity.gateway.runtime;
 
 import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
@@ -31,7 +34,10 @@ public class Main {
     Injector injector = Guice.createInjector(
         new GatewayModules().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
-        new BigMamaModule(configuration)
+        new ConfigModule(configuration),
+        new IOModule(),
+        new LocationRuntimeModule().getDistributedModules(),
+        new BigMamaModule()
         );
 
     // Get our fully wired Gateway

@@ -16,7 +16,7 @@ import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
-import com.continuuity.discovery.Discoverable;
+import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.collect.Lists;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;

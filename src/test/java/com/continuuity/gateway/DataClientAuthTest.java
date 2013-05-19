@@ -12,8 +12,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.tools.DataClient;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.After;
@@ -36,7 +35,6 @@ public class DataClientAuthTest {
       .getLogger(DataClientAuthTest.class);
 
   private OperationExecutor executor = null;
-  private static DiscoveryService discoveryService;
 
   Gateway gateway = null;
 
@@ -60,11 +58,8 @@ public class DataClientAuthTest {
     configuration = new CConfiguration();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
@@ -102,7 +97,6 @@ public class DataClientAuthTest {
 
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
-    discoveryService.startAndWait();
     gateway = new Gateway();
     gateway.setExecutor(this.executor);
     gateway.setConsumer(new TestUtil.NoopConsumer());

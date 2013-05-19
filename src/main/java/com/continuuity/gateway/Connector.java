@@ -6,7 +6,7 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type

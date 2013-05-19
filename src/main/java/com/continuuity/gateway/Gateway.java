@@ -14,7 +14,7 @@ import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -160,8 +160,6 @@ public class Gateway implements Server {
    */
   public void start(String[] args, CConfiguration conf) throws
       ServerException {
-
-    discoveryServiceClient.startAndWait();
 
     // Configure ourselves first
     configure(conf);

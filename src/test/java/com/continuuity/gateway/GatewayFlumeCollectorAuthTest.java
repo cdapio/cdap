@@ -12,8 +12,7 @@ import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -51,7 +50,6 @@ public class GatewayFlumeCollectorAuthTest {
 
   // This is the data fabric operations executor
   private OperationExecutor executor;
-  private static DiscoveryService discoveryService;
 
   // This is the configuration object we will use in these tests
   private CConfiguration myConfiguration;
@@ -67,11 +65,8 @@ public class GatewayFlumeCollectorAuthTest {
     myConfiguration = new CConfiguration();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new BigMamaModule(myConfiguration));
+    Injector injector = Guice.createInjector(new GatewayTestModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -94,7 +89,6 @@ public class GatewayFlumeCollectorAuthTest {
     keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
 
     // Now create our Gateway
-    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
     theGateway.setDiscoveryServiceClient(

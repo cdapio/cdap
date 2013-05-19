@@ -6,8 +6,7 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DataRestAccessor;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Before;
@@ -39,8 +38,6 @@ public class GatewayRestAccessorTest {
 
   private OperationExecutor executor;
 
-  private static DiscoveryService discoveryService;
-
   /**
    * Create a new Gateway instance to use in these set of tests. This method
    * is called before any of the test methods.
@@ -52,11 +49,8 @@ public class GatewayRestAccessorTest {
     CConfiguration configuration = new CConfiguration();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -75,7 +69,6 @@ public class GatewayRestAccessorTest {
         Constants.CONFIG_PATH_MIDDLE), path);
 
     // Now create our Gateway
-    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
     theGateway.setConsumer(new TestUtil.NoopConsumer());
