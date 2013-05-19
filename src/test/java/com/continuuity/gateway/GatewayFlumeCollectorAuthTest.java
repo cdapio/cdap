@@ -51,7 +51,6 @@ public class GatewayFlumeCollectorAuthTest {
 
   // This is the data fabric operations executor
   private OperationExecutor executor;
-  private static DiscoveryService discoveryService;
 
   // This is the configuration object we will use in these tests
   private CConfiguration myConfiguration;
@@ -71,7 +70,7 @@ public class GatewayFlumeCollectorAuthTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -91,7 +90,7 @@ public class GatewayFlumeCollectorAuthTest {
     myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
     Map<String,List<String>> keysAndClusters =
         new TreeMap<String,List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
+    keysAndClusters.put(apiKey, Arrays.asList(cluster));
 
     // Now create our Gateway
     discoveryService.startAndWait();

@@ -6,12 +6,8 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLEngine;
-import java.io.File;
 
 /**
  * This class builds an http pipeline for Netty. Note that all of our Http
@@ -24,26 +20,26 @@ import java.io.File;
 public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(NettyHttpPipelineFactory.class);
+    .getLogger(NettyHttpPipelineFactory.class);
 
   /**
-   * creates the request handler for each new instance of the pipeline
+   * creates the request handler for each new instance of the pipeline.
    */
   private NettyRequestHandlerFactory handlerFactory;
   /**
-   * provides all the http protocol specific configuration
+   * provides all the http protocol specific configuration.
    */
   private HttpConfig config;
 
   /**
-   * disallow default constructor
+   * disallow default constructor.
    */
   private NettyHttpPipelineFactory() {
   }
 
   /**
    * Only allowed constructor, to make sure we always have an HTTpConfig
-   * and a handler factory
+   * and a handler factory.
    *
    * @param config         provides all the options for the http protocol
    * @param handlerFactory to create an new request handler for each new
@@ -51,7 +47,7 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
    */
   public NettyHttpPipelineFactory(HttpConfig config,
                                   NettyRequestHandlerFactory handlerFactory)
-      throws Exception {
+    throws Exception {
     this.handlerFactory = handlerFactory;
     this.config = config;
     if (this.config.isSsl()) {
@@ -78,7 +74,7 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
     // use netty's default de-chunker
     if (this.config.isChunking()) {
       pipeline.addLast("aggregator",
-          new HttpChunkAggregator(this.config.getMaxContentSize()));
+                       new HttpChunkAggregator(this.config.getMaxContentSize()));
     }
     // use the default HTTP encoder from netty
     pipeline.addLast("encoder", new HttpResponseEncoder());

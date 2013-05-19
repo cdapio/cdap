@@ -24,7 +24,7 @@ public abstract class Collector extends Connector implements MetaDataServiceAwar
   protected Consumer consumer;
 
   /**
-   * Cache for Stream meta data lookups
+   * Cache for Stream meta data lookups.
    */
   protected StreamCache streamCache;
 
@@ -51,7 +51,8 @@ public abstract class Collector extends Connector implements MetaDataServiceAwar
   }
 
   /**
-   * Set the meta data service for this collector
+   * Set the meta data service for this collector.
+   *
    * @param service the metadata servrice to use
    */
   @Override

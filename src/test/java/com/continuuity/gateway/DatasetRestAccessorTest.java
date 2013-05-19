@@ -26,8 +26,6 @@ import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DatasetRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
-import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
@@ -77,9 +75,6 @@ public class DatasetRestAccessorTest {
 
   // the accessor to test
   private DatasetRestAccessor accessor;
-
-  // the rest collector we will use in the clear test
-  private RestCollector collector;
 
   /**
    * Set up in-memory data fabric
@@ -137,37 +132,6 @@ public class DatasetRestAccessorTest {
     restAccessor.start();
     // all fine
     this.accessor = restAccessor;
-    return "http://localhost:" + port + prefix + middle;
-  }
-
-  // we will need this to test the clear API
-  String setupCollector(String name, String prefix, String middle)
-      throws Exception {
-    // bring up a new collector
-    RestCollector restCollector = new RestCollector();
-    restCollector.setName(name);
-    restCollector.setAuthenticator(new NoAuthenticator());
-    // find a free port
-    int port = PortDetector.findFreePort();
-    // configure it
-    CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_MIDDLE), middle);
-    restCollector.configure(configuration);
-
-    StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
-    consumer.setExecutor(this.executor);
-    restCollector.setConsumer(consumer);
-    restCollector.setExecutor(this.executor);
-    restCollector.setMetadataService(new DummyMDS());
-    // start the accessor
-    restCollector.start();
-    // all fine
-    this.collector = restCollector;
     return "http://localhost:" + port + prefix + middle;
   }
 
@@ -461,8 +425,7 @@ public class DatasetRestAccessorTest {
     return streamExists || dataExists;
   }
   boolean verifyQueue(String name) throws Exception {
-    boolean dataExists = dequeueOne("queue:" + name);
-    return dataExists;
+    return dequeueOne("queue:" + name);
   }
   boolean verifyTable(String name) throws OperationException {
     OperationResult<Map<byte[], byte[]>> result;

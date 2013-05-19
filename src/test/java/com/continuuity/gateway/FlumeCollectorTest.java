@@ -28,7 +28,7 @@ public class FlumeCollectorTest {
     CConfiguration configuration = new CConfiguration();
     FlumeCollector collector = newCollector(name);
     collector.configure(configuration);
-    Assert.assertEquals(FlumeCollector.DefaultPort, collector.getPort());
+    Assert.assertEquals(FlumeCollector.DEFAULT_PORT, collector.getPort());
 
     name = "otherflume";
     int port = 9000;

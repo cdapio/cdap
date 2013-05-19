@@ -46,7 +46,6 @@ public class GatewayRestCollectorTest {
   CConfiguration myConfiguration;
 
   private OperationExecutor executor;
-  private static DiscoveryService discoveryService;
 
   /**
    * Create a new Gateway instance to use in these set of tests. This method
@@ -64,7 +63,7 @@ public class GatewayRestCollectorTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(myConfiguration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();

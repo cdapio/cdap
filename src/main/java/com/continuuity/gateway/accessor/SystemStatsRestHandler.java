@@ -41,25 +41,27 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the system stats REST API.
- * <p>
+ * <p/>
  * Example of well-formed reqeuest:
  * <PRE>
- *   http://localhost:10006/systemstats
+ * http://localhost:10006/systemstats
  * </PRE>
- *
  */
 public class SystemStatsRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(SystemStatsRestHandler.class);
+    .getLogger(SystemStatsRestHandler.class);
 
   private static final MetricsFormatter METRICS_FORMATTER = new SimpleMetricsFormatter();
 
   /**
-   * The allowed methods for this handler
+   * The allowed methods for this handler.
    */
-  static final Set<HttpMethod> allowedMethods = Sets.newHashSet(HttpMethod.GET);
-  
+  private static final Set<HttpMethod> allowedMethods = Sets.newHashSet(HttpMethod.GET);
+
+  /**
+   * Formats metrics.
+   */
   public static interface MetricsFormatter {
     String format(Map<String, ?> metrics);
   }
@@ -71,12 +73,12 @@ public class SystemStatsRestHandler extends NettyRestHandler {
   private SystemStatsRestAccessor accessor;
 
   /**
-   * The metrics object of the rest accessor
+   * The metrics object of the rest accessor.
    */
   private CMetrics metrics;
 
   /**
-   * Constructor requires the accessor that created this
+   * Constructor requires the accessor that created this.
    *
    * @param accessor the accessor that created this
    */
@@ -107,7 +109,6 @@ public class SystemStatsRestHandler extends NettyRestHandler {
       }
 
       QueryStringDecoder decoder = new QueryStringDecoder(uri);
-      Map<String, List<String>> parameters = decoder.getParameters();
       String path = decoder.getPath();
 
       // is this a ping? (http://gw:port/ping) if so respond OK and done
@@ -143,11 +144,11 @@ public class SystemStatsRestHandler extends NettyRestHandler {
       }
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e);
+                  this.accessor.getName() + "'. ", e);
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
     }
@@ -205,34 +206,18 @@ public class SystemStatsRestHandler extends NettyRestHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
-        this.accessor.getName() + "'. ", e.getCause());
-    if(e.getChannel().isOpen()) {
+                this.accessor.getName() + "'. ", e.getCause());
+    if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();
     }
   }
 
-  public static final class CommaSeparatedMetricsFormatter implements MetricsFormatter {
-    @Override
-    public String format(Map<String, ?> metrics) {
-      boolean first = true;
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<String, ?> metric : metrics.entrySet()) {
-        if (!first) {
-          sb.append(",");
-        }
-        sb.append(metric.getKey()).append("=").append(metric.getValue().toString());
-        first = false;
-      }
-      return sb.toString();
-    }
-  }
-
   /**
-   * Formats metrics so that each is place on one line with key and value separated with space
+   * Formats metrics so that each is place on one line with key and value separated with space.
    */
   public static final class SimpleMetricsFormatter implements MetricsFormatter {
     @Override
