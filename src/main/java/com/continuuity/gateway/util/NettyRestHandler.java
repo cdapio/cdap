@@ -31,7 +31,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
 public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
-      .getLogger(NettyRestHandler.class);
+    .getLogger(NettyRestHandler.class);
 
   /**
    * Respond to the client with an error. That closes the connection.
@@ -41,7 +41,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    */
   protected void respondError(Channel channel, HttpResponseStatus status) {
     HttpResponse response = new DefaultHttpResponse(
-        HttpVersion.HTTP_1_1, status);
+      HttpVersion.HTTP_1_1, status);
     response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
     ChannelFuture future = channel.write(response);
     future.addListener(ChannelFutureListener.CLOSE);
@@ -58,7 +58,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   protected void respondNotAllowed(Channel channel,
                                    Iterable<HttpMethod> allowedMethods) {
     HttpResponse response = new DefaultHttpResponse(
-        HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
+      HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
     StringBuilder allowed = new StringBuilder();
     String comma = "";
     for (HttpMethod method : allowedMethods) {
@@ -81,7 +81,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    *                the connection alive)
    */
   protected void respondSuccess(Channel channel, HttpRequest request) {
-    respond(channel, request, null, null, (ChannelBuffer)null);
+    respond(channel, request, null, null, (ChannelBuffer) null);
   }
 
   /**
@@ -110,11 +110,11 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param channel the channel on which the request came
    * @param request the original request (to determine whether to keep the
    *                connection alive)
-   * @param status the status code to respond with. Defaults to 200-OK if null
+   * @param status  the status code to respond with. Defaults to 200-OK if null
    */
   protected void respondSuccess(Channel channel, HttpRequest request,
                                 HttpResponseStatus status) {
-    respond(channel, request, status, null, (ChannelBuffer)null);
+    respond(channel, request, status, null, (ChannelBuffer) null);
   }
 
   protected void respond(Channel channel, HttpRequest request,
@@ -130,7 +130,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param channel the channel on which the request came
    * @param request the original request (to determine whether to keep the
    *                connection alive)
-   * @param status the status code to respond with. Defaults to 200-OK if null
+   * @param status  the status code to respond with. Defaults to 200-OK if null
    * @param headers additional headers to send with the response. May be null.
    * @param content the content of the response to send
    */
@@ -138,11 +138,12 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
                          HttpResponseStatus status,
                          Map<String, String> headers, ChannelBuffer content) {
     HttpResponse response = new DefaultHttpResponse(
-        HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
+      HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
     boolean keepAlive = HttpHeaders.isKeepAlive(request);
     if (headers != null) {
-      for (Map.Entry<String, String> entry : headers.entrySet())
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
         response.addHeader(entry.getKey(), entry.getValue());
+      }
     }
     response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content == null ? 0 : content.readableBytes());
     response.setContent(content);
@@ -158,10 +159,10 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   }
 
   protected void respondBadRequest(MessageEvent message, HttpRequest request,
-                                 MetricsHelper helper, String reason,
-                                 HttpResponseStatus status, Exception e) {
+                                   MetricsHelper helper, String reason,
+                                   HttpResponseStatus status, Exception e) {
     if (LOG.isTraceEnabled()) {
-      reason = (e == null || e.getMessage() == null) ?  reason : reason + ": " + e.getMessage();
+      reason = (e == null || e.getMessage() == null) ? reason : reason + ": " + e.getMessage();
       LOG.trace("Received an unsupported request (" + reason + ") with URI '" + request.getUri() + "'");
     }
     helper.finish(BadRequest);

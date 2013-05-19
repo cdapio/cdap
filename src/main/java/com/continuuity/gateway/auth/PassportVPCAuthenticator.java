@@ -6,7 +6,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -17,13 +16,13 @@ import java.util.Map;
 public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(PassportVPCAuthenticator.class);
+    LoggerFactory.getLogger(PassportVPCAuthenticator.class);
 
   private final String clusterName;
 
   private final PassportClient passportClient;
 
-  public PassportVPCAuthenticator(String clusterName,PassportClient passportClient) {
+  public PassportVPCAuthenticator(String clusterName, PassportClient passportClient) {
     this.clusterName = clusterName;
     this.passportClient = passportClient;
   }
@@ -37,7 +36,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   @Override
   public boolean authenticateRequest(AvroFlumeEvent event) {
-    for (Map.Entry<CharSequence,CharSequence> headerEntry :
+    for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
       if (headerKey.equals(CONTINUUITY_API_KEY)) {
@@ -59,7 +58,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   @Override
   public String getAccountId(AvroFlumeEvent event) {
-    for (Map.Entry<CharSequence,CharSequence> headerEntry :
+    for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
       if (headerKey.equals(CONTINUUITY_API_KEY)) {
@@ -73,17 +72,21 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   /**
    * Authenticates that the specified apiKey can access this cluster.
-   * @param apiKey
+   *
+   * @param apiKey for the request.
    * @return true
    */
   private boolean authenticate(String apiKey) {
     try {
       List<String> authorizedClusters =
-          this.passportClient.getVPCList(apiKey);
-      if (authorizedClusters == null || authorizedClusters.isEmpty())
+        this.passportClient.getVPCList(apiKey);
+      if (authorizedClusters == null || authorizedClusters.isEmpty()) {
         return false;
+      }
       for (String authorizedCluster : authorizedClusters) {
-        if (clusterName.equals(authorizedCluster)) return true;
+        if (clusterName.equals(authorizedCluster)) {
+          return true;
+        }
       }
       LOG.trace("Failed to authenticate request using key: " + apiKey);
       return false;

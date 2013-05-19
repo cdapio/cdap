@@ -13,10 +13,13 @@ import com.netflix.curator.x.discovery.strategies.RandomStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ *
+ */
 public class ServiceDiscovery {
 
   private static final Logger Log =
-      LoggerFactory.getLogger(ServiceDiscovery.class);
+    LoggerFactory.getLogger(ServiceDiscovery.class);
 
   // the configuration
   CConfiguration configuration;
@@ -33,8 +36,9 @@ public class ServiceDiscovery {
 
   /**
    * Initialize the service discovery client, we will reuse that
-   * every time we need to create a new client
-   * @throws java.io.IOException
+   * every time we need to create a new client.
+   *
+   * @throws ServerException
    */
   public void initialize() throws ServerException {
 
@@ -43,7 +47,7 @@ public class ServiceDiscovery {
     if (zookeeper == null) {
       // no zookeeper, look for the port and use localhost
       String message = "Zookeeper Ensemble not configured. Unable to " +
-          "initialize service discovery";
+        "initialize service discovery";
       Log.error(message);
       throw new ServerException(message);
     }
@@ -54,21 +58,21 @@ public class ServiceDiscovery {
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to start service discovery client: " + e.getMessage());
       throw new ServerException(
-          "Unable to start service discovery client.", e);
+        "Unable to start service discovery client.", e);
     }
     this.strategy = new RandomStrategy<ServicePayload>();
   }
 
   public ImmutablePair<String, Integer> getServiceAddress(String serviceName)
-      throws ServerException {
+    throws ServerException {
     String address;
     int port;
     try {
       // try to discover the service and pick one of the instances found
       ServiceDiscoveryClient.ServiceProvider provider =
-          this.discoveryClient.getServiceProvider(serviceName);
+        this.discoveryClient.getServiceProvider(serviceName);
       ServiceInstance<ServicePayload>
-          instance = strategy.getInstance(provider);
+        instance = strategy.getInstance(provider);
       if (instance != null) {
         // found an instance, get its host name and port
         address = instance.getAddress();
@@ -78,7 +82,7 @@ public class ServiceDiscovery {
       }
     } catch (Exception e) {
       String message = String.format("Error while discovering service '%s'. " +
-          "Reason: %s", serviceName, e.getMessage());
+                                       "Reason: %s", serviceName, e.getMessage());
       Log.error(message);
       throw new ServerException(message, e);
     }

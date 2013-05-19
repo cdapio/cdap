@@ -30,9 +30,6 @@ public class StreamClientTest {
   private static final Logger LOG = LoggerFactory
       .getLogger(StreamClientTest.class);
 
-  private OperationExecutor executor = null;
-  private static DiscoveryService discoveryService;
-
   Gateway gateway = null;
 
   String name = "access.rest";
@@ -54,8 +51,8 @@ public class StreamClientTest {
     Injector injector = Guice.createInjector(
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(configuration));
-    this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    OperationExecutor executor = injector.getInstance(OperationExecutor.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
@@ -89,7 +86,7 @@ public class StreamClientTest {
     // and make sure to pass the data fabric executor to the gateway.
     discoveryService.startAndWait();
     gateway = new Gateway();
-    gateway.setExecutor(this.executor);
+    gateway.setExecutor(executor);
     gateway.setConsumer(new TestUtil.NoopConsumer());
     gateway.setDiscoveryServiceClient(injector.getInstance(DiscoveryServiceClient.class));
     gateway.start(null, configuration);
@@ -158,10 +155,6 @@ public class StreamClientTest {
       args[args.length - 1] = streamId;
     }
     return new StreamClient().execute(args, configuration);
-  }
-
-  private String command(String[] args) {
-    return command(null, args);
   }
 
 }

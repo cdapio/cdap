@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class ConsumerTest {
-  private static String DEFAULT_ACCOUNT_ID = "default";
 
   /**
    * This tests that testConsumer counts correctly
@@ -51,6 +50,7 @@ public class ConsumerTest {
     Assert.assertEquals(0, consumer.eventsFailed());
 
     // send a good event and verify counters went up by one
+    String DEFAULT_ACCOUNT_ID = "default";
     consumer.consumeEvent(goodEvent, DEFAULT_ACCOUNT_ID);
     Assert.assertEquals(1, consumer.callsReceived());
     Assert.assertEquals(1, consumer.eventsReceived());

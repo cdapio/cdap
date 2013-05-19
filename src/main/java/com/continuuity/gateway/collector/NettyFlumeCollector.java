@@ -25,15 +25,15 @@ import java.util.concurrent.Executors;
 public class NettyFlumeCollector extends FlumeCollector {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(NettyFlumeCollector.class);
+    .getLogger(NettyFlumeCollector.class);
 
   /**
-   * the avro server
+   * the avro server.
    */
   private Server server;
 
   /**
-   * the max number of netty worker threads for the connector
+   * the max number of netty worker threads for the connector.
    */
   private int threads;
 
@@ -42,8 +42,9 @@ public class NettyFlumeCollector extends FlumeCollector {
     super.configure(configuration);
     // the only additional option we need is number of netty threads
     this.threads = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.getName(), Constants.CONFIG_THREADS), Constants.DEFAULT_THREADS);
+      this.getName(), Constants.CONFIG_THREADS), Constants.DEFAULT_THREADS);
   }
+
   @Override
   public void start() {
 
@@ -53,18 +54,18 @@ public class NettyFlumeCollector extends FlumeCollector {
     // source protocol as the interface, and the FlumeAdapter as its
     // implementation.
     this.server = new NettyServer(
-        new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
-        new InetSocketAddress(this.getPort()),
-        // in order to control the number of netty worker threads, we
-        // must create and pass in the server channel factory explicitly
-        new NioServerSocketChannelFactory(
-            Executors.newCachedThreadPool(),
-            Executors.newCachedThreadPool(),
-            this.threads));
+      new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
+      new InetSocketAddress(this.getPort()),
+      // in order to control the number of netty worker threads, we
+      // must create and pass in the server channel factory explicitly
+      new NioServerSocketChannelFactory(
+        Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool(),
+        this.threads));
     this.server.start();
 
     LOG.info("Collector '" + this.getName() +
-        "' started on port " + port + " with " + this.threads + " threads.");
+               "' started on port " + port + " with " + this.threads + " threads.");
   }
 
   @Override

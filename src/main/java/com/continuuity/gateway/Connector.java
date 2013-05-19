@@ -20,7 +20,7 @@ import com.continuuity.metadata.MetadataService;
  * <li>Set the name of the connector via connector.setName().</li>
  * <li>Configure the connector by calling connector.configure().</li>
  * <li>Connector-type specific initialization (such as, setConsumer() for a
- *    collector).</li>
+ * collector).</li>
  * <li>Start the connector via connector.start()</li>
  * <li>...</li>
  * <li>Stop the connector via connector.stop()</li>
@@ -29,22 +29,22 @@ import com.continuuity.metadata.MetadataService;
 public abstract class Connector {
 
   /**
-   * The name of this connector, it must be unique
+   * The name of this connector, it must be unique.
    */
   private String name;
 
   /**
-   * The metrics qualifier to be used for this connector
+   * The metrics qualifier to be used for this connector.
    */
   private String metricsQualifier;
 
   /**
-   * This is our configuration
+   * This is our configuration.
    */
   private CConfiguration myConfiguration;
 
   /**
-   * This will be used to collect connector metrics
+   * This will be used to collect connector metrics.
    */
   private CMetrics metrics = new CMetrics(MetricType.System);
 
@@ -54,7 +54,7 @@ public abstract class Connector {
   private DiscoveryServiceClient discoveryServiceClient;
 
   /**
-   * This will be used for zookeeper client discovery by all connectors
+   * This will be used for zookeeper client discovery by all connectors.
    */
   private ServiceDiscovery serviceDiscovery;
 
@@ -69,14 +69,14 @@ public abstract class Connector {
   private MetadataService mds;
 
   /**
-   * Retrieve the metrics client of the connector
+   * Retrieve the metrics client of the connector.
    */
   public CMetrics getMetricsClient() {
     return this.metrics;
   }
 
   /**
-   * Configure this connector
+   * Configure this connector.
    *
    * @param configuration The configuration
    */
@@ -86,7 +86,7 @@ public abstract class Connector {
   }
 
   /**
-   * Get this connector's configuration
+   * Get this connector's configuration.
    *
    * @return the configuration
    */
@@ -105,7 +105,7 @@ public abstract class Connector {
   }
 
   /**
-   * Get the name of this connector
+   * Get the name of this connector.
    *
    * @return the name of the connector
    */
@@ -114,7 +114,7 @@ public abstract class Connector {
   }
 
   /**
-   * Get the metrics qualifier for this connector (gateway.connector.name)
+   * Get the metrics qualifier for this connector (gateway.connector.name).
    *
    * @return the metrics qualifier
    */
@@ -131,7 +131,8 @@ public abstract class Connector {
   }
 
   /**
-   * Set the service discovery client, should only be called by Gateway main
+   * Set the service discovery client, should only be called by Gateway main.
+   *
    * @param discovery the discovery client to use
    */
   @Deprecated
@@ -150,6 +151,7 @@ public abstract class Connector {
 
   /**
    * Sets the authenticator to be used for all requests to this connector.
+   *
    * @param authenticator the authenticator to use for requests
    */
   public void setAuthenticator(GatewayAuthenticator authenticator) {
@@ -158,6 +160,7 @@ public abstract class Connector {
 
   /**
    * Returns the authenticator to be used for all requests to this connector.
+   *
    * @return authenticator to use for requests
    */
   public GatewayAuthenticator getAuthenticator() {
@@ -165,7 +168,8 @@ public abstract class Connector {
   }
 
   /**
-   * Set the meta data service for this collector
+   * Set the meta data service for this collector.
+   *
    * @param service the metadata servrice to use
    */
   public void setMetadataService(MetadataService service) {

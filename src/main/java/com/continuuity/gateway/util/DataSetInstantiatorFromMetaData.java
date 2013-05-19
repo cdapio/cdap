@@ -1,10 +1,10 @@
 package com.continuuity.gateway.util;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
+import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
@@ -33,11 +33,10 @@ public final class DataSetInstantiatorFromMetaData {
    * Constructor to use for read/write mode.
    *
    * @param opex the operation executor to use for data access
-   * @param mds the meta data store to use for meta data access
+   * @param mds  the meta data store to use for meta data access
    */
   public DataSetInstantiatorFromMetaData(OperationExecutor opex,
-                                         MetadataService mds)
-  {
+                                         MetadataService mds) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
     // we don't set the data set specs of the instantiator, instead we will
@@ -51,7 +50,7 @@ public final class DataSetInstantiatorFromMetaData {
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
     throws DataSetInstantiationException {
 
-    synchronized(this) {
+    synchronized (this) {
       if (!this.instantiator.hasDataSet(name)) {
         // get the data set spec from the meta data store
         Dataset dsMeta;

@@ -21,26 +21,26 @@ import java.util.concurrent.Executors;
  * and deletes, retrieve by secondary key etc.
  */
 public class DataRestAccessor
-    extends Accessor implements NettyRequestHandlerFactory {
+  extends Accessor implements NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(DataRestAccessor.class);
+    .getLogger(DataRestAccessor.class);
 
   /**
-   * this will provide defaults for the HTTP service, such as port and paths
+   * this will provide defaults for the HTTP service, such as port and paths.
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("accessor.rest")
-          .setPort(10002)
-          .setPathMiddle("/data/");
+    new HttpConfig("accessor.rest")
+      .setPort(10002)
+      .setPathMiddle("/data/");
 
   /**
-   * this will provide the actual HTTP configuration, backed by the default
+   * this will provide the actual HTTP configuration, backed by the default.
    */
   private HttpConfig httpConfig = defaultHttpConfig;
 
   /**
-   * return the HTTP configuration for this accessor
+   * return the HTTP configuration for this accessor.
    *
    * @return the HTTP configuration
    */
@@ -49,7 +49,7 @@ public class DataRestAccessor
   }
 
   /**
-   * this is the active Netty server channel
+   * this is the active Netty server channel.
    */
   private Channel serverChannel;
 
@@ -57,7 +57,7 @@ public class DataRestAccessor
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
     this.httpConfig = HttpConfig.configure(
-        this.getName(), configuration, defaultHttpConfig);
+      this.getName(), configuration, defaultHttpConfig);
   }
 
   @Override
@@ -73,38 +73,39 @@ public class DataRestAccessor
     try {
       address = new InetSocketAddress(this.httpConfig.getPort());
     } catch (Exception e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      e.printStackTrace();
     }
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(
-          new NioServerSocketChannelFactory(
-              Executors.newCachedThreadPool(),
-              Executors.newCachedThreadPool(),
-              this.httpConfig.getThreads()));
+        new NioServerSocketChannelFactory(
+          Executors.newCachedThreadPool(),
+          Executors.newCachedThreadPool(),
+          this.httpConfig.getThreads()));
       // and use a pipeline factory that uses this to configure itself
       // and to create a request handler for each client request.
       bootstrap.setPipelineFactory(
-          new NettyHttpPipelineFactory(this.httpConfig, this));
+        new NettyHttpPipelineFactory(this.httpConfig, this));
       // bind to the address = start the service
       this.serverChannel = bootstrap.bind(address);
       // server is now running
     } catch (Exception e) {
       LOG.error("Failed to startup accessor '" + this.getName()
-          + "' at " + this.httpConfig.getBaseUrl() + ".");
+                  + "' at " + this.httpConfig.getBaseUrl() + ".");
       throw e;
     }
     LOG.info("Connector " + this.getName() + " now running" +
-        " at " + this.httpConfig.getBaseUrl() +
-        " with " + this.httpConfig.getThreads() + " threads.");
+               " at " + this.httpConfig.getBaseUrl() +
+               " with " + this.httpConfig.getThreads() + " threads.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping " + this);
     // closing the channel stops the service
-    if (this.serverChannel != null)
+    if (this.serverChannel != null) {
       this.serverChannel.close();
+    }
     LOG.info("Stopped " + this);
   }
 }

@@ -4,8 +4,6 @@ import com.continuuity.gateway.Constants;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
-import java.util.Map;
-
 /**
  * Authenticator used when authentication is disabled.
  */

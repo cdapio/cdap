@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     .getLogger(DatasetRestHandler.class);
 
   /**
-   * The allowed methods for this handler
+   * The allowed methods for this handler.
    */
   static final Set<HttpMethod> allowedMethods = Sets.newHashSet(
     HttpMethod.GET,
@@ -82,7 +83,7 @@ public class DatasetRestHandler extends NettyRestHandler {
   private final DataSetInstantiatorFromMetaData instantiator;
 
   /**
-   * Constructor requires the accessor that created this
+   * Constructor requires the accessor that created this.
    *
    * @param accessor the accessor that created this
    */
@@ -200,7 +201,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
   }
 
-  private enum TableOp { List, Increment, Read, Write, Create, Delete }
+  private enum TableOp {List, Increment, Read, Write, Create, Delete}
 
   private void handleTableOperation(MessageEvent message, HttpRequest request,
                                     MetricsHelper helper, LinkedList<String> pathComponents,
@@ -231,7 +232,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       } else if (operations.size() == 1) {
         String op = operations.get(0);
         if ("list".equals(op)) {
-         operation = TableOp.List;
+          operation = TableOp.List;
         } else if ("increment".equals(op)) {
           operation = TableOp.Increment;
         } else {
@@ -247,9 +248,7 @@ public class DatasetRestHandler extends NettyRestHandler {
     if (columnParams != null && columnParams.size() > 0) {
       columns = Lists.newLinkedList();
       for (String param : columnParams) {
-        for (String column : param.split(",")) {
-          columns.add(column);
-        }
+        Collections.addAll(columns, param.split(","));
       }
     }
 
@@ -380,7 +379,8 @@ public class DatasetRestHandler extends NettyRestHandler {
       operation = TableOp.Increment;
     }
 
-    Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+    Type stringMapType = new TypeToken<Map<String, String>>() {
+    }.getType();
     // Type longMapType = new TypeToken<Map<String, Long>>() {}.getType();
 
     // for operations write and increment, there must be a JSON string in the body
@@ -496,8 +496,7 @@ public class DatasetRestHandler extends NettyRestHandler {
         respondSuccess(message.getChannel(), request, response);
         helper.finish(Success);
       }
-    }
-    else if (operation.equals(TableOp.Delete)) {
+    } else if (operation.equals(TableOp.Delete)) {
       Delete delete;
       try {
         byte[][] cols = new byte[columns.size()][];
@@ -521,9 +520,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       helper.finish(Success);
       respondSuccess(message.getChannel(), request);
-    }
-
-    else if (operation.equals(TableOp.Write)) {
+    } else if (operation.equals(TableOp.Write)) {
       Write write;
       // decode the columns and values into byte arrays
       if (valueMap == null || valueMap.isEmpty()) {
@@ -556,9 +553,7 @@ public class DatasetRestHandler extends NettyRestHandler {
       }
       helper.finish(Success);
       respondSuccess(message.getChannel(), request);
-    }
-
-    else if (operation.equals(TableOp.Increment)) {
+    } else if (operation.equals(TableOp.Increment)) {
       Increment increment;
       if (valueMap == null || valueMap.isEmpty()) {
         // this happens when we have no content
@@ -627,19 +622,19 @@ public class DatasetRestHandler extends NettyRestHandler {
     }
     for (String param : parameters.get("clear")) {
       for (String what : param.split(",")) {
-        if ("all".equals(what))
+        if ("all".equals(what)) {
           toClear.add(ClearFabric.ToClear.ALL);
-        else if ("data".equals(what))
+        } else if ("data".equals(what)) {
           toClear.add(ClearFabric.ToClear.DATA);
-        else if ("meta".equals(what))
+        } else if ("meta".equals(what)) {
           toClear.add(ClearFabric.ToClear.META);
-        else if ("tables".equals(what))
+        } else if ("tables".equals(what)) {
           toClear.add(ClearFabric.ToClear.TABLES);
-        else if ("queues".equals(what))
+        } else if ("queues".equals(what)) {
           toClear.add(ClearFabric.ToClear.QUEUES);
-        else if ("streams".equals(what))
+        } else if ("streams".equals(what)) {
           toClear.add(ClearFabric.ToClear.STREAMS);
-        else {
+        } else {
           respondBadRequest(message, request, helper, "invalid argument for clear");
           return;
         }

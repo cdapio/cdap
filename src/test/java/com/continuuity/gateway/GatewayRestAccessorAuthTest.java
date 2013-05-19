@@ -49,7 +49,6 @@ public class GatewayRestAccessorAuthTest {
   private Gateway theGateway = null;
 
   private OperationExecutor executor;
-  private static DiscoveryService discoveryService;
 
   /**
    * Create a new Gateway instance to use in these set of tests. This method
@@ -67,7 +66,7 @@ public class GatewayRestAccessorAuthTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -90,7 +89,7 @@ public class GatewayRestAccessorAuthTest {
     configuration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
     Map<String,List<String>> keysAndClusters =
         new TreeMap<String,List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
+    keysAndClusters.put(apiKey, Arrays.asList(cluster));
 
     // Now create our Gateway
     discoveryService.startAndWait();

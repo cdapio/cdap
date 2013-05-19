@@ -14,12 +14,11 @@ import java.util.concurrent.TimeUnit;
  * Main is a simple class that allows us to launch the Gateway as a standalone
  * program. This is also where we do our runtime injection.
  * <p/>
- * TODO: Prolly should look to wrap this in some sort of Daemon framework
  */
 public class Main {
 
   /**
-   * Our main method
+   * Our main method.
    *
    * @param args Our command line options
    */
@@ -29,10 +28,10 @@ public class Main {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getDistributedModules(),
-        new DataFabricModules().getDistributedModules(),
-        new BigMamaModule(configuration)
-        );
+      new GatewayModules().getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
+      new BigMamaModule(configuration)
+    );
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);

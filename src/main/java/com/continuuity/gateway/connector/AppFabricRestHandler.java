@@ -50,14 +50,14 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  */
 public class AppFabricRestHandler extends NettyRestHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricRestHandler.class);
-  private final static String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-  private final static String APPFABRIC_SERVICE_NAME = "app.fabric.service";
+  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+  private static final String APPFABRIC_SERVICE_NAME = "app.fabric.service";
 
   /**
-   * The allowed methods for this handler
+   * The allowed methods for this handler.
    */
   Set<HttpMethod> allowedMethods = Collections.singleton(
-      HttpMethod.PUT);
+    HttpMethod.PUT);
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -66,23 +66,18 @@ public class AppFabricRestHandler extends NettyRestHandler {
   private AppFabricRestConnector connector;
 
   /**
-   * The metrics object of the rest connector
+   * The metrics object of the rest connector.
    */
   private final CMetrics metrics;
 
-  private final String pathPrefix;
-
   /**
-   * Constructor requires the connector that created this
+   * Constructor requires the connector that created this.
    *
    * @param connector the connector that created this
    */
   AppFabricRestHandler(AppFabricRestConnector connector) {
     this.connector = connector;
     this.metrics = connector.getMetricsClient();
-    this.pathPrefix =
-        connector.getHttpConfig().getPathPrefix() +
-        connector.getHttpConfig().getPathMiddle();
   }
 
   @Override
@@ -102,21 +97,21 @@ public class AppFabricRestHandler extends NettyRestHandler {
       return;
     }
 
-    if(! connector.getAuthenticator().authenticateRequest(request)) {
+    if (!connector.getAuthenticator().authenticateRequest(request)) {
       respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
       helper.finish(BadRequest);
       return;
     }
 
     String accountId = connector.getAuthenticator().getAccountId(request);
-    if(accountId == null || accountId.isEmpty()) {
+    if (accountId == null || accountId.isEmpty()) {
       respondError(message.getChannel(), HttpResponseStatus.FORBIDDEN);
       helper.finish(BadRequest);
       return;
     }
 
     try {
-      if(method != HttpMethod.PUT) {
+      if (method != HttpMethod.PUT) {
         LOG.trace("Received Unsupported http request method " + method.getName());
         respondNotAllowed(message.getChannel(), allowedMethods);
         helper.finish(BadRequest);
@@ -129,7 +124,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
 
       try {
-        if(requestUri.contains("/apps/status")) {
+        if (requestUri.contains("/apps/status")) {
           ResourceIdentifier rIdentifier = new ResourceIdentifier(accountId, "no-app", "no-res", 1);
           DeploymentStatus status = client.dstatus(token, rIdentifier);
           Map<String, String> headers = Maps.newHashMap();
@@ -140,7 +135,7 @@ public class AppFabricRestHandler extends NettyRestHandler {
           helper.finish(Success);
         } else {
           String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
-          if(archiveName == null || archiveName.isEmpty()) {
+          if (archiveName == null || archiveName.isEmpty()) {
             LOG.trace("Archive name was not available in the header");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             helper.finish(BadRequest);
@@ -148,17 +143,17 @@ public class AppFabricRestHandler extends NettyRestHandler {
           }
 
           ChannelBuffer content = request.getContent();
-          if(content == null) {
+          if (content == null) {
             LOG.trace("No body passed from client");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             helper.finish(BadRequest);
             return;
           }
 
-          ResourceInfo rInfo = new ResourceInfo(accountId, "GWApp", archiveName,1, System.currentTimeMillis()/1000);
+          ResourceInfo rInfo = new ResourceInfo(accountId, "GWApp", archiveName, 1, System.currentTimeMillis() / 1000);
           ResourceIdentifier rIdentifier = client.init(token, rInfo);
 
-          while(content.readableBytes() > 0) {
+          while (content.readableBytes() > 0) {
             int bytesToRead = Math.min(1024 * 100, content.readableBytes());
             client.chunk(token, rIdentifier, content.readSlice(bytesToRead).toByteBuffer());
           }
@@ -167,10 +162,10 @@ public class AppFabricRestHandler extends NettyRestHandler {
           respondSuccess(message.getChannel(), request);
         }
       } finally {
-        if(client.getInputProtocol().getTransport().isOpen()) {
+        if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
         }
-        if(client.getOutputProtocol().getTransport().isOpen()) {
+        if (client.getOutputProtocol().getTransport().isOpen()) {
           client.getOutputProtocol().getTransport().close();
         }
       }
@@ -195,20 +190,20 @@ public class AppFabricRestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx,
                               ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.connector.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
-        this.connector.getName() + "'. ", e.getCause());
+                this.connector.getName() + "'. ", e.getCause());
     if (e.getChannel().isOpen()) {
       respondError(ctx.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();
     }
   }
 
-  private AppFabricService.Client getAppFabricClient() throws TTransportException  {
+  private AppFabricService.Client getAppFabricClient() throws TTransportException {
     List<Discoverable> endpoints
       = Lists.newArrayList(connector.getDiscoveryServiceClient().discover(APPFABRIC_SERVICE_NAME));
-    if(endpoints.isEmpty()) {
+    if (endpoints.isEmpty()) {
       LOG.trace("Received a request for deploy, but AppFabric service was not available.");
       return null;
     }

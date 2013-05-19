@@ -33,7 +33,7 @@ public class FlumeClient {
 
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
-      .getLogger(FlumeClient.class);
+    .getLogger(FlumeClient.class);
 
   /**
    * for debugging. should only be set to true in unit tests.
@@ -62,11 +62,13 @@ public class FlumeClient {
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = "flume-client";
-    if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
+    if (System.getProperty("script") != null) {
+      name = System.getProperty("script").replaceAll("[./]", "");
+    }
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
-        " --stream <id> --body <value> [ <option> ... ]");
+                  " --stream <id> --body <value> [ <option> ... ]");
     out.println("Options:");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
@@ -87,19 +89,24 @@ public class FlumeClient {
   }
 
   /**
-   * Print an error message followed by the usage statement
+   * Print an error message followed by the usage statement.
+   *
    * @param errorMessage the error message
    */
   void usage(String errorMessage) {
-    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    if (errorMessage != null) {
+      System.err.println("Error: " + errorMessage);
+    }
     usage(true);
   }
 
   /**
-   * Parse the command line arguments
+   * Parse the command line arguments.
    */
   void parseArguments(String[] args) {
-    if (args.length == 0) usage(true);
+    if (args.length == 0) {
+      usage(true);
+    }
     if ("--help".equals(args[0])) {
       usage(false);
       help = true;
@@ -109,32 +116,48 @@ public class FlumeClient {
     for (int pos = 0; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
       } else if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         hostname = args[pos];
       } else if ("--connector".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         connector = args[pos];
       } else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         apikey = args[pos];
       } else if ("--stream".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         destination = args[pos];
       } else if ("--header".equals(arg)) {
-        if (pos + 2 >= args.length) usage(true);
+        if (pos + 2 >= args.length) {
+          usage(true);
+        }
         headers.put(args[++pos], args[++pos]);
       } else if ("--body".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         body = args[pos];
       } else if ("--body-file".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         bodyFile = args[pos];
       } else if ("--help".equals(arg)) {
         usage(false);
@@ -151,30 +174,33 @@ public class FlumeClient {
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
-    if (help) return;
+    if (help) {
+      return;
+    }
     // verify that either --body or --body-file is given
-    if (body != null && bodyFile != null)
+    if (body != null && bodyFile != null) {
       usage("Either --body or --body-file must be specified.");
+    }
     // verify that a destination was given
-    if (destination == null)
+    if (destination == null) {
       usage("A destination stream must be specified.");
+    }
     // verify that only one hint is given for the URL
-    if (connector != null && port != -1)
+    if (connector != null && port != -1) {
       usage("Only one of --connector or --port may be specified.");
+    }
   }
 
   /**
    * read the body of the event in binary form, either from
-   * --body or --body-file
+   * --body or --body-file.
    */
   byte[] readBody() {
     if (body != null) {
       return body.getBytes();
-    }
-    else if (bodyFile != null) {
+    } else if (bodyFile != null) {
       return Util.readBinaryFile(bodyFile);
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -196,13 +222,15 @@ public class FlumeClient {
       if (flumeName == null) {
         return -1;
       } else {
-        if (verbose) System.out.println(
+        if (verbose) {
+          System.out.println(
             "Reading configuration for connector '" + flumeName + "'.");
+        }
       }
     }
     // get the collector's port number from the config
     return config.getInt(Constants.buildConnectorPropertyName(
-        flumeName, Constants.CONFIG_PORT), -1);
+      flumeName, Constants.CONFIG_PORT), -1);
   }
 
   /**
@@ -213,30 +241,37 @@ public class FlumeClient {
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
    * @return null in case of error, an string representing the retrieved value
-   * in case of success
+   *         in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
     validateArguments(args);
-    if (help) return "";
+    if (help) {
+      return "";
+    }
 
     // determine the flume port for the GET request
-    if (port == -1) port = findFlumePort(config, connector);
+    if (port == -1) {
+      port = findFlumePort(config, connector);
+    }
     if (port == -1) {
       System.err.println("Can't figure out the URL to send to. " +
-          "Please use --base or --connector to specify.");
+                           "Please use --base or --connector to specify.");
       return null;
     }
     // determine the gateway host
-    if (hostname == null) hostname = "localhost";
-    if (verbose)
+    if (hostname == null) {
+      hostname = "localhost";
+    }
+    if (verbose) {
       System.out.println("Using flume port: " + hostname + ":" + port);
+    }
 
     // get the body as a byte array
     byte[] binaryBody = readBody();
     if (binaryBody == null) {
       System.err.println("Cannot send an event without body. " +
-          "Please use --body or --body-file to specify the body.");
+                           "Please use --body or --body-file to specify the body.");
       return null;
     }
 
@@ -271,7 +306,7 @@ public class FlumeClient {
     } catch (UsageException e) {
       if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " +
-            Arrays.toString(args) + ". Exception: " + e);
+                             Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
     }
@@ -289,7 +324,9 @@ public class FlumeClient {
     FlumeClient instance = new FlumeClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
-    if (value == null) System.exit(1);
+    if (value == null) {
+      System.exit(1);
+    }
   }
 }
 

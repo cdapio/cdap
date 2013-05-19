@@ -39,8 +39,6 @@ public class GatewayRestAccessorTest {
 
   private OperationExecutor executor;
 
-  private static DiscoveryService discoveryService;
-
   /**
    * Create a new Gateway instance to use in these set of tests. This method
    * is called before any of the test methods.
@@ -56,7 +54,7 @@ public class GatewayRestAccessorTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
