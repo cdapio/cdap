@@ -17,6 +17,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  *
  */
@@ -38,21 +40,9 @@ public class AppFabricServerTest {
 
   @Test
   public void startStopServer() throws Exception {
-    ListenableFuture<Service.State> future = server.start();
-    Futures.addCallback(future, new FutureCallback<Service.State>() {
-      @Override
-      public void onSuccess(Service.State result) {
-        Assert.assertTrue(true);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        Assert.assertTrue(false);
-      }
-    });
-
-    Service.State state = future.get();
+    Service.State state = server.startAndWait();
     Assert.assertTrue(state == Service.State.RUNNING);
+    TimeUnit.SECONDS.sleep(5);
     state = server.stopAndWait();
     Assert.assertTrue(state == Service.State.TERMINATED);
   }

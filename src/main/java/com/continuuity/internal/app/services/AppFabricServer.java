@@ -34,10 +34,8 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
 
-  private ExecutorService executor;
   private TThreadedSelectorServer server;
-  private Thread runnerThread;
-  private TThreadedSelectorServer.Args options;
+  private ExecutorService executor;
 
   /**
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
@@ -74,12 +72,12 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       }
     });
 
-    options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(address))
+    TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(address))
       .executorService(executor)
       .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.DEFAULT_MAX_READ_BUFFER;
-    runnerThread = Thread.currentThread();
+    server = new TThreadedSelectorServer(options);
 
     // Start the flow metrics reporter.
     OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
@@ -99,7 +97,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Override
   protected void run() throws Exception {
-    server = new TThreadedSelectorServer(options);
     server.serve();
   }
 
@@ -107,7 +104,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Invoked during shutdown of the thread.
    */
   protected void triggerShutdown() {
-    runnerThread.interrupt();
     server.stop();
   }
 }

@@ -12,14 +12,13 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
-import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.pipeline.PipelineFactory;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
 
 /**
@@ -45,7 +44,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   /**
    * Guice module for AppFabricServer. Requires Opex related bindings being available.
    */
-  private static final class AppFabricServiceModule extends PrivateModule {
+  // Note: Ideally this should be private module, but gateway and test cases uses some of the internal bindings.
+  private static final class AppFabricServiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -56,16 +56,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
       bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
-      // Bind and expose MetaDataStore and StoreFactory.
-      // Hacky as it's actually exposed for gateway. Should fix gateway to have it's own Guice module.
       bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-      expose(MetaDataStore.class);
       bind(StoreFactory.class).to(MDSStoreFactory.class);
-      expose(StoreFactory.class);
-
-      // Bind and expose thrift service AppFabricService.
-      bind(AppFabricServer.class);
-      expose(AppFabricServer.class);
     }
   }
 }

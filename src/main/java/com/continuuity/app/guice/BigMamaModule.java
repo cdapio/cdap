@@ -65,6 +65,8 @@ public class BigMamaModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    // Note: Expose for test cases. Need to refactor test cases.
+    expose(ProgramRunnerFactory.class);
 
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
