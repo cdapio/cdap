@@ -3,71 +3,94 @@
  */
 package com.continuuity.app.runtime;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
+import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.weave.common.Services;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.util.concurrent.Futures;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AppFabric server main. It can be started as regular Java Application
  * or started using apache commons daemon (jsvc)
  */
-public final class AppFabricMain {
+public final class AppFabricMain extends DaemonMain {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
+  private ZKClientService zkClientService;
+  private AppFabricServer appFabricServer;
+  private Injector injector;
 
-  /**
-   * The main method. Invoked from command line directly. It simply call methods in the same sequence
-   * as if the program is started by jsvc.
-   */
-  public static void main(final String[] args) throws InterruptedException {
-    final AppFabricMain appFabricMain = new AppFabricMain();
-    final CountDownLatch shutdownLatch = new CountDownLatch(1);
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          try {
-            appFabricMain.stop();
-          } finally {
-            try {
-              appFabricMain.destroy();
-            } finally {
-              shutdownLatch.countDown();
-            }
-          }
-        } catch (Throwable t) {
-          LOG.error("Exception when shutting down: " + t.getMessage(), t);
+  public static void main(final String[] args) throws Exception {
+    new AppFabricMain().doMain(args);
+  }
+
+  @Override
+  public void init(String[] args) {
+    CConfiguration cConf = CConfiguration.create();
+    zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(cConf.get("zookeeper.quorum")).setSessionTimeout(10000).build(),
+            RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+          )
+        )
+      );
+
+    injector = Guice.createInjector(
+      new ConfigModule(),
+      new IOModule(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new ProgramRunnerRuntimeModule(zkClientService).getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Bind the remote opex
+          bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
+          bind(CConfiguration.class)
+            .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
+            .to(CConfiguration.class);
         }
       }
-    });
-    appFabricMain.init(args);
-    appFabricMain.start();
-
-    shutdownLatch.await();
+    );
   }
 
-  /**
-   * Invoked by jsvc to initialize the program.
-   */
-  public void init(String[] args) {
-  }
-
-  /**
-   * Invoked by jsvc to start the program.
-   */
+  @Override
   public void start() {
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
   }
 
   /**
    * Invoked by jsvc to stop the program.
    */
+  @Override
   public void stop() {
+    Futures.getUnchecked(Services.chainStop(appFabricServer, zkClientService));
   }
 
   /**
    * Invoked by jsvc for resource cleanup
    */
+  @Override
   public void destroy() {
   }
 }
