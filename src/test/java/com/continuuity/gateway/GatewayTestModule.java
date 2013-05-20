@@ -4,8 +4,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
@@ -31,7 +31,7 @@ public final class GatewayTestModule extends AbstractModule {
     install(new IOModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new LocationRuntimeModule().getInMemoryModules());
-    install(new BigMamaModule());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
+    install(new ProgramRunnerRuntimeModule().getInMemoryModules());
   }
 }

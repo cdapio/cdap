@@ -1,11 +1,9 @@
 package com.continuuity.gateway;
 
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.connector.AppFabricRestConnector;

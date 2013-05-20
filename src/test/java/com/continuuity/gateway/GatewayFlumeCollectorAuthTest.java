@@ -1,11 +1,9 @@
 package com.continuuity.gateway;
 
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;

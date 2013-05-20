@@ -1,14 +1,12 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.tools.StreamClient;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;

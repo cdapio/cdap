@@ -1,9 +1,9 @@
 package com.continuuity.gateway.runtime;
 
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -37,7 +37,7 @@ public class Main {
         new ConfigModule(configuration),
         new IOModule(),
         new LocationRuntimeModule().getDistributedModules(),
-        new BigMamaModule()
+        new DiscoveryRuntimeModule().getDistributedModules()
         );
 
     // Get our fully wired Gateway
