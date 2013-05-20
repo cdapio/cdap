@@ -30,15 +30,10 @@ import java.util.jar.Manifest;
  */
 public class LocalManagerTest {
   private static LocationFactory lf;
-  private static CConfiguration configuration;
 
   @BeforeClass
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
-                                                                      + "/" + UUID.randomUUID());
   }
 
   /**
@@ -49,7 +44,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     deployedJar.deleteOnExit();
-    TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
+    TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
   }
 
   /**
@@ -61,7 +56,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
 
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms)p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);

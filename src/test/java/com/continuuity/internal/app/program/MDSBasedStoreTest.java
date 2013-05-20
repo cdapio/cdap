@@ -56,11 +56,7 @@ import java.util.List;
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
   private MetadataService.Iface metadataService;
-  private static CConfiguration configuration;
-
-  static {
-    configuration = TestHelper.configuration;
-  }
+  private static CConfiguration configuration = TestHelper.configuration;
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before

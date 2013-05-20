@@ -22,7 +22,6 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
@@ -46,7 +45,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,26 +128,8 @@ public class MultiConsumerTest {
   @Test
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
-    final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
-                                                            + "/app/archive" + UUID.randomUUID());
-
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
-
-    injector.getInstance(DiscoveryService.class).startAndWait();
-
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(MultiApp.class, TestHelper.getManifestWithMainClass(MultiApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(MultiApp.class);
+    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
@@ -173,7 +153,7 @@ public class MultiConsumerTest {
 
     TimeUnit.SECONDS.sleep(4);
 
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 

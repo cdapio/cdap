@@ -68,26 +68,9 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
-                                                              + "/app/archive" + UUID.randomUUID());
-
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
-
-    injector.getInstance(DiscoveryService.class).startAndWait();
-
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(WordCountApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class);
+    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
@@ -110,7 +93,7 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(1);
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
@@ -130,7 +113,7 @@ public class FlowTest {
 
     // Query
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
     discoveryServiceClient.startAndWait();
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
@@ -161,27 +144,12 @@ public class FlowTest {
 
   @Test
   public void testCountRandomApp() throws Exception {
-    final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
-                                                            + "/app/archive" + UUID.randomUUID());
-
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
-
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(TestCountRandomApp.class, TestHelper.getManifestWithMainClass(TestCountRandomApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {
-        ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
+        ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
@@ -207,26 +175,12 @@ public class FlowTest {
 
   @Test
   public void testCountAndFilterWord() throws Exception {
-    final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app/archive" + UUID.randomUUID());
-
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                             new BigMamaModule(configuration));
-
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(CountAndFilterWord.class, TestHelper.getManifestWithMainClass(CountAndFilterWord.class))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
+    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(CountAndFilterWord.class);
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {
-        ProgramRunner runner = injector.getInstance(FlowProgramRunner.class);
+        ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new ProgramOptions() {
           @Override
           public String getName() {
@@ -247,7 +201,7 @@ public class FlowTest {
     }
 
     TimeUnit.SECONDS.sleep(1);
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 
