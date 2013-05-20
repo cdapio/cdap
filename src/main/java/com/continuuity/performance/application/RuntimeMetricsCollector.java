@@ -27,7 +27,8 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
   private final Stopwatch stopwatch = new Stopwatch();
   private volatile boolean interrupt = false;
 
-  public RuntimeMetricsCollector(LinkedBlockingDeque<String> queue, int interval, List<String> counterNames, String tags) {
+  public RuntimeMetricsCollector(LinkedBlockingDeque<String> queue, int interval, List<String> counterNames,
+                                 String tags) {
     this.counterNames = new ArrayList<CounterName>(counterNames.size());
     for (String counterName : counterNames) {
       CounterName cn = new CounterName(counterName);
@@ -107,15 +108,15 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     if (counter != null) {
       StringBuilder metricTags = new StringBuilder(tags);
       if (StringUtils.isNotEmpty(counterName.getApplicationId())) {
-        metricTags.append("application="+counterName.getApplicationId());
+        metricTags.append("application=" + counterName.getApplicationId());
         metricTags.append(" ");
       }
       if (StringUtils.isNotEmpty(counterName.getFlowId())) {
-        metricTags.append("flow="+counterName.getFlowId());
+        metricTags.append("flow=" + counterName.getFlowId());
         metricTags.append(" ");
       }
       if (StringUtils.isNotEmpty(counterName.getFlowletId())) {
-        metricTags.append("flowlet="+counterName.getFlowletId());
+        metricTags.append("flowlet=" + counterName.getFlowletId());
       }
       enqueueMetricCommand(counterName.getName(), unixTime, counter.getValue(), metricTags.toString().trim());
     }
@@ -135,6 +136,9 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     return "put" + " " + metricName + " " + unixTime + " " + value + " " + tags;
   }
 
+  /**
+   * Class for Counter names.
+   */
   final class CounterName {
     private CounterLevel level;
     private String accountId;
@@ -205,7 +209,10 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     }
   }
 
-  public enum CounterLevel {
+  /**
+   * Enum for level of counter.
+   */
+  enum CounterLevel {
     Account(1, "Account"),
     Flowlet(2, "Flowlet");
 
