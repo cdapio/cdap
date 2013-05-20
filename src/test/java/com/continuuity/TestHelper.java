@@ -15,7 +15,6 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
@@ -37,13 +36,14 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
-  private static CConfiguration configuration;
-  public static Injector injector;
+  public static CConfiguration configuration;
+  private static Injector injector;
 
   static {
+    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
+    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
     //injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
   }
 

@@ -27,7 +27,6 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -60,8 +59,7 @@ public class MDSBasedStoreTest {
   private static CConfiguration configuration;
 
   static {
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
+    configuration = TestHelper.configuration;
   }
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
