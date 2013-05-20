@@ -533,7 +533,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     ResultScanner resultScanner = null;
     try {
       Scan scan =  new Scan();
-      if (startRow != null ) {
+      if (startRow != null) {
         scan.setStartRow(startRow);
       }
       if (stopRow != null) {

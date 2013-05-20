@@ -867,25 +867,25 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     PreparedStatement ps = null;
     try {
-      if (startRow == null && stopRow ==null ) {
-        ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
+      if (startRow == null && stopRow ==null) {
+        ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
                                                  this.quotedTableName + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
       } else if (startRow == null) {
-        ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
+        ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
                                                  this.quotedTableName + "  "+ "WHERE rowKey < ?"
                                                  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, stopRow);
 
       }  else if (stopRow == null) {
-        ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
+        ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
                                                  this.quotedTableName + "  "+ "WHERE rowKey >= ?"
                                                  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, startRow);
       } else {
-        ps = this.connection.prepareStatement( "SELECT rowkey, column, version, kvtype, id, value FROM "+
+        ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
                                                  this.quotedTableName + "  "+ "WHERE rowKey >= ? AND "   +
                                                  "rowKey < ? "  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");

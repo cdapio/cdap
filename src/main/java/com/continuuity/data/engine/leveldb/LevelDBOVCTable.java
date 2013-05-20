@@ -909,13 +909,8 @@ public class LevelDBOVCTable extends AbstractOVCTable {
       byte[] lastRow = new byte[0];
 
       Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      boolean gotNext = false;
 
-      while(!gotNext) {
-        if (!iterator.hasNext()) {
-          //No more items. Break.
-          break;
-        }
+      while(iterator.hasNext()) {
 
         Map.Entry<byte[], byte[]> entry = iterator.peekNext();
         KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
