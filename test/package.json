@@ -5,6 +5,6 @@
     "chai": "1.6.0",
     "mocha": "1.9.0",
     "supertest": "0.6.0",
-    "zombie": "2.0.0-alpha18"
+    "webdriverjs": "0.7.8"
   }
 }
