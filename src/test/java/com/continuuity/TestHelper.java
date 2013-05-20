@@ -25,14 +25,8 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.UUID;
 import java.util.jar.Manifest;
 
 /**
