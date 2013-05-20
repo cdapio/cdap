@@ -214,17 +214,24 @@ final class MetricsClient extends AbstractExecutionThreadService {
    * Returns metric collection server endpoint or {@code null} if no endpoint available.
    */
   private InetSocketAddress getEndpoint() throws ServiceDiscoveryClientException {
-    ServiceInstance<ServicePayload> instance =
-      serviceDiscovery.getInstance(Constants.SERVICE_METRICS_COLLECTION_SERVER, new RandomStrategy<ServicePayload>());
-    if (instance == null) {
+    try {
+      ServiceInstance<ServicePayload> instance =
+        serviceDiscovery.getInstance(Constants.SERVICE_METRICS_COLLECTION_SERVER, new RandomStrategy<ServicePayload>());
+      if (instance == null) {
+        return null;
+      }
+
+      String hostname = instance.getAddress();
+      int port = instance.getPort();
+      LOG.info("Received service endpoint {}:{}.", hostname, port);
+
+      return new InetSocketAddress(hostname, port);
+    } catch (ServiceDiscoveryClientException e) {
+      if (isRunning()) {
+        throw e;
+      }
       return null;
     }
-
-    String hostname = instance.getAddress();
-    int port = instance.getPort();
-    LOG.info("Received service endpoint {}:{}.", hostname, port);
-
-    return new InetSocketAddress(hostname, port);
   }
 
   /**
@@ -236,8 +243,8 @@ final class MetricsClient extends AbstractExecutionThreadService {
     public ChannelPipeline getPipeline() throws Exception {
       ChannelPipeline pipeline = Channels.pipeline();
       pipeline.addLast("frameDecoder", new FixedLengthFrameDecoder(Integer.SIZE / 8));
-      pipeline.addLast("requestEncoder", new MetricRequestEncoder());
-      pipeline.addLast("responseDecoder", new MetricResponseDecoder());
+      pipeline.addLast("requestEncoder", new MetricClientRequestEncoder());
+      pipeline.addLast("responseDecoder", new MetricClientResponseDecoder());
       pipeline.addLast("responseHandler", new MetricResponseHandler());
       return pipeline;
     }
@@ -246,7 +253,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
   /**
    * Encoder to write metrics command to server.
    */
-  private static final class MetricRequestEncoder extends OneToOneEncoder {
+  private static final class MetricClientRequestEncoder extends OneToOneEncoder {
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
       if (msg instanceof String) {
@@ -263,7 +270,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
   /**
    * Decoder to decode server response in MetricResponse.
    */
-  private static final class MetricResponseDecoder extends OneToOneDecoder {
+  private static final class MetricClientResponseDecoder extends OneToOneDecoder {
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
       if (msg instanceof ChannelBuffer) {
