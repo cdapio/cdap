@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunnerTest {
   private static Injector injector;
-
+ 
   @BeforeClass
   public static void beforeClass() {
     final Configuration hConf = new Configuration();
