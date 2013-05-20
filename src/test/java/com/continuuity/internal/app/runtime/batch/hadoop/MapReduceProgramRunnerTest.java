@@ -57,20 +57,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunnerTest {
   private static Injector injector;
-  private static CConfiguration configuration;
 
   @BeforeClass
   public static void beforeClass() {
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
-
     final Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
 
-    injector = Guice.createInjector(new DataFabricModules().getSingleNodeModules(),
-                                    new BigMamaModule(configuration),
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                    new BigMamaModule(TestHelper.configuration),
                                     new Module() {
                                       @Override
                                       public void configure(Binder binder) {
@@ -81,7 +76,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testWordCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -117,7 +112,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testTimeSeriesRecordsCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -200,18 +195,6 @@ public class MapReduceProgramRunnerTest {
       }
     }
     return null;
-  }
-
-  private ApplicationWithPrograms deployApp(Class<? extends Application> appClass) throws Exception {
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    return (ApplicationWithPrograms) p.get();
   }
 
   private byte[] tb(String val) {

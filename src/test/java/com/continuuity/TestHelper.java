@@ -5,6 +5,7 @@
 package com.continuuity;
 
 import com.continuuity.api.Application;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.ManifestFields;
@@ -22,6 +23,8 @@ import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -44,7 +47,8 @@ public class TestHelper {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
     configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
-    //injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector(new BigMamaModule(configuration),
+                                    new DataFabricModules().getInMemoryModules());
   }
 
   public static Injector getInjector() {
@@ -57,7 +61,7 @@ public class TestHelper {
    * @param klass to set as Main-Class in manifest file.
    * @return An instance {@link Manifest}
    */
-  public static Manifest getManifestWithMainClass( Class<?> klass) {
+  public static Manifest getManifestWithMainClass(Class<?> klass) {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
@@ -67,35 +71,25 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager(Injector injector,
-                                                                           CConfiguration configuration) {
-    if (injector == null) {
-    injector = Guice.createInjector(new BigMamaModule(configuration),
-                                                   new DataFabricModules().getInMemoryModules());
-
-    }
-
-    ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-    return (Manager<Location, ApplicationWithPrograms>)factory.create();
-  }
-
-
-  /**
-   * @return Returns an instance of {@link LocalManager}
-   */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager( CConfiguration configuration) {
-    if (injector == null) {
-      injector = Guice.createInjector(new BigMamaModule(configuration),
-                                      new DataFabricModules().getInMemoryModules());
-
-    }
-
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
     return (Manager<Location, ApplicationWithPrograms>)factory.create();
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
     deployApplication(application, "app-" + System.currentTimeMillis()/1000 + ".jar");
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass) throws Exception {
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
+    );
+    deployedJar.deleteOnExit();
+
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    return (ApplicationWithPrograms) p.get();
   }
 
   /**
