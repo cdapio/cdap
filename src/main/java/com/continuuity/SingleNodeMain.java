@@ -4,8 +4,8 @@
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -235,8 +235,8 @@ public class SingleNodeMain {
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new BigMamaModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
@@ -248,8 +248,8 @@ public class SingleNodeMain {
       new IOModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new BigMamaModule(),
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
+      new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
       ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
