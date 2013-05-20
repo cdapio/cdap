@@ -17,6 +17,9 @@ import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
 
+// Ignoring all TestHBaseTTQueue tests for now. New queue algorithm has replaced this class. This class will be
+// removed later.
+@Ignore
 public class TestHBaseTTQueue extends TestTTQueue {
 
   private static Injector injector;
