@@ -45,7 +45,7 @@ import java.util.Map;
 /**
  *
  */
-public class InMemoryProgramRunnerModule extends PrivateModule {
+final class InMemoryProgramRunnerModule extends PrivateModule {
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.
