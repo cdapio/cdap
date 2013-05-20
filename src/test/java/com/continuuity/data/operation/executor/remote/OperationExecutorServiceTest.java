@@ -34,7 +34,8 @@ import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -49,6 +50,8 @@ import static org.junit.Assert.fail;
 
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OperationExecutorServiceTest.class);
 
   static OperationContext context = OperationUtil.DEFAULT;
 
@@ -657,9 +660,9 @@ public abstract class OperationExecutorServiceTest extends
 
     for (int i = 0; i < numThreads; i++) {
       OpexThread ti = new OpexThread(i, numWritesPerThread);
-      Log.debug("Starting thread " + i);
+      LOG.debug("Starting thread " + i);
       ti.start();
-      Log.debug("Thread " + i + " is running");
+      LOG.debug("Thread " + i + " is running");
       threads[i] = ti;
     }
     for (int i = 0; i < numThreads; i++) {
@@ -686,10 +689,10 @@ public abstract class OperationExecutorServiceTest extends
         for (int i = 0; i < this.times; i++) {
           byte[] key = (id + "-" + i).getBytes();
           byte[] value = Integer.toString(i).getBytes();
-          Log.debug("Thread " + id + " writing #" + i);
+          LOG.debug("Thread " + id + " writing #" + i);
           Write write = new Write(key, Operation.KV_COL, value);
           remote.commit(context, write);
-          Log.debug("Thread " + id + " reading #" + i);
+          LOG.debug("Thread " + id + " reading #" + i);
           Read read = new Read(key, Operation.KV_COL);
           Assert.assertArrayEquals(value,
               remote.execute(context, read).getValue().get(Operation.KV_COL));
