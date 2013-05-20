@@ -55,6 +55,12 @@ public class JarClassLoader extends MultiClassLoader {
     this.jarResources = jarResources;
   }
 
+  /**
+   * Returns an input stream for reading the specified resource. If the resource is not found then it will try
+   * finding it with its parent ClassLoader, if any.
+   * @param s The resource name
+   * @return An input stream for reading the resource, or null if the resource could not be found
+   */
   @Override
   public InputStream getResourceAsStream(String s) {
     String entry = s;
