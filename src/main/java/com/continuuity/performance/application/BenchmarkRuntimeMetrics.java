@@ -34,5 +34,4 @@ public interface BenchmarkRuntimeMetrics {
    * @throws java.util.concurrent.TimeoutException If the timeout time passed and still not seeing that many count.
    */
   void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
-
 }
