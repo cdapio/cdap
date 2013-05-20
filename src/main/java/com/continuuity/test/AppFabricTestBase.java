@@ -17,6 +17,7 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.BufferFileInputStream;
@@ -161,6 +162,7 @@ public class AppFabricTestBase {
                                     new ConfigModule(configuration),
                                     new IOModule(),
                                     new LocationRuntimeModule().getInMemoryModules(),
+                                    new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new AbstractModule() {
