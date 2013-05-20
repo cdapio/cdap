@@ -116,9 +116,7 @@ rpm {
 
 // The packaging extra options do not allow for rpm-specific settings.  As a workaround,
 //   override them directly in the rpm task
-println '****************** eval base rpm'
 rpm.doFirst {
-  println '****************** adding base rpm override'
   // we also override this for the common package
   if(packaging.extraOptions['--after-install'] == "$rootProject.projectDir/distributions/src/debian/scripts/postinst") {
     packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postinst"
@@ -144,14 +142,9 @@ artifacts {
 uploadPackages {
   repositories {
     repositories.mavenDeployer {
-      repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+      repository(url: "https://repository.continuuity.com/content/repositories/packages") {
         authentication(userName: nexusUsername, password: nexusPassword)
         pom.groupId = 'com.continuuity.distributions.release'
-        pom.version = getPomVersion()
-      }
-      snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
-        authentication(userName: nexusUsername, password: nexusPassword)
-        pom.groupId = 'com.continuuity.distributions.snapshots'
         pom.version = getPomVersion()
       }
       pom.whenConfigured { pom ->
