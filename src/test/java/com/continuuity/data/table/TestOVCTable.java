@@ -1422,4 +1422,126 @@ public abstract class TestOVCTable {
     assertEquals(149, lastEntryCol1);
     assertEquals(2*149, lastEntryCol2);
   }
+
+  @Test
+  public void testScanStartRowNull() throws OperationException {
+    final byte [] row = "scanTestsStartRowNull".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = null;
+    byte [] stopRow = Bytes.add(row, Bytes.toBytes(175));
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(100,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(75, count); // checks if we got required amount of entry
+    assertEquals(174, lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+  @Test
+  public void testScanStopRowNull() throws OperationException {
+    final byte [] row = "scanTestsStopRowNull".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = Bytes.add(row, Bytes.toBytes(150));
+    byte [] stopRow = null;
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(150,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(50, count); // checks if we got required amount of entry
+    assertEquals(199, lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
+
+  @Test
+  public void testScanStartAndStopRowNull() throws OperationException {
+    final byte [] row = "scanTestsStartStopRowNull".getBytes(Charsets.UTF_8);
+    final byte [] col = "c".getBytes(Charsets.UTF_8);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+
+    for ( int i = 100 ; i < 200; i++ ) {
+      byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
+      this.table.put(rowKey, col, tx.getWriteVersion(), Bytes.toBytes(i));
+    }
+
+    byte [] startRow = null;
+    byte [] stopRow = null;
+
+    Scanner scanner = this.table.scan(startRow, stopRow, TransactionOracle.DIRTY_READ_POINTER);
+
+    assertTrue(scanner != null);
+
+    int firstEntry = Bytes.toInt(scanner.next().getSecond().get(col));
+    assertEquals(100,firstEntry);
+
+    int count = 1; //count is set to one since we already read one entry
+    int lastEntry = -1;
+
+    boolean done = false;
+    while (!done) {
+      ImmutablePair<byte[], Map<byte[],byte[]>> r = scanner.next();
+      if ( r == null) {
+        done = true;
+      } else {
+        lastEntry = Bytes.toInt(r.getSecond().get(col));
+        count++;
+      }
+    }
+
+    assertEquals(100, count); // checks if we got required amount of entry
+    assertEquals(199, lastEntry); // checks if the scan interval [startRow, stopRow) works fine
+  }
+
 }

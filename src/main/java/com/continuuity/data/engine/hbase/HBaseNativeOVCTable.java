@@ -532,8 +532,13 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     ResultScanner resultScanner = null;
     try {
-      Scan scan =  new Scan(startRow);
-      scan.setStopRow(stopRow);
+      Scan scan =  new Scan();
+      if (startRow != null) {
+        scan.setStartRow(startRow);
+      }
+      if (stopRow != null) {
+        scan.setStopRow(stopRow);
+      }
       scan.setTimeRange(0, getMaxStamp(readPointer));
       scan.setMaxVersions();
       resultScanner = this.readTable.getScanner(scan);

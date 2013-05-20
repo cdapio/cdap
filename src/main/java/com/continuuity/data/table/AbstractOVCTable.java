@@ -98,4 +98,15 @@ public abstract class AbstractOVCTable implements OrderedVersionedColumnarTable 
     }
     return Bytes.head(bytes, lastNonZero + 1);
   }
+
+  @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns, ReadPointer readPointer) {
+    return scan(startRow, stopRow, readPointer);
+  }
+
+    @Override
+  public Scanner scan(ReadPointer readPointer) {
+    return scan(null, null, readPointer);
+  }
+
 }
