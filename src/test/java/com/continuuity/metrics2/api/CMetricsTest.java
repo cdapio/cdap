@@ -15,7 +15,8 @@ import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * Testing of flow metric API.
  */
 public class CMetricsTest {
+  private static final Logger LOG = LoggerFactory.getLogger(CMetricsTest.class);
   private static InMemoryZookeeper zookeeper;
   private static CConfiguration configuration;
   private static MetricsCollectionServerInterface serverInterface;
@@ -45,7 +47,7 @@ public class CMetricsTest {
     configuration.setInt(Constants.CFG_METRICS_COLLECTOR_SERVER_PORT,
       metricCollectionServePort);
 
-    Log.info("Zookeeper running on port {}, Metrics collection server on " +
+    LOG.info("Zookeeper running on port {}, Metrics collection server on " +
       "port {}.", zookeeper.getConnectionString(), metricCollectionServePort);
 
     // Create a Guice injector to inject the server.
