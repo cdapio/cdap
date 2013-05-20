@@ -28,7 +28,7 @@ public class WriteAndRead implements Application {
 
   private static final Logger LOG = LoggerFactory.getLogger(WriteAndRead.class);
 
-  public static final String tableName = "writeAndRead";
+  public static final String TABLE_NAME = "writeAndRead";
 
   public static void main(String[] args) {
     // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
@@ -48,7 +48,7 @@ public class WriteAndRead implements Application {
       .withStreams()
       .add(new Stream("keyValues"))
       .withDataSets()
-      .add(new KeyValueTable(tableName))
+      .add(new KeyValueTable(TABLE_NAME))
       .withFlows()
       .add(new WriteAndReadFlow())
       .noProcedure()
@@ -102,10 +102,10 @@ public class WriteAndRead implements Application {
     }
   }
   private static final class ReaderFlowlet extends AbstractFlowlet {
-    private static Logger LOG = LoggerFactory.getLogger(ReaderFlowlet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReaderFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(WriteAndRead.tableName)
+    @UseDataSet(WriteAndRead.TABLE_NAME)
     KeyValueTable kvTable;
 
     public void process(byte[] key) throws OperationException {
@@ -128,10 +128,10 @@ public class WriteAndRead implements Application {
   }
 
   private static final class WriterFlowlet extends AbstractFlowlet {
-    private static Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(WriteAndRead.tableName)
+    @UseDataSet(WriteAndRead.TABLE_NAME)
     KeyValueTable kvTable;
 
     private OutputEmitter<byte[]> output;
@@ -147,7 +147,7 @@ public class WriteAndRead implements Application {
   }
 
   private static final class KeyValueSource extends AbstractFlowlet {
-    private static Logger LOG = LoggerFactory.getLogger(KeyValueSource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KeyValueSource.class);
     private Metrics metrics;
 
     private OutputEmitter<WriteAndReadFlow.KeyAndValue> output;
