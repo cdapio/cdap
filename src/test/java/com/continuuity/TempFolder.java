@@ -22,7 +22,7 @@ public class TempFolder {
     try {
       folder= File.createTempFile("junit", "");
       folder.delete();
-      if (folder.mkdir()) {
+      if (!folder.mkdir()) {
         throw new RuntimeException("Could NOT create temp dir at " + folder.getAbsolutePath());
       }
       folder.deleteOnExit();
@@ -37,7 +37,7 @@ public class TempFolder {
   public File newFile(String fileName) throws IOException {
     try {
       File file = new File(folder, fileName);
-      if (file.createNewFile()) {
+      if (!file.createNewFile()) {
         throw new RuntimeException("Could NOT create temp file at " + file.getAbsolutePath());
       }
       file.deleteOnExit();
@@ -52,7 +52,7 @@ public class TempFolder {
    */
   public File newFolder(String folderName) {
     File file= new File(folder, folderName);
-    if (file.mkdir()) {
+    if (!file.mkdir()) {
       throw new RuntimeException("Could NOT create temp dir at " + file.getAbsolutePath());
     }
     file.deleteOnExit();
