@@ -7,8 +7,8 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -161,8 +161,8 @@ public class AppFabricTestBase {
                                     new ConfigModule(configuration),
                                     new IOModule(),
                                     new LocationRuntimeModule().getInMemoryModules(),
-                                    new BigMamaModule(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
+                                    new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {
