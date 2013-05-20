@@ -25,8 +25,14 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import java.util.jar.Manifest;
 
 /**
@@ -36,13 +42,14 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
-  private static CConfiguration configuration;
+  public static CConfiguration configuration;
   private static Injector injector;
 
   static {
+    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
+    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
     injector = Guice.createInjector(new BigMamaModule(configuration), new DataFabricModules().getInMemoryModules());
   }
 
