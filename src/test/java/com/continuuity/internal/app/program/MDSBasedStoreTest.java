@@ -22,18 +22,15 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.util.OperationUtil;
 import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
@@ -65,7 +62,8 @@ public class MDSBasedStoreTest {
     metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
     // cleanups data
-    TestHelper.getInjector().getInstance(OperationExecutor.class).execute(OperationUtil.DEFAULT, new ClearFabric());
+    TestHelper.getInjector().getInstance(OperationExecutor.class)
+      .execute(new OperationContext("developer"), new ClearFabric());
   }
 
   @Test
