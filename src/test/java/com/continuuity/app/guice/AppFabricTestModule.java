@@ -28,7 +28,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new IOModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new LocationRuntimeModule().getInMemoryModules());
-    install(new BigMamaModule());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
+    install(new ProgramRunnerRuntimeModule().getInMemoryModules());
   }
 }

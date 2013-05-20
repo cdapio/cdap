@@ -45,7 +45,7 @@ import java.util.Map;
 /**
  *
  */
-public class BigMamaModule extends PrivateModule {
+public class InMemoryProgramRunnerModule extends PrivateModule {
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.

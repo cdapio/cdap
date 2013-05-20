@@ -42,32 +42,16 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
  */
-public final class DistributedRuntimeModule extends PrivateModule {
+final class DistributedProgramRunnerModule extends PrivateModule {
 
-  private final Configuration hConfiguration;
-  private final CConfiguration cConfiguration;
-  private final YarnConfiguration yarnConfiguration;
   private final ZKClient zkClient;
 
-  public DistributedRuntimeModule(Configuration hConfiguration,
-                                  CConfiguration cConfiguration,
-                                  YarnConfiguration yarnConfiguration,
-                                  ZKClient zkClient) {
-    this.hConfiguration = hConfiguration;
-    this.cConfiguration = cConfiguration;
-    this.yarnConfiguration = yarnConfiguration;
+  DistributedProgramRunnerModule(ZKClient zkClient) {
     this.zkClient = zkClient;
   }
 
   @Override
   protected void configure() {
-    // Bind configurations
-    bind(Configuration.class).toInstance(hConfiguration);
-    bind(CConfiguration.class).toInstance(cConfiguration);
-    bind(YarnConfiguration.class).toInstance(yarnConfiguration);
-
-    // Bind and expose LocationFactory
-
     // Bind ZKClient
     bind(ZKClient.class).toInstance(zkClient);
 
@@ -89,7 +73,6 @@ public final class DistributedRuntimeModule extends PrivateModule {
       .to(ZKDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(ProcedureDiscoveryServiceClient.class);
     expose(DiscoveryServiceClient.class);
-
 
     // Bind ProgramRunner
     MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
