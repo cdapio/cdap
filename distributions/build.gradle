@@ -438,14 +438,17 @@ task prepackager(overwrite: true) {
 
 // Override some of our base packaging.gradle parameters for common package
 packaging {
+  dependencies = []
   extraOptions['--name'] = "continuuity"
   extraOptions['--directories'] = "/opt/continuuity"
   extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/debian/scripts/common-postinst"
   extraOptions['--template-value'] = "project=continuuity"
 }
-println '***************************** eval COMMON'
+rpm {
+  dependencies = []
+}
+
 rpm.doFirst {
-  println '*************************** adding COMMON overrides'
   packaging.extraOptions['--name'] = "continuuity"
   packaging.extraOptions['--directories'] = "/opt/continuuity"
   packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-postinst"

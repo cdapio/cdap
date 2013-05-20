@@ -90,6 +90,9 @@ def getPomVersion = {
  */
 packaging {
   baseDir = "$project.buildDir/stage-packaging"
+  dependencies = [
+                   'continuuity'
+                 ]
   extraOptions = [
                    '--name': "continuuity-$project.name",
                    '--vendor': 'Continuuity Inc.',
@@ -111,6 +114,10 @@ packaging {
  */
 rpm {
   baseDir = "$project.buildDir/stage-packaging"
+  dependencies = [
+                   'continuuity'
+                 ]
+
 }
 
 
@@ -134,10 +141,18 @@ configurations{
   packages
 }
 
-artifacts {
-  packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
-  packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+if(project.name == 'distributions') {
+  artifacts {
+    packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}_all.deb"), name: "continuuity"
+    packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-1.noarch.rpm"), name: "continuuity"
+  }
+} else {
+  artifacts {
+    packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
+    packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+  }
 }
+
 
 uploadPackages {
   repositories {
