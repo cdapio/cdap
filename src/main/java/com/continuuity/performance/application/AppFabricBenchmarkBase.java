@@ -192,7 +192,7 @@ public class AppFabricBenchmarkBase {
     }
 
     injector = Guice
-      .createInjector(new DataFabricModules().getDistributedModules(),
+      .createInjector(new DataFabricModules().getSingleNodeModules(),
                       new AngryMamaModule(configuration),
                       new AbstractModule() {
                         @Override
@@ -210,9 +210,32 @@ public class AppFabricBenchmarkBase {
                       new Module() {
                         @Override
                         public void configure(Binder binder) {
-                           binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
+                          binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
                         }
                       });
+
+//    injector = Guice
+//      .createInjector(new DataFabricModules().getDistributedModules(),
+//                      new AngryMamaModule(configuration),
+//                      new AbstractModule() {
+//                        @Override
+//                        protected void configure() {
+//                          install(new FactoryModuleBuilder()
+//                                    .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
+//                                    .build(BenchmarkManagerFactory.class));
+//                          install(new FactoryModuleBuilder()
+//                                    .implement(StreamWriter.class, BenchmarkStreamWriter.class)
+//                                    .build(BenchmarkStreamWriterFactory.class));
+//                          install(new FactoryModuleBuilder()
+//                                    .implement(ProcedureClient.class, DefaultProcedureClient.class)
+//                                    .build(ProcedureClientFactory.class));
+//                        }},
+//                      new Module() {
+//                        @Override
+//                        public void configure(Binder binder) {
+//                           binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
+//                        }
+//                      });
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     discoveryServiceClient.startAndWait();

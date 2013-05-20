@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingDeque;
  * server, it implements a exponential backoff to make sure we don't
  * tax the server trying to connect.
  */
-public class MensaMetricsDispatcher implements Runnable {
+public final class MensaMetricsDispatcher implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(MensaMetricsDispatcher.class);
   /**
@@ -203,14 +203,16 @@ public class MensaMetricsDispatcher implements Runnable {
 
       // Write the command to the session and attach a future for reporting
       // any issues seen.
+      LOG.debug("Trying to send metric {} to overlord.", cmd);
       WriteFuture future = session.write(cmd);
       if (future != null) {
         future.addListener(new IoFutureListener<WriteFuture>() {
           @Override
           public void operationComplete(WriteFuture future) {
             if (!future.isWritten()) {
-              LOG.warn("Attempted to send metric to overlord, " +
-                         "failed " + "due to session failures. [ {} ]", cmd);
+              LOG.warn("Attempt to send metric to overlord, " + "failed " + "due to session failures. [ {} ]", cmd);
+            } else {
+              LOG.debug("Suceesfully sent metric {} to overlord.", cmd);
             }
           }
         });

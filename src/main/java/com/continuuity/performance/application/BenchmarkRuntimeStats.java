@@ -7,6 +7,7 @@ import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Runtime statistics of an application during a benchmark.
  */
-public final class BenchmarkRuntimeStats {
+public final class  BenchmarkRuntimeStats {
 
   private static final String ACCOUNT_ID = "developer";
 
@@ -32,11 +33,6 @@ public final class BenchmarkRuntimeStats {
 
   public static BenchmarkRuntimeMetrics getFlowletMetrics(final String applicationId, final String flowId,
                                                           final String flowletId) {
-    return getMetrics(applicationId, flowId, flowletId);
-  }
-
-  private static BenchmarkRuntimeMetrics getMetrics(final String applicationId, final String flowId,
-                                                    final String flowletId) {
     final String inputName = String.format("%s.tuples.read.count", flowletId);
     final String processedName = String.format("%s.processed.count", flowletId);
 
@@ -93,6 +89,51 @@ public final class BenchmarkRuntimeStats {
     };
   }
 
+  public static void waitForCounter(String applicationId, String flowName, String flowletName, String counterName,
+                                    long count, long timeout, TimeUnit timeoutUnit)
+    throws TimeoutException, InterruptedException {
+    Counter c = getCounter(applicationId, flowName, flowletName, counterName);
+    if (c == null) {
+      throw new RuntimeException("No counter with name " + counterName + " found for application " + applicationId
+                                   + " ,flow " + flowName + " and flowlet " + flowletName + ".");
+    }
+    double value = c.getValue();
+    while (timeout > 0 && (value < count)) {
+      timeoutUnit.sleep(1);
+      value = getCounter(counterName).getValue();
+      timeout--;
+    }
+    if (timeout == 0 && (value < count)) {
+      throw new TimeoutException("Time limit reached.");
+    }
+  }
+
+  /**
+   * Waits until the provided counter has reached the provided count.
+   * @param counterName Name of counter
+   * @param count Value to be reached by counter
+   * @param timeout Maximum time to wait for
+   * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
+   * @throws java.util.concurrent.TimeoutException If the timeout time passed and still not seeing that many count.
+   */
+  public static void waitForCounter(String counterName, long count, long timeout, TimeUnit timeoutUnit)
+    throws TimeoutException,
+    InterruptedException {
+    Counter c = getCounter(counterName);
+    if (c == null) {
+      throw new RuntimeException("No counter with name " + counterName + " found.");
+    }
+    double value = c.getValue();
+    while (timeout > 0 && (value < count)) {
+      timeoutUnit.sleep(1);
+      value = getCounter(counterName).getValue();
+      timeout--;
+    }
+    if (timeout == 0 && (value < count)) {
+      throw new TimeoutException("Time limit reached.");
+    }
+  }
+
   public static Counter getCounter(String applicationId, String flowName, String flowletName, String counterName) {
     FlowArgument arg = new FlowArgument(ACCOUNT_ID, applicationId, flowName);
     try {
@@ -101,6 +142,22 @@ public final class BenchmarkRuntimeStats {
         if (counter.getQualifier().equals(flowletName) && counter.getName().equals(counterName)) {
           return counter;
         }
+      }
+      return null;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static Counter getCounter(String counterName) {
+    FlowArgument arg = new FlowArgument("-", "-", "-");
+    arg.setFlowletId("-");
+    CounterRequest req = new CounterRequest(arg);
+    req.setName(ImmutableList.of(counterName));
+    try {
+      List<Counter> counters = metricsClient.getCounters(req);
+      if (counters != null && counters.size() != 0) {
+        return counters.get(0);
       }
       return null;
     } catch (Exception e) {
