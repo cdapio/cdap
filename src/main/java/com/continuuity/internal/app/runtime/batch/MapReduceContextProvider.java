@@ -8,6 +8,7 @@ import com.continuuity.internal.app.runtime.batch.distributed.DistributedMapRedu
 import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
@@ -174,7 +175,8 @@ public class MapReduceContextProvider {
         contextBuilder = new InMemoryMapReduceContextBuilder(conf);
       } else {
         // mrFramework = "yarn" or "classic"
-        contextBuilder = new DistributedMapReduceContextBuilder(conf, jobContext.getConfiguration());
+        contextBuilder =
+          new DistributedMapReduceContextBuilder(conf, HBaseConfiguration.create(jobContext.getConfiguration()));
       }
     }
     return contextBuilder;
