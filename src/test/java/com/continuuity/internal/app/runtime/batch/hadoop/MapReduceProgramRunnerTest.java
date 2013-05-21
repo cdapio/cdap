@@ -69,7 +69,7 @@ public class MapReduceProgramRunnerTest {
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
 
-    injector = Guice.createInjector(new DataFabricModules().getSingleNodeModules(),
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new BigMamaModule(configuration),
                                     new Module() {
                                       @Override

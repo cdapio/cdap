@@ -155,14 +155,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     wrapReducerClassIfNeeded(jobConf);
 
     // set input/output datasets info
-    DataSet inputDataset = setInputDataSetIfNeeded(jobConf, context);
-    DataSet outputDataset = setOutputDataSetIfNeeded(jobConf, context);
+    setInputDataSetIfNeeded(jobConf, context);
+    setOutputDataSetIfNeeded(jobConf, context);
 
-    boolean useDataSetAsInputOrOutput = inputDataset != null || outputDataset != null;
-    if (useDataSetAsInputOrOutput) {
-      MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
-      contextProvider.set(context, cConf);
-    }
+    MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
+    contextProvider.set(context, cConf);
 
     // TODO: consider using approach that Weave uses: package all jars with submitted job all the time
     // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)

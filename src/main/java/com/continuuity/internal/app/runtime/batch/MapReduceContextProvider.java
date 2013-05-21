@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -66,9 +67,15 @@ public class MapReduceContextProvider {
   public void set(BasicMapReduceContext context, CConfiguration conf) {
     setRunId(context.getRunId().getId());
     setConf(conf);
-    setInputDataSet(((DataSet)context.getInputDataset()).getName());
-    setInputSelection(context.getInputDataSelection());
-    setOutputDataSet(((DataSet)context.getInputDataset()).getName());
+    if (context.getInputDataset() != null) {
+      setInputDataSet(((DataSet)context.getInputDataset()).getName());
+      if (context.getInputDataSelection() != null) {
+        setInputSelection(context.getInputDataSelection());
+      }
+    }
+    if (context.getOutputDataset() != null) {
+      setOutputDataSet(((DataSet)context.getOutputDataset()).getName());
+    }
   }
 
   private void setRunId(String runId) {
@@ -105,6 +112,9 @@ public class MapReduceContextProvider {
   private List<Split> getInputSelection() {
     String splitClassName = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLIT_CLASS);
     String splitsJson = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLITS);
+    if (splitClassName == null || splitsJson == null) {
+      return Collections.emptyList();
+    }
 
     try {
       // Yes, we know that it implements Split
