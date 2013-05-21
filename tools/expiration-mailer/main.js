@@ -49,7 +49,8 @@ var subjects = {
 	90: 'Your Continuuity Developer Sandbox Expires Today',
 	83: 'Continuuity Developer Sandbox Expiration Notice',
 	76: 'Continuuity Developer Sandbox Expiration Notice',
-	60: 'Using Your Continuuity Developer Sandbox'
+	60: 'Using Your Continuuity Developer Sandbox',
+	'special': 'Using Your Continuuity Developer Sandbox'
 };
 
 /**
@@ -73,7 +74,8 @@ function sendEmail (kind, email_id, locals, done) {
 					from: FROM_EMAIL,
 					to: email_id,
 					subject: subjects[kind],
-					text: text
+					text: text,
+					html: html
 				}, function(err, responseStatus) {
 					if (err) {
 						logger.warn(err);
@@ -123,7 +125,7 @@ function sendEmails(recipients, template) {
 
 }
 
-var days = [76, 83, 90];
+var days = [76, 83, 90, 'special'];
 var recipients = [];
 var remaining = days.length - 1;
 
@@ -169,7 +171,7 @@ for (var i = 0; i < days.length; i ++) {
 				logger.info('The following will receive a ' + day + '-day notice:');
 				console.log(table.toString() + '\n');
 
-				if (!--remaining) {
+				if (!remaining--) {
 
 					setTimeout(function () {
 
@@ -198,6 +200,7 @@ for (var i = 0; i < days.length; i ++) {
 	} else {
 
 		logger.error('File does not exist!', fileName);
+		remaining --;
 
 	}
 
