@@ -1275,10 +1275,6 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
       Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     private Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> rowColumnValueIterator;
 
-    public ResultSetScanner(ResultSet resultSet) {
-      this(resultSet, null);
-    }
-
     public ResultSetScanner(ResultSet resultSet, ReadPointer readPointer) {
       populateRowColumnValueMap(resultSet, readPointer);
       rowColumnValueIterator = this.rowColumnValueMap.entrySet().iterator();

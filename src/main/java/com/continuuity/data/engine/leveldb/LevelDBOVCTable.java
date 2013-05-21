@@ -874,10 +874,6 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     private final byte [] endRow;
     private final ReadPointer readPointer;
 
-    public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow) {
-     this(iterator, startRow, endRow, null);
-    }
-
     public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow, ReadPointer readPointer) {
       this.iterator = iterator;
       if (startRow == null) {

@@ -556,10 +556,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     private final ResultScanner scanner;
     private final ReadPointer readPointer;
 
-    public HBaseNativeScanner(ResultScanner scanner) {
-      this(scanner, null);
-    }
-
     public HBaseNativeScanner(ResultScanner scanner, ReadPointer readPointer) {
       this.scanner = scanner;
       this.readPointer = readPointer;

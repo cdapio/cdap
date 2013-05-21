@@ -996,10 +996,6 @@ public class HBaseOVCTable extends AbstractOVCTable {
     private final ResultScanner scanner;
     private final ReadPointer readPointer;
 
-    public HBaseScanner(ResultScanner scanner) {
-      this(scanner, null);
-    }
-
     private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
       this.scanner = scanner;
       this.readPointer = readPointer;
