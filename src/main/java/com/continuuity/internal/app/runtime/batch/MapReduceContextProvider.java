@@ -8,6 +8,7 @@ import com.continuuity.internal.app.runtime.batch.distributed.DistributedMapRedu
 import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
@@ -72,7 +73,6 @@ public class MapReduceContextProvider {
         setInputSelection(context.getInputDataSelection());
       }
     }
-
     if (context.getOutputDataset() != null) {
       setOutputDataSet(((DataSet)context.getOutputDataset()).getName());
     }
@@ -111,10 +111,10 @@ public class MapReduceContextProvider {
 
   private List<Split> getInputSelection() {
     String splitClassName = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLIT_CLASS);
-    if (splitClassName == null) {
+    String splitsJson = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLITS);
+    if (splitClassName == null || splitsJson == null) {
       return Collections.emptyList();
     }
-    String splitsJson = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLITS);
 
     try {
       // Yes, we know that it implements Split
@@ -185,7 +185,8 @@ public class MapReduceContextProvider {
         contextBuilder = new InMemoryMapReduceContextBuilder(conf);
       } else {
         // mrFramework = "yarn" or "classic"
-        contextBuilder = new DistributedMapReduceContextBuilder(conf, jobContext.getConfiguration());
+        contextBuilder =
+          new DistributedMapReduceContextBuilder(conf, HBaseConfiguration.create(jobContext.getConfiguration()));
       }
     }
     return contextBuilder;
