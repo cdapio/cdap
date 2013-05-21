@@ -1021,15 +1021,19 @@ public class HBaseOVCTable extends AbstractOVCTable {
             gotNext = true;
           } else {
             for (KeyValue kv : result.raw()){
+
               long version = kv.getTimestamp();
               if (readPointer != null && !readPointer.isVisible(version)) {
                 continue;
               }
+
               byte[] value = kv.getValue();
               byte[] column = kv.getQualifier();
+
               if (Bytes.equals(column, last)){
                 continue;
               }
+
               byte typePrefix = value[0];
               switch (typePrefix) {
                 case DATA:

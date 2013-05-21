@@ -1182,6 +1182,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
+
       byte[] rowKey = result.getBytes(1);
       if (!Bytes.equals(lastRow, rowKey)) {
         newRow = true;
@@ -1300,7 +1301,6 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
           return;
         }
 
-        byte [] lastRow = new byte[0];
         byte [] curCol = new byte [0];
         byte [] lastCol = new byte [0];
         byte [] curRow = new byte[0];
@@ -1363,7 +1363,6 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
             continue;
           }
           // Column is valid, therefore row is valid, add row
-          lastRow = row;
           lastCol = column;
 
           Map<byte[], byte[]> colMap = rowColumnValueMap.get(row);
