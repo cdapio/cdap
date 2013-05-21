@@ -548,9 +548,12 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     return new HBaseNativeScanner(resultScanner, readPointer);
   }
 
+  /**
+   * Implements Scanner on top of HBase ResultSetScanner for native Hbase.
+   */
   public class HBaseNativeScanner implements Scanner {
 
-    private final ResultScanner scanner ;
+    private final ResultScanner scanner;
     private final ReadPointer readPointer;
 
     public HBaseNativeScanner(ResultScanner scanner) {
@@ -569,7 +572,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       }
       try {
         Result result = scanner.next();
-        if(result == null) {
+        if (result == null) {
           return null;
         }
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -596,7 +599,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
         if (rowKey == null) {
           return null;
         } else {
-          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey, colValue);
         }
       } catch (IOException e) {
         throw Throwables.propagate(e);

@@ -988,9 +988,12 @@ public class HBaseOVCTable extends AbstractOVCTable {
     }
   }
 
+  /**
+   * Implements Scanner on top of HBase resultSetScanner.
+   */
   public class HBaseScanner implements Scanner {
 
-    private final ResultScanner scanner ;
+    private final ResultScanner scanner;
     private final ReadPointer readPointer;
 
     public HBaseScanner(ResultScanner scanner) {
@@ -1059,7 +1062,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
         if (rowKey == null) {
           return null;
         } else {
-          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey,colValue);
+          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey, colValue);
         }
       } catch (IOException e) {
         throw Throwables.propagate(e);

@@ -875,7 +875,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     private final ReadPointer readPointer;
 
     public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow) {
-     this(iterator, startRow, endRow,null);
+     this(iterator, startRow, endRow, null);
     }
 
     public LevelDBScanner(DBIterator iterator, byte [] startRow, byte[] endRow, ReadPointer readPointer) {
@@ -890,7 +890,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     }
 
     private boolean isVisible(KeyValue keyValue) {
-      if ( readPointer != null && !readPointer.isVisible(keyValue.getTimestamp())) {
+      if (readPointer != null && !readPointer.isVisible(keyValue.getTimestamp())) {
         return false;
       } else {
         return true;
@@ -912,22 +912,22 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
       Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-      while(iterator.hasNext()) {
+      while (iterator.hasNext()) {
 
         Map.Entry<byte[], byte[]> entry = iterator.peekNext();
         KeyValue keyValue = createKeyValue(entry.getKey(), entry.getValue());
 
-        if ( endRow != null && Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
+        if (endRow != null && Bytes.compareTo(keyValue.getRow(), endRow) >= 0) {
           //already reached the end. So break.
           break;
         }
 
-        if(!Bytes.equals(lastRow, keyValue.getRow())) {
+        if (!Bytes.equals(lastRow, keyValue.getRow())) {
           lastDelete = -1;
           undeleted = -1;
           lastCol = new byte[0];
           curCol = new byte[0];
-          if (columnValues.size() > 0 ){
+          if (columnValues.size() > 0){
             //If we have reached here. We have read all columns for a single row - since current row is not the same
             // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
             break;
@@ -987,7 +987,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
       if (columnValues.size() == 0) {
         return null;
       } else {
-        return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow,columnValues);
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow, columnValues);
 
       }
     }

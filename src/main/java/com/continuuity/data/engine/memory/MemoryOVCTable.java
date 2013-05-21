@@ -434,7 +434,7 @@ public class MemoryOVCTable extends AbstractOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     ConcurrentNavigableMap<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> submap;
 
-    if (startRow == null && stopRow == null ) {
+    if (startRow == null && stopRow == null) {
       submap = this.map;
     } else if (startRow == null) {
       submap = this.map.headMap(new RowLockTable.Row(stopRow));
@@ -502,27 +502,27 @@ public class MemoryOVCTable extends AbstractOVCTable {
       Entry<RowLockTable.Row, NavigableMap<Column, NavigableMap<Version, Value>>> rowEntry = null;
       boolean gotNext = false;
 
-      while(!gotNext){
+      while (!gotNext){
         if (!this.rows.hasNext()){
           break;
         }
         rowEntry = this.rows.next();
         //Try to read all columns for this row
         for (Map.Entry<Column, NavigableMap<Version, Value>> colEntry : rowEntry.getValue().entrySet()) {
-          if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue() )) {
+          if (!this.columnSet.isEmpty() && !this.columnSet.contains(colEntry.getKey().getValue())) {
             continue;
           }
           ImmutablePair<Long, byte[]> latest = filteredLatest(colEntry.getValue(), readPointer);
           if (latest != null){
-            columns.put(colEntry.getKey().getValue(),latest.getSecond());
+            columns.put(colEntry.getKey().getValue(), latest.getSecond());
           }
         }
-        if ( columns.size() > 0 ) {
+        if (columns.size() > 0) {
           //there is alteast one valid col for row. Exit the loop. If not try next row
           gotNext =  true;
         }
       }
-      if ( columns.size() > 0) {
+      if (columns.size() > 0) {
         return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey().getValue(), columns);
       } else {
         return null;
