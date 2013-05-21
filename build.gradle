@@ -1,3 +1,5 @@
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
 /**
  * Executes a passed in command and waits for it's completion.
  */
@@ -58,9 +60,13 @@ task nodeTests << {
 /**
  * Builds an edition
  */
-def build_edition(edition) {
+def build_edition(edition, base) {
   def installDir = "$buildDir/$edition"
+  if(base != null) {
+    installDir = "$buildDir/$base"
+  }
 
+  println "Directory $installDir"
   mkdir(installDir)
   mkdir("$installDir/client")
 
@@ -113,15 +119,33 @@ def build_edition(edition) {
       include 'env.js'
     }
   }
-
 }
 
 task cloud(dependsOn: 'jshint') {
-  build_edition('cloud')
+  build_edition('cloud', null)
 }
 
 task developer(dependsOn: ['jshint', 'nodeTests']) {
   build_edition('developer')
 }
+
+task prepackager(dependsOn: 'build', overwrite: true) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity/$project.name")
+  doLast {
+    build_edition('developer', 'stage-packaging/opt/continuuity/web-cloud-app')
+    copy {
+      from "$rootProject.projectDir/common/bin"
+      into "${installDir}/bin"
+    }
+    copy {
+      from 'conf'
+      into "${installDir}/conf"
+    }
+  }
+}
+
+debianPrepackager.dependsOn prepackager
+rpmPrepackager.dependsOn prepackager
 
 task build(dependsOn: [ 'cloud', 'developer' ]) { }
