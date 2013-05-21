@@ -3,7 +3,7 @@
 //
 
 define([], function () {
-	
+
 	var attachedFlow = Em.Object.extend({
 
 		init: function() {
@@ -18,7 +18,7 @@ define([], function () {
 		},
 
 		href: function () {
-			return '#/flows/status/' + this.get('app') + ':' + this.get('id');
+			return '#/flows/' + this.get('app') + ':' + this.get('id');
 		}.property(),
 
 		addMetricName: function (name) {
@@ -36,13 +36,26 @@ define([], function () {
 			var app = '-';
 			var id = '-';
 
-			var accountId = window.ENV.account.account_id;
+			var accountId = C.Env.user.id;
 
-			var start = C.__timeRange * -1;
+			var app_id = this.get('app'),
+				flow_id = this.get('id'),
+				start = C.__timeRange * -1;
 			var self = this;
 
 			var storageMetric = 'dataset.storage.' + this.get('id') + '.count';
 			metrics.push(storageMetric);
+
+			C.get('manager', {
+				method: 'status',
+				params: [app_id, flow_id, -1]
+			}, function (error, response) {
+
+				if (response.params) {
+					self.set('currentState', response.params.status);
+				}
+
+			});
 
 			return ['monitor', {
 				method: 'getTimeSeries',
@@ -78,86 +91,109 @@ define([], function () {
 
 	});
 
-	return Em.ArrayProxy.create({
-		types: Em.Object.create(),
-		load: function (id) {
+	var Controller = Em.ArrayProxy.extend({
+		types: Em.Object.create({
+			'DatasetFlow': Em.ArrayProxy.create({
+				content: []
+			})
+		}),
+		load: function () {
 
 			var self = this;
+			var model = this.get("model");
 
 			C.get('metadata', {
-				method: 'getDataset',
-				params: ['Dataset', {
-					id: id
-				}]
+				method: 'getFlowsByDataset',
+				params: [model.id]
 			}, function (error, response) {
 
-				self.set('current', C.Mdl.Dataset.create(response.params));
-				C.interstitial.hide();
-				
-				self.get('current').set('typeName', 'Dataset');
+				if (error) {
+					return;
+				}
 
-				self.set('types.DatasetFlow', Em.ArrayProxy.create({content: []}));
+				var flows = response.params;
 
-				C.get('metadata', {
-					method: 'getFlowsByDataset',
-					params: [id]
-				}, function (error, response) {
+				for (var i = 0; i < flows.length; i ++) {
 
+					flows[i].datasetId = model.id;
+					self.get('types.DatasetFlow').pushObject(attachedFlow.create(flows[i]));
 
-					self.startStats();
+				}
 
-					if (error) {
-						return;
-					}
-
-					var flows = response.params;
-
-					for (var i = 0; i < flows.length; i ++) {
-
-						flows[i].datasetId = id;
-
-						self.get('types.DatasetFlow').pushObject(attachedFlow.create(flows[i]));
-
-					}
-
-				});
+				self.interval = setInterval(function () {
+					self.updateStats();
+				}, 1000);
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, 100);
 
 			});
 
 		},
 
-		startStats: function () {
-			var self = this;
-			clearTimeout(this.updateTimeout);
-			this.updateTimeout = setTimeout(function () {
-				self.updateStats();
-			}, 1000);
-		},
-
 		updateStats: function () {
 			var self = this;
 
-			if (!this.get('current')) {
-				self.startStats();
-				return;
-			}
-
 			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('current').getUpdateRequest());
+			C.get.apply(C, this.get('model').getUpdateRequest());
 
 			var flows = this.get('types.DatasetFlow').content;
 			for (var i = 0; i < flows.length; i ++) {
 				C.get.apply(flows[i], flows[i].getUpdateRequest());
 			}
 
-			this.startStats();
-
 		},
 
 		unload: function () {
 
+			this.set('types', Em.Object.create({
+				'DatasetFlow': Em.ArrayProxy.create({
+					content: []
+				})
+			}));
+
+			clearInterval(this.interval);
+
+		},
+
+		delete: function () {
+
+			C.Modal.show(
+				"Delete Dataset",
+				"Are you sure you would like to delete this Dataset? This action is not reversible.",
+				$.proxy(function (event) {
+
+					var model = this.get('model');
+
+					C.get('metadata', {
+						method: 'deleteDataset',
+						params: ['Dataset', {
+							id: model.id
+						}]
+					}, function (error, response) {
+
+						if (error) {
+							C.Modal.show('Delete Error', error.message);
+						} else {
+							window.history.go(-1);
+						}
+
+					});
+				}, this));
+
 		}
 
 	});
+
+	Controller.reopenClass({
+		type: 'Dataset',
+		kind: 'Controller'
+	});
+
+	return Controller;
 
 });

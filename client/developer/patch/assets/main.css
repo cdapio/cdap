@@ -23,6 +23,7 @@
 	background-image: url(/assets/img/icn-nav-down.png);
 }
 
-#nav span {
+#product-name:after {
 	letter-spacing: 0.3em;
+	content: 'Developer Suite';
 }

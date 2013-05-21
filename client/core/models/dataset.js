@@ -3,20 +3,22 @@
 //
 
 define([], function () {
-	return Em.Object.extend({
+
+	var Model = Em.Object.extend({
+
+		href: function () {
+			return '#/datasets/' + this.get('id');
+		}.property(),
 		metricData: null,
 		metricNames: null,
 		type: 'Dataset',
 		plural: 'Datasets',
-		href: function () {
-			return '#/data/' + this.get('id');
-		}.property().cacheable(),
 		init: function() {
 			this._super();
 
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
-			
+
 			if (!this.get('id')) {
 				this.set('id', this.get('name'));
 			}
@@ -43,7 +45,7 @@ define([], function () {
 			var app = '-';
 			var id = '-';
 
-			var accountId = window.ENV.account.account_id;
+			var accountId = C.Env.user.id;
 
 			var start = C.__timeRange * -1;
 			var self = this;
@@ -91,8 +93,8 @@ define([], function () {
 
 					self.set('storage', storage);
 
-					self.set('storageLabel', C.util.bytes(storage)[0]);
-					self.set('storageUnits', C.util.bytes(storage)[1]);
+					self.set('storageLabel', C.Util.bytes(storage)[0]);
+					self.set('storageUnits', C.Util.bytes(storage)[1]);
 
 				});
 
@@ -100,4 +102,30 @@ define([], function () {
 
 		}
 	});
+
+	Model.reopenClass({
+		type: 'Dataset',
+		kind: 'Model',
+		find: function (dataset_id) {
+			var promise = Ember.Deferred.create();
+
+			C.get('metadata', {
+				method: 'getDataset',
+				params: ['Dataset', {
+					id: dataset_id
+				}]
+			}, function (error, response) {
+
+				var model = C.Dataset.create(response.params);
+
+				promise.resolve(model);
+
+			});
+
+			return promise;
+		}
+	});
+
+	return Model;
+
 });

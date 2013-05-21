@@ -3,105 +3,97 @@
 //
 
 define([], function () {
-	
-	return Em.Object.create({
-		types: Em.Object.create(),
-		load: function (app) {
+
+	var Controller = Em.Controller.extend({
+
+		elements: Em.Object.create(),
+
+		load: function () {
 
 			var self = this;
 			this.__remain = 3;
 
-			C.get('metadata', {
-				method: 'getApplication',
-				params: ['Application', {
-					id: app
-				}]
-			}, function (error, response) {
+			var model = this.get('model');
 
-				if (error) {
-					C.interstitial.label(error);
-					return;
-				}
+			self.set('elements.Flow', Em.ArrayProxy.create({content: []}));
+			self.set('elements.Stream', Em.ArrayProxy.create({content: []}));
+			self.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
+			self.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 
-				if (response.params.exists === false) {
-					C.interstitial.label('Application not found.', {
-						action: 'Dashboard',
-						click: function () {
-							C.router.set('location', '');
-						}
-					});
-					self.__remain = Infinity;
-					return;
-				}
-
-				self.set('current', C.Mdl.Application.create(response.params));
-
-			});
-
-			self.set('types.Flow', Em.ArrayProxy.create({content: []}));
-			self.set('types.Stream', Em.ArrayProxy.create({content: []}));
-			self.set('types.Query', Em.ArrayProxy.create({content: []}));
-			self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
-
-			C.Ctl.List.getObjects('Flow', function (objects) {
-				if (!self.get('types.Flow')) {
-					self.set('types.Flow', Em.ArrayProxy.create({content: []}));
+			C.Api.getElements('Flow', function (objects) {
+				if (!self.get('elements.Flow')) {
+					self.set('elements.Flow', Em.ArrayProxy.create({content: []}));
 				}
 
 				// ** HAX ** //
 				var i = objects.length;
-				var flows = [], queries = [];
+				var flows = [], procedures = [];
 				while(i--) {
 					if (objects[i].type === 1) {
-						queries.push(objects[i]);
+						procedures.push(objects[i]);
 					} else {
 						flows.push(objects[i]);
 					}
 				}
 
-				self.get('types.Flow').pushObjects(flows);
+				self.get('elements.Flow').pushObjects(flows);
 				self.__loaded();
 
-			}, app);
+			}, model.id);
 
-			C.Ctl.List.getObjects('Query', function (objects) {
-				if (!self.get('types.Query')) {
-					self.set('types.Query', Em.ArrayProxy.create({content: []}));
+			C.Api.getElements('Procedure', function (objects) {
+				if (!self.get('elements.Procedure')) {
+					self.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 				}
-				self.get('types.Query').pushObjects(objects);
+				self.get('elements.Procedure').pushObjects(objects);
 				self.__loaded();
-			}, app);
+			}, model.id);
 
-			C.Ctl.List.getObjects('Stream', function (objects) {
-				if (!self.get('types.Stream')) {
-					self.set('types.Stream', Em.ArrayProxy.create({content: []}));
+			C.Api.getElements('Stream', function (objects) {
+				if (!self.get('elements.Stream')) {
+					self.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 				}
-				self.get('types.Stream').pushObjects(objects);
+				self.get('elements.Stream').pushObjects(objects);
 				self.__loaded();
-			}, app);
+			}, model.id);
 
-			C.Ctl.List.getObjects('Dataset', function (objects) {
-				if (!self.get('types.Dataset')) {
-					self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
+			C.Api.getElements('Dataset', function (objects) {
+				if (!self.get('elements.Dataset')) {
+					self.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 				}
-				self.get('types.Dataset').pushObjects(objects);
+				self.get('elements.Dataset').pushObjects(objects);
 				self.__loaded();
-			}, app);
+			}, model.id);
 
 		},
 		__remain: -1,
 		__loaded: function () {
 
 			if (!(--this.__remain)) {
-				C.interstitial.hide();
-				this.getStats();
+
+				var self = this;
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.getStats();
+				}, 100);
+
 			}
+
+		},
+
+		unload: function () {
+
+			clearTimeout(this.__timeout);
+			this.set('elements', Em.Object.create());
 
 		},
 
 		startAllFlows: function (done) {
 
-			var flows = this.get('types.Flow').content;
+			var flows = this.get('elements.Flow').content;
 			var flowCount = flows.length;
 			var i = flowCount;
 
@@ -136,7 +128,7 @@ define([], function () {
 
 		stopAllFlows: function (done) {
 
-			var flows = this.get('types.Flow').content;
+			var flows = this.get('elements.Flow').content;
 			var flowCount = flows.length;
 			var i = flowCount;
 
@@ -145,7 +137,7 @@ define([], function () {
 				done();
 
 			} else {
-				
+
 				var requested = false;
 
 				while(i--) {
@@ -181,13 +173,13 @@ define([], function () {
 
 		},
 
-		startAllQueries: function (done) {
+		startAllProcedures: function (done) {
 
-			var queries = this.get('types.Query').content;
-			var queryCount = queries.length;
-			var i = queryCount;
+			var procedures = this.get('elements.Procedure').content;
+			var ProcedureCount = procedures.length;
+			var i = ProcedureCount;
 
-			if (!queryCount) {
+			if (!ProcedureCount) {
 
 				done();
 
@@ -195,35 +187,35 @@ define([], function () {
 
 				while(i--) {
 
-					queries[i].set('currentState', 'STARTING');
+					procedures[i].set('currentState', 'STARTING');
 
 					C.socket.request('manager', {
 						method: 'start',
-						params: [queries[i].application, queries[i].id, -1, 'QUERY']
-					}, function (error, response, query) {
-						
-						query.set('currentState', 'RUNNING');
+						params: [procedures[i].application, procedures[i].id, -1, 'Procedure']
+					}, function (error, response, Procedure) {
 
-						if (!--queryCount) {
+						Procedure.set('currentState', 'RUNNING');
+
+						if (!--ProcedureCount) {
 
 							done();
 
 						}
 
-					}, queries[i]);
+					}, procedures[i]);
 
 				}
 			}
 
 		},
 
-		stopAllQueries: function (done) {
+		stopAllProcedures: function (done) {
 
-			var queries = this.get('types.Query').content;
-			var queryCount = queries.length;
-			var i = queryCount;
+			var procedures = this.get('elements.Procedure').content;
+			var ProcedureCount = procedures.length;
+			var i = ProcedureCount;
 
-			if (!queryCount) {
+			if (!ProcedureCount) {
 
 				done();
 
@@ -231,22 +223,22 @@ define([], function () {
 
 				while(i--) {
 
-					queries[i].set('currentState', 'STOPPING');
+					procedures[i].set('currentState', 'STOPPING');
 
 					C.socket.request('manager', {
 						method: 'stop',
-						params: [queries[i].application, queries[i].id, -1, 'QUERY']
-					}, function (error, response, query) {
-						
-						query.set('currentState', 'STOPPED');
+						params: [procedures[i].application, procedures[i].id, -1, 'Procedure']
+					}, function (error, response, Procedure) {
 
-						if (!--queryCount) {
+						Procedure.set('currentState', 'STOPPED');
+
+						if (!--ProcedureCount) {
 
 							done();
 
 						}
 
-					}, queries[i]);
+					}, procedures[i]);
 
 				}
 			}
@@ -255,35 +247,35 @@ define([], function () {
 		__timeout: null,
 		getStats: function () {
 
-			var self = this, types = ['Flow', 'Stream', 'Query', 'Dataset'];
+			var self = this, types = ['Flow', 'Stream', 'Procedure', 'Dataset'];
 
-			if (this.get('current')) {
+			if (this.get('model')) {
 
-				C.get.apply(C, this.get('current').getUpdateRequest());
-				
+				C.get.apply(C, this.get('model').getUpdateRequest());
+
 				for (var i = 0; i < types.length; i ++) {
 
-					var content = this.get('types').get(types[i]).get('content');
+					var content = this.get('elements').get(types[i]).get('content');
 					for (var j = 0; j < content.length; j ++) {
 						if (typeof content[j].getUpdateRequest === 'function') {
 							C.get.apply(C, content[j].getUpdateRequest());
 						}
 					}
 				}
-				
+
 
 				var storage = 0;
-				var streams = this.get('types.Stream').content;
+				var streams = this.get('elements.Stream').content;
 				for (var i = 0; i < streams.length; i ++) {
 					storage += streams[i].get('storage');
 				}
-				var datasets = this.get('types.Dataset').content;
+				var datasets = this.get('elements.Dataset').content;
 				for (var i = 0; i < datasets.length; i ++) {
 					storage += datasets[i].get('storage');
 				}
 
-				self.get('current').set('storageLabel', C.util.bytes(storage)[0]);
-				self.get('current').set('storageUnits', C.util.bytes(storage)[1]);
+				self.get('model').set('storageLabel', C.Util.bytes(storage)[0]);
+				self.get('model').set('storageUnits', C.Util.bytes(storage)[1]);
 
 			}
 
@@ -293,12 +285,150 @@ define([], function () {
 
 		},
 
-		unload: function () {
-			
-			clearTimeout(this.__timeout);
-			this.set('types', Em.Object.create());
+		/*
+		 * Application maintenance features
+		 */
+
+		delete: function () {
+
+			C.Modal.show(
+				"Delete Application",
+				"Are you sure you would like to delete this Application? This action is not reversible.",
+				$.proxy(function (event) {
+
+					var app = this.get('model');
+
+					C.get('metadata', {
+						method: 'deleteApplication',
+						params: ['Application', {
+							id: app.id
+						}]
+					}, function (error, response) {
+
+						C.Modal.hide(function () {
+
+							if (error) {
+								C.Modal.show('Error Deleting', error.message);
+							} else {
+								window.history.go(-1);
+							}
+
+						});
+
+					});
+				}, this));
+
+		},
+
+		/*
+		 * Application promotion features
+		 */
+
+		promotePrompt: function () {
+
+			var view = Em.View.create({
+				controller: this,
+				model: this.get('model'),
+				templateName: 'promote',
+				classNames: ['popup-modal', 'popup-full'],
+				credentialBinding: 'C.Env.credential'
+			});
+
+			view.append();
+			this.promoteReload();
+
+		},
+
+		promoteReload: function () {
+
+			this.set('loading', true);
+
+			var self = this;
+			self.set('destinations', []);
+			self.set('message', null);
+			self.set('network', false);
+
+			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
+				function (result, status) {
+
+				$.getJSON('/destinations', function (result, status) {
+
+					if (result === 'network') {
+
+						self.set('network', true);
+
+					} else {
+
+						var destinations = [];
+
+						for (var i = 0; i < result.length; i ++) {
+
+							destinations.push({
+								id: result[i].vpc_name,
+								name: result[i].vpc_label + ' (' + result[i].vpc_name + '.continuuity.net)'
+							});
+
+						}
+
+						self.set('destinations', destinations);
+
+					}
+
+					self.set('loading', false);
+
+				});
+
+			});
+
+		}.observes('C.Env.credential'),
+
+		promoteSubmit: function () {
+
+			this.set("pushing", true);
+			var model = this.get('model');
+			var self = this;
+
+			var destination = self.get('destination');
+			if (!destination) {
+				return;
+			}
+
+			destination += '.continuuity.net';
+
+			C.get('far', {
+				method: 'promote',
+				params: [model.id, destination, C.Env.get('credential')]
+			}, function (error, response) {
+
+				if (error) {
+
+					self.set('finished', 'Error');
+					if (error.name) {
+						self.set('finishedMessage', error.name + ': ' + error.message);
+					} else {
+						self.set('finishedMessage', response.message || JSON.stringify(error));
+					}
+
+				} else {
+
+					self.set('finished', 'Success');
+					self.set('finishedMessage', 'Successfully pushed to ' + destination + '.');
+					self.set('finishedLink', 'https://' + destination + '/' + window.location.hash);
+				}
+
+				self.set("pushing", false);
+
+			});
 
 		}
+
 	});
+
+	Controller.reopenClass({
+		type: 'App',
+		kind: 'Controller'
+	});
+
+	return Controller;
 
 });
