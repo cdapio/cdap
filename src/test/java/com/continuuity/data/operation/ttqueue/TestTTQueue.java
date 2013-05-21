@@ -9,6 +9,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -1349,11 +1350,10 @@ public abstract class TestTTQueue {
         ") (n=" + n + ")", n <= dequeueReturns.get());
   }
 
-  // TODO revive this test when hash partitioning is working.
-  // TODO This used to use long_mod, but I deleted that partitioner
-  // TODO This does not work with round/robin nor fifo - can't guarantee that entry#i has value i
-  @Test @Ignore
+  // Note: This does not work with round/robin nor fifo - can't guarantee that entry#i has value i
+  @Test
   public void testMultiConsumerMultiGroup() throws Exception {
+    final String HASH_KEY = "hkey";
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
@@ -1376,7 +1376,9 @@ public abstract class TestTTQueue {
     for (int i=0; i<n; i++) {
       consumers[i] = new QueueConsumer[n];
       for (int j=0; j<n; j++) {
-        consumers[i][j] = new QueueConsumer(j, i, n, new QueueConfig(PartitionerType.ROUND_ROBIN, true));
+        consumers[i][j] = new StatefulQueueConsumer(j, i, n, "g" + i, HASH_KEY,
+                                                    new QueueConfig(PartitionerType.HASH, true));
+        queue.configure(consumers[i][j], readPointer);
       }
     }
 
@@ -1421,7 +1423,7 @@ public abstract class TestTTQueue {
     long numEnqueues = 0;
     // enqueue the first four values
     for (int i=0; i<n; i++) {
-      assertTrue(queue.enqueue(new QueueEntry(values[i]), transaction).isSuccess());
+      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(HASH_KEY, i), values[i]), transaction).isSuccess());
       numEnqueues++;
     }
 
@@ -1563,7 +1565,7 @@ public abstract class TestTTQueue {
 
     // enqueue everything!
     for (int i=0; i<n*n; i++) {
-      assertTrue(queue.enqueue(new QueueEntry(values[i]), transaction).isSuccess());
+      assertTrue(queue.enqueue(new QueueEntry(ImmutableMap.of(HASH_KEY, i), values[i]), transaction).isSuccess());
       numEnqueues++;
     }
 
