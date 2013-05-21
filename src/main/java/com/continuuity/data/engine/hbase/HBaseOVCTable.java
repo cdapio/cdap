@@ -994,7 +994,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
     private final ReadPointer readPointer;
 
     public HBaseScanner(ResultScanner scanner) {
-      this(scanner,null);
+      this(scanner, null);
     }
 
     private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
@@ -1040,7 +1040,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
                 case DELETE_VERSION:
                   break;
                 case DELETE_ALL:
-                  last = column; //pretend that all columns are read
+                  last = column; //Mark not to read any versions of this column
                   break;
                 default:
                   break;
