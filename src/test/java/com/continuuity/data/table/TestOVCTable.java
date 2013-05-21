@@ -1574,7 +1574,7 @@ public abstract class TestOVCTable {
       this.table.put(rowKey, col3, highVersion, Bytes.toBytes(0));
     }
 
-    for(int i=100; i<200; i++){
+    for(int i = 100; i < 200; i++){
       byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
       this.table.delete(rowKey, col1, highVersion);
     }
@@ -1624,7 +1624,7 @@ public abstract class TestOVCTable {
       this.table.put(rowKey, col3, highVersion, Bytes.toBytes(2));
     }
 
-    for(int i=100; i<200; i++){
+    for(int i = 100; i < 200; i++){
       byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
       this.table.deleteAll(rowKey, col1, highVersion);
     }
@@ -1688,7 +1688,7 @@ public abstract class TestOVCTable {
       this.table.put(rowKey, col3, highVersion, Bytes.toBytes(2));
     }
 
-    for(int i=100; i<200; i++){
+    for(int i = 100; i < 200; i++){
       byte [] rowKey = Bytes.add(row,Bytes.toBytes(i));
       this.table.deleteAll(rowKey, col1, lowVersion);
     }
