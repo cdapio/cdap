@@ -1,16 +1,9 @@
 
 define(['models/app', 'models/definition', 'models/flow', 'models/flowlet',
-	'models/run', 'models/stream', 'models/dataset', 'models/query'],
-	function (A, D, F, Fl, R, S, Ds, Q) {
-		return {
-			Application: A,
-			Definition: D,
-			Flow: F,
-			Flowlet: Fl,
-			Run: R,
-			Stream: S,
-			Dataset: Ds,
-			Query: Q
-		};
+	'models/run', 'models/stream', 'models/dataset', 'models/procedure'],
+	function () {
+
+		return Array.prototype.slice.call(arguments, 0);
+
 	}
 );

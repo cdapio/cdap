@@ -120,7 +120,7 @@ logger.setLevel(LOG_LEVEL);
 			logger.warn(error);
 			done({'fatal': 'Could not connect to AppFabric (Manager).'});
 		});
-		
+
 		conn.on('connect', function (response) {
 
 			var Manager = thrift.createClient(AppFabricService, conn);
@@ -185,7 +185,7 @@ logger.setLevel(LOG_LEVEL);
 					} else {
 						done('Unknown method for service Manager: ' + method, null);
 					}
-					
+
 			}
 
 			conn.end();
@@ -208,7 +208,7 @@ logger.setLevel(LOG_LEVEL);
 			logger.warn(error);
 			done({'fatal': 'Could not connect to MetricsService.'});
 		});
-		
+
 		conn.on('connect', function (response) {
 
 			var Monitor = thrift.createClient(MetricsFrontendService, conn);
@@ -300,11 +300,11 @@ logger.setLevel(LOG_LEVEL);
 		conn.on('error', function (error) {
 			done({'fatal': 'Could not connect to AppFabric(FAR).'});
 		});
-		
+
 		conn.on('connect', function (response) {
 
 			FAR = thrift.createClient(AppFabricService, conn);
-	            
+
 			switch (method) {
 
 				case 'remove':
@@ -315,7 +315,12 @@ logger.setLevel(LOG_LEVEL);
 						version: -1,
 						accountId: accountID
 					});
-					FAR.removeApplication(auth_token, identifier, done);
+					try {
+						FAR.removeApplication(auth_token, identifier, done);
+					} catch (e) {
+						logger.error(e);
+						done({'error': e});
+					}
 					break;
 
 				case 'promote':
@@ -326,8 +331,12 @@ logger.setLevel(LOG_LEVEL);
 						accountId: accountID,
 						resource: 'name'
 					});
-
-					FAR.promote(auth_token, identifier, params[1], done);
+					try {
+						FAR.promote(auth_token, identifier, params[1], done);
+					} catch (e) {
+						logger.error(e);
+						done({'error': e});
+					}
 
 					break;
 
@@ -359,17 +368,17 @@ logger.setLevel(LOG_LEVEL);
 
 		switch (method) {
 			case 'inject':
-				
+
 				// Adding 1000 to be picked up by nginx.
 				post_options.port = parseInt(this.config['stream.rest.port']) + (secure ? 1000 : 0);
 				post_options.path = '/stream/' + params.stream;
-				
+
 			break;
 			case 'query':
 
 				// Adding 1000 to be picked up by nginx.
 				post_options.port = parseInt(this.config['procedure.rest.port']) + (secure ? 1000 : 0);
-				post_options.path = '/procedure/' + params.app + '/' + 
+				post_options.path = '/procedure/' + params.app + '/' +
 					params.service + '/' + params.method;
 
 				post_data = post_data || '{}';
@@ -394,14 +403,14 @@ logger.setLevel(LOG_LEVEL);
 					statusCode: res.statusCode,
 					response: {
 						req: {
-							statusCode: res.statusCode,
-							data: data
-						},
-						res: {
 							host: post_options.host,
 							port: post_options.port,
 							path: post_options.path,
 							data: post_data
+						},
+						res: {
+							statusCode: res.statusCode,
+							data: data
 						}
 					}
 				} : false, {
@@ -423,7 +432,7 @@ logger.setLevel(LOG_LEVEL);
 
 		request.write(post_data)
 		request.end();
-		
+
 	};
 
 	this.upload = function (accountID, req, res, file, socket) {
@@ -538,7 +547,7 @@ logger.setLevel(LOG_LEVEL);
 						};
 
 						var CHUNK_SIZE = 102400;
-						
+
 						send_chunk(0, CHUNK_SIZE > data.length ? data.length : CHUNK_SIZE);
 
 					}
@@ -546,5 +555,5 @@ logger.setLevel(LOG_LEVEL);
 			});
 		});
 	};
-	
+
 }).call(exports);

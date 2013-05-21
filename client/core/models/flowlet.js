@@ -3,7 +3,8 @@
 //
 
 define([], function () {
-	return Em.Object.extend({
+
+	var Model = Em.Object.extend({
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
@@ -26,10 +27,10 @@ define([], function () {
 			this.get('metricNames')[name] = 1;
 
 		},
-		getUpdateRequest: function () {
+		getUpdateRequest: function (flow) {
 
-			var id = C.Ctl.Flow.current.id;
-			var app = C.Ctl.Flow.current.app;
+			var id = flow.name;
+			var app = flow.app;
 
 			var self = this;
 			var pointCount = 30;
@@ -61,13 +62,6 @@ define([], function () {
 						data[k] = data[k].value;
 					}
 
-					/*
-					data = data.splice(0, 25);
-					for (var k = data.length; k < 25; k++) {
-						data.unshift(0);
-					}
-					*/
-
 					metric = metric.replace(/\./g, '');
 
 					self.get('metricData').set(metric, data);
@@ -87,43 +81,27 @@ define([], function () {
 		}.property().cacheable(false),
 		fitCount: function () {
 			return 'No Change';
-		}.property().cacheable(false),
-		addInstances: function (value, done) {
+		}.property().cacheable(false)
+	});
 
-			var instances = this.get('instances') + value;
+	Model.reopenClass({
+		type: 'Flowlet',
+		kind: 'Model',
+		find: function (flowlet_id) {
 
-			if (instances < 1 || instances > 64) {
-				done('Cannot set instances. Please select an instance count > 1 and <= 64');
-			} else {
+			/*
+			 * We will use this Flowlet and its ID to find the
+			 * Flowlet model in the parent controller.
+			 * See FlowletController.load()
+			 */
 
-				var current = this;
-				var currentFlow = C.Ctl.Flow.get('current');
+			return C.Flowlet.create({
+				'name': flowlet_id
+			});
 
-				var app = currentFlow.get('applicationId');
-				var flow = currentFlow.get('id');
-				var version = currentFlow.version;
-
-				var flowlet = current.name;
-
-				C.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.', 'inst');
-				$('#flowlet-container').hide();
-
-				C.get('manager', {
-					method: 'setInstances',
-					params: [app, flow, version, flowlet, instances]
-				}, function (error, response) {
-
-					if (error) {
-						C.Vw.Informer.show(error, 'alert-error');
-					} else {
-						current.set('instances', instances);
-					}
-
-					C.interstitial.hide('inst');
-
-				});
-
-			}
 		}
 	});
+
+	return Model;
+
 });

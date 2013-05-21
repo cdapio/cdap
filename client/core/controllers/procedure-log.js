@@ -1,16 +1,18 @@
 //
-// Flow Log Controller.
+// Procedure Log Controller.
 //
 
 define([], function () {
 
 	var Controller = Em.ArrayProxy.extend({
 
-		load: function () {
+		load: function (app, id) {
 
 			function resize () {
 				$('#logView').css({height: ($(window).height() - 240) + 'px'});
 			}
+
+			resize();
 
 			var goneOver = false;
 			var app = this.get('model').app;
@@ -18,12 +20,22 @@ define([], function () {
 
 			function logInterval () {
 
+				if (C.currentPath !== 'Procedure.Log') {
+					clearInterval(self.interval);
+					return;
+				}
+
 				resize();
 
 				C.get('monitor', {
 					method: 'getLog',
 					params: [app, id, 1024 * 10]
 				}, function (error, response) {
+
+					if (C.currentPath !== 'Procedure.Log') {
+						clearInterval(self.interval);
+						return;
+					}
 
 					if (error) {
 
@@ -84,7 +96,7 @@ define([], function () {
 	});
 
 	Controller.reopenClass({
-		type: 'FlowLog',
+		type: 'ProcedureLog',
 		kind: 'Controller'
 	});
 

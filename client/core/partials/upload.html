@@ -1,0 +1,13 @@
+<div class="modal-header">
+<a {{action "hide" target="view"}} class="close">&times;</a>
+<h2>Add an Application</h2>
+</div>
+<div class="modal-loading"></div>
+<div class="modal-body">
+{{view C.Embed.DropZone}}
+</table>
+<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
+</div>
+<div class="modal-footer">
+<button {{action "hide" target="view"}} class="btn">Cancel</a>
+</div>

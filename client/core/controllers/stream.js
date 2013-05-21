@@ -4,58 +4,74 @@
 
 define([], function () {
 
-	return Em.ArrayProxy.create({
-		typesBinding: 'current.types',
-		/*Em.Object.create({
-			'StreamFlow':
-		}),*/
+	var Controller = Em.Controller.extend({
+		typesBinding: 'model.types',
+
 		load: function (id) {
 
 			var self = this;
 
-			C.get('metadata', {
-				method: 'getStream',
-				params: ['Stream', {
-					id: id
-				}]
-			}, function (error, response) {
-
-				self.set('current', C.Mdl.Stream.create(response.params));
-				C.interstitial.hide();
-
-				self.startStats();
-
-			});
-
-		},
-
-		startStats: function () {
-			var self = this;
-			clearTimeout(this.updateTimeout);
-			this.updateTimeout = setTimeout(function () {
+			this.interval = setInterval(function () {
 				self.updateStats();
 			}, 1000);
+
+			/*
+			 * Give the chart Embeddables 100ms to configure
+			 * themselves before updating.
+			 */
+			setTimeout(function () {
+				self.updateStats();
+			}, 100);
+
 		},
 
 		updateStats: function () {
 			var self = this;
 
-			if (!this.get('current')) {
-				self.startStats();
-				return;
-			}
-
 			// Update timeseries data for current flow.
-			C.get.apply(C, this.get('current').getUpdateRequest());
-
-			this.startStats();
+			C.get.apply(C, this.get('model').getUpdateRequest());
 
 		},
 
 		unload: function () {
 
+			clearInterval(this.interval);
+
+		},
+
+		delete: function () {
+
+			C.Modal.show("Delete Stream",
+				"Are you sure you would like to delete this Stream? This action is not reversible.",
+				$.proxy(function (event) {
+
+					var stream = this.get('model');
+
+					C.get('metadata', {
+						method: 'deleteStream',
+						params: ['Stream', {
+							id: stream.id
+						}]
+					}, function (error, response) {
+
+						if (error) {
+							C.Modal.show('Delete Error', error.message);
+						} else {
+							window.history.go(-1);
+						}
+
+					});
+				}, this));
+
 		}
 
 	});
+
+	Controller.reopenClass({
+		type: 'Stream',
+		kind: 'Controller'
+	});
+
+	return Controller;
 
 });

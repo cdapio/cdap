@@ -20,7 +20,7 @@ define([], function () {
 		},
 
 		href: function () {
-			return '#/flows/status/' + this.get('app') + ':' + this.get('id');
+			return '#/flows/' + this.get('app') + ':' + this.get('id');
 		}.property(),
 
 		addMetricName: function (name) {
@@ -43,7 +43,7 @@ define([], function () {
 
 			}
 
-			var accountId = window.ENV.account.account_id;
+			var accountId = C.Env.user.id;
 
 			var start = C.__timeRange * -1;
 			var self = this;
@@ -117,7 +117,7 @@ define([], function () {
 
 	});
 
-	return Em.Object.extend({
+	var Model = Em.Object.extend({
 		metricData: null,
 		metricNames: null,
 		type: 'Stream',
@@ -130,7 +130,7 @@ define([], function () {
 
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
-			
+
 			this.set('types', Em.Object.create());
 
 			if (!this.get('id')) {
@@ -185,7 +185,7 @@ define([], function () {
 			var app = '-';
 			var id = '-';
 
-			var accountId = window.ENV.account.account_id;
+			var accountId = C.Env.user.id;
 
 			var start = C.__timeRange * -1;
 			var self = this;
@@ -259,14 +259,14 @@ define([], function () {
 							if (diff < 0) {
 								diff = 0;
 							}
-							flow.set('unconsumed', C.util.number(diff));
+							flow.set('unconsumed', C.Util.number(diff));
 
 							if (--remain === 0) {
 								diff = streamEnqueued - lowestAckd;
 								if (diff < 0) {
 									diff = 0;
 								}
-								self.set('unconsumed', C.util.number(diff));
+								self.set('unconsumed', C.Util.number(diff));
 							}
 
 						}, flows[i]);
@@ -287,8 +287,8 @@ define([], function () {
 
 					self.set('storage', storage);
 
-					self.set('storageLabel', C.util.bytes(storage)[0]);
-					self.set('storageUnits', C.util.bytes(storage)[1]);
+					self.set('storageLabel', C.Util.bytes(storage)[0]);
+					self.set('storageUnits', C.Util.bytes(storage)[1]);
 
 				});
 
@@ -296,4 +296,33 @@ define([], function () {
 
 		}
 	});
+
+	Model.reopenClass({
+
+		type: 'Stream',
+		kind: 'Model',
+		find: function (stream_id) {
+
+			var promise = Ember.Deferred.create();
+
+			C.get('metadata', {
+				method: 'getStream',
+				params: ['Stream', {
+					id: stream_id
+				}]
+			}, function (error, response) {
+
+				var model = C.Stream.create(response.params);
+
+				promise.resolve(model);
+
+			});
+
+			return promise;
+		}
+
+	});
+
+	return Model;
+
 });
