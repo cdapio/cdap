@@ -33,10 +33,6 @@ public class SimpleHttpPoster implements HttpPoster {
   }
 
   @Override
-  public void init() {
-  }
-
-  @Override
   public void post(byte[] message) throws Exception {
     post.setEntity(new ByteArrayEntity(message));
     HttpClient client = new DefaultHttpClient();
