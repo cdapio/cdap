@@ -1017,12 +1017,18 @@ public class HBaseOVCTable extends AbstractOVCTable {
         while (!gotNext) {
           Result result = scanner.next();
           if (result == null) {
-            gotNext = true;
+            break;
           } else {
+            Set<Long> deleted = Sets.newHashSet();
+
             for (KeyValue kv : result.raw()){
 
               long version = kv.getTimestamp();
-              if (readPointer != null && !readPointer.isVisible(version)) {
+              if (readPointer != null && !readPointer.isVisible(version) ) {
+                continue;
+              }
+
+              if (deleted.contains(version)){
                 continue;
               }
 
@@ -1041,6 +1047,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
                   rowKey = kv.getKey();
                   break;
                 case DELETE_VERSION:
+                  deleted.add(version);
                   break;
                 case DELETE_ALL:
                   last = column; //Mark not to read any versions of this column
@@ -1055,7 +1062,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
           }
         }
 
-        if (rowKey == null) {
+        if (colValue.isEmpty()) {
           return null;
         } else {
           return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey, colValue);
