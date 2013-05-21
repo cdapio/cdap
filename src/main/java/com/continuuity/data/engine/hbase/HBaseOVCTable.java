@@ -1013,10 +1013,11 @@ public class HBaseOVCTable extends AbstractOVCTable {
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
         boolean gotNext = false;
+        byte[] last = null;
 
-        while(!gotNext) {
+        while (!gotNext) {
           Result result = scanner.next();
-          if(result == null) {
+          if (result == null) {
             gotNext = true;
           } else {
             Set<Long> deleted = Sets.newHashSet();
@@ -1026,17 +1027,24 @@ public class HBaseOVCTable extends AbstractOVCTable {
                 deleted.contains(version)) {
                 continue;
               }
+
               byte[] value = kv.getValue();
+              byte[] column = kv.getQualifier();
+              if (Bytes.equals(column, last)){
+                continue;
+              }
               byte typePrefix = value[0];
               switch (typePrefix) {
                 case DATA:
-                  colValue.put(kv.getQualifier(), removeTypePrefix(kv.getValue()));
+                  colValue.put(column, removeTypePrefix(kv.getValue()));
+                  last = column;
                   rowKey = kv.getKey();
                   break;
                 case DELETE_VERSION:
                   deleted.add(version);
                   break;
                 case DELETE_ALL:
+                  last = column;
                   return null;
               }
             }

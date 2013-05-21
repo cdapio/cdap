@@ -574,13 +574,19 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
         }
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
+        byte[] last = null;
+
         for (KeyValue kv : result.raw()) {
           if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
             continue;
           }
           rowKey = kv.getKey();
           byte[] column = kv.getQualifier();
+          if (Bytes.equals(column, last)) {
+            continue;
+          }
           byte [] value = kv.getValue();
+          last = column;
           colValue.put(column, value);
         }
         if (rowKey == null) {
