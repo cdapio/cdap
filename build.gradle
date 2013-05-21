@@ -1,6 +1,7 @@
 // Set up the application plugin so we can launch the Gateway from gradle
 apply plugin: 'java'
 apply plugin: 'application'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
