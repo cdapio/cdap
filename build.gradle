@@ -126,7 +126,7 @@ task cloud(dependsOn: 'jshint') {
 }
 
 task developer(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('developer')
+  build_edition('developer', null)
 }
 
 task prepackager(dependsOn: 'build', overwrite: true) {
