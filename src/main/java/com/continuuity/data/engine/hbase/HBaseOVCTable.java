@@ -1010,21 +1010,19 @@ public class HBaseOVCTable extends AbstractOVCTable {
       try {
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
-        boolean gotNext = false;
         byte[] last = null;
 
         //Loop until one row is read completely or until end is reached.
-        while (!gotNext) {
+        while (colValue.isEmpty()) {
           Result result = scanner.next();
           if (result == null) {
             break;
           } else {
             Set<Long> deleted = Sets.newHashSet();
-
             for (KeyValue kv : result.raw()){
 
               long version = kv.getTimestamp();
-              if (readPointer != null && !readPointer.isVisible(version) ) {
+              if (readPointer != null && !readPointer.isVisible(version)) {
                 continue;
               }
 
@@ -1045,6 +1043,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
                   colValue.put(column, removeTypePrefix(kv.getValue()));
                   last = column;
                   rowKey = kv.getKey();
+                  deleted.clear(); //Read one version. So clear deleted hash to get non deleted versions of next cols.
                   break;
                 case DELETE_VERSION:
                   deleted.add(version);
@@ -1055,9 +1054,6 @@ public class HBaseOVCTable extends AbstractOVCTable {
                 default:
                   break;
               }
-            }
-            if (colValue.size() > 0) {
-              gotNext = true;
             }
           }
         }
