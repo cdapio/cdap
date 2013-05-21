@@ -1,4 +1,4 @@
-app-fabric
-==========
+Continuuity App Fabric
+=======================
 
-The app-fabric manages and runs all applications. 
+Runtime management component of a **Reactor**
