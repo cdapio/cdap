@@ -53,7 +53,7 @@ describe('Main app test', function() {
       .click('.create-btn', function(err, btn) {
         assert.isNull(err);
       })
-      .isVisible('#dev-applications-list', function(err, visible) {
+      .isVisible('#cmp-applications-list', function(err, visible) {
         assert.isNull(err);
         assert.isTrue(visible);
         done();
@@ -63,8 +63,41 @@ describe('Main app test', function() {
   it('should show streams', function(done) {
     client
       .click('.nav-streams')
-      .waitFor('#dev-streams-list', 1000)
-      .isVisible('#dev-streams-list', function(err, visible) {
+      .waitFor('#cmp-streams-list', 1000)
+      .isVisible('#cmp-streams-list', function(err, visible) {
+        assert.isNull(err);
+        assert.isTrue(visible);
+        done();
+      });
+  });
+
+  it('should show flows', function(done) {
+    client
+      .click('.nav-flows')
+      .waitFor('#cmp-flows-list', 1000)
+      .isVisible('#cmp-flows-list', function(err, visible) {
+        assert.isNull(err);
+        assert.isTrue(visible);
+        done();
+      });
+  });
+
+  it('should show datasets', function(done) {
+    client
+      .click('.nav-datasets')
+      .waitFor('#cmp-datasets-list', 1000)
+      .isVisible('#cmp-datasets-list', function(err, visible) {
+        assert.isNull(err);
+        assert.isTrue(visible);
+        done();
+      });
+  });
+
+  it('should show query page', function(done) {
+    client
+      .click('.nav-queries')
+      .waitFor('#cmp-queries-list', 1000)
+      .isVisible('#cmp-queries-list', function(err, visible) {
         assert.isNull(err);
         assert.isTrue(visible);
         done();
