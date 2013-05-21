@@ -1009,25 +1009,22 @@ public class HBaseOVCTable extends AbstractOVCTable {
       }
 
       try {
-
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
         boolean gotNext = false;
         byte[] last = null;
 
+        //Loop until one row is read completely or until end is reached.
         while (!gotNext) {
           Result result = scanner.next();
           if (result == null) {
             gotNext = true;
           } else {
-            Set<Long> deleted = Sets.newHashSet();
-            for (KeyValue kv : result.raw()) {
+            for (KeyValue kv : result.raw()){
               long version = kv.getTimestamp();
-              if ((readPointer != null && !readPointer.isVisible(version)) ||
-                deleted.contains(version)) {
+              if (readPointer != null && !readPointer.isVisible(version)) {
                 continue;
               }
-
               byte[] value = kv.getValue();
               byte[] column = kv.getQualifier();
               if (Bytes.equals(column, last)){
@@ -1041,14 +1038,15 @@ public class HBaseOVCTable extends AbstractOVCTable {
                   rowKey = kv.getKey();
                   break;
                 case DELETE_VERSION:
-                  deleted.add(version);
                   break;
                 case DELETE_ALL:
-                  last = column;
-                  return null;
+                  last = column; //pretend that all columns are read
+                  break;
+                default:
+                  break;
               }
             }
-            if (rowKey != null ){
+            if (colValue.size() > 0) {
               gotNext = true;
             }
           }
@@ -1057,7 +1055,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
         if (rowKey == null) {
           return null;
         } else {
-          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey,colValue);
         }
       } catch (IOException e) {
         throw Throwables.propagate(e);

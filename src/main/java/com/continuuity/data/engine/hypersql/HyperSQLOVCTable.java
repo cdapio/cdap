@@ -1332,7 +1332,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
             continue;
           }
 
-          // Check if this is a new column, reset delete pointers if so
+         // Check if this is a new column, reset delete pointers if so
           if (!Bytes.equals(curCol, column)) {
             curCol = column;
             lastDelete = -1;
@@ -1364,6 +1364,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
           }
           // Column is valid, therefore row is valid, add row
           lastRow = row;
+          lastCol = column;
 
           Map<byte[], byte[]> colMap = rowColumnValueMap.get(row);
           if(colMap == null) {

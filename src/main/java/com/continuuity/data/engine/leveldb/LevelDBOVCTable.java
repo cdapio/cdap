@@ -907,6 +907,8 @@ public class LevelDBOVCTable extends AbstractOVCTable {
       long lastDelete = -1;
       long undeleted = -1;
       byte[] lastRow = new byte[0];
+      byte[] lastCol = new byte[0];
+      byte[] curCol = new byte[0];
 
       Map<byte[], byte[]> columnValues = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
@@ -923,6 +925,8 @@ public class LevelDBOVCTable extends AbstractOVCTable {
         if(!Bytes.equals(lastRow, keyValue.getRow())) {
           lastDelete = -1;
           undeleted = -1;
+          lastCol = new byte[0];
+          curCol = new byte[0];
           if (columnValues.size() > 0 ){
             //If we have reached here. We have read all columns for a single row - since current row is not the same
             // as previous row and we have collected atleast one valid value in the columnValues collection. Break.
@@ -931,9 +935,20 @@ public class LevelDBOVCTable extends AbstractOVCTable {
         }
 
         lastRow = keyValue.getRow();
+        iterator.next();
 
         if (!isVisible(keyValue)) {
           continue;
+        }
+
+        if (Bytes.equals(lastCol, keyValue.getQualifier())) {
+          continue;
+        }
+
+        if (!Bytes.equals(curCol, keyValue.getQualifier())) {
+          curCol = keyValue.getQualifier();
+          lastDelete = -1;
+          undeleted = -1;
         }
 
         long curVersion = keyValue.getTimestamp();
@@ -941,19 +956,33 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
         if (type == Type.Delete) {
           lastDelete = curVersion;
-        } else if (type == Type.UndeleteColumn) {
+          continue;
+        }
+        if (curVersion == lastDelete) {
+          continue;
+        }
+
+        if (type == Type.UndeleteColumn) {
           undeleted = curVersion;
-        } else if (type == Type.DeleteColumn) {
-          if (undeleted != curVersion) {
-            break;
+          continue;
+        }
+
+        if (type == Type.DeleteColumn) {
+          if (undeleted == curVersion) {
+            continue;
+          } else {
+            lastCol = keyValue.getQualifier();
+            continue;
           }
-        } else if (type == Type.Put) {
+        }
+
+        if (type == Type.Put) {
           if (curVersion != lastDelete) {
             // If we get here, this version is visible - so add it!
             columnValues.put(keyValue.getQualifier(), keyValue.getValue());
+            lastCol = keyValue.getQualifier();
           }
         }
-        iterator.next();
       }
       if (columnValues.size() == 0) {
         return null;
@@ -962,7 +991,6 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
       }
     }
-
 
     @Override
     public void close() {
