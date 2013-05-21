@@ -63,10 +63,12 @@ public class JarClassLoader extends MultiClassLoader {
    */
   @Override
   public InputStream getResourceAsStream(String s) {
+    // Since entries in jarResources do not start with leading "/", remove it from s to query jarResources.
     String entry = s;
     if (s.startsWith("/")) {
       entry = entry.substring(1);
     }
+
     byte[] resource = jarResources.getResource(entry);
     if (resource == null) {
       ClassLoader parent = getParent();
