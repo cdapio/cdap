@@ -1663,6 +1663,11 @@ public abstract class TestOVCTable {
     assertEquals(100, count); //50 rows and 2 cols
   }
 
+  /**
+   * Insert into three cols at version v1, Insert into three columns with version v2.
+   * Delete lower version. Scan should return all higher versioned columns.
+   * @throws OperationException
+   */
   @Test
   public void testScanWithDeleteAllLowerVersion() throws OperationException {
     final byte [] row = "scanTestsWithDeleteSingleColumn".getBytes(Charsets.UTF_8);
@@ -1726,4 +1731,50 @@ public abstract class TestOVCTable {
     }
     assertEquals(150, count); //50 rows and 3 cols
   }
+
+  /**
+   * Write ( col1, v1), (col2, v1), (col2, v2), (col3, v2)
+   * Delete (col2, v2), (col3, v2)
+   * DeleteAll (col1, v2)
+   * Scan all records -> should return (col2, v1) and nothing else
+   *
+   * @throws OperationException
+   */
+  @Test
+  public void testScanDeletesWithMultipleVersions() throws OperationException {
+    final byte [] rowKeyPrefix = "scanTestsDeletesWithVersions".getBytes(Charsets.UTF_8);
+    final byte [] col1 = "c1".getBytes(Charsets.UTF_8);
+    final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
+    final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
+
+    byte [] rowKey = Bytes.add(rowKeyPrefix,Bytes.toBytes(10));
+    byte [] value = Bytes.toBytes(1);
+    byte [] highValue = Bytes.toBytes(2);
+
+    long version = 1L;
+    this.table.put(rowKey, col1, version, value );
+    this.table.put(rowKey, col2, version, value );
+
+    long highVersion = 2L;
+    this.table.put(rowKey, col2, highVersion, highValue );
+    this.table.put(rowKey, col3, highVersion, highValue );
+
+    this.table.delete(rowKey, col2, highVersion);
+    this.table.delete(rowKey, col3, highVersion);
+    this.table.deleteAll(rowKey, col1, highVersion);
+
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+
+    Scanner scanner = this.table.scan(tx);
+
+    assertTrue(scanner != null);
+    ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+
+    assertTrue(Bytes.equals(entry.getSecond().get(col2), value));
+    assertTrue(entry.getSecond().get(col1) == null);
+    assertTrue(entry.getSecond().get(col3) == null);
+
+    assertTrue(null == scanner.next());
+  }
+
 }
