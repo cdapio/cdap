@@ -3,6 +3,6 @@
  */
 
 /**
- * This package contains classes for writing Continuuity application benchmarks.
+ * This package contains classes to test the peformance of Continuuity applications.
  */
 package com.continuuity.performance.application;

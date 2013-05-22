@@ -3,6 +3,6 @@
  */
 
 /**
- * This package contains the classes for testing performance of applications.
+ * This package contains examples of performance tests.
  */
 package com.continuuity.performance.test.app;

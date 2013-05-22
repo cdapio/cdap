@@ -7,7 +7,7 @@ import com.google.inject.assistedinject.Assisted;
 
 /**
  * This interface is using Guice assisted inject to create
- * {@link com.continuuity.performance.application.BenchmarkStreamWriter}.
+ * {@link GatewayStreamWriter}.
  */
 public interface BenchmarkStreamWriterFactory {
 

@@ -97,7 +97,7 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     enqueueMetricCommand(new CounterName(counterName).getName(), unixTime, value, tags);
   }
 
-  public void enqueueMetric(CounterName counterName, long unixTime) {
+  public void  enqueueMetric(CounterName counterName, long unixTime) {
     final Counter counter;
     if (counterName.getLevel() == CounterLevel.Account) {
       counter = BenchmarkRuntimeStats.getCounter(counterName.getName());
@@ -222,10 +222,6 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
     private CounterLevel(int id, String name) {
       this.id = id;
       this.name = name;
-    }
-
-    public int getId() {
-      return id;
     }
 
     public String getName() {

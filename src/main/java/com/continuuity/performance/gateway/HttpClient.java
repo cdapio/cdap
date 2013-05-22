@@ -1,10 +1,9 @@
 package com.continuuity.performance.gateway;
 
 /**
- * HttpPoster.
+ * HttpClient interface for sending events to Gateway.
  */
-public interface HttpPoster {
+public interface HttpClient {
   void post(byte[] message) throws Exception;
-  void post(String message) throws Exception;
 }
 
