@@ -1,6 +1,6 @@
-
-
-// Stream detail controller
+/*
+ * Flow Stream Controller
+ */
 
 define([], function () {
 
@@ -21,7 +21,7 @@ define([], function () {
 			 */
 			setTimeout(function () {
 				self.getStats();
-			}, 100);
+			}, C.EMBEDDABLE_DELAY);
 
 		},
 
@@ -37,7 +37,7 @@ define([], function () {
 
 			this.__timeout = setTimeout(function () {
 				self.getStats();
-			}, 1000);
+			}, C.METRICS_INTERVAL);
 
 		},
 

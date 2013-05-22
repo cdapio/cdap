@@ -1,3 +1,6 @@
+/*
+ * Controller Index
+ */
 
 define(['core/controllers/app', 'core/controllers/flow-status', 'core/controllers/flow-flowlet',
 	'core/controllers/list', 'core/controllers/stream', 'core/controllers/dataset',

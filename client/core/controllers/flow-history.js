@@ -1,6 +1,6 @@
-//
-// Flow History Controller.
-//
+/*
+ * Flow History Controller
+ */
 
 define([], function () {
 

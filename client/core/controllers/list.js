@@ -1,6 +1,6 @@
-//
-// List Controller
-//
+/*
+ * List Controller
+ */
 
 define([], function () {
 
@@ -40,7 +40,7 @@ define([], function () {
 
 				self.interval = setInterval(function () {
 					self.updateStats();
-				}, 1000);
+				}, C.POLLING_INTERVAL);
 
 				/*
 				 * Give the chart Embeddables 100ms to configure
@@ -48,7 +48,7 @@ define([], function () {
 				 */
 				setTimeout(function () {
 					self.updateStats();
-				}, 100);
+				}, C.EMBEDDABLE_DELAY);
 
 			});
 

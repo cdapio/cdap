@@ -1,6 +1,6 @@
-//
-// Dataset Controller
-//
+/*
+ * Dataset Controller
+ */
 
 define([], function () {
 
@@ -92,11 +92,14 @@ define([], function () {
 	});
 
 	var Controller = Em.ArrayProxy.extend({
+
 		types: Em.Object.create({
 			'DatasetFlow': Em.ArrayProxy.create({
 				content: []
 			})
 		}),
+		interval: null,
+
 		load: function () {
 
 			var self = this;
@@ -122,14 +125,14 @@ define([], function () {
 
 				self.interval = setInterval(function () {
 					self.updateStats();
-				}, 1000);
+				}, C.POLLING_INTERVAL);
 				/*
 				 * Give the chart Embeddables 100ms to configure
 				 * themselves before updating.
 				 */
 				setTimeout(function () {
 					self.updateStats();
-				}, 100);
+				}, C.EMBEDDABLE_DELAY);
 
 			});
 

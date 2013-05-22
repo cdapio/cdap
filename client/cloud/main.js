@@ -1,4 +1,3 @@
-
 /*
  * Main entry point for Hosted Reactor UI
  */
@@ -9,11 +8,11 @@ require.config({
 	}
 });
 
-/*
- * Patching feature not being used yet.
- */
-
 define (['core/application', 'patch/views/index'], function (C, Patch) {
+
+	/*
+	 * Patching feature not being used yet.
+	 */
 
 	C.Router.map(function() {
 
@@ -61,9 +60,15 @@ define (['core/application', 'patch/views/index'], function (C, Patch) {
 	 * This is a basic route handler that others can extend from to reduce duplication.
 	 */
 	var basicRouter = Ember.Route.extend({
+		/*
+		 * Override to load the Controller once the Route has been activated.
+		 */
 		setupController: function(controller) {
 			controller.load();
 		},
+		/*
+		 * Override to unload the Controller once the Route has been deactivated.
+		 */
 		deactivate: function () {
 			this.controller.unload();
 		}
@@ -128,12 +133,19 @@ define (['core/application', 'patch/views/index'], function (C, Patch) {
 
 	/*
 	 * Pages for lists of Elements use the List controller.
+	 * @param {string} type ['App', 'Stream', 'Flow', ...]
 	 */
 	function getListHandler(type) {
 		return {
+			/*
+			 * Override to load the Controller once the Route has been activated.
+			 */
 			setupController: function  () {
 				this.controllerFor('List').load(type);
 			},
+			/*
+			 * Override the templates to be rendered and where.
+			 */
 			renderTemplate: function () {
 				/*
 				 * Render the List Page template (i.e. the header / time selector)
@@ -149,6 +161,9 @@ define (['core/application', 'patch/views/index'], function (C, Patch) {
 					into: 'list-page'
 				});
 			},
+			/*
+			 * Override to unload the Controller once the Route has been deactivated.
+			 */
 			deactivate: function () {
 				this.controllerFor('List').unload();
 			}

@@ -1,3 +1,6 @@
+/*
+ * Stream Injector Embeddable
+ */
 
 define([], function () {
 

@@ -1,3 +1,6 @@
+/*
+ * Components Index
+ */
 
 define(['core/models/index', 'core/controllers/index'],
 	function (Models, Controllers) {

@@ -1,7 +1,6 @@
-
-//
-// Utility functions
-//
+/*
+ * Utilities
+ */
 
 define([], function () {
 

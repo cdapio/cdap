@@ -1,3 +1,6 @@
+/*
+ * Breadcrumb Embeddable
+ */
 
 define([], function () {
 

@@ -1,3 +1,6 @@
+/*
+ * Flow DAG Visualizer Embeddable
+ */
 
 define([], function () {
 

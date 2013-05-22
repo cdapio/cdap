@@ -1,3 +1,6 @@
+/*
+ * API
+ */
 
 define(['core/socket'], function (Socket) {
 

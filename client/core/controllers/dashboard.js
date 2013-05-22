@@ -1,18 +1,22 @@
-//
-// Dashboard Controller
-//
+/*
+ * Dashboard Controller
+ */
 
 define([], function () {
 
 	var Controller = Em.Controller.extend({
+
 		elements: Em.Object.create(),
 		counts: Em.Object.create(),
-		__toLoad: 5,
+		__remaining: -1,
+
 		load: function () {
 
-			var self = this;
-
-			this.__toLoad = 5;
+			/*
+			 * This is decremented to know when loading is complete.
+			 * There are 6 things to load. See __loaded below.
+			 */
+			this.__remaining = 5;
 
 			this.set('elements.App', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
@@ -26,16 +30,12 @@ define([], function () {
 				metricData: Em.Object.create()
 			}));
 
-			function finish () {
-				/*
-				* Give the chart Embeddables 100ms to configure
-				* themselves before updating.
-				*/
-				setTimeout(function () {
-					self.getStats();
-				}, 100);
-			}
+			var self = this;
 
+			/*
+			 * Load Apps
+			 * Also load all Elements for each App to calculate per-App totals
+			 */
 			C.Api.getElements('App', function (objects) {
 				var i = objects.length;
 				while (i--) {
@@ -58,60 +58,54 @@ define([], function () {
 				self.get('elements.App').pushObjects(objects);
 				self.get('counts').set('App', objects.length);
 
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					finish();
-					self.__toLoad = 5;
-				}
+				self.__loaded();
 
 			});
 
+			/*
+			 * Load all Streams to calculate counts and storage
+			 */
 			C.Api.getElements('Stream', function (objects) {
 
-				// For use by storage trend
 				self.get('elements.Stream').pushObjects(objects);
-
-				// For use by account stream count
 				self.get('counts').set('Stream', objects.length);
-
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					finish();
-				}
+				self.__loaded();
 
 			});
+
+			/*
+			 * Load all Flows to calculate counts
+			 */
 			C.Api.getElements('Flow', function (objects) {
-				self.get('counts').set('Flow', objects.length);
 
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					finish();
-				}
+				self.get('counts').set('Flow', objects.length);
+				self.__loaded();
+
 			});
+
+			/*
+			 * Load all Datasets to calculate counts and storage
+			 */
 			C.Api.getElements('Dataset', function (objects) {
 
-				// For use by storage trend
 				self.get('elements.Dataset').pushObjects(objects);
-
-				// For use by account datset count
 				self.get('counts').set('Dataset', objects.length);
+				self.__loaded();
 
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					finish();
-				}
 			});
+
+			/*
+			 * Load all Procedures to calculate counts
+			 */
 			C.Api.getElements('Procedure', function (objects) {
-				self.get('counts').set('Procedure', objects.length);
 
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					finish();
-				}
+				self.get('counts').set('Procedure', objects.length);
+				self.__loaded();
+
 			});
 
-			/**
-			 * Check disk space.
+			/*
+			 * Check disk space
 			 */
 			if (C.Env.cluster) {
 
@@ -126,10 +120,39 @@ define([], function () {
 			}
 
 		},
-		__timeout: null,
-		getStats: function () {
 
-			var self = this, objects, content;
+		__loaded: function () {
+
+			if (!(--this.__remaining)) {
+
+				var self = this;
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, C.EMBEDDABLE_DELAY);
+
+				this.interval = setInterval(function () {
+					self.updateStats();
+				}, C.POLLING_INTERVAL);
+
+			}
+
+		},
+
+		unload: function () {
+
+			clearInterval(this.interval);
+			this.set('elements', Em.Object.create());
+			this.set('counts', Em.Object.create());
+
+		},
+
+		updateStats: function () {
+
+			var self = this;
 
 			var streams = this.get('elements.Stream').content;
 			var datasets = this.get('elements.Dataset').content;
@@ -138,16 +161,26 @@ define([], function () {
 			var metrics = [];
 			var start = C.__timeRange * -1;
 
+			/*
+			 * Add Stream URIs to calculate storage usage by Streams
+			 */
 			for (var i = 0; i < streams.length; i ++) {
 				metrics.push('stream.storage.stream//' + accountId + '/' + streams[i].id + '.count');
 			}
 
+			/*
+			 * Add Dataset URIs to calculate storage usage by Datasets
+			 */
 			for (var i = 0; i < datasets.length; i ++) {
 				metrics.push('dataset.storage.' + datasets[i].id + '.count');
 			}
 
 			if (metrics.length) {
 
+				/*
+				 * Get total disk usage and push to storage trend timeseries
+				 * Someday we will have an API to give us a real timeseries
+				 */
 				C.get('monitor', {
 					method: 'getCounters',
 					params: ['-', '-', null, metrics]
@@ -165,8 +198,8 @@ define([], function () {
 
 					var series = self.get('model').get('metricData').get('storagetrend');
 
-					// If first value, initialize timeseries with current total across the board
-					if (undefined === series) {
+					// If first value, initialize timeseries with current total as straight line
+					if (series === undefined) {
 						var length = Math.abs(start) - 21;
 						series = [];
 						while (length--) {
@@ -182,7 +215,10 @@ define([], function () {
 
 			} else {
 
-				var length = Math.abs(start) - 21;
+				/*
+				 * No storage Elements, create a flat timeseries as default
+				 */
+				var length = Math.abs(start);
 				var series = [];
 				while (length--) {
 					series[length] = 0;
@@ -192,6 +228,9 @@ define([], function () {
 
 			}
 
+			/*
+			 * Update processed.count for entire Reactor
+			 */
 			C.get('monitor', {
 				method: 'getTimeSeries',
 				params: [null, null, ['processed.count'], (C.__timeRange * -1), null, 'ACCOUNT_LEVEL']
@@ -219,9 +258,12 @@ define([], function () {
 
 			});
 
-			if ((objects = this.get('elements.App'))) {
+			/*
+			 * Update metrics for all Apps
+			 */
+			if (this.get('elements.App')) {
 
-				content = objects.get('content');
+				var content = this.get('elements.App').get('content');
 
 				for (var i = 0; i < content.length; i ++) {
 					if (typeof content[i].getUpdateRequest === 'function') {
@@ -229,17 +271,10 @@ define([], function () {
 					}
 				}
 
-				self.__timeout = setTimeout(function () {
-					self.getStats();
-				}, 1000);
 			}
 
-		},
-
-		unload: function () {
-			clearTimeout(this.__timeout);
-			this.set('elements', Em.Object.create());
 		}
+
 	});
 
 	Controller.reopenClass({

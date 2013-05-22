@@ -1,3 +1,6 @@
+/*
+ * Embeddables Index
+ */
 
 define(['embeddables/breadcrumb', 'embeddables/chart', 'embeddables/create-button',
 	'embeddables/create-dialogue', 'embeddables/textfield', 'embeddables/dagnode', 'embeddables/dropzone',

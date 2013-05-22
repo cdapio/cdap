@@ -1,6 +1,6 @@
-//
-// App Model
-//
+/*
+ * App Model
+ */
 
 define([], function () {
 

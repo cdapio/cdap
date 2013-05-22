@@ -1,6 +1,6 @@
-//
-// Stream Model
-//
+/*
+ * Stream Model
+ */
 
 define([], function () {
 

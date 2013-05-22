@@ -1635,24 +1635,24 @@ ol {
 
 .window-input {
 
-    width: 212px;
-    height: 100px;
+	width: 212px;
+	height: 100px;
 
-    content: "";
-    position: absolute;
+	content: "";
+	position: absolute;
 	top: 17px;
 	left: -55px;
-    width: 60px;
-    height: 60px;
-    border: 2px solid white;
-    -moz-border-radius: 50px 50px 0 50px;
-         border-radius: 50px 50px 0 50px;
-    -webkit-transform: rotate(-45deg);
-       -moz-transform: rotate(-45deg);
-        -ms-transform: rotate(-45deg);
-         -o-transform: rotate(-45deg);
-            transform: rotate(-45deg);
-    background-color: #0f2647;
+	width: 60px;
+	height: 60px;
+	border: 2px solid white;
+	-moz-border-radius: 50px 50px 0 50px;
+	border-radius: 50px 50px 0 50px;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-ms-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	transform: rotate(-45deg);
+	background-color: #0f2647;
 
 }
 

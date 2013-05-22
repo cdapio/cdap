@@ -1,6 +1,6 @@
-//
-// Application
-//
+/*
+ * Application
+ */
 
 require.config({
 	paths: {
@@ -21,6 +21,16 @@ function(Components, Api, Embeddables, Util){
 		 * Logs router transitions to the Developer Console
 		 */
 		LOG_TRANSITIONS: true,
+
+		/*
+		 * Constant: Polling interval for metrics.
+		 */
+		POLLING_INTERVAL: 1000,
+
+		/*
+		 * Constant: Delay to wait for Embeddables to configure before checking them.
+		 */
+		EMBEDDABLE_DELAY: 100,
 
 		/*
 		 * Allows us to set the ID of the main view element.
@@ -153,7 +163,6 @@ function(Components, Api, Embeddables, Util){
 
 		} else {
 
-			// Reconnected.
 			$('#warning').html('<div>Reconnected!</div>').fadeOut();
 
 		}
@@ -165,19 +174,8 @@ function(Components, Api, Embeddables, Util){
 	Api.Socket.addErrorHandler(function error (message, args) {
 
 		if (typeof message === "object") {
-
-			if (message.name === "FlowServiceException") {
-				$('#flow-alert').removeClass('alert-success')
-					.addClass('alert-error').html('Error: ' + message.message).show();
-
-				setTimeout(function () {
-					window.location.reload();
-				}, 2000);
-				return;
-			}
 			message = message.message;
 		}
-
 		$('#warning').html('<div>' + message + '</div>').show();
 
 	});

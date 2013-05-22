@@ -1,6 +1,6 @@
-//
-// Flow Model
-//
+/*
+ * Flow Model
+ */
 
 define([], function () {
 
