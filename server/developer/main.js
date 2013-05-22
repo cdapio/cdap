@@ -50,7 +50,7 @@ var server = http.createServer(app);
 io = require('socket.io').listen(server);
 io.configure('development', function(){
 	io.set('transports', ['websocket', 'xhr-polling']);
-	io.set('log level', 1);
+	// io.set('log level', 1);
 });
 
 var config = {};
@@ -98,7 +98,7 @@ io.sockets.on('connection', function (newSocket) {
 
 	socket.on('manager', function (request) {
 		Api.manager('developer', request.method, request.params, function (error, response) {
-			
+
 			if (response && response.length) {
 				var int64values = {
 					"lastStarted": 1,
@@ -120,7 +120,7 @@ io.sockets.on('connection', function (newSocket) {
 				params: typeof response === "string" ? JSON.parse(response) : response,
 				id: request.id
 			});
-			
+
 		});
 	});
 
@@ -132,8 +132,8 @@ io.sockets.on('connection', function (newSocket) {
 app.post('/upload/:file', function (req, res) {
 
 	var accountID = 'developer';
-	Api.upload(accountID, req, res, req.params.file, socket);				
-	
+	Api.upload(accountID, req, res, req.params.file, socket);
+
 });
 
 /**
@@ -155,7 +155,7 @@ app.get('/version', function (req, res) {
 		});
 
 		response.on('end', function () {
-			
+
 			data = data.replace(/\n/g, '');
 
 			res.send(JSON.stringify({
@@ -200,7 +200,7 @@ app.get('/destinations', function  (req, res) {
 				});
 
 				response.on('end', function () {
-					
+
 					res.write(data);
 					res.end();
 
@@ -221,7 +221,7 @@ app.get('/destinations', function  (req, res) {
 			});
 
 			request.on('socket', function (socket) {
-				socket.setTimeout(10000);  
+				socket.setTimeout(10000);
 				socket.on('timeout', function() {
 
 					request.abort();
@@ -296,7 +296,7 @@ function getLocalHost () {
 	}
 
 	return localhost;
-	
+
 }
 
 /**
@@ -325,7 +325,7 @@ fs.readFile(__dirname + '/continuuity-local.xml',
 			Api.configure(config, apiKey || null);
 
 			logger.info('Listening on port',
-				config['node-port']);	
+				config['node-port']);
 			server.listen(config['node-port']);
 
 			logger.info(config);

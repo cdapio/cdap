@@ -1,80 +1,64 @@
-//
-// List Controller
-//
+/*
+ * List Controller
+ */
 
 define([], function () {
 
-	return Em.Object.create({
-		types: Em.Object.create(),
-		__methodNames: {
-			'Application': 'getApplications',
-			'Flow': 'getFlows',
-			'Stream': 'getStreams',
-			'Query': 'getQueries',
-			'Dataset': 'getDatasets'
-		},
+	var Controller = Em.Controller.extend({
+
+		elements: Em.Object.create(),
+
 		__plurals: {
-			'Application': 'Applications',
+			'App': 'Applications',
 			'Flow': 'Process',
 			'Stream': 'Collect',
-			'Query': 'Query',
+			'Procedure': 'Query',
 			'Dataset': 'Store'
 		},
 		title: function () {
 			return this.__plurals[this.get('entityType')];
 		}.property('entityType'),
-		getObjects: function (type, callback, appId, arg) {
+		load: function (type) {
 
 			var self = this;
 			this.set('entityType', type);
 
-			//** Hax: Remove special case for Flow when ready **//
+			C.Api.getElements(type, function (objects) {
 
-			C.get('metadata', {
-				method: this.__methodNames[type] + (appId ? 'ByApplication' : ''),
-				params: appId ? [appId] : []
-			}, function (error, response, params) {
+				//** Hax: Remove special case for Flow when ready **//
 
-				if (error) {
-					if (typeof callback === 'function') {
-						callback([], arg);
-					} else {
-						C.interstitial.label(error);
-					}
-				} else {
-					var objects = response.params;
-					var i = objects.length, type = params[0];
-					while (i--) {
-						objects[i] = C.Mdl[type].create(objects[i]);
-					}
-					if (typeof params[1] === 'function') { // For you
-						callback(objects, arg);
-
-					} else { // For me
-
-						var i = objects.length;
-						while (i--) {
-							if (type === 'Query' && objects[i].type === 0) {
-								objects.splice(i, 1);
-							} else if (type === 'Flow' && objects[i].type === 1) {
-								objects.splice(i, 1);
-							}
-						}
-
-						self.set('types.' + type, Em.ArrayProxy.create({content: objects}));
-						C.interstitial.hide();
-						C.Ctl.List.getStats();
+				var i = objects.length;
+				while (i--) {
+					if (type === 'Query' && objects[i].type === 0) {
+						objects.splice(i, 1);
+					} else if (type === 'Flow' && objects[i].type === 1) {
+						objects.splice(i, 1);
 					}
 				}
-			}, [type, callback]);
+
+				self.set('elements.' + type, Em.ArrayProxy.create({content: objects}));
+
+				self.interval = setInterval(function () {
+					self.updateStats();
+				}, C.POLLING_INTERVAL);
+
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, C.EMBEDDABLE_DELAY);
+
+			});
+
 		},
 
-		__timeout: null,
-		getStats: function () {
+		updateStats: function () {
 
-			var objects, content;
+			var objects, content, self = this;
 
-			if ((objects = this.get('types.' + this.get('entityType')))) {
+			if ((objects = this.get('elements.' + this.get('entityType')))) {
 
 				content = objects.get('content');
 
@@ -84,25 +68,25 @@ define([], function () {
 					}
 				}
 
-				this.__timeout = setTimeout(function () {
-					C.Ctl.List.getStats();
-				}, 1000);
-
 			}
 
 		},
 
-		viewType: function () {
-
-			return Em.get('C.Vw.' + this.get('entityType') + 'List');
-
-		}.property().cacheable(false),
-
 		unload: function () {
-			clearTimeout(this.__timeout);
-			this.set('types', Em.Object.create());
+
+			clearInterval(this.interval);
+
+			this.set('elements', Em.Object.create());
+
 		}
 
 	});
+
+	Controller.reopenClass({
+		type: 'List',
+		kind: 'Controller'
+	});
+
+	return Controller;
 
 });

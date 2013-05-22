@@ -1,24 +1,28 @@
-//
-// Dashboard Controller
-//
+/*
+ * Dashboard Controller
+ */
 
 define([], function () {
-	
-	return Em.ArrayProxy.create({
-		types: Em.Object.create(),
+
+	var Controller = Em.Controller.extend({
+
+		elements: Em.Object.create(),
 		counts: Em.Object.create(),
-		__toLoad: 5,
+		__remaining: -1,
+
 		load: function () {
 
-			var self = this;
+			/*
+			 * This is decremented to know when loading is complete.
+			 * There are 6 things to load. See __loaded below.
+			 */
+			this.__remaining = 5;
 
-			this.__toLoad = 5;
+			this.set('elements.App', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 
-			this.set('types.Application', Em.ArrayProxy.create({content: []}));
-			this.set('types.Stream', Em.ArrayProxy.create({content: []}));
-			this.set('types.Dataset', Em.ArrayProxy.create({content: []}));
-
-			this.set('current', Em.Object.create({
+			this.set('model', Em.Object.create({
 				addMetricName: function (metric) {
 					this.get('metricNames')[metric] = 1;
 				},
@@ -26,92 +30,88 @@ define([], function () {
 				metricData: Em.Object.create()
 			}));
 
-			C.Ctl.List.getObjects('Application', function (objects) {
+			var self = this;
+
+			/*
+			 * Load Apps
+			 * Also load all Elements for each App to calculate per-App totals
+			 */
+			C.Api.getElements('App', function (objects) {
 				var i = objects.length;
 				while (i--) {
-					objects[i] = C.Mdl['Application'].create(objects[i]);
+					objects[i] = C.App.create(objects[i]);
 
-					C.Ctl.List.getObjects('Stream', function (obj, arg) {
+					C.Api.getElements('Stream', function (obj, arg) {
 						objects[arg].set('counts.Stream', obj.length);
 					}, objects[i].id, i);
-					C.Ctl.List.getObjects('Flow', function (obj, arg) {
+					C.Api.getElements('Flow', function (obj, arg) {
 						objects[arg].set('counts.Flow', obj.length);
 					}, objects[i].id, i);
-					C.Ctl.List.getObjects('Dataset', function (obj, arg) {
+					C.Api.getElements('Dataset', function (obj, arg) {
 						objects[arg].set('counts.Dataset', obj.length);
 					}, objects[i].id, i);
-					C.Ctl.List.getObjects('Query', function (obj, arg) {
-						objects[arg].set('counts.Query', obj.length);
+					C.Api.getElements('Procedure', function (obj, arg) {
+						objects[arg].set('counts.Procedure', obj.length);
 					}, objects[i].id, i);
 
 				}
-				self.get('types.Application').pushObjects(objects);
-				self.get('counts').set('Application', objects.length);
+				self.get('elements.App').pushObjects(objects);
+				self.get('counts').set('App', objects.length);
 
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					C.interstitial.hide();
-					self.getStats();
-				}
+				self.__loaded();
 
 			});
 
-			C.Ctl.List.getObjects('Stream', function (objects) {
-
-				// For use by storage trend
-				self.get('types.Stream').pushObjects(objects);
-				
-				// For use by account stream count
-				self.get('counts').set('Stream', objects.length);
-
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					C.interstitial.hide();
-					self.getStats();
-				}
-
-			});
-			C.Ctl.List.getObjects('Flow', function (objects) {
-				self.get('counts').set('Flow', objects.length);
-				
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					C.interstitial.hide();
-					self.getStats();
-				}
-			});
-			C.Ctl.List.getObjects('Dataset', function (objects) {
-
-				// For use by storage trend
-				self.get('types.Dataset').pushObjects(objects);
-
-				// For use by account datset count
-				self.get('counts').set('Dataset', objects.length);
-
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					C.interstitial.hide();
-					self.getStats();
-				}
-			});
-			C.Ctl.List.getObjects('Query', function (objects) {
-				self.get('counts').set('Query', objects.length);
-
-				self.__toLoad--;
-				if (!self.__toLoad) {
-					C.interstitial.hide();
-					self.getStats();
-				}
-			});
-
-			/**
-			 * Check disk space.
+			/*
+			 * Load all Streams to calculate counts and storage
 			 */
-			if (window.ENV.cluster) {
+			C.Api.getElements('Stream', function (objects) {
+
+				self.get('elements.Stream').pushObjects(objects);
+				self.get('counts').set('Stream', objects.length);
+				self.__loaded();
+
+			});
+
+			/*
+			 * Load all Flows to calculate counts
+			 */
+			C.Api.getElements('Flow', function (objects) {
+
+				self.get('counts').set('Flow', objects.length);
+				self.__loaded();
+
+			});
+
+			/*
+			 * Load all Datasets to calculate counts and storage
+			 */
+			C.Api.getElements('Dataset', function (objects) {
+
+				self.get('elements.Dataset').pushObjects(objects);
+				self.get('counts').set('Dataset', objects.length);
+				self.__loaded();
+
+			});
+
+			/*
+			 * Load all Procedures to calculate counts
+			 */
+			C.Api.getElements('Procedure', function (objects) {
+
+				self.get('counts').set('Procedure', objects.length);
+				self.__loaded();
+
+			});
+
+			/*
+			 * Check disk space
+			 */
+			if (C.Env.cluster) {
 
 				$.getJSON('/disk', function (status) {
 
-					var bytes = C.util.bytes(status.free);
+					var bytes = C.Util.bytes(status.free);
 					$('#diskspace').find('.sparkline-box-title').html(
 						'Storage (' + bytes[0] + bytes[1] + ' Free)');
 
@@ -120,28 +120,67 @@ define([], function () {
 			}
 
 		},
-		__timeout: null,
-		getStats: function () {
 
-			var self = this, objects, content;
+		__loaded: function () {
 
-			var streams = this.get('types.Stream').content;
-			var datasets = this.get('types.Dataset').content;
+			if (!(--this.__remaining)) {
 
-			var accountId = window.ENV.account.account_id;
+				var self = this;
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, C.EMBEDDABLE_DELAY);
+
+				this.interval = setInterval(function () {
+					self.updateStats();
+				}, C.POLLING_INTERVAL);
+
+			}
+
+		},
+
+		unload: function () {
+
+			clearInterval(this.interval);
+			this.set('elements', Em.Object.create());
+			this.set('counts', Em.Object.create());
+
+		},
+
+		updateStats: function () {
+
+			var self = this;
+
+			var streams = this.get('elements.Stream').content;
+			var datasets = this.get('elements.Dataset').content;
+
+			var accountId = C.Env.user.id;
 			var metrics = [];
 			var start = C.__timeRange * -1;
 
+			/*
+			 * Add Stream URIs to calculate storage usage by Streams
+			 */
 			for (var i = 0; i < streams.length; i ++) {
 				metrics.push('stream.storage.stream//' + accountId + '/' + streams[i].id + '.count');
 			}
 
+			/*
+			 * Add Dataset URIs to calculate storage usage by Datasets
+			 */
 			for (var i = 0; i < datasets.length; i ++) {
 				metrics.push('dataset.storage.' + datasets[i].id + '.count');
 			}
 
 			if (metrics.length) {
 
+				/*
+				 * Get total disk usage and push to storage trend timeseries
+				 * Someday we will have an API to give us a real timeseries
+				 */
 				C.get('monitor', {
 					method: 'getCounters',
 					params: ['-', '-', null, metrics]
@@ -157,10 +196,10 @@ define([], function () {
 						currentValue += values[i].value;
 					}
 
-					var series = self.get('current').get('metricData').get('storagetrend');
+					var series = self.get('model').get('metricData').get('storagetrend');
 
-					// If first value, initialize timeseries with current total across the board
-					if (undefined === series) {
+					// If first value, initialize timeseries with current total as straight line
+					if (series === undefined) {
 						var length = Math.abs(start) - 21;
 						series = [];
 						while (length--) {
@@ -170,27 +209,33 @@ define([], function () {
 
 					series.shift();
 					series.push(currentValue);
-					self.get('current').get('metricData').set('storagetrend', series.concat([]));
+					self.get('model').get('metricData').set('storagetrend', series.concat([]));
 
 				});
 
 			} else {
 
-				var length = Math.abs(start) - 21;
+				/*
+				 * No storage Elements, create a flat timeseries as default
+				 */
+				var length = Math.abs(start);
 				var series = [];
 				while (length--) {
 					series[length] = 0;
 				}
 
-				self.get('current').get('metricData').set('storagetrend', series.concat([]));
+				self.get('model').get('metricData').set('storagetrend', series.concat([]));
 
 			}
 
+			/*
+			 * Update processed.count for entire Reactor
+			 */
 			C.get('monitor', {
 				method: 'getTimeSeries',
 				params: [null, null, ['processed.count'], (C.__timeRange * -1), null, 'ACCOUNT_LEVEL']
 			}, function (error, response) {
-				
+
 				if (!response.params) {
 					return;
 				}
@@ -206,16 +251,19 @@ define([], function () {
 					}
 
 					metric = metric.replace(/\./g, '');
-					self.get('current').get('metricData').set(metric, data);
+					self.get('model').get('metricData').set(metric, data);
 
 				}
 
 
 			});
 
-			if ((objects = this.get('types.Application'))) {
+			/*
+			 * Update metrics for all Apps
+			 */
+			if (this.get('elements.App')) {
 
-				content = objects.get('content');
+				var content = this.get('elements.App').get('content');
 
 				for (var i = 0; i < content.length; i ++) {
 					if (typeof content[i].getUpdateRequest === 'function') {
@@ -223,16 +271,17 @@ define([], function () {
 					}
 				}
 
-				self.__timeout = setTimeout(function () {
-					self.getStats();
-				}, 1000);
 			}
 
-		},
-
-		unload: function () {
-			clearTimeout(this.__timeout);
-			this.set('types', Em.Object.create());
 		}
+
 	});
+
+	Controller.reopenClass({
+		type: 'Index',
+		kind: 'Controller'
+	});
+
+	return Controller;
+
 });

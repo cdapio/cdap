@@ -1,3 +1,6 @@
+/*
+ * Main entry point for Local Reactor UI
+ */
 
 require.config({
 	paths: {
@@ -5,266 +8,178 @@ require.config({
 	}
 });
 
-define (['core/app', 'patch/views/index'], function (C, Patch) {
+define (['core/application', 'patch/views/index'], function (C, Patch) {
 
-	C.Ctx = {
-		Vw: Patch
-	};
+	/*
+	 * Patching feature not being used yet.
+	 */
 
-	$.extend(C, {
-		Router: Em.Router.extend({
-			enableLogging: false,
-			root: Em.Route.extend({
-				home: Em.Route.extend({
-					route: '/',
-					connectOutlets: function (router, context) {
-						C.Ctl.Dashboard.load();
-						router.get('applicationController').connectOutlet({
-							viewClass: C.Vw.Dash,
-							controller: C.Ctl.Dashboard
-						});
-					},
-					enter: C.interstitial.show,
-					navigateAway: function () {
-						C.Ctl.Dashboard.unload();
-					}
-				}),
-				apps: Em.Route.extend({
-					route: '/apps',
-					index: Em.Route.extend({
-						route: '/',
-						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("Application");
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.ListPage,
-								controller: C.Ctl.List
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.List.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					app: Em.Route.extend({
-						route: '/:appId',
-						connectOutlets: function (router, context) {
-							C.Ctl.Application.load(context.appId);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.Application,
-								controller: C.Ctl.Application
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.Application.unload();
-						},
-						enter: C.interstitial.show
-					})
-				}),
-				flows: Em.Route.extend({
-					route: '/flows',
-					index: Em.Route.extend({
-						route: '/',
-						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("Flow");
-
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.ListPage,
-								controller: C.Ctl.List
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.List.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					flow: Em.Route.extend({
-						route: '/status/:id',
-						connectOutlets: function (router, context) {
-
-							C.Ctl.FlowHistory.unload();
-
-							var id = context.id.split(':');
-							C.Ctl.Flow.load(id[0], id[1]);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.FlowStatus,
-								controller: C.Ctl.Flow
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.Flow.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					log: Em.Route.extend({
-						route: '/log/:id',
-						connectOutlets: function (router, context) {
-							var id = context.id.split(':');
-							C.Ctl.FlowLog.load(id[0], id[1]);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.FlowLog,
-								controller: C.Ctl.FlowLog
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.FlowLog.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					history: Em.Route.extend({
-						route: '/history/:id',
-						connectOutlets: function (router, context) {
-
-							C.Ctl.Flow.unload();
-
-							var id = context.id.split(':');
-							C.Ctl.FlowHistory.load(id[0], id[1]);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.FlowHistory,
-								controller: C.Ctl.FlowHistory
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.FlowHistory.unload();
-						},
-						enter: C.interstitial.show
-					})
-				}),
-				streams: Em.Route.extend({
-					route: '/streams',
-					index: Em.Route.extend({
-						route: '/',
-						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("Stream");
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.ListPage,
-								controller: C.Ctl.List
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.List.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					stream: Em.Route.extend({
-						route: '/:id',
-						connectOutlets: function (router, context) {
-							C.Ctl.Stream.load(context.id);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.Stream,
-								controller: C.Ctl.Stream
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.Stream.unload();
-						},
-						enter: C.interstitial.show
-					})
-				}),
-				queries: Em.Route.extend({
-					route: '/queries',
-					index: Em.Route.extend({
-						route: '/',
-						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("Query");
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.ListPage,
-								controller: C.Ctl.List
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.List.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					query: Em.Route.extend({
-						route: '/status/:id',
-						connectOutlets: function (router, context) {
-
-							var id = context.id.split(':');
-							C.Ctl.Query.load(id[0], id[1]);
-							
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.Query,
-								controller: C.Ctl.Query
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.Query.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					log: Em.Route.extend({
-						route: '/log/:id',
-						connectOutlets: function (router, context) {
-							var id = context.id.split(':');
-							C.Ctl.QueryLog.load(id[0], id[1]);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.QueryLog,
-								controller: C.Ctl.QueryLog
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.QueryLog.unload();
-						},
-						enter: C.interstitial.show
-					})
-				}),
-				datas: Em.Route.extend({
-					route: '/data',
-					index: Em.Route.extend({
-						route: '/',
-						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("Dataset");
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.ListPage,
-								controller: C.Ctl.List
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.List.unload();
-						},
-						enter: C.interstitial.show
-					}),
-					data: Em.Route.extend({
-						route: '/:id',
-						connectOutlets: function (router, context) {
-							C.Ctl.Dataset.load(context.id);
-							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.Dataset,
-								controller: C.Ctl.Dataset
-							});
-						},
-						navigateAway: function () {
-							C.Ctl.Dataset.unload();
-						},
-						enter: C.interstitial.show
-					})
-				})
-			})
-		})
-	});
-
-	$(function () {
+	C.Router.map(function() {
 
 		/*
-		 * Do version check.
+		 * The following define the routes in use by the application.
+		 * Templates are referred to by resource name and inserted automatically.
+		 * Models are determined by the dynamic route and loaded automatically.
 		 */
 
-		$.getJSON('/version', function (version) {
+		this.resource('App', { path: '/apps/:app_id' } );
 
-			if (version && version.current !== 'UNKNOWN') {
+		this.resource('Streams', { path: '/streams' });
+		this.resource('Stream', { path: '/streams/:stream_id' });
 
-				if (version.current !== version.newest) {
+		this.resource('Flows', { path: '/flows' });
+		this.resource('Flow', { path: '/flows/:flow_id' }, function() {
 
-					$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-						version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' + 
-						'Click here to download</a>.</div>').show();
+			this.resource('FlowStatus', { path: '/' }, function () {
 
-				}
+				// These live in FlowStatus so they can visually overlay the Flow.
+				this.route('Flowlet', { path: '/flowlets/:flowlet_id' });
+				this.route('Stream', { path: '/streams/:stream_id' });
 
-			}
+			});
+
+			this.route('Log', { path: '/log' });
+			this.route('History', { path: '/history' });
+
+		});
+
+		this.resource('Datasets', { path: '/datasets' });
+		this.resource('Dataset', { path: '/datasets/:dataset_id' });
+
+		this.resource('Procedures', { path: '/procedures' });
+		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
+
+			this.route('Status', { path: '/' });
+			this.route('Log', { path: '/log' });
 
 		});
 
 	});
+
+	/*
+	 * This is a basic route handler that others can extend from to reduce duplication.
+	 */
+	var basicRouter = Ember.Route.extend({
+		/*
+		 * Override to load the Controller once the Route has been activated.
+		 */
+		setupController: function(controller) {
+			controller.load();
+		},
+		/*
+		 * Override to unload the Controller once the Route has been deactivated.
+		 */
+		deactivate: function () {
+			this.controller.unload();
+		}
+	});
+
+	/*
+	 * The following define the actual route handlers.
+	 * Dashboard controller is the "Index" route handler, as specified in its source.
+	 */
+	$.extend(C, {
+
+		ApplicationRoute: basicRouter.extend(),
+
+		IndexRoute: basicRouter.extend(),
+
+		AppRoute: basicRouter.extend(),
+
+		StreamRoute: basicRouter.extend(),
+
+		FlowStatusRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Flow');
+			}
+		}),
+
+		FlowLogRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Flow');
+			}
+		}),
+
+		FlowHistoryRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Flow');
+			}
+		}),
+
+		FlowStatusFlowletRoute: basicRouter.extend({
+			model: function (params) {
+				// See FlowletController to see how we get the full Flowlet model.
+				return C.Flowlet.create({ 'name': params.flowlet_id });
+			}
+		}),
+
+		FlowStatusStreamRoute: basicRouter.extend(),
+
+		DatasetRoute: basicRouter.extend(),
+
+		ProcedureStatusRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Procedure');
+			}
+		}),
+
+		ProcedureLogRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Procedure');
+			}
+		})
+
+	});
+
+	/*
+	 * Pages for lists of Elements use the List controller.
+	 * @param {string} type ['App', 'Stream', 'Flow', ...]
+	 */
+	function getListHandler(type) {
+		return {
+			/*
+			 * Override to load the Controller once the Route has been activated.
+			 */
+			setupController: function  () {
+				this.controllerFor('List').load(type);
+			},
+			/*
+			 * Override the templates to be rendered and where.
+			 */
+			renderTemplate: function () {
+				/*
+				 * Render the List Page template (i.e. the header / time selector)
+				 */
+				this.render('list-page', {
+					controller: 'List'
+				});
+				/*
+				 * Render a list type partial into the List Page template
+				 */
+				this.render('_' + type.toLowerCase() + 's-list', {
+					controller: 'List',
+					into: 'list-page'
+				});
+			},
+			/*
+			 * Override to unload the Controller once the Route has been deactivated.
+			 */
+			deactivate: function () {
+				this.controllerFor('List').unload();
+			}
+		}
+	}
+
+	$.extend(C, {
+
+		StreamsRoute: Em.Route.extend(getListHandler('Stream')),
+
+		FlowsRoute: Em.Route.extend(getListHandler('Flow')),
+
+		DatasetsRoute: Em.Route.extend(getListHandler('Dataset')),
+
+		ProceduresRoute: Em.Route.extend(getListHandler('Procedure'))
+
+	});
+
 });

@@ -1,5 +1,5 @@
 /*
- * Flow Model
+ * Procedure Model
  */
 
 define([], function () {
@@ -7,14 +7,19 @@ define([], function () {
 	var Model = Em.Object.extend({
 
 		href: function () {
-			return '#/flows/' + this.get('id');
+			return '#/procedures/' + this.get('id');
 		}.property(),
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
 		instances: 0,
-		type: 'Flow',
-		plural: 'Flows',
+		type: 'Procedure',
+		plural: 'Procedures',
+		isRunning: function () {
+
+			return this.get('currentState') === 'RUNNING' ? true : false;
+
+		}.property('currentState').cacheable(false),
 		init: function() {
 			this._super();
 
@@ -28,6 +33,15 @@ define([], function () {
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
 		},
+		controlLabel: function () {
+
+			if (this.get('isRunning')) {
+				return 'Stop';
+			} else {
+				return 'Start';
+			}
+
+		}.property('currentState').cacheable(false),
 		addMetricName: function (name) {
 
 			this.get('metricNames')[name] = 1;
@@ -38,7 +52,7 @@ define([], function () {
 			var self = this;
 
 			var app_id = this.get('app'),
-				flow_id = this.get('name'),
+				procedure_id = this.get('name'),
 				start = C.__timeRange * -1;
 
 			var metrics = [];
@@ -55,7 +69,7 @@ define([], function () {
 
 			C.get('manager', {
 				method: 'status',
-				params: [app_id, flow_id, -1]
+				params: [app_id, procedure_id, -1, 'QUERY']
 			}, function (error, response) {
 
 				if (response.params) {
@@ -66,7 +80,7 @@ define([], function () {
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app_id, flow_id, metrics, start, undefined, 'FLOW_LEVEL']
+				params: [app_id, procedure_id, metrics, start, undefined, 'FLOW_LEVEL']
 			}, function (error, response) {
 
 				if (!response.params) {
@@ -102,14 +116,6 @@ define([], function () {
 			}
 			return arr;
 		}.property('meta'),
-		isRunning: function() {
-
-			if (this.currentState !== 'RUNNING') {
-				return false;
-			}
-			return true;
-
-		}.property('currentState'),
 		started: function () {
 			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
 		}.property('timeTrigger'),
@@ -120,7 +126,7 @@ define([], function () {
 
 			if (this.currentState === 'RUNNING' ||
 				this.currentState === 'PAUSING') {
-				return 'btn-pause';
+				return 'btn-stop';
 			} else {
 				return 'btn-start';
 			}
@@ -151,7 +157,7 @@ define([], function () {
 				'stopped': 'Start',
 				'stopping': 'Start',
 				'starting': 'Start',
-				'running': 'Pause',
+				'running': 'Stop',
 				'adjusting': '...',
 				'draining': '...',
 				'failed': 'Start'
@@ -160,7 +166,7 @@ define([], function () {
 	});
 
 	Model.reopenClass({
-		type: 'Flow',
+		type: 'Procedure',
 		kind: 'Model',
 		find: function(model_id) {
 
@@ -168,28 +174,26 @@ define([], function () {
 
 			model_id = model_id.split(':');
 			app_id = model_id[0];
-			flow_id = model_id[1];
+			procedure_id = model_id[1];
 
-			C.get('manager', {
-				method: 'getFlowDefinition',
-				params: [app_id, flow_id]
+			C.get('metadata', {
+				method: 'getQuery',
+				params: ['Query', {
+					application: app_id,
+					id: procedure_id
+				}]
 			}, function (error, response) {
-
-				if (error || !response.params) {
-					promise.reject(error);
-					return;
-				}
 
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;
-				response.params.type = 'Flow';
+				response.params.type = 'Procedure';
 				response.params.applicationId = app_id;
 
-				var model = C.Flow.create(response.params);
+				var model = C.Procedure.create(response.params);
 
 				C.get('manager', {
 					method: 'status',
-					params: [app_id, flow_id, -1]
+					params: [app_id, procedure_id, -1, 'QUERY']
 				}, function (error, response) {
 
 					if (response.params) {

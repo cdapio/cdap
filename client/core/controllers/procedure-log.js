@@ -1,16 +1,18 @@
 /*
- * Flow Log Controller
+ * Procedure Log Controller
  */
 
 define([], function () {
 
 	var Controller = Em.ArrayProxy.extend({
 
-		load: function () {
+		load: function (app, id) {
 
 			function resize () {
 				$('#logView').css({height: ($(window).height() - 240) + 'px'});
 			}
+
+			resize();
 
 			var goneOver = false;
 			var app = this.get('model').app;
@@ -18,12 +20,22 @@ define([], function () {
 
 			function logInterval () {
 
+				if (C.currentPath !== 'Procedure.Log') {
+					clearInterval(self.interval);
+					return;
+				}
+
 				resize();
 
 				C.get('monitor', {
 					method: 'getLog',
 					params: [app, id, 1024 * 10]
 				}, function (error, response) {
+
+					if (C.currentPath !== 'Procedure.Log') {
+						clearInterval(self.interval);
+						return;
+					}
 
 					if (error) {
 
@@ -46,27 +58,29 @@ define([], function () {
 					$('#logView').html(response);
 					var textarea = $('#logView');
 
-					// Content exceeds height
-					if (textarea[0].scrollHeight > textarea.height()) {
+					setTimeout(function () {
 
-						if (!goneOver) {
-							textarea.scrollTop(textarea[0].scrollHeight);
-							goneOver = true;
+						// Content exceeds height
+						if (textarea[0].scrollHeight > textarea.height()) {
+
+							if (!goneOver) {
+								textarea.scrollTop(textarea[0].scrollHeight);
+								goneOver = true;
+							}
+
+							// Scrolled off the bottom
+							if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
+								textarea.scrollTop(textarea[0].scrollHeight);
+							}
+
 						}
 
-						// Scrolled off the bottom
-						if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
-							textarea.scrollTop(textarea[0].scrollHeight);
-						}
-
-					}
+					}, C.EMBEDDABLE_DELAY);
 
 				});
 			}
 
-			setTimeout(function () {
-				logInterval();
-			}, C.EMBEDDABLE_DELAY);
+			logInterval();
 
 			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
 
@@ -82,7 +96,7 @@ define([], function () {
 	});
 
 	Controller.reopenClass({
-		type: 'FlowLog',
+		type: 'ProcedureLog',
 		kind: 'Controller'
 	});
 

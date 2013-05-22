@@ -1,15 +1,11 @@
-//
-// Flow Run Model
-//
+/*
+ * Flow Run Model
+ */
 
 define([], function () {
-	return Em.Object.extend({
-		href: function () {
-			var flow = C.Ctl.Flow.get('current');
-			if (flow) {
-				return '#/flow/' + flow.get('meta').app + '/' + flow.get('meta').name + '/' + this.get('runId');
-			}
-		}.property(),
+
+	var Model = Em.Object.extend({
+
 		elementId: function () {
 			return 'run-' + this.get('rid');
 		}.property(),
@@ -34,4 +30,12 @@ define([], function () {
 			}[state];
 		}.property('endStatus')
 	});
+
+	Model.reopenClass({
+		type: 'Run',
+		kind: 'Model'
+	});
+
+	return Model;
+
 });

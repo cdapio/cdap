@@ -1,9 +1,11 @@
-//
-// App Model
-//
+/*
+ * App Model
+ */
 
 define([], function () {
-	return Em.Object.extend({
+
+	var Model = Em.Object.extend({
+
 		href: function () {
 			return '#/apps/' + this.get('id');
 		}.property(),
@@ -46,13 +48,13 @@ define([], function () {
 				}
 			}
 			if (!metrics.length) {
-				
+
 				//C.debug('Not tracking any metrics for Application ' + id);
 
 				this.set('__loadingData', false);
 				return;
 			}
-				
+
 			return ['monitor', {
 				method: 'getTimeSeries',
 				params: [id, null, metrics, start, undefined, 'APPLICATION_LEVEL']
@@ -95,4 +97,30 @@ define([], function () {
 			}];
 		}
 	});
+
+	Model.reopenClass({
+		type: 'App',
+		kind: 'Model',
+		find: function(model_id) {
+			var promise = Ember.Deferred.create();
+
+			C.get('metadata', {
+				method: 'getApplication',
+				params: ['Application', {
+					id: model_id
+				}]
+			}, function (error, response) {
+
+				var model = C.App.create(response.params);
+
+				promise.resolve(model);
+
+			});
+
+			return promise;
+		}
+	});
+
+	return Model;
+
 });

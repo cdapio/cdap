@@ -128,7 +128,7 @@ a, a:visited {
 	background-image: -ms-linear-gradient(120deg, #031e35, #1d375e);
 	background-image: linear-gradient(120deg, #031e35, #1d375e);
 }
-#nav span {
+#product-name {
 	margin-bottom: 50px;
 	display: block;
 	color: #fff;
@@ -138,6 +138,9 @@ a, a:visited {
 	letter-spacing: 0.1em;
 	padding-left: 45px;
 	line-height: 8px;
+}
+#product-name:hover {
+	text-decoration: none;
 }
 #nav ul li {
 	list-style: none;
@@ -317,11 +320,11 @@ a, a:visited {
 	padding-right: 24px;
 	padding-left: 14px;
 	background-image: url(../img/breadcrumb-split.png);
-	
+
 	background-repeat: no-repeat;
 	text-decoration: none;
 	line-height: 36px;
-	
+
 	background-position: right 0px;
 
 	letter-spacing: 0.08em;
@@ -413,7 +416,7 @@ h1 span {
 .panel table tr {
 
 }
-.panel table th, .popup-container table th, 
+.panel table th, .popup-container table th,
 	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
 	 {
 	border-top: 0;
@@ -719,7 +722,7 @@ input[type="text"] {
 	text-decoration: none;
 }
 .dash-app-resource-health {
-	
+
 
 	border-right: 1px solid #EEE !important;
 	padding-left: 16px !important;
@@ -803,7 +806,7 @@ input[type="text"] {
 	font-size: 32px;
 	letter-spacing: 0.04em;
 	font-family: "HelveticaNeueW01-57Cn";
-	
+
 }
 .dash-app-sub-health-value span {
 	font-size: 0.4em;
@@ -874,15 +877,14 @@ input[type="text"] {
 	letter-spacing: 0.1em;
 	border-radius: 2px;
 }
-.nav-pills > .active > a, .nav-pills > .active > a:hover{
+.nav-pills > li > .active, .nav-pills > li > .active:hover {
 	background-color: #8C9495;
 	border: 2px solid #A7B0B1;
-	/*
-	box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.2);
-	*/
+	color: #fff;
 	margin: 0px 2px;
 	border-radius: 3px;
 	line-height: 11px;
+	padding: 7px 10px;
 }
 .nav-pills > li > a:hover {
 	background-color: #41B0D1;
@@ -1212,7 +1214,11 @@ a strong {
 	bottom: 0px;
 	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
-	display: none;
+}
+.popup-full {
+	top: 200px;
+	left: 224px;
+
 }
 .popup-container {
 	width: 706px;
@@ -1359,7 +1365,7 @@ a strong {
 	background-repeat: no-repeat;
 }
 #flowlet-popup-processed {
-	
+
 	display: none;
 }
 #flowlet-popup-outputs {
@@ -1417,7 +1423,7 @@ a strong {
 }
 #flowlet-popup-tab-content .input-queue {
 	background-color: #41B0D1;
-	margin-left: 300px;	
+	margin-left: 300px;
 	height: 100px;
 }
 
@@ -1496,6 +1502,7 @@ a strong {
 	background-color: #353d3e;
 	color: #fff;
 	border-color: #222;
+	min-height: 300px;
 }
 .query-response {
 	height: 540px;
@@ -1581,7 +1588,7 @@ ol {
 	padding: 42px 36px 0px 70px;
 	float: left;
 }
-.window { 
+.window {
 
 	color: #fff;
 	text-transform: uppercase;
@@ -1593,7 +1600,7 @@ ol {
 	height: 104px;
 
 	text-align:center;
-	z-index:20; 
+	z-index:20;
 
 	font-family:helvetica;
 	font-size:12px;
@@ -1608,7 +1615,7 @@ ol {
 
 }
 .window-1 {
-	margin-top: 72px;
+	margin-top: 74px;
 }
 .window-2 {
 	margin-top: 154px;
@@ -1627,20 +1634,40 @@ ol {
 }
 
 .window-input {
-	height: 54px;
+
+	width: 212px;
+	height: 100px;
+
+	content: "";
 	position: absolute;
-	background-image: url(../img/flowlet-input.png);
-	background-repeat: no-repeat;
-	
-	top: 20px;
-	left: -64px;
-	line-height: 55px;
-	text-align: center;
-	padding-right: 10px;
-	width: 82px;
-	font-size: 20px;
-	font-family: "HelveticaNeueW01-57Cn";
+	top: 17px;
+	left: -55px;
+	width: 60px;
+	height: 60px;
+	border: 2px solid white;
+	-moz-border-radius: 50px 50px 0 50px;
+	border-radius: 50px 50px 0 50px;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-ms-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	transform: rotate(-45deg);
+	background-color: #0f2647;
+
 }
+
+.window-input.bad {
+	background-color: #e76363;
+}
+.window-input-label {
+	font-size: 19px;
+	font-family: "HelveticaNeueW01-57Cn";
+	position: absolute;
+	top: 37px;
+	left: -50px;
+	width: 52px;
+}
+
 .window-icon {
 	height: 32px;
 	width: 32px;
@@ -1684,7 +1711,7 @@ ol {
 	border-color: #fff;
 }
 .window.source .window-input {
-	background-image: url(../img/stream-input.png);
+	background-color: #7daf7c;
 }
 .window.source .window-icon {
 	background-position: 0px 32px;

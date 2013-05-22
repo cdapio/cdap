@@ -1,134 +1,167 @@
-//
-// App Status Controller
-//
+/*
+ * App Controller
+ */
 
 define([], function () {
-	
-	return Em.Object.create({
-		types: Em.Object.create(),
-		load: function (app) {
+
+	var Controller = Em.Controller.extend({
+
+		elements: Em.Object.create(),
+		__remaining: -1,
+
+		load: function () {
+
+			/*
+			 * This is decremented to know when loading is complete.
+			 * There are 4 things to load. See __loaded below.
+			 */
+			this.__remaining = 3;
+
+			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 
 			var self = this;
-			this.__remain = 3;
+			var model = this.get('model');
 
-			C.get('metadata', {
-				method: 'getApplication',
-				params: ['Application', {
-					id: app
-				}]
-			}, function (error, response) {
+			/*
+			 * Load Streams
+			 */
+			C.Api.getElements('Stream', function (objects) {
 
-				if (error) {
-					C.interstitial.label(error);
-					return;
-				}
+				self.get('elements.Stream').pushObjects(objects);
+				self.__loaded();
 
-				if (response.params.exists === false) {
-					C.interstitial.label('Application not found.', {
-						action: 'Dashboard',
-						click: function () {
-							C.router.set('location', '');
+			}, model.id);
+
+			/*
+			 * Load Flows
+			 */
+			C.Api.getElements('Flow', function (objects) {
+
+				self.get('elements.Flow').pushObjects(objects);
+				self.__loaded();
+
+			}, model.id);
+
+			/*
+			 * Load Datasets
+			 */
+			C.Api.getElements('Dataset', function (objects) {
+
+				self.get('elements.Dataset').pushObjects(objects);
+				self.__loaded();
+
+			}, model.id);
+
+			/*
+			 * Load Procedures
+			 */
+			C.Api.getElements('Procedure', function (objects) {
+
+				self.get('elements.Procedure').pushObjects(objects);
+				self.__loaded();
+
+			}, model.id);
+
+		},
+
+		__loaded: function () {
+
+			if (!(--this.__remaining)) {
+
+				var self = this;
+				/*
+				 * Give the chart Embeddables 100ms to configure
+				 * themselves before updating.
+				 */
+				setTimeout(function () {
+					self.updateStats();
+				}, C.EMBEDDABLE_DELAY);
+
+				this.interval = setInterval(function () {
+					self.updateStats();
+				}, C.POLLING_INTERVAL);
+
+			}
+
+		},
+
+		unload: function () {
+
+			clearInterval(this.interval);
+			this.set('elements', Em.Object.create());
+
+		},
+
+		updateStats: function () {
+
+			var self = this, types = ['Flow', 'Stream', 'Procedure', 'Dataset'];
+
+			if (this.get('model')) {
+
+				C.get.apply(C, this.get('model').getUpdateRequest());
+
+				for (var i = 0; i < types.length; i ++) {
+
+					var content = this.get('elements').get(types[i]).get('content');
+					for (var j = 0; j < content.length; j ++) {
+						if (typeof content[j].getUpdateRequest === 'function') {
+							C.get.apply(C, content[j].getUpdateRequest());
 						}
-					});
-					self.__remain = Infinity;
-					return;
-				}
-
-				self.set('current', C.Mdl.Application.create(response.params));
-
-			});
-
-			self.set('types.Flow', Em.ArrayProxy.create({content: []}));
-			self.set('types.Stream', Em.ArrayProxy.create({content: []}));
-			self.set('types.Query', Em.ArrayProxy.create({content: []}));
-			self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
-
-			C.Ctl.List.getObjects('Flow', function (objects) {
-				if (!self.get('types.Flow')) {
-					self.set('types.Flow', Em.ArrayProxy.create({content: []}));
-				}
-
-				// ** HAX ** //
-				var i = objects.length;
-				var flows = [], queries = [];
-				while(i--) {
-					if (objects[i].type === 1) {
-						queries.push(objects[i]);
-					} else {
-						flows.push(objects[i]);
 					}
 				}
 
-				self.get('types.Flow').pushObjects(flows);
-				self.__loaded();
 
-			}, app);
-
-			C.Ctl.List.getObjects('Query', function (objects) {
-				if (!self.get('types.Query')) {
-					self.set('types.Query', Em.ArrayProxy.create({content: []}));
+				var storage = 0;
+				var streams = this.get('elements.Stream').content;
+				for (var i = 0; i < streams.length; i ++) {
+					storage += streams[i].get('storage');
 				}
-				self.get('types.Query').pushObjects(objects);
-				self.__loaded();
-			}, app);
-
-			C.Ctl.List.getObjects('Stream', function (objects) {
-				if (!self.get('types.Stream')) {
-					self.set('types.Stream', Em.ArrayProxy.create({content: []}));
+				var datasets = this.get('elements.Dataset').content;
+				for (var i = 0; i < datasets.length; i ++) {
+					storage += datasets[i].get('storage');
 				}
-				self.get('types.Stream').pushObjects(objects);
-				self.__loaded();
-			}, app);
 
-			C.Ctl.List.getObjects('Dataset', function (objects) {
-				if (!self.get('types.Dataset')) {
-					self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
-				}
-				self.get('types.Dataset').pushObjects(objects);
-				self.__loaded();
-			}, app);
+				self.get('model').set('storageLabel', C.Util.bytes(storage)[0]);
+				self.get('model').set('storageUnits', C.Util.bytes(storage)[1]);
 
-		},
-		__remain: -1,
-		__loaded: function () {
-
-			if (!(--this.__remain)) {
-				C.interstitial.hide();
-				this.getStats();
 			}
 
 		},
 
 		startAllFlows: function (done) {
 
-			var flows = this.get('types.Flow').content;
-			var flowCount = flows.length;
-			var i = flowCount;
+			var flows = this.get('elements.Flow').content;
+			var toSend = toReceive = flows.length;
 
-			if (!flowCount) {
+			if (!toSend) {
 
 				done();
 
 			} else {
 
-				while(i--) {
+				var requested = false;
 
-					flows[i].set('currentState', 'STARTING');
+				while(toSend--) {
+
+					flows[toSend].set('currentState', 'STARTING');
 
 					C.socket.request('manager', {
 						method: 'start',
-						params: [flows[i].application, flows[i].id, -1, 'FLOW']
+						params: [flows[toSend].app, flows[toSend].name, -1, 'FLOW']
 					}, function (error, response, flow) {
 
 						flow.set('currentState', 'RUNNING');
 
-						if (!--flowCount) {
+						if (!--toReceive) {
 
 							done();
 
 						}
 
-					}, flows[i]);
+					}, flows[toSend]);
 				}
 			}
 
@@ -136,40 +169,39 @@ define([], function () {
 
 		stopAllFlows: function (done) {
 
-			var flows = this.get('types.Flow').content;
-			var flowCount = flows.length;
-			var i = flowCount;
+			var flows = this.get('elements.Flow').content;
+			var toSend = toReceive = flows.length;
 
-			if (!flowCount) {
+			if (!toSend) {
 
 				done();
 
 			} else {
-				
+
 				var requested = false;
 
-				while(i--) {
+				while(toSend--) {
 
-					if (flows[i].get('currentState') !== 'STOPPED') {
+					if (flows[toSend].get('currentState') !== 'STOPPED') {
 
 						requested = true;
 
-						flows[i].set('currentState', 'STOPPING');
+						flows[toSend].set('currentState', 'STOPPING');
 
 						C.socket.request('manager', {
 							method: 'stop',
-							params: [flows[i].application, flows[i].id, -1, 'FLOW']
+							params: [flows[toSend].app, flows[toSend].name, -1, 'FLOW']
 						}, function (error, response, flow) {
 
 							flow.set('currentState', 'STOPPED');
 
-							if (!--flowCount) {
+							if (!--toReceive) {
 
 								done();
 
 							}
 
-						}, flows[i]);
+						}, flows[toSend]);
 					}
 				}
 
@@ -181,124 +213,232 @@ define([], function () {
 
 		},
 
-		startAllQueries: function (done) {
+		startAllProcedures: function (done) {
 
-			var queries = this.get('types.Query').content;
-			var queryCount = queries.length;
-			var i = queryCount;
+			var procedures = this.get('elements.Procedure').content;
+			var toSend = toReceive = procedures.length;
 
-			if (!queryCount) {
+			if (!toSend) {
 
 				done();
 
 			} else {
 
-				while(i--) {
+				var requested = false;
 
-					queries[i].set('currentState', 'STARTING');
+				while(toSend--) {
+
+					procedures[toSend].set('currentState', 'STARTING');
 
 					C.socket.request('manager', {
 						method: 'start',
-						params: [queries[i].application, queries[i].id, -1, 'QUERY']
-					}, function (error, response, query) {
-						
-						query.set('currentState', 'RUNNING');
+						params: [procedures[toSend].app, procedures[toSend].name, -1, 'FLOW']
+					}, function (error, response, flow) {
 
-						if (!--queryCount) {
+						flow.set('currentState', 'RUNNING');
+
+						if (!--toReceive) {
 
 							done();
 
 						}
 
-					}, queries[i]);
-
+					}, procedures[toSend]);
 				}
 			}
 
 		},
 
-		stopAllQueries: function (done) {
+		stopAllProcedures: function (done) {
 
-			var queries = this.get('types.Query').content;
-			var queryCount = queries.length;
-			var i = queryCount;
+			var procedures = this.get('elements.Procedure').content;
+			var toSend = toReceive = procedures.length;
 
-			if (!queryCount) {
+			if (!toSend) {
 
 				done();
 
 			} else {
 
-				while(i--) {
+				var requested = false;
 
-					queries[i].set('currentState', 'STOPPING');
+				while(toSend--) {
 
-					C.socket.request('manager', {
-						method: 'stop',
-						params: [queries[i].application, queries[i].id, -1, 'QUERY']
-					}, function (error, response, query) {
-						
-						query.set('currentState', 'STOPPED');
+					if (procedures[toSend].get('currentState') !== 'STOPPED') {
 
-						if (!--queryCount) {
+						requested = true;
 
-							done();
+						procedures[toSend].set('currentState', 'STOPPING');
 
-						}
+						C.socket.request('manager', {
+							method: 'stop',
+							params: [procedures[toSend].app, procedures[toSend].name, -1, 'QUERY']
+						}, function (error, response, procedure) {
 
-					}, queries[i]);
+							procedure.set('currentState', 'STOPPED');
 
-				}
-			}
+							if (!--toReceive) {
 
-		},
-		__timeout: null,
-		getStats: function () {
+								done();
 
-			var self = this, types = ['Flow', 'Stream', 'Query', 'Dataset'];
+							}
 
-			if (this.get('current')) {
-
-				C.get.apply(C, this.get('current').getUpdateRequest());
-				
-				for (var i = 0; i < types.length; i ++) {
-
-					var content = this.get('types').get(types[i]).get('content');
-					for (var j = 0; j < content.length; j ++) {
-						if (typeof content[j].getUpdateRequest === 'function') {
-							C.get.apply(C, content[j].getUpdateRequest());
-						}
+						}, procedures[toSend]);
 					}
 				}
-				
 
-				var storage = 0;
-				var streams = this.get('types.Stream').content;
-				for (var i = 0; i < streams.length; i ++) {
-					storage += streams[i].get('storage');
+				if (!requested) {
+					done();
 				}
-				var datasets = this.get('types.Dataset').content;
-				for (var i = 0; i < datasets.length; i ++) {
-					storage += datasets[i].get('storage');
-				}
-
-				self.get('current').set('storageLabel', C.util.bytes(storage)[0]);
-				self.get('current').set('storageUnits', C.util.bytes(storage)[1]);
 
 			}
 
-			this.__timeout = setTimeout(function () {
-				self.getStats();
-			}, 1000);
+		},
+
+		/*
+		 * Application maintenance features
+		 */
+
+		delete: function () {
+
+			C.Modal.show(
+				"Delete Application",
+				"Are you sure you would like to delete this Application? This action is not reversible.",
+				$.proxy(function (event) {
+
+					var app = this.get('model');
+
+					C.get('metadata', {
+						method: 'deleteApplication',
+						params: ['Application', {
+							id: app.id
+						}]
+					}, function (error, response) {
+
+						C.Modal.hide(function () {
+
+							if (error) {
+								C.Modal.show('Error Deleting', error.message);
+							} else {
+								window.history.go(-1);
+							}
+
+						});
+
+					});
+				}, this));
 
 		},
 
-		unload: function () {
-			
-			clearTimeout(this.__timeout);
-			this.set('types', Em.Object.create());
+		/*
+		 * Application promotion features
+		 */
+
+		promotePrompt: function () {
+
+			var view = Em.View.create({
+				controller: this,
+				model: this.get('model'),
+				templateName: 'promote',
+				classNames: ['popup-modal', 'popup-full'],
+				credentialBinding: 'C.Env.credential'
+			});
+
+			view.append();
+			this.promoteReload();
+
+		},
+
+		promoteReload: function () {
+
+			this.set('loading', true);
+
+			var self = this;
+			self.set('destinations', []);
+			self.set('message', null);
+			self.set('network', false);
+
+			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
+				function (result, status) {
+
+				$.getJSON('/destinations', function (result, status) {
+
+					if (result === 'network') {
+
+						self.set('network', true);
+
+					} else {
+
+						var destinations = [];
+
+						for (var i = 0; i < result.length; i ++) {
+
+							destinations.push({
+								id: result[i].vpc_name,
+								name: result[i].vpc_label + ' (' + result[i].vpc_name + '.continuuity.net)'
+							});
+
+						}
+
+						self.set('destinations', destinations);
+
+					}
+
+					self.set('loading', false);
+
+				});
+
+			});
+
+		}.observes('C.Env.credential'),
+
+		promoteSubmit: function () {
+
+			this.set("pushing", true);
+			var model = this.get('model');
+			var self = this;
+
+			var destination = self.get('destination');
+			if (!destination) {
+				return;
+			}
+
+			destination += '.continuuity.net';
+
+			C.get('far', {
+				method: 'promote',
+				params: [model.id, destination, C.Env.get('credential')]
+			}, function (error, response) {
+
+				if (error) {
+
+					self.set('finished', 'Error');
+					if (error.name) {
+						self.set('finishedMessage', error.name + ': ' + error.message);
+					} else {
+						self.set('finishedMessage', response.message || JSON.stringify(error));
+					}
+
+				} else {
+
+					self.set('finished', 'Success');
+					self.set('finishedMessage', 'Successfully pushed to ' + destination + '.');
+					self.set('finishedLink', 'https://' + destination + '/' + window.location.hash);
+				}
+
+				self.set("pushing", false);
+
+			});
 
 		}
+
 	});
+
+	Controller.reopenClass({
+		type: 'App',
+		kind: 'Controller'
+	});
+
+	return Controller;
 
 });
