@@ -1,3 +1,6 @@
+/*
+ * Drop Zone Embeddable
+ */
 
 define([
 	], function () {

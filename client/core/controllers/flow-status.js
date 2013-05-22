@@ -1,6 +1,6 @@
-//
-// Flow Controller.
-//
+/*
+ * Flow Status Controller
+ */
 
 define([], function () {
 
@@ -29,7 +29,7 @@ define([], function () {
 
 			this.interval = setInterval(function () {
 				self.updateStats();
-			}, 1000);
+			}, C.POLLING_INTERVAL);
 
 			/*
 			 * Give the chart Embeddables 100ms to configure
@@ -37,7 +37,7 @@ define([], function () {
 			 */
 			setTimeout(function () {
 				self.updateStats();
-			}, 100);
+			}, C.EMBEDDABLE_DELAY);
 
 		},
 
@@ -366,7 +366,6 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			self.__pending = true;
 			model.set('currentState', 'STARTING');
 
 			C.get('manager', {
@@ -379,7 +378,6 @@ define([], function () {
 				} else {
 					model.set('lastStarted', new Date().getTime() / 1000);
 				}
-				self.__pending = false;
 
 			});
 
@@ -389,7 +387,6 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			self.__pending = true;
 			model.set('currentState', 'STOPPING');
 
 			C.get('manager', {
@@ -400,7 +397,6 @@ define([], function () {
 				if (error) {
 					C.Modal.show(error.name, error.message);
 				}
-				self.__pending = false;
 
 			});
 

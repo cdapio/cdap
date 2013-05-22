@@ -1,6 +1,6 @@
-//
-// Dataset Model
-//
+/*
+ * Dataset Model
+ */
 
 define([], function () {
 

@@ -1,6 +1,6 @@
-//
-// Stream Controller
-//
+/*
+ * Stream Controller
+ */
 
 define([], function () {
 
@@ -13,7 +13,7 @@ define([], function () {
 
 			this.interval = setInterval(function () {
 				self.updateStats();
-			}, 1000);
+			}, C.POLLING_INTERVAL);
 
 			/*
 			 * Give the chart Embeddables 100ms to configure
@@ -21,7 +21,7 @@ define([], function () {
 			 */
 			setTimeout(function () {
 				self.updateStats();
-			}, 100);
+			}, C.EMBEDDABLE_DELAY);
 
 		},
 

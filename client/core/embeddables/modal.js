@@ -1,4 +1,6 @@
-
+/*
+ * Modal Dialogue Embeddable
+ */
 
 define([
 	'lib/text!../partials/modal.html'

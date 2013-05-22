@@ -1,3 +1,6 @@
+/*
+ * Flow DAG Node Embeddable
+ */
 
 define([
 	'lib/text!../partials/dagnode.html'

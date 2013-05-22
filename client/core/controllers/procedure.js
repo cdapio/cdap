@@ -1,6 +1,6 @@
-//
-// Query Controller.
-//
+/*
+ * Procedure Controller
+ */
 
 define([], function () {
 
@@ -13,7 +13,7 @@ define([], function () {
 
 			this.interval = setInterval(function () {
 				self.updateStats();
-			}, 1000);
+			}, C.METRICS_INTERVAL);
 
 			/*
 			 * Give the chart Embeddables 100ms to configure
@@ -21,7 +21,7 @@ define([], function () {
 			 */
 			setTimeout(function () {
 				self.updateStats();
-			}, 100);
+			}, C.EMBEDDABLE_DELAY);
 
 		},
 
@@ -42,7 +42,6 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			self.__pending = true;
 			model.set('currentState', 'STARTING');
 
 			C.get('manager', {
@@ -50,7 +49,6 @@ define([], function () {
 				params: [app, id, -1, 'QUERY']
 			}, function (error, response) {
 
-				self.__pending = false;
 				model.set('lastStarted', new Date().getTime() / 1000);
 
 			});
@@ -61,7 +59,6 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			self.__pending = true;
 			model.set('currentState', 'STOPPING');
 
 			C.get('manager', {
@@ -69,7 +66,6 @@ define([], function () {
 				params: [app, id, -1, 'QUERY']
 			}, function (error, response) {
 
-				self.__pending = false;
 
 			});
 

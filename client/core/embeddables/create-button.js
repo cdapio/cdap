@@ -1,6 +1,6 @@
-//
-// Create Button View
-//
+/*
+ * Create Button Embeddable
+ */
 
 define([], function () {
 

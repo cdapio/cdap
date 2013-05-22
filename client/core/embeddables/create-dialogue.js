@@ -1,6 +1,6 @@
-//
-// Create App, Stream, Dataset
-//
+/*
+ * Create Dialogue Embeddable
+ */
 
 define([
 	'lib/text!../partials/upload.html'

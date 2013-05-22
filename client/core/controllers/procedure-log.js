@@ -1,6 +1,6 @@
-//
-// Procedure Log Controller.
-//
+/*
+ * Procedure Log Controller
+ */
 
 define([], function () {
 
@@ -75,14 +75,14 @@ define([], function () {
 
 						}
 
-					}, 100);
+					}, C.EMBEDDABLE_DELAY);
 
 				});
 			}
 
 			logInterval();
 
-			this.interval = setInterval(logInterval, 1000);
+			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
 
 		},
 

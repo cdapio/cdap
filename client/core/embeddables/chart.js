@@ -1,3 +1,6 @@
+/*
+ * Chart Embeddable
+ */
 
 define([], function () {
 

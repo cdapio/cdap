@@ -1,6 +1,6 @@
-//
-// Procedure Model
-//
+/*
+ * Procedure Model
+ */
 
 define([], function () {
 

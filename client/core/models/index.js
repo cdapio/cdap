@@ -1,5 +1,8 @@
+/*
+ * Models Index
+ */
 
-define(['models/app', 'models/definition', 'models/flow', 'models/flowlet',
+define(['models/app', 'models/flow', 'models/flowlet',
 	'models/run', 'models/stream', 'models/dataset', 'models/procedure'],
 	function () {
 

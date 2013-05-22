@@ -1,6 +1,6 @@
-//
-// Flowlet Model
-//
+/*
+ * Flowlet Model
+ */
 
 define([], function () {
 

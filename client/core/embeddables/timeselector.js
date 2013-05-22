@@ -1,6 +1,6 @@
-//
-// Time Selector View
-//
+/*
+ * Time Selector Embeddable
+ */
 
 define([
 	'lib/text!../partials/timeselector.html'

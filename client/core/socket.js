@@ -1,3 +1,6 @@
+/*
+ * Socket.IO
+ */
 
 define([], function () {
 

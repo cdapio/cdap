@@ -1,6 +1,6 @@
-//
-// Flowlet Controller
-//
+/*
+ * Flowlet Controller
+ */
 
 define([], function () {
 
@@ -34,7 +34,7 @@ define([], function () {
 			 * Setup connections based on the Flow.
 			 */
 			var cx = flow.connections;
-			function find_contributors(direction, flowlet, input) {
+			function findContributors(direction, flowlet, input) {
 				var res = [];
 				var opp = 'from';
 				if (direction === 'from') {
@@ -53,29 +53,22 @@ define([], function () {
 				inputs = [], outputs = [];
 
 			/*
-			 * Find inputs.
+			 * Find inputs and outputs.
 			 */
 			for (var i in streams) {
 				if (streams[i].second === 'IN') {
 					inputs.push({
 						'name': i,
-						'contrib': find_contributors('to', model.name, i)
+						'contrib': findContributors('to', model.name, i)
+					});
+				} else if (streams[i].second === 'OUT') {
+					outputs.push({
+						'name': i,
+						'contrib': findContributors('from', model.name, i)
 					});
 				}
 			}
 			this.get('model').set('inputs', inputs);
-
-			/*
-			 * Find outputs.
-			 */
-			for (var i in streams) {
-				if (streams[i].second === 'OUT') {
-					outputs.push({
-						'name': i,
-						'contrib': find_contributors('from', model.name, i)
-					});
-				}
-			}
 			this.get('model').set('outputs', outputs);
 
 			/*
@@ -90,7 +83,7 @@ define([], function () {
 			var self = this;
 			setTimeout(function () {
 				self.getStats();
-			}, 100);
+			}, C.EMBEDDABLE_DELAY);
 
 		},
 
@@ -108,7 +101,7 @@ define([], function () {
 
 			self.__timeout = setTimeout(function () {
 				self.getStats(self);
-			}, 1000);
+			}, C.POLLING_INTERVAL);
 
 		},
 
@@ -152,11 +145,7 @@ define([], function () {
 		},
 		navigate: function (event) {
 
-			var id = $(event.target).attr('flowlet-id');
-			var flowlet = this.get('controllers').get('FlowStatus').get_flowlet(id);
-
-			this.close();
-			this.show(flowlet);
+			// TODO
 
 		},
 		addOneInstance: function () {

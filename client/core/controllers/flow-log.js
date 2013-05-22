@@ -1,6 +1,6 @@
-//
-// Flow Log Controller.
-//
+/*
+ * Flow Log Controller
+ */
 
 define([], function () {
 
@@ -46,31 +46,29 @@ define([], function () {
 					$('#logView').html(response);
 					var textarea = $('#logView');
 
-					setTimeout(function () {
+					// Content exceeds height
+					if (textarea[0].scrollHeight > textarea.height()) {
 
-						// Content exceeds height
-						if (textarea[0].scrollHeight > textarea.height()) {
-
-							if (!goneOver) {
-								textarea.scrollTop(textarea[0].scrollHeight);
-								goneOver = true;
-							}
-
-							// Scrolled off the bottom
-							if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
-								textarea.scrollTop(textarea[0].scrollHeight);
-							}
-
+						if (!goneOver) {
+							textarea.scrollTop(textarea[0].scrollHeight);
+							goneOver = true;
 						}
 
-					}, 100);
+						// Scrolled off the bottom
+						if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
+							textarea.scrollTop(textarea[0].scrollHeight);
+						}
+
+					}
 
 				});
 			}
 
-			logInterval();
+			setTimeout(function () {
+				logInterval();
+			}, C.EMBEDDABLE_DELAY);
 
-			this.interval = setInterval(logInterval, 1000);
+			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
 
 		},
 
