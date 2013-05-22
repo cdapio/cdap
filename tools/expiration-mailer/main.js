@@ -126,19 +126,21 @@ var remaining = days.length - 1;
 var today = new Date();
 logger.trace('Searching for today\'s recipients... ' + today.toString());
 
+var pathName = '/opt/continuuity/data';
+
 for (var i = 0; i < days.length; i ++) {
 
 	var fileName = 'vpcExpirationReport-' + (today.getYear() + 1900) + (today.getMonth() < 9 ? '0' : '') +
 		(today.getMonth() + 1) + today.getDate() + '_' + days[i];
 
-	if (fs.existsSync(__dirname + '/' + fileName)) {
+	if (fs.existsSync(pathName + '/' + fileName)) {
 
 		(function () {
 
 			var entries = [];
 			var day = days[i];
 
-			csv().from.stream(fs.createReadStream(__dirname + '/' + fileName))
+			csv().from.stream(fs.createReadStream(pathName + '/' + fileName))
 			.on('record', function(row,index){
 				entries.push(row);
 			}).on('end', function (count) {
@@ -163,6 +165,11 @@ for (var i = 0; i < days.length; i ++) {
 				console.log(table.toString() + '\n');
 
 				if (!remaining--) {
+
+					if (!recipients.length) {
+                                                logger.warn('No emails need to be sent.');
+                                                process.exit();
+                                        }
 
 					setTimeout(function () {
 
