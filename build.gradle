@@ -27,12 +27,12 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
     dependencies {
-        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.9-SNAPSHOT"
+        classpath 'com.kenshoo:gradle-fpm:0.3'
     }
 }
 
 subprojects {
-    version = rootProject.version
+  version = rootProject.version
 }
 evaluationDependsOnChildren()
 
@@ -44,6 +44,7 @@ if (!hasProperty("branch")) {
 }
 
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".", branch: branch)
+
 
 task gitCheckout {
     group = 'Git'
@@ -209,4 +210,3 @@ task gitCheckoutBranch {
 
     }
 }
-

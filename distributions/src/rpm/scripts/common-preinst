@@ -1,0 +1,9 @@
+# pre install script for <%= project %>
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+getent group continuuity >/dev/null || groupadd -r continuuity 
+getent passwd continuuity >/dev/null || /usr/sbin/useradd --comment "Continuuity User" --shell /bin/bash -M -r -g continuuity --home /var/run/continuuity continuuity
+
+

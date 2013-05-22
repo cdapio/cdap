@@ -5,11 +5,11 @@ evaluationDependsOn(':passport')
 evaluationDependsOn(':loom')
 
 apply plugin:'maven'
-apply plugin:'ubuntu'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 task javadoc(type: Javadoc, overwrite: true) {
   source = project.parent.subprojects.collect { proj ->
-   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
+   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api") != null){
      return proj.sourceSets.api.allJava.exclude{ print it.file.name }
    }else{
     return []
@@ -31,10 +31,10 @@ task javadoc(type: Javadoc, overwrite: true) {
   }
   group = 'Documentation'
   description = 'Aggregates API javadocs across all projects.'
+  options.windowTitle = "Continuuity Reactor Javadoc ${rootProject.version}"
 
   destinationDir = new File(buildDir, 'javadoc')
   // Might need a classpath
-
 }
 
 task combinedApiJar(type: Jar) {
@@ -420,3 +420,43 @@ uploadApiArchives {
     }
   }
 }
+
+
+// common continuuity package
+task prepackager(overwrite: true) {
+  def stageDir = file("$buildDir/stage-packaging")
+  def installDir = file("$stageDir/opt/continuuity")
+  doLast {
+    copy {
+      from "$rootProject.projectDir/distributions/src/conf.dist"
+      into "${stageDir}/etc/continuuity/conf.dist"
+    }
+  }
+}
+
+
+// Override some of our base packaging.gradle parameters for common package
+packaging {
+  dependencies = []
+  extraOptions['--name'] = "continuuity"
+  extraOptions['--directories'] = "/opt/continuuity"
+  extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/debian/scripts/common-postinst"
+  extraOptions['--template-value'] = "project=continuuity"
+}
+rpm {
+  dependencies = []
+}
+
+rpm.doFirst {
+  packaging.extraOptions['--name'] = "continuuity"
+  packaging.extraOptions['--directories'] = "/opt/continuuity"
+  packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-postinst"
+  packaging.extraOptions['--before-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-preinst"
+  packaging.extraOptions['--template-value'] = "project=continuuity"
+}
+
+
+debianPrepackager.dependsOn prepackager
+rpmPrepackager.dependsOn prepackager
+
+
