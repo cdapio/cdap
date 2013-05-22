@@ -196,7 +196,7 @@ public class ApplicationPerformanceTestBase {
     }
 
     Module dataFabricModule;
-    if (configuration.get("mode").equals("distributed") ) {
+    if (configuration.get("mode") != null && configuration.get("mode").equals("distributed") ) {
       dataFabricModule = new DataFabricModules().getDistributedModules();
     } else {
       dataFabricModule = new DataFabricModules().getSingleNodeModules();
@@ -212,7 +212,7 @@ public class ApplicationPerformanceTestBase {
                                     .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
                                     .build(BenchmarkManagerFactory.class));
                           install(new FactoryModuleBuilder()
-                                    .implement(StreamWriter.class, MultiThreadedStreamWriter.class)
+                                    .implement(StreamWriter.class, GatewayStreamWriter.class)
                                     .build(BenchmarkStreamWriterFactory.class));
                           install(new FactoryModuleBuilder()
                                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
