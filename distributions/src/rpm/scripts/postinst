@@ -17,5 +17,3 @@ for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 base
   ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$svcname
 done
 
-#update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
-
