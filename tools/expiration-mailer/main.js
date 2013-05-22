@@ -3,7 +3,6 @@
 var fs  = require("fs"),
 	log4js = require('log4js'),
 	path = require('path'),
-	emailTemplates = require('email-templates'),
 	csv = require('csv'),
 	nodemailer = require('nodemailer'),
 	program = require('commander')
@@ -63,33 +62,25 @@ function sendEmail (kind, email_id, locals, done) {
 
 	logger.trace('Sending ' + kind + ' warning to ' + locals.first_name + ' ' + locals.last_name + ' (' + email_id + ')');
 
-	emailTemplates(emailDir, function(err, template) {
+	var text = fs.readFileSync(__dirname + '/email-templates/' + kind + '/text.ejs', 'utf8');
+	var html = fs.readFileSync(__dirname + '/email-templates/' + kind + '/html.ejs', 'utf8');
 
-		template(kind, locals, function(err, html, text) {
+	emailTransport.sendMail({
+		from: FROM_EMAIL,
+		to: email_id,
+		subject: subjects[kind],
+		text: text,
+		html: html
+	}, function(err, responseStatus) {
+		if (err) {
+			logger.warn(err);
+			done(500, err);
+		} else {
+			done(200, true);
 
-			if (err) {
-				logger.warn(err);
-			} else {
-				emailTransport.sendMail({
-					from: FROM_EMAIL,
-					to: email_id,
-					subject: subjects[kind],
-					text: text,
-					html: html
-				}, function(err, responseStatus) {
-					if (err) {
-						logger.warn(err);
-						done(500, err);
-					} else {
-						done(200, true);
-
-					}
-				});
-			}
-
-		});
-
+		}
 	});
+
 }
 
 /**
