@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 /**
  *
  */
-public final class MensaMetricsReporter implements MetricsReporter {
+public final class MensaMetricsReporter  {
   static final Logger LOG = LoggerFactory.getLogger(MensaMetricsReporter.class);
 
   private final String mensaHost;

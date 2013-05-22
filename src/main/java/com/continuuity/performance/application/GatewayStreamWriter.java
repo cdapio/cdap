@@ -4,12 +4,11 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
-import com.continuuity.performance.gateway.HttpPoster;
-import com.continuuity.performance.gateway.SimpleHttpPoster;
+import com.continuuity.performance.gateway.HttpClient;
+import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.StreamWriter;
@@ -19,34 +18,27 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.commons.lang.StringUtils;
-import org.hsqldb.lib.StringUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
+ * Stream writer that sends events to a stream through Gateway's REST API.
  */
-public class BenchmarkStreamWriter implements StreamWriter {
+public class GatewayStreamWriter implements StreamWriter {
 
-  private final OperationContext opCtx;
-  private final QueueName queueName;
   private final StreamEventCodec codec;
-  HttpPoster poster;
+  private final HttpClient poster;
 
   @Inject
-  public BenchmarkStreamWriter(CConfiguration config,
-                               @Assisted QueueName queueName,
-                               @Assisted("accountId") String accountId,
-                               @Assisted("applicationId") String applicationId) {
+  public GatewayStreamWriter(CConfiguration config,
+                             @Assisted QueueName queueName) {
 
-    opCtx = new OperationContext(accountId, applicationId);
-    this.queueName = queueName;
     codec = new StreamEventCodec();
     Map<String, String> headers = null;
     String apiKey = config.get("apikey");
-    if (!StringUtil.isEmpty(apiKey)) {
+    if (!StringUtils.isEmpty(apiKey)) {
       headers = ImmutableMap.of(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
     }
     String gateway = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS, Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
@@ -55,7 +47,7 @@ public class BenchmarkStreamWriter implements StreamWriter {
     }
     String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
       + queueName.getSimpleName();
-    poster = new SimpleHttpPoster(url, headers);
+    poster = new SimpleHttpClient(url, headers);
   }
 
   @Override

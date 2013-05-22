@@ -70,14 +70,23 @@ import java.util.jar.Manifest;
 /**
  * Base class to inherit from that provides benchmarking functionality for {@link com.continuuity.api.Application}.
  */
-public class AppFabricBenchmarkBase {
+public class ApplicationPerformanceTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricBenchmarkBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationPerformanceTestBase.class);
   private static File tmpDir;
   private static AppFabricService.Iface appFabricService;
   private static LocationFactory locationFactory;
   private static Injector injector;
+  private final String accountId;
 
+  public ApplicationPerformanceTestBase(String accountId, CConfiguration configuration) {
+    this.accountId = accountId;
+    init(configuration);
+  }
+
+  private ApplicationPerformanceTestBase() {
+    this.accountId = null;
+  }
 
   private Class<? extends Application> getApplicationClass(String appClassName) {
     if (!appClassName.startsWith("com.continuuity")) {
@@ -93,14 +102,12 @@ public class AppFabricBenchmarkBase {
 
   public ApplicationManager deployApplication(String appClassName) {
     Preconditions.checkNotNull(appClassName, "Application class cannot be null.");
-    ApplicationManager bam = deployApplication(getApplicationClass(appClassName));
-    return bam;
+    return deployApplication(getApplicationClass(appClassName));
   }
 
   public ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
-    final String accountId = "developer";
     Application application;
     try {
       application = applicationClz.newInstance();
@@ -144,14 +151,14 @@ public class AppFabricBenchmarkBase {
       }
       Preconditions.checkState(status == 5, "Failed to deploy app.");
 
-      ApplicationManager mgr
+      ApplicationManager appMgr
         = injector.getInstance(BenchmarkManagerFactory.class).create(token, accountId, applicationId,
                                                                                 appFabricService,
                                                                                 deployedJar, appSpec);
-      Preconditions.checkNotNull(mgr, "Failed to deploy app.");
+      Preconditions.checkNotNull(appMgr, "Failed to deploy app.");
       LOG.debug("Succesfully deployed jar file {} with application.", jarFile.getAbsolutePath());
 
-      return mgr;
+      return appMgr;
 
     } catch (Exception e) {
       LOG.error("Deployment of jar file {} with new application failed!", jarFile.getAbsolutePath());
@@ -167,7 +174,7 @@ public class AppFabricBenchmarkBase {
     }
   }
 
-  public static final void init() {
+  private void init(CConfiguration configuration) {
     LOG.debug("Initializing AppFabric for performance test.");
     File testAppDir = Files.createTempDir();
 
@@ -177,11 +184,8 @@ public class AppFabricBenchmarkBase {
     outputDir.mkdirs();
     tmpDir.mkdirs();
 
-    final CConfiguration configuration = CConfiguration.create();
     configuration.set("app.output.dir", outputDir.getAbsolutePath());
     configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
-    configuration.set("zk", "db101.ubench.sl");
-    configuration.set("host", "db101.ubench.sl");
 
     try {
       LOG.debug("Connecting with remote AppFabric server");
@@ -191,8 +195,15 @@ public class AppFabricBenchmarkBase {
       Throwables.propagate(e);
     }
 
+    Module dataFabricModule;
+    if (configuration.get("mode").equals("distributed") ) {
+      dataFabricModule = new DataFabricModules().getDistributedModules();
+    } else {
+      dataFabricModule = new DataFabricModules().getSingleNodeModules();
+    }
+
     injector = Guice
-      .createInjector(new DataFabricModules().getSingleNodeModules(),
+      .createInjector(dataFabricModule,
                       new AngryMamaModule(configuration),
                       new AbstractModule() {
                         @Override
@@ -201,7 +212,7 @@ public class AppFabricBenchmarkBase {
                                     .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
                                     .build(BenchmarkManagerFactory.class));
                           install(new FactoryModuleBuilder()
-                                    .implement(StreamWriter.class, BenchmarkStreamWriter.class)
+                                    .implement(StreamWriter.class, MultiThreadedStreamWriter.class)
                                     .build(BenchmarkStreamWriterFactory.class));
                           install(new FactoryModuleBuilder()
                                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
@@ -213,29 +224,6 @@ public class AppFabricBenchmarkBase {
                           binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
                         }
                       });
-
-//    injector = Guice
-//      .createInjector(new DataFabricModules().getDistributedModules(),
-//                      new AngryMamaModule(configuration),
-//                      new AbstractModule() {
-//                        @Override
-//                        protected void configure() {
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
-//                                    .build(BenchmarkManagerFactory.class));
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(StreamWriter.class, BenchmarkStreamWriter.class)
-//                                    .build(BenchmarkStreamWriterFactory.class));
-//                          install(new FactoryModuleBuilder()
-//                                    .implement(ProcedureClient.class, DefaultProcedureClient.class)
-//                                    .build(ProcedureClientFactory.class));
-//                        }},
-//                      new Module() {
-//                        @Override
-//                        public void configure(Binder binder) {
-//                           binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
-//                        }
-//                      });
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     discoveryServiceClient.startAndWait();

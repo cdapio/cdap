@@ -2,28 +2,20 @@ package com.continuuity.performance.gateway;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Map;
 
 /**
- *
+ * HttpClient for sending HttpPosts to Gateway.
  */
-public class SimpleHttpPoster implements HttpPoster {
-  String url;
-  Map<String, String> httpHeaders;
+public class SimpleHttpClient implements HttpClient {
   private final HttpPost post;
-  URI uri;
 
-  public SimpleHttpPoster(String url, Map<String, String> httpHeaders) {
-    this.url = url;
-    this.httpHeaders = httpHeaders;
-
+  public SimpleHttpClient(String url, Map<String, String> httpHeaders) {
     post = new HttpPost(url);
     if (httpHeaders != null && !httpHeaders.isEmpty()) {
       for (Map.Entry<String, String> header : httpHeaders.entrySet()) {
@@ -35,7 +27,7 @@ public class SimpleHttpPoster implements HttpPoster {
   @Override
   public void post(byte[] message) throws Exception {
     post.setEntity(new ByteArrayEntity(message));
-    HttpClient client = new DefaultHttpClient();
+    org.apache.http.client.HttpClient client = new DefaultHttpClient();
 
     try {
       HttpResponse response = client.execute(post);
@@ -46,10 +38,5 @@ public class SimpleHttpPoster implements HttpPoster {
     } catch (IOException e) {
       throw new Exception("Error sending HTTP request: " + e.getMessage(), e);
     }
-  }
-
-  @Override
-  public void post(String message) throws Exception {
-    post(message.getBytes());
   }
 }

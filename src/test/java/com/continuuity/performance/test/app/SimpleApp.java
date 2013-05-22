@@ -21,18 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a sample word count app that is used in testing in
- * many places.
+ * This is a sample Continuuity application  that is used for demonstration of performance testing.
  */
-public class WriteAndRead implements Application {
+public class SimpleApp implements Application {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WriteAndRead.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SimpleApp.class);
 
   public static final String TABLE_NAME = "writeAndRead";
-
-  public static void main(String[] args) {
-    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
-  }
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
@@ -43,7 +38,7 @@ public class WriteAndRead implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("WriteAndRead")
+      .setName("SimpleApp")
       .setDescription("Flow that writes key=value then reads back the key")
       .withStreams()
       .add(new Stream("keyValues"))
@@ -60,8 +55,8 @@ public class WriteAndRead implements Application {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("WriteAndRead")
-        .setDescription("Example flow that writes then reads")
+        .setName("SimpleApp")
+        .setDescription("Example flow that writes events from a stream to a data set and then reads them from there.")
         .withFlowlets()
         .add("source", new KeyValueSource())
         .add("writer", new WriterFlowlet())
@@ -105,7 +100,7 @@ public class WriteAndRead implements Application {
     private static final Logger LOG = LoggerFactory.getLogger(ReaderFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(WriteAndRead.TABLE_NAME)
+    @UseDataSet(SimpleApp.TABLE_NAME)
     KeyValueTable kvTable;
 
     public void process(byte[] key) throws OperationException {
@@ -131,7 +126,7 @@ public class WriteAndRead implements Application {
     private static final Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(WriteAndRead.TABLE_NAME)
+    @UseDataSet(SimpleApp.TABLE_NAME)
     KeyValueTable kvTable;
 
     private OutputEmitter<byte[]> output;
