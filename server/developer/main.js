@@ -34,18 +34,10 @@ devServer.VERSION = '';
  */
 devServer.LOG_LEVEL = 'INFO';
 
-<<<<<<< HEAD
 /**
  * App framework.
  */
 devServer.app = express();
-=======
-io = require('socket.io').listen(server);
-io.configure('development', function(){
-	io.set('transports', ['websocket', 'xhr-polling']);
-	// io.set('log level', 1);
-});
->>>>>>> feature/client-library-update
 
 /**
  * Server.
@@ -116,7 +108,6 @@ devServer.configureExpress = function() {
 	}
 };
 
-<<<<<<< HEAD
 /**
  * Creates http server based on app framework.
  * Currently works only with express.
@@ -137,34 +128,6 @@ devServer.getSocketIo = function(server) {
 	io.configure('development', function(){
 		io.set('transports', ['websocket', 'xhr-polling']);
 		io.set('log level', 1);
-=======
-	socket.on('manager', function (request) {
-		Api.manager('developer', request.method, request.params, function (error, response) {
-
-			if (response && response.length) {
-				var int64values = {
-					"lastStarted": 1,
-					"lastStopped": 1,
-					"startTime": 1,
-					"endTime": 1
-				};
-				for (var i = 0; i < response.length; i ++) {
-					for (var j in response[i]) {
-						if (j in int64values) {
-							response[i][j] = parseInt(response[i][j].toString(), 10);
-						}
-					}
-				}
-			}
-
-			socket.emit('exec', error, {
-				method: request.method,
-				params: typeof response === "string" ? JSON.parse(response) : response,
-				id: request.id
-			});
-
-		});
->>>>>>> feature/client-library-update
 	});
 	return io;
 };
@@ -175,7 +138,6 @@ devServer.getSocketIo = function(server) {
  * @param {Object} error error.
  * @param {Object} response for hte socket request.
  */
-<<<<<<< HEAD
 devServer.socketResponse = function(request, error, response) {
 	devServer.socket.emit('exec', error, {
 		method: request.method,
@@ -183,14 +145,6 @@ devServer.socketResponse = function(request, error, response) {
 		id: request.id
 	});
 };
-=======
-app.post('/upload/:file', function (req, res) {
-
-	var accountID = 'developer';
-	Api.upload(accountID, req, res, req.params.file, socket);
-
-});
->>>>>>> feature/client-library-update
 
 /**
  * Configures socket io handlers. Async binds socket io methods.
@@ -202,24 +156,18 @@ devServer.configureIoHandlers = function(io) {
 		devServer.socket = newSocket;
 		devServer.socket.emit('env',
 													{"name": "local", "version": "developer", "credential": Api.credential });
-		
+
 		devServer.socket.on('metadata', function (request) {
 			Api.metadata('developer', request.method, request.params, function (error, response) {
 				devServer.socketResponse(request, error, response);
 			});
 		});
 
-<<<<<<< HEAD
 		devServer.socket.on('far', function (request) {
 			Api.far('developer', request.method, request.params, function (error, response) {
 				devServer.socketResponse(request, error, response);
 			});
 		});
-=======
-		response.on('end', function () {
-
-			data = data.replace(/\n/g, '');
->>>>>>> feature/client-library-update
 
 		devServer.socket.on('gateway', function (request) {
 			Api.gateway('apikey', request.method, request.params, function (error, response) {
@@ -235,7 +183,7 @@ devServer.configureIoHandlers = function(io) {
 
 		devServer.socket.on('manager', function (request) {
 			Api.manager('developer', request.method, request.params, function (error, response) {
-				
+
 				if (response && response.length) {
 					var int64values = {
 						"lastStarted": 1,
@@ -274,7 +222,7 @@ devServer.bindRoutes = function() {
 		console.log("the socket is");
 		console.log(devServer.socket);
 		var accountID = 'developer';
-		Api.upload(accountID, req, res, req.params.file, devServer.socket);				
+		Api.upload(accountID, req, res, req.params.file, devServer.socket);
 	});
 
 	/**
@@ -300,7 +248,7 @@ devServer.bindRoutes = function() {
 			});
 
 			response.on('end', function () {
-				
+
 				data = data.replace(/\n/g, '');
 
 				res.send(JSON.stringify({
@@ -308,16 +256,8 @@ devServer.bindRoutes = function() {
 					newest: data
 				}));
 				res.end();
-
-<<<<<<< HEAD
 			});
 		}).end();
-=======
-				response.on('end', function () {
-
-					res.write(data);
-					res.end();
->>>>>>> feature/client-library-update
 
 	});
 
@@ -345,7 +285,6 @@ devServer.bindRoutes = function() {
 					port: devServer.config['accounts-port']
 				};
 
-<<<<<<< HEAD
 				var request = https.request(options, function(response) {
 					var data = '';
 					response.on('data', function (chunk) {
@@ -362,11 +301,6 @@ devServer.bindRoutes = function() {
 						res.end();
 					});
 				});
-=======
-			request.on('socket', function (socket) {
-				socket.setTimeout(10000);
-				socket.on('timeout', function() {
->>>>>>> feature/client-library-update
 
 				request.on('error', function () {
 					res.write('network');
@@ -374,7 +308,7 @@ devServer.bindRoutes = function() {
 				});
 
 				request.on('socket', function (socket) {
-					socket.setTimeout(10000);  
+					socket.setTimeout(10000);
 					socket.on('timeout', function() {
 
 						request.abort();
@@ -444,18 +378,12 @@ devServer.getLocalHost = function() {
 		}
 	}
 	return localhost;
-<<<<<<< HEAD
 };
-=======
-
-}
->>>>>>> feature/client-library-update
 
 /**
  * Sets config data for application server.
  * @param {Function} opt_callback Callback function to start sever start process.
  */
-<<<<<<< HEAD
 devServer.getConfig = function(opt_callback) {
 	fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
 		var parser = new xml2js.Parser();
@@ -466,36 +394,6 @@ devServer.getConfig = function(opt_callback) {
 				item = result[item];
 				devServer.config[item.name] = item.value;
 			}
-=======
-fs.readFile(__dirname + '/continuuity-local.xml',
-	function (error, result) {
-
-	var parser = new xml2js.Parser();
-	parser.parseString(result, function (err, result) {
-
-		result = result.property;
-		var localhost = getLocalHost();
-
-		for (var item in result) {
-			item = result[item];
-			config[item.name] = item.value;
-		}
-
-		/**
-		 * Pull in stored credentials.
-		 */
-		fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
-
-			logger.trace('Configuring with', config);
-			Api.configure(config, apiKey || null);
-
-			logger.info('Listening on port',
-				config['node-port']);
-			server.listen(config['node-port']);
-
-			logger.info(config);
-
->>>>>>> feature/client-library-update
 		});
 		fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
 			devServer.logger.trace('Configuring with', devServer.config);
