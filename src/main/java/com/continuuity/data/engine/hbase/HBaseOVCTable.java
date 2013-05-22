@@ -1042,7 +1042,9 @@ public class HBaseOVCTable extends AbstractOVCTable {
                 case DATA:
                   colValue.put(column, removeTypePrefix(kv.getValue()));
                   last = column;
-                  rowKey = kv.getKey();
+                  if (rowKey == null) {
+                    rowKey = kv.getKey();
+                  }
                   deleted.clear(); //Read one version. So clear deleted hash to get non deleted versions of next cols.
                   break;
                 case DELETE_VERSION:
