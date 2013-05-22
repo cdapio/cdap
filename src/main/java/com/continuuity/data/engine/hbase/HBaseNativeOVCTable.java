@@ -548,14 +548,13 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
     return new HBaseNativeScanner(resultScanner, readPointer);
   }
 
+  /**
+   * Implements Scanner on top of HBase ResultSetScanner for native Hbase.
+   */
   public class HBaseNativeScanner implements Scanner {
 
-    private final ResultScanner scanner ;
+    private final ResultScanner scanner;
     private final ReadPointer readPointer;
-
-    public HBaseNativeScanner(ResultScanner scanner) {
-      this(scanner, null);
-    }
 
     public HBaseNativeScanner(ResultScanner scanner, ReadPointer readPointer) {
       this.scanner = scanner;
@@ -569,24 +568,34 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
       }
       try {
         Result result = scanner.next();
-        if(result == null) {
+        if (result == null) {
           return null;
         }
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
+        byte[] last = null;
+
         for (KeyValue kv : result.raw()) {
+
           if (readPointer != null && !readPointer.isVisible(kv.getTimestamp())) {
             continue;
           }
+
           rowKey = kv.getKey();
           byte[] column = kv.getQualifier();
+          if (Bytes.equals(column, last)) {
+            continue;
+          }
+
           byte [] value = kv.getValue();
+          last = column;
           colValue.put(column, value);
         }
+
         if (rowKey == null) {
           return null;
         } else {
-          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey, colValue);
         }
       } catch (IOException e) {
         throw Throwables.propagate(e);

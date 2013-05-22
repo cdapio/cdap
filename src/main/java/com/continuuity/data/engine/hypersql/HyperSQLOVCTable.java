@@ -867,26 +867,26 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
     PreparedStatement ps = null;
     try {
-      if (startRow == null && stopRow ==null) {
+      if (startRow == null && stopRow == null){
         ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
                                                  this.quotedTableName + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
-      } else if (startRow == null) {
+      } else if (startRow == null){
         ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
-                                                 this.quotedTableName + "  "+ "WHERE rowKey < ?"
+                                                 this.quotedTableName + "  " + "WHERE rowKey < ?"
                                                  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, stopRow);
 
-      }  else if (stopRow == null) {
+      } else if (stopRow == null){
         ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
-                                                 this.quotedTableName + "  "+ "WHERE rowKey >= ?"
+                                                 this.quotedTableName + "  " + "WHERE rowKey >= ?"
                                                  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, startRow);
       } else {
         ps = this.connection.prepareStatement("SELECT rowkey, column, version, kvtype, id, value FROM " +
-                                                 this.quotedTableName + "  "+ "WHERE rowKey >= ? AND "   +
+                                                 this.quotedTableName + "  " + "WHERE rowKey >= ? AND "   +
                                                  "rowKey < ? "  + " " + "ORDER BY rowKey, column ASC," +
                                                  "version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, startRow);
@@ -896,10 +896,10 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
       ResultSet resultSet = ps.executeQuery();
       return new ResultSetScanner(resultSet, readPointer);
 
-    } catch(SQLException e) {
+    } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
-      if (ps!=null){
+      if (ps != null){
         try {
           ps.close();
         } catch (SQLException e){
@@ -1182,6 +1182,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
+
       byte[] rowKey = result.getBytes(1);
       if (!Bytes.equals(lastRow, rowKey)) {
         newRow = true;
@@ -1262,7 +1263,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
   }
 
   /**
-   * Implements Scanner using a ResultSet
+   * Implements Scanner using a ResultSet.
    * The current implementation first reads all value from result set and stores it in memory
    * The resultSet expects the following values to be present
    *
@@ -1274,12 +1275,8 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
       Map<byte[], byte[]>>(Bytes.BYTES_COMPARATOR);
     private Iterator<Map.Entry<byte[], Map<byte[], byte[]>>> rowColumnValueIterator;
 
-    public ResultSetScanner(ResultSet resultSet) {
-      this(resultSet, null);
-    }
-
     public ResultSetScanner(ResultSet resultSet, ReadPointer readPointer) {
-      populateRowColumnValueMap(resultSet,readPointer);
+      populateRowColumnValueMap(resultSet, readPointer);
       rowColumnValueIterator = this.rowColumnValueMap.entrySet().iterator();
     }
 
@@ -1287,7 +1284,7 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
       if (rowColumnValueIterator.hasNext()){
         Map.Entry<byte[], Map<byte[], byte[]>> entry  = rowColumnValueIterator.next();
-        return new ImmutablePair<byte[], Map<byte[], byte[]>>(entry.getKey(),entry.getValue());
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(entry.getKey(), entry.getValue());
       } else {
         return null;
       }
@@ -1296,11 +1293,10 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
     private void populateRowColumnValueMap(ResultSet result, ReadPointer readPointer) {
 
       try {
-        if (result == null ) {
+        if (result == null){
           return;
         }
 
-        byte [] lastRow = new byte[0];
         byte [] curCol = new byte [0];
         byte [] lastCol = new byte [0];
         byte [] curRow = new byte[0];
@@ -1363,17 +1359,17 @@ public class HyperSQLOVCTable extends AbstractOVCTable {
             continue;
           }
           // Column is valid, therefore row is valid, add row
-          lastRow = row;
+          lastCol = column;
 
           Map<byte[], byte[]> colMap = rowColumnValueMap.get(row);
-          if(colMap == null) {
+          if (colMap == null) {
             colMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
             rowColumnValueMap.put(row, colMap);
           }
           colMap.put(column, result.getBytes(6));
         }
       }
-      catch(SQLException e){
+      catch (SQLException e){
         throw Throwables.propagate(e);
       }
     }

@@ -988,14 +988,13 @@ public class HBaseOVCTable extends AbstractOVCTable {
     }
   }
 
+  /**
+   * Implements Scanner on top of HBase resultSetScanner.
+   */
   public class HBaseScanner implements Scanner {
 
-    private final ResultScanner scanner ;
+    private final ResultScanner scanner;
     private final ReadPointer readPointer;
-
-    public HBaseScanner(ResultScanner scanner) {
-      this(scanner,null);
-    }
 
     private HBaseScanner(ResultScanner scanner, ReadPointer readPointer){
       this.scanner = scanner;
@@ -1009,47 +1008,62 @@ public class HBaseOVCTable extends AbstractOVCTable {
       }
 
       try {
-
         Map<byte[], byte[]> colValue = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         byte [] rowKey = null;
-        boolean gotNext = false;
+        byte[] last = null;
 
-        while(!gotNext) {
+        //Loop until one row is read completely or until end is reached.
+        while (colValue.isEmpty()) {
           Result result = scanner.next();
-          if(result == null) {
-            gotNext = true;
+          if (result == null) {
+            break;
           } else {
             Set<Long> deleted = Sets.newHashSet();
-            for (KeyValue kv : result.raw()) {
+            for (KeyValue kv : result.raw()){
+
               long version = kv.getTimestamp();
-              if ((readPointer != null && !readPointer.isVisible(version)) ||
-                deleted.contains(version)) {
+              if (readPointer != null && !readPointer.isVisible(version)) {
                 continue;
               }
+
+              if (deleted.contains(version)){
+                continue;
+              }
+
               byte[] value = kv.getValue();
+              byte[] column = kv.getQualifier();
+
+              if (Bytes.equals(column, last)){
+                continue;
+              }
+
               byte typePrefix = value[0];
               switch (typePrefix) {
                 case DATA:
-                  colValue.put(kv.getQualifier(), removeTypePrefix(kv.getValue()));
-                  rowKey = kv.getKey();
+                  colValue.put(column, removeTypePrefix(kv.getValue()));
+                  last = column;
+                  if (rowKey == null) {
+                    rowKey = kv.getKey();
+                  }
+                  deleted.clear(); //Read one version. So clear deleted hash to get non deleted versions of next cols.
                   break;
                 case DELETE_VERSION:
                   deleted.add(version);
                   break;
                 case DELETE_ALL:
-                  return null;
+                  last = column; //Mark not to read any versions of this column
+                  break;
+                default:
+                  break;
               }
-            }
-            if (rowKey != null ){
-              gotNext = true;
             }
           }
         }
 
-        if (rowKey == null) {
+        if (colValue.isEmpty()) {
           return null;
         } else {
-          return new ImmutablePair<byte[], Map<byte[],byte[]>>(rowKey,colValue);
+          return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowKey, colValue);
         }
       } catch (IOException e) {
         throw Throwables.propagate(e);
