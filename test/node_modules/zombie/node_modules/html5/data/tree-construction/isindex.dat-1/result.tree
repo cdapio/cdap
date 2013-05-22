@@ -1,0 +1,12 @@
+<html>
+  <head>
+  <body>
+    <form>
+      action="B"
+      <hr>
+      <label>
+        "C"
+        <input>
+          foo="D"
+          name="isindex"
+      <hr>

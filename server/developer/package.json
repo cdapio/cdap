@@ -3,5 +3,10 @@
 	"version": "0.0.1",
 	"main": "./main.js",
 	"dependencies": {
+    "express": "3.2.4",
+    "log4js": "0.6.5",
+    "node-int64": "0.3.0",
+    "socket.io": "0.9.14",
+    "xml2js": "0.2.7"
 	}
 }

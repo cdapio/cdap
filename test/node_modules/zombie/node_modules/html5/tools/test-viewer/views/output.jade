@@ -1,0 +1,16 @@
+h1 Output
+- if(serialized != td.document) {
+  p.fail Fail!
+- } else {
+  p.success Success!
+- }
+div Input:
+  blockquote
+    pre= td.data
+table
+  tr
+    th Actual
+    th Expected
+  tr
+    td!= toHTML(serialized)
+    td!= toHTML(td.document)

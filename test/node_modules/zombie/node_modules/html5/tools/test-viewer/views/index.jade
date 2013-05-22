@@ -1,0 +1,8 @@
+h1= title
+p Welcome to #{title}
+ul
+  - tests.forEach(function(t) {
+    li
+      - var link = "/" + t
+      a(href: link)= t
+  - })

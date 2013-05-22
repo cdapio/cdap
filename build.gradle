@@ -46,6 +46,18 @@ task jshint << {
 }
 
 /**
+ * Runs node js tests.
+ */
+task nodeTests << {
+  def developer = [
+    "$rootProject.projectDir/web-cloud-app/test/node_modules/mocha/bin/mocha"
+  ]
+  if(executeCommand(developer) != 0) {
+    throw new GradleScriptException("Error running node tests", null)
+  }
+}
+
+/**
  * Builds an edition
  */
 def build_edition(edition, base) {
@@ -113,8 +125,8 @@ task cloud(dependsOn: 'jshint') {
   build_edition('cloud', null)
 }
 
-task developer(dependsOn: 'jshint') {
-  build_edition('developer', null)
+task developer(dependsOn: ['jshint', 'nodeTests']) {
+  build_edition('developer')
 }
 
 task prepackager(dependsOn: 'build', overwrite: true) {
