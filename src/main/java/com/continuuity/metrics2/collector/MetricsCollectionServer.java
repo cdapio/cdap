@@ -232,9 +232,8 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
 
       return registrationInfo;
     } catch (Exception e) {
-      Log.debug(StackTraceUtil.toStringStackTrace(e));
       Log.error("Failed configuring metrics collection server : {}",
-                e.getMessage());
+                e.getMessage(), e);
     }
     return null;
   }
