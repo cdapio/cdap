@@ -20,13 +20,6 @@ public abstract class MultiClassLoader extends ClassLoader {
   private char classNameReplacementChar;
 
   /**
-   * Creates a ClassLoader with system ClassLoader as its parent.
-   */
-  protected MultiClassLoader() {
-    super();
-  }
-
-  /**
    * Creates a ClassLoader with the given ClassLoader as its parent.
    * @param parent The parent ClassLoader
    */

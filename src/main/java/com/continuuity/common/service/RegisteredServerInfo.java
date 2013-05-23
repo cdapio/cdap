@@ -1,6 +1,5 @@
 package com.continuuity.common.service;
 
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServicePayload;
 
 /**

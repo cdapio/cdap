@@ -17,7 +17,7 @@ public class ClassLoaderTest {
   public void testClassLoader() throws ClassNotFoundException {
     final String recordClassName = "com.continuuity.TestRecord";
 
-    ClassLoader classLoader = new MultiClassLoader() {
+    ClassLoader classLoader = new MultiClassLoader(ClassLoader.getSystemClassLoader()) {
       @Override
       protected byte[] loadClassBytes(String className) {
         if (className.equals(recordClassName)) {
