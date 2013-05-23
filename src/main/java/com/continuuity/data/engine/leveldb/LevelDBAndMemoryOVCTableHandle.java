@@ -22,7 +22,7 @@ public class LevelDBAndMemoryOVCTableHandle extends AbstractOVCTableHandle {
   private MemoryOVCTableHandle memoryOVCTableHandle;
 
   @Override
-  public synchronized OrderedVersionedColumnarTable getTable(byte[] tableName)
+  public OrderedVersionedColumnarTable getTable(byte[] tableName)
       throws OperationException {
     // If this is the queue table, use a memory table, otherwise leveldb
     if (Bytes.equals(tableName, SimpleOVCTableHandle.queueOVCTable)) {
