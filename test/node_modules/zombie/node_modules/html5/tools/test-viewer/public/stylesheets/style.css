@@ -1,0 +1,9 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+td { vertical-align: top; }
+
+.success { color: #080 }
+.fail { color: #800 }
