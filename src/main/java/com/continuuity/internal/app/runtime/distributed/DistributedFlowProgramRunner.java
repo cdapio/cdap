@@ -59,8 +59,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + flowSpec.getName());
 
     WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
-               .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))   // TODO(terence): deal with logging
-               .withPackages("com.google.inject", "com.continuuity.api");
+               .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));   // TODO(terence): deal with logging
 
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       preparer.withArguments(entry.getKey(),

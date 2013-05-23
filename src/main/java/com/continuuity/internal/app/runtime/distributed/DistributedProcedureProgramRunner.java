@@ -56,7 +56,6 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     WeavePreparer preparer = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec,
                                                                                hConfFile, cConfFile))
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))   // TODO(terence): deal with logging
-            .withPackages("com.google.inject", "com.continuuity.api")
             .withArguments(procedureSpec.getName(),
                            "--jar", program.getProgramJarLocation().getName(),
                            "--instances", "1",
