@@ -12,9 +12,10 @@ import com.continuuity.app.program.Type;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -28,7 +29,7 @@ import java.util.jar.Manifest;
  * Tests the functionality of Deploy Manager.
  */
 public class LocalManagerTest {
-  private static com.continuuity.weave.filesystem.LocationFactory lf;
+  private static LocationFactory lf;
   private static CConfiguration configuration;
 
   @BeforeClass
@@ -56,7 +57,7 @@ public class LocalManagerTest {
    */
   @Test
   public void testGoodPipeline() throws Exception {
-    com.continuuity.weave.filesystem.Location deployedJar = lf.create(
+    Location deployedJar = lf.create(
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
 

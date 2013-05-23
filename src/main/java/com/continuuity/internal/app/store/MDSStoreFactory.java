@@ -19,7 +19,7 @@ public class MDSStoreFactory implements StoreFactory {
   private final MetaDataStore store;
   private final MetadataService.Iface mdsService;
   private final CConfiguration configuration;
-  private final com.continuuity.weave.filesystem.LocationFactory lFactory;
+  private final LocationFactory lFactory;
 
   @Inject
   public MDSStoreFactory(CConfiguration configuration,

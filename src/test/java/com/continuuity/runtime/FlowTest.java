@@ -75,7 +75,7 @@ public class FlowTest {
 
     LocalLocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
 
-    com.continuuity.weave.filesystem.Location deployedJar = lf.create(
+    Location deployedJar = lf.create(
       JarFinder.getJar(WordCountApp.class, TestHelper.getManifestWithMainClass(WordCountApp.class))
     );
     deployedJar.deleteOnExit();

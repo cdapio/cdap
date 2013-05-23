@@ -18,7 +18,7 @@ import com.google.inject.Inject;
 public final class SyncManagerFactory implements ManagerFactory {
   private final CConfiguration configuration;
   private final PipelineFactory<?> pFactory;
-  private final com.continuuity.weave.filesystem.LocationFactory lFactory;
+  private final LocationFactory lFactory;
   private final StoreFactory sFactory;
 
   @Inject

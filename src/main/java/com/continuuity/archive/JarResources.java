@@ -36,7 +36,7 @@ public final class JarResources {
    * @param jar location of JAR file.
    * @throws IOException
    */
-  public JarResources(com.continuuity.weave.filesystem.Location jar) throws IOException {
+  public JarResources(Location jar) throws IOException {
     manifest = init(jar);
   }
 

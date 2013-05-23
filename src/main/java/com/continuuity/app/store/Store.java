@@ -84,7 +84,7 @@ public interface Store {
    * @throws OperationException
    */
   void addApplication(Id.Application id,
-                      ApplicationSpecification specification, com.continuuity.weave.filesystem.Location appArchiveLocation) throws OperationException;
+                      ApplicationSpecification specification, Location appArchiveLocation) throws OperationException;
 
   /**
    * Returns application specification by id.

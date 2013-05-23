@@ -8,5 +8,5 @@ package com.continuuity.app.deploy;
  *
  */
 public interface ManagerFactory {
-  Manager<?, ?> create();
+  <U, V> Manager<U, V> create();
 }

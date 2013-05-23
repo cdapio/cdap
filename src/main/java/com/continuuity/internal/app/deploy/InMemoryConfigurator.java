@@ -13,6 +13,7 @@ import com.continuuity.app.program.Archive;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -37,7 +38,7 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */
-  private final com.continuuity.weave.filesystem.Location archive;
+  private final Location archive;
 
   /**
    * Application which needs to be configured.
@@ -104,7 +105,7 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture result = SettableFuture.create();
 
     try {
-      Application app = null;
+      Application app;
 
       if(archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
@@ -126,12 +127,10 @@ public final class InMemoryConfigurator implements Configurator {
       // TODO: The SchemaGenerator should be injected
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
-    } catch(Exception e) {
-      LOG.debug(StackTraceUtil.toStringStackTrace(e));
-      return Futures.immediateFailedFuture(e);
-    } catch(Throwable throwable) {
-      LOG.debug(StackTraceUtil.toStringStackTrace(throwable));
-      return Futures.immediateFailedFuture(throwable);
+
+    } catch(Throwable t) {
+      LOG.error(t.getMessage(), t);
+      return Futures.immediateFailedFuture(t);
     } finally {
       if(writer != null) {
         try {
