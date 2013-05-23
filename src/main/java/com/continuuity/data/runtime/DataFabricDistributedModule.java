@@ -31,7 +31,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   public static final String CONF_ENABLE_NATIVE_QUEUES =
       "fabric.queue.hbase.native";
   
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = true;
+  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
 
   /**
    * Create a module with default configuration for HBase and Continuuity

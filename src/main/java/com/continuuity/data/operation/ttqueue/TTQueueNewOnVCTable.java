@@ -306,6 +306,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         // if we found any entries in the dequeued set, return them again (that is the contract of singleEntry)
         if (entries.size() > 0) {
           dequeueStrategy.saveDequeueState(consumer, config, queueState, readPointer);
+          this.dequeueReturns.incrementAndGet();
           return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                    pointers.toArray(new QueueEntryPointer[pointers.size()]),
                                    entries.toArray(new QueueEntry[entries.size()]));

@@ -1311,9 +1311,6 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   public void testMultipleConsumerMultiTimeouts() {
   }
 
-  @Override @Test @Ignore
-  public void testMultiConsumerMultiGroup() {}
-
   @Override
   @Test
   @Ignore
