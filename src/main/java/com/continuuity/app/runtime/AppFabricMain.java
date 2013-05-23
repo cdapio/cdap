@@ -13,6 +13,7 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
@@ -75,6 +76,7 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void start() {
+    injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
   }
