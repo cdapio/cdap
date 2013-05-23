@@ -69,6 +69,14 @@ public class Constants {
   /**
    * Data Fabric
    */
+  public static enum InMemoryPersistenceType {
+    MEMORY,
+    LEVELDB,
+    HSQLDB
+  }
+  /** defines which persistence engine to use when running all in one JVM **/
+  public static final String CFG_DATA_INMEMORY_PERSISTENCE = "data.local.inmemory.persistence.type";
+  public static final String CFG_DATA_LEVELDB_ENABLED = "data.local.leveldb.enabled";
   public static final String CFG_DATA_LEVELDB_DIR = "data.local.leveldb";
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.leveldb.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.leveldb.cachesize";
@@ -77,6 +85,8 @@ public class Constants {
   /**
    * Defaults for Data Fabric
    */
+  public static final String DEFAULT_DATA_INMEMORY_PERSISTENCE = InMemoryPersistenceType.MEMORY.name();
+  public static final boolean DEFAULT_DATA_LEVELDB_ENABLED = true;
   public static final String DEFAULT_DATA_LEVELDB_DIR = "data";
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024*1024*100;
