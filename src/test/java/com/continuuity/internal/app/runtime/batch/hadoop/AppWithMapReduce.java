@@ -9,6 +9,7 @@ import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
+import com.continuuity.api.data.dataset.table.Table;
 import org.apache.hadoop.mapreduce.Job;
 
 /**
@@ -21,7 +22,10 @@ public class AppWithMapReduce implements Application {
       .setName("AppWithMapReduce")
       .setDescription("Application with MapReduce job")
       .noStream()
-      .withDataSets().add(new KeyValueTable("jobConfig")).add(new SimpleTimeseriesTable("timeSeries"))
+      .withDataSets()
+        .add(new KeyValueTable("jobConfig"))
+        .add(new SimpleTimeseriesTable("timeSeries"))
+        .add(new Table("counters"))
       .noFlow()
       .noProcedure()
       .withBatch().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())

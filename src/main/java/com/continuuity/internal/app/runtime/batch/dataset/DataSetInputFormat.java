@@ -6,7 +6,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
-import com.continuuity.internal.app.runtime.batch.inmemory.MapReduceContextAccessor;
+import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -30,8 +30,8 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
-    Configuration conf = context.getConfiguration();
-    List<Split> splits = MapReduceContextAccessor.getContext(conf).getInputDataSelection();
+    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context);
+    List<Split> splits = contextProvider.get().getInputDataSelection();
 
     List<InputSplit> list = new ArrayList<InputSplit>();
     for (Split split : splits) {
@@ -49,7 +49,8 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
-    BasicMapReduceContext mrContext = MapReduceContextAccessor.getContext(conf);
+    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context);
+    BasicMapReduceContext mrContext = contextProvider.get();
     @SuppressWarnings("unchecked")
     BatchReadable<KEY, VALUE> dataset = (BatchReadable) mrContext.getDataSet(getInputDataSetSpec(conf).getName());
     SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
