@@ -10,30 +10,36 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.sql.SQLException;
-
 /**
  * This class implements the table handle for LevelDB.
  */
 public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
-
-  private final String basePath;
-  private final Integer blockSize;
-  private final Long cacheSize;
+  @Inject
+  @Named("LevelDBOVCTableHandleBasePath")
+  private String basePath;
 
   @Inject
-  public LevelDBOVCTableHandle(
-      @Named("LevelDBOVCTableHandleBasePath")String basePath,
-      @Named("LevelDBOVCTableHandleBlockSize")Integer blockSize,
-      @Named("LevelDBOVCTableHandleCacheSize")Long cacheSize)
-          throws SQLException {
-    this.basePath = basePath;
-    this.blockSize = blockSize;
-    this.cacheSize = cacheSize;
+  @Named("LevelDBOVCTableHandleBlockSize")
+  private Integer blockSize;
+
+  @Inject
+  @Named("LevelDBOVCTableHandleCacheSize")
+  private Long cacheSize;
+
+  /**
+   * This class is a singleton.
+   * We have to guard against creating multiple instances because level db supports only one active client
+   */
+  private static final LevelDBOVCTableHandle INSTANCE = new LevelDBOVCTableHandle();
+
+  private LevelDBOVCTableHandle() {}
+
+  public static LevelDBOVCTableHandle getInstance() {
+    return INSTANCE;
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     LevelDBOVCTable table =
         new LevelDBOVCTable(basePath, Bytes.toString(tableName), blockSize, cacheSize);
@@ -42,7 +48,7 @@ public class LevelDBOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable openTable(byte[] tableName)
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName)
       throws OperationException {
     LevelDBOVCTable table =
         new LevelDBOVCTable(basePath, Bytes.toString(tableName), blockSize, cacheSize);

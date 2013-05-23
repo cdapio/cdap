@@ -6,6 +6,8 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -28,6 +30,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
   private final Integer blockSize;
   private final Long cacheSize;
   private final CConfiguration conf;
+
+  public static boolean isOsLevelDBCompatible() {
+    String OS = System.getProperty("os.name").toLowerCase();
+    return OS.contains("mac") || OS.contains("nix") || OS.contains("nux") || OS.contains("aix");
+  }
 
   public DataFabricLevelDBModule(CConfiguration configuration) {
     String path = configuration.get(Constants.CFG_DATA_LEVELDB_DIR);
@@ -68,8 +75,11 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
+//    bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
+    bind(LevelDBOVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
+    bind(MemoryOVCTableHandle.class).toInstance(MemoryOVCTableHandle.getInstance());
     bind(OVCTableHandle.class).to(LevelDBAndMemoryOVCTableHandle.class);
-    
+
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
     

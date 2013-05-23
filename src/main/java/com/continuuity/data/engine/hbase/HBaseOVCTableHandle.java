@@ -52,7 +52,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
     try {
       createTable(tableName, FAMILY);
       return createOVCTable(tableName);
@@ -63,7 +63,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     try {
       if (this.admin.tableExists(tableName)) {
         return createOVCTable(tableName);
