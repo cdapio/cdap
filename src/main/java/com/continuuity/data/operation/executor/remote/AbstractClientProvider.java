@@ -1,12 +1,14 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.common.discovery.ServicePayload;
-import com.netflix.curator.x.discovery.ProviderStrategy;
-import com.netflix.curator.x.discovery.ServiceInstance;
-import com.netflix.curator.x.discovery.strategies.RandomStrategy;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.ZKDiscoveryService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractClientProvider implements OpexClientProvider {
 
@@ -25,11 +28,8 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
   // the configuration
   CConfiguration configuration;
 
-  // the client to discover where opex service is running
-  ServiceDiscoveryClient discoveryClient;
-
-  // the strategy we will use to choose from multiple discovered instances
-  ProviderStrategy<ServicePayload> strategy;
+  // the endpoint strategy for service discovery.
+  EndpointStrategy endpointStrategy;
 
   protected AbstractClientProvider(CConfiguration configuration) {
     this.configuration = configuration;
@@ -54,14 +54,20 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       return;
     }
     // attempt to discover the service
-    try {
-      this.discoveryClient = new ServiceDiscoveryClient(zookeeper);
-      Log.info("Connected to service discovery. ");
-    } catch (ServiceDiscoveryClientException e) {
-      Log.error("Unable to start service discovery client: " + e.getMessage());
-      throw new TException("Unable to start service discovery client.", e);
-    }
-    this.strategy = new RandomStrategy<ServicePayload>();
+    // Ideally the DiscoveryServiceClient should be injected so that we don't need to create a new ZK client
+    // Also, there should be a stop() method for lifecycle management to stop the ZK client
+    // Although it's ok for now as ZKClientService uses daemon thread only
+    ZKClientService zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zookeeper).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+        ));
+    zkClientService.startAndWait();
+    endpointStrategy = new RandomEndpointStrategy(
+      new ZKDiscoveryService(zkClientService).discover(Constants.OPERATION_EXECUTOR_SERVICE_NAME));
   }
 
   protected OperationExecutorClient newClient() throws TException {
@@ -72,7 +78,9 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
     String address;
     int port;
 
-    if (this.discoveryClient == null) {
+    Discoverable endpoint = endpointStrategy == null ? null : endpointStrategy.pick();
+
+    if (endpoint == null) {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
@@ -82,20 +90,8 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
       Log.info("Service assumed at " + address + ":" + port);
     } else {
-      try {
-        // try to discover the service and pick one of the instances found
-        ServiceDiscoveryClient.ServiceProvider provider =
-            this.discoveryClient.getServiceProvider(
-                Constants.OPERATION_EXECUTOR_SERVICE_NAME);
-        ServiceInstance<ServicePayload>
-            instance = strategy.getInstance(provider);
-        // found an instance, get its host name and port
-        address = instance.getAddress();
-        port = instance.getPort();
-      } catch (Exception e) {
-        Log.error("Unable to discover opex service: " + e.getMessage());
-        throw new TException("Unable to discover opex service.", e);
-      }
+      address = endpoint.getSocketAddress().getHostName();
+      port = endpoint.getSocketAddress().getPort();
       Log.info("Service discovered at " + address + ":" + port);
     }
     // now we have an address and port, try to connect a client
