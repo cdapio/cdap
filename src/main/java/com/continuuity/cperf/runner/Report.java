@@ -1,11 +1,20 @@
 package com.continuuity.cperf.runner;
 
-//@Retention(RetentionPolicy.RUNTIME)
-//@Target(ElementType.TYPE)
-//@Inherited
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Annotation to assign metrics to performance tests.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Inherited
 public @interface Report {
     /**
-     * @return a Runner class (must have a constructor that takes a single Class to run)
+     * Array of metrics to be reported during a performance test.
      */
     String[] value();
 }
