@@ -10,7 +10,6 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
-import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
@@ -43,7 +42,7 @@ import java.util.List;
 public class Gateway implements Server {
 
   /**
-   * This is our Logger instance
+   * This is our Logger instance.
    */
   private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
@@ -82,18 +81,13 @@ public class Gateway implements Server {
   private GatewayMetrics gatewayMetrics = new GatewayMetrics();
 
   /**
-   * This will be shared by all connectors for zk service discovery
-   */
-  private ServiceDiscovery serviceDiscovery;
-
-  /**
    * The list of connectors for this Gateway. This list is populated in
    * the configure method.
    */
   private List<Connector> connectorList = new ArrayList<Connector>();
 
   /**
-   * Our Configuration object
+   * Our Configuration object.
    */
   private CConfiguration myConfiguration;
 
@@ -113,7 +107,7 @@ public class Gateway implements Server {
   private GatewayAuthenticator authenticator;
 
   /**
-   * Get the Gateway's current configuration
+   * Get the Gateway's current configuration.
    *
    * @return Our current Configuration
    */
@@ -196,7 +190,7 @@ public class Gateway implements Server {
         ((Collector) connector).setConsumer(this.consumer);
       }
       if (connector instanceof MetaDataServiceAware) {
-        ((MetaDataServiceAware) connector).setMetadataService(this.mds);
+        connector.setMetadataService(this.mds);
       }
       if (connector instanceof MetaDataStoreAware) {
         ((MetaDataStoreAware) connector).setMetadataStore(this.metaDataStore);
@@ -296,7 +290,7 @@ public class Gateway implements Server {
   }
 
   /**
-   * Set the gateway's Configuration, then create and configure the connectors
+   * Set the gateway's Configuration, then create and configure the connectors.
    *
    * @param configuration The Configuration object that contains the options
    *                      for the Gateway and all its connectors. This can not
@@ -318,14 +312,6 @@ public class Gateway implements Server {
 
     // Save the configuration so we can use it again later
     myConfiguration = configuration;
-
-    // try to establish service discovery
-    boolean doDiscovery = configuration.getBoolean(
-        Constants.CONFIG_DO_SERVICE_DISCOVERY, true);
-    if (doDiscovery) {
-      this.serviceDiscovery = new ServiceDiscovery(configuration);
-      this.serviceDiscovery.initialize();
-    }
 
     // Determine cluster instance name for authentication purposes
     this.clusterName = myConfiguration.get(Constants.CONFIG_CLUSTER_NAME,
@@ -390,9 +376,6 @@ public class Gateway implements Server {
         }
 
         newConnector.setDiscoveryServiceClient(discoveryServiceClient);
-        
-        // set the connector's discovery client
-        newConnector.setServiceDiscovery(this.serviceDiscovery);
 
         // set the connector's authenticator
         newConnector.setAuthenticator(this.authenticator);
@@ -411,15 +394,16 @@ public class Gateway implements Server {
   }
 
   /**
-   * Check whether a connector with the given name is already registered
+   * Check whether a connector with the given name is already registered.
    *
    * @param name The name to be checked
    * @return true If a connector with the same name exists
    */
   private boolean hasNamedConnector(String name) {
     for (Connector connector : this.connectorList) {
-      if (connector.getName().equals(name))
+      if (connector.getName().equals(name)) {
         return true;
+      }
     }
     return false;
   }
