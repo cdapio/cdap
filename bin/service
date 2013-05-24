@@ -14,55 +14,66 @@ else
   exit 0
 fi
 
-NAME=`basename $0`
+# Determine service name from the name of the symlink being run
+SVCNAME=`basename $0`
 
-if [[ "X$NAME" == "Xsvc" ]]; then
-  echo "Create a soft link to this script as start-<component>"
-  echo "E.g. ln -s start-far bin/start"
+if [[ "X$SVCNAME" == "Xsvc" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
   exit 1
 fi
 
-#APP=`echo $NAME | awk -F"-" ' { print $2 } '`; export APP
-APP=`echo $NAME | cut -d'-' -f2-`; export APP
-#SERVICE=`echo $NAME | awk -F"-" ' { print $3 }'`; export SERVICE
+# APP is shortened SVCNAME
+APP=`echo $SVCNAME | cut -d'-' -f2-`; export APP
 
+# Determine symlink target (full path)
+TARGET=`readlink $0`
+if [[ $? -ne 0 ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Determine package name by applying regex to the target of the symlink being run
+PKGNAME=`echo $TARGET | sed -e 's:/opt/continuuity/\([^/]*\)/.*:\1:'`
+if [[ "X$PKGNAME" == "X" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Default CONTINUUITY_HOME to /opt/continuuity (package default)
 if [ ! -n "$CONTINUUITY_HOME" ]; then
-  echo "CONTINUUITY_HOME is not set. Please set it."
-  exit 1
+  CONTINUUITY_HOME="/opt/continuuity"
 fi
 
-COMMON_BIN="$CONTINUUITY_HOME"/bin
-if [ ! -d "$COMMON_BIN" ]; then
- if [ -d "$CONTINUUITY_HOME"/common/bin ]; then
-   COMMON_BIN="$CONTINUUITY_HOME"/common/bin
- fi
+# Default CONTINUUITY_CONF to /etc/continuuity (package default)
+if [ ! -n "$CONTINUUITY_CONF" ]; then
+  CONTINUUITY_CONF="/etc/continuuity/conf"
 fi
 
-# Load comman.sh
-source $COMMON_BIN/common.sh
+# construct COMPONENT_HOME and COMPONENT_BIN
+COMPONENT_HOME="$CONTINUUITY_HOME"/"$PKGNAME"
+COMPONENT_BIN="$COMPONENT_HOME"/bin
 
-# Load common environment file too
-source $COMMON_BIN/common-env.sh
+# Load component comman.sh 
+source $COMPONENT_BIN/common.sh
 
-# Set the app home.
-#APP_HOME="$CONTINUUITY_HOME"/"$APP"
-#APP_HOME="$CONTINUUITY_HOME"
+# Load component common environment file too
+source $COMPONENT_BIN/common-env.sh
 
 # Load app specific configuration.
-#SERVICE_ENVIRONMENT_FILE="$APP_HOME"/conf/"$SERVICE"-env.sh
-SERVICE_ENVIRONMENT_FILE="$CONTINUUITY_HOME"/conf/"$APP"-env.sh
+SERVICE_ENVIRONMENT_FILE="$COMPONENT_HOME"/conf/"$APP"-env.sh
 if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
  . "$SERVICE_ENVIRONMENT_FILE"
 fi
 
 # Set Log location
-#export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
 export LOG_PREFIX=$APP-$IDENT_STRING-$HOSTNAME
 export LOGFILE=$LOG_PREFIX.log
 loglog="${LOG_DIR}/${LOGFILE}"
 
 # Set PID location
-#pid=$PID_DIR/$SERVICE-${IDENT_STRING}.pid
 pid=$PID_DIR/$APP-${IDENT_STRING}.pid
 loggc=$LOG_DIR/$LOG_PREFIX.gc
 
@@ -78,9 +89,7 @@ start() {
       rotate_log $loglog
       check_before_start
 
-      #echo "`date` Starting $SERVICE service component $APP on `hostname`"
       echo "`date` Starting $APP service on `hostname`"
-      #echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
       echo "`date` Starting $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
@@ -94,7 +103,11 @@ start() {
       check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
 
       # Setup classpaths.
-      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/lib/*:$CONTINUUITY_HOME/conf/:$EXTRA_CLASSPATH
+      if [ "$CLASSPATH" = "" ]; then
+        CLASSPATH=$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      else
+        CLASSPATH=$CLASSPATH:$COMPONENT_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
+      fi
 
       # sets the JAVA variable.
       set_java
@@ -102,9 +115,7 @@ start() {
       rotate_log $loggc
       check_before_start
 
-      #echo "`date` Starting Java $SERVICE service component $APP on `hostname`"
       echo "`date` Starting Java $APP service on `hostname`"
-      #echo "`date` Starting Java $SERVICE service component $APP on `hostname`" >> $loglog
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 

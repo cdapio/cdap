@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
+import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +90,10 @@ public class LogCollector {
     // determine whether we have a writer open for this log
     LogWriter writer = loggers.get(tag);
     long sizeHint = -1L;
-    if (writer != null) {
+    // TODO horrible! what worth is the FileSystem abstraction then?
+    // for local fs when we started appending writer counts only whatever written by it, so writer.getWritePosition()
+    // is misleading
+    if (writer != null && !(fs instanceof RawLocalFileSystem)) {
       sizeHint = writer.getWritePosition();
     }
 

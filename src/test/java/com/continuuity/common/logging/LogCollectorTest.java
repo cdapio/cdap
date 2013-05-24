@@ -120,20 +120,9 @@ public class LogCollectorTest {
     // - if it rolls, then we lose messages
     // - if it fails, then we don't see the new message
     lines = collector.tail(logtag, 27 * lengthOfOne + 10);
-    // the local file system append() does not work. Hence we roll the
-    // log when re-opening the collector and lose one file (11 messages)
-    // TODO how terrible! it defeats the purpose of the FileSystem abstraction
-    // TODO fix this as soon as append works for local fs
-    if (FileSystem.get(hConfig) instanceof LocalFileSystem) {
-      Assert.assertEquals(15, lines.size());
-      for (int i = 0; i < 15; i++) {
-        Assert.assertTrue(lines.get(i).contains(makeMessage(i + 22)));
-      }
-    } else {
-      Assert.assertEquals(26, lines.size());
-      for (int i = 0; i < 26; i++) {
-        Assert.assertTrue(lines.get(i).contains(makeMessage(i + 11)));
-      }
+    Assert.assertEquals(26, lines.size());
+    for (int i = 0; i < 26; i++) {
+      Assert.assertTrue(lines.get(i).contains(makeMessage(i + 11)));
     }
   }
 
