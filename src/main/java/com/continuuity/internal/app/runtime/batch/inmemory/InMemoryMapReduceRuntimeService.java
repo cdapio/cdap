@@ -10,6 +10,7 @@ import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.fs.Path;
@@ -33,7 +34,7 @@ public class InMemoryMapReduceRuntimeService implements MapReduceRuntimeService 
   }
 
   @Override
-  public Cancellable submit(final MapReduce job, com.continuuity.weave.filesystem.Location jobJarLocation, final BasicMapReduceContext context,
+  public Cancellable submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context,
                             final JobFinishCallback callback)
     throws Exception {
     final Job jobConf = Job.getInstance(conf);

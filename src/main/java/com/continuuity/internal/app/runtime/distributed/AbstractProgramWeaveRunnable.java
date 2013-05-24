@@ -3,17 +3,16 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.common.guice.IOModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueueReader;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -22,16 +21,14 @@ import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.io.SchemaGenerator;
-import com.continuuity.runtime.MetricsModules;
 import com.continuuity.weave.api.Command;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnable;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -41,7 +38,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
@@ -62,6 +58,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link WeaveRunnable} for running a program through a {@link ProgramRunner}.
+ *
+ * @param <T> The {@link ProgramRunner} type.
  */
 public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> implements WeaveRunnable {
 
@@ -218,8 +216,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       protected void configure() {
         bind(InetAddress.class).annotatedWith(Names.named("config.hostname")).toInstance(context.getHost());
 
-        bind(LocationFactory.class).to(LocalLocationFactory.class).in(Scopes.SINGLETON);
-        bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class).in(Scopes.SINGLETON);
+        bind(LocationFactory.class).toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
 
         // For binding DataSet transaction stuff
         install(createFactoryModule(DataFabricFacadeFactory.class,
@@ -231,8 +228,6 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
         // For datum decode.
         install(new IOModule());
-
-        install(new MetricsModules().getDistributedModules());
 
         // Bind remote operation executor
         bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
@@ -261,3 +256,4 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     };
   }
 }
+

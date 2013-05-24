@@ -18,6 +18,7 @@ import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeployRunStopTest {
 
   private static AppFabricService.Iface server;
-  private static com.continuuity.weave.filesystem.LocationFactory lf;
+  private static LocationFactory lf;
   private static StoreFactory sFactory;
   private static AtomicInteger instanceCount = new AtomicInteger(0);
   private static AtomicInteger messageCount = new AtomicInteger(0);

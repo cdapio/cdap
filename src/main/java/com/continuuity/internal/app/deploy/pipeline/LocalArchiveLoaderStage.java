@@ -11,6 +11,7 @@ import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.InMemoryConfigurator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.pipeline.AbstractStage;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,7 +44,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<com.continuuity.weave
    * @param archive Location of archive.
    */
   @Override
-  public void process(com.continuuity.weave.filesystem.Location archive) throws Exception {
+  public void process(Location archive) throws Exception {
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(id, archive);
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     //TODO: Check with Terence on how to handle this stuff.

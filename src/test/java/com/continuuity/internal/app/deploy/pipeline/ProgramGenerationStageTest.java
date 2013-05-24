@@ -14,6 +14,7 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.StageContext;
+import com.continuuity.weave.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,7 +27,7 @@ public class ProgramGenerationStageTest {
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    com.continuuity.weave.filesystem.LocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
+    LocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
     ApplicationSpecification appSpec = new ToyApp().configure();
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());

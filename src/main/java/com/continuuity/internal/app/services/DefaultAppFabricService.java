@@ -48,8 +48,6 @@ import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -66,8 +64,11 @@ import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -143,7 +144,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Factory for handling the location - can do both in either Distributed or Local mode.
    */
-  private final com.continuuity.weave.filesystem.LocationFactory locationFactory;
+  private final LocationFactory locationFactory;
 
   /**
    * DeploymentManager responsible for running pipeline.
@@ -163,14 +164,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
-  private static final int UPLOAD_TIMEOUT = 10*60*1000; // 10 min
+  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
   /**
-   * Construct this object with curator client for managing the zookeeper.
+   * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, OperationExecutor opex,
-                                 com.continuuity.weave.filesystem.LocationFactory locationFactory, ManagerFactory managerFactory,
+                                 LocationFactory locationFactory, ManagerFactory managerFactory,
                                  AuthorizationFactory authFactory, StoreFactory storeFactory, ProgramRuntimeService
     runtimeService) {
     this.opex = opex;
@@ -184,7 +185,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                           + "/archive";
     this.mds = new MetadataService(opex);
 
-    // FIXME: This is hacky to start service like this.
+    // Note: This is hacky to start service like this.
     if (this.runtimeService.state() != Service.State.RUNNING) {
       this.runtimeService.startAndWait();
     }
@@ -243,7 +244,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                              new BasicArguments(),
                                                              new BasicArguments()));
       store.setStart(programId, runtimeInfo.getController().getRunId().getId(),
-                     System.currentTimeMillis()/1000);
+                     TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return new RunIdentifier(runtimeInfo.getController().getRunId().toString());
 
     } catch (Throwable throwable) {
@@ -270,7 +271,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         runtimeInfo = findRuntimeInfo(id);
       }
 
-      int version = 1;  // FIXME, how to get version?
+      int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
         return new FlowStatus(id.getApplicationId(), id.getFlowId(),
                               version, null, ProgramController.State.STOPPED.toString());
@@ -291,9 +292,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   private String controllerStateToString(ProgramController.State state) {
-    if(state == ProgramController.State.ALIVE) {
+    if (state == ProgramController.State.ALIVE) {
       return "RUNNING";
-    } else if(state == ProgramController.State.ERROR) {
+    } else if (state == ProgramController.State.ERROR) {
       return "FAILED";
     }
     return state.toString();
@@ -314,7 +315,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramController controller = runtimeInfo.getController();
       RunId runId = controller.getRunId();
       controller.stop().get();
-      store.setStop(runtimeInfo.getProgramId(), runId.getId(), System.currentTimeMillis() /1000,
+      store.setStop(runtimeInfo.getProgramId(), runId.getId(),
+                    TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                     runtimeInfo.getController().getState().toString());
       return new RunIdentifier(runId.getId());
     } catch (Throwable throwable) {
@@ -417,10 +419,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public String getFlowDefinition(FlowIdentifier id)
     throws AppFabricServiceException, TException {
     try {
-      if(id.getType() == EntityType.FLOW) {
+      if (id.getType() == EntityType.FLOW) {
         FlowDefinitionImpl flowDef = getFlowDef(id);
         return new Gson().toJson(flowDef);
-      } else if(id.getType() == EntityType.QUERY) {
+      } else if (id.getType() == EntityType.QUERY) {
         QueryDefinitionImpl queryDef = getQueryDefn(id);
         return new Gson().toJson(queryDef);
       }
@@ -437,7 +439,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
                                            identifier.toString() + ", reason: " + e.getMessage());
@@ -457,7 +459,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
-    } catch(OperationException e) {
+    } catch (OperationException e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
       throw  new AppFabricServiceException("Could not retrieve application spec for " + id.toString() + "." +
                                              e.getMessage());
@@ -584,14 +586,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
       try {
         log = store.getRunHistory(programId);
-      } catch(OperationException e) {
+      } catch (OperationException e) {
         throw  new AppFabricServiceException("Unable to retrieve application for " +
                                              id.toString() + e.getMessage());
       }
       List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
       for (RunRecord runRecord : log) {
         history.add(new FlowRunRecord(runRecord.getPid(), runRecord.getStartTs(),
-                                      runRecord.getStopTs(),runRecord.getEndStatus())
+                                      runRecord.getStopTs(), runRecord.getEndStatus())
         );
       }
       return history;
@@ -608,7 +610,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Override
   public void stopAll(String id) throws AppFabricServiceException, TException {
-    // FIXME: Is id application id?
+    // Note: Is id application id?
     try {
       List<ListenableFuture<?>> futures = Lists.newLinkedList();
       for (Type type : Type.values()) {
@@ -653,17 +655,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws AppFabricServiceException {
     LOG.debug("Init deploying application " + info.toString());
-    ResourceIdentifier identifier = new ResourceIdentifier( info.getAccountId(), "appId", "resourceId", 1);
+    ResourceIdentifier identifier = new ResourceIdentifier(info.getAccountId(), "appId", "resourceId", 1);
 
     try {
-      if(sessions.containsKey(info.getAccountId())) {
+      if (sessions.containsKey(info.getAccountId())) {
         throw new AppFabricServiceException("An upload is already in progress for this account.");
       }
-      com.continuuity.weave.filesystem.Location uploadDir = locationFactory.create(archiveDir + "/" + info.getAccountId());
-      if(! uploadDir.exists() && ! uploadDir.mkdirs()) {
+      Location uploadDir = locationFactory.create(archiveDir + "/" + info.getAccountId());
+      if (!uploadDir.exists() && !uploadDir.mkdirs()) {
         LOG.warn("Unable to create directory '{}'", uploadDir.getName());
       }
-      com.continuuity.weave.filesystem.Location archive = uploadDir.append(info.getFilename());
+      Location archive = uploadDir.append(info.getFilename());
       SessionInfo sessionInfo = new SessionInfo(identifier, info, archive, DeployStatus.REGISTERED);
       sessions.put(info.getAccountId(), sessionInfo);
       return identifier;
@@ -684,7 +686,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws AppFabricServiceException {
     LOG.debug("Receiving chunk of application " + resource.toString());
-    if(! sessions.containsKey(resource.getAccountId())) {
+    if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("A session id has not been created for upload. Please call #init");
     }
 
@@ -692,7 +694,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       OutputStream stream = info.getOutputStream();
       // Read the chunk from ByteBuffer and write it to file
-      if(chunk != null) {
+      if (chunk != null) {
         byte[] buffer = new byte[chunk.remaining()];
         chunk.get(buffer);
         stream.write(buffer);
@@ -716,39 +718,36 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void deploy(AuthToken token, final ResourceIdentifier resource) throws AppFabricServiceException {
     LOG.debug("Finishing deploy of application " + resource.toString());
-    if(!sessions.containsKey(resource.getAccountId())) {
+    if (!sessions.containsKey(resource.getAccountId())) {
       throw new AppFabricServiceException("No information about archive being uploaded is available.");
     }
 
+    final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
     try {
       Id.Account id = Id.Account.from(resource.getAccountId());
-      Location archiveLocation = sessions.get(resource.getAccountId()).getArchiveLocation();
-      OutputStream stream = sessions.get(resource.getAccountId()).getOutputStream();
-      try {
-        sessions.get(resource.getAccountId()).setStatus(DeployStatus.VERIFYING);
-        Manager<com.continuuity.weave.filesystem.Location, ApplicationWithPrograms> manager
-          = (Manager<com.continuuity.weave.filesystem.Location, ApplicationWithPrograms>)managerFactory.create();
-        ListenableFuture<ApplicationWithPrograms> future = manager.deploy(id, archiveLocation);
-        Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
-          @Override
-          public void onSuccess(ApplicationWithPrograms result) {
-            save(sessions.get(resource.getAccountId()).setStatus(DeployStatus.DEPLOYED));
-            sessions.remove(resource.getAccountId());
-          }
+      Location archiveLocation = sessionInfo.getArchiveLocation();
+      sessionInfo.getOutputStream().close();
+      sessionInfo.setStatus(DeployStatus.VERIFYING);
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create();
+      ListenableFuture<ApplicationWithPrograms> future = manager.deploy(id, archiveLocation);
+      Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
+        @Override
+        public void onSuccess(ApplicationWithPrograms result) {
+          save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
+          sessions.remove(resource.getAccountId());
+        }
 
-          @Override
-          public void onFailure(Throwable t) {
-            LOG.warn(StackTraceUtil.toStringStackTrace(t));
-            save(sessions.get(resource.getAccountId()).setStatus(DeployStatus.FAILED));
-            sessions.remove(resource.getAccountId());
-          }
-        });
-      } finally {
-        stream.close();
-      }
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.warn(StackTraceUtil.toStringStackTrace(t));
+          save(sessionInfo.setStatus(DeployStatus.FAILED));
+          sessions.remove(resource.getAccountId());
+        }
+      });
+
     } catch (Throwable e) {
       LOG.warn(StackTraceUtil.toStringStackTrace(e));
-      save(sessions.get(resource.getAccountId()).setStatus(DeployStatus.FAILED));
+      save(sessionInfo.setStatus(DeployStatus.FAILED));
       sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException(e.getMessage());
     }
@@ -764,7 +763,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public DeploymentStatus dstatus(AuthToken token, ResourceIdentifier resource) throws AppFabricServiceException {
     try {
-      if(!sessions.containsKey(resource.getAccountId())) {
+      if (!sessions.containsKey(resource.getAccountId())) {
         SessionInfo info = retrieve(resource.getAccountId());
         DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
                                                        info.getStatus().getMessage(), null);
@@ -796,22 +795,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Preconditions.checkArgument(authToken.isSetToken(), "API key is not set");
       Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
-      final com.continuuity.weave.filesystem.Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(),
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(),
                                                                                           id.getApplicationId()));
-      if(! appArchive.exists()) {
+      if (!appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }
 
       String schema = "https";
-      if("localhost".equals(hostname)) {
+      if ("localhost".equals(hostname)) {
         schema = "http";
       }
 
-      int port = configuration.getInt( "app.rest.port", 10007);
+      int port = configuration.getInt("app.rest.port", 10007);
       String url = String.format("%s://%s:%d/app", schema, hostname, port);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
-        .setRequestTimeoutInMs(UPLOAD_TIMEOUT)
+        .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
         .setHeader("X-Archive-Name", appArchive.getName())
         .setHeader("X-Continuuity-ApiKey", authToken.getToken())
         .build();
@@ -819,7 +818,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       try {
         Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
-        if(response.getStatusCode() != 200) {
+        if (response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
         }
         return true;
@@ -836,7 +835,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     private final Location location;
 
-    private LocationBodyGenerator(com.continuuity.weave.filesystem.Location location) {
+    private LocationBodyGenerator(Location location) {
       this.location = location;
     }
 
@@ -937,7 +936,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values()), "There are program still running for application " + appId.getId());
 
-      com.continuuity.weave.filesystem.Location appArchive = store.getApplicationArchiveLocation(appId);
+      Location appArchive = store.getApplicationArchiveLocation(appId);
       appArchive.delete();
       store.removeApplication(appId);
       MetricsFrontendServiceImpl mfs = new MetricsFrontendServiceImpl(configuration);
@@ -1033,13 +1032,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private boolean save(SessionInfo info) {
     try {
-      Gson gson = new GsonBuilder().registerTypeAdapter(com.continuuity.weave.filesystem.Location.class, new LocationCodec(locationFactory)).create();
+      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
       String accountId = info.getResourceIdenitifier().getAccountId();
-      com.continuuity.weave.filesystem.Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
-      if(! outputDir.exists()) {
+      Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      if (!outputDir.exists()) {
         return false;
       }
-      final com.continuuity.weave.filesystem.Location sessionInfoFile = outputDir.append("session.json");
+      final Location sessionInfoFile = outputDir.append("session.json");
       OutputSupplier<Writer> writer = new OutputSupplier<Writer>() {
         @Override
         public Writer getOutput() throws IOException {
@@ -1069,11 +1068,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Nullable
   private SessionInfo retrieve(String accountId) {
     try {
-      final com.continuuity.weave.filesystem.Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
-      if(! outputDir.exists()) {
+      final Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      if (!outputDir.exists()) {
         return null;
       }
-      final com.continuuity.weave.filesystem.Location sessionInfoFile = outputDir.append("session.json");
+      final Location sessionInfoFile = outputDir.append("session.json");
       InputSupplier<Reader> reader = new InputSupplier<Reader>() {
         @Override
         public Reader getInput() throws IOException {
@@ -1081,7 +1080,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       };
 
-      Gson gson = new GsonBuilder().registerTypeAdapter(com.continuuity.weave.filesystem.Location.class, new LocationCodec(locationFactory)).create();
+      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
       Reader r = reader.getInput();
       try {
         SessionInfo info = gson.fromJson(r, SessionInfo.class);
