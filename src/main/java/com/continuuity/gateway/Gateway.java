@@ -373,7 +373,6 @@ public class Gateway implements Server {
             (Connector) Class.forName(connectorClassName).newInstance();
           // Tell it what it's called
           newConnector.setName(connectorName);
-
         } catch (Exception e) {
           LOG.error("Cannot instantiate class " + connectorClassName + "(" +
                       e.getMessage() + "). Skipping Connector '" +
