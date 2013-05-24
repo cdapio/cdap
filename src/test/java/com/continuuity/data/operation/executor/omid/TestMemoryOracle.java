@@ -346,7 +346,7 @@ public class TestMemoryOracle {
     Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
 
     // now tx4 commits. It has a conflict with tx1 (on 'b' row) but will not fail since tx4 and tx1 are NTC
-    Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
+    Assert.assertTrue(oracle.commitTransaction(tx4).isSuccess());
   }
 
   @Test
