@@ -203,7 +203,7 @@ public final class MensaMetricsDispatcher implements Runnable {
 
       // Write the command to the session and attach a future for reporting
       // any issues seen.
-      LOG.error("Trying to send metric {} to overlord.", cmd);
+      LOG.debug("Trying to send metric {} to overlord.", cmd);
       WriteFuture future = session.write(cmd);
       if (future != null) {
         future.addListener(new IoFutureListener<WriteFuture>() {
@@ -212,7 +212,7 @@ public final class MensaMetricsDispatcher implements Runnable {
             if (!future.isWritten()) {
               LOG.warn("Attempt to send metric to overlord, " + "failed " + "due to session failures. [ {} ]", cmd);
             } else {
-              LOG.error("Suceesfully sent metric {} to overlord.", cmd);
+              LOG.debug("Suceesfully sent metric {} to overlord.", cmd);
             }
           }
         });
