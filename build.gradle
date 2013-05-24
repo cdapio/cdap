@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 /**
  * Building of API archive
@@ -50,7 +51,17 @@ dependencies {
   }
   compile libraries.weave_api
   compile libraries.weave_common
-  compile libraries.weave_yarn
+  compile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
+
+  compile libraries.hadoop_annotations
+  compile libraries.hadoop_auth
+  compile libraries.hadoop_common
+  compile libraries.hadoop_yarn
+  compile libraries.hadoop_yarn_api
+  compile libraries.hadoop_yarn_client
+  compile libraries.hadoop_yarn_common
 
   // Thrift related stuff.
   thriftCompile libraries.thrift
