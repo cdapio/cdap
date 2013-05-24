@@ -23,6 +23,16 @@ struct TReadAllKeys {
   5: i64 id,
 }
 
+struct TGetSplits {
+  1: string table,
+  2: optional string metric,
+  3: optional binary start,
+  4: optional binary stop,
+  5: optional list<binary> columns,
+  6: i32 numSplits,
+  7: i64 id,
+}
+
 struct TReadColumnRange {
   1: optional string table,
   2: optional string metric,
@@ -103,6 +113,12 @@ struct TQueueConfig {
   4: bool returnBatch,
 }
 
+enum TQueueStateType {
+  UNINITIALIZED,
+  INITIALIZED,
+  NOT_FOUND,
+}
+
 struct TQueueConsumer {
   1: i32 instanceId,
   2: i64 groupId,
@@ -111,7 +127,7 @@ struct TQueueConsumer {
   5: optional string partitioningKey,
   6: optional TQueueConfig queueConfig,
   7: bool isStateful,
-  8: optional binary queueState,
+  8: TQueueStateType stateType,
 }
 
 struct TQueueEntryPointer {
@@ -164,6 +180,18 @@ struct TGetQueueInfo {
 struct TQueueConfigure {
   1: binary queueName,
   2: TQueueConsumer newConsumer,
+  3: optional string metric,
+}
+
+struct TQueueConfigureGroups {
+  1: binary queueName,
+  2: list<i64> groupIds,
+  3: optional string metric,
+}
+
+struct TQueueDropInflight {
+  1: binary queueName,
+  2: TQueueConsumer consumer,
   3: optional string metric,
 }
 
@@ -233,6 +261,11 @@ struct TTransaction {
   3: optional TReadPointer readPointer,
 }
 
+struct TKeyRange {
+  1: binary start,
+  2: binary stop,
+}
+
 exception TOperationException {
   1: required i32 status,
   2: string message,
@@ -257,6 +290,8 @@ service TOperationExecutor {
   TOptionalBinaryMap readColumnRangeTx(1: TOperationContext context, 2: TTransaction tx, 3: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
   map<binary, i64> increment(1: TOperationContext context, 2: TIncrement increment) throws (1: TOperationException ex),
   map<binary, i64> incrementTx(1: TOperationContext context, 2: TTransaction tx, 3: TIncrement increment) throws (1: TOperationException ex),
+  list<TKeyRange> getSplits(1: TOperationContext context, 2: TGetSplits getSplits) throws (1: TOperationException ex),
+  list<TKeyRange> getSplitsTx(1: TOperationContext context, 2: TTransaction tx, 3: TGetSplits getSplits) throws (1: TOperationException ex),
 
   // internal op ex
   TDequeueResult dequeue(1: TOperationContext context, 2: TQueueDequeue dequeue) throws (1: TOperationException ex),
@@ -265,5 +300,7 @@ service TOperationExecutor {
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
   void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
   void configureQueue(1: TOperationContext context, 2: TQueueConfigure configure) throws (1: TOperationException ex),
+  void configureQueueGroups(1: TOperationContext context, 2: TQueueConfigureGroups configure) throws (1: TOperationException ex),
+  void queueDropInflight(1: TOperationContext context, 2: TQueueDropInflight op) throws (1: TOperationException ex),
 
 }

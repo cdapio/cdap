@@ -9,13 +9,13 @@ import com.google.common.base.Objects;
  */
 public class Read extends ReadOperation {
 
-  /** the name of the table */
+  // the name of the table
   private final String table;
 
-  /** The key/row to read */
+  // The key/row to read
   private final byte [] key;
 
-  /** The columns to read */
+  // The columns to read
   private final byte [][] columns;
 
   /**
@@ -40,7 +40,7 @@ public class Read extends ReadOperation {
   public Read(final String table,
               final byte [] row,
               final byte [] column) {
-    this(table, row, new byte [][] { column } );
+    this(table, row, new byte [][] { column });
   }
 
   /**
@@ -89,18 +89,28 @@ public class Read extends ReadOperation {
     this.columns = columns;
   }
 
+  /**
+   * @return the table name
+   */
   public String getTable() {
     return this.table;
   }
 
+  /**
+   * @return the row key for the read
+   */
   public byte [] getKey() {
     return this.key;
   }
 
+  /**
+   * @return the columns to read
+   */
   public byte [][] getColumns() {
     return this.columns;
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     char sep = '[';

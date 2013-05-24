@@ -7,7 +7,8 @@ MAIN_CLASS=com.continuuity.data.runtime.OpexServiceMain
 MAIN_CLASS_ARGS="start"
 
 # Add Hadoop HDFS classpath
-EXTRA_CLASSPATH="$HBASE_HOME/conf/"
+# Assuming update-alternatives convention
+EXTRA_CLASSPATH="/etc/hbase/conf/"
 
 JAVA_HEAPMAX=-Xmx1024m
 

@@ -44,7 +44,7 @@ public class EvictionHelper {
    * consumer read pointer.
    * Min evict entry is calculated as the first valid of -
    * 1. min(uncommitted entries) - 1
-   * 2. max(committed entries)
+   * 2. max(min committed entries of a txn)
    * 3. min(dequeue entry set) - 1
    * 4. consumer read pointer - 1
    * @param consumerReadPointer consumer read pointer
@@ -55,14 +55,14 @@ public class EvictionHelper {
   public long getMinEvictionEntry(long consumerReadPointer, TTQueueNewOnVCTable.DequeuedEntrySet dequeuedEntrySet,
                                   ReadPointer readPointer) {
     long minUnCommittedAckEntry = Long.MAX_VALUE;
-    long maxCommittedAckEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
+    long maxMinCommittedAckEntry = TTQueueNewConstants.FIRST_ENTRY_ID - 1;
 
     for(Map.Entry<Long, Long> entry : txnMinAckEntryMap.entrySet()) {
       // Finalize runs after a commit, so it is safe to consider ack list from current transaction too
       if(readPointer.isVisible(entry.getKey())) {
         // Transaction is committed
-        if(maxCommittedAckEntry < entry.getValue()) {
-          maxCommittedAckEntry = entry.getValue();
+        if(maxMinCommittedAckEntry < entry.getValue()) {
+          maxMinCommittedAckEntry = entry.getValue();
         }
       } else {
         // Transaction is not yet committed
@@ -73,8 +73,8 @@ public class EvictionHelper {
     }
     if(minUnCommittedAckEntry != Long.MAX_VALUE) {
       return minUnCommittedAckEntry - 1;
-    } else if(maxCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
-      return maxCommittedAckEntry;
+    } else if(maxMinCommittedAckEntry >= TTQueueNewConstants.FIRST_ENTRY_ID) {
+      return maxMinCommittedAckEntry;
     } else if(!dequeuedEntrySet.isEmpty()) {
       return dequeuedEntrySet.min().getEntryId() - 1;
     } else {
@@ -97,6 +97,14 @@ public class EvictionHelper {
         iterator.remove();
       }
     }
+  }
+
+  /**
+   * Returns the number of transactions present in EvictionHelper
+   * @return number of transactions present in EvictionHelper
+   */
+  public int size() {
+    return txnMinAckEntryMap.size();
   }
 
   @Override

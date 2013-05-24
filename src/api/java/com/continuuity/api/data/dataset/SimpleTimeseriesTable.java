@@ -4,19 +4,19 @@
 
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.Write;
-import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.IteratorBasedSplitReader;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.data.dataset.table.Write;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
@@ -81,24 +81,25 @@ import java.util.Map;
  *
  * <p>
  * NOTES:
- * <ul>
+ * <ol>
  *   <li>
- *    1. This implementation does NOT address RegionServer hot-spotting issue that appears when writing rows with
+ *    This implementation does NOT address RegionServer hot-spotting issue that appears when writing rows with
  *       monotonically increasing/decreasing keys into HBase. Which is relevant for HBase-based back-end.
  *       To avoid this problem user should NOT write all data under same metric key. In general, writes will be as
  *       distributed as the amount of different metric keys the data is written for. Having one metric key would mean
  *       hitting single RegionServer at any given point of time with all writes. Which is usually NOT desired.
  *   </li>
  *   <li>
- *    2. The current implementation (incl. the format of the stored data) is heavily affected by {@link com.continuuity.api.data.dataset.table.Table} API which
+ *    The current implementation (incl. the format of the stored data) is heavily affected by
+ *    {@link com.continuuity.api.data.dataset.table.Table} API which
  *       is used under the hood. In particular the implementation is constrained by the absence of
- *       <code>readHigherOrEq()</code> method in {@link com.continuuity.api.data.dataset.table.Table} API, which would return next row with key greater or
- *       equals to the given.<br/>
+ *       <code>readHigherOrEq()</code> method in {@link com.continuuity.api.data.dataset.table.Table} API,
+ *       which would  return next row with key greater or equals to the given.<br/>
  *   </li>
  *   <li>
- *    3. The client code should not rely on the implementation details: they can be changed without a notice.
+ *    The client code should not rely on the implementation details: they can be changed without a notice.
  *   </li>
- * </ul>
+ * </ol>
  * </p>
  */
 public class SimpleTimeseriesTable extends DataSet
@@ -259,7 +260,7 @@ public class SimpleTimeseriesTable extends DataSet
   }
 
   private int applyLimitOnRowsToRead(final long timeIntervalsCount) {
-    return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ ) ? MAX_ROWS_TO_SCAN_PER_READ : (int) timeIntervalsCount;
+    return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ) ? MAX_ROWS_TO_SCAN_PER_READ : (int) timeIntervalsCount;
   }
 
   /**
@@ -404,7 +405,7 @@ public class SimpleTimeseriesTable extends DataSet
   /////// Methods for using DataSet as input for MapReduce job
 
   private static final class InputSplit extends Split {
-    private byte key[];
+    private byte[] key;
     private long startTime;
     private long endTime;
     private byte[][] tags;
@@ -418,15 +419,10 @@ public class SimpleTimeseriesTable extends DataSet
   }
 
   /**
-   * Defines input selection for Batch job
+   * Defines input selection for Batch job.
    * @param splitsCount number of parts to split the data selection into. Each piece
-   * @param key
-   * @param startTime
-   * @param endTime
-   * @param tags
-   * @return
    */
-  public List<Split> getInput(int splitsCount, byte key[], long startTime, long endTime, byte[]... tags) {
+  public List<Split> getInput(int splitsCount, byte[] key, long startTime, long endTime, byte[]... tags) {
     long timeIntervalPerSplit = (endTime - startTime) / splitsCount;
     // we don't want splits to be empty
     timeIntervalPerSplit = timeIntervalPerSplit > 0 ? timeIntervalPerSplit : 1;
@@ -456,16 +452,18 @@ public class SimpleTimeseriesTable extends DataSet
     return new TimeseriesTableRecordsReader();
   }
 
-  public static final class TimeseriesTableRecordsReader
+  /**
+   * A record reader for time series.
+   */
+  public final class TimeseriesTableRecordsReader
     extends IteratorBasedSplitReader<byte[], Entry> {
     @Override
-    public Iterator<Entry> createIterator(final BatchReadable dataset,
-                                          final Split split) throws OperationException {
+    public Iterator<Entry> createIterator(final Split split) throws OperationException {
 
       InputSplit s = (InputSplit) split;
 
       // TODO: avoid reading all data at once :)
-      List<TimeseriesTable.Entry> data = ((TimeseriesTable) dataset).read(s.key, s.startTime, s.endTime, s.tags);
+      List<TimeseriesTable.Entry> data = SimpleTimeseriesTable.this.read(s.key, s.startTime, s.endTime, s.tags);
       return data.iterator();
     }
 

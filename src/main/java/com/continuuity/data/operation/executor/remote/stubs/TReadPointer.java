@@ -502,13 +502,13 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
           case 3: // EXCLUDES
             if (schemeField.type == org.apache.thrift.protocol.TType.SET) {
               {
-                org.apache.thrift.protocol.TSet _set108 = iprot.readSetBegin();
-                struct.excludes = new HashSet<Long>(2*_set108.size);
-                for (int _i109 = 0; _i109 < _set108.size; ++_i109)
+                org.apache.thrift.protocol.TSet _set124 = iprot.readSetBegin();
+                struct.excludes = new HashSet<Long>(2*_set124.size);
+                for (int _i125 = 0; _i125 < _set124.size; ++_i125)
                 {
-                  long _elem110; // required
-                  _elem110 = iprot.readI64();
-                  struct.excludes.add(_elem110);
+                  long _elem126; // required
+                  _elem126 = iprot.readI64();
+                  struct.excludes.add(_elem126);
                 }
                 iprot.readSetEnd();
               }
@@ -542,9 +542,9 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
         oprot.writeFieldBegin(EXCLUDES_FIELD_DESC);
         {
           oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, struct.excludes.size()));
-          for (long _iter111 : struct.excludes)
+          for (long _iter127 : struct.excludes)
           {
-            oprot.writeI64(_iter111);
+            oprot.writeI64(_iter127);
           }
           oprot.writeSetEnd();
         }
@@ -587,9 +587,9 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
       if (struct.isSetExcludes()) {
         {
           oprot.writeI32(struct.excludes.size());
-          for (long _iter112 : struct.excludes)
+          for (long _iter128 : struct.excludes)
           {
-            oprot.writeI64(_iter112);
+            oprot.writeI64(_iter128);
           }
         }
       }
@@ -609,13 +609,13 @@ public class TReadPointer implements org.apache.thrift.TBase<TReadPointer, TRead
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TSet _set113 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-          struct.excludes = new HashSet<Long>(2*_set113.size);
-          for (int _i114 = 0; _i114 < _set113.size; ++_i114)
+          org.apache.thrift.protocol.TSet _set129 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+          struct.excludes = new HashSet<Long>(2*_set129.size);
+          for (int _i130 = 0; _i130 < _set129.size; ++_i130)
           {
-            long _elem115; // required
-            _elem115 = iprot.readI64();
-            struct.excludes.add(_elem115);
+            long _elem131; // required
+            _elem131 = iprot.readI64();
+            struct.excludes.add(_elem131);
           }
         }
         struct.setExcludesIsSet(true);

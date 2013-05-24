@@ -1,6 +1,8 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.executor.BatchTransactionAgentWithSyncReads;
@@ -9,7 +11,7 @@ import com.continuuity.data.operation.executor.SmartTransactionAgent;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricLocalModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -49,8 +51,7 @@ public class DataSetTestBase {
   public static void setupDataFabric() {
     // use Guice to inject an in-memory opex
     final Injector injector =
-      // Guice.createInjector(new DataFabricModules().getInMemoryModules());
-      Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
+      Guice.createInjector(new DataFabricModules().getInMemoryModules());
     opex = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
     fabric = new DataFabricImpl(opex, OperationUtil.DEFAULT);

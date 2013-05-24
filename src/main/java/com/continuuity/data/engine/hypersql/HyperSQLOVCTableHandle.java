@@ -14,21 +14,22 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * This class implements the table handle for HyperSQL.
+ */
 public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
 
-  private final String hyperSqlJDBCString;
   private final Connection connection;
 
   @Inject
   public HyperSQLOVCTableHandle(
       @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString)
           throws SQLException {
-    this.hyperSqlJDBCString = hyperSqlJDBCString;
-    this.connection = DriverManager.getConnection(this.hyperSqlJDBCString);
+    this.connection = DriverManager.getConnection(hyperSqlJDBCString);
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
     HyperSQLOVCTable table = new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
     table.initializeTable();
@@ -36,10 +37,14 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     HyperSQLOVCTable table =
         new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
-    if (table.openTable()) return table; else return null;
+    if (table.openTable()) {
+      return table;
+    } else {
+      return null;
+    }
   }
 
   @Override

@@ -3,7 +3,7 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
+import com.continuuity.data.engine.leveldb.LevelDBAndMemoryOVCTableHandle;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
@@ -33,7 +33,7 @@ public class TestLevelDBNewTTQueue extends TestTTQueueNew {
 
   @Override
   public void testInjection() {
-    assertTrue(handle instanceof LevelDBOVCTableHandle);
+    assertTrue(handle instanceof LevelDBAndMemoryOVCTableHandle);
   }
 
   @Override

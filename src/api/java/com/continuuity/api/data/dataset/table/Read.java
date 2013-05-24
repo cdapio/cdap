@@ -17,7 +17,7 @@ public class Read {
   protected int limit;
 
   /**
-   * Get the row key
+   * Get the row key.
    * @return the row key of the operation
    */
   public byte[] getRow() {
@@ -34,7 +34,7 @@ public class Read {
   }
 
   /**
-   * Get the start of the column range to read
+   * Get the start of the column range to read.
    * @return the start of the column range
    */
   public byte[] getStartCol() {
@@ -42,7 +42,7 @@ public class Read {
   }
 
   /**
-   * Get the end (exclusive) of the column range to read
+   * Get the end (exclusive) of the column range to read.
    * @return the end of the column range
    */
   public byte[] getStopCol() {
@@ -50,7 +50,7 @@ public class Read {
   }
 
   /**
-   * Get the limit for the number of columns to return
+   * Get the limit for the number of columns to return.
    * @return the limit for the number of columns to return
    */
   public int getLimit() {
@@ -58,7 +58,7 @@ public class Read {
   }
 
   /**
-   * Read a several columns
+   * Read several columns.
    * @param row the row key
    * @param columns an array of column keys
    */
@@ -70,7 +70,7 @@ public class Read {
   }
 
   /**
-   * Read a single column
+   * Read a single column.
    * @param row the row key
    * @param column the column key
    */
@@ -79,7 +79,7 @@ public class Read {
   }
 
   /**
-   * Read a consecutive range of columns
+   * Read a consecutive range of columns.
    * @param row the row key
    * @param start the column to read. If null, reading will start with the
    *              first column of the row.
@@ -91,7 +91,7 @@ public class Read {
   }
 
   /**
-   * Read all columns of a row
+   * Read all columns of a row.
    * @param row the row key
    */
   public Read(byte[] row) {
@@ -99,7 +99,7 @@ public class Read {
   }
 
   /**
-   * Read all columns of a row to a limited number
+   * Read all columns of a row to a limited number.
    * @param row the row key
    * @param limit a limit for the number of columns to return. A value -1
    *              signifies unlimited.
@@ -109,7 +109,7 @@ public class Read {
   }
 
   /**
-   * Read a consecutive range of columns up to a limited number
+   * Read a consecutive range of columns up to a limited number.
    * @param row the row key
    * @param start the column to read. If null, reading will start with the
    *              first column of the row.

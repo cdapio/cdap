@@ -737,14 +737,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
           case 2: // ENTRY_POINTERS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list66 = iprot.readListBegin();
-                struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list66.size);
-                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
+                org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
+                struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list74.size);
+                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
                 {
-                  TQueueEntryPointer _elem68; // required
-                  _elem68 = new TQueueEntryPointer();
-                  _elem68.read(iprot);
-                  struct.entryPointers.add(_elem68);
+                  TQueueEntryPointer _elem76; // required
+                  _elem76 = new TQueueEntryPointer();
+                  _elem76.read(iprot);
+                  struct.entryPointers.add(_elem76);
                 }
                 iprot.readListEnd();
               }
@@ -810,9 +810,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         oprot.writeFieldBegin(ENTRY_POINTERS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.entryPointers.size()));
-          for (TQueueEntryPointer _iter69 : struct.entryPointers)
+          for (TQueueEntryPointer _iter77 : struct.entryPointers)
           {
-            _iter69.write(oprot);
+            _iter77.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -879,9 +879,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetEntryPointers()) {
         {
           oprot.writeI32(struct.entryPointers.size());
-          for (TQueueEntryPointer _iter70 : struct.entryPointers)
+          for (TQueueEntryPointer _iter78 : struct.entryPointers)
           {
-            _iter70.write(oprot);
+            _iter78.write(oprot);
           }
         }
       }
@@ -909,14 +909,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TList _list71 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list71.size);
-          for (int _i72 = 0; _i72 < _list71.size; ++_i72)
+          org.apache.thrift.protocol.TList _list79 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.entryPointers = new ArrayList<TQueueEntryPointer>(_list79.size);
+          for (int _i80 = 0; _i80 < _list79.size; ++_i80)
           {
-            TQueueEntryPointer _elem73; // required
-            _elem73 = new TQueueEntryPointer();
-            _elem73.read(iprot);
-            struct.entryPointers.add(_elem73);
+            TQueueEntryPointer _elem81; // required
+            _elem81 = new TQueueEntryPointer();
+            _elem81.read(iprot);
+            struct.entryPointers.add(_elem81);
           }
         }
         struct.setEntryPointersIsSet(true);

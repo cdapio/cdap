@@ -68,6 +68,12 @@ public class TestNativeHBaseTTQueue extends TestTTQueue {
     // this test case uses TTQueueOnHBaseNative directly - no need to test it
   }
 
+
+  // This test cannot run on the old implementation since it needs HASH partitioning to work
+  @Override @Ignore
+  public void testMultiConsumerMultiGroup() throws Exception {
+  }
+
   @Override
   protected int getNumIterations() {
     return 10;

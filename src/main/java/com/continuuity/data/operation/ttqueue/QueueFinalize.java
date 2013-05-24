@@ -2,6 +2,8 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueRunnable;
+import com.continuuity.data.operation.executor.omid.queueproxy.QueueStateProxy;
 
 /**
 *
@@ -12,7 +14,8 @@ public class QueueFinalize {
   private final QueueConsumer consumer;
   private final int totalNumGroups;
 
-  public QueueFinalize(final byte[] queueName, QueueEntryPointer[] entryPointers, QueueConsumer consumer,
+  public QueueFinalize(final byte[] queueName, QueueEntryPointer[] entryPointers,
+                       QueueConsumer consumer,
                        int totalNumGroups) {
     this.queueName = queueName;
     this.entryPointers = entryPointers;
@@ -24,8 +27,17 @@ public class QueueFinalize {
     return queueName;
   }
 
-  public void execute(TTQueueTable queueTable, Transaction transaction)
+  public void execute(final QueueStateProxy queueStateProxy, final TTQueueTable queueTable,
+                      final Transaction transaction)
     throws OperationException {
-    queueTable.finalize(queueName, entryPointers, consumer, totalNumGroups, transaction);
+    queueStateProxy.run(queueName, consumer,
+                                       new QueueRunnable() {
+                                         @Override
+                                         public void run(StatefulQueueConsumer statefulQueueConsumer)
+                                           throws OperationException {
+                                           queueTable.finalize(queueName, entryPointers, statefulQueueConsumer,
+                                                               totalNumGroups, transaction);
+                                         }
+                                       });
   }
 }

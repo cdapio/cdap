@@ -4,19 +4,28 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.GetSplits;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.KeyRange;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.Scan;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigureGroups;
+import com.continuuity.data.operation.ttqueue.admin.QueueDropInflight;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
+import com.continuuity.data.table.Scanner;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.TException;
@@ -27,9 +36,6 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * An operation executor that delegates all operations to a remote
@@ -118,25 +124,25 @@ public class RemoteOperationExecutor
    */
   abstract static class Operation<T> {
 
-    /* the name of the operation */
+    /** the name of the operation. */
     String name;
 
-    /** constructor with name of operation */
+    /** constructor with name of operation. */
     Operation(String name) {
       this.name = name;
     }
 
-    /** return the name of the operation */
+    /** return the name of the operation. */
     String getName() {
       return name;
     }
 
-    /** execute the operation, given an opex client */
+    /** execute the operation, given an opex client. */
     abstract T execute(OperationExecutorClient client)
         throws TException, OperationException;
   }
 
-  /** see execute(operation, client) */
+  /** see execute(operation, client). */
   private <T> T execute(Operation<T> operation) throws OperationException {
     return execute(operation, null);
   }
@@ -202,8 +208,9 @@ public class RemoteOperationExecutor
       } finally {
         // in case any other exception happens (other than TException), and
         // also in case of succeess, the client must be returned to the pool.
-        if (client != null)
+        if (client != null) {
           provider.returnClient(client);
+        }
       }
     }
   }
@@ -337,7 +344,7 @@ public class RemoteOperationExecutor
 
   @Override
   public long execute(final OperationContext context,
-                      final QueueAdmin.GetGroupID getGroupID)
+                      final GetGroupID getGroupID)
       throws OperationException {
     return this.execute(
         new Operation<Long>("GetGroupID") {
@@ -398,7 +405,7 @@ public class RemoteOperationExecutor
                                                       final Read read)
     throws OperationException {
     return this.execute(
-        new Operation<OperationResult<Map<byte[],byte[]>>>("Read") {
+        new Operation<OperationResult<Map<byte[], byte[]>>>("Read") {
           @Override
           public OperationResult<Map<byte[], byte[]>>
           execute(OperationExecutorClient client)
@@ -444,11 +451,40 @@ public class RemoteOperationExecutor
     throws OperationException {
     return this.execute(new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
       @Override
-      public OperationResult<List<byte[]>> execute(OperationExecutorClient client) throws OperationException,
-        TException {
+      public OperationResult<List<byte[]>> execute(OperationExecutorClient client)
+        throws OperationException, TException {
         return client.execute(context, transaction, readAllKeys);
       }
     });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, getSplits);
+        }
+      });
+  }
+
+  @Override
+  public OperationResult<List<KeyRange>> execute(final OperationContext context,
+                                                 final Transaction transaction,
+                                                 final GetSplits getSplits)
+    throws OperationException {
+    return this.execute(
+      new Operation<OperationResult<List<KeyRange>>>("GetSplits") {
+        @Override
+        public OperationResult<List<KeyRange>> execute(OperationExecutorClient client)
+          throws OperationException, TException {
+          return client.execute(context, transaction, getSplits);
+        }
+      });
   }
 
   @Override
@@ -456,7 +492,7 @@ public class RemoteOperationExecutor
                                                       final ReadColumnRange readColumnRange)
     throws OperationException {
     return this.execute(new Operation<
-      OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
+      OperationResult<Map<byte[], byte[]>>>("ReadColumnRange") {
       @Override
       public OperationResult<Map<byte[], byte[]>>
       execute(OperationExecutorClient client)
@@ -481,8 +517,8 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final OperationContext context, @Nullable Transaction transaction,
-                      final QueueAdmin.QueueConfigure configure) throws OperationException {
+  public void execute(final OperationContext context, final QueueConfigure configure)
+    throws OperationException {
     this.execute(
       new Operation<Boolean>("QueueConfigure") {
         @Override
@@ -492,6 +528,38 @@ public class RemoteOperationExecutor
           return true;
         }
       });
+  }
+
+  @Override
+  public void execute(final OperationContext context, final QueueConfigureGroups configure) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("QueueConfigureGroups") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.execute(context, configure);
+          return true;
+        }
+      });
+  }
+
+  @Override
+  public void execute(final OperationContext context, final QueueDropInflight op) throws OperationException {
+    this.execute(
+      new Operation<Boolean>("QueueDropInflight") {
+        @Override
+        public Boolean execute(OperationExecutorClient client)
+          throws TException, OperationException {
+          client.execute(context, op);
+          return true;
+        }
+      });
+  }
+
+  @Override
+  public Scanner scan(OperationContext context, @Nullable Transaction transaction, Scan scan)
+    throws OperationException {
+    throw new UnsupportedOperationException("Remote operation executor does not support scans.");
   }
 
   @Override

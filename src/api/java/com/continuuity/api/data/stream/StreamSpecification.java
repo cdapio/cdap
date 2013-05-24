@@ -1,7 +1,7 @@
 package com.continuuity.api.data.stream;
 
 /**
- * Specification for {@code Stream}
+ * Specification for {@code Stream}.
  */
 public final class StreamSpecification {
   private final String name;
@@ -11,20 +11,20 @@ public final class StreamSpecification {
   }
 
   /**
-   * Returns the name of the Stream
+   * Returns the name of the Stream.
    */
   public String getName(){
     return name;
   }
 
  /**
-  * {@code StreamSpecification} builder used to build specification of stream
+  * {@code StreamSpecification} builder used to build specification of stream.
   */
   public static final class Builder {
     private String name;
 
     /**
-     * Adds name parameter to Streams
+     * Adds name parameter to Streams.
      * @param name stream name
      * @return Builder instance
      */
@@ -34,7 +34,7 @@ public final class StreamSpecification {
     }
 
     /**
-     * Create {@code StreamSpecification}
+     * Create {@code StreamSpecification}.
      * @return Instance of {@code StreamSpecification}
      */
     public StreamSpecification create() {

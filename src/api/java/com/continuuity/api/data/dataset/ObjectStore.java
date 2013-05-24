@@ -4,6 +4,10 @@ import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
@@ -13,18 +17,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported
+ * This data set allows to store objects of a particular class into a table. The types that are supported are:
  * <ul>
  *   <li>a plain java class</li>
  *   <li>a parametrized class</li>
  *   <li>a static inner class of one of the above</li>
  * </ul>
  * Interfaces and not-static inner classes are not supported.
+ * @param <T> the type of objects in the store
  */
 @Beta
-public class ObjectStore<T> extends DataSet {
+public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   // the (write) schema of the objects in the store
   protected final Schema schema;
@@ -73,7 +79,7 @@ public class ObjectStore<T> extends DataSet {
   }
 
   /**
-   * Constructor from a data set specification
+   * Constructor from a data set specification.
    * @param spec the specification
    */
   public ObjectStore(DataSetSpecification spec) {
@@ -124,4 +130,35 @@ public class ObjectStore<T> extends DataSet {
     this.delegate.write(key, object);
   }
 
+  /**
+   * Returns splits for a range of keys in the table.
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param stop If non-null, the returned splits will only cover keys that are less.
+   * @return list of {@link Split}
+   */
+  @Beta
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.getSplits(numSplits, start, stop);
+  }
+
+  @Override
+  public List<Split> getSplits() throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.getSplits();
+  }
+
+  @Override
+  public SplitReader<byte[], T> createSplitReader(Split split) {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.createSplitReader(split);
+  }
 }

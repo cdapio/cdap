@@ -1,7 +1,8 @@
 package com.continuuity.data.metadata;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.OperationContext;
@@ -17,12 +18,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * An implementation of MetaDataStore that serializes every entry into a byte array and stores that in a column.
+ */
 public class SerializingMetaDataStore implements MetaDataStore {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(SerializingMetaDataStore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SerializingMetaDataStore.class);
 
   OperationExecutor opex;
 
@@ -33,6 +41,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
   private static byte[] string2Bytes(String string) {
     return string.getBytes(charsetUTF8);
   }
+
   private static String bytes2String(byte[] bytes) {
     return new String(bytes, charsetUTF8);
   }
@@ -60,7 +69,9 @@ public class SerializingMetaDataStore implements MetaDataStore {
     StringBuilder str = new StringBuilder();
     str.append(type);
     str.append('\0');
-    if (app != null) str.append(app);
+    if (app != null) {
+      str.append(app);
+    }
     str.append('\0');
     str.append(id);
     return string2Bytes(str.toString());
@@ -95,10 +106,16 @@ public class SerializingMetaDataStore implements MetaDataStore {
   private static String extractApplication(byte[] columnKey) {
     String str = bytes2String(columnKey);
     int pos = str.indexOf('\0');
-    if (pos < 0) return null;
+    if (pos < 0) {
+      return null;
+    }
     int pos1 = str.indexOf('\0', pos + 1);
-    if (pos1 < 0) return null;
-    if (pos1 == pos + 1) return null;
+    if (pos1 < 0) {
+      return null;
+    }
+    if (pos1 == pos + 1) {
+      return null;
+    }
     return str.substring(pos + 1, pos1);
   }
 
@@ -106,13 +123,12 @@ public class SerializingMetaDataStore implements MetaDataStore {
    * To avoid the overhead of creating new serializer for every call,
    * we keep a serializer for each thread in a thread local structure.
    */
-  ThreadLocal<MetaDataSerializer> serializers =
-      new ThreadLocal<MetaDataSerializer>();
+  ThreadLocal<MetaDataSerializer> serializers = new ThreadLocal<MetaDataSerializer>();
 
   /**
-   * Utility method to get or create the thread local serializer
+   * Utility method to get or create the thread local serializer.
    */
-  MetaDataSerializer getSerializer() {
+  private MetaDataSerializer getSerializer() {
     if (this.serializers.get() == null) {
       this.serializers.set(new MetaDataSerializer());
     }
@@ -125,47 +141,37 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public void add(OperationContext context,
-                  MetaDataEntry entry) throws OperationException {
+  public void add(OperationContext context, MetaDataEntry entry) throws OperationException {
     add(context, entry, true);
   }
 
   @Override
-  public void add(OperationContext context,
-                  MetaDataEntry entry, boolean resolve)
-      throws OperationException {
+  public void add(OperationContext context, MetaDataEntry entry, boolean resolve) throws OperationException {
     write(context, null, entry, false, resolve);
   }
 
   @Override
-  public void update(OperationContext context,
-                     MetaDataEntry entry) throws OperationException {
+  public void update(OperationContext context, MetaDataEntry entry) throws OperationException {
     update(context, entry, true);
   }
 
   @Override
-  public void update(OperationContext context,
-                     MetaDataEntry entry, boolean resolve)
-      throws OperationException {
+  public void update(OperationContext context, MetaDataEntry entry, boolean resolve) throws OperationException {
     write(context, null, entry, true, resolve);
   }
 
   @Override
-  public void swap(OperationContext context,
-                   MetaDataEntry expected, MetaDataEntry entry)
-      throws OperationException {
+  public void swap(OperationContext context, MetaDataEntry expected, MetaDataEntry entry) throws OperationException {
     write(context, expected, entry, true, true);
   }
 
-  private void write(OperationContext context,
-                     MetaDataEntry expected,
-                     MetaDataEntry entry,
-                     boolean isUpdate,
+  private void write(OperationContext context, MetaDataEntry expected, MetaDataEntry entry, boolean isUpdate,
                      boolean resolve)
-      throws OperationException {
+    throws OperationException {
 
-    if (entry == null)
+    if (entry == null) {
       throw new IllegalArgumentException("entry cannot be null");
+    }
 
     byte[] rowkey = makeRowKey(entry);
     byte[] column = makeColumnKey(entry);
@@ -176,8 +182,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     } catch (MetaDataException e) {
       // no need to log, serializer has logged this already
       // the meta data exception is only a wrapper around the actual exception
-      throw new OperationException(
-          StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
     }
 
     OperationResult<Map<byte[], byte[]>> result;
@@ -185,14 +190,15 @@ public class SerializingMetaDataStore implements MetaDataStore {
       Read read = new Read(tableName, rowkey, column);
       result = opex.execute(context, read);
     } catch (OperationException e) {
-      String message =
-          String.format("Error reading meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error reading meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
 
     byte[] bytesRead = null;
-    if (!result.isEmpty()) bytesRead = result.getValue().get(column);
+    if (!result.isEmpty()) {
+      bytesRead = result.getValue().get(column);
+    }
 
     if (!isUpdate && bytesRead != null) {
       if (resolve && Arrays.equals(bytes, bytesRead)) {
@@ -200,17 +206,15 @@ public class SerializingMetaDataStore implements MetaDataStore {
         return;
       }
       // a different value already exists
-      String message =
-          String.format("Meta data entry for %s already exists.", entry);
-      Log.debug(message);
+      String message = String.format("Meta data entry for %s already exists.", entry);
+      LOG.debug(message);
       throw new OperationException(StatusCode.WRITE_CONFLICT, message);
     }
     if (isUpdate) {
       if (bytesRead == null) {
         // update expects a value to update, but none is there
-        String message =
-            String.format("Meta data entry for %s does not exist.", entry);
-        Log.debug(message);
+        String message = String.format("Meta data entry for %s does not exist.", entry);
+        LOG.debug(message);
         throw new OperationException(StatusCode.ENTRY_NOT_FOUND, message);
       }
       if (expected != null) {
@@ -218,8 +222,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
         try {
           expectedBytes = getSerializer().serialize(expected);
         } catch (MetaDataException e) {
-          throw new OperationException(
-              StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+          throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
         }
         // compare with expected
         if (!Arrays.equals(bytesRead, expectedBytes)) {
@@ -227,9 +230,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
             // matches the new value -> no need to write
             return;
           }
-          String message = String.format("Existing meta data entry " +
-              "for %s does not match expected entry.", entry);
-          Log.trace(message);
+          String message = String.format("Existing meta data entry " + "for %s does not match expected entry.", entry);
+          LOG.trace(message);
           // existing entry is there but does not match expected entry
           throw new OperationException(StatusCode.WRITE_CONFLICT, message);
         }
@@ -244,9 +246,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
       } else {
         // generate a compare-and-swap operation to make sure there is no add
         // conflict with some other thread or process
-        CompareAndSwap compareAndSwap =
-            new CompareAndSwap(tableName, rowkey, column, bytesRead, bytes);
-          opex.commit(context, compareAndSwap);
+        CompareAndSwap compareAndSwap = new CompareAndSwap(tableName, rowkey, column, bytesRead, bytes);
+        opex.commit(context, compareAndSwap);
       }
     } catch (OperationException e) {
       if (resolve && e.getStatus() == StatusCode.WRITE_CONFLICT) {
@@ -257,112 +258,110 @@ public class SerializingMetaDataStore implements MetaDataStore {
           Read read = new Read(tableName, rowkey, column);
           result = opex.execute(context, read);
           // compare the latest value. If is the same, we are good
-          if (!result.isEmpty() &&
-              Arrays.equals(bytes, result.getValue().get(column)))
+          if (!result.isEmpty() && Arrays.equals(bytes, result.getValue().get(column))) {
             return;
+          }
         } catch (OperationException e1) {
-          String message =
-              String.format("Error reading meta data: %s", e1.getMessage());
-          Log.error(message, e1);
+          String message = String.format("Error reading meta data: %s", e1.getMessage());
+          LOG.error(message, e1);
           throw new OperationException(e.getStatus(), message, e1);
         }
       }
       // conflict could not be resolved, or a different error
-      String message =
-          String.format("Error writing meta data: %s", e.getMessage());
-      if (e.getStatus() != StatusCode.WRITE_CONFLICT) Log.error(message, e);
+      String message = String.format("Error writing meta data: %s", e.getMessage());
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+        LOG.error(message, e);
+      }
       throw new OperationException(e.getStatus(), message, e);
     }
   }
 
   @Override
-  public void updateField(OperationContext context,
-                          String account, String application,
-                          String type, String id,
-                          String field, String value,
-                          int retries) throws OperationException {
-    if (field == null)
+  public void updateField(OperationContext context, String account, String application, String type, String id,
+                          String field, String value, int retries)
+    throws OperationException {
+    if (field == null) {
       throw new IllegalArgumentException("field cannot be null");
-    if (field.isEmpty())
+    }
+    if (field.isEmpty()) {
       throw new IllegalArgumentException("field cannot be empty");
+    }
 
-    updateField(context, account, application,
-        type, id, field, null, null, null, value, null, retries, false);
+    updateField(context, account, application, type, id, field, null, null, null, value, null, retries, false);
   }
 
   @Override
-  public void updateField(OperationContext context,
-                          String account, String application,
-                          String type, String id,
-                          String field, byte[] value,
-                          int retries) throws OperationException {
-    if (field == null)
+  public void updateField(OperationContext context, String account, String application, String type, String id,
+                          String field, byte[] value, int retries)
+    throws OperationException {
+    if (field == null) {
       throw new IllegalArgumentException("field cannot be null");
-    if (field.isEmpty())
+    }
+    if (field.isEmpty()) {
       throw new IllegalArgumentException("field cannot be empty");
+    }
 
-    updateField(context, account, application,
-        type, id, null, field, null, null, null, value, retries, false);
+    updateField(context, account, application, type, id, null, field, null, null, null, value, retries, false);
   }
 
   @Override
-  public void swapField(OperationContext context,
-                          String account, String application,
-                          String type, String id,
-                          String field, String old, String value,
-                          int retries) throws OperationException {
-    if (field == null)
+  public void swapField(OperationContext context, String account, String application, String type, String id,
+                        String field, String old, String value, int retries)
+    throws OperationException {
+    if (field == null) {
       throw new IllegalArgumentException("field cannot be null");
-    if (field.isEmpty())
+    }
+    if (field.isEmpty()) {
       throw new IllegalArgumentException("field cannot be empty");
+    }
 
-    updateField(context, account, application,
-        type, id, field, null, old, null, value, null, retries, true);
+    updateField(context, account, application, type, id, field, null, old, null, value, null, retries, true);
   }
 
   @Override
-  public void swapField(OperationContext context,
-                          String account, String application,
-                          String type, String id,
-                          String field, byte[] old, byte[] value,
-                          int retries) throws OperationException {
-    if (field == null)
+  public void swapField(OperationContext context, String account, String application, String type, String id,
+                        String field, byte[] old, byte[] value, int retries)
+    throws OperationException {
+    if (field == null) {
       throw new IllegalArgumentException("field cannot be null");
-    if (field.isEmpty())
+    }
+    if (field.isEmpty()) {
       throw new IllegalArgumentException("field cannot be empty");
+    }
 
-    updateField(context, account, application,
-        type, id, null, field, null, old, null, value, retries, true);
+    updateField(context, account, application, type, id, null, field, null, old, null, value, retries, true);
   }
 
-  private void updateField(OperationContext context,
-                          String account, String application,
-                          String type, String id,
-                          String textField, String binField,
-                          String textOld, byte[] binOld,
-                          String textValue, byte[] binValue,
-                          int retryAttempts, boolean doCompareAndSwap)
-      throws OperationException {
-    if (account == null)
+  private void updateField(OperationContext context, String account, String application, String type, String id,
+                           String textField, String binField, String textOld, byte[] binOld, String textValue,
+                           byte[] binValue, int retryAttempts, boolean doCompareAndSwap)
+    throws OperationException {
+    if (account == null) {
       throw new IllegalArgumentException("account cannot be null");
-    if (account.isEmpty())
+    }
+    if (account.isEmpty()) {
       throw new IllegalArgumentException("account cannot be empty");
-    if (id == null)
+    }
+    if (id == null) {
       throw new IllegalArgumentException("id cannot be null");
-    if (id.isEmpty())
+    }
+    if (id.isEmpty()) {
       throw new IllegalArgumentException("id cannot be empty");
-    if (application != null && application.isEmpty())
+    }
+    if (application != null && application.isEmpty()) {
       throw new IllegalArgumentException("application cannot be empty");
-    if (type == null)
+    }
+    if (type == null) {
       throw new IllegalArgumentException("type cannot be null");
-    if (type.isEmpty())
+    }
+    if (type.isEmpty()) {
       throw new IllegalArgumentException("type cannot be empty");
+    }
 
     byte[] rowkey = makeRowKey(account);
     byte[] column = makeColumnKey(application, type, id);
 
-    int attempts = retryAttempts < 0 ?
-        DEFAULT_RETRIES_ON_CONFLICT : retryAttempts;
+    int attempts = retryAttempts < 0 ? DEFAULT_RETRIES_ON_CONFLICT : retryAttempts;
 
     while (attempts >= 0) { // 0 means no retry, but of course a first attempt
       --attempts;
@@ -372,64 +371,60 @@ public class SerializingMetaDataStore implements MetaDataStore {
       OperationResult<Map<byte[], byte[]>> result = opex.execute(context, read);
 
       // throw exception if not existing
-      if (result.isEmpty())
-        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
-            "Meta data entry does not exist.");
+      if (result.isEmpty()) {
+        throw new OperationException(StatusCode.ENTRY_NOT_FOUND, "Meta data entry does not exist.");
+      }
 
       // get the raw (serialized) bytes of the entry
       byte[] bytes = result.getValue().get(column);
-      if (bytes == null)
-        throw new OperationException(StatusCode.INTERNAL_ERROR,
-            "Meta data entry is null.");
+      if (bytes == null) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, "Meta data entry is null.");
+      }
 
       // de-serialize the entry
       MetaDataEntry entry;
       try {
         entry = getSerializer().deserialize(bytes);
       } catch (MetaDataException e) {
-        throw new OperationException(
-            StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
       }
 
       // in case of compare-and-swap, check the existing value
       if (doCompareAndSwap) {
         if (textField != null) {
           String existingValue = entry.getTextField(textField);
-          if ((textOld == null && existingValue != null) ||
-              (textOld != null && !textOld.equals(existingValue))) {
-            throw new OperationException(StatusCode.WRITE_CONFLICT,
-                "Existing field value does not match expected value");
+          if ((textOld == null && existingValue != null) || (textOld != null && !textOld.equals(existingValue))) {
+            throw new OperationException(StatusCode.WRITE_CONFLICT, "Existing field value does not match expected " +
+              "value");
           }
         } else if (binField != null) {
           byte[] existingValue = entry.getBinaryField(binField);
-          if ((binOld == null && existingValue != null) ||
-              !Arrays.equals(binOld, existingValue)) {
-            throw new OperationException(StatusCode.WRITE_CONFLICT,
-                "Existing field value does not match expected value");
+          if ((binOld == null && existingValue != null) || !Arrays.equals(binOld, existingValue)) {
+            throw new OperationException(StatusCode.WRITE_CONFLICT, "Existing field value does not match expected " +
+              "value");
           }
         }
       }
 
       // update the field
-      if (textField != null)
+      if (textField != null) {
         entry.addField(textField, textValue);
-      else if (binField != null)
+      } else if (binField != null) {
         entry.addField(binField, binValue);
-      else throw new IllegalArgumentException(
-            "Only one of textField or binField may be null");
+      } else {
+        throw new IllegalArgumentException("Only one of textField or binField may be null");
+      }
 
       // re-serialize
       byte[] newBytes;
       try {
         newBytes = getSerializer().serialize(entry);
         if (newBytes == null || newBytes.length == 0) {
-          throw new OperationException(StatusCode.INTERNAL_ERROR,
-              "serialization of meta data entry returned " +
-                  (newBytes == null ? "null" : "empty byte array"));
+          throw new OperationException(StatusCode.INTERNAL_ERROR, "serialization of meta data entry returned " +
+            (newBytes == null ? "null" : "empty byte array"));
         }
       } catch (MetaDataException e) {
-        throw new OperationException(
-            StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
       }
 
       // write w/ compareAndSwap
@@ -438,79 +433,93 @@ public class SerializingMetaDataStore implements MetaDataStore {
         opex.commit(context, compareAndSwap);
         return;
       } catch (OperationException e) {
-        if (e.getStatus() == StatusCode.WRITE_CONFLICT && attempts >= 0)
+        if (e.getStatus() == StatusCode.WRITE_CONFLICT && attempts >= 0) {
           continue;
+        }
         throw e;
       }
     }
   }
 
   @Override
-  public MetaDataEntry get(OperationContext context,
-                           String account, String application,
-                           String type, String id) throws OperationException {
+  public MetaDataEntry get(OperationContext context, String account, String application, String type, String id)
+    throws OperationException {
 
-    if (account == null)
+    if (account == null) {
       throw new IllegalArgumentException("account cannot be null");
-    if (account.isEmpty())
+    }
+    if (account.isEmpty()) {
       throw new IllegalArgumentException("account cannot be empty");
-    if (id == null)
+    }
+    if (id == null) {
       throw new IllegalArgumentException("id cannot be null");
-    if (id.isEmpty())
+    }
+    if (id.isEmpty()) {
       throw new IllegalArgumentException("id cannot be empty");
-    if (application != null && application.isEmpty())
+    }
+    if (application != null && application.isEmpty()) {
       throw new IllegalArgumentException("application cannot be empty");
-    if (type == null)
+    }
+    if (type == null) {
       throw new IllegalArgumentException("type cannot be null");
-    if (type.isEmpty())
+    }
+    if (type.isEmpty()) {
       throw new IllegalArgumentException("type cannot be empty");
+    }
 
     byte[] rowkey = makeRowKey(account);
     byte[] column = makeColumnKey(application, type, id);
 
     try {
       Read read = new Read(tableName, rowkey, column);
-      OperationResult<Map<byte[], byte[]>> result =
-          opex.execute(context, read);
+      OperationResult<Map<byte[], byte[]>> result = opex.execute(context, read);
 
-      if (result.isEmpty()) return null;
+      if (result.isEmpty()) {
+        return null;
+      }
 
       byte[] bytes = result.getValue().get(column);
-      if (bytes == null) return null;
+      if (bytes == null) {
+        return null;
+      }
 
       return getSerializer().deserialize(bytes);
 
     } catch (OperationException e) {
-      String message =
-          String.format("Error reading meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error reading meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
 
     } catch (MetaDataException e) {
-      throw new OperationException(
-          StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
   }
 
   @Override
-  public void delete(OperationContext context,
-                     String account, String application,
-                     String type, String id) throws OperationException {
+  public void delete(OperationContext context, String account, String application, String type, String id)
+    throws OperationException {
 
-    if (account == null)
+    if (account == null) {
       throw new IllegalArgumentException("account cannot be null");
-    if (account.isEmpty())
+    }
+    if (account.isEmpty()) {
       throw new IllegalArgumentException("account cannot be empty");
-    if (id == null)
+    }
+    if (id == null) {
       throw new IllegalArgumentException("id cannot be null");
-    if (id.isEmpty())
+    }
+    if (id.isEmpty()) {
       throw new IllegalArgumentException("id cannot be empty");
-    if (application != null && application.isEmpty())
+    }
+    if (application != null && application.isEmpty()) {
       throw new IllegalArgumentException("application cannot be empty");
-    if (type == null)
+    }
+    if (type == null) {
       throw new IllegalArgumentException("type cannot be null");
-    if (type.isEmpty())
+    }
+    if (type.isEmpty()) {
       throw new IllegalArgumentException("type cannot be empty");
+    }
 
     byte[] rowkey = makeRowKey(account);
     byte[] column = makeColumnKey(application, type, id);
@@ -519,39 +528,42 @@ public class SerializingMetaDataStore implements MetaDataStore {
       opex.commit(context, new Delete(tableName, rowkey, column));
 
     } catch (OperationException e) {
-      String message =
-          String.format("Error deleting meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error deleting meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
   }
 
   @Override
-  public List<MetaDataEntry> list(OperationContext context,
-                                  String account, String application,
-                                  String type, Map<String, String> fields)
-      throws OperationException {
+  public List<MetaDataEntry> list(OperationContext context, String account, String application, String type,
+                                  Map<String, String> fields)
+    throws OperationException {
     try {
-      if (account == null)
+      if (account == null) {
         throw new IllegalArgumentException("account cannot be null");
-      if (account.isEmpty())
+      }
+      if (account.isEmpty()) {
         throw new IllegalArgumentException("account cannot be empty");
-      if (application != null && application.isEmpty())
+      }
+      if (application != null && application.isEmpty()) {
         throw new IllegalArgumentException("application cannot be empty");
-      if (type == null)
+      }
+      if (type == null) {
         throw new IllegalArgumentException("type cannot be null");
-      if (type.isEmpty())
+      }
+      if (type.isEmpty()) {
         throw new IllegalArgumentException("type cannot be empty");
+      }
 
       byte[] rowkey = makeRowKey(account);
       byte[] start = startColumnKey(application, type);
       byte[] stop = stopColumnKey(application, type);
-      ReadColumnRange read =
-          new ReadColumnRange(tableName, rowkey, start, stop);
-      OperationResult<Map<byte[],byte[]>> result = opex.execute(context, read);
+      ReadColumnRange read = new ReadColumnRange(tableName, rowkey, start, stop);
+      OperationResult<Map<byte[], byte[]>> result = opex.execute(context, read);
 
-      if (result.isEmpty())
+      if (result.isEmpty()) {
         return Collections.emptyList();
+      }
 
       List<MetaDataEntry> entries = Lists.newArrayList();
       for (byte[] bytes : result.getValue().values()) {
@@ -559,17 +571,18 @@ public class SerializingMetaDataStore implements MetaDataStore {
         try {
           meta = getSerializer().deserialize(bytes);
         } catch (MetaDataException e) {
-          throw new OperationException(
-              StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
+          throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
         }
-        if (!type.equals(meta.getType()))
+        if (!type.equals(meta.getType())) {
           continue;
-        if (application != null && !application.equals(meta.getApplication()))
+        }
+        if (application != null && !application.equals(meta.getApplication())) {
           continue;
+        }
 
         if (fields != null) {
           boolean match = true;
-          for (Map.Entry<String,String> field : fields.entrySet()) {
+          for (Map.Entry<String, String> field : fields.entrySet()) {
             if (field.getValue() == null) {
               if (!meta.getTextFields().contains(field.getKey())) {
                 match = false;
@@ -582,7 +595,9 @@ public class SerializingMetaDataStore implements MetaDataStore {
               }
             }
           }
-          if (!match) continue;
+          if (!match) {
+            continue;
+          }
         }
         entries.add(meta);
       }
@@ -590,24 +605,24 @@ public class SerializingMetaDataStore implements MetaDataStore {
       return entries;
 
     } catch (OperationException e) {
-      String message =
-          String.format("Error reading meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error reading meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
   }
 
   @Override
-  public void clear(OperationContext context,
-                    String account, String application)
-      throws OperationException {
+  public void clear(OperationContext context, String account, String application) throws OperationException {
 
-    if (account == null)
+    if (account == null) {
       throw new IllegalArgumentException("account cannot be null");
-    if (account.isEmpty())
+    }
+    if (account.isEmpty()) {
       throw new IllegalArgumentException("account cannot be empty");
-    if (application != null && application.isEmpty())
+    }
+    if (application != null && application.isEmpty()) {
       throw new IllegalArgumentException("application cannot be empty");
+    }
 
     byte[] rowkey = makeRowKey(account);
     ReadColumnRange read = new ReadColumnRange(tableName, rowkey, null, null);
@@ -615,9 +630,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
     try {
       result = opex.execute(context, read);
     } catch (OperationException e) {
-      String message =
-          String.format("Error reading meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error reading meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
 
@@ -628,8 +642,9 @@ public class SerializingMetaDataStore implements MetaDataStore {
     } else {
       List<byte[]> cols = Lists.newArrayList();
       for (byte[] colkey : colset) {
-        if (application.equals(extractApplication(colkey)))
+        if (application.equals(extractApplication(colkey))) {
           cols.add(colkey);
+        }
       }
       columns = cols.toArray(new byte[cols.size()][]);
     }
@@ -638,9 +653,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
     try {
       opex.commit(context, delete);
     } catch (OperationException e) {
-      String message =
-          String.format("Error clearing meta data: %s", e.getMessage());
-      Log.error(message, e);
+      String message = String.format("Error clearing meta data: %s", e.getMessage());
+      LOG.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
   }

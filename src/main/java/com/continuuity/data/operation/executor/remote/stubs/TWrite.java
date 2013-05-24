@@ -781,13 +781,13 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
           case 4: // COLUMNS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
-                struct.columns = new ArrayList<ByteBuffer>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
+                org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
+                struct.columns = new ArrayList<ByteBuffer>(_list16.size);
+                for (int _i17 = 0; _i17 < _list16.size; ++_i17)
                 {
-                  ByteBuffer _elem10; // required
-                  _elem10 = iprot.readBinary();
-                  struct.columns.add(_elem10);
+                  ByteBuffer _elem18; // required
+                  _elem18 = iprot.readBinary();
+                  struct.columns.add(_elem18);
                 }
                 iprot.readListEnd();
               }
@@ -799,13 +799,13 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
           case 5: // VALUES
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list11 = iprot.readListBegin();
-                struct.values = new ArrayList<ByteBuffer>(_list11.size);
-                for (int _i12 = 0; _i12 < _list11.size; ++_i12)
+                org.apache.thrift.protocol.TList _list19 = iprot.readListBegin();
+                struct.values = new ArrayList<ByteBuffer>(_list19.size);
+                for (int _i20 = 0; _i20 < _list19.size; ++_i20)
                 {
-                  ByteBuffer _elem13; // required
-                  _elem13 = iprot.readBinary();
-                  struct.values.add(_elem13);
+                  ByteBuffer _elem21; // required
+                  _elem21 = iprot.readBinary();
+                  struct.values.add(_elem21);
                 }
                 iprot.readListEnd();
               }
@@ -860,9 +860,9 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
         oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.columns.size()));
-          for (ByteBuffer _iter14 : struct.columns)
+          for (ByteBuffer _iter22 : struct.columns)
           {
-            oprot.writeBinary(_iter14);
+            oprot.writeBinary(_iter22);
           }
           oprot.writeListEnd();
         }
@@ -872,9 +872,9 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
         oprot.writeFieldBegin(VALUES_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.values.size()));
-          for (ByteBuffer _iter15 : struct.values)
+          for (ByteBuffer _iter23 : struct.values)
           {
-            oprot.writeBinary(_iter15);
+            oprot.writeBinary(_iter23);
           }
           oprot.writeListEnd();
         }
@@ -932,18 +932,18 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
       if (struct.isSetColumns()) {
         {
           oprot.writeI32(struct.columns.size());
-          for (ByteBuffer _iter16 : struct.columns)
+          for (ByteBuffer _iter24 : struct.columns)
           {
-            oprot.writeBinary(_iter16);
+            oprot.writeBinary(_iter24);
           }
         }
       }
       if (struct.isSetValues()) {
         {
           oprot.writeI32(struct.values.size());
-          for (ByteBuffer _iter17 : struct.values)
+          for (ByteBuffer _iter25 : struct.values)
           {
-            oprot.writeBinary(_iter17);
+            oprot.writeBinary(_iter25);
           }
         }
       }
@@ -970,26 +970,26 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
       }
       if (incoming.get(3)) {
         {
-          org.apache.thrift.protocol.TList _list18 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.columns = new ArrayList<ByteBuffer>(_list18.size);
-          for (int _i19 = 0; _i19 < _list18.size; ++_i19)
+          org.apache.thrift.protocol.TList _list26 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.columns = new ArrayList<ByteBuffer>(_list26.size);
+          for (int _i27 = 0; _i27 < _list26.size; ++_i27)
           {
-            ByteBuffer _elem20; // required
-            _elem20 = iprot.readBinary();
-            struct.columns.add(_elem20);
+            ByteBuffer _elem28; // required
+            _elem28 = iprot.readBinary();
+            struct.columns.add(_elem28);
           }
         }
         struct.setColumnsIsSet(true);
       }
       if (incoming.get(4)) {
         {
-          org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.values = new ArrayList<ByteBuffer>(_list21.size);
-          for (int _i22 = 0; _i22 < _list21.size; ++_i22)
+          org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.values = new ArrayList<ByteBuffer>(_list29.size);
+          for (int _i30 = 0; _i30 < _list29.size; ++_i30)
           {
-            ByteBuffer _elem23; // required
-            _elem23 = iprot.readBinary();
-            struct.values.add(_elem23);
+            ByteBuffer _elem31; // required
+            _elem31 = iprot.readBinary();
+            struct.values.add(_elem31);
           }
         }
         struct.setValuesIsSet(true);

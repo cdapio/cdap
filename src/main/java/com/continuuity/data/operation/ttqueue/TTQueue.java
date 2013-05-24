@@ -3,10 +3,10 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
-
+import java.util.List;
 /**
  * A Transactional Tabular Queue interface.
  *
@@ -104,10 +104,28 @@ public interface TTQueue {
   /**
    * Used to configure the queue on start-up, or when consumer instances are changed.
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @return the old consumer count
    * @throws OperationException if unsuccessful
    */
-  int configure(QueueConsumer newConsumer) throws OperationException;
+  int configure(QueueConsumer newConsumer, ReadPointer readPointer) throws OperationException;
+
+  /**
+   * Used to configure the consumer groups of a queue on start-up.
+   * Any other existing consumer groups if any will be removed.
+   * @param groupIds list of groupIds to configure
+   * @return the list of removed groupIds
+   * @throws OperationException
+   */
+  List<Long> configureGroups(List<Long> groupIds) throws OperationException;
+
+  /**
+   * Drops any inflight entries for a consumer.
+   * @param consumer consumer whose inflight entries need to be dropped.
+   * @param readPointer read pointer
+   * @throws OperationException
+   */
+  void dropInflightState(QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.

@@ -31,9 +31,4 @@ public class TTQueueTableOnVCTable extends TTQueueAbstractTableOnVCTable {
     table.clear();
   }
 
-  @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer)
-    throws OperationException {
-    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
-  }
 }

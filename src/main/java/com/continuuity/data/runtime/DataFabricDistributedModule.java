@@ -1,8 +1,5 @@
 package com.continuuity.data.runtime;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
@@ -17,6 +14,8 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   public static final String CONF_ENABLE_NATIVE_QUEUES =
       "fabric.queue.hbase.native";
   
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = true;
+  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
 
   /**
    * Create a module with default configuration for HBase and Continuuity
@@ -71,7 +70,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   }
 
   private CConfiguration loadConfiguration() {
-    CConfiguration conf = CConfiguration.create();
+    @SuppressWarnings("UnnecessaryLocalVariable") CConfiguration conf = CConfiguration.create();
 
     // this expects the port and number of threads for the opex service
     // - data.opex.server.port <int>
@@ -114,6 +113,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // Bind our configurations
     bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
   }
 
   public CConfiguration getConfiguration() {

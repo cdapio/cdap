@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+/**
+ * This class implements the table handle for HBase.
+ */
 public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
   private static final Logger Log = LoggerFactory.getLogger(HBaseOVCTableHandle.class);
@@ -30,7 +33,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   protected final Configuration hConf;
   protected final HBaseAdmin admin;
 
-  protected static final IOExceptionHandler exceptionHandler = new HBaseIOExceptionHandler();
+  protected final IOExceptionHandler exceptionHandler = new HBaseIOExceptionHandler();
 
   protected static final byte [] FAMILY = Bytes.toBytes("fam");
 
@@ -49,7 +52,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
     try {
       createTable(tableName, FAMILY);
       return createOVCTable(tableName);
@@ -60,7 +63,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+  protected OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     try {
       if (this.admin.tableExists(tableName)) {
         return createOVCTable(tableName);
@@ -120,6 +123,9 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     return "hbase";
   }
 
+  /**
+   * An exception handler that wraps every HBase exception into a runtime exception.
+   */
   public static class HBaseIOExceptionHandler implements IOExceptionHandler {
     @Override
     public void handle(IOException e) {

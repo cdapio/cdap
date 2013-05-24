@@ -7,6 +7,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.executor.TransactionProxy;
+import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
+ * built-in data sets.
  */
 public class DataSetInstantiationBase {
 
@@ -50,7 +52,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * whether this is a read-only instantiation
+   * Whether this is a read-only instantiation.
    */
   public boolean isReadOnly() {
     return readOnly;
@@ -77,7 +79,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * Find out whether the instantiator has a spec for a named data set
+   * Find out whether the instantiator has a spec for a named data set.
    * @param name the name of the data set
    * @return whether the instantiator knows the spec for the data set
    */
@@ -144,7 +146,7 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * helper method to cast the created data set object to its correct class.
+   * Helper method to cast the created data set object to its correct class.
    * This method is to isolate the unchecked cast (it has to be unchecked
    * because T is a type parameter, we cannot do instanceof or isAssignableFrom
    * on type parameters...) into a small method, that we can annotate with a
@@ -159,9 +161,8 @@ public class DataSetInstantiationBase {
   private <T extends DataSet> T convert(Object o, String className)
     throws DataSetInstantiationException {
     try {
-      return (T)o;
-    }
-    catch (ClassCastException e) {
+      return (T) o;
+    } catch (ClassCastException e) {
       throw logAndException(e, "Incompatible assignment of com.continuuity.data.dataset of type %s", className);
     }
   }
@@ -193,7 +194,7 @@ public class DataSetInstantiationBase {
       // this sets the delegate table of the Table to a new ReadWriteTable
       RuntimeTable runtimeTable = this.isReadOnly()
         ? ReadOnlyTable.setReadOnlyTable((Table) obj, fabric, metricName, proxy)
-        : ReadWriteTable.setReadWriteTable((Table)obj, fabric, metricName, proxy);
+        : ReadWriteTable.setReadWriteTable((Table) obj, fabric, metricName, proxy);
       // also ensure that the table exists in the data fabric
       try {
         runtimeTable.open();
@@ -203,24 +204,36 @@ public class DataSetInstantiationBase {
       }
       return;
     }
-    // for object stores, we set the delegate
-    if (obj instanceof ObjectStore<?>) {
-      ObjectStoreImpl.setImplementation((ObjectStore<?>) obj, this.classLoader);
-      // but do not return yet, continue to inject data fabric into the impl
+    // for object stores (and subclasses), we set the delegate to a RuntimeObjectStore. But RuntimeObjectStore
+    // is a subclass of ObjectStore itself, and there is no point in setting its delegate (it would actually
+    // lead to infinite recursion!).
+    if (obj instanceof ObjectStore<?> && !(obj instanceof RuntimeObjectStore)) {
+      RuntimeObjectStore.setImplementation((ObjectStore<?>) obj, this.classLoader);
+      // but do not return yet, continue to inject data fabric into the runtime
     }
-    // otherwise recur through all fields of type DataSet
-    Class<?> objClass = obj.getClass();
-    for (Field field : objClass.getDeclaredFields()) {
-      if (DataSet.class.isAssignableFrom(field.getType())) {
-        field.setAccessible(true);
-        Object fieldValue;
-        try {
-          fieldValue = field.get(obj);
-        } catch (IllegalAccessException e) {
-          throw logAndException(e, "Cannot access field %s of data set class %s",
-                                field.getName(), objClass.getName());
+
+    // otherwise recur through all fields of type DataSet of this class and its super classes
+    // Walk up the hierarchy of this dataset class.
+    for (TypeToken<?> type : TypeToken.of(obj.getClass()).getTypes().classes()) {
+      if (type.getRawType().equals(Object.class)) {
+        break;
+      }
+
+      // Inject OutputEmitter fields.
+      for (Field field : type.getRawType().getDeclaredFields()) {
+        if (DataSet.class.isAssignableFrom(field.getType())) {
+          field.setAccessible(true);
+          Object fieldValue;
+          try {
+            fieldValue = field.get(obj);
+          } catch (IllegalAccessException e) {
+            throw logAndException(e, "Cannot access field %s of data set class %s",
+                                  field.getName(), obj.getClass().getName());
+          }
+          if (fieldValue != null) {
+            injectDataFabric(fieldValue, metricName, fabric, proxy);
+          }
         }
-        injectDataFabric(fieldValue, metricName, fabric, proxy);
       }
     }
   }

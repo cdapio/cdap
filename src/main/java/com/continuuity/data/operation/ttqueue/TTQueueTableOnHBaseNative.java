@@ -6,6 +6,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -13,9 +14,8 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -96,8 +96,19 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public void configure(byte[] queueName, QueueConsumer newConsumer) throws OperationException {
-    // Noting to do, only needs to be implemented in com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable
+  public int configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
+    throws OperationException {
+    return getQueue(queueName).configure(newConsumer, readPointer);
+  }
+
+  @Override
+  public List<Long> configureGroups(byte[] queueName, List<Long> groupIds) throws OperationException {
+    return getQueue(queueName).configureGroups(groupIds);
+  }
+
+  @Override
+  public void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).dropInflightState(consumer, readPointer);
   }
 
   @Override

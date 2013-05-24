@@ -5,6 +5,9 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * An opex client provider that uses thread local to maintain at most one open connection per thread.
+ */
 public class ThreadLocalClientProvider extends AbstractClientProvider {
 
   private static final Logger Log =

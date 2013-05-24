@@ -20,6 +20,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * An abstract opex client provider that implements common functionality.
+ */
 public abstract class AbstractClientProvider implements OpexClientProvider {
 
   private static final Logger Log =
@@ -42,7 +45,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
 
   /**
    * Initialize the service discovery client, we will reuse that
-   * every time we need to create a new client
+   * every time we need to create a new client.
    * @throws IOException
    */
   public void initDiscovery() throws TException {

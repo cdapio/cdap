@@ -3,8 +3,9 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+import java.util.List;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -94,12 +95,35 @@ public interface TTQueueTable {
 
   /**
    * Used to configure the queue on start-up, or when consumer instances are changed.
+   *
    * @param queueName name of the queue
    * @param newConsumer consumer that contains the new configuration information.
+   * @param readPointer read pointer
    * @throws OperationException if unsuccessful
    */
-  void configure(byte[] queueName, QueueConsumer newConsumer)
+  int configure(byte[] queueName, QueueConsumer newConsumer, ReadPointer readPointer)
     throws OperationException;
+
+  /**
+   * Used to configure the consumer groups of a queue on start-up.
+   * Any other existing consumer groups if any will be removed.
+   *
+   * @param queueName name of the queue
+   * @param groupIds list of groupIds to configure
+   * @return the list of removed groupIds
+   * @throws OperationException
+   */
+  List<Long> configureGroups(byte[] queueName, List<Long> groupIds) throws OperationException;
+
+  /**
+   * Drops any inflight entries for a consumer of a queue.
+   *
+   * @param queueName name of the queue
+   * @param consumer consumer whose inflight entries need to be dropped.
+   * @param readPointer read pointer
+   * @throws OperationException
+   */
+  void dropInflightState(byte[] queueName, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for the specified queue.

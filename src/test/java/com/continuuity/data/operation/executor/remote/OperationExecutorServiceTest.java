@@ -18,7 +18,6 @@ import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -27,11 +26,16 @@ import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.data.util.OperationUtil;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -39,8 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,6 +50,8 @@ import static org.junit.Assert.fail;
 
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OperationExecutorServiceTest.class);
 
   static OperationContext context = OperationUtil.DEFAULT;
 
@@ -378,8 +382,8 @@ public abstract class OperationExecutorServiceTest extends
     remote.commit(context, write);
     QueueConfig config=new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(qq, consumer));
+    remote.execute(context, new QueueConfigure(q, consumer));
+    remote.execute(context, new QueueConfigure(qq, consumer));
 
     // insert two elements into a queue, and dequeue one to get an ack
     remote.commit(context, new QueueEnqueue(q, new QueueEntry("0".getBytes())));
@@ -472,8 +476,8 @@ public abstract class OperationExecutorServiceTest extends
     assertTrue(remote.execute(context, new Read(a, kvcol)).isEmpty());
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
     QueueConsumer consumer = new QueueConsumer(0, 1, 1, config);
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, consumer));
+    remote.execute(context, new QueueConfigure(q, consumer));
+    remote.execute(context, new QueueConfigure(s, consumer));
     assertTrue(remote.execute(context, new QueueDequeue(q, consumer, config)).isEmpty());
     assertTrue(remote.execute(context, new QueueDequeue(s, consumer, config)).isEmpty());
 
@@ -497,7 +501,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // clear only the queues
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.QUEUES));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, consumer));
+    remote.execute(context, new QueueConfigure(q, consumer));
 
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x,
@@ -513,7 +517,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // verify that the streams are gone, but tables and queues are there
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(s, consumer));
+    remote.execute(context, new QueueConfigure(s, consumer));
     Assert.assertArrayEquals(x, remote.execute(context, new Read(a, kvcol)).getValue().get(kvcol));
     Assert.assertArrayEquals(x, remote.execute(
         context, new QueueDequeue(q, consumer, config)).getEntry().getData());
@@ -546,8 +550,8 @@ public abstract class OperationExecutorServiceTest extends
       i++;
     }
     // get two groupids
-    long id1 = remote.execute(context, new QueueAdmin.GetGroupID(q));
-    long id2 = remote.execute(context, new QueueAdmin.GetGroupID(q));
+    long id1 = remote.execute(context, new GetGroupID(q));
+    long id2 = remote.execute(context, new GetGroupID(q));
     Assert.assertFalse(id1 == id2);
 
     // creeate two configs, one hash, one random, one single, one multi
@@ -561,10 +565,10 @@ public abstract class OperationExecutorServiceTest extends
     QueueConsumer cons22 = new QueueConsumer(1, id2, 2, "group2", conf2);
 
     // configure queues
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons11));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons12));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons21));
-    remote.execute(context, null, new QueueAdmin.QueueConfigure(q, cons22));
+    remote.execute(context, new QueueConfigure(q, cons11));
+    remote.execute(context, new QueueConfigure(q, cons12));
+    remote.execute(context, new QueueConfigure(q, cons21));
+    remote.execute(context, new QueueConfigure(q, cons22));
 
     // dequeue with each consumer
     DequeueResult res11 = remote.execute(context, new QueueDequeue(q, cons11, conf1));
@@ -656,9 +660,9 @@ public abstract class OperationExecutorServiceTest extends
 
     for (int i = 0; i < numThreads; i++) {
       OpexThread ti = new OpexThread(i, numWritesPerThread);
-      Log.debug("Starting thread " + i);
+      LOG.debug("Starting thread " + i);
       ti.start();
-      Log.debug("Thread " + i + " is running");
+      LOG.debug("Thread " + i + " is running");
       threads[i] = ti;
     }
     for (int i = 0; i < numThreads; i++) {
@@ -685,10 +689,10 @@ public abstract class OperationExecutorServiceTest extends
         for (int i = 0; i < this.times; i++) {
           byte[] key = (id + "-" + i).getBytes();
           byte[] value = Integer.toString(i).getBytes();
-          Log.debug("Thread " + id + " writing #" + i);
+          LOG.debug("Thread " + id + " writing #" + i);
           Write write = new Write(key, Operation.KV_COL, value);
           remote.commit(context, write);
-          Log.debug("Thread " + id + " reading #" + i);
+          LOG.debug("Thread " + id + " reading #" + i);
           Read read = new Read(key, Operation.KV_COL);
           Assert.assertArrayEquals(value,
               remote.execute(context, read).getValue().get(Operation.KV_COL));

@@ -9,7 +9,7 @@ public abstract class AbstractWriteOperation implements WriteOperation {
   protected byte[] row;
 
   /**
-   * Constructor from the row key
+   * Constructor from the row key.
    * @param row the row key
    */
   public AbstractWriteOperation(byte[] row) {
@@ -17,7 +17,7 @@ public abstract class AbstractWriteOperation implements WriteOperation {
   }
 
   /**
-   * Get the row key of the row to write
+   * Get the row key of the row to write.
    * @return the row key
    */
   public byte[] getRow() {

@@ -344,7 +344,7 @@ public class Consumer implements Runnable {
       consumer = new StatefulQueueConsumer(consumer.getInstanceId(), consumer.getGroupId(),
                                                          consumer.getGroupSize(),
                                                          "", TTQueueRandomizedTest.HASH_KEY, consumer.getQueueConfig());
-      queue.configure(consumer);
+      queue.configure(consumer, oracle.getReadPointer());
     }
 
     public QueueConsumer getConsumer(String position, int runId, int crashId)

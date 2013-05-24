@@ -487,13 +487,13 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
           case 1: // THE_LIST
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list90 = iprot.readListBegin();
-                struct.theList = new ArrayList<ByteBuffer>(_list90.size);
-                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
+                org.apache.thrift.protocol.TList _list106 = iprot.readListBegin();
+                struct.theList = new ArrayList<ByteBuffer>(_list106.size);
+                for (int _i107 = 0; _i107 < _list106.size; ++_i107)
                 {
-                  ByteBuffer _elem92; // required
-                  _elem92 = iprot.readBinary();
-                  struct.theList.add(_elem92);
+                  ByteBuffer _elem108; // required
+                  _elem108 = iprot.readBinary();
+                  struct.theList.add(_elem108);
                 }
                 iprot.readListEnd();
               }
@@ -538,9 +538,9 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
           oprot.writeFieldBegin(THE_LIST_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.theList.size()));
-            for (ByteBuffer _iter93 : struct.theList)
+            for (ByteBuffer _iter109 : struct.theList)
             {
-              oprot.writeBinary(_iter93);
+              oprot.writeBinary(_iter109);
             }
             oprot.writeListEnd();
           }
@@ -590,9 +590,9 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
       if (struct.isSetTheList()) {
         {
           oprot.writeI32(struct.theList.size());
-          for (ByteBuffer _iter94 : struct.theList)
+          for (ByteBuffer _iter110 : struct.theList)
           {
-            oprot.writeBinary(_iter94);
+            oprot.writeBinary(_iter110);
           }
         }
       }
@@ -610,13 +610,13 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
       BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TList _list95 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.theList = new ArrayList<ByteBuffer>(_list95.size);
-          for (int _i96 = 0; _i96 < _list95.size; ++_i96)
+          org.apache.thrift.protocol.TList _list111 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.theList = new ArrayList<ByteBuffer>(_list111.size);
+          for (int _i112 = 0; _i112 < _list111.size; ++_i112)
           {
-            ByteBuffer _elem97; // required
-            _elem97 = iprot.readBinary();
-            struct.theList.add(_elem97);
+            ByteBuffer _elem113; // required
+            _elem113 = iprot.readBinary();
+            struct.theList.add(_elem113);
           }
         }
         struct.setTheListIsSet(true);
