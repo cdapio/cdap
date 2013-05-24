@@ -48,16 +48,20 @@ public abstract class MultiClassLoader extends ClassLoader {
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
     byte[] classBytes = loadClassBytes(className);
-    if(classBytes == null) {
+    if (classBytes == null) {
       //Check with the parent classloader
       try {
         ClassLoader parent = getParent();
-        if (parent != null) {
-          return parent.loadClass(className);
+        try {
+          if (parent != null) {
+            return parent.loadClass(className);
+          }
+        } catch (ClassNotFoundException e) {
+          return ClassLoader.getSystemClassLoader().loadClass(className);
         }
         return ClassLoader.getSystemClassLoader().loadClass(className);
-      } catch(ClassNotFoundException e) {
-        if(LOG.isTraceEnabled()) {
+      } catch (ClassNotFoundException e) {
+        if (LOG.isTraceEnabled()) {
           LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
         }
         throw e;
@@ -66,12 +70,12 @@ public abstract class MultiClassLoader extends ClassLoader {
 
     //Define it (parse the class file)
     result = defineClass(className, classBytes, 0, classBytes.length);
-    if(result == null) {
+    if (result == null) {
       throw new ClassFormatError("Error parsing class " + className);
     }
 
     //Resolve if necessary
-    if(resolveIt) {
+    if (resolveIt) {
       resolveClass(result);
     }
 
