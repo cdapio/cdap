@@ -3,6 +3,7 @@ package com.continuuity.performance.application;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.thrift.Counter;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
         }
       } // each interval
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      Throwables.propagate(e);
     } finally {
       LOG.debug("Shutting down runtime metrics collector.");
       stopwatch.stop();
@@ -125,7 +126,7 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
   private void enqueueMetricCommand(String metricName, long unixTime, double value, String tags) {
     String cmd = getMetricCommand(metricName, unixTime, value, tags);
     queue.add(cmd);
-    LOG.info("Added metric command '{}' to the metric collector's dispatch queue.", cmd);
+    LOG.debug("Added metric command '{}' to the metric collector's dispatch queue.", cmd);
   }
 
   private static long getCurrentUnixTime() {
