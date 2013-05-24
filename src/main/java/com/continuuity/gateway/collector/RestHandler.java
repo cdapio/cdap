@@ -14,11 +14,14 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
@@ -51,8 +54,6 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
-import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * This is the http request handler for the rest collector. This supports
@@ -374,8 +375,8 @@ public class RestHandler extends NettyRestHandler {
         case NEWID: {
           String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
                                      .toString();
-          QueueAdmin.GetGroupID op =
-              new QueueAdmin.GetGroupID(queueURI.getBytes());
+          GetGroupID op =
+              new GetGroupID(queueURI.getBytes());
           long id;
           try {
             id = this.collector.getExecutor().
@@ -387,7 +388,7 @@ public class RestHandler extends NettyRestHandler {
             QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
             QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
             this.collector.getExecutor()
-              .execute(operationContext, null, new QueueAdmin.QueueConfigure(queueURI.getBytes(), queueConsumer));
+              .execute(operationContext, new QueueConfigure(queueURI.getBytes(), queueConsumer));
           } catch (Exception e) {
             LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
             helper.finish(Error);

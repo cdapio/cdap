@@ -1,6 +1,7 @@
 // Set up the application plugin so we can launch the Gateway from gradle
 apply plugin: 'java'
 apply plugin: 'application'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
@@ -34,6 +35,10 @@ dependencies {
   compile libraries.flume_ng_sdk
 
   compile libraries.weave_discovery_api
+}
+
+test {
+    jvmArgs '-Xmx2048m'
 }
 
 /**

@@ -8,19 +8,21 @@ import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueName;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.admin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.auth.NoAuthenticator;
@@ -70,12 +72,13 @@ public class RestAccessorTest {
    * Set up in-memory data fabric
    */
   @Before
-  public void setup() {
+  public void setup() throws OperationException {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+      new DataFabricModules().getInMemoryModules());
     this.executor = injector.getInstance(OperationExecutor.class);
+    this.executor.execute(TestUtil.context, new ClearFabric(ClearFabric.ToClear.ALL));
 
   } // end of setupGateway
 
@@ -546,11 +549,11 @@ public class RestAccessorTest {
 
     String streamUri = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
                                 .toString();
-    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
+    GetGroupID op = new GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    this.executor.execute(context, null, new QueueAdmin.QueueConfigure(streamUri.getBytes(), queueConsumer));
+    this.executor.execute(context, new QueueConfigure(streamUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
@@ -569,11 +572,11 @@ public class RestAccessorTest {
   }
 
   void verifyInteger(String queueUri, int n) throws Exception {
-    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
+    GetGroupID op = new GetGroupID(queueUri.getBytes());
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(context, new QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
@@ -616,11 +619,11 @@ public class RestAccessorTest {
   }
 
   void verifyQueueGone(String queueUri) throws Exception {
-    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
+    GetGroupID op = new GetGroupID(queueUri.getBytes());
     long id = this.executor.execute(context, op);
     QueueConfig queueConfig = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1, queueConfig);
-    executor.execute(context, null, new QueueAdmin.QueueConfigure(queueUri.getBytes(), queueConsumer));
+    executor.execute(context, new QueueConfigure(queueUri.getBytes(), queueConsumer));
     // singleEntry = true means we must ack before we can see the next entry
     QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(context, dequeue);
