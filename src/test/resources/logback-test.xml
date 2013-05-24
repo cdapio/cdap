@@ -8,6 +8,10 @@
 <!--                                                                         -->
 
 <configuration>
+    <!--Supressing some chatty loggers -->
+    <logger name="org.apache.hadoop" level="INFO"/>
+    <logger name="org.mortbay.log" level="INFO"/>
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>

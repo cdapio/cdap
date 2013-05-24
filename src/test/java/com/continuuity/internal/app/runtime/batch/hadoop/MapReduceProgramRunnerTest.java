@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.batch.hadoop;
 
 import com.continuuity.TestHelper;
-import com.continuuity.api.Application;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
@@ -13,9 +12,6 @@ import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.archive.JarFinder;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
@@ -25,14 +21,14 @@ import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +41,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,20 +48,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunnerTest {
   private static Injector injector;
-  private static CConfiguration configuration;
 
   @BeforeClass
   public static void beforeClass() {
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, "/tmp/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, "/tmp/app/archive" + UUID.randomUUID());
+    final Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
 
-    injector = Guice.createInjector(new AppFabricTestModule(configuration));
+    injector = Guice.createInjector(new AppFabricTestModule(TestHelper.configuration),
+                                    new Module() {
+                                      @Override
+                                      public void configure(Binder binder) {
+                                        binder.bind(Configuration.class).toInstance(hConf);
+                                      }
+                                    });
+
   }
 
   @Test
   public void testWordCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -102,7 +103,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testTimeSeriesRecordsCount() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
@@ -123,6 +124,10 @@ public class MapReduceProgramRunnerTest {
     expected.put("tag1", 18L);
     expected.put("tag2", 3L);
     expected.put("tag3", 18L);
+    // this is a hack for making writes of MR visible here. Should go away when integrated with long-running tx
+    // TODO: is the fact that we have to do this hack actually means there's a bug? With SynchronousTransactionAgent
+    //       all should be visible right away
+    table.write(new TimeseriesTable.Entry(Bytes.toBytes("foo"), Bytes.toBytes("bar"), 0L));
     List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
     Assert.assertEquals(expected.size(), agg.size());
     for (TimeseriesTable.Entry entry : agg) {
@@ -181,18 +186,6 @@ public class MapReduceProgramRunnerTest {
       }
     }
     return null;
-  }
-
-  private ApplicationWithPrograms deployApp(Class<? extends Application> appClass) throws Exception {
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    return (ApplicationWithPrograms) p.get();
   }
 
   private byte[] tb(String val) {

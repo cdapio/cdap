@@ -14,37 +14,27 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.archive.JarFinder;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -128,23 +118,9 @@ public class MultiConsumerTest {
   @Test
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
-    final CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/app/temp");
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir")
-                                                            + "/app/archive" + UUID.randomUUID());
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(MultiApp.class);
+    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
-    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
-
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(MultiApp.class, TestHelper.getManifestWithMainClass(MultiApp.class))
-    );
-    deployedJar.deleteOnExit();
-
-    ListenableFuture<?> p = TestHelper.getLocalManager(configuration).deploy(DefaultId.ACCOUNT, deployedJar);
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final ApplicationWithPrograms app = (ApplicationWithPrograms)p.get();
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
@@ -168,7 +144,7 @@ public class MultiConsumerTest {
 
     TimeUnit.SECONDS.sleep(4);
 
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+    OperationExecutor opex = TestHelper.getInjector().getInstance(OperationExecutor.class);
     OperationContext opCtx = new OperationContext(DefaultId.ACCOUNT.getId(),
                                                   app.getAppSpecLoc().getSpecification().getName());
 

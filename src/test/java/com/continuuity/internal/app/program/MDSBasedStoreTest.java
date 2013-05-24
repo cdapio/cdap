@@ -22,18 +22,16 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
-import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
@@ -42,6 +40,7 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -55,20 +54,15 @@ import java.util.List;
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
   private MetadataService.Iface metadataService;
-  private static CConfiguration configuration;
-
-  static {
-    configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
-  }
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
-  public void before() {
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
-
-    metadataService = injector.getInstance(MetadataService.Iface.class);
-    store = injector.getInstance(MDSBasedStore.class);
+  public void before() throws OperationException {
+    metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
+    store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
+    // cleanups data
+    TestHelper.getInjector().getInstance(OperationExecutor.class)
+      .execute(new OperationContext("developer"), new ClearFabric());
   }
 
   @Test

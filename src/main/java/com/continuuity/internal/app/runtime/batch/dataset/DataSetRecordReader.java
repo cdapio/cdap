@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -15,12 +14,10 @@ import java.io.IOException;
 
 final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private final SplitReader<KEY, VALUE> splitReader;
-  private final BatchReadable<KEY, VALUE> dataset;
   private final BasicMapReduceContext context;
 
-  public DataSetRecordReader(final BatchReadable<KEY, VALUE> dataset, final SplitReader<KEY, VALUE> splitReader,
-                                  BasicMapReduceContext context) {
-    this.dataset = dataset;
+  public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
+                             BasicMapReduceContext context) {
     this.splitReader = splitReader;
     this.context = context;
   }
@@ -28,16 +25,16 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   @Override
   public void initialize(final InputSplit split, final TaskAttemptContext context) throws IOException,
                                                                                           InterruptedException {
+    // hack: making sure logging constext is set on the thread that accesses the runtime context
+    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
+
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     try {
-      splitReader.initialize(dataset, inputSplit.getSplit());
+      splitReader.initialize(inputSplit.getSplit());
     } catch(OperationException e) {
       throw Throwables.propagate(e);
     }
-
-    // hack: making sure logging constext is set on the thread that accesses the runtime context
-    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
   }
 
   @Override
@@ -65,7 +62,11 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
   @Override
   public VALUE getCurrentValue() throws IOException, InterruptedException {
-    return splitReader.getCurrentValue();
+    try {
+      return splitReader.getCurrentValue();
+    } catch(OperationException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

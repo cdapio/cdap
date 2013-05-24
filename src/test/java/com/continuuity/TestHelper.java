@@ -5,6 +5,7 @@
 package com.continuuity;
 
 import com.continuuity.api.Application;
+import com.continuuity.app.DefaultId;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.guice.AppFabricTestModule;
@@ -19,8 +20,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -35,13 +38,14 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
-  private static CConfiguration configuration;
+  public static CConfiguration configuration;
   private static Injector injector;
 
   static {
+    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.set("app.output.dir", System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set("app.tmp.dir", System.getProperty("java.io.tmpdir") + "/temp");
+    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
     injector = Guice.createInjector(new AppFabricTestModule(configuration));
   }
 
@@ -65,16 +69,25 @@ public class TestHelper {
   /**
    * @return Returns an instance of {@link LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager(CConfiguration configuration) {
-    injector = Guice.createInjector(new AppFabricTestModule(configuration));
-
-
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
     return factory.create();
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
     deployApplication(application, "app-" + System.currentTimeMillis()/1000 + ".jar");
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass) throws Exception {
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
+    );
+    deployedJar.deleteOnExit();
+
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    return (ApplicationWithPrograms) p.get();
   }
 
   /**

@@ -89,6 +89,10 @@ public final class Program {
     return programJarLocation;
   }
 
+  public ClassLoader getClassLoader() {
+    return jarClassLoader;
+  }
+
   private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {
     Preconditions.checkNotNull(manifest);
     Preconditions.checkNotNull(name);

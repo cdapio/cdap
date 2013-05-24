@@ -17,7 +17,7 @@ import java.net.InetSocketAddress;
  * LocalJobRunner with fix.
  */
 public class LocalClientProtocolProvider extends ClientProtocolProvider {
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryMapReduceRuntimeService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LocalClientProtocolProvider.class);
 
   @Override
   public ClientProtocol create(Configuration conf) throws IOException {
