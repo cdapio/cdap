@@ -17,6 +17,13 @@ public interface ApplicationManager {
   FlowManager startFlow(String flowName);
 
   /**
+   * Starts a mapreduce job.
+   * @param jobName Name of the mapreduce job to start.
+   * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   */
+  MapReduceManager startMapReduce(String jobName);
+
+  /**
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
    * @return A {@link ProcedureManager} for controlling the started procedure.

@@ -1,9 +1,14 @@
 package com.continuuity.test.app;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
@@ -13,13 +18,14 @@ import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.operation.StatusCode;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 
 /**
  * This class implements a key/value map on top of Table. Supported
  * operations are read, write, delete, and swap.
  */
-public class MyKeyValueTable extends DataSet {
+public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -129,5 +135,55 @@ public class MyKeyValueTable extends DataSet {
    */
   public void swap(byte[] key, byte[] oldValue, byte[] newValue) throws OperationException {
     this.table.write(new Swap(key, KEY_COLUMN, oldValue, newValue));
+  }
+
+  // Batch integration functionality
+
+  @Override
+  public List<Split> getSplits() throws OperationException {
+    return this.table.getSplits();
+  }
+
+  @Override
+  public SplitReader<byte[], byte[]> createSplitReader(Split split) {
+    return new KeyValueScanner(split);
+  }
+
+  /**
+   * The split reader for key/value is reading table split using the underlying Table's split reader.
+   */
+  public class KeyValueScanner extends SplitReader<byte[], byte[]> {
+
+    // the underlying table's split reader
+    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+
+    public KeyValueScanner(Split split) {
+      this.reader = table.createSplitReader(split);
+    }
+
+    @Override
+    public void initialize(Split split) throws InterruptedException, OperationException {
+      this.reader.initialize(split);
+    }
+
+    @Override
+    public boolean nextKeyValue() throws InterruptedException, OperationException {
+      return this.reader.nextKeyValue();
+    }
+
+    @Override
+    public byte[] getCurrentKey() throws InterruptedException {
+      return this.reader.getCurrentKey();
+    }
+
+    @Override
+    public byte[] getCurrentValue() throws InterruptedException, OperationException {
+      return this.reader.getCurrentValue().get(KEY_COLUMN);
+    }
+
+    @Override
+    public void close() {
+      this.reader.close();
+    }
   }
 }
