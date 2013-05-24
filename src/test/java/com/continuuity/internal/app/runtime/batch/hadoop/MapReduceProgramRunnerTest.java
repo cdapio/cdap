@@ -48,23 +48,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-  private static Injector injector;
-
-  @BeforeClass
-  public static void beforeClass() {
-    final Configuration hConf = new Configuration();
-    hConf.addResource("mapred-site-local.xml");
-    hConf.reloadConfiguration();
-
-    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                    new BigMamaModule(TestHelper.configuration),
-                                    new Module() {
-                                      @Override
-                                      public void configure(Binder binder) {
-                                        binder.bind(Configuration.class).toInstance(hConf);
-                                      }
-                                    });
-  }
+  private static Injector injector = TestHelper.getInjector();
 
   @Test
   public void testWordCount() throws Exception {
@@ -125,10 +109,7 @@ public class MapReduceProgramRunnerTest {
     expected.put("tag1", 18L);
     expected.put("tag2", 3L);
     expected.put("tag3", 18L);
-    // this is a hack for making writes of MR visible here. Should go away when integrated with long-running tx
-    // TODO: is the fact that we have to do this hack actually means there's a bug? With SynchronousTransactionAgent
-    //       all should be visible right away
-    table.write(new TimeseriesTable.Entry(Bytes.toBytes("foo"), Bytes.toBytes("bar"), 0L));
+
     List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
     Assert.assertEquals(expected.size(), agg.size());
     for (TimeseriesTable.Entry entry : agg) {

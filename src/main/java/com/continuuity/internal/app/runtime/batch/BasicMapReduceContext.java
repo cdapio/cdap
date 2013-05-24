@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.batch;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -14,6 +15,7 @@ import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
 import org.apache.hadoop.mapreduce.Job;
 
@@ -35,10 +37,12 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
   private BatchWritable outputDataset;
   private final CMetrics systemMapperMetrics;
   private final CMetrics systemReducerMetrics;
+  private final TransactionAgent txAgent;
 
   public BasicMapReduceContext(Program program, RunId runId,
-                               Map<String, DataSet> datasets, MapReduceSpecification spec) {
+                               TransactionAgent txAgent, Map<String, DataSet> datasets, MapReduceSpecification spec) {
     super(program, runId, datasets);
+    this.txAgent = txAgent;
     this.systemMapperMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Mapper"));
     this.systemReducerMetrics = new CMetrics(MetricType.FlowSystem, getMetricName("Reducer"));
     this.metrics = new MapReduceMetrics(getAccountId(), getApplicationId(),
@@ -120,5 +124,9 @@ public class BasicMapReduceContext extends ProgramRuntimeContext implements MapR
 
   public BatchWritable getOutputDataset() {
     return outputDataset;
+  }
+
+  public void flushOperations() throws OperationException {
+    txAgent.flush();
   }
 }

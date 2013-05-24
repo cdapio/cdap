@@ -7,16 +7,22 @@ import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
-  private final BatchWritable<KEY, VALUE> batchWritable;
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
 
-  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext context) {
+  private final BatchWritable<KEY, VALUE> batchWritable;
+  private final BasicMapReduceContext mrContext;
+
+  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext mrContext) {
     this.batchWritable = batchWritable;
+    this.mrContext = mrContext;
     // hack: making sure logging constext is set on the thread that accesses the runtime context
-    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+    LoggingContextAccessor.setLoggingContext(mrContext.getLoggingContext());
   }
 
   @Override
@@ -30,6 +36,13 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
 
   @Override
   public void close(final TaskAttemptContext context) throws IOException, InterruptedException {
-    // DO NOTHING
+    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in memory by tx
+    // agent)
+    try {
+      mrContext.flushOperations();
+    } catch (OperationException e) {
+      LOG.error("Failed to flush operations at the end of reducer of " + mrContext.toString());
+      throw Throwables.propagate(e);
+    }
   }
 }

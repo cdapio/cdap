@@ -22,7 +22,9 @@ import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
+import com.continuuity.data.operation.executor.SmartTransactionAgent;
+import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -62,7 +64,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private Job jobConf;
   private MapReduceProgramController controller;
-  private TransactionProxy transactionProxy;
+  private TransactionAgent txAgent;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
@@ -89,9 +91,19 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     OperationContext opexContext = new OperationContext(program.getAccountId(), program.getApplicationId());
 
-    // TODO: start long running tx here (requires missing long-running txs)
-    transactionProxy = new TransactionProxy();
-    transactionProxy.setTransactionAgent(new SynchronousTransactionAgent(opex, opexContext));
+    // Starting long-running transaction that we will also use in mapreduce tasks
+    Transaction tx;
+    try {
+      tx = opex.startTransaction(opexContext, false);
+      txAgent = new SmartTransactionAgent(opex, opexContext, tx);
+      txAgent.start();
+    } catch (OperationException e) {
+      LOG.error("Failed to start transaction for mapreduce job: " + program.getProgramName());
+      throw Throwables.propagate(e);
+    }
+
+    TransactionProxy transactionProxy = new TransactionProxy();
+    transactionProxy.setTransactionAgent(txAgent);
 
     DataFabric dataFabric = new DataFabricImpl(opex, opexContext);
     DataSetInstantiator dataSetContext =
@@ -101,7 +113,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       RunId runId = RunId.generate();
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, runId, DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
+        new BasicMapReduceContext(program, runId, txAgent,
+                                  DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
 
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
       context.injectFields(job);
@@ -112,7 +125,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce job: " + context.toString());
-      submit(job, program.getProgramJarLocation(), context);
+      submit(job, program.getProgramJarLocation(), context, tx);
 
       // adding listener which stops mapreduce job when controller stops.
       controller.addListener(new AbstractListener() {
@@ -138,17 +151,21 @@ public class MapReduceProgramRunner implements ProgramRunner {
       } catch (OperationException ex) {
         throw Throwables.propagate(ex);
       }
-      LOG.error("Failed to run mapreduce job", e);
+      LOG.error("Failed to run mapreduce job: " + program.getProgramName(), e);
       throw Throwables.propagate(e);
     }
   }
 
-  private void submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context)
+  private void submit(final MapReduce job, Location jobJarLocation, final BasicMapReduceContext context, Transaction tx)
     throws Exception {
     jobConf = Job.getInstance(hConf);
     context.setJob(jobConf);
     // additional mapreduce job initialization at run-time
     job.beforeSubmit(context);
+
+    // we do flush to make operations executed in beforeSubmit() visible in mapreduce tasks (which may run in a
+    // different JVM)
+    context.flushOperations();
 
     // replace user's Mapper & Reducer's with our wrappers in job config
     wrapMapperClassIfNeeded(jobConf);
@@ -159,7 +176,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     setOutputDataSetIfNeeded(jobConf, context);
 
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
-    contextProvider.set(context, cConf);
+    // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
+    contextProvider.set(context, cConf, tx);
 
     // TODO: consider using approach that Weave uses: package all jars with submitted job all the time
     // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
@@ -244,9 +262,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     controller.stop();
     try {
       if (success) {
-        transactionProxy.getTransactionAgent().finish();
+        txAgent.finish();
       } else {
-        transactionProxy.getTransactionAgent().abort();
+        txAgent.abort();
       }
     } catch (OperationException e) {
       throw Throwables.propagate(e);

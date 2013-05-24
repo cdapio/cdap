@@ -10,19 +10,16 @@ import java.io.IOException;
 class DataSetOutputCommitter extends OutputCommitter {
   @Override
   public void setupJob(final JobContext jobContext) throws IOException {
-    // TODO: start transaction
   }
 
   @Override
   public void commitJob(final JobContext jobContext) throws IOException {
     super.commitJob(jobContext);
-    // TODO: commit transaction
   }
 
   @Override
   public void abortJob(final JobContext jobContext, final JobStatus.State state) throws IOException {
     super.abortJob(jobContext, state);
-    // TODO: rollback transaction
   }
 
   @Override

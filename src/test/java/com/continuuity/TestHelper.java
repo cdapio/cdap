@@ -25,8 +25,11 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 
 import java.nio.ByteBuffer;
@@ -47,8 +50,19 @@ public class TestHelper {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
     configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
-    injector = Guice.createInjector(new BigMamaModule(configuration),
-                                    new DataFabricModules().getInMemoryModules());
+    final Configuration hConf = new Configuration();
+    // we use it to make mapreduce framework to use our fixed LocalJobRunner in lcoal mode
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                                    new BigMamaModule(TestHelper.configuration),
+                                    new Module() {
+                                      @Override
+                                      public void configure(Binder binder) {
+                                        binder.bind(Configuration.class).toInstance(hConf);
+                                      }
+                                    });
   }
 
   public static Injector getInjector() {
