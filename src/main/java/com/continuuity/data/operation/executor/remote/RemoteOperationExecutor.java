@@ -230,14 +230,14 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public Transaction startTransaction(final OperationContext context)
+  public Transaction startTransaction(final OperationContext context, final boolean trackChanges)
     throws OperationException {
     return this.execute(
       new Operation<Transaction>("startTransaction") {
         @Override
         public Transaction execute(OperationExecutorClient client)
           throws OperationException, TException {
-          return client.startTransaction(context);
+          return client.startTransaction(context, trackChanges);
         }
       });
   }

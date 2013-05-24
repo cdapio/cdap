@@ -138,7 +138,7 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public Transaction startTransaction(OperationContext context) throws OperationException, TException {
+  public Transaction startTransaction(OperationContext context, boolean trackChanges) throws OperationException, TException {
 
     MetricsHelper helper = newHelper("startTransaction");
 
@@ -147,7 +147,7 @@ public class OperationExecutorClient extends ConverterUtils {
         Log.trace("Received StartTransaction");
       }
       TOperationContext tcontext = wrap(context);
-      TTransaction ttx = client.start(tcontext);
+      TTransaction ttx = client.start(tcontext, trackChanges);
       if (Log.isTraceEnabled()) {
         Log.trace("StartTransaction successful.");
       }

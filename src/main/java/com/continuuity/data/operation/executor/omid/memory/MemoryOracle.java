@@ -143,22 +143,25 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized Transaction startTransaction() {
+  public synchronized Transaction startTransaction(boolean trackChanges) {
     long txid = this.timeOracle.getTimestamp();
     this.inProgress.put(txid, new InProgress());
     Set<Long> excludes = this.getExcludes();
     this.excludes.add(txid);
-    return new Transaction(txid, new MemoryReadPointer(txid, txid, excludes));
+    return new Transaction(txid, new MemoryReadPointer(txid, txid, excludes), trackChanges);
   }
 
   @Override
-  public void validateTransaction(Transaction tx) throws OmidTransactionException {
+  public synchronized void validateTransaction(Transaction tx) throws OmidTransactionException {
     getInProgress(tx.getWriteVersion());
   }
 
   @Override
   public synchronized void addToTransaction(Transaction tx, List<Undo> undos) throws OmidTransactionException {
-    getInProgress(tx.getWriteVersion()).add(undos);
+    // don't store undos for transaction that doesn't track changes
+    if (tx.isTrackChanges()) {
+      getInProgress(tx.getWriteVersion()).add(undos);
+    }
   }
 
   @Override
@@ -176,12 +179,19 @@ public class MemoryOracle implements TransactionOracle {
   @Override
   public synchronized void removeTransaction(Transaction tx) throws OmidTransactionException {
     long txid = tx.getWriteVersion();
-    // this is called after all writes of a failed transaction have been
-    // undone successfully. It removes the txid from the invalid and excluded list.
-    if (!this.excludes.remove(txid) || this.inProgress.containsKey(txid)) {
-      throw new OmidTransactionException(
-        StatusCode.INVALID_TRANSACTION, "Transaction not aborted");
+    boolean failed = false;
+    // This is called after all writes of a failed transaction have been
+    // undone successfully. In this case it removes the txid from the invalid and excluded list.
+    // In case of transaction that doesn't track undos, we have to keep it in the list of excluded. Changes made by
+    // such transaction will be cleaned up separately
+    if (tx.isTrackChanges()) {
+      failed = !this.excludes.remove(txid);
     }
+
+    if (failed || this.inProgress.containsKey(txid)) {
+      throw new OmidTransactionException(StatusCode.INVALID_TRANSACTION, "Transaction not aborted");
+    }
+
     // we must move the read pointer. If the failed transaction performed an
     // enqueue, then it was undone by overwriting the entry meta data with an
     // invalid marker. That write must be visible to subsequent dequeue calls.

@@ -716,7 +716,7 @@ public abstract class OperationExecutorServiceTest extends
     final byte[] two = Bytes.toBytes(2L);
 
     // start a transaction
-    Transaction tx = remote.startTransaction(context);
+    Transaction tx = remote.startTransaction(context, true);
     // execute a write in xaction
     remote.execute(context, tx, batch(new Write(table, r1, c1, one)));
     // read from outside xaction -> not visible
@@ -770,7 +770,7 @@ public abstract class OperationExecutorServiceTest extends
     assertArrayEquals(two, result.getValue().get(c2));
 
     // start xaction
-    tx = remote.startTransaction(context);
+    tx = remote.startTransaction(context, true);
     // increment in xaction
     iresult = remote.increment(context, tx, new Increment(table, r3, c1, 2L));
     assertEquals(new Long(2L), iresult.get(c1));

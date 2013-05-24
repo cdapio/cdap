@@ -9,13 +9,16 @@ import com.google.common.base.Objects;
 public final class Transaction implements ReadPointer, WritePointer {
   private final WritePointer writePointer;
   private final ReadPointer readPointer;
+  private final boolean trackChanges;
 
+  @Deprecated
   public Transaction(WritePointer writePointer, ReadPointer readPointer) {
     this.readPointer = readPointer;
     this.writePointer = writePointer;
+    this.trackChanges = true;
   }
 
-  public Transaction(final long writeVersion, ReadPointer readPointer) {
+  public Transaction(final long writeVersion, ReadPointer readPointer, boolean trackChanges) {
     this.writePointer = new WritePointer() {
       @Override
       public long getWriteVersion() {
@@ -30,6 +33,7 @@ public final class Transaction implements ReadPointer, WritePointer {
       }
     };
     this.readPointer = readPointer;
+    this.trackChanges = trackChanges;
   }
 
   public ReadPointer getReadPointer() {
@@ -49,6 +53,10 @@ public final class Transaction implements ReadPointer, WritePointer {
   @Override
   public long getWriteVersion() {
     return writePointer.getWriteVersion();
+  }
+
+  public boolean isTrackChanges() {
+    return trackChanges;
   }
 
   @Override

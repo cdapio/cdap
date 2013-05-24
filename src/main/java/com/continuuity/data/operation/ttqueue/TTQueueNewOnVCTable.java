@@ -541,7 +541,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
       EvictionHelper evictionHelper = queueState.getEvictionHelper();
       // Run cleanup to remove committed transactions
-      evictionHelper.cleanup(new Transaction(TransactionOracle.DIRTY_WRITE_VERSION, readPointer));
+      evictionHelper.cleanup(new Transaction(TransactionOracle.DIRTY_WRITE_VERSION, readPointer, true));
       if(evictionHelper.size() > 0) {
         throw new OperationException(
           StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,

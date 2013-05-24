@@ -115,6 +115,14 @@ public class OmidTransactionalOperationExecutor
   static int maxDequeueRetries = 200;
   static long dequeueRetrySleep = 5;
 
+  // Defines whether this opex talks to oracle or not. With current implementation if set to false the only difference
+  // is that transaction validation doesn't happen through oracle.
+  // TODO: Ideally we should also forbid oracle-related ops, like starting/aborting transactions, but now too many
+  //       things (like accessing meta table, etc.) mixed in this sinlge class which makes it hard to do.
+  @Inject (optional = true)
+  @Named("DataFabricOperationExecutorTalksToOracle")
+  private boolean talkToOracle = true;
+
   // A proxy that runs all queue operations while managing state.
   // Also runs all queue operations for a single consumer serially.
   private final QueueStateProxy queueStateProxy;
@@ -522,8 +530,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_READ_ALL_KEYS_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
-    ReadPointer pointer =
-      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    ReadPointer pointer = getReadPointer(transaction);
     List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), pointer);
     end(REQ_TYPE_READ_ALL_KEYS_LATENCY, begin);
     dataSetMetric_read(readKeys.getMetricName());
@@ -547,8 +554,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_GET_SPLITS_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, getSplits.getTable());
-    ReadPointer pointer =
-      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    ReadPointer pointer = getReadPointer(transaction);
     List<KeyRange> result = table.getSplits(getSplits.getNumSplits(), getSplits.getStart(), getSplits.getStop(),
                                             getSplits.getColumns(), pointer);
     end(REQ_TYPE_GET_SPLITS_LATENCY, begin);
@@ -572,8 +578,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_READ_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
-    ReadPointer pointer =
-      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    ReadPointer pointer = getReadPointer(transaction);
     OperationResult<Map<byte[], byte[]>> result =
       table.get(read.getKey(), read.getColumns(), pointer);
     end(REQ_TYPE_READ_LATENCY, begin);
@@ -598,7 +603,7 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_READ_COLUMN_RANGE_NUM_OPS);
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readColumnRange.getTable());
-    ReadPointer pointer = transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    ReadPointer pointer = getReadPointer(transaction);
     OperationResult<Map<byte[], byte[]>> result = table.get(readColumnRange.getKey(),
                                                             readColumnRange.getStartColumn(),
                                                             readColumnRange.getStopColumn(),
@@ -657,14 +662,15 @@ public class OmidTransactionalOperationExecutor
     incMetric(REQ_TYPE_WRITE_OPERATION_BATCH_NUM_OPS);
     long begin = begin();
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
-    commit(context, startTransaction(), writes);
+    // when transaction is not defined, we start tx that tracks changes by default
+    commit(context, startTransaction(true), writes);
     end(REQ_TYPE_WRITE_OPERATION_BATCH_LATENCY, begin);
   }
 
   @Override
-  public Transaction startTransaction(OperationContext context)
+  public Transaction startTransaction(OperationContext context, boolean trackChanges)
     throws OperationException {
-    return this.startTransaction();
+    return this.startTransaction(trackChanges);
   }
 
   @Override
@@ -673,9 +679,10 @@ public class OmidTransactionalOperationExecutor
                              List<WriteOperation> writes) throws OperationException {
     // make sure we have a valid transaction
     if (transaction != null) {
-      oracle.validateTransaction(transaction);
+      validateTransaction(transaction);
     } else {
-      transaction = startTransaction();
+      // when transaction is not defined, we start tx that tracks changes by default
+      transaction = startTransaction(true);
     }
 
     // TODO should we add an empty batch of undos to the transaction in oracle?
@@ -791,7 +798,9 @@ public class OmidTransactionalOperationExecutor
                                      Increment increment) throws
     OperationException {
     // start transaction, execute increment, commit transaction, return result
-    Transaction tx = startTransaction();
+
+    // when transaction is not defined, we start tx that tracks changes by default
+    Transaction tx = startTransaction(true);
     Map<byte[], Long> result = increment(context, tx, increment);
     commit(context, tx);
     return result;
@@ -805,7 +814,7 @@ public class OmidTransactionalOperationExecutor
     if (transaction == null) {
       throw new OmidTransactionException(StatusCode.INVALID_TRANSACTION, "transaction cannot be null");
     } else {
-      oracle.validateTransaction(transaction);
+      validateTransaction(transaction);
     }
 
     WriteTransactionResult writeTxReturn = write(context, increment, transaction);
@@ -1107,7 +1116,7 @@ public class OmidTransactionalOperationExecutor
     initialize();
     incMetric(REQ_TYPE_SCAN_NUM_OPS);
     long begin = begin();
-    ReadPointer pointer = transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    ReadPointer pointer = getReadPointer(transaction);
     OrderedVersionedColumnarTable table = this.findRandomTable(context, scan.getTable());
     Scanner scanner = table.scan(scan.getStartRow(), scan.getStopRow(), scan.getColumns(), pointer);
     end(REQ_TYPE_SCAN_LATENCY, begin);
@@ -1115,9 +1124,9 @@ public class OmidTransactionalOperationExecutor
     return scanner;
   }
 
-  Transaction startTransaction() {
+  Transaction startTransaction(boolean trackChanges) {
     incMetric(REQ_TYPE_START_TRANSACTION_NUM_OPS);
-    return this.oracle.startTransaction();
+    return this.oracle.startTransaction(trackChanges);
   }
 
   void addToTransaction(Transaction transaction, List<Undo> undos)
@@ -1204,4 +1213,24 @@ public class OmidTransactionalOperationExecutor
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
+
+  private void validateTransaction(Transaction transaction) throws OmidTransactionException {
+    if (talkToOracle) {
+      oracle.validateTransaction(transaction);
+    } else {
+      if (transaction == null) {
+        throw new OmidTransactionException(StatusCode.INVALID_TRANSACTION,
+                                           "Tx is null. Cannot operate without transaction");
+      }
+    }
+  }
+
+  private ReadPointer getReadPointer(Transaction transaction) throws OmidTransactionException {
+    if (transaction != null) {
+      return transaction.getReadPointer();
+    }
+
+    return this.oracle.getReadPointer();
+  }
+
 } // end of OmitTransactionalOperationExecutor

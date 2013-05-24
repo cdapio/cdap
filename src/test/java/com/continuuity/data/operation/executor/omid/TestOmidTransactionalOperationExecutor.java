@@ -86,7 +86,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] value = Bytes.toBytes("value");
 
     // start a transaction
-    Transaction pointer = executor.startTransaction();
+    Transaction pointer = executor.startTransaction(true);
 
     // write to a key
     WriteTransactionResult txResult = executor.write(context, new Write(key, kvcol, value), pointer);
@@ -207,7 +207,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] valueTwo = Bytes.toBytes("value2");
 
     // start tx one
-    Transaction pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction(true);
     // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
@@ -220,7 +220,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // start tx two
-    Transaction pointerTwo = executor.startTransaction();
+    Transaction pointerTwo = executor.startTransaction(true);
     // System.out.println("Started transaction two : " + pointerTwo);
     assertTrue(pointerTwo.getWriteVersion() > pointerOne.getWriteVersion());
 
@@ -257,7 +257,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testClosedTransactionsThrowExceptions");
 
     // start txwOne
-    Transaction pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction(true);
     //System.out.println("Started transaction txwOne : " + pointerOne);
 
     // write and commit
@@ -286,7 +286,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testOverlappingConcurrentReadersAndWriters");
 
     // start txwOne
-    Transaction pointerWOne = executor.startTransaction();
+    Transaction pointerWOne = executor.startTransaction(true);
     // System.out.println("Started transaction txwOne : " + pointerWOne);
 
     // write 1
@@ -306,10 +306,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
         executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol));
 
     // open long-running read
-    Transaction pointerReadOne = executor.startTransaction();
+    Transaction pointerReadOne = executor.startTransaction(true);
 
     // write 2 and commit immediately
-    Transaction pointerWTwo = executor.startTransaction();
+    Transaction pointerWTwo = executor.startTransaction(true);
     // System.out.println("Started transaction txwTwo : " + pointerWTwo);
     WriteTransactionResult txResultW2 =
       executor.write(context, new Write(key, kvcol, Bytes.toBytes(2)), pointerWTwo);
@@ -324,10 +324,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(Bytes.toBytes(2), value.getValue().get(kvcol));
 
     // open long-running read
-    Transaction pointerReadTwo = executor.startTransaction();
+    Transaction pointerReadTwo = executor.startTransaction(true);
 
     // write 3 with one transaction but don't commit
-    Transaction pointerWThree = executor.startTransaction();
+    Transaction pointerWThree = executor.startTransaction(true);
     // System.out.println("Started transaction txwThree : " + pointerWThree);
     WriteTransactionResult txResultW3 =
       executor.write(context, new Write(key, kvcol, Bytes.toBytes(3)), pointerWThree);
@@ -335,7 +335,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.addToTransaction(pointerWThree, txResultW3.undos);
 
     // write 4 with another transaction and also don't commit
-    Transaction pointerWFour = executor.startTransaction();
+    Transaction pointerWFour = executor.startTransaction(true);
     // System.out.println("Started transaction txwFour : " + pointerWFour);
     WriteTransactionResult txResultW4 =
       executor.write(context, new Write(key, kvcol, Bytes.toBytes(4)), pointerWFour);
@@ -368,7 +368,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // now do the same thing but in reverse order of conflict
 
     // write 5 with one transaction but don't commit
-    Transaction pointerWFive = executor.startTransaction();
+    Transaction pointerWFive = executor.startTransaction(true);
     // System.out.println("Started transaction txwFive : " + pointerWFive);
     WriteTransactionResult txResultW5 =
       executor.write(context, new Write(key, kvcol, Bytes.toBytes(5)), pointerWFive);
@@ -376,7 +376,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.addToTransaction(pointerWFive, txResultW5.undos);
 
     // write 6 with another transaction and also don't commit
-    Transaction pointerWSix = executor.startTransaction();
+    Transaction pointerWSix = executor.startTransaction(true);
     // System.out.println("Started transaction txwSix : " + pointerWSix);
     WriteTransactionResult txResultW6 =
       executor.write(context, new Write(key, kvcol, Bytes.toBytes(6)), pointerWSix);
@@ -439,10 +439,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(dequeueResult.isSuccess());
 
     // Start our ack operation
-    Transaction ackPointer = executor.startTransaction();
+    Transaction ackPointer = executor.startTransaction(true);
 
     // Start a fake operation that will just conflict with our key
-    Transaction fakePointer = executor.startTransaction();
+    Transaction fakePointer = executor.startTransaction(true);
     Undo fakeUndo = new UndoWrite(null, key, new byte[][] { new byte[] {'a' } } );
     executor.addToTransaction(fakePointer, Collections.singletonList(fakeUndo));
 
@@ -471,7 +471,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
 
     // Start new ack operation
-    ackPointer = executor.startTransaction();
+    ackPointer = executor.startTransaction(true);
 
     // Same increment and ack
     writes = new ArrayList<WriteOperation>(2);
@@ -503,7 +503,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] valueOne = Bytes.toBytes("valueOne");
     byte [] valueTwo = Bytes.toBytes("valueTwo");
 
-    Transaction dirtyRead = new Transaction(1L, MemoryReadPointer.DIRTY_READ);
+    Transaction dirtyRead = new Transaction(1L, MemoryReadPointer.DIRTY_READ, true);
 
     List<WriteOperation> ops = new ArrayList<WriteOperation>();
     Delete delete = new Delete(key, kvcol);
@@ -516,7 +516,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, delete);
 
     // start tx one
-    Transaction pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction(true);
     // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
@@ -535,7 +535,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(valueOne, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
 
     // start tx two
-    Transaction pointerTwo = executor.startTransaction();
+    Transaction pointerTwo = executor.startTransaction(true);
     // System.out.println("Started transaction two : " + pointerTwo);
 
     // delete value one
@@ -566,11 +566,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertArrayEquals(valueTwo, executor.execute(context, dirtyRead, new Read(key, kvcol)).getValue().get(kvcol));
 
     // start tx three
-    Transaction pointerThree = executor.startTransaction();
+    Transaction pointerThree = executor.startTransaction(true);
     // System.out.println("Started transaction three : " + pointerThree);
 
     // start and commit a fake transaction which will overlap
-    Transaction pointerFour = executor.startTransaction();
+    Transaction pointerFour = executor.startTransaction(true);
     Undo fakeUndo = new UndoWrite(null, key, new byte[][] { new byte[] {'a' } } );
     executor.addToTransaction(pointerFour, Collections.singletonList(fakeUndo));
     assertTrue(executor.commitTransaction(pointerFour).isSuccess());
@@ -873,7 +873,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] me = "me".getBytes();
 
     // start two transactions, one explicit, one by submitting a batch
-    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
     Transaction tx2 = executor.execute(context, null, batch(new Write(table, a, col, me)));
     // increment a counter with both transactions
     executor.execute(context, tx1, batch(new Increment(table, b, x, 1L)));
@@ -907,13 +907,13 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] three = {'3'};
 
     // write a value to row a with the first transaction
-    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
     executor.execute(context, tx1, batch(new Write(table, a, x, one)));
     // write row b with the second transaction
-    Transaction tx2 = executor.startTransaction(context);
+    Transaction tx2 = executor.startTransaction(context, true);
     executor.execute(context, tx2, batch(new Write(table, b, x, two)));
     // write to a different row x with the third transaction
-    Transaction tx3 = executor.startTransaction(context);
+    Transaction tx3 = executor.startTransaction(context, true);
     executor.execute(context, tx3, batch(new Write(table, x, y, one)));
     // write a value to row b with the first transaction
     executor.execute(context, tx1, batch(new Write(table, b, y, three)));
@@ -945,11 +945,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] col = { 'c', '1' };
 
     // start a transaction
-    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
     // set a row to 10
     executor.execute(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(10L))));
     // increment the row in another transaction
-    Transaction tx2 = executor.startTransaction(context);
+    Transaction tx2 = executor.startTransaction(context, true);
     // TODO increment is currently broken in HBase (see Jira ENG-2126).
     // TODO For now, when testing HBase, perform a write, not an increment
     // TODO this must be removed as soon as HBase is fixed
@@ -987,7 +987,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] one = {'1'};
 
     // start transaction
-    Transaction tx = executor.startTransaction();
+    Transaction tx = executor.startTransaction(true);
     // write a value in that tx
     executor.execute(context, tx, batch(new Write(table, f, x, one)));
     // read the value outside the tx -> null
@@ -1016,7 +1016,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] eleven = Bytes.toBytes(11L);
 
     // start a transaction
-    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
     // write a value 1
     executor.execute(context, tx1, batch(new Write(table, f, x, one)));
     // increment the value by 10
@@ -1074,7 +1074,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.commit(context, new Write(table, first, ab, new byte[][]{Bytes.toBytes(1L), Bytes.toBytes(10L)}));
 
     // start a transaction
-    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
     // increment these columns within the transaction
     Map<byte[], Long> res = executor.
       increment(context, tx1, new Increment(table, first, abc, new long[]{1, 2, 55}));
@@ -1113,9 +1113,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] b = {'b'};
 
     // start three transactions
-    Transaction tx1 = executor.startTransaction(context);
-    Transaction tx2 = executor.startTransaction(context);
-    Transaction tx3 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
+    Transaction tx2 = executor.startTransaction(context, true);
+    Transaction tx3 = executor.startTransaction(context, true);
 
     // all transactions write the same row to different tables, one uses default table
     executor.execute(context, tx1, batch(new Write(a, b, b)));
@@ -1137,8 +1137,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
     final byte[] b = {'b'};
 
     // start a transactions
-    Transaction tx1 = executor.startTransaction(context);
-    Transaction tx2 = executor.startTransaction(context);
+    Transaction tx1 = executor.startTransaction(context, true);
+    Transaction tx2 = executor.startTransaction(context, true);
     // execute some write
     executor.execute(context, tx1, batch(new Write(table, a, b, b)));
     // commit the first transaction, abort the second

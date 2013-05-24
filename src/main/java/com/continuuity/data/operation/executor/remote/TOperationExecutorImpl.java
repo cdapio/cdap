@@ -133,7 +133,7 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
   // batch write, return a structure and never null, and is thus safe
 
   @Override
-  public TTransaction start(TOperationContext tcontext) throws TOperationException, TException {
+  public TTransaction start(TOperationContext tcontext, boolean trackChanges) throws TOperationException, TException {
 
     MetricsHelper helper = newHelper("startTransaction");
 
@@ -143,7 +143,7 @@ public class TOperationExecutorImpl extends ConverterUtils implements TOperation
 
     try {
       OperationContext context = unwrap(tcontext);
-      Transaction result = this.opex.startTransaction(context);
+      Transaction result = this.opex.startTransaction(context, trackChanges);
       TTransaction ttx = wrap(result);
       if (Log.isTraceEnabled()) {
         Log.trace("Read successful.");
