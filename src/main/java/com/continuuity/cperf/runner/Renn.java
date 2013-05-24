@@ -94,7 +94,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
- * Bla bla
+ * Runner for performance tests. This class is using lots of classes and code from JUnit framework.
  */
 public final class Renn {
   private static final Logger LOG = LoggerFactory.getLogger(Renn.class);
@@ -133,7 +133,6 @@ public final class Renn {
       start = 1;
     }
 
-    // 1. parse command line for <key> <value>, copy everything else into config
     LOG.debug("Parsing command line options...");
     for (int i = start; i < args.length; i++) {
       if ("help".equals(args[i])) {
@@ -353,7 +352,7 @@ public final class Renn {
 
     Module dataFabricModule;
     if (configuration.get("perf.datafabric.mode") != null
-      && configuration.get("perf.datafabric.mode").equals("distributed") ) {
+      && configuration.get("perf.datafabric.mode").equals("distributed")) {
       dataFabricModule = new DataFabricModules().getDistributedModules();
     } else {
       dataFabricModule = new DataFabricModules().getSingleNodeModules();
@@ -572,7 +571,10 @@ public final class Renn {
     Leitung.stopAll();
   }
 
-  public final static class Leitung {
+  /**
+   * Manager for running performance test.
+   */
+  public static final class Leitung {
     private static Leitung one;
 
     private final Renn runner;

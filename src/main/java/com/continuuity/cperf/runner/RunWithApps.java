@@ -8,12 +8,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation to assign applications to performance tests.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RunWithApps {
     /**
-     * @return a Runner class (must have a constructor that takes a single Class to run)
+     * Applications to be deployed and tested during performance test runs.
      */
     Class<? extends Application>[] value();
 }
