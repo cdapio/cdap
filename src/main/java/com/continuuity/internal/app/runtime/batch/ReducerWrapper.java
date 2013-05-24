@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -31,6 +32,15 @@ public class ReducerWrapper extends Reducer {
     LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 
     delegate.run(context);
+
+    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in memory by tx
+    // agent
+    try {
+      basicMapReduceContext.flushOperations();
+    } catch (OperationException e) {
+      LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString());
+      throw Throwables.propagate(e);
+    }
   }
 
   private Reducer createReducerInstance(ClassLoader classLoader, String userReducer) {

@@ -60,6 +60,10 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
 
           binder.bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hConf);
           binder.bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(cConf);
+
+          // Every mr task talks to datastore directly bypassing oracle
+          binder.bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
+            .toInstance(false);
           binder.bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
             .toInstance(cConf);
         }
