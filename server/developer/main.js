@@ -256,7 +256,6 @@ devServer.bindRoutes = function() {
 					newest: data
 				}));
 				res.end();
-
 			});
 		}).end();
 
