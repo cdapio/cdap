@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Dispatcher for sending stream events to the Continuuity Gateway. It runs in a seperate thread dequeuing the events
@@ -17,6 +18,7 @@ public final class StreamEventDispatcher implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamEventDispatcher.class);
 
+  private final AtomicLong counter = new AtomicLong(0);
   private final HttpClient httpPoster;
   private final LinkedBlockingDeque<byte[]> queue;
 
@@ -26,7 +28,6 @@ public final class StreamEventDispatcher implements Runnable {
    * Constructs and initializes {@link StreamEventDispatcher}.
    */
   public StreamEventDispatcher(String url, Map<String, String> headers, final LinkedBlockingDeque<byte[]> queue) {
-
     this.queue = queue;
     httpPoster = new SimpleHttpClient(url, headers);
   }
@@ -49,7 +50,7 @@ public final class StreamEventDispatcher implements Runnable {
         event = queue.take();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        LOG.warn("Stream event dispatcher thread has been interrupted.");
+        LOG.debug("Stream event dispatcher thread has been interrupted.");
         continue;
       }
 
@@ -62,11 +63,11 @@ public final class StreamEventDispatcher implements Runnable {
 
       try {
         httpPoster.post(event);
-        LOG.debug("Successfully sent stream event {} to gateway.", event);
+        LOG.debug("Successfully sent {} stream events to the gateway.", counter.incrementAndGet());
       } catch (Exception e) {
         Throwables.propagate(e);
       }
     }
-    LOG.debug("Stream event dispatcher finished!");
+    LOG.debug("Stream event dispatcher finished.");
   }
 }

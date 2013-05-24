@@ -43,17 +43,18 @@ public class MultiThreadedStreamWriter implements StreamWriter {
 
   private final List<LinkedBlockingDeque<byte[]>> queues;
 
-  private final AtomicInteger nextQueue = new AtomicInteger(-1);
+  private final AtomicInteger counter = new AtomicInteger(0);
   private final int numThreads;
 
-  @Inject
-  public MultiThreadedStreamWriter(CConfiguration config,
-                                   int numThreads,
-                                   @Assisted QueueName queueName,
-                                   @Assisted("accountId") String accountId,
-                                   @Assisted("applicationId") String applicationId) {
+  private final ExecutorService dispatcherThreadPool;
 
-    this.numThreads = numThreads;
+  @Inject
+  public MultiThreadedStreamWriter(CConfiguration config, @Assisted QueueName queueName) {
+    if (StringUtils.isNotEmpty(config.get("perf.reporter.threads"))) {
+      numThreads = Integer.valueOf(config.get("perf.reporter.threads"));
+    } else {
+      numThreads = 1;
+    }
 
     String gateway = config.get(Constants.CFG_APP_FABRIC_SERVER_ADDRESS, Constants.DEFAULT_APP_FABRIC_SERVER_ADDRESS);
     if (StringUtils.isEmpty(gateway)) {
@@ -67,7 +68,7 @@ public class MultiThreadedStreamWriter implements StreamWriter {
     String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
       + queueName.getSimpleName();
 
-    ExecutorService dispatcherThreadPool = Executors.newFixedThreadPool(numThreads);
+    dispatcherThreadPool = Executors.newFixedThreadPool(numThreads);
     queues = new ArrayList<LinkedBlockingDeque<byte[]>>(numThreads);
     dispatchers = new ArrayList<StreamEventDispatcher>(numThreads);
     dispatcherFutures = new ArrayList<Future>(numThreads);
@@ -81,6 +82,16 @@ public class MultiThreadedStreamWriter implements StreamWriter {
     }
 
     codec = new StreamEventCodec();
+  }
+
+  public void shutdown() {
+    LOG.debug("Stopping all stream event dispatcher threads and the executor service...");
+    for (int i = 0; i < numThreads; i++) {
+      dispatchers.get(i).stop();
+      dispatcherFutures.get(i).cancel(true);
+    }
+    dispatcherThreadPool.shutdown();
+    LOG.debug("Stopped all stream event dispatcher threads and the executor service.");
   }
 
   @Override
@@ -120,15 +131,9 @@ public class MultiThreadedStreamWriter implements StreamWriter {
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    queues.get(this.nextQueue.getAndIncrement() % numThreads).
+    final int nextQueue = this.counter.getAndIncrement() % numThreads;
+    queues.get(nextQueue).
       add(codec.encodePayload(new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer)));
-  }
-
-  public void shutdown() {
-    LOG.debug("Stopping all stream event dispatcher threads...");
-    for (int i = 0; i < dispatcherFutures.size(); i++) {
-      dispatchers.get(i).stop();
-      dispatcherFutures.get(i).cancel(true);
-    }
+    LOG.debug("Added stream event to dispatcher queue {}.", nextQueue);
   }
 }

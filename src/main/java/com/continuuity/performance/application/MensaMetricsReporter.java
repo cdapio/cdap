@@ -18,8 +18,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 public final class MensaMetricsReporter  {
   static final Logger LOG = LoggerFactory.getLogger(MensaMetricsReporter.class);
 
-  private final String mensaHost;
-  private final int mensaPort;
+  private final String tsdbHostName;
+  private final int tsdbPort;
   private final RuntimeMetricsCollector collector;
   private final LinkedBlockingDeque<String> dispatchQueue;
   private final MensaMetricsDispatcher dispatcher;
@@ -27,33 +27,35 @@ public final class MensaMetricsReporter  {
   private Future futureCollector;
   private Future futureDispatcher;
 
-  public MensaMetricsReporter(CConfiguration config, List<String> metricNames, String tags) {
-    String mensa = config.get("mensa");
-    if (StringUtils.isNotEmpty(mensa)) {
-      String[] hostPort = mensa.split(":");
-      mensaHost = hostPort[0];
-      mensaPort = Integer.valueOf(hostPort[1]);
+  public MensaMetricsReporter(CConfiguration config, List<String> metricNames, String tags, int interval) {
+//    if (StringUtils.isNotEmpty(config.get("opentsdb.server.address"))) {
+//      tsdbHostName = config.get("opentsdb.server.address");
+//    } else {
+//      tsdbHostName = "localhost";
+//    }
+    tsdbHostName = "mon101.ops.sl";
+    if (StringUtils.isNotEmpty(config.get("opentsdb.server.port"))) {
+      tsdbPort = Integer.valueOf(config.get("opentsdb.server.port"));
     } else {
-      mensaHost = null;
-      mensaPort = -1;
+      tsdbPort = 4242;
     }
-    String extraTags = config.get("extratags");
+    String extraTags = config.get("perf.tags");
     if (StringUtils.isNotEmpty(extraTags)) {
-      extraTags = extraTags.replace(",", " ");
-      //appendExtraTags(extraTags);
+      tags = tags + extraTags.replace(",", " ");
+      tags = tags.trim();
     }
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
-    collector = new RuntimeMetricsCollector(dispatchQueue, 10, metricNames, tags);
-    dispatcher = new MensaMetricsDispatcher(mensaHost, mensaPort, dispatchQueue);
+    collector = new RuntimeMetricsCollector(dispatchQueue, interval, metricNames, tags);
+    dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
   }
 
-  public MensaMetricsReporter(String mensaHost, int mensaPort, List<String> metricNames, String tags, int interval) {
-    this.mensaHost = mensaHost;
-    this.mensaPort = mensaPort;
+  public MensaMetricsReporter(String tsdbHostName, int tsdbPort, List<String> metricNames, String tags, int interval) {
+    this.tsdbHostName = tsdbHostName;
+    this.tsdbPort = tsdbPort;
     dispatchQueue = new LinkedBlockingDeque<String>(50000);
     collector = new RuntimeMetricsCollector(dispatchQueue, interval, metricNames, tags);
-    dispatcher = new MensaMetricsDispatcher(mensaHost, mensaPort, dispatchQueue);
+    dispatcher = new MensaMetricsDispatcher(tsdbHostName, tsdbPort, dispatchQueue);
     init();
   }
 

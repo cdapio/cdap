@@ -35,6 +35,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -46,6 +48,8 @@ import java.util.concurrent.TimeoutException;
  * Default Benchmark Manager.
  */
 public class DefaultBenchmarkManager implements ApplicationManager {
+
+  static final Logger LOG = LoggerFactory.getLogger(DefaultBenchmarkManager.class);
 
   private final ConcurrentMap<String, FlowIdentifier> runningProcessses = Maps.newConcurrentMap();
   private final AuthToken token;
@@ -216,7 +220,7 @@ public class DefaultBenchmarkManager implements ApplicationManager {
   @Override
   public StreamWriter getStreamWriter(String streamName) {
     QueueName queueName = QueueName.fromStream(Id.Account.from(accountId), streamName);
-    return streamWriterFactory.create(CConfiguration.create(), queueName, accountId, applicationId);
+    return streamWriterFactory.create(CConfiguration.create(), queueName);
   }
 
   @Override
@@ -226,6 +230,7 @@ public class DefaultBenchmarkManager implements ApplicationManager {
 
   @Override
   public void stopAll() {
+    LOG.debug("Stopping all flowlets and procedures...");
     try {
       for (Map.Entry<String, FlowIdentifier> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
         appFabricServer.stop(token, entry.getValue());
@@ -235,6 +240,7 @@ public class DefaultBenchmarkManager implements ApplicationManager {
     } finally {
       RuntimeStats.clearStats(applicationId);
     }
+    LOG.debug("Stopped all flowlets and procedures.");
   }
 
   private static final class DataSetClassLoader extends ClassLoader {
