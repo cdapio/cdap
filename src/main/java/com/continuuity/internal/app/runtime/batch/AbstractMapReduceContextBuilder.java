@@ -17,8 +17,8 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
@@ -101,8 +101,6 @@ public abstract class AbstractMapReduceContextBuilder {
     // Hooking up with logging and metrics systems
     // this is a hack for old logging system
     CAppender.logWriter = injector.getInstance(LogWriter.class);
-    // this is a hack for old metrics system
-    OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
 
     return context;
   }

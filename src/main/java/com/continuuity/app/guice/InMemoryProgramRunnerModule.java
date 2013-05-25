@@ -17,8 +17,6 @@ import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
-import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
-import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceRuntimeService;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
@@ -53,6 +51,10 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
 
+    // Bind and expose LogWriter (a bit hacky, but needed by MapReduce for now)
+    bind(LogWriter.class).to(LocalLogWriter.class);
+    expose(LogWriter.class);
+
     // Bind ServiceAnnouncer for procedure.
     bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
@@ -71,10 +73,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-
-    // Bind MapReduce runtime service
-    bind(MapReduceRuntimeService.class).to(InMemoryMapReduceRuntimeService.class).in(Scopes.SINGLETON);
-    expose(MapReduceRuntimeService.class);
 
     // For binding DataSet transaction stuff
     install(new PrivateModule() {
@@ -96,7 +94,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
   @Singleton
   @Provides
-  private LogWriter providesLogWriter(CConfiguration configuration) {
+  private LocalLogWriter providesLogWriter(CConfiguration configuration) {
     return new LocalLogWriter(configuration);
   }
 

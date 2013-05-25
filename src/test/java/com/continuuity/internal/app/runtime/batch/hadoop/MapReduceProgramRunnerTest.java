@@ -51,18 +51,7 @@ public class MapReduceProgramRunnerTest {
 
   @BeforeClass
   public static void beforeClass() {
-    final Configuration hConf = new Configuration();
-    hConf.addResource("mapred-site-local.xml");
-    hConf.reloadConfiguration();
-
-    injector = Guice.createInjector(new AppFabricTestModule(TestHelper.configuration),
-                                    new Module() {
-                                      @Override
-                                      public void configure(Binder binder) {
-                                        binder.bind(Configuration.class).toInstance(hConf);
-                                      }
-                                    });
-
+    injector = Guice.createInjector(new AppFabricTestModule(TestHelper.configuration));
   }
 
   @Test

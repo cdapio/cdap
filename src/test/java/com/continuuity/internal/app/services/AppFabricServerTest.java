@@ -4,15 +4,16 @@
 
 package com.continuuity.internal.app.services;
 
+import com.continuuity.TempFolder;
 import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.continuuity.weave.internal.utils.Networks;
+import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,10 +29,11 @@ public class AppFabricServerTest {
 
   @BeforeClass
   public static void before() throws Exception {
+    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.setInt(Constants.CFG_APP_FABRIC_SERVER_PORT, 45000);
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
+    configuration.setInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Networks.getRandomPort());
+    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
 
     Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 

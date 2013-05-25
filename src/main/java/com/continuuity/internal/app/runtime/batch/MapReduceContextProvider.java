@@ -68,13 +68,13 @@ public class MapReduceContextProvider {
     setRunId(context.getRunId().getId());
     setConf(conf);
     if (context.getInputDataset() != null) {
-      setInputDataSet(((DataSet)context.getInputDataset()).getName());
+      setInputDataSet(((DataSet) context.getInputDataset()).getName());
       if (context.getInputDataSelection() != null) {
         setInputSelection(context.getInputDataSelection());
       }
     }
     if (context.getOutputDataset() != null) {
-      setOutputDataSet(((DataSet)context.getOutputDataset()).getName());
+      setOutputDataSet(((DataSet) context.getOutputDataset()).getName());
     }
   }
 

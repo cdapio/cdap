@@ -8,36 +8,48 @@ import org.junit.Test;
  */
 public class ApplicationSecurityTest {
 
+  private static final class SecurityAdmin {
+    private void set(RuntimePermission permission) {
+      ApplicationSecurity.builder()
+        .adminClass(this.getClass())
+        .add(permission)
+        .apply();
+    }
+
+    private void reset() {
+      System.setSecurityManager(null);
+    }
+  }
+
   /**
    * Tests that the admin class has ability to change security manager.
    */
   @Test
   public void testAbilityToSetSecurityManagerMultipleTimes() throws Exception {
-    // Apply security and make sure we block exitJVM. This would throw an
-    // SecurityException.
-    ApplicationSecurity.builder()
-      .adminClass(this.getClass())
-      .add(new RuntimePermission("exitJVM"))
-      .apply();
-
+    SecurityAdmin admin = new SecurityAdmin();
     try {
-      System.exit(0);
-      Assert.assertFalse("Security is not set correctly. System.exit should have thrown security exception", true);
-    } catch (Exception e) {
-      Assert.assertTrue("Security manager was set", true);
-    }
+      // Apply security and make sure we block exitJVM. This would throw an
+      // SecurityException.
+      admin.set(new RuntimePermission("exitJVM"));
 
-    // Changes the security setting.
-    ApplicationSecurity.builder()
-      .adminClass(this.getClass())
-      .add(new RuntimePermission("exitJVM.2"))
-      .apply();
+      try {
+        System.exit(0);
+        Assert.assertFalse("Security is not set correctly. System.exit should have thrown security exception", true);
+      } catch (Exception e) {
+        Assert.assertTrue("Security manager was set", true);
+      }
 
-    try {
-      System.exit(2);
-      Assert.assertFalse("Security is not set correctly. System.exit should have thrown security exception", true);
-    } catch (Exception e) {
-      Assert.assertTrue("Security manager was set again.", true);
+      // Changes the security setting.
+      admin.set(new RuntimePermission("exitJVM.2"));
+
+      try {
+        System.exit(2);
+        Assert.assertFalse("Security is not set correctly. System.exit should have thrown security exception", true);
+      } catch (Exception e) {
+        Assert.assertTrue("Security manager was set again.", true);
+      }
+    } finally {
+      admin.reset();
     }
   }
 }

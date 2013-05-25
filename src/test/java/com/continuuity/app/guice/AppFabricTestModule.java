@@ -9,22 +9,27 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.AbstractModule;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  *
  */
 public final class AppFabricTestModule extends AbstractModule {
 
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
+  private final Configuration hConf;
 
   public AppFabricTestModule(CConfiguration configuration) {
-    this.configuration = configuration;
+    this.cConf = configuration;
+    hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
   }
 
   @Override
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
-    install(new ConfigModule(configuration));
+    install(new ConfigModule(cConf, hConf));
     install(new IOModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new LocationRuntimeModule().getInMemoryModules());
