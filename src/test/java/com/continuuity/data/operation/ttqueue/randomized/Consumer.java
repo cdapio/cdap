@@ -8,6 +8,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -252,9 +253,48 @@ public class Consumer implements Runnable {
           Assert.assertTrue(dequeueResult.isSuccess());
           queue.ack(dequeueResult.getEntryPointers(), consumer, transaction);
 
+          listeningExecutorService.submit(new QueueCommit(runId, crashId, listeningExecutorService, consumerHolder,
+                                                       dequeueResult, transaction));
+        }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    private String getLogMessage(String message) {
+      return Consumer.this.getLogMessage(String.format("runId=%d crashId=%d %s", runId, crashId, message));
+    }
+  }
+
+  public class QueueCommit implements Runnable {
+    private final int runId;
+    private final int crashId;
+    private final ListeningExecutorService listeningExecutorService;
+    private final ConsumerHolder consumerHolder;
+    private final DequeueResult dequeueResult;
+    private final Transaction transaction;
+
+    private final Logger LOG = LoggerFactory.getLogger(QueueAck.class);
+
+    public QueueCommit(int runId, int crashId, ListeningExecutorService listeningExecutorService,
+                    ConsumerHolder consumerHolder, DequeueResult dequeueResult, Transaction transaction) {
+      this.runId = runId;
+      this.crashId = crashId;
+      this.listeningExecutorService = listeningExecutorService;
+      this.consumerHolder = consumerHolder;
+      this.dequeueResult = dequeueResult;
+      this.transaction = transaction;
+    }
+
+    @Override
+    public void run() {
+      try {
+        TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
+        synchronized (consumerHolder) {
           if(testConfig.shouldUnack()) {
             // Note: consumer cannot crash after an ack before txn is committed since Opex runs
             // all the operations together. However, Opex can crash which is not tested here.
+            QueueConsumer consumer = consumerHolder.getConsumer();
             LOG.info(getLogMessage(String.format("Unacking list =%s", entriesToInt(dequeueResult.getEntries()))));
             queue.unack(dequeueResult.getEntryPointers(), consumer, transaction);
             oracle.abortTransaction(transaction);
@@ -316,6 +356,10 @@ public class Consumer implements Runnable {
                            transaction);
             LOG.info(getLogMessage(String.format("finalizing=%s",
                                                  entriesToInt(dequeueResult.getEntries()))));
+            if(Consumer.this.consumerControl.getId() == 0) {
+              QueueInfo queueInfo = queue.getQueueInfo();
+              LOG.info(getLogMessage(String.format("QueueInfo=%s", queueInfo.getJSONString())));
+            }
           }
         }
       } catch (Exception e) {
@@ -354,6 +398,10 @@ public class Consumer implements Runnable {
                                              position, runId, crashId)));
         createNewConsumer();
       }
+      return consumer;
+    }
+
+    public QueueConsumer getConsumer() {
       return consumer;
     }
 

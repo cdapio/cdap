@@ -654,7 +654,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
     info.put("writePointer", queueWritePointer);
     info.put("groups", groupInfos);
 
-    // return the entnire map as a json string
+    // Read eviction information
+    EvictionState evictionState = new EvictionState(table);
+    evictionState.readEvictionState(TransactionOracle.DIRTY_READ_POINTER);
+    info.put("globalLastEvictEntry", evictionState.getGlobalLastEvictEntry());
+    info.put("groupEvictEntriesMap", evictionState.getGroupEvictEntryMap());
+
+    // return the entire map as a json string
     Gson gson = new Gson();
     return new QueueInfo(gson.toJson(info));
   }
@@ -849,9 +855,9 @@ public class TTQueueNewOnVCTable implements TTQueue {
           e);
       }
     }
+    DequeueStrategy dequeueStrategy = getDequeueStrategy(queueState.getPartitioner());
     EvictionHelper evictionHelper = queueState.getEvictionHelper();
-    return evictionHelper.getMinEvictionEntry(queueState.getConsumerReadPointer(), queueState.getDequeueEntrySet(),
-                                              transaction);
+    return evictionHelper.getMinEvictionEntry(dequeueStrategy.getMinUnAckedEntry(queueState), transaction);
   }
 
   class EvictionState {
@@ -908,6 +914,10 @@ public class TTQueueNewOnVCTable implements TTQueue {
 
     public Long getGroupEvictEntry(long groupId) {
       return groupEvictEntries.get(groupId);
+    }
+
+    public Map<Long, Long> getGroupEvictEntryMap() {
+      return Collections.unmodifiableMap(groupEvictEntries);
     }
 
     private void readGroupEvictInformationInternal(ReadPointer readPointer) throws OperationException {
@@ -1924,6 +1934,13 @@ public class TTQueueNewOnVCTable implements TTQueue {
                           ReadPointer readPointer) throws OperationException;
 
     /**
+     * returns the min entry that is not yet acked for a consumer. Entries equal to or greater than this entry are
+     * still not dequeued/acked, and hence cannot be evicted. Entries below this can be evicted if they are acked.
+     * @return min entry that is not yet acked for a consumer.
+     */
+    long getMinUnAckedEntry(QueueStateImpl queueState);
+
+    /**
      * method to read queue entries specified in entryIds into queue state
      * @return  true if all entries were skipped because they are invalid or evicted. That means we have to move the
      * consumer past these entries and fetch again.
@@ -2263,6 +2280,11 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public long getMinUnAckedEntry(QueueStateImpl queueState) {
+      return TTQueueNewConstants.FIRST_ENTRY_ID - 1;
+    }
+
+    @Override
     public void configure(List<QueueConsumer> consumers, List<QueueStateImpl> queueStates, QueueConfig config,
                           long groupId, int currentConsumerCount, int newConsumerCount, ReadPointer readPointer)
       throws OperationException {
@@ -2324,6 +2346,14 @@ public class TTQueueNewOnVCTable implements TTQueue {
   }
 
   abstract class AbstractDisjointDequeueStrategy extends AbstractDequeueStrategy implements DequeueStrategy {
+    @Override
+    public long getMinUnAckedEntry(QueueStateImpl queueState) {
+      // Min unacked entry is min(min(dequeue entry), consumerReadPointer) for disjoint dequeue strategy
+      long dEntry = queueState.getDequeueEntrySet().isEmpty() ?
+        Long.MAX_VALUE : queueState.getDequeueEntrySet().min().getEntryId();
+
+      return Math.min(dEntry, queueState.getConsumerReadPointer());
+    }
 
     @Override
     public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates, QueueConfig config,
@@ -2562,7 +2592,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
         long groupReadPointer = table.incrementAtomicDirtily(rowKey, GROUP_READ_POINTER, 0);
 
         long lastEvictEntry = getLastEvictEntry();
-        if(lastEvictEntry != INVALID_ENTRY_ID) {
+        if(lastEvictEntry != INVALID_ENTRY_ID && groupReadPointer < lastEvictEntry) {
           // Entries have been evicted. Set GROUP_READ_POINTER to GLOBAL_LAST_EVICT_ENTRY
           table.compareAndSwapDirty(rowKey, GROUP_READ_POINTER, Bytes.toBytes(groupReadPointer),
                                     Bytes.toBytes(lastEvictEntry));
@@ -2675,6 +2705,17 @@ public class TTQueueNewOnVCTable implements TTQueue {
     }
 
     @Override
+    public long getMinUnAckedEntry(QueueStateImpl queueState) {
+      // min unacked entry is min(min(dequeue entry set), min(claimed entries), consumerReadPointer)
+      long dEntry = queueState.getDequeueEntrySet().isEmpty() ?
+        Long.MAX_VALUE : queueState.getDequeueEntrySet().min().getEntryId();
+      long cEntry = queueState.getClaimedEntryList().getClaimedEntry() == ClaimedEntryRange.INVALID ?
+        Long.MAX_VALUE : queueState.getClaimedEntryList().getClaimedEntry().getBegin();
+
+      return Math.min(dEntry, Math.min(cEntry, queueState.getConsumerReadPointer()));
+    }
+
+    @Override
     public void configure(List<QueueConsumer> currentConsumers, List<QueueStateImpl> queueStates,
                           QueueConfig config, final long groupId, final int currentConsumerCount,
                           final int newConsumerCount, ReadPointer readPointer) throws OperationException {
@@ -2732,6 +2773,7 @@ public class TTQueueNewOnVCTable implements TTQueue {
    * TTQueueNewIterator implements Iterator interface to provide iteration on top of table Scanner.
    * remove functionality is not implemented
    */
+  @SuppressWarnings("UnusedDeclaration")
   private static class TTQueueNewIterator implements Iterator<QueueEntry> {
 
     private final Scanner scanner;

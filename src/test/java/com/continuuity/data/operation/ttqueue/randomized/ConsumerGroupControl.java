@@ -1,44 +1,32 @@
 package com.continuuity.data.operation.ttqueue.randomized;
 
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.BrokenBarrierException;
 
 /**
  *
  */
 public class ConsumerGroupControl {
-  private volatile CyclicBarrier configBarrier;
-  private volatile CyclicBarrier runBarrier;
+  private final FlexibleCyclicBarrier configBarrier;
+  private final FlexibleCyclicBarrier runBarrier;
 
   public ConsumerGroupControl(int numGroups) {
-    configBarrier = new CyclicBarrier(numGroups);
-    runBarrier = new CyclicBarrier(numGroups);
+    configBarrier = new FlexibleCyclicBarrier(numGroups);
+    runBarrier = new FlexibleCyclicBarrier(numGroups);
   }
 
-  public CyclicBarrier getConfigBarrier() {
+  public FlexibleCyclicBarrier getConfigBarrier() {
     return configBarrier;
   }
 
-  public CyclicBarrier getRunBarrier() {
+  public FlexibleCyclicBarrier getRunBarrier() {
     return runBarrier;
   }
 
-  public void reduceConfigBarrier() {
-    synchronized (this) {
-      int num = configBarrier.getParties();
-      if(num == 1) {
-        return;
-      }
-      configBarrier = new CyclicBarrier(num - 1);
-    }
+  public void reduceConfigBarrier() throws InterruptedException, BrokenBarrierException {
+    configBarrier.decrementParties();
   }
 
-  public void reduceRunBarrier() {
-    synchronized (this) {
-      int num = runBarrier.getParties();
-      if(num == 1) {
-        return;
-      }
-      runBarrier = new CyclicBarrier(num - 1);
-    }
+  public void reduceRunBarrier() throws InterruptedException, BrokenBarrierException {
+    runBarrier.decrementParties();
   }
 }

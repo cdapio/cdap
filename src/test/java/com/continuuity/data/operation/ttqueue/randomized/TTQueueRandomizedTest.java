@@ -83,7 +83,7 @@ public class TTQueueRandomizedTest {
     LOG.info("Num threads=" + NUM_THREADS);
     ListeningExecutorService listeningExecutorService =
       MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(NUM_THREADS));
-    TestController testController = new TestController();
+    final TestController testController = new TestController();
 
     // Create entries that need to be enqueued
     ImmutableList.Builder<Integer> builder = ImmutableList.builder();

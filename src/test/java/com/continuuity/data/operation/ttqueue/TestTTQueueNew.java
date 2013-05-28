@@ -2430,9 +2430,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       oracle.commitTransaction(t1);
       // Run finalize again
       runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
-      int newFirstEntry = i == entries.length ? i : i + 1;   // Last entry will not get evicted
-      i++;
+      // Last 2 entries will not get evicted, due to the way eviction entries are determined using min committed
+      // entries of a txn.
+      int newFirstEntry = i >= entries.length - 2 ? entries.length - 2 : i + 1;
       assertFirstEntry(queue, newFirstEntry);
+      i++;
     }
   }
 
