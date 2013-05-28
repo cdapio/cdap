@@ -7,24 +7,25 @@ def executeCommand(command) {
   def runnableCommand = command.join(' ')
   def proc = runnableCommand.execute();
   proc.waitFor()
-  //proc.exitValue()
-  0
+  proc.exitValue()
 }
 
 /**
- * Task for running jshint over developer and cloud code base. 
+ * Task for running jshint over developer and cloud code base.
  */
 task jshint << {
   def developer = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/", 
-    "./client/core/views/", 
-    "./client/core/controllers/", 
-    "./client/core/", 
+    "./client/core/models/",
+    "./client/core/embeddables/",
+    "./client/core/controllers/",
+    "./client/core/",
     "./client/developer/patch/views",
-    "./server/developer/main.js", 
+    "./server/developer/main.js",
     "--config", 'jshint.json'
   ]
+
+  print developer.join(' ');
 
   if(executeCommand(developer) != 0) {
     throw new GradleScriptException("JSHint reported errors while building developer app", null)
@@ -32,12 +33,12 @@ task jshint << {
 
   def cloud = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/", 
-    "./client/core/views/", 
-    "./client/core/controllers/", 
-    "./client/core/", 
+    "./client/core/models/",
+    "./client/core/embeddables/",
+    "./client/core/controllers/",
+    "./client/core/",
     "./client/cloud/patch/views",
-    "./server/cloud/main.js", 
+    "./server/cloud/main.js",
     "--config", 'jshint.json'
   ]
   if(executeCommand(cloud) != 0) {
@@ -77,7 +78,9 @@ def build_edition(edition, base) {
     "baseUrl=$projectDir/client/${edition}",
     "out=$installDir/client/main.js"
   ]
-  
+
+  print rcmd.join(' ');
+
   if(executeCommand(rcmd) != 0) {
     throw new GradleScriptException("Failed while running r.js for edition '${edition}'", null)
   }

@@ -17,6 +17,7 @@ define([], function () {
 			var goneOver = false;
 			var app = this.get('model').app;
 			var id = this.get('model').name;
+			var self = this;
 
 			function logInterval () {
 

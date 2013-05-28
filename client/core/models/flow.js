@@ -166,9 +166,9 @@ define([], function () {
 
 			var promise = Ember.Deferred.create();
 
-			model_id = model_id.split(':');
-			app_id = model_id[0];
-			flow_id = model_id[1];
+			var model_id = model_id.split(':');
+			var app_id = model_id[0];
+			var flow_id = model_id[1];
 
 			C.get('manager', {
 				method: 'getFlowDefinition',

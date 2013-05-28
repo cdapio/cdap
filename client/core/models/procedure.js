@@ -172,9 +172,9 @@ define([], function () {
 
 			var promise = Ember.Deferred.create();
 
-			model_id = model_id.split(':');
-			app_id = model_id[0];
-			procedure_id = model_id[1];
+			var model_id = model_id.split(':');
+			var app_id = model_id[0];
+			var procedure_id = model_id[1];
 
 			C.get('metadata', {
 				method: 'getQuery',
