@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Default Benchmark Manager.
+ * Default Benchmark Context.
  */
 public class DefaultBenchmarkManager implements ApplicationManager {
 

@@ -94,8 +94,8 @@ import java.util.jar.Manifest;
 /**
  * Runner for performance tests. This class is using lots of classes and code from JUnit framework.
  */
-public final class Renn {
-  private static final Logger LOG = LoggerFactory.getLogger(Renn.class);
+public final class PerformanceTestRunner {
+  private static final Logger LOG = LoggerFactory.getLogger(PerformanceTestRunner.class);
   private static File tmpDir;
   private static AppFabricService.Iface appFabricService;
   private static LocationFactory locationFactory;
@@ -107,7 +107,7 @@ public final class Renn {
 
   ApplicationManager appMgr;
 
-  private Renn() {
+  private PerformanceTestRunner() {
     config = CConfiguration.create();
   }
 
@@ -157,7 +157,7 @@ public final class Renn {
   }
 
   public static void main(String[] args) throws Throwable {
-    Renn runner = new Renn();
+    PerformanceTestRunner runner = new PerformanceTestRunner();
     boolean ok = runner.parseOptions(args);
     if (ok) {
       runner.runTest();
@@ -520,13 +520,13 @@ public final class Renn {
 
   private void beforeClass() throws ClassNotFoundException {
     init(config);
-    Leitung leitung = Leitung.getInstance(this);
+    Context runManager = Context.getInstance(this);
     Class<? extends Application>[] apps = getApplications(fTestClass);
     if (apps != null && apps.length != 0) {
       clearAppFabric();
       for (Class<? extends Application> each : apps) {
         appMgr = deployApplication(each);
-        leitung.addApplicationManager(each.getSimpleName(), appMgr);
+        runManager.addApplicationManager(each.getSimpleName(), appMgr);
       }
     }
     if ("true".equalsIgnoreCase(config.get("perf.reporter.enabled"))) {
@@ -538,7 +538,7 @@ public final class Renn {
         if (StringUtils.isNotEmpty(config.get("perf.report.interval"))) {
           interval = Integer.valueOf(config.get("perf.report.interval"));
         }
-        Leitung.report(metricList, tags, interval);
+        Context.report(metricList, tags, interval);
       }
     }
   }
@@ -549,7 +549,7 @@ public final class Renn {
       clearAppFabric();
       for (Class<? extends Application> each : apps) {
         appMgr = deployApplication(each);
-        Leitung.getInstance().addApplicationManager(each.getSimpleName(), appMgr);
+        Context.getInstance().addApplicationManager(each.getSimpleName(), appMgr);
       }
     }
   }
@@ -557,41 +557,41 @@ public final class Renn {
   private void afterMethod(FrameworkMethod testMethod) {
     Class<? extends Application>[] apps = getApplications(testMethod);
     if (apps != null && apps.length != 0) {
-      Leitung.stopAll();
+      Context.stopAll();
       clearAppFabric();
     }
   }
 
   private void afterClass() {
-    Leitung.stopAll();
+    Context.stopAll();
   }
 
   /**
-   * Manager for running performance test.
+   * Context for managing components of a performance test.
    */
-  public static final class Leitung {
-    private static Leitung one;
+  public static final class Context {
+    private static Context one;
 
-    private final Renn runner;
+    private final PerformanceTestRunner runner;
     private final Map<String, ApplicationManager> appMgrs;
     private final Set<MultiThreadedStreamWriter> streamWriters;
     private final List<MensaMetricsReporter> mensaReporters;
 
-    protected static Leitung getInstance(Renn runner) {
+    protected static Context getInstance(PerformanceTestRunner runner) {
       if (one == null) {
-        one = new Leitung(runner);
+        one = new Context(runner);
       }
       return one;
     }
 
-    private static Leitung getInstance() {
+    private static Context getInstance() {
       if (one == null) {
-        throw new NullPointerException("Renn has not instantiated Leitung.");
+        throw new NullPointerException("PerformanceTestRunner has not instantiated Context.");
       }
       return one;
     }
 
-    private Leitung(Renn runner) {
+    private Context(PerformanceTestRunner runner) {
       this.runner = runner;
       appMgrs = new HashMap<String, ApplicationManager>();
       streamWriters = new HashSet<MultiThreadedStreamWriter>();
@@ -656,11 +656,4 @@ public final class Renn {
       }
     }
   }
-  //  public static void main(String[] args) throws InterruptedException, TimeoutException, IOException {
-//    CConfiguration config = CConfiguration.create();
-//    config.set("zk", "db101.ubench.sl");
-//    config.set("host", "db101.ubench.sl");
-//    SimpleRennen perfTest = new SimpleRennen("developer", config);
-//    perfTest.testApp();
-//  }
 }
