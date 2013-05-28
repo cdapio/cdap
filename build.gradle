@@ -98,7 +98,8 @@ def build_edition(edition, base) {
   }
 
   copy {
-    from "client/$edition/index.html"
+    from "client/${edition}"
+    include('index.html', 'main.js')
     if(edition == 'cloud') {
       from "client/$edition/access-error.html"
       from "client/$edition/internal-error.html"
