@@ -52,11 +52,6 @@ public abstract class Connector {
    */
   private DiscoveryServiceClient discoveryServiceClient;
 
-//  /**
-//   * This will be used for zookeeper client discovery by all connectors
-//   */
-//  private ServiceDiscovery serviceDiscovery;
-
   /**
    * Authenticates requests to this connector.
    */
