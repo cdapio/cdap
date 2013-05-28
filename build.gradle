@@ -16,16 +16,14 @@ def executeCommand(command) {
 task jshint << {
   def developer = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/",
-    "./client/core/embeddables/",
-    "./client/core/controllers/",
-    "./client/core/",
-    "./client/developer/patch/views",
-    "./server/developer/main.js",
+    "$rootProject.projectDir/web-cloud-app/client/core/models/",
+    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
+    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
+    "$rootProject.projectDir/web-cloud-app/client/core/",
+    "$rootProject.projectDir/web-cloud-app/client/developer/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/developer/main.js",
     "--config", 'jshint.json'
   ]
-
-  print developer.join(' ');
 
   if(executeCommand(developer) != 0) {
     throw new GradleScriptException("JSHint reported errors while building developer app", null)
@@ -33,12 +31,12 @@ task jshint << {
 
   def cloud = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/",
-    "./client/core/embeddables/",
-    "./client/core/controllers/",
-    "./client/core/",
-    "./client/cloud/patch/views",
-    "./server/cloud/main.js",
+    "$rootProject.projectDir/web-cloud-app/client/core/models/",
+    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
+    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
+    "$rootProject.projectDir/web-cloud-app/client/core/",
+    "$rootProject.projectDir/web-cloud-app/client/cloud/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/cloud/main.js",
     "--config", 'jshint.json'
   ]
   if(executeCommand(cloud) != 0) {
@@ -79,8 +77,6 @@ def build_edition(edition, base) {
     "out=$installDir/client/main.js"
   ]
 
-  print rcmd.join(' ');
-
   if(executeCommand(rcmd) != 0) {
     throw new GradleScriptException("Failed while running r.js for edition '${edition}'", null)
   }
@@ -102,7 +98,7 @@ def build_edition(edition, base) {
 
   copy {
     from "client/${edition}"
-    include('index.html', 'main.js')
+    include('index.html')
     if(edition == 'cloud') {
       from "client/$edition/access-error.html"
       from "client/$edition/internal-error.html"
