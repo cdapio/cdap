@@ -1,14 +1,24 @@
 package com.continuuity.metadata;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metadata.thrift.*;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.runtime.MetadataModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -25,10 +35,11 @@ public class MetadataServiceTest {
 
   /** Instance of account used for tests. */
   private static Account account;
+  private static Injector injector;
 
   @BeforeClass
   public static void beforeMetadataService() throws Exception {
-    Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       new MetadataModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules()
     );
@@ -41,6 +52,13 @@ public class MetadataServiceTest {
   @AfterClass
   public static void afterMetadataService() throws Exception {
     // nothing to be done here.
+  }
+
+  @Before
+  public void cleanDataFabric() throws OperationException {
+    // cleanups data
+    injector.getInstance(OperationExecutor.class)
+      .execute(new OperationContext("developer"), new ClearFabric());
   }
 
   /**
@@ -196,8 +214,9 @@ public class MetadataServiceTest {
     Application application = new Application("app1");
     application.setName("Application 1");
     application.setDescription("Test application");
+    Assert.assertFalse(mds.getApplication(account, application).isExists());
     Assert.assertTrue(mds.createApplication(account, application));
-    Assert.assertTrue(mds.getApplications(account).size() > 0);
+    Assert.assertTrue(mds.getApplication(account, application).isExists());
   }
 
   /**
