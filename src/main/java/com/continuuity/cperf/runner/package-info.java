@@ -3,6 +3,6 @@
  */
 
 /**
- * This package contains bla bla for bla bla.
+ * This package contains runners for performance tests.
  */
 package com.continuuity.cperf.runner;

@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Class for collecting runtime metrics while performance test is being executed.
  */
 public final class RuntimeMetricsCollector implements MetricsCollector {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMetricsCollector.class);
@@ -138,7 +138,7 @@ public final class RuntimeMetricsCollector implements MetricsCollector {
   }
 
   /**
-   * Class for Counter names.
+   * Class for account or flowlet level counter names.
    */
   final class CounterName {
     private CounterLevel level;
