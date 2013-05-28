@@ -1,15 +1,18 @@
 package com.continuuity.internal.app.runtime.batch.inmemory;
 
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.runtime.MetadataModules;
-import com.continuuity.runtime.MetricsModules;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Binder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -40,8 +43,12 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   private Injector createInMemoryModules() {
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
-      new BigMamaModule(cConf),
-      new MetricsModules().getInMemoryModules(),
+//      new BigMamaModule(cConf),
+      new ConfigModule(cConf),
+      new IOModule(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       // Every mr task talks to datastore directly bypassing oracle
@@ -53,8 +60,12 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   private Injector createPersistentModules(Constants.InMemoryPersistenceType persistenceType) {
     ImmutableList<Module> singleNodeModules = ImmutableList.of(
-      new BigMamaModule(cConf),
-      new MetricsModules().getSingleNodeModules(),
+//      new BigMamaModule(cConf),
+      new ConfigModule(cConf),
+      new IOModule(),
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       Constants.InMemoryPersistenceType.LEVELDB == persistenceType ?
         new DataFabricLevelDBModule(cConf) : new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
@@ -64,12 +75,12 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     return Guice.createInjector(singleNodeModules);
   }
 
-  private static class NoOracleOpexModule implements Module {
+  private static class NoOracleOpexModule extends AbstractModule {
     private static NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
 
     @Override
-    public void configure(Binder binder) {
-      binder.bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
+    public void configure() {
+      bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
         .toInstance(false);
     }
   }

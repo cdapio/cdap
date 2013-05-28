@@ -8,7 +8,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.Inject;
 

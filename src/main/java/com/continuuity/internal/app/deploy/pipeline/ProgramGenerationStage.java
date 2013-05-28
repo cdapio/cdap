@@ -1,18 +1,18 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.pipeline.AbstractStage;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 

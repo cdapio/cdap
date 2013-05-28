@@ -7,7 +7,8 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.app.DefaultId;
 import com.continuuity.app.deploy.Manager;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -16,20 +17,15 @@ import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 
 import java.nio.ByteBuffer;
@@ -50,19 +46,7 @@ public class TestHelper {
     configuration = CConfiguration.create();
     configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
     configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
-    final Configuration hConf = new Configuration();
-    // we use it to make mapreduce framework to use our fixed LocalJobRunner in lcoal mode
-    hConf.addResource("mapred-site-local.xml");
-    hConf.reloadConfiguration();
-
-    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                    new BigMamaModule(TestHelper.configuration),
-                                    new Module() {
-                                      @Override
-                                      public void configure(Binder binder) {
-                                        binder.bind(Configuration.class).toInstance(hConf);
-                                      }
-                                    });
+    injector = Guice.createInjector(new AppFabricTestModule(configuration));
   }
 
   public static Injector getInjector() {
@@ -87,7 +71,7 @@ public class TestHelper {
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = injector.getInstance(ManagerFactory.class);
-    return (Manager<Location, ApplicationWithPrograms>)factory.create();
+    return factory.create();
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
@@ -115,7 +99,7 @@ public class TestHelper {
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    LocationFactory lf = injector.getInstance(LocationFactory.class);
+    LocationFactory lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
 
     // Create a local jar - simulate creation of application archive.
     Location deployedJar = lf.create(

@@ -4,13 +4,12 @@
 
 package com.continuuity.internal.filesystem;
 
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
@@ -18,9 +17,9 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 /**
- * Codec for {@link Location}. We write {@link URI} for location.
+ * Codec for {@link com.continuuity.weave.filesystem.Location}. We write {@link java.net.URI} for location.
  */
-public class LocationCodec implements JsonSerializer<Location>, JsonDeserializer<Location> {
+public final class LocationCodec implements JsonSerializer<Location>, JsonDeserializer<Location> {
   private final LocationFactory lf;
 
   public LocationCodec(LocationFactory lf) {
@@ -35,7 +34,7 @@ public class LocationCodec implements JsonSerializer<Location>, JsonDeserializer
   }
 
   @Override
-  public Location deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+  public Location deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
     JsonObject jsonObj = json.getAsJsonObject();
     String uri = jsonObj.get("uri").getAsString();
     return lf.create(uri);

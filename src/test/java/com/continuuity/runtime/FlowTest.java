@@ -6,7 +6,6 @@ import com.continuuity.TestHelper;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueName;
@@ -14,34 +13,24 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.archive.JarFinder;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueEntry;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.Discoverable;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -56,7 +45,6 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,9 +56,9 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));
@@ -114,7 +102,6 @@ public class FlowTest {
     // Query
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
-    discoveryServiceClient.startAndWait();
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency")).iterator().next();
@@ -144,8 +131,8 @@ public class FlowTest {
 
   @Test
   public void testCountRandomApp() throws Exception {
-    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
+
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {
@@ -175,8 +162,8 @@ public class FlowTest {
 
   @Test
   public void testCountAndFilterWord() throws Exception {
-    TestHelper.getInjector().getInstance(DiscoveryService.class).startAndWait();
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(CountAndFilterWord.class);
+
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getProcessorType() == Type.FLOW) {

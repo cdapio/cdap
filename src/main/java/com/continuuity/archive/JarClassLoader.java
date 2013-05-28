@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -18,21 +18,24 @@ public class JarClassLoader extends MultiClassLoader {
   private final JarResources jarResources;
 
   /**
-   * Creates a ClassLoader that load classes from the given jar file with the system ClassLoader as its parent.
+   * Creates a ClassLoader that load classes from the given jar file.
    * @param jarLocation Location of the jar file
    * @throws IOException If there is error loading the jar file
+   * @see #JarClassLoader(JarResources)
    */
   public JarClassLoader(Location jarLocation) throws IOException {
     this(new JarResources(jarLocation));
   }
 
   /**
-   * Creates a ClassLoader with provided archive resources with the system ClassLoader as its parent.
-   *
+   * Creates a ClassLoader with provided archive resources and uses context classloader as parent if available.
+   * Otherwise, the classloader of this class would be used as parent classloader.
    * @param jarResources instance of archive resources
    */
   public JarClassLoader(JarResources jarResources) {
-    this.jarResources = jarResources;
+    this(jarResources,
+         Thread.currentThread().getContextClassLoader() == null ?
+           JarClassLoader.class.getClassLoader() : Thread.currentThread().getContextClassLoader());
   }
 
   /**
