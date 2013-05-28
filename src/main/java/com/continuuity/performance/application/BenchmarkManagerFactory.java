@@ -3,7 +3,7 @@ package com.continuuity.performance.application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.google.inject.assistedinject.Assisted;
 
 /**

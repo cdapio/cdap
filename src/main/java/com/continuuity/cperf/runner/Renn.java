@@ -15,10 +15,6 @@ import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.test.DefaultProcedureClient;
 import com.continuuity.internal.test.ProcedureClientFactory;
@@ -36,6 +32,8 @@ import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -383,9 +381,6 @@ public final class Renn {
                       }
       );
 
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    discoveryServiceClient.startAndWait();
-    injector.getInstance(DiscoveryService.class).startAndWait();
     locationFactory = injector.getInstance(LocationFactory.class);
   }
 
