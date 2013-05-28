@@ -1,27 +1,23 @@
 package com.continuuity.gateway;
 
-import static org.junit.Assert.assertTrue;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.gateway.accessor.DataRestAccessor;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.continuuity.app.guice.BigMamaModule;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.gateway.accessor.DataRestAccessor;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This test configures a gateway with a test accessor as the single connector
@@ -62,11 +58,8 @@ public class GatewayRestAccessorAuthTest {
     CConfiguration configuration = new CConfiguration();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules(),
-        new BigMamaModule(configuration));
+    Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     // Look for a free port
     port = PortDetector.findFreePort();
@@ -92,7 +85,6 @@ public class GatewayRestAccessorAuthTest {
     keysAndClusters.put(apiKey, Arrays.asList(cluster));
 
     // Now create our Gateway
-    discoveryService.startAndWait();
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
     theGateway.setConsumer(new TestUtil.NoopConsumer());
