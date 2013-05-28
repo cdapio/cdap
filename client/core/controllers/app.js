@@ -134,7 +134,8 @@ define([], function () {
 		startAllFlows: function (done) {
 
 			var flows = this.get('elements.Flow').content;
-			var toSend = toReceive = flows.length;
+			var toSend = flows.length;
+			var toReceive = toSend;
 
 			if (!toSend) {
 
@@ -170,7 +171,8 @@ define([], function () {
 		stopAllFlows: function (done) {
 
 			var flows = this.get('elements.Flow').content;
-			var toSend = toReceive = flows.length;
+			var toSend = flows.length;
+			var toReceive = toSend;
 
 			if (!toSend) {
 
@@ -216,7 +218,8 @@ define([], function () {
 		startAllProcedures: function (done) {
 
 			var procedures = this.get('elements.Procedure').content;
-			var toSend = toReceive = procedures.length;
+			var toSend = procedures.length;
+			var toReceive = toSend;
 
 			if (!toSend) {
 
@@ -252,7 +255,8 @@ define([], function () {
 		stopAllProcedures: function (done) {
 
 			var procedures = this.get('elements.Procedure').content;
-			var toSend = toReceive = procedures.length;
+			var toSend = procedures.length;
+			var toReceive = toSend;
 
 			if (!toSend) {
 

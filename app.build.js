@@ -1,6 +1,6 @@
 ({
     baseUrl: "client/developer",
-    locale: "en-us",  
+    locale: "en-us",
     inlineText: true,
     out: './build/developer/client/main.js',
     name: 'main',
@@ -8,7 +8,7 @@
     	"core": "../core/",
 		"lib": "../core/lib",
 		"models": "../core/models",
-		"views": "../core/views",
+        "embeddables": "../core/embeddables",
 		"controllers": "../core/controllers",
 		"partials": "../core/partials"
 	},

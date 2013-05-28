@@ -7,7 +7,7 @@ var express = require('express'),
 	http = require('http'),
 	https = require('https'),
 	io = require('socket.io'),
-	Int64 = require('node-int64').Int64;
+	Int64 = require('node-int64').Int64,
 	fs = require('fs'),
 	xml2js = require('xml2js'),
 	log4js = require('log4js'),
@@ -29,13 +29,6 @@ var sockets = {};
 process.env.NODE_ENV = 'development';
 
 /**
- * Catch anything uncaught.
- */
-process.on('uncaughtException', function (err) {
-  logger.error('Uncaught Exception', err);
-});
-
-/**
 * Configure logger.
 */
 log4js.configure({
@@ -46,6 +39,12 @@ log4js.configure({
 var logger = process.logger = log4js.getLogger('Cloud UI');
 logger.setLevel(LOG_LEVEL);
 
+/**
+ * Catch anything uncaught.
+ */
+process.on('uncaughtException', function (err) {
+  logger.error('Uncaught Exception', err);
+});
 
 /**
  * Read configuration and start the server.
@@ -73,6 +72,8 @@ function accountsRequest (path, done) {
 		method: 'GET'
 	};
 
+	var lib;
+
 	if (process.env.NODE_ENV === 'production') {
 		lib = https;
 	} else {
@@ -89,6 +90,8 @@ function accountsRequest (path, done) {
 
 			logger.info('Response from accounts', result.statusCode, data);
 
+			var status;
+
 			try {
 				data = JSON.parse(data);
 				status = result.statusCode;
@@ -97,7 +100,7 @@ function accountsRequest (path, done) {
 				data = e;
 				status = 500;
 			}
-		
+
 			done(status, data);
 
 		});
@@ -128,7 +131,7 @@ function renderError(req, res) {
 		res.sendfile('internal-error.html', {'root': getRoot()});
 	} catch (e) {
 		res.write('Internal error. Please email <a href="mailto:support@continuuity.com">support@continuuity.com</a>.');
-	}	
+	}
 
 }
 
@@ -294,7 +297,7 @@ fs.readFile(configPath, function (error, result) {
 
 					// Perform ownership check.
 					if (process.env.NODE_ENV === 'production') {
-						
+
 						if (!config['info'].owner || !config['info'].owner.account_id) {
 
 							logger.error('Inbound SSO. Owner information not found in the configuration!');
@@ -354,7 +357,7 @@ fs.readFile(configPath, function (error, result) {
 			io.set('authorization', function (data, accept) {
 
 				if (data.headers.cookie) {
-					
+
 					var cookies = cookie.parse(data.headers.cookie);
 					var signedCookies = utils.parseSignedCookies(cookies, config['cookie-secret']);
 					var obj = utils.parseJSONCookies(signedCookies);
@@ -449,7 +452,7 @@ fs.readFile(configPath, function (error, result) {
 
 					Api.manager(socket.handshake.account_id,
 						request.method, request.params, function (error, response) {
-						
+
 						if (response && response.length) {
 							var int64values = {
 								"lastStarted": 1,
@@ -605,7 +608,7 @@ fs.readFile(configPath, function (error, result) {
 							io.set('log level', 1);
 							io.set('resource', '/socket.io');
 						});
-						
+
 						/**
 						 * Set the handlers after io has been configured.
 						 */
