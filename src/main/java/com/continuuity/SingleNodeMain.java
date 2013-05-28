@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,8 +231,13 @@ public class SingleNodeMain {
       levelDBCompatibleOS = true;
     }
 
+    // For the modified local job runner
+    Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
-      new ConfigModule(configuration),
+      new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -244,7 +250,7 @@ public class SingleNodeMain {
     );
 
     ImmutableList<Module> singleNodeModules = ImmutableList.of(
-      new ConfigModule(configuration),
+      new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new LocationRuntimeModule().getSingleNodeModules(),
