@@ -113,7 +113,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
             RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
           )
       ));
-    zkClientService.startAndWait();
+    zkClientService.start();
     endpointStrategy = new StickyEndpointStrategy(new ZKDiscoveryService(zkClientService)
                                                     .discover(Constants.SERVICE_METRICS_COLLECTION_SERVER));
     LOG.info("MetricsClient started");
@@ -122,7 +122,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping MetricsClient");
-    zkClientService.stopAndWait();
+    zkClientService.stop();
     channelGroup.close().await();
     bootstrap.releaseExternalResources();
     LOG.info("MetricsClient stopped");
@@ -148,7 +148,12 @@ final class MetricsClient extends AbstractExecutionThreadService {
         long nanoTime = System.nanoTime();
         long sleepTime = nextConnectTime - nanoTime;
         if (sleepTime > 0) {
-          TimeUnit.NANOSECONDS.sleep(sleepTime);
+          try {
+            TimeUnit.NANOSECONDS.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            // Interrupted from shutdown. Ok to continue.
+            LOG.info("Metric client interrupted.");
+          }
         }
         connect(writeChannelRef);
 
