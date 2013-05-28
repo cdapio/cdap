@@ -22,6 +22,7 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
+import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
@@ -250,7 +251,8 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules()
+      new DataFabricModules().getInMemoryModules(),
+      new MetadataModules().getInMemoryModules()
     );
   }
 
@@ -287,7 +289,8 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules()
+          useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
+      new MetadataModules().getInMemoryModules()
     );
   }
 }
