@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# pre remove script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+    remove|upgrade|deconfigure)
+      for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+        sudo -u continuuity /etc/init.d/svc-$svcname stop > /dev/null 2>&1 ||:
+        if [ -h "/etc/init.d/svc-$svcname" ]; then
+          unlink /etc/init.d/svc-$svcname > /dev/null 2>&1 ||:
+        fi
+        rm -f /opt/continuuity/$package_name/version ||:
+      done
+    ;;
+
+    failed-upgrade)
+    ;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,13 @@
+# post uninstall script for <%= project %>
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+# placeholder - should add a condrestart to common service
+# if we have another version installed (ie, upgrade), do a conditional restart
+#if [ $1 -ge 1 ]; then 
+#  for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
+#    sudo -u continuuity /etc/init.d/svc-$svcname condrestart > /dev/null 2>&1
+#  done
+#fi
+

@@ -105,6 +105,8 @@ packaging {
                    '--architecture': 'all',
                    '--version': "${getPomVersion()}",
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
+                   '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
+                   '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
                    '--template-value': "project=$project.name"
   ]
 }
@@ -127,6 +129,12 @@ rpm.doFirst {
   // we also override this for the common package
   if(packaging.extraOptions['--after-install'] == "$rootProject.projectDir/distributions/src/debian/scripts/postinst") {
     packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postinst"
+  }
+  if(packaging.extraOptions['--before-remove'] == "$rootProject.projectDir/distributions/src/debian/scripts/prerm") {
+    packaging.extraOptions['--before-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/prerm"
+  }
+  if(packaging.extraOptions['--after-remove'] == "$rootProject.projectDir/distributions/src/debian/scripts/postrm") {
+    packaging.extraOptions['--after-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/postrm"
   }
 }
 

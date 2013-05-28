@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 #COMMON  post install script for <%= project %>
 set -e
 
@@ -9,31 +8,6 @@ version="<%= @version %>"
 
 case "$1" in
   configure)
-    mkdir -p /var/log/continuuity || :
-    echo $version > /opt/continuuity/$package_name/version
-    chmod +x /opt/continuuity/$package_name/bin/service
-    for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-      if [[ -h /etc/init.d/svc-$svcname ]]; then
-        unlink /etc/init.d/svc-$svcname
-      fi
-      ln -s /opt/continuuity/$package_name/bin/service /etc/init.d/svc-$svcname
-    done
-
-    # generate default empty configuration
-    if [[ ! -e /etc/continuuity/conf.dist/continuuity-site.xml ]]; then
-      mkdir -p /etc/continuuity/conf.dist
-      cat >/etc/continuuity/conf.dist/continuuity-site.xml <<'EOT'
-<?xml version="1.0"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<!-- Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.  -->
-<configuration>
-  <!--
-    Your site level configuration goes here
-  -->
-</configuration>
-EOT
-  fi
-
     update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
   ;;
 
