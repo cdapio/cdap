@@ -290,7 +290,7 @@ public class SingleNodeMain {
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
           useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getInMemoryModules()
+      new MetadataModules().getSingleNodeModules()
     );
   }
 }
