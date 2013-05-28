@@ -66,16 +66,19 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     this.typeRep = new TypeRepresentation(type);
   }
 
-  @Override
-  public DataSetSpecification configure() {
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
-    return new DataSetSpecification.Builder(this)
-      .property("schema", gson.toJson(this.schema))
-      .property("type", gson.toJson(this.typeRep))
-      .dataset(this.kvTable.configure())
-      .create();
+  /**
+   * Constructor that takes in an existing key/value store. This can be called by subclasses to inject a different
+   * key/value store implementation.
+   * @param name the name of the data set/object store
+   * @param type the type of the objects in the store
+   * @param kvStore existing key/value store
+   * @throws UnsupportedTypeException if the type cannot be supported
+   */
+  public ObjectStore(String name, Type type, KeyValueTable kvStore) throws UnsupportedTypeException {
+    super(name);
+    this.kvTable = kvStore;
+    this.schema = new ReflectionSchemaGenerator().generate(type);
+    this.typeRep = new TypeRepresentation(type);
   }
 
   /**
@@ -90,6 +93,35 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
     this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     this.kvTable = new KeyValueTable(spec.getSpecificationFor(this.getName() + "_kv"));
+  }
+
+  /**
+   * Constructor from specification that also takes in an existing key/value store. This can be called by subclasses
+   * to injecta different
+   * key/value store implementation.
+   * @param spec the data set specification
+   * @param kvStore existing key/value store
+   */
+  protected ObjectStore(DataSetSpecification spec, KeyValueTable kvStore) {
+    super(spec);
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+    this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
+    this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
+    this.kvTable = kvStore;
+  }
+
+  @Override
+  public DataSetSpecification configure() {
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+    return new DataSetSpecification.Builder(this)
+      .property("schema", gson.toJson(this.schema))
+      .property("type", gson.toJson(this.typeRep))
+      .dataset(this.kvTable.configure())
+      .create();
   }
 
   /**
@@ -160,5 +192,15 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     return this.delegate.createSplitReader(split);
+  }
+
+  /**
+   * Return a split reader that exposes the raw byte arrays from the underlying key value store.
+   * @param split the split
+   * @return a byte array split reader
+   */
+  @Beta
+  public SplitReader<byte[], byte[]> createRawSplitReader(Split split) {
+    return this.kvTable.createSplitReader(split);
   }
 }
