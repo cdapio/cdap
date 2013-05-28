@@ -22,7 +22,6 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
-import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
@@ -38,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,7 +58,7 @@ public class SingleNodeMain {
 
   private InMemoryZKServer zookeeper;
 
-  public SingleNodeMain(ImmutableList<Module> modules, CConfiguration configuration) {
+  public SingleNodeMain(List<Module> modules, CConfiguration configuration) {
     this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService();
 
@@ -198,10 +198,11 @@ public class SingleNodeMain {
       System.exit(-1);
     }
 
-    boolean inMemory = false;
-    boolean levelDBEnabled = true;
+    CConfiguration configuration = CConfiguration.create();
 
-    // We only support 'help' command line options currently
+    // Single node use persistent data fabric by default
+    boolean inMemory = false;
+
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
@@ -209,34 +210,38 @@ public class SingleNodeMain {
       } else if ("--in-memory".equals(args[0])) {
         inMemory = true;
       } else if ("--leveldb-disable".equals(args[0])) {
-        levelDBEnabled = false;
+        // this option overrides a setting that tells if level db can be used for persistence
+        configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, false);
       } else {
         usage(true);
       }
     }
 
-    CConfiguration configuration = CConfiguration.create();
-    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    boolean inVPC = false;
-    String environment = configuration.get("appfabric.environment", "devsuite");
-    if (environment.equals("vpc")) {
-      System.err.println("AppFabric Environment : " + environment);
-      inVPC = true;
-    }
-
-    boolean levelDBCompatibleOS = false;
-    String os = System.getProperty("os.name").toLowerCase();
-    if (os.contains("mac") || os.contains("nix")  || os.contains("nux") || os.contains("aix")) {
-      levelDBCompatibleOS = true;
-    }
-
+    // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
 
-    ImmutableList<Module> inMemoryModules = ImmutableList.of(
+    List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
+                                    : createPersistentModules(configuration, hConf);
+
+    SingleNodeMain main = new SingleNodeMain(modules, configuration);
+    try {
+      main.startUp(args);
+    } catch (Exception e) {
+      main.shutDown();
+      System.err.println("Failed to start server. " + e.getMessage());
+      System.exit(-2);
+    }
+  }
+
+  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
+
+    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
+
+    return ImmutableList.of(
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
@@ -245,11 +250,35 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules()
+      new DataFabricModules().getInMemoryModules()
     );
+  }
 
-    ImmutableList<Module> singleNodeModules = ImmutableList.of(
+  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
+    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
+
+    boolean inVPC = false;
+    String environment =
+      configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
+    if (environment.equals("vpc")) {
+      System.err.println("AppFabric Environment : " + environment);
+      inVPC = true;
+    }
+
+    boolean levelDBCompatibleOS = DataFabricLevelDBModule.isOsLevelDBCompatible();
+    boolean levelDBEnabled =
+      configuration.getBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, Constants.DEFAULT_DATA_LEVELDB_ENABLED);
+
+    boolean useLevelDB = (inVPC || levelDBCompatibleOS) && levelDBEnabled;
+    if (useLevelDB) {
+      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    } else {
+      configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.HSQLDB.name());
+    }
+
+    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, levelDBEnabled);
+
+    return ImmutableList.of(
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
@@ -258,20 +287,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      ((inVPC || levelDBCompatibleOS) && levelDBEnabled) ? new DataFabricLevelDBModule(configuration)
-        : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules()
+      useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules()
     );
-
-    SingleNodeMain main = inMemory ? new SingleNodeMain(inMemoryModules, configuration)
-      : new SingleNodeMain(singleNodeModules, configuration);
-    try {
-      main.startUp(args);
-    } catch (Exception e) {
-      main.shutDown();
-      System.err.println("Failed to start server. " + e.getMessage());
-      System.exit(-2);
-    }
-
   }
 }
