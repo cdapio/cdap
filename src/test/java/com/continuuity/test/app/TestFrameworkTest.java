@@ -1,12 +1,13 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.AppFabricTestBase;
 import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeMetrics;
+import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -18,6 +19,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -107,6 +109,14 @@ public class TestFrameworkTest extends AppFabricTestBase {
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
       procedureMetrics.waitForProcessed(1, 1, TimeUnit.SECONDS);
       Assert.assertEquals(0L, procedureMetrics.getException());
+
+      // Run mapreduce job
+      MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
+      mrManager.waitForFinish(15L, TimeUnit.SECONDS);
+
+      long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
+      // every event has 5 tokens
+      Assert.assertEquals(5 * 100L, totalCount);
 
     } finally {
       applicationManager.stopAll();

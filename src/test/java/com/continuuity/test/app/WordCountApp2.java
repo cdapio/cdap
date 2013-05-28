@@ -10,7 +10,12 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -29,6 +34,11 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +58,7 @@ public class WordCountApp2 implements Application {
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
+   * {@link com.continuuity.api.ApplicationSpecification}.
    *
    * @return An instance of {@code ApplicationSpecification}.
    */
@@ -58,11 +68,16 @@ public class WordCountApp2 implements Application {
       .setName("WordCountApp")
       .setDescription("Application for counting words")
       .withStreams().add(new Stream("text"))
-      .withDataSets().add(new MyKeyValueTable("mydataset"))
+      .withDataSets().add(new MyKeyValueTable("mydataset")).add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency()).build();
+      .withProcedures().add(new WordFrequency())
+      .withBatch().add(new CountTotal())
+      .build();
   }
 
+  /**
+   *
+   */
   public static final class MyRecord {
 
     private final String title;
@@ -97,6 +112,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordCountFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -113,6 +131,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class StreamSource extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
     private Metrics metrics;
@@ -132,6 +153,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class Tokenizer extends AbstractFlowlet {
     @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
@@ -159,6 +183,9 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
 //  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
@@ -193,16 +220,70 @@ public class WordCountApp2 implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
     private MyKeyValueTable counters;
 
+    @UseDataSet("totals")
+    private MyKeyValueTable totals;
+
     @Handle("wordfreq")
-    private void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    private void wordfreq(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+    }
+
+    @Handle("total")
+    private void total(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+      long result = Bytes.toLong(this.totals.read(Bytes.toBytes("total_words_count")));
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+    }
+  }
+
+  public static class CountTotal extends AbstractMapReduce {
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("countTotal")
+        .setDescription("Counts total words count")
+        .useInputDataSet("mydataset")
+        .useOutputDataSet("totals")
+        .build();
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      job.setMapperClass(MyMapper.class);
+      job.setMapOutputKeyClass(BytesWritable.class);
+      job.setMapOutputValueClass(LongWritable.class);
+      job.setReducerClass(MyReducer.class);
+    }
+
+    public static class MyMapper extends Mapper<byte[], byte[], BytesWritable, LongWritable> {
+      @Override
+      protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
+        context.write(new BytesWritable(Bytes.toBytes("total")), new LongWritable(Bytes.toLong(value)));
+      }
+    }
+
+    public static class MyReducer extends Reducer<BytesWritable, LongWritable, byte[], byte[]> {
+      @Override
+      protected void reduce(BytesWritable key, Iterable<LongWritable> values, Context context)
+        throws IOException, InterruptedException {
+
+        long total = 0;
+        for (LongWritable longWritable : values) {
+          total += longWritable.get();
+        }
+
+        context.write(Bytes.toBytes("total_words_count"), Bytes.toBytes(total));
+      }
     }
   }
 
