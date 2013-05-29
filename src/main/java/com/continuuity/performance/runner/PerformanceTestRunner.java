@@ -1,4 +1,4 @@
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -110,7 +110,7 @@ public final class PerformanceTestRunner {
   private final CConfiguration config;
   private String accountId = "developer";
 
-  ApplicationManager appMgr;
+  private ApplicationManager appManager;
 
   private PerformanceTestRunner() {
     config = CConfiguration.create();
@@ -121,11 +121,6 @@ public final class PerformanceTestRunner {
   }
 
   private boolean parseOptions(String[] args) throws ClassNotFoundException {
-
-    if (args.length == 0 || "--help".equals(args[0])) {
-      return false;
-    }
-
     testClass = new TestClass(Class.forName(args[0]));
 
     if (args.length == 1) {
@@ -142,9 +137,6 @@ public final class PerformanceTestRunner {
 
     LOG.debug("Parsing command line options...");
     for (int i = start; i < args.length; i++) {
-      if ("help".equals(args[i])) {
-        return false;
-      }
       if (i + 1 < args.length) {
         String key = args[i];
         String value = args[++i];
@@ -314,14 +306,14 @@ public final class PerformanceTestRunner {
       }
       Preconditions.checkState(status == 5, "Failed to deploy app.");
 
-      ApplicationManager appMgr
+      ApplicationManager appManager
         = injector.getInstance(BenchmarkManagerFactory.class).create(token, accountId, applicationId,
                                                                      appFabricService,
                                                                      deployedJar, appSpec);
-      Preconditions.checkNotNull(appMgr, "Failed to deploy app.");
+      Preconditions.checkNotNull(appManager, "Failed to deploy app.");
       LOG.debug("Succesfully deployed jar file {} with application.", jarFile.getAbsolutePath());
 
-      return appMgr;
+      return appManager;
 
     } catch (Exception e) {
       LOG.error("Deployment of jar file {} with new application failed!", jarFile.getAbsolutePath());
@@ -535,8 +527,8 @@ public final class PerformanceTestRunner {
     if (apps != null && apps.length != 0) {
       clearAppFabric();
       for (Class<? extends Application> each : apps) {
-        appMgr = deployApplication(each);
-        runManager.addApplicationManager(each.getSimpleName(), appMgr);
+        appManager = deployApplication(each);
+        runManager.addApplicationManager(each.getSimpleName(), appManager);
       }
     }
     if ("true".equalsIgnoreCase(config.get("perf.reporter.enabled"))) {
@@ -558,8 +550,8 @@ public final class PerformanceTestRunner {
     if (apps != null && apps.length != 0) {
       clearAppFabric();
       for (Class<? extends Application> each : apps) {
-        appMgr = deployApplication(each);
-        Context.getInstance().addApplicationManager(each.getSimpleName(), appMgr);
+        appManager = deployApplication(each);
+        Context.getInstance().addApplicationManager(each.getSimpleName(), appManager);
       }
     }
   }
@@ -583,7 +575,7 @@ public final class PerformanceTestRunner {
     private static Context one;
 
     private final PerformanceTestRunner runner;
-    private final Map<String, ApplicationManager> appMgrs;
+    private final Map<String, ApplicationManager> appManagers;
     private final Set<MultiThreadedStreamWriter> streamWriters;
     private final List<MensaMetricsReporter> mensaReporters;
 
@@ -603,17 +595,17 @@ public final class PerformanceTestRunner {
 
     private Context(PerformanceTestRunner runner) {
       this.runner = runner;
-      appMgrs = new HashMap<String, ApplicationManager>();
+      appManagers = new HashMap<String, ApplicationManager>();
       streamWriters = new HashSet<MultiThreadedStreamWriter>();
       mensaReporters = new ArrayList<MensaMetricsReporter>();
     }
 
-    protected void addApplicationManager(String appName, ApplicationManager mgr) {
-      appMgrs.put(appName, mgr);
+    protected void addApplicationManager(String appName, ApplicationManager manager) {
+      appManagers.put(appName, manager);
     }
 
     public static ApplicationManager getApplicationManager(String appName) {
-      return getInstance().appMgrs.get(appName);
+      return getInstance().appManagers.get(appName);
     }
 
     public final CConfiguration getConfiguration() {
@@ -658,8 +650,8 @@ public final class PerformanceTestRunner {
       for (MultiThreadedStreamWriter streamWriter : getInstance().streamWriters) {
         streamWriter.shutdown();
       }
-      for (ApplicationManager mgr : getInstance().appMgrs.values()) {
-        mgr.stopAll();
+      for (ApplicationManager manager : getInstance().appManagers.values()) {
+        manager.stopAll();
       }
       for (MensaMetricsReporter reporter : getInstance().mensaReporters) {
         reporter.shutdown();

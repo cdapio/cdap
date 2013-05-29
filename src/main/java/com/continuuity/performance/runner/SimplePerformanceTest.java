@@ -1,4 +1,4 @@
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
 import com.continuuity.test.FlowManager;
@@ -18,9 +18,9 @@ public class SimplePerformanceTest {
   public void testApp() throws IOException, TimeoutException, InterruptedException {
     final int numStreamEvents = 10000;
 
-    FlowManager flowMgr = PerformanceTestRunner.Context.startFlow("SimpleApp", "SimpleFlow");
+    FlowManager flowManager = PerformanceTestRunner.Context.startFlow("SimpleApp", "SimpleFlow");
 
-    flowMgr.setFlowletInstances("source", 2);
+    flowManager.setFlowletInstances("source", 2);
 
     StreamWriter kvStream = PerformanceTestRunner.Context.getStreamWriter("SimpleApp", "keyValues");
 
