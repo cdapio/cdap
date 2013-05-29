@@ -42,7 +42,6 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   private Injector createInMemoryModules() {
     ImmutableList<Module> inMemoryModules = ImmutableList.of(
-//      new BigMamaModule(cConf),
       new ConfigModule(cConf),
       new IOModule(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -57,7 +56,6 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   private Injector createPersistentModules(Constants.InMemoryPersistenceType persistenceType) {
     ImmutableList<Module> singleNodeModules = ImmutableList.of(
-//      new BigMamaModule(cConf),
       new ConfigModule(cConf),
       new IOModule(),
       new LocationRuntimeModule().getSingleNodeModules(),
