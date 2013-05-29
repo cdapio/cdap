@@ -29,9 +29,16 @@ dependencies {
 
     compile libraries.kryo
     compile libraries.hsql
-    compile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity') { exclude module: 'junit' }
+    compile libraries.jcl_over_slf4j
+    compile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity') {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+    }
 
-    testCompile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity:tests') { exclude module: 'junit' }
+    testCompile('org.apache.hbase:hbase:0.94.2.1.4.7.continuuity:tests') {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+    }
     testCompile libraries.hadoop_minicluster
 }
 
