@@ -1265,6 +1265,7 @@ public class ConverterUtils {
     TTransaction ttx = new TTransaction(false);
     ttx.setReadPointer(wrap(tx.getReadPointer()));
     ttx.setTxid(tx.getWriteVersion());
+    ttx.setTrackChanges(tx.isTrackChanges());
     return ttx;
   }
 
@@ -1272,7 +1273,7 @@ public class ConverterUtils {
    * unwrap a transaction.
    */
   Transaction unwrap(TTransaction ttx) {
-    return ttx.isIsNull() ? null : new Transaction(ttx.getTxid(), unwrap(ttx.getReadPointer()));
+    return ttx.isIsNull() ? null : new Transaction(ttx.getTxid(), unwrap(ttx.getReadPointer()), ttx.isTrackChanges());
   }
 
   /**

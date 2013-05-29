@@ -66,6 +66,27 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   @Override
   public void write(byte[] key, T object) throws OperationException {
+    // write to key value table
+    writeRaw(key, encode(object));
+  }
+
+  @Override
+  public T read(byte[] key) throws OperationException {
+    byte[] bytes = readRaw(key);
+    return decode(bytes);
+  }
+
+  private void writeRaw(byte[] key, byte[] value) throws OperationException {
+    // write to key value table
+    this.kvTable.write(key, value);
+  }
+
+  private byte[] readRaw(byte[] key) throws OperationException {
+    // read from the key/value table
+    return this.kvTable.read(key);
+  }
+
+  private byte[] encode(T object) throws OperationException {
     // encode T using schema
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     BinaryEncoder encoder = new BinaryEncoder(bos);
@@ -75,14 +96,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
       throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
                                    "Failed to encode object to be written: " + e.getMessage(), e);
     }
-    // write to key value table
-    this.kvTable.write(key, bos.toByteArray());
-  }
-
-  @Override
-  public T read(byte[] key) throws OperationException {
-    byte[] bytes = this.kvTable.read(key);
-    return decode(bytes);
+    return bos.toByteArray();
   }
 
   private T decode(byte[] bytes) throws OperationException {

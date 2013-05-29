@@ -1197,7 +1197,7 @@ public abstract class TestOVCTable {
     final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
 
     // execute a write in a new xaction
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
     this.table.put(row, c1, tx.getWriteVersion(), one);
     // read from outside xaction -> not visible
     ReadPointer outside = new MemoryReadPointer(2, 2, Collections.singleton(1L));
@@ -1216,7 +1216,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1255,7 +1255,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1295,7 +1295,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTests".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1321,7 +1321,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTestsWithDeletes".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1374,7 +1374,7 @@ public abstract class TestOVCTable {
     final byte [] col1 = "c1".getBytes(Charsets.UTF_8);
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1428,7 +1428,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTestsStartRowNull".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1468,7 +1468,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTestsStopRowNull".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1509,7 +1509,7 @@ public abstract class TestOVCTable {
     final byte [] row = "scanTestsStartStopRowNull".getBytes(Charsets.UTF_8);
     final byte [] col = "c".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(1, 1, new HashSet<Long>()), true);
 
     for (int i = 100; i < 200; i++) {
       byte [] rowKey = Bytes.add(row, Bytes.toBytes(i));
@@ -1556,7 +1556,7 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
     long version = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1606,7 +1606,7 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
     long version = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1675,7 +1675,7 @@ public abstract class TestOVCTable {
     final byte [] col2 = "c2".getBytes(Charsets.UTF_8);
     final byte [] col3 = "c3".getBytes(Charsets.UTF_8);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
     long lowVersion = 1L;
 
     for (int i = 100; i < 200; i++) {
@@ -1763,7 +1763,7 @@ public abstract class TestOVCTable {
     this.table.delete(rowKey, col3, highVersion);
     this.table.deleteAll(rowKey, col1, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
 
     Scanner scanner = this.table.scan(tx);
 
@@ -1810,7 +1810,7 @@ public abstract class TestOVCTable {
     this.table.undeleteAll(rowKey, col1, highVersion);
     this.table.undeleteAll(rowKey, col2, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
 
     Scanner scanner = this.table.scan(tx);
 
@@ -1853,7 +1853,7 @@ public abstract class TestOVCTable {
     this.table.undeleteAll(rowKey, col1, highVersion);
     this.table.undeleteAll(rowKey, col2, highVersion);
 
-    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()));
+    Transaction tx = new Transaction(1, new MemoryReadPointer(Long.MAX_VALUE, Long.MAX_VALUE, new HashSet<Long>()), true);
 
     OperationResult<byte[]> entryCol1 = this.table.get(rowKey, col1,  tx);
     OperationResult<byte[]> entryCol2 = this.table.get(rowKey, col2,  tx);

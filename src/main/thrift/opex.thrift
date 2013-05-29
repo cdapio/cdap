@@ -259,6 +259,7 @@ struct TTransaction {
   1: bool isNull,
   2: optional i64 txid,
   3: optional TReadPointer readPointer,
+  4: optional bool trackChanges,
 }
 
 struct TKeyRange {
@@ -274,7 +275,7 @@ exception TOperationException {
 service TOperationExecutor {
 
   // batch op ex
-  TTransaction start(1: TOperationContext context) throws (1: TOperationException ex),
+  TTransaction start(1: TOperationContext context, 2: bool trackChanges) throws (1: TOperationException ex),
   void batch(1: TOperationContext context, 2: TWriteBatch batch) throws (1: TOperationException ex),
   TTransaction execute(1: TOperationContext context, 2: TTransaction tx, 3: TWriteBatch batch) throws (1: TOperationException ex),
   void finish(1: TOperationContext context, 2: TTransaction tx, 3: TWriteBatch batch) throws (1: TOperationException ex),

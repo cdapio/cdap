@@ -31,7 +31,7 @@ public class TOperationExecutor {
 
   public interface Iface {
 
-    public TTransaction start(TOperationContext context) throws TOperationException, org.apache.thrift.TException;
+    public TTransaction start(TOperationContext context, boolean trackChanges) throws TOperationException, org.apache.thrift.TException;
 
     public void batch(TOperationContext context, List<TWriteOperation> batch) throws TOperationException, org.apache.thrift.TException;
 
@@ -83,7 +83,7 @@ public class TOperationExecutor {
 
   public interface AsyncIface {
 
-    public void start(TOperationContext context, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.start_call> resultHandler) throws org.apache.thrift.TException;
+    public void start(TOperationContext context, boolean trackChanges, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.start_call> resultHandler) throws org.apache.thrift.TException;
 
     public void batch(TOperationContext context, List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.batch_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -153,16 +153,17 @@ public class TOperationExecutor {
       super(iprot, oprot);
     }
 
-    public TTransaction start(TOperationContext context) throws TOperationException, org.apache.thrift.TException
+    public TTransaction start(TOperationContext context, boolean trackChanges) throws TOperationException, org.apache.thrift.TException
     {
-      send_start(context);
+      send_start(context, trackChanges);
       return recv_start();
     }
 
-    public void send_start(TOperationContext context) throws org.apache.thrift.TException
+    public void send_start(TOperationContext context, boolean trackChanges) throws org.apache.thrift.TException
     {
       start_args args = new start_args();
       args.setContext(context);
+      args.setTrackChanges(trackChanges);
       sendBase("start", args);
     }
 
@@ -798,24 +799,27 @@ public class TOperationExecutor {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void start(TOperationContext context, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler) throws org.apache.thrift.TException {
+    public void start(TOperationContext context, boolean trackChanges, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      start_call method_call = new start_call(context, resultHandler, this, ___protocolFactory, ___transport);
+      start_call method_call = new start_call(context, trackChanges, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class start_call extends org.apache.thrift.async.TAsyncMethodCall {
       private TOperationContext context;
-      public start_call(TOperationContext context, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private boolean trackChanges;
+      public start_call(TOperationContext context, boolean trackChanges, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.context = context;
+        this.trackChanges = trackChanges;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("start", org.apache.thrift.protocol.TMessageType.CALL, 0));
         start_args args = new start_args();
         args.setContext(context);
+        args.setTrackChanges(trackChanges);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -1708,7 +1712,7 @@ public class TOperationExecutor {
       protected start_result getResult(I iface, start_args args) throws org.apache.thrift.TException {
         start_result result = new start_result();
         try {
-          result.success = iface.start(args.context);
+          result.success = iface.start(args.context, args.trackChanges);
         } catch (TOperationException ex) {
           result.ex = ex;
         }
@@ -2183,6 +2187,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("start_args");
 
     private static final org.apache.thrift.protocol.TField CONTEXT_FIELD_DESC = new org.apache.thrift.protocol.TField("context", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField TRACK_CHANGES_FIELD_DESC = new org.apache.thrift.protocol.TField("trackChanges", org.apache.thrift.protocol.TType.BOOL, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -2191,10 +2196,12 @@ public class TOperationExecutor {
     }
 
     public TOperationContext context; // required
+    public boolean trackChanges; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      CONTEXT((short)1, "context");
+      CONTEXT((short)1, "context"),
+      TRACK_CHANGES((short)2, "trackChanges");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2211,6 +2218,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 1: // CONTEXT
             return CONTEXT;
+          case 2: // TRACK_CHANGES
+            return TRACK_CHANGES;
           default:
             return null;
         }
@@ -2251,11 +2260,15 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
+    private static final int __TRACKCHANGES_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.CONTEXT, new org.apache.thrift.meta_data.FieldMetaData("context", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOperationContext.class)));
+      tmpMap.put(_Fields.TRACK_CHANGES, new org.apache.thrift.meta_data.FieldMetaData("trackChanges", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(start_args.class, metaDataMap);
     }
@@ -2264,19 +2277,25 @@ public class TOperationExecutor {
     }
 
     public start_args(
-      TOperationContext context)
+      TOperationContext context,
+      boolean trackChanges)
     {
       this();
       this.context = context;
+      this.trackChanges = trackChanges;
+      setTrackChangesIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public start_args(start_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetContext()) {
         this.context = new TOperationContext(other.context);
       }
+      this.trackChanges = other.trackChanges;
     }
 
     public start_args deepCopy() {
@@ -2286,6 +2305,8 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.context = null;
+      setTrackChangesIsSet(false);
+      this.trackChanges = false;
     }
 
     public TOperationContext getContext() {
@@ -2312,6 +2333,29 @@ public class TOperationExecutor {
       }
     }
 
+    public boolean isTrackChanges() {
+      return this.trackChanges;
+    }
+
+    public start_args setTrackChanges(boolean trackChanges) {
+      this.trackChanges = trackChanges;
+      setTrackChangesIsSet(true);
+      return this;
+    }
+
+    public void unsetTrackChanges() {
+      __isset_bit_vector.clear(__TRACKCHANGES_ISSET_ID);
+    }
+
+    /** Returns true if field trackChanges is set (has been assigned a value) and false otherwise */
+    public boolean isSetTrackChanges() {
+      return __isset_bit_vector.get(__TRACKCHANGES_ISSET_ID);
+    }
+
+    public void setTrackChangesIsSet(boolean value) {
+      __isset_bit_vector.set(__TRACKCHANGES_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case CONTEXT:
@@ -2322,6 +2366,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case TRACK_CHANGES:
+        if (value == null) {
+          unsetTrackChanges();
+        } else {
+          setTrackChanges((Boolean)value);
+        }
+        break;
+
       }
     }
 
@@ -2329,6 +2381,9 @@ public class TOperationExecutor {
       switch (field) {
       case CONTEXT:
         return getContext();
+
+      case TRACK_CHANGES:
+        return Boolean.valueOf(isTrackChanges());
 
       }
       throw new IllegalStateException();
@@ -2343,6 +2398,8 @@ public class TOperationExecutor {
       switch (field) {
       case CONTEXT:
         return isSetContext();
+      case TRACK_CHANGES:
+        return isSetTrackChanges();
       }
       throw new IllegalStateException();
     }
@@ -2369,6 +2426,15 @@ public class TOperationExecutor {
           return false;
       }
 
+      boolean this_present_trackChanges = true;
+      boolean that_present_trackChanges = true;
+      if (this_present_trackChanges || that_present_trackChanges) {
+        if (!(this_present_trackChanges && that_present_trackChanges))
+          return false;
+        if (this.trackChanges != that.trackChanges)
+          return false;
+      }
+
       return true;
     }
 
@@ -2391,6 +2457,16 @@ public class TOperationExecutor {
       }
       if (isSetContext()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.context, typedOther.context);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTrackChanges()).compareTo(typedOther.isSetTrackChanges());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTrackChanges()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.trackChanges, typedOther.trackChanges);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2422,6 +2498,10 @@ public class TOperationExecutor {
         sb.append(this.context);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("trackChanges:");
+      sb.append(this.trackChanges);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -2440,6 +2520,8 @@ public class TOperationExecutor {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -2473,6 +2555,14 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 2: // TRACK_CHANGES
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.trackChanges = iprot.readBool();
+                struct.setTrackChangesIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -2493,6 +2583,9 @@ public class TOperationExecutor {
           struct.context.write(oprot);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(TRACK_CHANGES_FIELD_DESC);
+        oprot.writeBool(struct.trackChanges);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -2514,20 +2607,30 @@ public class TOperationExecutor {
         if (struct.isSetContext()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetTrackChanges()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetContext()) {
           struct.context.write(oprot);
+        }
+        if (struct.isSetTrackChanges()) {
+          oprot.writeBool(struct.trackChanges);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, start_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.context = new TOperationContext();
           struct.context.read(iprot);
           struct.setContextIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.trackChanges = iprot.readBool();
+          struct.setTrackChangesIsSet(true);
         }
       }
     }
@@ -14140,7 +14243,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map156.size);
                   for (int _i157 = 0; _i157 < _map156.size; ++_i157)
                   {
-                    ByteBuffer _key158; // optional
+                    ByteBuffer _key158; // required
                     long _val159; // required
                     _key158 = iprot.readBinary();
                     _val159 = iprot.readI64();
@@ -14245,7 +14348,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map162.size);
             for (int _i163 = 0; _i163 < _map162.size; ++_i163)
             {
-              ByteBuffer _key164; // optional
+              ByteBuffer _key164; // required
               long _val165; // required
               _key164 = iprot.readBinary();
               _val165 = iprot.readI64();
@@ -15218,7 +15321,7 @@ public class TOperationExecutor {
                   struct.success = new HashMap<ByteBuffer,Long>(2*_map166.size);
                   for (int _i167 = 0; _i167 < _map166.size; ++_i167)
                   {
-                    ByteBuffer _key168; // optional
+                    ByteBuffer _key168; // required
                     long _val169; // required
                     _key168 = iprot.readBinary();
                     _val169 = iprot.readI64();
@@ -15323,7 +15426,7 @@ public class TOperationExecutor {
             struct.success = new HashMap<ByteBuffer,Long>(2*_map172.size);
             for (int _i173 = 0; _i173 < _map172.size; ++_i173)
             {
-              ByteBuffer _key174; // optional
+              ByteBuffer _key174; // required
               long _val175; // required
               _key174 = iprot.readBinary();
               _val175 = iprot.readI64();
@@ -19084,6 +19187,8 @@ public class TOperationExecutor {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);

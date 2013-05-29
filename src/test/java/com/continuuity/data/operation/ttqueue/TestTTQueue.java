@@ -78,7 +78,7 @@ public abstract class TestTTQueue {
     int numEntries = getNumIterations();
 
     for (int i=1; i<numEntries+1; i++) {
-      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), new Transaction(getDirtyWriteVersion(), getDirtyPointer()));
+      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true));
     }
     System.out.println("Done enqueueing");
 
@@ -93,7 +93,7 @@ public abstract class TestTTQueue {
     queue.configure(consumerSync, getDirtyPointer());
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
-      Transaction transaction = new Transaction(rp.getMaximum(), rp);
+      Transaction transaction = new Transaction(rp.getMaximum(), rp, true);
       DequeueResult result = queue.dequeue(consumerSync, rp);
       assertTrue(result.isSuccess());
       //assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
@@ -160,14 +160,14 @@ public abstract class TestTTQueue {
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       queueNormal.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=-1
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queueNormal.dequeue(consumer, t.getReadPointer());
       Assert.assertFalse(result.isEmpty());
@@ -195,14 +195,14 @@ public abstract class TestTTQueue {
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       queueEvict.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=1
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       result = queueEvict.dequeue(consumer, t.getReadPointer());
       queueEvict.ack(result.getEntryPointer(), consumer, t);
       oracle.commitTransaction(t);
@@ -238,14 +238,14 @@ public abstract class TestTTQueue {
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
       oracle.commitTransaction(t);
     }
 
     // dequeue/ack/finalize 10 things w/ group1 and numGroups=3
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queue.dequeue(consumer1,oracle.getReadPointer());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
@@ -264,7 +264,7 @@ public abstract class TestTTQueue {
 
     // dequeue everything with consumer2
     for (int i=0; i<10; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queue.dequeue(consumer2, t.getReadPointer());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
@@ -283,7 +283,7 @@ public abstract class TestTTQueue {
 
     // dequeue everything except the last entry with consumer3
     for (int i=0; i<9; i++) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       DequeueResult result =
           queue.dequeue(consumer3, t.getReadPointer());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
@@ -296,7 +296,7 @@ public abstract class TestTTQueue {
 
     // create a new consumer and dequeue, should get the 10th entry!
     QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.configure(consumer4,oracle.getReadPointer());
     DequeueResult result = queue.dequeue(consumer4, t.getReadPointer());
     assertFalse(result.isEmpty());
@@ -320,7 +320,7 @@ public abstract class TestTTQueue {
         queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
 
     // consumer 3 still gets entry 9
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer3, t.getReadPointer());
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),
         Bytes.equals(Bytes.toBytes(9), result.getEntry().getData()));
@@ -346,7 +346,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer, true);
 
     QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
@@ -406,7 +406,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer, true);
 
     QueueEntry[] queueEntries = new QueueEntry[numQueueEntries];
     for(int i=0; i<numQueueEntries; i++) {
@@ -462,7 +462,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue(conf);
     long dirtyVersion = getDirtyWriteVersion();
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(dirtyVersion, dirtyReadPointer, true);
 
     byte [] valueSemiAckedTimeout = Bytes.toBytes("semiAckedTimeout");
     byte [] valueSemiAckedToDequeued = Bytes.toBytes("semiAckedToDequeued");
@@ -532,7 +532,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue ten entries
     int n=10;
@@ -611,7 +611,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue ten entries
     int n=10;
@@ -736,7 +736,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue 3 entries
     int n=3;
@@ -798,7 +798,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue four entries
     int n=4;
@@ -945,7 +945,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue four entries
     int n=4;
@@ -1052,7 +1052,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     // enqueue one hundred entries
     int n=100;
@@ -1170,7 +1170,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     byte [] valueOne = Bytes.toBytes("value1");
     byte [] valueTwo = Bytes.toBytes("value2");
@@ -1262,7 +1262,7 @@ public abstract class TestTTQueue {
     final TTQueue queue = createQueue();
     final ReadPointer readPointer = getCleanPointer();
     final long version = readPointer.getMaximum();
-    final Transaction transaction = new Transaction(version, readPointer);
+    final Transaction transaction = new Transaction(version, readPointer, true);
 
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
@@ -1357,7 +1357,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     ReadPointer readPointer = getCleanPointer();
     long version = readPointer.getMaximum();
-    Transaction transaction = new Transaction(version, readPointer);
+    Transaction transaction = new Transaction(version, readPointer, true);
 
     AtomicLong dequeueReturns = null;
     if (queue instanceof TTQueueOnVCTable) {
