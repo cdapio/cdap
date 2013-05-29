@@ -441,6 +441,8 @@ packaging {
   extraOptions['--name'] = "continuuity"
   extraOptions['--directories'] = "/opt/continuuity"
   extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/debian/scripts/common-postinst"
+  packaging.extraOptions['--before-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-preinst"
+  packaging.extraOptions['--before-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-prerm"
   extraOptions['--template-value'] = "project=continuuity"
 }
 rpm {
@@ -452,6 +454,7 @@ rpm.doFirst {
   packaging.extraOptions['--directories'] = "/opt/continuuity"
   packaging.extraOptions['--after-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-postinst"
   packaging.extraOptions['--before-install'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-preinst"
+  packaging.extraOptions['--before-remove'] = "$rootProject.projectDir/distributions/src/rpm/scripts/common-prerm"
   packaging.extraOptions['--template-value'] = "project=continuuity"
 }
 

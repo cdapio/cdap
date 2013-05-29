@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# post remove script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+    remove|upgrade|deconfigure)
+    ;;
+
+esac
+
+exit 0
+
+
