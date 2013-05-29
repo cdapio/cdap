@@ -1236,7 +1236,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testConflictNotDetectedWithNTCXactions() throws OperationException {
-    final String table = "tIIIPX";
+    final String table = "tIIIIPX";
     final byte[] r1 = { 'r', '1' };
     final byte[] c1 = { 'c', '1' };
     final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
@@ -1263,7 +1263,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testNTCXactionIsNotRolledBackByOpex() throws OperationException {
-    final String table = "tIIIPX";
+    final String table = "tIIIIIPX";
     final byte[] r1 = { 'r', '1' };
     final byte[] c1 = { 'c', '1' };
     final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
