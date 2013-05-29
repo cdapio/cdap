@@ -1,6 +1,7 @@
 package com.continuuity.security;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -25,6 +26,7 @@ public class ApplicationSecurityTest {
    * Tests that the admin class has ability to change security manager.
    */
   @Test
+  @Ignore
   public void testAbilityToSetSecurityManagerMultipleTimes() throws Exception {
     SecurityAdmin admin = new SecurityAdmin();
     try {
