@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * HttpClient for sending HttpPosts to Gateway.
  */
-public class SimpleHttpClient {
+public final class SimpleHttpClient {
   private final HttpPost post;
 
   public SimpleHttpClient(String url, Map<String, String> httpHeaders) {

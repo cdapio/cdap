@@ -39,7 +39,7 @@ public class MultiThreadedStreamWriter implements StreamWriter {
 
 
   private final List<StreamEventDispatcher> dispatchers;
-  List<Future> dispatcherFutures;
+  private List<Future> dispatcherFutures;
 
   private final List<LinkedBlockingDeque<byte[]>> queues;
 
@@ -50,8 +50,8 @@ public class MultiThreadedStreamWriter implements StreamWriter {
 
   @Inject
   public MultiThreadedStreamWriter(CConfiguration config, @Assisted QueueName queueName) {
-    if (StringUtils.isNotEmpty(config.get("perf.reporter.threads"))) {
-      numThreads = Integer.valueOf(config.get("perf.reporter.threads"));
+    if (StringUtils.isNotEmpty(config.get("perf.dispatcher.threads"))) {
+      numThreads = Integer.valueOf(config.get("perf.dispatcher.threads"));
     } else {
       numThreads = 1;
     }
