@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * HttpClient for sending HttpPosts to Gateway.
  */
-public class SimpleHttpClient implements HttpClient {
+public class SimpleHttpClient {
   private final HttpPost post;
 
   public SimpleHttpClient(String url, Map<String, String> httpHeaders) {
@@ -24,7 +24,6 @@ public class SimpleHttpClient implements HttpClient {
     }
   }
 
-  @Override
   public void post(byte[] message) throws Exception {
     post.setEntity(new ByteArrayEntity(message));
     org.apache.http.client.HttpClient client = new DefaultHttpClient();
