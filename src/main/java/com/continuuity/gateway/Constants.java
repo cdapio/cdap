@@ -150,7 +150,6 @@ public class Constants {
   public static final int DEFAULT_THREADS = 20;
 
   public static final String METRICS_SERVICE_NAME =
-    com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
-  public static final String FLOW_SERVICE_NAME =
-    com.continuuity.common.conf.Constants.SERVICE_FLOW_SERVER;
+        com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
+  public static final String FLOW_SERVICE_NAME = "app.fabric.service";
 } // end of Constants class

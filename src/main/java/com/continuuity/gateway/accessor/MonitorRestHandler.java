@@ -105,7 +105,7 @@ public class MonitorRestHandler extends NettyRestHandler {
         accessor.getHttpConfig().getPathPrefix() +
             accessor.getHttpConfig().getPathMiddle();
     flowEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
-                                                 .discover("app.fabric.service"));
+                                                 .discover(Constants.FLOW_SERVICE_NAME));
     metricsEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
                                                     .discover(Constants.METRICS_SERVICE_NAME));
   }
@@ -171,7 +171,7 @@ public class MonitorRestHandler extends NettyRestHandler {
    */
   private AppFabricService.Client getFlowClient() throws ServerException {
     if (flowClients.get() == null || !flowClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol("app.fabric.service", flowEndpoints);
+      TProtocol protocol = getThriftProtocol(Constants.FLOW_SERVICE_NAME, flowEndpoints);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       flowClients.set(client);
     }
