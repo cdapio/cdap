@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  */
 public class FlexibleCyclicBarrier {
-  private volatile CyclicBarrier barrier;
+  private CyclicBarrier barrier;
   private final ReadWriteLock barrierLock;
 
   public FlexibleCyclicBarrier(int parties) {
@@ -25,7 +25,7 @@ public class FlexibleCyclicBarrier {
   public int await() throws InterruptedException, BrokenBarrierException {
     barrierLock.readLock().lock();
     try {
-    return barrier.await();
+      return barrier.await();
     } finally {
       barrierLock.readLock().unlock();
     }

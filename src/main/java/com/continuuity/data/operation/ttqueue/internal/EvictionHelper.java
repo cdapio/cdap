@@ -100,7 +100,7 @@ public class EvictionHelper {
     while(iterator.hasNext()) {
       Map.Entry<Long, Long> entry = iterator.next();
       // Cleanup happens within a transaction, so need to exclude current transaction from getting cleaned up
-      if(entry.getKey() != transaction.getWriteVersion() &&  readPointer.isVisible(entry.getKey())) {
+      if(entry.getKey() != transaction.getWriteVersion() && readPointer.isVisible(entry.getKey())) {
         // Save the maxMinCommittedAckEntry
         if(maxMinCommittedAckEntry < entry.getValue()) {
           maxMinCommittedAckEntry = entry.getValue();
