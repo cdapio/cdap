@@ -7,6 +7,7 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeueEntry;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.DequeuedEntrySet;
 import com.continuuity.data.operation.ttqueue.TTQueueNewOnVCTable.TransientWorkingSet;
@@ -1323,6 +1324,207 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   }
 
   @Test
+  public void testEvictOnAck_OneGroup() throws Exception {
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, true);
+    QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, config);
+
+    // first try with evict-on-ack off
+    TTQueue queueNormal = createQueue();
+    queueNormal.configure(consumer, getDirtyPointer());
+    int numGroups = -1;
+
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      queueNormal.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
+      oracle.commitTransaction(t);
+    }
+
+    // dequeue/ack/finalize 10 things w/ numGroups=-1
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      DequeueResult result =
+        queueNormal.dequeue(consumer, t.getReadPointer());
+      Assert.assertFalse(result.isEmpty());
+      queueNormal.ack(result.getEntryPointer(), consumer, t);
+      queueNormal.finalize(result.getEntryPointer(), consumer, numGroups, t);
+      oracle.commitTransaction(t);
+    }
+
+    // dequeue is empty
+    assertTrue(
+      queueNormal.dequeue(consumer, getDirtyPointer()).isEmpty());
+
+    // dequeue with new consumer still has entries (expected)
+    consumer = new QueueConsumer(0, 1, 1, config);
+    queueNormal.configure(consumer, getDirtyPointer());
+    DequeueResult result = queueNormal.dequeue(consumer, getDirtyPointer());
+    assertFalse(result.isEmpty());
+    assertEquals(0, Bytes.toInt(result.getEntry().getData()));
+
+    // now do it again with evict-on-ack turned on
+    TTQueue queueEvict = createQueue();
+    numGroups = 1;
+    consumer = new StatefulQueueConsumer(0, 0, 1, config);
+    queueEvict.configure(consumer, getDirtyPointer());
+
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      queueEvict.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
+      oracle.commitTransaction(t);
+    }
+
+    // dequeue/ack/finalize 10 things w/ numGroups=1
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      result = queueEvict.dequeue(consumer, t.getReadPointer());
+      queueEvict.ack(result.getEntryPointer(), consumer, t);
+      oracle.commitTransaction(t);
+      queueEvict.finalize(result.getEntryPointer(), consumer, numGroups, t);
+    }
+
+    // dequeue is empty
+    assertTrue(
+      queueEvict.dequeue(consumer, getDirtyPointer()).isEmpty());
+
+    // dequeue with new consumer should not have more than one entry, since the entry that consumerReadPointer points
+    // to will not get finalized
+    consumer = new QueueConsumer(0, 2, 1, config);
+    queueEvict.configure(consumer, getDirtyPointer());
+    Transaction t = oracle.startTransaction(true);
+    result = queueEvict.dequeue(consumer, getDirtyPointer());
+    queueEvict.ack(result.getEntryPointer(), consumer, t);
+    oracle.commitTransaction(t);
+    result = queueEvict.dequeue(consumer, getDirtyPointer());
+    assertTrue(result.toString(), result.isEmpty());
+  }
+
+  @Test
+  public void testEvictOnAck_ThreeGroups() throws Exception {
+    TTQueue queue = createQueue();
+    final boolean singleEntry = true;
+
+    QueueConfig config = new QueueConfig(PartitionerType.FIFO, singleEntry);
+    QueueConsumer consumer1 = new StatefulQueueConsumer(0, 2, 1, config);
+    queue.configure(consumer1, TransactionOracle.DIRTY_READ_POINTER);
+    QueueConsumer consumer2 = new StatefulQueueConsumer(0, 1, 1, config);
+    queue.configure(consumer2, TransactionOracle.DIRTY_READ_POINTER);
+    QueueConsumer consumer3 = new StatefulQueueConsumer(0, 0, 1, config);
+    queue.configure(consumer3, TransactionOracle.DIRTY_READ_POINTER);
+
+    // enable evict-on-ack for 3 groups
+    int numGroups = 3;
+
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
+      oracle.commitTransaction(t);
+    }
+
+    // dequeue/ack/finalize 10 things w/ group1 and numGroups=3
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      DequeueResult result =
+        queue.dequeue(consumer1,oracle.getReadPointer());
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer1, t);
+      oracle.commitTransaction(t);
+      queue.finalize(result.getEntryPointer(), consumer1, numGroups, t);
+    }
+
+    // dequeue is empty
+    assertTrue(
+      queue.dequeue(consumer1, getDirtyPointer()).isEmpty());
+
+    // dequeue with consumer2 still has entries (expected)
+    assertFalse(
+      queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
+
+    // dequeue everything with consumer2
+    for (int i=0; i<10; i++) {
+      Transaction t = oracle.startTransaction(true);
+      DequeueResult result =
+        queue.dequeue(consumer2, t.getReadPointer());
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer2, t);
+      oracle.commitTransaction(t);
+      queue.finalize(result.getEntryPointer(), consumer2, numGroups, t);
+    }
+
+    // dequeue is empty
+    assertTrue(
+      queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
+
+    // dequeue with consumer3 still has entries (expected)
+    assertFalse(
+      queue.dequeue(consumer3, getDirtyPointer()).isEmpty());
+
+    // dequeue everything except the last entry with consumer3
+    for (int i=0; i<9; i++) {
+      Transaction t = oracle.startTransaction(true);
+      DequeueResult result =
+        queue.dequeue(consumer3, t.getReadPointer());
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getEntry().getData()));
+      queue.ack(result.getEntryPointer(), consumer3, t);
+      oracle.commitTransaction(t);
+      queue.finalize(result.getEntryPointer(), consumer3, numGroups, t);
+    }
+
+    // now the first 8 entries should have been physically evicted!
+
+    // create a new consumer and dequeue, should get the 9th entry!
+    QueueConsumer consumer4 = new QueueConsumer(0, 3, 1, config);
+    Transaction t = oracle.startTransaction(true);
+    queue.configure(consumer4,oracle.getReadPointer());
+    DequeueResult result = queue.dequeue(consumer4, t.getReadPointer());
+    assertFalse(result.isEmpty());
+    assertTrue("Expected 8 but was " + Bytes.toInt(result.getEntry().getData()),
+               Bytes.equals(Bytes.toBytes(8), result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), consumer4, t);
+    oracle.commitTransaction(t);
+    queue.finalize(result.getEntryPointer(), consumer4, ++numGroups, t); // numGroups=4
+
+    // dequeue again with consumer4 should get 9
+    t = oracle.startTransaction(true);
+    result = queue.dequeue(consumer4, getDirtyPointer());
+    assertEquals(9, Bytes.toInt(result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), consumer4, t);
+    oracle.commitTransaction(t);
+
+    // dequeue again should be empty on consumer4
+    result = queue.dequeue(consumer4, getDirtyPointer());
+    assertTrue(result.isEmpty());
+
+    // dequeue is empty for 1 and 2
+    assertTrue(
+      queue.dequeue(consumer1, getDirtyPointer()).isEmpty());
+    assertTrue(
+      queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
+
+    // consumer 3 still gets entry 9
+    t = oracle.startTransaction(true);
+    result = queue.dequeue(consumer3, t.getReadPointer());
+    assertTrue("Expected 9 but was " + Bytes.toInt(result.getEntry().getData()),
+               Bytes.equals(Bytes.toBytes(9), result.getEntry().getData()));
+    queue.ack(result.getEntryPointer(), consumer3, t);
+    oracle.commitTransaction(t);
+    // finalize now with numGroups=4
+    queue.finalize(result.getEntryPointer(), consumer3, numGroups, t);
+
+    // everyone is empty now!
+    assertTrue(
+      queue.dequeue(consumer1, getDirtyPointer()).isEmpty());
+    assertTrue(
+      queue.dequeue(consumer2, getDirtyPointer()).isEmpty());
+    assertTrue(
+      queue.dequeue(consumer3, getDirtyPointer()).isEmpty());
+    assertTrue(
+      queue.dequeue(consumer4, getDirtyPointer()).isEmpty());
+  }
+
+  @Test
   public void testBatchSyncDisjoint() throws OperationException {
     testBatchSyncDisjoint(PartitionerType.HASH, false);
     testBatchSyncDisjoint(PartitionerType.HASH, true);
@@ -2430,9 +2632,11 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       oracle.commitTransaction(t1);
       // Run finalize again
       runFinalize(queue, entryPointers, grp1Consumer1, grp1Consumer2, grp2Consumer1, grp1Consumer2);
-      int newFirstEntry = i == entries.length ? i : i + 1;   // Last entry will not get evicted
-      i++;
+      // Last 2 entries will not get evicted, due to the way eviction entries are determined using min committed
+      // entries of a txn.
+      int newFirstEntry = i >= entries.length - 2 ? entries.length - 2 : i + 1;
       assertFirstEntry(queue, newFirstEntry);
+      i++;
     }
   }
 
@@ -2457,6 +2661,79 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // verification, also the previous finalize with grp1Consumer1 wouldn't write the eviction information till
     // the end of the finalize function, hence (available groups == total groups) check will fail
     queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
+  }
+
+  @Test
+  public void testEvictClaimedEntries() throws Exception {
+    // Eviction entry determination should take ClaimedEntryList into account
+    TTQueueNewOnVCTable queue = (TTQueueNewOnVCTable) createQueue();
+    TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
+    TTQueueNewOnVCTable.DequeueStrategy fifoDequeueStrategy = queue.new FifoDequeueStrategy();
+    queueState.setPartitioner(FIFO);
+    queueState.setConsumerReadPointer(10);
+    // Min unack entry should be only based on consumerReadPointer
+    assertEquals(10, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet(Sets.newTreeSet(Lists.newArrayList(new DequeueEntry(9),
+                                                                                                new DequeueEntry(8))));
+    queueState.setDequeueEntrySet(dequeuedEntrySet);
+    // Min unack entry should be based on consumerReadPointer, dequeueEntrySet
+    assertEquals(8, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    ClaimedEntryList claimedEntryList = new ClaimedEntryList();
+    claimedEntryList.add(5, 6);
+    claimedEntryList.add(3, 4);
+    queueState.setClaimedEntryList(claimedEntryList);
+    // Min unack entry should be based on consumerReadPointer, dequeueEntrySet, ClaimedEntryList
+    assertEquals(3, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    // Clear dequeued entry set
+    queueState.setDequeueEntrySet(new DequeuedEntrySet());
+    // Min unack entry should still be min of ClaimedEntryList
+    assertEquals(3, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    // Restore dequeued entry set, but clear ClaimedEntryList
+    queueState.setDequeueEntrySet(dequeuedEntrySet);
+    queueState.setClaimedEntryList(new ClaimedEntryList());
+    // Min unack entry should now be min of dequeeudEntrySet
+    assertEquals(8, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+
+    queueState.setReconfigPartitionersList(
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(
+        Lists.newArrayList(new TTQueueNewOnVCTable.ReconfigPartitioner(2, ROUND_ROBIN))));
+  }
+
+  @Test
+  public void testEvictReconfigPartitionerList() throws Exception {
+    // Eviction entry determination should take ClaimedEntryList into account
+    TTQueueNewOnVCTable queue = (TTQueueNewOnVCTable) createQueue();
+    TTQueueNewOnVCTable.QueueStateImpl queueState = new TTQueueNewOnVCTable.QueueStateImpl();
+    TTQueueNewOnVCTable.DequeueStrategy fifoDequeueStrategy = queue.new RoundRobinDequeueStrategy();
+    queueState.setPartitioner(ROUND_ROBIN);
+    queueState.setConsumerReadPointer(10);
+    // Min unack entry should be only based on consumerReadPointer
+    assertEquals(10, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    DequeuedEntrySet dequeuedEntrySet = new DequeuedEntrySet(Sets.newTreeSet(Lists.newArrayList(new DequeueEntry(9),
+                                                                                                new DequeueEntry(8))));
+    queueState.setDequeueEntrySet(dequeuedEntrySet);
+    // Min unack entry should be based on consumerReadPointer, dequeueEntrySet
+    assertEquals(8, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    TTQueueNewOnVCTable.ReconfigPartitionersList reconfigPartitionersList =
+      new TTQueueNewOnVCTable.ReconfigPartitionersList(Lists.newArrayList(
+        new TTQueueNewOnVCTable.ReconfigPartitioner(7, ROUND_ROBIN),
+        new TTQueueNewOnVCTable.ReconfigPartitioner(8, ROUND_ROBIN)));
+    queueState.setReconfigPartitionersList(reconfigPartitionersList);
+    queueState.setConsumerReadPointer(7);
+    // Min unack entry should be based on consumerReadPointer, dequeueEntrySet, reconfigPartitionersList
+    assertEquals(7, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
+
+    // Clear dequeued entry set
+    queueState.setDequeueEntrySet(new DequeuedEntrySet());
+    // Min unack entry should still be min of ClaimedEntryList
+    assertEquals(7, fifoDequeueStrategy.getMinUnAckedEntry(queueState));
   }
 
   private interface QueueConsumerHolder {

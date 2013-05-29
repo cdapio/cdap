@@ -6,6 +6,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.StatefulQueueConsumer;
 import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -112,7 +113,8 @@ public class ConsumerGroup implements Runnable {
 
         LOG.info(getLogMessage("Run done. Waiting for others to finish running"));
         groupControl.getRunBarrier().await();
-        LOG.info(getLogMessage("All run done."));
+        QueueInfo queueInfo = queue.getQueueInfo();
+        LOG.info(getLogMessage(String.format("All run done. QueueInfo=%s", queueInfo.getJSONString())));
 
 //        for(int i = 0; i < numConsumers; ++i) {
 //          LOG.info(getLogMessage("Consumer:" + i + " dequeueList=" + groupMap.get(i)));
