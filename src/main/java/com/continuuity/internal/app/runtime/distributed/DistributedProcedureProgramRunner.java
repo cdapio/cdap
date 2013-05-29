@@ -53,9 +53,10 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
 
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
 
+    // TODO (ENG-2526): deal with logging
     WeavePreparer preparer = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec,
                                                                                hConfFile, cConfFile))
-            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))   // TODO(terence): deal with logging
+            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .withArguments(procedureSpec.getName(),
                            "--jar", program.getProgramJarLocation().getName(),
                            "--instances", "1",
@@ -92,7 +93,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
 
     @Override
     protected void doCommand(String name, Object value) throws Exception {
-      // TODO
+      // TODO (ENG-2526)
     }
   }
 }

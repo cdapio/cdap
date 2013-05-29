@@ -58,8 +58,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + flowSpec.getName());
 
+    // TODO (ENG-2313): deal with logging
     WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
-               .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));   // TODO(terence): deal with logging
+               .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
 
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       preparer.withArguments(entry.getKey(),
@@ -126,7 +127,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
      * @throws InterruptedException
      */
     private synchronized void changeInstances(String flowletName, final int newInstanceCount) throws Exception {
-      // TODO
+      // TODO (ENG-2526)
     }
   }
 }
