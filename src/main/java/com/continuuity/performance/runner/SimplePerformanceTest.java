@@ -1,4 +1,4 @@
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;
 
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
 import com.continuuity.test.FlowManager;

@@ -5,4 +5,4 @@
 /**
  * This package contains runners for performance tests.
  */
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;

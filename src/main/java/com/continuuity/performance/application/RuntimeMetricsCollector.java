@@ -1,7 +1,7 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.cperf.runner.PerformanceTestRunner;
+import com.continuuity.performance.runner.PerformanceTestRunner;
 import com.continuuity.metrics2.thrift.Counter;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;

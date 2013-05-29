@@ -1,4 +1,4 @@
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;

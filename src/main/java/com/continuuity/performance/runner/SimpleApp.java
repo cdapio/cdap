@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.cperf.runner;
+package com.continuuity.performance.runner;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -23,11 +23,11 @@ import org.slf4j.LoggerFactory;
 /**
  * This is a sample Continuuity application  that is used for demonstration of performance testing.
  */
-public class TrivialApp implements Application {
+public class SimpleApp implements Application {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TrivialApp.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SimpleApp.class);
 
-  public static final String TABLE_NAME = "TrivialAppTable";
+  public static final String TABLE_NAME = "SimpleAppTable";
 
   /**
    * Configures the {@link com.continuuity.api.Application} by returning an
@@ -38,7 +38,7 @@ public class TrivialApp implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("TrivialApp")
+      .setName("SimpleApp")
       .setDescription("Flow that writes key=value then reads back the key")
       .withStreams()
       .add(new Stream("keyValues"))
@@ -55,7 +55,7 @@ public class TrivialApp implements Application {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("TrivialFlow")
+        .setName("SimpleFlow")
         .setDescription("Example flow that writes events from a stream to a data set and then reads them from there.")
         .withFlowlets()
         .add("source", new KeyValueSource())
@@ -100,7 +100,7 @@ public class TrivialApp implements Application {
     private static final Logger LOG = LoggerFactory.getLogger(ReaderFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(TrivialApp.TABLE_NAME)
+    @UseDataSet(SimpleApp.TABLE_NAME)
     KeyValueTable kvTable;
 
     public void process(byte[] key) throws OperationException {
@@ -126,7 +126,7 @@ public class TrivialApp implements Application {
     private static final Logger LOG = LoggerFactory.getLogger(WriterFlowlet.class);
     private Metrics metrics;
 
-    @UseDataSet(TrivialApp.TABLE_NAME)
+    @UseDataSet(SimpleApp.TABLE_NAME)
     KeyValueTable kvTable;
 
     private OutputEmitter<byte[]> output;
