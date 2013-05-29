@@ -10,7 +10,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 public abstract class Accessor extends Connector implements DataAccessor {
 
   /**
-   * the data fabric executor to use for all data access
+   * the data fabric executor to use for all data access.
    */
   protected OperationExecutor executor;
 
@@ -24,3 +24,4 @@ public abstract class Accessor extends Connector implements DataAccessor {
     return this.executor;
   }
 }
+

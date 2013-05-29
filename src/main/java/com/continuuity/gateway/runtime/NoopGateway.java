@@ -13,7 +13,7 @@ import com.google.inject.Injector;
 public class NoopGateway {
 
   /**
-   * Our main method
+   * Our main method.
    *
    * @param args Our command line options
    */
@@ -21,8 +21,8 @@ public class NoopGateway {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getNoopModules(),
-        new DataFabricModules().getNoopModules());
+      new GatewayModules().getNoopModules(),
+      new DataFabricModules().getNoopModules());
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);

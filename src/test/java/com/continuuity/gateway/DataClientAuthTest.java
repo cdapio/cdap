@@ -36,7 +36,6 @@ public class DataClientAuthTest {
       .getLogger(DataClientAuthTest.class);
 
   private OperationExecutor executor = null;
-  private static DiscoveryService discoveryService;
 
   Gateway gateway = null;
 
@@ -64,7 +63,7 @@ public class DataClientAuthTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
@@ -98,7 +97,7 @@ public class DataClientAuthTest {
     configuration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
     Map<String,List<String>> keysAndClusters =
         new TreeMap<String,List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(new String [] { cluster }));
+    keysAndClusters.put(apiKey, Arrays.asList(cluster));
 
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
@@ -285,13 +284,13 @@ public class DataClientAuthTest {
 
   /**
    * Adds the --apikey &lt;apikey> arguments to the argument list. 
-   * @param args
-   * @return
    */
   private String [] addAuth(String [] args) {
     int len = args == null ? 0 : args.length;
     String [] ret = new String[len + 2];
-    for (int i=0; i<len; i++) ret[i] = args[i];
+    for (int i=0; i<len; i++) {
+      ret[i] = args[i];
+    }
     ret[ret.length - 2] = "--apikey";
     ret[ret.length - 1] = apiKey;
     return ret;

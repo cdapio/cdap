@@ -47,10 +47,10 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the query rest accessor.
- * <p>
+ * <p/>
  * At this time it only accepts POST requests, which it forwards to a
  * procedure registered in the service discovery.
- * <p>
+ * <p/>
  * example:
  * <pre>
  * POST http://g.c.c/query/myapp/feedreader/getfeed HTTP/1.1
@@ -62,7 +62,7 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public final class QueryRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(QueryRestHandler.class);
+    .getLogger(QueryRestHandler.class);
 
   /**
    * The allowed methods for this handler
@@ -80,7 +80,6 @@ public final class QueryRestHandler extends NettyRestHandler {
    *
    * {"userid":100}
    * </pre>
-   *
    */
 //  private String pathPrefix;
 
@@ -209,7 +208,7 @@ public final class QueryRestHandler extends NettyRestHandler {
           if (entity.getContentType() != null) {
             contentType = entity.getContentType().getValue();
           }
-          int contentLength = (int)entity.getContentLength();
+          int contentLength = (int) entity.getContentLength();
           if (contentLength > 0) {
             content = ChannelBuffers.dynamicBuffer(contentLength);
           } else {
@@ -225,11 +224,11 @@ public final class QueryRestHandler extends NettyRestHandler {
         }
       } catch (Exception e) {
         LOG.error("Exception when forwarding query to URI " + relayUri
-            + ": " + e.getMessage() + ", at " +
-            StackTraceUtil.toStringStackTrace(e));
+                    + ": " + e.getMessage() + ", at " +
+                    StackTraceUtil.toStringStackTrace(e));
         helper.finish(Error);
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         return;
       } finally {
         client.getConnectionManager().shutdown();
@@ -237,10 +236,10 @@ public final class QueryRestHandler extends NettyRestHandler {
 
       // return result from provider
       respond(message.getChannel(), request,
-          HttpResponseStatus.valueOf(status),
-          contentType == null ? null : Collections.
-              singletonMap(HttpHeaders.Names.CONTENT_TYPE, contentType),
-          content);
+              HttpResponseStatus.valueOf(status),
+              contentType == null ? null : Collections.
+                singletonMap(HttpHeaders.Names.CONTENT_TYPE, contentType),
+              content);
 
       if (status == HttpStatus.SC_OK) {
         helper.finish(Success);
@@ -257,11 +256,11 @@ public final class QueryRestHandler extends NettyRestHandler {
       }
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e.getCause());
+                  this.accessor.getName() + "'. ", e.getCause());
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
     }
@@ -269,11 +268,11 @@ public final class QueryRestHandler extends NettyRestHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
-        this.accessor.getName() + "'. ", e.getCause());
-    if(e.getChannel().isOpen()) {
+                this.accessor.getName() + "'. ", e.getCause());
+    if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();
     }

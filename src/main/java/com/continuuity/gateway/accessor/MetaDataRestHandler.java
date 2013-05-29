@@ -36,18 +36,17 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the metadata REST API.
- * <p>
+ * <p/>
  * At this time it only accepts GET requests to list entries or to view an entry.
  * Examples of well-formed reqeuests:
  * <PRE>
- *   list GET http://gateway:port/metadata/type/id[&encoding=name]
+ * list GET http://gateway:port/metadata/type/id[&encoding=name]
  * </PRE>
- *
  */
 public class MetaDataRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(MetaDataRestHandler.class);
+    .getLogger(MetaDataRestHandler.class);
 
   // the allowed methods for this handler
   Set<HttpMethod> allowedMethods = Collections.singleton(HttpMethod.GET);
@@ -83,8 +82,8 @@ public class MetaDataRestHandler extends NettyRestHandler {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
     this.pathPrefix =
-        accessor.getHttpConfig().getPathPrefix() +
-            accessor.getHttpConfig().getPathMiddle();
+      accessor.getHttpConfig().getPathPrefix() +
+        accessor.getHttpConfig().getPathMiddle();
   }
 
   @Override
@@ -224,11 +223,11 @@ public class MetaDataRestHandler extends NettyRestHandler {
 
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e);
+                  this.accessor.getName() + "'. ", e);
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
     }
@@ -236,11 +235,11 @@ public class MetaDataRestHandler extends NettyRestHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
-        this.accessor.getName() + "'. ", e.getCause());
-    if(e.getChannel().isOpen()) {
+                this.accessor.getName() + "'. ", e.getCause());
+    if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();
     }

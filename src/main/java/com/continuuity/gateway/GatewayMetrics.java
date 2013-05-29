@@ -15,8 +15,9 @@ public class GatewayMetrics {
 
   /**
    * Increments counter. If counter doesn't exist creates new one.
+   *
    * @param counterName counter to increment
-   * @param delta value to increment by
+   * @param delta       value to increment by
    */
   public void count(String counterName, long delta) {
     Long existingValue = metrics.get(counterName);

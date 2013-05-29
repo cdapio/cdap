@@ -48,7 +48,6 @@ public class MetaDataClient {
 
   String command = null;         // the command to run
 
-  String account = null;         // the account to inspect
   String app = null;             // the application to inspect, optional
   String type = null;            // the type of entries
   String id = null;              // the id of the entry to show, optional
@@ -63,7 +62,8 @@ public class MetaDataClient {
    * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws com.continuuity.common.utils.UsageException in case of error
+   * @throws com.continuuity.common.utils.UsageException
+   *          in case of error
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -90,19 +90,24 @@ public class MetaDataClient {
   }
 
   /**
-   * Print an error message followed by the usage statement
+   * Print an error message followed by the usage statement.
+   *
    * @param errorMessage the error message
    */
   void usage(String errorMessage) {
-    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    if (errorMessage != null) {
+      System.err.println("Error: " + errorMessage);
+    }
     usage(true);
   }
 
   /**
-   * Parse the command line arguments
+   * Parse the command line arguments.
    */
   void parseArguments(String[] args) {
-    if (args.length == 0) usage(true);
+    if (args.length == 0) {
+      usage(true);
+    }
     if ("--help".equals(args[0])) {
       usage(false);
       help = true;
@@ -114,45 +119,52 @@ public class MetaDataClient {
     for (int pos = 1; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         hostname = args[pos];
-      }
-      else if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--port".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.parseInt(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
-      }
-      else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--apikey".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         apikey = args[pos];
-      }
-      else if ("--application".equals(arg) || "--app".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--application".equals(arg) || "--app".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         app = args[pos];
-      }
-      else if ("--type".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--type".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         type = args[pos];
-      }
-      else if ("--id".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--id".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         id = args[pos];
-      }
-      else if ("--filter".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--filter".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         filters.add(args[pos]);
-      }
-      else if ("--value".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--value".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         values.add(args[pos]);
-      }
-      else if ("--verbose".equals(arg)) {
+      } else if ("--verbose".equals(arg)) {
         verbose = true;
-      }
-      else if ("--help".equals(arg)) {
+      } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
         return;
@@ -168,11 +180,14 @@ public class MetaDataClient {
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
-    if (help) return;
+    if (help) {
+      return;
+    }
 
     // first validate the command
-    if (!supportedCommands.contains(command))
+    if (!supportedCommands.contains(command)) {
       usage("Unsupported command '" + command + "'.");
+    }
 
     if (type == null) {
       usage("--type must be specified");
@@ -197,7 +212,9 @@ public class MetaDataClient {
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
     validateArguments(args);
-    if (help) return "";
+    if (help) {
+      return "";
+    }
 
     boolean useSsl = !forceNoSSL && (apikey != null);
     String baseUrl = Util.findBaseUrl(config, MetaDataRestAccessor.class, null, hostname, port, useSsl);
@@ -206,7 +223,9 @@ public class MetaDataClient {
                            "Please use --host and --port to specify.");
       return null;
     } else {
-      if (verbose) System.out.println("Using base URL: " + baseUrl);
+      if (verbose) {
+        System.out.println("Using base URL: " + baseUrl);
+      }
     }
 
     // prepare for HTTP
@@ -246,15 +265,21 @@ public class MetaDataClient {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
     }
-    if (!checkHttpStatus(response)) return null;
-    if (printResponse(response) == null) return null;
+    if (!checkHttpStatus(response)) {
+      return null;
+    }
+    if (printResponse(response) == null) {
+      return null;
+    }
     return "OK.";
   }
 
   public String printResponse(HttpResponse response) {
     // read the binary value from the HTTP response
     byte[] binaryResponse = Util.readHttpResponse(response);
-    if (binaryResponse == null) return null;
+    if (binaryResponse == null) {
+      return null;
+    }
     // now make returned value available to user
     System.out.println(new String(binaryResponse, Charsets.UTF_8));
     return "OK.";
@@ -264,19 +289,22 @@ public class MetaDataClient {
    * Check whether the Http return code is positive. If not, print the error
    * message and return false. Otherwise, if verbose is on, print the response
    * status line.
+   *
    * @param response the HTTP response
    * @return whether the response indicates success
    */
   boolean checkHttpStatus(HttpResponse response) {
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      if (verbose)
+      if (verbose) {
         System.out.println(response.getStatusLine());
-      else
+      } else {
         System.err.println(response.getStatusLine().getReasonPhrase());
+      }
       return false;
     }
-    if (verbose)
+    if (verbose) {
       System.out.println(response.getStatusLine());
+    }
     return true;
   }
 
@@ -303,7 +331,9 @@ public class MetaDataClient {
     MetaDataClient instance = new MetaDataClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
-    if (value == null) System.exit(1);
+    if (value == null) {
+      System.exit(1);
+    }
   }
 }
 

@@ -3,12 +3,9 @@ package com.continuuity.gateway;
 import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.connector.AppFabricRestConnector;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -32,34 +29,18 @@ import java.util.concurrent.TimeUnit;
 
 public class AppFabricConnectorTest {
   private final static String CONTINUUITY_API_KEY = PassportConstants.CONTINUUITY_API_KEY_HEADER;
-  static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
-  static final String apiKey = "SampleTestApiKey";
-  static final String cluster = "SampleTestClusterName";
-
-  /**
-   * this is the executor for all access to the data fabric
-   */
-  private OperationExecutor executor;
-
-  /**
-   * the rest connector we will use in the tests
-   */
-  private AppFabricRestConnector connector;
 
   private static AppFabricServer server;
-  private static LocationFactory lf;
-  private static CConfiguration configuration;
   private static Connector restConnector;
   private static int port;
-  private static String prefix = "";
-  private static String middle = "/app/";
+  private static final String prefix = "";
 
   /**
    * Set up in-memory data fabric
    */
   @Before
   public void setup() throws Exception {
-    configuration = CConfiguration.create();
+    CConfiguration configuration = CConfiguration.create();
     configuration.setInt(com.continuuity.common.conf.Constants.CFG_APP_FABRIC_SERVER_PORT,
                          PortDetector.findFreePort());
     configuration.set("app.output.dir", "/tmp/app");
@@ -78,9 +59,6 @@ public class AppFabricConnectorTest {
     server = injector.getInstance(AppFabricServer.class);
     server.startAndWait();
 
-    // As we are handling Locations for File and Path, get the factory for creating locations.
-    lf = injector.getInstance(LocationFactory.class);
-
     // Create and configure the AppFabricConnector.
     restConnector = new AppFabricRestConnector();
     DiscoveryServiceClient ds = injector.getInstance(DiscoveryServiceClient.class);
@@ -92,8 +70,9 @@ public class AppFabricConnectorTest {
 
     port = PortDetector.findFreePort();
     // configure it
-    configuration.setInt(Constants.buildConnectorPropertyName(name,Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name,Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    String middle = "/app/";
     configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
     restConnector.configure(configuration);
     restConnector.start();

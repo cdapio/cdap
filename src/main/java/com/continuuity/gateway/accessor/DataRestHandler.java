@@ -45,16 +45,16 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 public class DataRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(DataRestHandler.class);
+    .getLogger(DataRestHandler.class);
 
   /**
-   * The allowed methods for this handler
+   * The allowed methods for this handler.
    */
   Set<HttpMethod> allowedMethods = Sets.newHashSet(
-      HttpMethod.GET,
-      HttpMethod.DELETE,
-      HttpMethod.PUT,
-      HttpMethod.POST);
+    HttpMethod.GET,
+    HttpMethod.DELETE,
+    HttpMethod.PUT,
+    HttpMethod.POST);
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -63,13 +63,13 @@ public class DataRestHandler extends NettyRestHandler {
   private DataRestAccessor accessor;
 
   /**
-   * The metrics object of the rest accessor
+   * The metrics object of the rest accessor.
    */
   private CMetrics metrics;
 
   /**
    * All the paths have to be of the form
-   * http://host:port&lt;pathPrefix>&lt;table>/&lt;key>
+   * http://host:port&lt;pathPrefix>&lt;table>/&lt;key>.
    * For instance, if config(prefix="/v0.1/" path="table/"),
    * then pathPrefix will be "/v0.1/table/", and a valid request is
    * GET http://host:port/v0.1/table/mytable/12345678
@@ -77,7 +77,7 @@ public class DataRestHandler extends NettyRestHandler {
   private String pathPrefix;
 
   /**
-   * Constructor requires the accessor that created this
+   * Constructor requires the accessor that created this.
    *
    * @param accessor the accessor that created this
    */
@@ -85,7 +85,7 @@ public class DataRestHandler extends NettyRestHandler {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
     this.pathPrefix =
-        accessor.getHttpConfig().getPathPrefix() +
+      accessor.getHttpConfig().getPathPrefix() +
         accessor.getHttpConfig().getPathMiddle();
   }
 
@@ -107,7 +107,7 @@ public class DataRestHandler extends NettyRestHandler {
 
     LOG.trace("Request received: " + method + " " + requestUri);
     GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
+      this.getClass(), this.metrics, this.accessor.getMetricsQualifier()), accessor.getGatewayMetrics());
 
     try {
       // check whether the request's HTTP method is supported
@@ -123,7 +123,7 @@ public class DataRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       List<String> clearParams = null;
       int operation = UNKNOWN;
-      
+
       // if authentication is enabled, verify an authentication token has been
       // passed and then verify the token is valid
       if (!accessor.getAuthenticator().authenticateRequest(request)) {
@@ -143,34 +143,33 @@ public class DataRestHandler extends NettyRestHandler {
       if (method == HttpMethod.PUT) {
         operation = WRITE;
         helper.setMethod("write");
-      }
-      else if (method == HttpMethod.DELETE) {
+      } else if (method == HttpMethod.DELETE) {
         operation = DELETE;
         helper.setMethod("delete");
-      }
-      else if (method == HttpMethod.POST) {
+      } else if (method == HttpMethod.POST) {
         clearParams = parameters.get("clear");
         if (clearParams != null && clearParams.size() > 0) {
           operation = CLEAR;
           helper.setMethod("clear");
-        } else
+        } else {
           operation = BAD;
+        }
       } else if (method == HttpMethod.GET) {
         if ("/ping".equals(requestUri)) {
           operation = PING;
           helper.setMethod("ping");
-        }
-        else if (parameters == null || parameters.size() == 0) {
+        } else if (parameters == null || parameters.size() == 0) {
           operation = READ;
           helper.setMethod("read");
         } else {
           List<String> qParams = parameters.get("q");
           if (qParams != null && qParams.size() == 1
-              && "list".equals(qParams.get(0))) {
+            && "list".equals(qParams.get(0))) {
             operation = LIST;
             helper.setMethod("list");
-          } else
+          } else {
             operation = BAD;
+          }
         }
       }
 
@@ -185,17 +184,17 @@ public class DataRestHandler extends NettyRestHandler {
       if (operation == UNKNOWN) {
         helper.finish(BadRequest);
         LOG.trace("Received an unsupported " + method + " request '"
-            + request.getUri() + "'.");
+                    + request.getUri() + "'.");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
         return;
       }
 
       // respond with error for parameters if the operation does not allow them
       if (operation != LIST && operation != CLEAR &&
-          parameters != null && !parameters.isEmpty()) {
+        parameters != null && !parameters.isEmpty()) {
         helper.finish(BadRequest);
         LOG.trace("Received a " + method +
-            " request with query parameters, which is not supported");
+                    " request with query parameters, which is not supported");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
         return;
       }
@@ -223,20 +222,22 @@ public class DataRestHandler extends NettyRestHandler {
           // no further / is allowed in the path
           if (remainder.length() == pos + 1) {
             key = null;
-          } else if (remainder.indexOf('/', pos + 1) < 0)
+          } else if (remainder.indexOf('/', pos + 1) < 0) {
             key = remainder.substring(pos + 1);
-          else {
+          } else {
             helper.finish(BadRequest);
             LOG.trace("Received a request with invalid path " +
-                path + "(path does not end with key)");
+                        path + "(path does not end with key)");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
-          } } }
+          }
+        }
+      }
 
       // check that URL could be parsed up to destination
       // except for CLEAR, where no destination may be given
       if ((destination == null && operation != CLEAR) ||
-          (destination != null && operation == CLEAR)) {
+        (destination != null && operation == CLEAR)) {
         helper.finish(NotFound);
         LOG.trace("Received a request with unknown path '" + path + "'.");
         respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -245,19 +246,19 @@ public class DataRestHandler extends NettyRestHandler {
 
       // all operations except for LIST and CLEAR need a key
       if (operation != LIST && operation != CLEAR &&
-          (key == null || key.length() == 0)) {
+        (key == null || key.length() == 0)) {
         helper.finish(BadRequest);
         LOG.trace("Received a request with invalid path " +
-            path + "(no key given)");
+                    path + "(no key given)");
         respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
         return;
       }
       // operation LIST and CLEAR must not have a key
       if ((operation == LIST || operation == CLEAR) &&
-          (key != null && key.length() > 0)) {
+        (key != null && key.length() > 0)) {
         helper.finish(BadRequest);
         LOG.trace("Received a request with invalid path " +
-            path + "(no key may be given)");
+                    path + "(no key may be given)");
         respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
         return;
       }
@@ -273,19 +274,19 @@ public class DataRestHandler extends NettyRestHandler {
       }
 
       OperationContext operationContext = new OperationContext(accountId);
-      switch(operation) {
-        case READ : {
+      switch (operation) {
+        case READ: {
           // Get the value from the data fabric
-          OperationResult<Map<byte[],byte[]>> result;
+          OperationResult<Map<byte[], byte[]>> result;
           try {
             Read read = new Read(table, keyBinary, Operation.KV_COL);
             result = this.accessor.getExecutor().
-                execute(operationContext, read);
+              execute(operationContext, read);
           } catch (Exception e) {
             helper.finish(Error);
             LOG.error("Error during Read: " + e.getMessage(), e);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return;
           }
           if (result.isEmpty() || null == result.getValue().get(Operation.KV_COL)) {
@@ -297,7 +298,7 @@ public class DataRestHandler extends NettyRestHandler {
           }
           break;
         }
-        case LIST : {
+        case LIST: {
           int start = 0, limit = 100;
           String enc = "url";
           List<String> startParams = parameters.get("start");
@@ -307,9 +308,9 @@ public class DataRestHandler extends NettyRestHandler {
             } catch (NumberFormatException e) {
               helper.finish(BadRequest);
               LOG.trace("Received a request with invalid start '" +
-                  startParams.get(0) + "' (not an integer).");
+                          startParams.get(0) + "' (not an integer).");
               respondError(message.getChannel(),
-                  HttpResponseStatus.BAD_REQUEST);
+                           HttpResponseStatus.BAD_REQUEST);
               return;
             }
           }
@@ -320,9 +321,9 @@ public class DataRestHandler extends NettyRestHandler {
             } catch (NumberFormatException e) {
               helper.finish(BadRequest);
               LOG.trace("Received a request with invalid limit '" +
-                  limitParams.get(0) + "' (not an integer).");
+                          limitParams.get(0) + "' (not an integer).");
               respondError(message.getChannel(),
-                  HttpResponseStatus.BAD_REQUEST);
+                           HttpResponseStatus.BAD_REQUEST);
               return;
             }
           }
@@ -330,12 +331,12 @@ public class DataRestHandler extends NettyRestHandler {
           if (encParams != null && !encParams.isEmpty()) {
             enc = encParams.get(0);
             if (!"hex".equals(enc) && !"url".equals(enc) &&
-                !Charset.isSupported(enc)) {
+              !Charset.isSupported(enc)) {
               helper.finish(BadRequest);
               LOG.trace("Received a request with invalid encoding "
-                  + enc + ".");
+                          + enc + ".");
               respondError(message.getChannel(),
-                  HttpResponseStatus.BAD_REQUEST);
+                           HttpResponseStatus.BAD_REQUEST);
               return;
             }
           }
@@ -343,12 +344,12 @@ public class DataRestHandler extends NettyRestHandler {
           try {
             ReadAllKeys read = new ReadAllKeys(table, start, limit);
             result = this.accessor.getExecutor().
-                execute(operationContext, read);
+              execute(operationContext, read);
           } catch (Exception e) {
             helper.finish(Error);
             LOG.error("Error listing keys: " + e.getMessage() + ".", e);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return;
           }
           StringBuilder builder = new StringBuilder();
@@ -360,19 +361,19 @@ public class DataRestHandler extends NettyRestHandler {
           }
           // for hex or url, send it back as ASCII, otherwise use encoding
           byte[] responseBody = builder.toString().getBytes(
-              "url".equals(enc) || "hex".equals(enc) ? "ASCII" : enc);
+            "url".equals(enc) || "hex".equals(enc) ? "ASCII" : enc);
           respondSuccess(message.getChannel(), request, responseBody);
           helper.finish(Success);
           break;
         }
 
-        case DELETE : {
+        case DELETE: {
           // first perform a Read to determine whether the key exists
           try {
             Read read = new Read(table, keyBinary, Operation.KV_COL);
-            OperationResult<Map<byte[],byte[]>> result =
-                this.accessor.getExecutor().
-                    execute(operationContext, read);
+            OperationResult<Map<byte[], byte[]>> result =
+              this.accessor.getExecutor().
+                execute(operationContext, read);
             if (result.isEmpty() || null == result.getValue().get(Operation.KV_COL)) {
               // key does not exist -> Not Found
               respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -384,7 +385,7 @@ public class DataRestHandler extends NettyRestHandler {
             helper.finish(Error);
             LOG.error("Error during Read: " + e.getMessage(), e);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
             break;
           }
 
@@ -401,11 +402,11 @@ public class DataRestHandler extends NettyRestHandler {
             LOG.error("Error during Delete: " + e.getMessage(), e);
             helper.finish(Error);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
           }
           break;
         }
-        case WRITE : {
+        case WRITE: {
           // read the body of the request and add it to the event
           ChannelBuffer content = request.getContent();
           if (content == null) {
@@ -430,44 +431,48 @@ public class DataRestHandler extends NettyRestHandler {
             helper.finish(Error);
             LOG.error("Error during Write: " + e.getMessage(), e);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
           }
           break;
         }
-        case CLEAR : {
+        case CLEAR: {
           // figure out what to clear
           List<ClearFabric.ToClear> toClear = Lists.newArrayList();
           for (String param : clearParams) {
             for (String what : param.split(",")) {
-              if ("all".equals(what))
+              if ("all".equals(what)) {
                 toClear.add(ClearFabric.ToClear.ALL);
-              else if ("data".equals(what))
+              } else if ("data".equals(what)) {
                 toClear.add(ClearFabric.ToClear.DATA);
-              else if ("meta".equals(what))
+              } else if ("meta".equals(what)) {
                 toClear.add(ClearFabric.ToClear.META);
-              else if ("tables".equals(what))
+              } else if ("tables".equals(what)) {
                 toClear.add(ClearFabric.ToClear.TABLES);
-              else if ("queues".equals(what))
+              } else if ("queues".equals(what)) {
                 toClear.add(ClearFabric.ToClear.QUEUES);
-              else if ("streams".equals(what))
-                toClear.add(ClearFabric.ToClear.STREAMS);
-              else {
-                helper.finish(BadRequest);
-                LOG.trace("Received invalid clear request with URI " +
-                    requestUri);
-                respondError(message.getChannel(),
-                    HttpResponseStatus.BAD_REQUEST);
-                break;
-              } } }
+              } else {
+                if ("streams".equals(what)) {
+                  toClear.add(ClearFabric.ToClear.STREAMS);
+                } else {
+                  helper.finish(BadRequest);
+                  LOG.trace("Received invalid clear request with URI " +
+                              requestUri);
+                  respondError(message.getChannel(),
+                               HttpResponseStatus.BAD_REQUEST);
+                  break;
+                }
+              }
+            }
+          }
           ClearFabric clearFabric = new ClearFabric(toClear);
           try {
             this.accessor.getExecutor().
-                execute(operationContext, clearFabric);
+              execute(operationContext, clearFabric);
           } catch (Exception e) {
             LOG.error("Exception clearing data fabric: ", e);
             helper.finish(Error);
             respondError(message.getChannel(),
-                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                         HttpResponseStatus.INTERNAL_SERVER_ERROR);
             break;
           }
           respondSuccess(message.getChannel(), request);
@@ -479,16 +484,16 @@ public class DataRestHandler extends NettyRestHandler {
           // this should not happen because we checked above -> internal error
           helper.finish(Error);
           respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                       HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
       }
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e.getCause());
+                  this.accessor.getName() + "'. ", e.getCause());
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
     }
@@ -496,10 +501,10 @@ public class DataRestHandler extends NettyRestHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
-        this.accessor.getName() + "'. ", e.getCause());
+                this.accessor.getName() + "'. ", e.getCause());
     if (e.getChannel().isOpen()) {
       respondError(ctx.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();

@@ -23,13 +23,13 @@ import java.util.concurrent.Executors;
  * implement the handling of a request.
  */
 public class RestCollector extends Collector
-    implements DataAccessor, NettyRequestHandlerFactory {
+  implements DataAccessor, NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(RestCollector.class);
+    .getLogger(RestCollector.class);
 
   /**
-   * the data fabric executor to use for all data access
+   * the data fabric executor to use for all data access.
    */
   protected OperationExecutor executor;
 
@@ -44,20 +44,20 @@ public class RestCollector extends Collector
   }
 
   /**
-   * this will provide defaults for the HTTP service, such as port and paths
+   * this will provide defaults for the HTTP service, such as port and paths.
    */
   private static final HttpConfig defaultConfig =
-      new HttpConfig("stream.rest")
-          .setPort(10000)
-          .setPathMiddle("/stream/");
+    new HttpConfig("stream.rest")
+      .setPort(10000)
+      .setPathMiddle("/stream/");
 
   /**
-   * this will provide the actual HTTP configuration, backed by the default
+   * this will provide the actual HTTP configuration, backed by the default.
    */
   private HttpConfig httpConfig = defaultConfig;
 
   /**
-   * return the HTTP configuration for this accessor
+   * return the HTTP configuration for this accessor.
    *
    * @return the HTTP configuration
    */
@@ -66,7 +66,7 @@ public class RestCollector extends Collector
   }
 
   /**
-   * this is the active Netty server channel
+   * this is the active Netty server channel.
    */
   private Channel serverChannel;
 
@@ -74,7 +74,7 @@ public class RestCollector extends Collector
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
     this.httpConfig =
-        HttpConfig.configure(this.getName(), configuration, defaultConfig);
+      HttpConfig.configure(this.getName(), configuration, defaultConfig);
   }
 
   @Override
@@ -90,38 +90,39 @@ public class RestCollector extends Collector
     try {
       address = new InetSocketAddress(this.httpConfig.getPort());
     } catch (Exception e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      e.printStackTrace();
     }
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(
-          new NioServerSocketChannelFactory(
-              Executors.newCachedThreadPool(),
-              Executors.newCachedThreadPool(),
-              this.httpConfig.getThreads()));
+        new NioServerSocketChannelFactory(
+          Executors.newCachedThreadPool(),
+          Executors.newCachedThreadPool(),
+          this.httpConfig.getThreads()));
       // and use a pipeline factory that uses this to cnfigure itself and to
       // create a request handler for each client request.
       bootstrap.setPipelineFactory(
-          new NettyHttpPipelineFactory(this.httpConfig, this));
+        new NettyHttpPipelineFactory(this.httpConfig, this));
       // bind to the address = start the service
       this.serverChannel = bootstrap.bind(address);
       // server is now running
     } catch (Exception e) {
       LOG.error("Failed to startup collector '" + this.getName()
-          + "' at " + this.httpConfig.getBaseUrl() + ".");
+                  + "' at " + this.httpConfig.getBaseUrl() + ".");
       throw e;
     }
     LOG.info("Connector " + this.getName() + " now running" +
-        " at " + this.httpConfig.getBaseUrl() +
-        " with " + this.httpConfig.getThreads() + " threads.");
+               " at " + this.httpConfig.getBaseUrl() +
+               " with " + this.httpConfig.getThreads() + " threads.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping " + this);
     // closing the channel stops the service
-    if (this.serverChannel != null)
+    if (this.serverChannel != null) {
       this.serverChannel.close();
+    }
     LOG.info("Stopped " + this);
   }
 }

@@ -18,34 +18,37 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Writer that is responsible for writing to 'Stream'.
+ */
 public class StreamEventWritingConsumer extends Consumer {
 
   /**
-   * This is the operations executor that we will use to talk to the data-fabric
+   * This is the operations executor that we will use to talk to the data-fabric.
    */
   @Inject
   private OperationExecutor executor;
 
   /**
-   * The codec to serialize events into byte arrays that can we written to the stream
+   * The codec to serialize events into byte arrays that can we written to the stream.
    */
   private final StreamEventCodec serializer = new StreamEventCodec();
 
   /**
-   * Utility method to get or create the thread local serializer
+   * Utility method to get or create the thread local serializer.
    */
   StreamEventCodec getSerializer() {
     return this.serializer;
   }
 
   /**
-   * This is our Logger class
+   * This is our Logger class.
    */
   private static final Logger LOG = LoggerFactory
-      .getLogger(StreamEventWritingConsumer.class);
+    .getLogger(StreamEventWritingConsumer.class);
 
   /**
-   * Use this if you don't use Guice to create the consumer
+   * Use this if you don't use Guice to create the consumer.
    *
    * @param executor The operations executor to use
    */
@@ -63,12 +66,12 @@ public class StreamEventWritingConsumer extends Consumer {
     String destination = event.getHeaders().get(Constants.HEADER_DESTINATION_STREAM);
     if (destination == null) {
       LOG.warn("Enqueuing an event that has no destination. " +
-          "Using 'default' instead.");
+                 "Using 'default' instead.");
       destination = "default";
     }
     // construct the stream URO to use for the data fabric
     String queueURI = QueueName.fromStream(new Id.Account(accountId), destination)
-                               .toString();
+      .toString();
     LOG.trace("Sending event to " + queueURI + ", event = " + event);
 
     return new QueueEnqueue(queueURI.getBytes(), new QueueEntry(bytes));
@@ -82,7 +85,7 @@ public class StreamEventWritingConsumer extends Consumer {
       this.executor.commit(new OperationContext(accountId), enqueue);
     } catch (Exception e) {
       Exception e1 = new Exception(
-          "Failed to enqueue event(s): " + e.getMessage(), e);
+        "Failed to enqueue event(s): " + e.getMessage(), e);
       LOG.error(e.getMessage(), e);
       throw e1;
     }
@@ -98,10 +101,9 @@ public class StreamEventWritingConsumer extends Consumer {
       this.executor.commit(new OperationContext(accountId), operations);
     } catch (Exception e) {
       Exception e1 = new Exception(
-          "Failed to enqueue event(s): " + e.getMessage(), e);
+        "Failed to enqueue event(s): " + e.getMessage(), e);
       LOG.error(e.getMessage(), e);
       throw e1;
     }
   }
-
 }

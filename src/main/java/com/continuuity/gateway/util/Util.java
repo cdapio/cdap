@@ -20,10 +20,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Utility class containing helpers.
+ */
 public class Util {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(Util.class);
+    .getLogger(Util.class);
 
   /**
    * This methods inspects the searches the gateway configuration for
@@ -47,14 +50,14 @@ public class Util {
 
     // Retrieve the list of connectors in the gateway
     Collection<String> allConnectorNames = config.
-        getStringCollection(Constants.CONFIG_CONNECTORS);
+      getStringCollection(Constants.CONFIG_CONNECTORS);
 
     // For each Connector
     for (String connectorName : allConnectorNames) {
       // Retrieve the connector's Class name
       String connectorClassName = config.get(
-          Constants.buildConnectorPropertyName(connectorName,
-              Constants.CONFIG_CLASSNAME));
+        Constants.buildConnectorPropertyName(connectorName,
+                                             Constants.CONFIG_CLASSNAME));
       // no class name configured? skip!
       if (connectorClassName == null) {
         LOG.warn("No class configured for connector '" + connectorName + "'.");
@@ -65,23 +68,23 @@ public class Util {
         Class connectorClass = Class.forName(connectorClassName);
         if (testClass(connectorBaseClass, connectorClass)) {
           LOG.debug("Found connector '" + connectorName +
-              "' of type " + connectorClassName);
+                      "' of type " + connectorClassName);
           connectorNames.add(connectorName);
         }
         // class cannot be found? skip!
       } catch (ClassNotFoundException e) {
         LOG.warn("Configured class " + connectorClassName +
-            " for connector '" + connectorName + "' not found.");
+                   " for connector '" + connectorName + "' not found.");
       }
     }
     // make sure there is exactly one flume collector
     if (connectorNames.size() == 0) {
       LOG.error("No connector of type " + connectorBaseClass.getName() +
-          " found in configuration.");
+                  " found in configuration.");
       return null;
     } else if (connectorNames.size() > 1) {
       LOG.error("Multiple connectors of type " + connectorBaseClass.getName() +
-          " found: " + connectorNames);
+                  " found: " + connectorNames);
       return null;
     }
     return connectorNames.iterator().next();
@@ -110,13 +113,13 @@ public class Util {
    * name by scanning through the configuration. Then it uses the
    * obtained Http config to create the base url for requests.
    *
-   * @param config   The gateway configuration
+   * @param config        The gateway configuration
    * @param connectorName The name of the connector, optional
-   * @param hostname The hostname to use for the url, optional. Note that
-   *                 the connector's HttpConfig does not have a hostname
-   *                 because it specifies a local inet address, hence it
-   *                 would use 0.0.0.0 or localhost. This parameter helps
-   *                 to correct the hostname portion of the returned url.
+   * @param hostname      The hostname to use for the url, optional. Note that
+   *                      the connector's HttpConfig does not have a hostname
+   *                      because it specifies a local inet address, hence it
+   *                      would use 0.0.0.0 or localhost. This parameter helps
+   *                      to correct the hostname portion of the returned url.
    * @return The base url if found, or null otherwise.
    */
   public static String findBaseUrl(CConfiguration config, Class connectorClass,
@@ -130,7 +133,7 @@ public class Util {
         return null;
       } else {
         LOG.info("Reading configuration for connector '" +
-            connectorName + "'.");
+                   connectorName + "'.");
       }
     }
     // get the collector's http config
@@ -139,10 +142,10 @@ public class Util {
       httpConfig = HttpConfig.configure(connectorName, config, null);
     } catch (Exception e) {
       LOG.error("Exception reading Http configuration for connector '"
-          + connectorName + "': " + e.getMessage());
+                  + connectorName + "': " + e.getMessage());
       return null;
     }
-    if (port>0) {
+    if (port > 0) {
       httpConfig.setPort(port);
     }
     httpConfig.setSsl(ssl);
@@ -150,11 +153,12 @@ public class Util {
   }
 
   /**
-   * Read the contents of an Http response
+   * Read the contents of an Http response.
+   *
    * @param response The Http response
    * @return the contents as a byte array
    */
-  static public byte[] readHttpResponse(HttpResponse response) {
+  public static byte[] readHttpResponse(HttpResponse response) {
     byte[] binary;
     try {
       if (response.getEntity() == null) {
@@ -180,12 +184,12 @@ public class Util {
   }
 
   /**
-   * Read the contents of a binary file into a byte array
+   * Read the contents of a binary file into a byte array.
    *
    * @param filename The name of the file
    * @return the content of the file if successful, otherwise null
    */
-  static public byte[] readBinaryFile(String filename) {
+  public static byte[] readBinaryFile(String filename) {
     File file = new File(filename);
     if (!file.isFile()) {
       System.err.println("'" + filename + "' is not a regular file.");
@@ -207,19 +211,19 @@ public class Util {
       LOG.error("File '" + filename + "' cannot be opened: " + e.getMessage());
     } catch (IOException e) {
       LOG.error(
-          "Error reading from file '" + filename + "': " + e.getMessage());
+        "Error reading from file '" + filename + "': " + e.getMessage());
     }
     return bytes;
   }
 
   /**
-   * Convert a hexadecimal string into a byte array
+   * Convert a hexadecimal string into a byte array.
    *
    * @param hex The string to convert
    * @return the byte array value of the String
    * @throws NumberFormatException if the string is ill-formed
    */
-  static public byte[] hexValue(String hex) {
+  public static byte[] hexValue(String hex) {
     // verify the length of the string
     if (hex.length() % 2 != 0) {
       throw new NumberFormatException("Hex string must have even length.");
@@ -234,31 +238,32 @@ public class Util {
   }
 
   /**
-   * Convert a hexadecimal character into a byte
+   * Convert a hexadecimal character into a byte.
    *
    * @param hex The character to convert
    * @return the byte value of the character
    * @throws NumberFormatException if the character is not hexadecimal
    */
-  static public byte hexValue(char hex) {
-    if (hex >= '0' && hex <= '9')
+  public static byte hexValue(char hex) {
+    if (hex >= '0' && hex <= '9') {
       return (byte) (hex - '0');
-    else if (hex >= 'a' && hex <= 'f')
+    } else if (hex >= 'a' && hex <= 'f') {
       return (byte) (hex - 'a' + 10);
-    else if (hex >= 'A' && hex <= 'F')
+    } else if (hex >= 'A' && hex <= 'F') {
       return (byte) (hex - 'A' + 10);
-    else
+    } else {
       throw new NumberFormatException(
-          "'" + hex + "' is not a hexadecimal character.");
+        "'" + hex + "' is not a hexadecimal character.");
+    }
   }
 
   /**
-   * Convert a byte array into its hex string representation
+   * Convert a byte array into its hex string representation.
    *
    * @param bytes the byte array to convert
    * @return A hex string representing the bytes
    */
-  static public String toHex(byte[] bytes) {
+  public static String toHex(byte[] bytes) {
     StringBuilder builder = new StringBuilder(bytes.length * 2);
     for (byte b : bytes) {
       try {
@@ -273,57 +278,70 @@ public class Util {
   }
 
   /**
-   * decode an URL-encoded string into bytes
+   * decode an URL-encoded string into bytes.
    */
   public static byte[] urlDecode(String str) {
     try { // we use a base encoding that accepts all byte values
       return URLDecoder.decode(str, "ISO8859_1").getBytes("ISO8859_1");
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace(); return null; // cant' happen with ISO8859_1 = Latin1
+      e.printStackTrace();
+      return null; // cant' happen with ISO8859_1 = Latin1
     }
   }
+
   /**
-   * URL-encode a binary string
+   * URL-encode a binary string.
    */
   public static String urlEncode(byte[] binary) {
-    if (binary == null) return null;
+    if (binary == null) {
+      return null;
+    }
     try { // we use a base encoding that accepts all byte values
       return URLEncoder.encode(new String(binary, "ISO8859_1"), "ISO8859_1");
     } catch (UnsupportedEncodingException e) {
       // this cannot happen with ISO8859_1 = Latin1
-      e.printStackTrace(); return null;
+      e.printStackTrace();
+      return null;
 
     }
   }
 
   /**
-   * Encode a byte string as a String
-   * @param bytes the byte string to encode
+   * Encode a byte string as a String.
+   *
+   * @param bytes    the byte string to encode
    * @param encoding the encoding to use - "url" for URL-encoded, "hex" for
    *                 hexadecimal, or any other valid encoding name
    * @return the encoded String
    */
   public static String encode(byte[] bytes, String encoding) {
-    if (bytes == null) return null;
-    else if (encoding == null) return urlEncode(bytes);
-    else if ("url".equals(encoding)) return urlEncode(bytes);
-    else if ("hex".equals(encoding)) return toHex(bytes);
-    else try {
+    if (bytes == null) {
+      return null;
+    } else if (encoding == null) {
+      return urlEncode(bytes);
+    } else if ("url".equals(encoding)) {
+      return urlEncode(bytes);
+    } else if ("hex".equals(encoding)) {
+      return toHex(bytes);
+    } else {
+      try {
         return new String(bytes, encoding);
       } catch (UnsupportedEncodingException e) {
         return urlEncode(bytes);
       }
+    }
   }
 
   /**
-   * Convert a long value into a big-endian byte array
+   * Convert a long value into a big-endian byte array.
+   *
    * @param value the value to convert
    * @return the bytes of the value
    */
   public static byte[] longToBytes(long value) {
     byte[] bytes = new byte[8];
-    for (int i = 7; i >=0; i--) {
-      bytes[i] = (byte)(value & 0xff);
+    for (int i = 7; i >= 0; i--) {
+      bytes[i] = (byte) (value & 0xff);
       value = value >> 8;
     }
     return bytes;
@@ -335,6 +353,7 @@ public class Util {
    * arrays of less than 8 bytes, this will produce the same value as if the
    * array was left-padded with zeros. For arrays longer than 8 bytes, only
    * the last 8 bytes are used.
+   *
    * @param bytes the byte array to convert
    * @return the long value of the byte array
    */

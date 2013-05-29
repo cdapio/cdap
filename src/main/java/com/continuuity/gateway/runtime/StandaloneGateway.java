@@ -10,12 +10,11 @@ import com.google.inject.Injector;
  * Main is a simple class that allows us to launch the Gateway as a standalone
  * program. This is also where we do our runtime injection.
  * <p/>
- * TODO: Prolly should look to wrap this in some sort of Daemon framework
  */
 public class StandaloneGateway {
 
   /**
-   * Our main method
+   * Our main method.
    *
    * @param args Our command line options
    */
@@ -23,8 +22,8 @@ public class StandaloneGateway {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getInMemoryModules(),
-        new DataFabricModules().getInMemoryModules());
+      new GatewayModules().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules());
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);

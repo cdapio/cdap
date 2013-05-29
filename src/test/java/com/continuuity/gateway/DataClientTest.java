@@ -34,7 +34,6 @@ public class DataClientTest {
       .getLogger(DataClientTest.class);
 
   private OperationExecutor executor = null;
-  private static DiscoveryService discoveryService;
 
   Gateway gateway = null;
 
@@ -58,7 +57,7 @@ public class DataClientTest {
         new DataFabricModules().getInMemoryModules(),
         new BigMamaModule(configuration));
     this.executor = injector.getInstance(OperationExecutor.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value

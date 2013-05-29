@@ -29,6 +29,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -71,22 +72,20 @@ public class DataSetClient {
 
   boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
 
-  public DataSetClient disallowSSL() {
-    this.forceNoSSL=true;
-    return this;
-  }
-
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws com.continuuity.common.utils.UsageException in case of error
+   * @throws com.continuuity.common.utils.UsageException
+   *          in case of error
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = "data-client";
-    if (System.getProperty("script")!=null) name = System.getProperty("script").replaceAll("[./]", "");
+    if (System.getProperty("script") != null) {
+      name = System.getProperty("script").replaceAll("[./]", "");
+    }
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " create --table name");
@@ -121,20 +120,25 @@ public class DataSetClient {
   }
 
   /**
-   * Print an error message followed by the usage statement
+   * Print an error message followed by the usage statement.
+   *
    * @param errorMessage the error message
    */
   void usage(String errorMessage) {
-    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    if (errorMessage != null) {
+      System.err.println("Error: " + errorMessage);
+    }
     usage(true);
   }
 
 
   /**
-   * Parse the command line arguments
+   * Parse the command line arguments.
    */
   void parseArguments(String[] args) {
-    if (args.length == 0) usage(true);
+    if (args.length == 0) {
+      usage(true);
+    }
     if ("--help".equals(args[0])) {
       usage(false);
       help = true;
@@ -146,82 +150,86 @@ public class DataSetClient {
     for (int pos = 1; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         hostname = args[pos];
-      }
-      else if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--port".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.parseInt(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
-      }
-      else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--apikey".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         apikey = args[pos];
-      }
-      else if ("--table".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--table".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         table = args[pos];
-      }
-      else if ("--row".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--row".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         row = args[pos];
-      }
-      else if ("--start".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--start".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         startcol = args[pos];
-      }
-      else if ("--stop".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--stop".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         stopcol = args[pos];
-      }
-      else if ("--limit".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--limit".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           limit = Integer.parseInt(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
-      }
-      else if ("--column".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--column".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         columns.add(args[pos]);
-      }
-      else if ("--columns".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        for (String column : args[pos].split(","))
-          columns.add(column);
-      }
-      else if ("--value".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+      } else if ("--columns".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
+        Collections.addAll(columns, args[pos].split(","));
+      } else if ("--value".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
         values.add(args[pos]);
-      }
-      else if ("--values".equals(arg)) {
-        if (++pos >= args.length) usage(true);
-        for (String value : args[pos].split(","))
-          values.add(value);
-      }
-      else if ("--hex".equals(arg)) {
+      } else if ("--values".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
+        Collections.addAll(values, args[pos].split(","));
+      } else if ("--hex".equals(arg)) {
         encoding = "hex";
-      }
-      else if ("--url".equals(arg)) {
+      } else if ("--url".equals(arg)) {
         encoding = "url";
-      }
-      else if ("--base64".equals(arg)) {
+      } else if ("--base64".equals(arg)) {
         encoding = "base64";
-      }
-      else if ("--verbose".equals(arg)) {
+      } else if ("--verbose".equals(arg)) {
         verbose = true;
-      }
-      else if ("--pretty".equals(arg)) {
+      } else if ("--pretty".equals(arg)) {
         pretty = true;
-      }
-      else if ("--json".equals(arg)) {
+      } else if ("--json".equals(arg)) {
         pretty = false;
-      }
-      else if ("--help".equals(arg)) {
+      } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
         return;
@@ -237,36 +245,48 @@ public class DataSetClient {
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
-    if (help) return;
+    if (help) {
+      return;
+    }
 
     // first validate the command
-    if (!supportedCommands.contains(command))
+    if (!supportedCommands.contains(command)) {
       usage("Unsupported command '" + command + "'.");
+    }
 
-    if (table == null)
+    if (table == null) {
       usage("--table is required for table operations.");
+    }
+
     if ("create".equals(command)) {
-      if (row != null)
+      if (row != null) {
         usage("--row is not allowed for table create command.");
-      if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty())
+      }
+      if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty()) {
         usage("specifying columns or values is not allowed for table create command.");
+      }
     } else {
-      if (row == null)
+      if (row == null) {
         usage("--row is required for table operations.");
+      }
       if ("read".equals(command)) {
         if ((startcol != null || stopcol != null) && !columns.isEmpty()) {
           usage("--start/stop and --column(s) may not be used together.");
         }
       } else { // table op but not read
-        if (columns.isEmpty())
+        if (columns.isEmpty()) {
           usage("--column(s) is required for table write operations.");
+        }
         if (!"delete".equals(command)) {
-          if (columns.size() != values.size())
+          if (columns.size() != values.size()) {
             usage("number of values must match number of columns.");
+          }
         }
         if ("increment".equals(command)) {
           try {
-            for (String value : values) Long.parseLong(value);
+            for (String value : values) {
+              Long.parseLong(value);
+            }
           } catch (NumberFormatException e) {
             usage("for increment all values must be numbers");
           }
@@ -287,12 +307,14 @@ public class DataSetClient {
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
    * @return null in case of error, an string representing the retrieved value
-   * in case of success
+   *         in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
     validateArguments(args);
-    if (help) return "";
+    if (help) {
+      return "";
+    }
 
     boolean useSsl = !forceNoSSL && (apikey != null);
     String baseUrl = Util.findBaseUrl(config, DatasetRestAccessor.class, null, hostname, port, useSsl);
@@ -301,7 +323,9 @@ public class DataSetClient {
                            "Please use --host and --port to specify.");
       return null;
     } else {
-      if (verbose) System.out.println("Using base URL: " + baseUrl);
+      if (verbose) {
+        System.out.println("Using base URL: " + baseUrl);
+      }
     }
 
     // prepare for HTTP
@@ -309,8 +333,9 @@ public class DataSetClient {
     HttpResponse response;
 
     // construct the full URL and verify its well-formedness
+    URI uri;
     try {
-      URI uri = URI.create(baseUrl);
+      uri = URI.create(baseUrl);
     } catch (IllegalArgumentException e) {
       // this can only happen if the --host, or --base are not valid for a URL
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
@@ -332,7 +357,9 @@ public class DataSetClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
       return "OK.";
     }
     // all operations other than create require row
@@ -340,15 +367,15 @@ public class DataSetClient {
     String sep = "?";
     if ("read".equals(command)) {
       if (startcol != null) {
-        requestUrl += sep +  "start=" + startcol;
+        requestUrl += sep + "start=" + startcol;
         sep = "&";
       }
       if (stopcol != null) {
-        requestUrl += sep +  "stop=" + stopcol;
+        requestUrl += sep + "stop=" + stopcol;
         sep = "&";
       }
       if (limit != -1) {
-        requestUrl += sep +  "limit=" + limit;
+        requestUrl += sep + "limit=" + limit;
         sep = "&";
       }
       if (!columns.isEmpty()) {
@@ -374,8 +401,12 @@ public class DataSetClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
-      if (printResponse(response) == null) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
+      if (printResponse(response) == null) {
+        return null;
+      }
       return "OK.";
     }
 
@@ -399,7 +430,9 @@ public class DataSetClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
       return "OK.";
     }
 
@@ -424,8 +457,12 @@ public class DataSetClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
-      if (printResponse(response) == null) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
+      if (printResponse(response) == null) {
+        return null;
+      }
       return "OK.";
     }
 
@@ -450,15 +487,18 @@ public class DataSetClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
     }
 
     return null;
   }
 
   byte[] buildJson(boolean isNumber) {
-    if (columns.isEmpty())
-      return new byte[] { '{', '}' };
+    if (columns.isEmpty()) {
+      return new byte[]{'{', '}'};
+    }
 
     StringBuilder builder = new StringBuilder();
     char pre = '{';
@@ -467,9 +507,13 @@ public class DataSetClient {
       builder.append('"');
       builder.append(columns.removeFirst());
       builder.append("\":");
-      if (!isNumber) builder.append('"');
+      if (!isNumber) {
+        builder.append('"');
+      }
       builder.append(values.removeFirst());
-      if (!isNumber) builder.append('"');
+      if (!isNumber) {
+        builder.append('"');
+      }
       pre = ',';
     }
     builder.append('}');
@@ -480,28 +524,34 @@ public class DataSetClient {
    * Check whether the Http return code is positive. If not, print the error
    * message and return false. Otherwise, if verbose is on, print the response
    * status line.
+   *
    * @param response the HTTP response
    * @return whether the response indicates success
    */
   boolean checkHttpStatus(HttpResponse response) {
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      if (verbose)
+      if (verbose) {
         System.out.println(response.getStatusLine());
-      else
+      } else {
         System.err.println(response.getStatusLine().getReasonPhrase());
+      }
       return false;
     }
-    if (verbose)
+    if (verbose) {
       System.out.println(response.getStatusLine());
+    }
     return true;
   }
 
   public String printResponse(HttpResponse response) {
     if (pretty) {
       try {
-        if (response.getEntity().getContent() == null) return null;
+        if (response.getEntity().getContent() == null) {
+          return null;
+        }
         Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-        Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+        Type stringMapType = new TypeToken<Map<String, String>>() {
+        }.getType();
         Map<String, String> map = new Gson().fromJson(reader, stringMapType);
         for (Map.Entry<String, String> entry : map.entrySet()) {
           System.out.println(entry.getKey() + ":" + entry.getValue());
@@ -514,7 +564,9 @@ public class DataSetClient {
     } else {
       // read the binary value from the HTTP response
       byte[] binaryResponse = Util.readHttpResponse(response);
-      if (binaryResponse == null) return null;
+      if (binaryResponse == null) {
+        return null;
+      }
       // now make returned value available to user
       System.out.println(new String(binaryResponse, Charsets.UTF_8));
       return "OK.";
@@ -544,6 +596,8 @@ public class DataSetClient {
     DataSetClient instance = new DataSetClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
-    if (value == null) System.exit(1);
+    if (value == null) {
+      System.exit(1);
+    }
   }
 }

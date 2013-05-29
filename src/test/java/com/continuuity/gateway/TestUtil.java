@@ -1,7 +1,6 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
@@ -19,9 +18,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.operation.ttqueue.admin.GetQueueInfo;
 import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
-import com.continuuity.data.operation.ttqueue.admin.QueueInfo;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
@@ -48,7 +45,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class TestUtil {
 
@@ -241,45 +237,6 @@ public class TestUtil {
     Assert.assertArrayEquals(createMessage(messageNumber), Bytes.toBytes(event.getBody()));
   }
 
-  public static void verifyQueueInfo(OperationExecutor executor,
-                                     int port, String prefix, String path,
-                                     String stream)
-    throws OperationException, IOException {
-    // get the queue info from opex
-    byte[] queueName = QueueName.fromStream(new Id.Account(TestUtil.DEFAULT_ACCOUNT_ID), stream)
-                                .toString().getBytes();
-    OperationResult<QueueInfo> info = executor.execute(
-        TestUtil.DEFAULT_CONTEXT, new GetQueueInfo(queueName));
-    String json = info.isEmpty() ? null : info.getValue().getJSONString();
-
-    // get the queue info via HTTP
-    String url = "http://localhost:" + port + prefix + path + stream;
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(new HttpGet(url));
-    client.getConnectionManager().shutdown();
-    String json2 = null;
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-      int length = (int)response.getEntity().getContentLength();
-      // verify that the value is actually the same
-      InputStream content = response.getEntity().getContent();
-      if (length > 0) {
-        byte[] bytes = new byte[length];
-        int bytesRead = 0;
-        while (bytesRead < length) {
-          int readNow = content.read(bytes, bytesRead, length - bytesRead);
-          if (readNow < 0)
-            Assert.fail("failed to read entire response content");
-          bytesRead += readNow;
-        }
-        Assert.assertEquals(length, bytesRead);
-        json2 = new String(bytes);
-      }
-    }
-
-    // verify they match
-    Assert.assertEquals(json, json2);
-  }
-
   /**
    * A consumer that does nothing
    */
@@ -414,22 +371,6 @@ public class TestUtil {
     }
     // verify that the entire content was read
     Assert.assertEquals(-1, content.read(new byte[1]));
-  }
-
-  /**
-   * Verify that a given value can be retrieved for a given key via http GET
-   * request
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param baseUri  The URI for get request, without the key
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void writeAndGet(OperationExecutor executor,
-                          String baseUri, byte[] key, byte[] value)
-      throws Exception {
-    writeAndGet(executor, baseUri, null, key, value);
   }
 
   /**

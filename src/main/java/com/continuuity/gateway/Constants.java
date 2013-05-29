@@ -12,57 +12,57 @@ public class Constants {
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
 
   /**
-   * The prefix for all continuity classes
+   * The prefix for all continuity classes.
    */
   static final String CONTINUUITY_PREFIX = "X-Continuuity-";
 
   /**
-   * The prefix for all gateway properties
+   * The prefix for all gateway properties.
    */
   static final String GATEWAY_PREFIX = "gateway.";
 
   /**
-   * Used by the external client to identify and authenticate the client
+   * Used by the external client to identify and authenticate the client.
    */
   public static final String HEADER_STREAM_CONSUMER
-      = CONTINUUITY_PREFIX + "ConsumerId";
+    = CONTINUUITY_PREFIX + "ConsumerId";
 
   /**
-   * Used by the external client to indicate what end point an event goes to
+   * Used by the external client to indicate what end point an event goes to.
    */
   public static final String HEADER_DESTINATION_STREAM
-      = CONTINUUITY_PREFIX + "Destination";
+    = CONTINUUITY_PREFIX + "Destination";
 
   /**
    * Created by gateway to annotate each event with the name of the collector
-   * through which it was ingested
+   * through which it was ingested.
    */
   public static final String HEADER_FROM_COLLECTOR
-      = CONTINUUITY_PREFIX + "FromCollector";
+    = CONTINUUITY_PREFIX + "FromCollector";
 
   /**
-   * List of named collectors for the gateway
+   * List of named collectors for the gateway.
    */
   public static final String CONFIG_CONNECTORS
-      = GATEWAY_PREFIX + "connectors";
+    = GATEWAY_PREFIX + "connectors";
 
   /**
-   * Hostname of the gateway service
+   * Hostname of the gateway service.
    */
   public static final String CONFIG_HOSTNAME
-      = GATEWAY_PREFIX + "hostname";
+    = GATEWAY_PREFIX + "hostname";
 
   /**
-   * Whether gateway should provide ZK service discovery to the connectors
+   * Whether gateway should provide ZK service discovery to the connectors.
    */
   public static final String CONFIG_DO_SERVICE_DISCOVERY
-      = GATEWAY_PREFIX + "discovery";
+    = GATEWAY_PREFIX + "discovery";
 
   /**
    * Whether gateway should authenticate requests.
    */
   public static final String CONFIG_AUTHENTICATION_REQUIRED
-      = GATEWAY_PREFIX + "authenticate";
+    = GATEWAY_PREFIX + "authenticate";
 
   /**
    * Default setting for whether gateway should authenticate (false for local).
@@ -73,7 +73,7 @@ public class Constants {
    * Configuration parameter name for setting the cluster name.
    */
   public static final String CONFIG_CLUSTER_NAME
-      = GATEWAY_PREFIX + "cluster.name";
+    = GATEWAY_PREFIX + "cluster.name";
 
   /**
    * Default cluster name.
@@ -81,32 +81,32 @@ public class Constants {
   public static final String CONFIG_CLUSTER_NAME_DEFAULT = "localhost";
 
   /**
-   * Class name of a named connector
+   * Class name of a named connector.
    */
   public static final String CONFIG_CLASSNAME = "class";
 
   /**
-   * Port number of a connector
+   * Port number of a connector.
    */
   public static final String CONFIG_PORT = "port";
 
   /**
-   * Number of worker threads for a connector
+   * Number of worker threads for a connector.
    */
   public static final String CONFIG_THREADS = "threads";
 
   /**
-   * Whether an HTTP connector supports chunked requests
+   * Whether an HTTP connector supports chunked requests.
    */
   public static final String CONFIG_CHUNKING = "chunk";
 
   /**
-   * The maximal supported size of the content of an Http request
+   * The maximal supported size of the content of an Http request.
    */
   public static final String CONFIG_MAX_SIZE = "maxsize";
 
   /**
-   * Whether an HTTP connector supports SSL
+   * Whether an HTTP connector supports SSL.
    */
   public static final String CONFIG_SSL = "ssl";
 
@@ -118,7 +118,7 @@ public class Constants {
   public static final String CONFIG_PATH_PREFIX = "prefix";
 
   /**
-   * Middle component in the HTTP URL
+   * Middle component in the HTTP URL.
    * For instance, in http://g.d.c/rest/destination/myStream the middle is
    * /destination/
    */
@@ -145,12 +145,12 @@ public class Constants {
   // Defaults for various configurations
 
   /**
-   * Default number of worker threads for a connector
+   * Default number of worker threads for a connector.
    */
   public static final int DEFAULT_THREADS = 20;
 
-  public static final String metricsServiceName =
-      com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
-  public static final String flowServiceName =
-      com.continuuity.common.conf.Constants.SERVICE_FLOW_SERVER;
+  public static final String METRICS_SERVICE_NAME =
+    com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
+  public static final String FLOW_SERVICE_NAME =
+    com.continuuity.common.conf.Constants.SERVICE_FLOW_SERVER;
 } // end of Constants class

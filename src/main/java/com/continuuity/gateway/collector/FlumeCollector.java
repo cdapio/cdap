@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
@@ -19,17 +19,17 @@ import com.continuuity.gateway.Consumer;
 public abstract class FlumeCollector extends Collector {
 
   /**
-   * If no port is ever configured, we run here
+   * If no port is ever configured, we run here.
    */
-  public static final int DefaultPort = 8765;
+  public static final int DEFAULT_PORT = 8765;
 
   /**
-   * The actual port to run on, set by configure()
+   * The actual port to run on, set by configure().
    */
-  protected int port = DefaultPort;
+  protected int port = DEFAULT_PORT;
 
   /**
-   * The adapter that converts from and to flume Avro and calls the consumer
+   * The adapter that converts from and to flume Avro and calls the consumer.
    */
   protected FlumeAdapter flumeAdapter;
 
@@ -47,11 +47,11 @@ public abstract class FlumeCollector extends Collector {
     super.configure(configuration);
     // the only option we need is the port number
     this.port = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.getName(), Constants.CONFIG_PORT), DefaultPort);
+      this.getName(), Constants.CONFIG_PORT), DEFAULT_PORT);
   }
 
   /**
-   * Return the port that this collector is listening on
+   * Return the port that this collector is listening on.
    *
    * @return the port number
    */
@@ -60,11 +60,11 @@ public abstract class FlumeCollector extends Collector {
   }
 
   /**
-   * Helper method for printing in the log
+   * Helper method for printing in the log.
    */
   public String toString() {
     return this.getClass().getName() + " at :" + this.getPort() + " (" +
-        (this.consumer == null ? "no consumer set" :
-            this.consumer.getClass().getName()) + ")";
+      (this.consumer == null ? "no consumer set" :
+        this.consumer.getClass().getName()) + ")";
   }
 }
