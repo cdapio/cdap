@@ -742,14 +742,6 @@ public final class PerformanceTestRunner {
       }
     }
 
-    /**
-     * Waits until the provided counter has reached the provided count.
-     * @param counterName Name of counter
-     * @param count Value to be reached by counter
-     * @param timeout Maximum time to wait for
-     * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
-     * @throws java.util.concurrent.TimeoutException If the timeout time passed and still not seeing that many count.
-     */
     public static void waitForCounter(String counterName, long count, long timeout, TimeUnit timeoutUnit)
       throws TimeoutException,
       InterruptedException {
