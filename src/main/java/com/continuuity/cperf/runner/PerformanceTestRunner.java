@@ -20,10 +20,13 @@ import com.continuuity.internal.test.DefaultProcedureClient;
 import com.continuuity.internal.test.ProcedureClientFactory;
 import com.continuuity.internal.test.bytecode.FlowletRewriter;
 import com.continuuity.internal.test.bytecode.ProcedureRewriter;
+import com.continuuity.metrics2.thrift.Counter;
+import com.continuuity.metrics2.thrift.CounterRequest;
+import com.continuuity.metrics2.thrift.FlowArgument;
+import com.continuuity.metrics2.thrift.MetricsFrontendService;
 import com.continuuity.performance.application.AngryMamaModule;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.performance.application.BenchmarkRuntimeStats;
 import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
 import com.continuuity.performance.application.DefaultBenchmarkManager;
 import com.continuuity.performance.application.MensaMetricsReporter;
@@ -55,11 +58,11 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.hsqldb.lib.StringUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.internal.runners.model.ReflectiveCallable;
 import org.junit.internal.runners.statements.Fail;
 import org.junit.runners.model.FrameworkMethod;
@@ -87,6 +90,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -95,14 +99,15 @@ import java.util.jar.Manifest;
  * Runner for performance tests. This class is using lots of classes and code from JUnit framework.
  */
 public final class PerformanceTestRunner {
+
   private static final Logger LOG = LoggerFactory.getLogger(PerformanceTestRunner.class);
   private static File tmpDir;
   private static AppFabricService.Iface appFabricService;
   private static LocationFactory locationFactory;
   private static Injector injector;
 
-  private TestClass fTestClass;
-  CConfiguration config;
+  private TestClass testClass;
+  private final CConfiguration config;
   private String accountId = "developer";
 
   ApplicationManager appMgr;
@@ -111,13 +116,17 @@ public final class PerformanceTestRunner {
     config = CConfiguration.create();
   }
 
+  public String getAccountId() {
+    return accountId;
+  }
+
   private boolean parseOptions(String[] args) throws ClassNotFoundException {
 
     if (args.length == 0 || "--help".equals(args[0])) {
       return false;
     }
 
-    fTestClass = new TestClass(Class.forName(args[0]));
+    testClass = new TestClass(Class.forName(args[0]));
 
     if (args.length == 1) {
       return true;
@@ -171,7 +180,7 @@ public final class PerformanceTestRunner {
 
       beforeClass();
 
-      for (FrameworkMethod eachBefore : fTestClass.getAnnotatedMethods(BeforeClass.class)) {
+      for (FrameworkMethod eachBefore : testClass.getAnnotatedMethods(BeforeClass.class)) {
         try {
           eachBefore.invokeExplosively(null);
         } catch (Throwable e) {
@@ -179,16 +188,16 @@ public final class PerformanceTestRunner {
         }
       }
 
-      Object fTarget = getTarget();
-      for (FrameworkMethod eachTest : fTestClass.getAnnotatedMethods(Test.class)) {
+      Object testClassConstructor = getTarget();
+      for (FrameworkMethod eachTest : testClass.getAnnotatedMethods(PerformanceTest.class)) {
         beforeMethod(eachTest);
-        for (FrameworkMethod eachBefore : fTestClass.getAnnotatedMethods(Before.class)) {
-          eachBefore.invokeExplosively(fTarget);
+        for (FrameworkMethod eachBefore : testClass.getAnnotatedMethods(Before.class)) {
+          eachBefore.invokeExplosively(testClassConstructor);
         }
-        eachTest.invokeExplosively(fTarget);
-        for (FrameworkMethod eachAfter : fTestClass.getAnnotatedMethods(After.class)) {
+        eachTest.invokeExplosively(testClassConstructor);
+        for (FrameworkMethod eachAfter : testClass.getAnnotatedMethods(After.class)) {
           try {
-            eachAfter.invokeExplosively(fTarget);
+            eachAfter.invokeExplosively(testClassConstructor);
           } catch (Throwable e) {
             errors.add(e);
           }
@@ -196,7 +205,7 @@ public final class PerformanceTestRunner {
         afterMethod(eachTest);
       }
 
-      for (FrameworkMethod eachAfter : fTestClass.getAnnotatedMethods(AfterClass.class)) {
+      for (FrameworkMethod eachAfter : testClass.getAnnotatedMethods(AfterClass.class)) {
         try {
           eachAfter.invokeExplosively(null);
         } catch (Throwable e) {
@@ -210,11 +219,11 @@ public final class PerformanceTestRunner {
   }
 
   private List<FrameworkMethod> getAnnotatedMethods(Class<? extends Annotation> annotationClass) {
-     return fTestClass.getAnnotatedMethods(annotationClass);
+     return testClass.getAnnotatedMethods(annotationClass);
   }
 
   private Annotation[] getClassAnnotations() {
-    return fTestClass.getAnnotations();
+    return testClass.getAnnotations();
   }
 
   private Class<? extends Application>[] getApplications(TestClass testClass) {
@@ -250,7 +259,7 @@ public final class PerformanceTestRunner {
       test = new ReflectiveCallable() {
         @Override
         protected Object runReflectiveCall() throws Throwable {
-          return fTestClass.getOnlyConstructor().newInstance();
+          return testClass.getOnlyConstructor().newInstance();
         }
       }.run();
       return test;
@@ -322,14 +331,19 @@ public final class PerformanceTestRunner {
 
   public void clearAppFabric() {
     try {
-      appFabricService.reset(new AuthToken("appFabricTest"), "developer");
+      // use dummy authorization token
+      if (StringUtils.isNotEmpty(accountId)) {
+        appFabricService.reset(new AuthToken("appFabricTest"), accountId);
+      } else {
+        appFabricService.reset(new AuthToken("appFabricTest"), "developer");
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   private void init(CConfiguration configuration) {
-    LOG.debug("Initializing Continuuity Reactory for a performance test.");
+    LOG.debug("Initializing Continuuity Reactor for a performance test.");
     File testAppDir = Files.createTempDir();
 
     File outputDir = new File(testAppDir, "app");
@@ -521,7 +535,7 @@ public final class PerformanceTestRunner {
   private void beforeClass() throws ClassNotFoundException {
     init(config);
     Context runManager = Context.getInstance(this);
-    Class<? extends Application>[] apps = getApplications(fTestClass);
+    Class<? extends Application>[] apps = getApplications(testClass);
     if (apps != null && apps.length != 0) {
       clearAppFabric();
       for (Class<? extends Application> each : apps) {
@@ -615,7 +629,7 @@ public final class PerformanceTestRunner {
     }
 
     public static BenchmarkRuntimeMetrics getFlowletMetrics(String appName, String flowName, String flowletName) {
-      return BenchmarkRuntimeStats.getFlowletMetrics(appName, flowName, flowletName);
+      return BenchmarkRuntimeStats.getFlowletMetrics(getInstance().runner.accountId, appName, flowName, flowletName);
     }
 
     public static StreamWriter getStreamWriter(String appName, String streamName) {
@@ -654,6 +668,195 @@ public final class PerformanceTestRunner {
       for (MensaMetricsReporter reporter : getInstance().mensaReporters) {
         reporter.shutdown();
       }
+    }
+  }
+  /**
+   * Runtime statistics of an application during a performance test.
+   */
+  public static final class BenchmarkRuntimeStats {
+
+    private static MetricsFrontendService.Client metricsClient = getMetricsClient();
+
+    public static BenchmarkRuntimeMetrics getFlowletMetrics(final String accountId, final String applicationId, final String flowId,
+                                                            final String flowletId) {
+      final String inputName = String.format("%s.tuples.read.count", flowletId);
+      final String processedName = String.format("%s.processed.count", flowletId);
+
+      return new BenchmarkRuntimeMetrics() {
+        @Override
+        public long getInput() {
+          Double input = getCounters(accountId, applicationId, flowId, flowletId).get(inputName);
+          if (input == null) {
+            return 0L;
+          } else {
+            return input.longValue();
+          }
+        }
+
+        @Override
+        public long getProcessed() {
+          Double processed = getCounters(accountId, applicationId, flowId, flowletId).get(processedName);
+          if (processed == null) {
+            return 0L;
+          } else {
+            return processed.longValue();
+          }
+        }
+
+        @Override
+        public void waitForinput(long count, long timeout, TimeUnit timeoutUnit)
+          throws TimeoutException, InterruptedException {
+          waitFor(inputName, count, timeout, timeoutUnit);
+        }
+
+        @Override
+        public void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit)
+          throws TimeoutException, InterruptedException {
+          waitFor(processedName, count, timeout, timeoutUnit);
+        }
+
+        private void waitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
+          throws TimeoutException, InterruptedException {
+          Double value = getCounters(accountId, applicationId, flowId, flowletId).get(name);
+          while (timeout > 0 && (value == null || value.longValue() < count)) {
+            timeoutUnit.sleep(1);
+            value = getCounters(accountId, applicationId, flowId, flowletId).get(name);
+            timeout--;
+          }
+          if (timeout == 0 && (value == null || value.longValue() < count)) {
+            throw new TimeoutException("Time limit reached.");
+          }
+        }
+
+        @Override
+        public String toString() {
+          return String.format("%s; input=%d, processed=%d, exception=%d", flowletId, getInput(), getProcessed());
+        }
+      };
+    }
+
+    public static void waitForCounter(String accountId, String applicationId, String flowName, String flowletName, String counterName,
+                                      long count, long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException, InterruptedException {
+      Counter c = getCounter(accountId, applicationId, flowName, flowletName, counterName);
+      if (c == null) {
+        throw new RuntimeException("No counter with name " + counterName + " found for application " + applicationId
+                                     + " ,flow " + flowName + " and flowlet " + flowletName + ".");
+      }
+      double value = c.getValue();
+      while (timeout > 0 && (value < count)) {
+        timeoutUnit.sleep(1);
+        value = getCounter(counterName).getValue();
+        timeout--;
+      }
+      if (timeout == 0 && (value < count)) {
+        throw new TimeoutException("Time limit reached.");
+      }
+    }
+
+    /**
+     * Waits until the provided counter has reached the provided count.
+     * @param counterName Name of counter
+     * @param count Value to be reached by counter
+     * @param timeout Maximum time to wait for
+     * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
+     * @throws java.util.concurrent.TimeoutException If the timeout time passed and still not seeing that many count.
+     */
+    public static void waitForCounter(String counterName, long count, long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException,
+      InterruptedException {
+      Counter c = getCounter(counterName);
+      if (c == null) {
+        throw new RuntimeException("No counter with name " + counterName + " found.");
+      }
+      double value = c.getValue();
+      while (timeout > 0 && (value < count)) {
+        timeoutUnit.sleep(1);
+        value = getCounter(counterName).getValue();
+        timeout--;
+      }
+      if (timeout == 0 && (value < count)) {
+        throw new TimeoutException("Time limit reached.");
+      }
+    }
+
+    public static Counter getCounter(String accountId, String applicationId, String flowName, String flowletName, String counterName) {
+      FlowArgument arg = new FlowArgument(accountId, applicationId, flowName);
+      try {
+        List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
+        for (Counter counter : counters) {
+          if (counter.getQualifier().equals(flowletName) && counter.getName().equals(counterName)) {
+            return counter;
+          }
+        }
+        return null;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public static Counter getCounter(String counterName) {
+      FlowArgument arg = new FlowArgument("-", "-", "-");
+      arg.setFlowletId("-");
+      CounterRequest req = new CounterRequest(arg);
+      req.setName(ImmutableList.of(counterName));
+      try {
+        List<Counter> counters = metricsClient.getCounters(req);
+        if (counters != null && counters.size() != 0) {
+          return counters.get(0);
+        }
+        return null;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public static Map<String, Double> getCounters(String accountId, String applicationId, String flowName) {
+      return getCounters(accountId, applicationId, flowName, null);
+    }
+
+    public static Map<String, Double> getCounters(String accountId, String applicationId, String flowName, String flowletName) {
+      FlowArgument arg = new FlowArgument(accountId, applicationId, flowName);
+      try {
+        List<Counter> counters = metricsClient.getCounters(new CounterRequest(arg));
+        Map<String, Double> counterMap = new HashMap<String, Double>(counters.size());
+        if (StringUtil.isEmpty(flowletName)) {
+          for (Counter counter : counters) {
+            counterMap.put(counter.getQualifier() + "." + counter.getName(), counter.getValue());
+          }
+        } else {
+          for (Counter counter : counters) {
+            if (counter.getQualifier().equals(flowletName)) {
+              counterMap.put(counter.getQualifier() + "." + counter.getName(), counter.getValue());
+            }
+          }
+        }
+        return counterMap;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    private static MetricsFrontendService.Client getMetricsClient() {
+      CConfiguration config = CConfiguration.create();
+      try {
+        return
+          new MetricsFrontendService.Client(
+            getThriftProtocol(config.get(Constants.CFG_METRICS_FRONTEND_SERVER_ADDRESS,
+                                         Constants.DEFAULT_OVERLORD_SERVER_ADDRESS),
+                              config.getInt(Constants.CFG_METRICS_FRONTEND_SERVER_PORT,
+                                            Constants.DEFAULT_METRICS_FRONTEND_SERVER_PORT)));
+      } catch (TTransportException e) {
+        Throwables.propagate(e);
+      }
+      return null;
+    }
+
+    private static TProtocol getThriftProtocol(String serviceHost, int servicePort) throws TTransportException {
+      TTransport transport = new TFramedTransport(new TSocket(serviceHost, servicePort));
+      transport.open();
+      //now try to connect the thrift client
+      return new TBinaryProtocol(transport);
     }
   }
 }

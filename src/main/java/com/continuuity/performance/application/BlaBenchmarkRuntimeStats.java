@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Runtime statistics of an application during a benchmark.
+ * Runtime statistics of an application during a performance test.
  */
-public final class  BenchmarkRuntimeStats {
+public final class BlaBenchmarkRuntimeStats {
 
   private static final String ACCOUNT_ID = "developer";
 
