@@ -5,15 +5,18 @@ package com.continuuity.common.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.common.discovery.ServicePayload;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.StickyEndpointStrategy;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.ZKDiscoveryService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.netflix.curator.x.discovery.ServiceInstance;
-import com.netflix.curator.x.discovery.strategies.RandomStrategy;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -78,8 +81,8 @@ final class MetricsClient extends AbstractExecutionThreadService {
   private ClientBootstrap bootstrap;
   private ChannelGroup channelGroup;
 
-  // TODO (ternece) : replace with DiscoverServiceClient.
-  private ServiceDiscoveryClient serviceDiscovery;
+  private ZKClientService zkClientService;
+  private EndpointStrategy endpointStrategy;
 
   MetricsClient(CConfiguration configuration) {
     this.configuration = configuration;
@@ -100,17 +103,26 @@ final class MetricsClient extends AbstractExecutionThreadService {
     bootstrap.setPipelineFactory(new MetricClientPipelineFactory());
     bootstrap.setOption("connectTimeoutMillis", CONNECT_TIMEOUT);
 
-    serviceDiscovery = new ServiceDiscoveryClient(
-      configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
-                        Constants.DEFAULT_ZOOKEEPER_ENSEMBLE)
-    );
+    // Note: The discovery service should be injected
+    zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+                                                         Constants.DEFAULT_ZOOKEEPER_ENSEMBLE)).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+      ));
+    zkClientService.start();
+    endpointStrategy = new StickyEndpointStrategy(new ZKDiscoveryService(zkClientService)
+                                                    .discover(Constants.SERVICE_METRICS_COLLECTION_SERVER));
     LOG.info("MetricsClient started");
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping MetricsClient");
-    serviceDiscovery.close();
+    zkClientService.stop();
     channelGroup.close().await();
     bootstrap.releaseExternalResources();
     LOG.info("MetricsClient stopped");
@@ -136,7 +148,12 @@ final class MetricsClient extends AbstractExecutionThreadService {
         long nanoTime = System.nanoTime();
         long sleepTime = nextConnectTime - nanoTime;
         if (sleepTime > 0) {
-          TimeUnit.NANOSECONDS.sleep(sleepTime);
+          try {
+            TimeUnit.NANOSECONDS.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            // Interrupted from shutdown. Ok to continue.
+            LOG.info("Metric client interrupted.");
+          }
         }
         connect(writeChannelRef);
 
@@ -144,7 +161,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
         // Assumption is that after connection is established, the connection will be used at least once,
         // hence resetting the interval to BACKOFF_MIN_TIME (in the else part).
         // Otherwise, the interval will be exponential increased until it reaches BACKOFF_MAX_TIME.
-        nextConnectTime = nanoTime + interval;
+        nextConnectTime = nanoTime + TimeUnit.NANOSECONDS.convert(interval, TimeUnit.SECONDS);
         interval = Math.min(BACKOFF_MAX_TIME, interval * BACKOFF_EXPONENT);
 
       } else {
@@ -213,18 +230,9 @@ final class MetricsClient extends AbstractExecutionThreadService {
   /**
    * Returns metric collection server endpoint or {@code null} if no endpoint available.
    */
-  private InetSocketAddress getEndpoint() throws ServiceDiscoveryClientException {
-    ServiceInstance<ServicePayload> instance =
-      serviceDiscovery.getInstance(Constants.SERVICE_METRICS_COLLECTION_SERVER, new RandomStrategy<ServicePayload>());
-    if (instance == null) {
-      return null;
-    }
-
-    String hostname = instance.getAddress();
-    int port = instance.getPort();
-    LOG.info("Received service endpoint {}:{}.", hostname, port);
-
-    return new InetSocketAddress(hostname, port);
+  private InetSocketAddress getEndpoint() {
+    Discoverable discoverable = endpointStrategy.pick();
+    return discoverable == null ? null : discoverable.getSocketAddress();
   }
 
   /**
@@ -236,8 +244,8 @@ final class MetricsClient extends AbstractExecutionThreadService {
     public ChannelPipeline getPipeline() throws Exception {
       ChannelPipeline pipeline = Channels.pipeline();
       pipeline.addLast("frameDecoder", new FixedLengthFrameDecoder(Integer.SIZE / 8));
-      pipeline.addLast("requestEncoder", new MetricRequestEncoder());
-      pipeline.addLast("responseDecoder", new MetricResponseDecoder());
+      pipeline.addLast("requestEncoder", new MetricClientRequestEncoder());
+      pipeline.addLast("responseDecoder", new MetricClientResponseDecoder());
       pipeline.addLast("responseHandler", new MetricResponseHandler());
       return pipeline;
     }
@@ -246,7 +254,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
   /**
    * Encoder to write metrics command to server.
    */
-  private static final class MetricRequestEncoder extends OneToOneEncoder {
+  private static final class MetricClientRequestEncoder extends OneToOneEncoder {
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
       if (msg instanceof String) {
@@ -263,7 +271,7 @@ final class MetricsClient extends AbstractExecutionThreadService {
   /**
    * Decoder to decode server response in MetricResponse.
    */
-  private static final class MetricResponseDecoder extends OneToOneDecoder {
+  private static final class MetricClientResponseDecoder extends OneToOneDecoder {
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
       if (msg instanceof ChannelBuffer) {

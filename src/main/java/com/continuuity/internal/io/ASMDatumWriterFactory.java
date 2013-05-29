@@ -9,6 +9,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Map;
@@ -18,6 +20,8 @@ import java.util.Map;
  * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
 public final class ASMDatumWriterFactory implements DatumWriterFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ASMDatumWriterFactory.class);
 
   private final LoadingCache<CacheKey, Class<DatumWriter<?>>> datumWriterClasses;
   private final FieldAccessorFactory fieldAccessorFactory;
@@ -41,7 +45,7 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
       Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(new CacheKey(schema, type));
-      return (DatumWriter<T>)writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
+      return (DatumWriter<T>) writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
                                         .newInstance(schema, fieldAccessorFactory);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -57,13 +61,13 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
-      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
-                                                                                          key.getSchema());
+      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(), key.getSchema());
 
       ClassLoader typeClassloader = key.getType().getRawType().getClassLoader();
       ByteCodeClassLoader classloader = classloaders.get(typeClassloader);
       if (classloader == null) {
-        classloader = new ByteCodeClassLoader(typeClassloader);
+        classloader = new ByteCodeClassLoader(typeClassloader == null ? Thread.currentThread().getContextClassLoader()
+                                                : typeClassloader);
         classloaders.put(typeClassloader, classloader);
       }
 

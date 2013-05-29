@@ -57,11 +57,9 @@ import java.util.concurrent.TimeUnit;
  *
  * </p>
  */
-public class OverlordMetricsReporter extends AbstractPollingReporter
-  implements MetricProcessor<String> {
+public final class OverlordMetricsReporter extends AbstractPollingReporter implements MetricProcessor<String> {
 
-  private static final Logger Log
-    = LoggerFactory.getLogger(OverlordMetricsReporter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OverlordMetricsReporter.class);
 
   /**
    * Stores the timestamp at which the metrics time are computed.
@@ -96,7 +94,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   /**
    * Specifies the backoff minimum time to be used for backing off.
    */
-  private static int BACKOFF_MIN_TIME = 1;
+  private static final int BACKOFF_MIN_TIME = 1;
 
   /**
    * Specifies the backoff maximum time.
@@ -106,7 +104,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   /**
    * Specifies the exponent for increasing the backoff by.
    */
-  private static int BACKOFF_EXPONENT = 2;
+  private static final int BACKOFF_EXPONENT = 2;
 
   /**
    * Current interval to sleep during back-off.
@@ -121,8 +119,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    * @param unit   the time unit of {@code period}
    * @param configuration the configuration to use
    */
-  public static synchronized void enable(long period, TimeUnit unit,
-                            CConfiguration configuration) {
+  public static synchronized void enable(long period, TimeUnit unit, CConfiguration configuration) {
 
     // In order to prevent from all the hosts checking to see if the
     // service is backup we add some amount of randomization that allows
@@ -166,8 +163,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    *                 report
    * @param configuration instance of configuration object.
    */
-  protected OverlordMetricsReporter(MetricsRegistry registry, CConfiguration
-    configuration) {
+  private OverlordMetricsReporter(MetricsRegistry registry, CConfiguration configuration) {
     super(registry, "overlord-metric-reporter");
     Preconditions.checkNotNull(configuration);
     Preconditions.checkNotNull(registry);
@@ -222,7 +218,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
       try {
         metric.processWith(this, entry.getKey(), null);
       } catch (Exception e) {
-        Log.warn("Issue processing metric {}. Reason : {}",
+        LOG.warn("Issue processing metric {}. Reason : {}",
                  metric.toString(), e.getMessage());
       }
     }
@@ -251,7 +247,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
       tags = String.format("host=%s", hostname);
     }
 
-    if (scope != null && !scope.isEmpty() ) {
+    if (scope != null && !scope.isEmpty()) {
       tags = String.format("%s scope=%s", tags, scope);
     }
 
@@ -391,7 +387,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
       final InetAddress addr = InetAddress.getLocalHost();
       return addr.getHostName();
     } catch (UnknownHostException e) {
-      Log.error("Unable to get local  name: ", e);
+      LOG.error("Unable to get local  name: ", e);
     }
     return null;
   }

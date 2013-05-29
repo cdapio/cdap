@@ -1,11 +1,17 @@
 package com.continuuity.common.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.discovery.ServiceDiscoveryClientException;
+import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryService;
+import com.continuuity.weave.discovery.ZKDiscoveryService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
@@ -13,9 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This abstract class makes it easy to build a registered server.
@@ -30,11 +36,6 @@ public abstract class AbstractRegisteredServer {
     (AbstractRegisteredServer.class);
 
   /**
-   * Service registration client.
-   */
-  private ServiceDiscoveryClient client;
-
-  /**
    * Name of the server
    */
   private String server = "NA";
@@ -43,6 +44,9 @@ public abstract class AbstractRegisteredServer {
    * Command port cmdPortServer associated with the service.
    */
   private CommandPortServer cmdPortServer;
+
+
+  private Cancellable discoveryServiceCancellable;
 
   /**
    * Indicates whether the registered server has started or no.
@@ -182,14 +186,31 @@ public abstract class AbstractRegisteredServer {
         }
       });
 
-      RegisteredServerInfo serverArgs = configure(args, conf);
+      final RegisteredServerInfo serverArgs = configure(args, conf); // Declaring final to access in inner class
       if(serverArgs == null) {
         throw new ServerException("configuration of service failed.");
       }
 
-      client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(server, serverArgs.getAddress(), serverArgs.getPort(),
-                      serverArgs.getPayload());
+      ZKClientService zkClient = ZKClientServices.delegate(
+        ZKClients.retryOnFailure(
+          ZKClients.reWatchOnExpire(
+            ZKClientService.Builder.of(zkEnsemble).build()),
+          RetryStrategies.fixDelay(1, TimeUnit.SECONDS)));
+      zkClient.startAndWait();
+
+      DiscoveryService discoveryService = new ZKDiscoveryService(zkClient);
+
+      discoveryServiceCancellable = discoveryService.register(new Discoverable() {
+        @Override
+        public String getName() {
+          return server;
+        }
+
+        @Override
+        public InetSocketAddress getSocketAddress() {
+          return new InetSocketAddress(serverArgs.getAddress(), serverArgs.getPort());
+        }
+      });
 
       serverThread = start();
       if(serverThread == null) {
@@ -228,12 +249,6 @@ public abstract class AbstractRegisteredServer {
         cmdPortServer = null;
       }
 
-    } catch (ServiceDiscoveryClientException e) {
-      Log.error("Unable to register the cmdPortServer with discovery " +
-                  "service, shutting down. Reason {}", e.getMessage());
-      stop(true);
-      throw new ServerException("Unable to register the cmdPortServer with " +
-                                  "discovery service");
     } catch (CommandPortServer.CommandPortException e) {
       Log.warn("Error starting the command port service. Service not " +
                  "started. Reason : {}", e.getMessage());
@@ -258,17 +273,14 @@ public abstract class AbstractRegisteredServer {
     // Stop the services started by implementation class.
     stop();
 
-    try {
-      if(client != null) {
-        client.close();
-      }
-      if(cmdPortServer != null) {
-        cmdPortServer.stop();
-      }
-    } catch (IOException e) {
-      Log.warn("Issue while closing the service discovery client. " +
-                 "Reason : {}", e.getMessage());
+    if (discoveryServiceCancellable != null){
+      discoveryServiceCancellable.cancel();
     }
+
+    if(cmdPortServer != null) {
+      cmdPortServer.stop();
+    }
+
   }
 
   /**

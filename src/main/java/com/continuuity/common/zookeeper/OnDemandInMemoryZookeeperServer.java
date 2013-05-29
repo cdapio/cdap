@@ -12,7 +12,7 @@ public final class OnDemandInMemoryZookeeperServer {
   public static InMemoryZookeeper getSingletonInstance() throws IOException, InterruptedException {
     InMemoryZookeeper result = inMemoryZookeeper;
     if (result == null) {
-      synchronized(OnDemandInMemoryZookeeperServer.class) {
+      synchronized (OnDemandInMemoryZookeeperServer.class) {
         result = inMemoryZookeeper;
         if (result == null) {
           inMemoryZookeeper = result = createInstance();
