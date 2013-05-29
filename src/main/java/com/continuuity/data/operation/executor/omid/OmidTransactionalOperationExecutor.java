@@ -722,7 +722,11 @@ public class OmidTransactionalOperationExecutor
 
     // if any write failed, abort the transaction
     if (abort) {
-      abort(context, transaction);
+      // automatically abort transaction if it is not long-running one (ie. tracking one). In non-tracking case, it is
+      // assumed that tx is always managed by tx agent.
+      if (transaction.isTrackChanges()) {
+        abort(context, transaction);
+      }
       throw new OmidTransactionException(
         writeTxReturn.statusCode, writeTxReturn.message);
       }
@@ -829,7 +833,11 @@ public class OmidTransactionalOperationExecutor
     } else {
       // operation failed
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
-      abort(context, transaction);
+      // automatically abort transaction if it is not long-running one (ie. tracking one). In non-tracking case, it is
+      // assumed that tx is always managed by tx agent.
+      if (transaction.isTrackChanges()) {
+        abort(context, transaction);
+      }
       throw new OmidTransactionException(writeTxReturn.statusCode, writeTxReturn.message);
     }
   }

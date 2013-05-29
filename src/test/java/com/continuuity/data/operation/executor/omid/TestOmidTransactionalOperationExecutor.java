@@ -1260,4 +1260,34 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // commit should NOT fail with conflict
     executor.commit(context, tx);
   }
+
+  @Test
+  public void testNTCXactionIsNotRolledBackByOpex() throws OperationException {
+    final String table = "tIIIPX";
+    final byte[] r1 = { 'r', '1' };
+    final byte[] c1 = { 'c', '1' };
+    final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
+
+    // execute a write in a new NTC xaction
+    Transaction ntc = executor.startTransaction(false);
+    // this should fail: no data is there to swap
+    boolean failed = false;
+    try {
+      executor.execute(context, ntc, batch(new CompareAndSwap(table, r1, c1, one, one)));
+    } catch (OperationException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+
+    // but tx should not be aborted, we can work with it after that
+    Map<byte[], Long> incResult = executor.increment(context, ntc, new Increment(table, r1, c1, 55L));
+    assertEquals(55L, (long) incResult.get(c1));
+
+    // commit should NOT fail
+    executor.commit(context, ntc);
+
+    // verifying that writes where committed
+    incResult = executor.increment(context, new Increment(table, r1, c1, 1L));
+    assertEquals(56L, (long) incResult.get(c1));
+  }
 }
