@@ -152,7 +152,7 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized void validateTransaction(Transaction tx) throws OmidTransactionException {
+  public void validateTransaction(Transaction tx) throws OmidTransactionException {
     getInProgress(tx.getWriteVersion());
   }
 

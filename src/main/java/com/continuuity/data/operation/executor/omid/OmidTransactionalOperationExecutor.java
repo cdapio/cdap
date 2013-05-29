@@ -119,7 +119,7 @@ public class OmidTransactionalOperationExecutor
   // is that transaction validation doesn't happen through oracle.
   // TODO: Ideally we should also forbid oracle-related ops, like starting/aborting transactions, but now too many
   //       things (like accessing meta table, etc.) mixed in this sinlge class which makes it hard to do.
-  @Inject (optional = true)
+  @Inject(optional = true)
   @Named("DataFabricOperationExecutorTalksToOracle")
   private boolean talkToOracle = true;
 

@@ -845,7 +845,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertTrue(result1.isEmpty()
         || result1.getValue().get(colY) == null);
     Assert.assertTrue(result2.isEmpty()
-        || result2.getValue().get(colX) == null);
+                        || result2.getValue().get(colX) == null);
 
     // clear the tables for one context
     executor.execute(context1, new ClearFabric(ClearFabric.ToClear.TABLES));
@@ -1232,5 +1232,32 @@ public abstract class TestOmidTransactionalOperationExecutor {
         throw e;
       }
     }
+  }
+
+  @Test
+  public void testConflictNotDetectedWithNTCXactions() throws OperationException {
+    final String table = "tIIIPX";
+    final byte[] r1 = { 'r', '1' };
+    final byte[] c1 = { 'c', '1' };
+    final byte[] one = com.continuuity.api.common.Bytes.toBytes(1L);
+
+    // 1) check that NTC tx doesn't fail with conflict
+    // 2) check that other tx doesn't fail because it conflicts with NTC xaction
+
+    // execute a write in a new NTC xaction
+    Transaction ntc = executor.startTransaction(false);
+    executor.execute(context, ntc, batch(new Write(table, r1, c1, one)));
+    // read from outside xaction -> not visible
+    OperationResult<Map<byte[], byte[]>> result = executor.execute(context, new Read(table, r1, c1));
+    assertTrue(result.isEmpty() || result.getValue().get(c1) == null);
+    // increment outside xaction -> increments pre-xaction value
+    Map<byte[], Long> iresult = executor.increment(context, new Increment(table, r1, c1, 4L));
+    assertEquals(new Long(4L), iresult.get(c1));
+    // execute a write in a new xaction
+    Transaction tx = executor.execute(context, null, batch(new Write(table, r1, c1, one)));
+    // commit should NOT fail with conflict
+    executor.commit(context, ntc);
+    // commit should NOT fail with conflict
+    executor.commit(context, tx);
   }
 }

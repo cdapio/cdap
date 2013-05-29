@@ -257,6 +257,10 @@ public abstract class OperationExecutorServiceTest extends
     Write write = new Write(key, "x".getBytes(), "1".getBytes());
     remote.commit(context, write);
 
+    // starting ntc before we changed value for the first time to cause conflict later
+    Transaction ntc = remote.startTransaction(context, false);
+    Assert.assertFalse(ntc.isTrackChanges());
+
     // compareAndSwap with actual value
     CompareAndSwap compareAndSwap = new CompareAndSwap(key,
         "x".getBytes(), "1".getBytes(), "2".getBytes());
@@ -270,16 +274,25 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("2".getBytes(), columns.get("x".getBytes()));
 
     // compareAndSwap with different value
-    compareAndSwap = new CompareAndSwap(key,
-        "x".getBytes(), "1".getBytes(), "3".getBytes());
+    compareAndSwap = new CompareAndSwap(key, "x".getBytes(), "1".getBytes(), "3".getBytes());
     try {
       remote.commit(context, compareAndSwap);
       Assert.fail("Expected compare-and-swap to fail.");
     } catch (OperationException e) {
       //expected
     }
+    // read back and verify it has NOT swapped
+    columns = remote.execute(context, read).getValue();
+    Assert.assertNotNull(columns);
+    Assert.assertEquals(1, columns.size());
+    Assert.assertArrayEquals("2".getBytes(), columns.get("x".getBytes()));
 
-    // read back and verify it has not swapped
+    // check that NTC started earlier doesn't detect conflict
+    compareAndSwap = new CompareAndSwap(key, "x".getBytes(), "1".getBytes(), "3".getBytes());
+    // should NOT fail
+    remote.commit(context, ntc, Arrays.asList((WriteOperation) compareAndSwap));
+    // read back and verify that tx that started later overrides whatever written by NTC transaction
+    // (first one to commit wins)
     columns = remote.execute(context, read).getValue();
     Assert.assertNotNull(columns);
     Assert.assertEquals(1, columns.size());

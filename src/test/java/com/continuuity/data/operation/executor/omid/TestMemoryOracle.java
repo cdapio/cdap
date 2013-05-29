@@ -349,6 +349,7 @@ public class TestMemoryOracle {
     Assert.assertTrue(oracle.commitTransaction(tx4).isSuccess());
   }
 
+  // 2)
   @Test
   public void testNonTrackingChangesTxStaysInExcludedOnAbort() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
