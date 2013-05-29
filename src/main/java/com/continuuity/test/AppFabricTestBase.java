@@ -6,7 +6,9 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
@@ -14,11 +16,10 @@ import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.test.ApplicationManagerFactory;
 import com.continuuity.internal.test.DefaultApplicationManager;
@@ -28,6 +29,8 @@ import com.continuuity.internal.test.ProcedureClientFactory;
 import com.continuuity.internal.test.StreamWriterFactory;
 import com.continuuity.internal.test.bytecode.FlowletRewriter;
 import com.continuuity.internal.test.bytecode.ProcedureRewriter;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -70,7 +73,6 @@ public class AppFabricTestBase {
   private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
-  private static DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -157,7 +159,12 @@ public class AppFabricTestBase {
     configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                    new BigMamaModule(configuration),
+                                    new ConfigModule(configuration),
+                                    new IOModule(),
+                                    new LocationRuntimeModule().getInMemoryModules(),
+                                    new DiscoveryRuntimeModule().getInMemoryModules(),
+                                    new AppFabricServiceRuntimeModule().getInMemoryModules(),
+                                    new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {
@@ -172,10 +179,6 @@ public class AppFabricTestBase {
                                                 .build(ProcedureClientFactory.class));
                                       }
                                     });
-
-    discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    discoveryServiceClient.startAndWait();
-    injector.getInstance(DiscoveryService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
   }
@@ -220,7 +223,7 @@ public class AppFabricTestBase {
     Collections.addAll(queue, dir.listFiles());
 
     // Find all flowlet classes (flowlet class => flowId)
-    // Todo: Limitation now is that the same flowlet class can be used in one flow only (can have multiple names)
+    // Note: Limitation now is that the same flowlet class can be used in one flow only (can have multiple names)
     Map<String, String> flowletClassNames = Maps.newHashMap();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
