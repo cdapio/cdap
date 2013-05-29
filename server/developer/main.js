@@ -5,7 +5,7 @@
 
 var express = require('express'),
 	io = require('socket.io'),
-	Int64 = require('node-int64').Int64;
+	Int64 = require('node-int64').Int64,
 	fs = require('fs'),
 	xml2js = require('xml2js'),
 	log4js = require('log4js'),
@@ -269,7 +269,7 @@ devServer.bindRoutes = function() {
 		fs.readFile(__dirname + '/.credential', 'utf-8', function (error, result) {
 
 			res.on('error', function (e) {
-				logger.trace('/destinations', e);
+				devServer.logger.trace('/destinations', e);
 			});
 
 			if (error) {
@@ -369,7 +369,7 @@ devServer.getLocalHost = function() {
 	for (var dev in ifaces) {
 		for (var i = 0, len = ifaces[dev].length; i < len; i++) {
 			var details = ifaces[dev][i];
-			if (details.family == 'IPv4') {
+			if (details.family === 'IPv4') {
 				if (dev === 'lo0') {
 					localhost = details.address;
 					break;
@@ -399,7 +399,7 @@ devServer.getConfig = function(opt_callback) {
 			devServer.logger.trace('Configuring with', devServer.config);
 			Api.configure(devServer.config, apiKey || null);
 			devServer.configSet = true;
-			if (opt_callback && typeof opt_callback == "function") {
+			if (opt_callback && typeof opt_callback === "function") {
 				opt_callback();
 			}
 		});
@@ -414,11 +414,11 @@ devServer.start = function() {
 	devServer.getConfig(function() {
 		devServer.server = devServer.getServerInstance(devServer.app);
 		devServer.io = devServer.getSocketIo(devServer.server);
-		devServer.configureIoHandlers(devServer.io)
+		devServer.configureIoHandlers(devServer.io);
 		devServer.bindRoutes();
 		devServer.server.listen(devServer.config['node-port']);
 		devServer.logger.info('Listening on port', devServer.config['node-port']);
-		devServer.logger.info(devServer.config);;
+		devServer.logger.info(devServer.config);
 	});
 };
 

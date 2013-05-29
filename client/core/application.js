@@ -82,9 +82,9 @@ function(Components, Api, Embeddables, Util){
 	 * Setup Models, Views and Controllers.
 	 *
 	 * Referenced automatically by Ember. Format:
-	 * 		Model:		Application.Flow
-	 * 		View:		Application.FlowView
-	 * 		Controller:	Application.FlowController
+	 * Model:		Application.Flow
+	 * View:		Application.FlowView
+	 * Controller:	Application.FlowController
 	 *
 	 */
 

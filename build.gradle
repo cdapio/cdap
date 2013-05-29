@@ -7,23 +7,22 @@ def executeCommand(command) {
   def runnableCommand = command.join(' ')
   def proc = runnableCommand.execute();
   proc.waitFor()
-  //proc.exitValue()
-  0
+  proc.exitValue()
 }
 
 /**
- * Task for running jshint over developer and cloud code base. 
+ * Task for running jshint over developer and cloud code base.
  */
 task jshint << {
   def developer = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/", 
-    "./client/core/views/", 
-    "./client/core/controllers/", 
-    "./client/core/", 
-    "./client/developer/patch/views",
-    "./server/developer/main.js", 
-    "--config", 'jshint.json'
+    "$rootProject.projectDir/web-cloud-app/client/core/models/",
+    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
+    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
+    "$rootProject.projectDir/web-cloud-app/client/core/",
+    "$rootProject.projectDir/web-cloud-app/client/developer/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/developer/main.js",
+    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
 
   if(executeCommand(developer) != 0) {
@@ -32,13 +31,13 @@ task jshint << {
 
   def cloud = [
     "$rootProject.projectDir/web-cloud-app/tools/jshint/bin/hint",
-    "./client/core/models/", 
-    "./client/core/views/", 
-    "./client/core/controllers/", 
-    "./client/core/", 
-    "./client/cloud/patch/views",
-    "./server/cloud/main.js", 
-    "--config", 'jshint.json'
+    "$rootProject.projectDir/web-cloud-app/client/core/models/",
+    "$rootProject.projectDir/web-cloud-app/client/core/embeddables/",
+    "$rootProject.projectDir/web-cloud-app/client/core/controllers/",
+    "$rootProject.projectDir/web-cloud-app/client/core/",
+    "$rootProject.projectDir/web-cloud-app/client/cloud/patch/views",
+    "$rootProject.projectDir/web-cloud-app/server/cloud/main.js",
+    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
   if(executeCommand(cloud) != 0) {
     throw new GradleScriptException("JSHint reported errors while building cloud app", null)
@@ -77,7 +76,7 @@ def build_edition(edition, base) {
     "baseUrl=$projectDir/client/${edition}",
     "out=$installDir/client/main.js"
   ]
-  
+
   if(executeCommand(rcmd) != 0) {
     throw new GradleScriptException("Failed while running r.js for edition '${edition}'", null)
   }
@@ -98,7 +97,8 @@ def build_edition(edition, base) {
   }
 
   copy {
-    from "client/$edition/index.html"
+    from "client/${edition}"
+    include('index.html')
     if(edition == 'cloud') {
       from "client/$edition/access-error.html"
       from "client/$edition/internal-error.html"
