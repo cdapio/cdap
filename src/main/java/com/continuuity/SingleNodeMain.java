@@ -3,17 +3,19 @@
  */
 package com.continuuity;
 
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Copyright;
-import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -22,9 +24,9 @@ import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
+import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -36,35 +38,33 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Singlenode Main
+ * Singlenode Main.
  * NOTE: Use AbstractIdleService
  */
 public class SingleNodeMain {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
-
-  private InMemoryZookeeper zookeeper;
-  private final WebCloudAppService webCloudAppService;
-  private Gateway gateway;
-  private DiscoveryService discoveryService;
-  private MetricsCollectionServerInterface overlordCollection;
-  private MetricsFrontendServerInterface overloadFrontend;
-  private MetadataServerInterface metaDataServer;
-  private AppFabricServer appFabricServer;
   private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
-  private final CConfiguration configuration;
-  private final ImmutableList<Module> modules;
 
-  public SingleNodeMain(ImmutableList<Module> modules, CConfiguration configuration) {
-    this.modules = modules;
+  private final WebCloudAppService webCloudAppService;
+  private final CConfiguration configuration;
+  private final Gateway gateway;
+  private final MetricsCollectionServerInterface overlordCollection;
+  private final MetricsFrontendServerInterface overloadFrontend;
+  private final MetadataServerInterface metaDataServer;
+  private final AppFabricServer appFabricServer;
+
+  private InMemoryZKServer zookeeper;
+
+  public SingleNodeMain(List<Module> modules, CConfiguration configuration) {
     this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService();
 
     Injector injector = Guice.createInjector(modules);
     gateway = injector.getInstance(Gateway.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
     overlordCollection = injector.getInstance(MetricsCollectionServerInterface.class);
     overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
@@ -89,16 +89,16 @@ public class SingleNodeMain {
   protected void startUp(String[] args) throws Exception {
     File zkDir = new File(ZOOKEEPER_DATA_DIR);
     zkDir.mkdir();
-    int port = PortDetector.findFreePort();
-    discoveryService.startAndWait();
-    zookeeper = new InMemoryZookeeper(port, zkDir);
-    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
+    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
+    zookeeper.startAndWait();
+
+    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionStr());
 
     // Start all the services.
     overlordCollection.start(args, configuration);
 
     Service.State state = appFabricServer.startAndWait();
-    if(state != Service.State.RUNNING) {
+    if (state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric.");
     }
 
@@ -124,8 +124,9 @@ public class SingleNodeMain {
       appFabricServer.stopAndWait();
       overloadFrontend.stop(true);
       overlordCollection.stop(true);
+      zookeeper.stopAndWait();
     } catch (Exception e) {
-      LOG.error(StackTraceUtil.toStringStackTrace(e));
+      LOG.error(e.getMessage(), e);
     }
   }
 
@@ -161,14 +162,13 @@ public class SingleNodeMain {
 
   /**
    * Checks if node is in path or no.
-   * @return
    */
   public static boolean nodeExists() {
     try {
       Process proc = Runtime.getRuntime().exec("node -v");
       TimeUnit.SECONDS.sleep(2);
       int exitValue = proc.exitValue();
-      if(exitValue != 0) {
+      if (exitValue != 0) {
         return false;
       }
     } catch (IOException e) {
@@ -191,7 +191,7 @@ public class SingleNodeMain {
 
     // Checks if node exists.
     try {
-      if(! nodeExists()) {
+      if (!nodeExists()) {
         System.err.println("Unable to find nodejs in path. Please add it to PATH.");
       }
     } catch (Exception e) {
@@ -220,15 +220,13 @@ public class SingleNodeMain {
 
 
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
-    // When BigMamaModule is refactored we may move it into one of the singlenode modules.
-    Module hadoopConfModule = getHadoopConfModule();
+    // For the modified local job runner
+    Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
 
-    ImmutableList<Module> modules;
-    if (inMemory) {
-      modules = createInMemoryModules(configuration, hadoopConfModule);
-    } else {
-      modules = createPersistentModules(configuration, hadoopConfModule);
-    }
+    List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
+                                    : createPersistentModules(configuration, hConf);
 
     SingleNodeMain main = new SingleNodeMain(modules, configuration);
     try {
@@ -240,41 +238,31 @@ public class SingleNodeMain {
     }
   }
 
-  private static Module getHadoopConfModule() {
-    return new Module() {
-        @Override
-        public void configure(Binder binder) {
-          Configuration hConf = new Configuration();
-          hConf.addResource("mapred-site-local.xml");
-          hConf.reloadConfiguration();
-          binder.bind(Configuration.class).toInstance(hConf);
-        }
-      };
-  }
-
-  private static ImmutableList<Module> createInMemoryModules(CConfiguration configuration,
-                                                             Module hadoopConfModule) {
+  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
 
     return ImmutableList.of(
-      new BigMamaModule(configuration),
+      new ConfigModule(configuration, hConf),
+      new IOModule(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules(),
-      hadoopConfModule
+      new MetadataModules().getInMemoryModules()
     );
   }
 
-  private static ImmutableList<Module> createPersistentModules(CConfiguration configuration, Module hadoopConfModule) {
-    ImmutableList<Module> modules;
+  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     boolean inVPC = false;
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
-    if(environment.equals("vpc")) {
+    if (environment.equals("vpc")) {
       System.err.println("AppFabric Environment : " + environment);
       inVPC = true;
     }
@@ -292,14 +280,17 @@ public class SingleNodeMain {
 
     configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, levelDBEnabled);
 
-    modules = ImmutableList.of(
-      new BigMamaModule(configuration),
+    return ImmutableList.of(
+      new ConfigModule(configuration, hConf),
+      new IOModule(),
+      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new AppFabricServiceRuntimeModule().getSingleNodeModules(),
+      new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules(),
-      hadoopConfModule
+          useLevelDB ? new DataFabricLevelDBModule(configuration) : new DataFabricModules().getSingleNodeModules(),
+      new MetadataModules().getSingleNodeModules()
     );
-    return modules;
   }
 }
