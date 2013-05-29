@@ -27,11 +27,11 @@ import java.util.TreeMap;
 /**
  * This tests whether Flume events are properly transmitted through the Gateway
  */
-public class GatewayFlumeCollectorAuthTest {
+public class GatewayFlumeCollectorTest {
 
   // Our logger object
   private static final Logger LOG = LoggerFactory
-      .getLogger(GatewayFlumeCollectorAuthTest.class);
+      .getLogger(GatewayFlumeCollectorTest.class);
 
   // A set of constants we'll use in this test
   static final String name = "collect.flume";
@@ -79,13 +79,6 @@ public class GatewayFlumeCollectorAuthTest {
     myConfiguration.setInt(Constants.
         buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 
-    // Authentication configuration
-    myConfiguration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
-    myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
-    Map<String,List<String>> keysAndClusters =
-        new TreeMap<String,List<String>>();
-    keysAndClusters.put(apiKey, Arrays.asList(cluster));
-
     // Now create our Gateway
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
@@ -95,11 +88,6 @@ public class GatewayFlumeCollectorAuthTest {
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
     theGateway.setConsumer(theConsumer);
-
-    // Set the mocked passport client for authentication
-    theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
-
-    theGateway.start(null, myConfiguration);
 
     // make sure the destination stream is defined in the meta data
     MetadataService mds = new MetadataService(this.executor);
@@ -119,15 +107,24 @@ public class GatewayFlumeCollectorAuthTest {
    * @throws Exception If any exceptions happen during the test
    */
   @Test
-  public void testFlumeToQueueWithStreamEventWritingConsumer() throws Exception {
+  public void testWithAuthFlumeToQueueWithStreamEventWritingConsumer() throws Exception {
 
     // Set up our consumer and queues
     StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
     consumer.setExecutor(this.executor);
 
-    // Initialize and start the Gateway
+
+    // Set the mocked passport client for authentication
+    // Authentication configuration
+    myConfiguration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
+    myConfiguration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
+    Map<String,List<String>> keysAndClusters =
+      new TreeMap<String,List<String>>();
+    keysAndClusters.put(apiKey, Arrays.asList(cluster));
+    theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
     theGateway.setConsumer(consumer);
 
+    // Initialize and start the Gateway
     try {
       theGateway.start(null, myConfiguration);
     } catch (ServerException e) {
@@ -141,10 +138,44 @@ public class GatewayFlumeCollectorAuthTest {
     Assert.assertEquals(eventsToSend, consumer.eventsReceived());
     Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
     Assert.assertEquals(0, consumer.eventsFailed());
+    TestUtil.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
+    TestUtil.disableAuth();
+
+    // Stop the Gateway
+    theGateway.stop(false);
+  }
+
+  /**
+   * Test that we can send simulated Flume events to a Queue using
+   * StreamEventWritingConsumer.
+   *
+   * @throws Exception If any exceptions happen during the test
+   */
+  @Test
+  public void testWithNoAuthFlumeToQueueWithStreamEventWritingConsumer() throws Exception {
+
+    // Set up our consumer and queues
+    StreamEventWritingConsumer consumer = new StreamEventWritingConsumer();
+    consumer.setExecutor(this.executor);
+
+    // Initialize and start the Gateway
+    myConfiguration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, false);
+    theGateway.setConsumer(consumer);
+
+    try {
+      theGateway.start(null, myConfiguration);
+    } catch (ServerException e) {
+      // We don't care about the reconfigure problem in this test
+      LOG.debug(e.getMessage());
+    }
+
+    // Send some events
+    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
+    Assert.assertEquals(0, consumer.eventsFailed());
     TestUtil.consumeQueueAsEvents(this.executor, destination, name,
                                   eventsToSend);
-
-    TestUtil.disableAuth();
 
     // Stop the Gateway
     theGateway.stop(false);
