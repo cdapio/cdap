@@ -41,7 +41,7 @@ public class MapReduceContextProvider {
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_OUTPUT_DATASET = "hconf.program.output.dataset";
-  // todo: do better job wrt tx serde
+
   private static final String HCONF_ATTR_TX_WRITE_VERSION = "hconf.program.tx.write_version";
   private static final String HCONF_ATTR_TX_READ_POINTER_WRITE_POINT = "hconf.program.tx.read_pointer.write";
   private static final String HCONF_ATTR_TX_READ_POINTER_READ_POINT = "hconf.program.tx.read_pointer.read";
@@ -192,10 +192,9 @@ public class MapReduceContextProvider {
   }
 
   private void setTx(Transaction tx) {
-    // todo: do better job wrt tx serde
     ReadPointer readPointer = tx.getReadPointer();
     if (!(readPointer instanceof MemoryReadPointer)) {
-      String message = String.format("Unsupported readPointer implementation %s, only MemortReadPointer is supported",
+      String message = String.format("Unsupported readPointer implementation %s, only MemoryReadPointer is supported",
                                      readPointer.getClass().getName());
       Log.error(message);
       throw new IllegalArgumentException(message);
@@ -211,7 +210,6 @@ public class MapReduceContextProvider {
   }
 
   private Transaction getTx() {
-    // todo: do better job wrt tx serde
     long writeVersion = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_TX_WRITE_VERSION));
     long writePoint = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_TX_READ_POINTER_WRITE_POINT));
     long readPoint = Long.valueOf(jobContext.getConfiguration().get(HCONF_ATTR_TX_READ_POINTER_READ_POINT));
