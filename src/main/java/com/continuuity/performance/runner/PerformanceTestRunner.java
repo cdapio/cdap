@@ -6,31 +6,46 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.authorization.AuthorizationFactory;
+import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
+import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.internal.test.DefaultProcedureClient;
 import com.continuuity.internal.test.ProcedureClientFactory;
 import com.continuuity.internal.test.bytecode.FlowletRewriter;
 import com.continuuity.internal.test.bytecode.ProcedureRewriter;
+import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
-import com.continuuity.performance.application.AngryMamaModule;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
 import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
 import com.continuuity.performance.application.DefaultBenchmarkManager;
 import com.continuuity.performance.application.MensaMetricsReporter;
 import com.continuuity.performance.application.MultiThreadedStreamWriter;
+import com.continuuity.pipeline.PipelineFactory;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.ProcedureClient;
@@ -50,6 +65,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -360,7 +376,11 @@ public final class PerformanceTestRunner {
 
     injector = Guice
       .createInjector(dataFabricModule,
-                      new AngryMamaModule(configuration),
+                      new ConfigModule(configuration),
+                      new IOModule(),
+                      new LocationRuntimeModule().getInMemoryModules(),
+                      new DiscoveryRuntimeModule().getInMemoryModules(),
+                      new ProgramRunnerRuntimeModule().getInMemoryModules(),
                       new AbstractModule() {
                         @Override
                         protected void configure() {
@@ -378,7 +398,14 @@ public final class PerformanceTestRunner {
                       new Module() {
                         @Override
                         public void configure(Binder binder) {
+                          binder.bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
+                          binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
+
+                          binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
+                          binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
                           binder.bind(AppFabricService.Iface.class).toInstance(appFabricService);
+                          binder.bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+                          binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
                         }
                       }
       );
