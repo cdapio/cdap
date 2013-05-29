@@ -13,7 +13,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.apache.hadoop.conf.Configuration;
+import com.google.inject.name.Names;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -43,7 +43,9 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new BigMamaModule(cConf),
       new MetricsModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules()
+      new MetadataModules().getInMemoryModules(),
+      // Every mr task talks to datastore directly bypassing oracle
+      NoOracleOpexModule.INSTANCE
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -55,8 +57,20 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new MetricsModules().getSingleNodeModules(),
       Constants.InMemoryPersistenceType.LEVELDB == persistenceType ?
         new DataFabricLevelDBModule(cConf) : new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules()
+      new MetadataModules().getSingleNodeModules(),
+      // Every mr task talks to datastore directly bypassing oracle
+      NoOracleOpexModule.INSTANCE
     );
     return Guice.createInjector(singleNodeModules);
+  }
+
+  private static class NoOracleOpexModule implements Module {
+    private static NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
+
+    @Override
+    public void configure(Binder binder) {
+      binder.bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
+        .toInstance(false);
+    }
   }
 }

@@ -10,24 +10,13 @@ import java.io.IOException;
 class DataSetOutputCommitter extends OutputCommitter {
   @Override
   public void setupJob(final JobContext jobContext) throws IOException {
-    // TODO: start transaction
-  }
-
-  @Override
-  public void commitJob(final JobContext jobContext) throws IOException {
-    super.commitJob(jobContext);
-    // TODO: commit transaction
-  }
-
-  @Override
-  public void abortJob(final JobContext jobContext, final JobStatus.State state) throws IOException {
-    super.abortJob(jobContext, state);
-    // TODO: rollback transaction
+    // DO NOTHING, see needsTaskCommit() comment
   }
 
   @Override
   public boolean needsTaskCommit(final TaskAttemptContext taskContext) throws IOException {
-    // Don't do commit of individual task work. Work is committed on job level
+    // Don't do commit of individual task work. Work is committed on job level. Ops are flushed on a Mapper/Reducer
+    // wrapper level
     return false;
   }
 
