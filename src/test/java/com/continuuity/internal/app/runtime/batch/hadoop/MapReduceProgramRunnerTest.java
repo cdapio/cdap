@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-
   private static Injector injector = TestHelper.getInjector();
 
   @Test
