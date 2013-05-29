@@ -10,7 +10,7 @@ import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowDescriptor;
@@ -18,8 +18,7 @@ import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -142,13 +141,12 @@ public class DeployRunStopTest {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
     configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
 
-    final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new BigMamaModule(configuration));
+    final Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     server = injector.getInstance(AppFabricService.Iface.class);
 
     // Create location factory.
-    lf = injector.getInstance(LocationFactory.class);
+    lf = injector.getInstance(com.continuuity.weave.filesystem.LocationFactory.class);
 
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);

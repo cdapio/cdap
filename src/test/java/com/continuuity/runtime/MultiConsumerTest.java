@@ -14,33 +14,23 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.archive.JarFinder;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -130,6 +120,7 @@ public class MultiConsumerTest {
     // TODO: Fix this test case to really test with numGroups settings.
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(MultiApp.class);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getProcessorType().name()));

@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;

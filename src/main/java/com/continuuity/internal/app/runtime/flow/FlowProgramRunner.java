@@ -9,7 +9,6 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -17,6 +16,7 @@ import com.continuuity.app.runtime.RunId;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -86,7 +86,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         int instanceCount = entry.getValue().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
-                       startFlowlet(program, new FlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
+                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
         }
       }
     } catch (Throwable t) {
@@ -112,35 +112,13 @@ public final class FlowProgramRunner implements ProgramRunner {
                                .run(program, options);
   }
 
-  private final static class FlowletOptions implements ProgramOptions {
-
-    private final String name;
-    private final Arguments arguments;
-    private final Arguments userArguments;
-
-    private FlowletOptions(String name, int instanceId, int instances, RunId runId) {
-      this.name = name;
-      this.arguments = new BasicArguments(
-        ImmutableMap.of("instanceId", Integer.toString(instanceId),
-                        "instances", Integer.toString(instances),
-                        "runId", runId.getId()));
-      this.userArguments = new BasicArguments();
-    }
-
-    @Override
-    public String getName() {
-      return name;
-    }
-
-    @Override
-    public Arguments getArguments() {
-      return arguments;
-    }
-
-    @Override
-    public Arguments getUserArguments() {
-      return userArguments;
-    }
+  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances, RunId runId) {
+    return new SimpleProgramOptions(name,
+                                    new BasicArguments(ImmutableMap.of(
+                                      "instanceId", Integer.toString(instanceId),
+                                      "instances", Integer.toString(instances),
+                                      "runId", runId.getId())),
+                                    new BasicArguments());
   }
 
   private final class FlowProgramController extends AbstractProgramController {
@@ -294,7 +272,8 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Last create more instances
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
-                     startFlowlet(program, new FlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
+                     startFlowlet(program,
+                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
       }
     }
 

@@ -5,7 +5,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Charsets;
@@ -35,7 +35,7 @@ public final class ProgramBundle {
    * Clones a give application archive using the {@link com.continuuity.archive.ArchiveBundler}.
    * A new manifest file will be amended to the jar.
    *
-   * @return An instance of {@link com.continuuity.filesystem.Location} containing the program JAR.
+   * @return An instance of {@link com.continuuity.weave.filesystem.Location} containing the program JAR.
    *
    * @throws java.io.IOException in case of any issue related to copying jars.
    */

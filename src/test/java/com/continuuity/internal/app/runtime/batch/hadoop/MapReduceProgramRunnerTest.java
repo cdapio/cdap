@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.app.DefaultId;
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -18,7 +18,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
@@ -48,7 +47,12 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MapReduceProgramRunnerTest {
-  private static Injector injector = TestHelper.getInjector();
+  private static Injector injector;
+
+  @BeforeClass
+  public static void beforeClass() {
+    injector = Guice.createInjector(new AppFabricTestModule(TestHelper.configuration));
+  }
 
   @Test
   public void testWordCount() throws Exception {

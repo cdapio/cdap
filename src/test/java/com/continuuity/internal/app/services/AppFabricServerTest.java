@@ -4,63 +4,47 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.guice.BigMamaModule;
+import com.continuuity.TempFolder;
+import com.continuuity.app.guice.AppFabricTestModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.continuuity.weave.internal.utils.Networks;
+import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class AppFabricServerTest {
   private static AppFabricServer server;
-  private static DiscoveryService discoveryService;
   private static CConfiguration configuration;
 
   @BeforeClass
   public static void before() throws Exception {
+    TempFolder tempFolder = new TempFolder();
     configuration = CConfiguration.create();
-    configuration.setInt(Constants.CFG_APP_FABRIC_SERVER_PORT, 45000);
-    configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir") + "/app");
-    configuration.set(Constants.CFG_APP_FABRIC_TEMP_DIR, System.getProperty("java.io.tmpdir") + "/temp");
+    configuration.setInt(Constants.CFG_APP_FABRIC_SERVER_PORT, Networks.getRandomPort());
+    configuration.set("app.output.dir", tempFolder.newFolder("app").getAbsolutePath());
+    configuration.set("app.tmp.dir", tempFolder.newFolder("temp").getAbsolutePath());
 
-    Injector injector = Guice.createInjector(
-      new BigMamaModule(configuration),
-      new DataFabricModules().getInMemoryModules()
-    );
+    Injector injector = Guice.createInjector(new AppFabricTestModule(configuration));
 
     server = injector.getInstance(AppFabricServer.class);
-    discoveryService = injector.getInstance(DiscoveryService.class);
-    discoveryService.startAndWait();
   }
 
   @Test
   public void startStopServer() throws Exception {
-    ListenableFuture<Service.State> future = server.start();
-    Futures.addCallback(future, new FutureCallback<Service.State>() {
-      @Override
-      public void onSuccess(Service.State result) {
-        Assert.assertTrue(true);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        Assert.assertTrue(false);
-      }
-    });
-
-    Service.State state = future.get();
+    Service.State state = server.startAndWait();
     Assert.assertTrue(state == Service.State.RUNNING);
+    TimeUnit.SECONDS.sleep(5);
     state = server.stopAndWait();
     Assert.assertTrue(state == Service.State.TERMINATED);
   }

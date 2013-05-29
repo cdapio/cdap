@@ -29,6 +29,7 @@ testrunner {
 dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
@@ -42,10 +43,25 @@ dependencies {
   compile libraries.google_guice_assistedinject
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
+  compile libraries.jcl_over_slf4j
   compile libraries.jsr_305
   compile libraries.netty
-  compile libraries.hadoop_minicluster
+  compile (libraries.hadoop_minicluster) {
+    exclude group: 'commons-logging'
+  }
+  compile libraries.weave_api
+  compile libraries.weave_common
+  compile (libraries.weave_yarn) {
+    exclude group: 'org.apache.hadoop'
+  }
 
+  compile libraries.hadoop_annotations
+  compile libraries.hadoop_auth
+  compile libraries.hadoop_common
+  compile libraries.hadoop_yarn
+  compile libraries.hadoop_yarn_api
+  compile libraries.hadoop_yarn_client
+  compile libraries.hadoop_yarn_common
 
   // Thrift related stuff.
   thriftCompile libraries.thrift

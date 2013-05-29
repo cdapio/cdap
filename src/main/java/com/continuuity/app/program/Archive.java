@@ -7,7 +7,7 @@ package com.continuuity.app.program;
 import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 
 import java.io.IOException;
 import java.util.jar.Manifest;

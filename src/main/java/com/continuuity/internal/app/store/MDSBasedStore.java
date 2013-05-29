@@ -20,8 +20,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
@@ -29,6 +27,8 @@ import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableTable;
@@ -81,7 +81,7 @@ public class MDSBasedStore implements Store {
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
                        MetadataService.Iface metaDataService,
-                       LocationFactory locationFactory) {
+                       com.continuuity.weave.filesystem.LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
     this.metaDataService = metaDataService;
     this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);

@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;

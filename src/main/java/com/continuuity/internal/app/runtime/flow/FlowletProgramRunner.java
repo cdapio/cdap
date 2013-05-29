@@ -103,13 +103,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory txAgentSupplierFactory,
-                              QueueReaderFactory queueReaderFactory, LogWriter logWriter) {
+                              QueueReaderFactory queueReaderFactory) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.txAgentSupplierFactory = txAgentSupplierFactory;
     this.queueReaderFactory = queueReaderFactory;
-    CAppender.logWriter = logWriter;
     queueConsumerSuppliers = ImmutableList.of();
+  }
+
+  @Inject(optional = true)
+  void setLogWriter(LogWriter logWriter) {
+    CAppender.logWriter = logWriter;
   }
 
   @Override

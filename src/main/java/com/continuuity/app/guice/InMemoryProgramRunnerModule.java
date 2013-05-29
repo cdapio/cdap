@@ -4,67 +4,46 @@
 
 package com.continuuity.app.guice;
 
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
-import com.continuuity.internal.app.runtime.batch.MapReduceRuntimeService;
-import com.continuuity.internal.io.SchemaGenerator;
-import com.continuuity.app.authorization.AuthorizationFactory;
-import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
-import com.continuuity.filesystem.LocationFactory;
-import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
-import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueueReader;
-import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
+import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
-import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import com.continuuity.internal.app.services.DefaultAppFabricService;
-import com.continuuity.internal.app.store.MDSStoreFactory;
-import com.continuuity.internal.discovery.InMemoryDiscoveryService;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.pipeline.PipelineFactory;
+import com.continuuity.weave.api.ServiceAnnouncer;
+import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.base.Preconditions;
-import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Named;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 /**
  *
  */
-public class BigMamaModule extends AbstractModule {
-
-  private final CConfiguration configuration;
-
-  public BigMamaModule(CConfiguration configuration) {
-    this.configuration = configuration;
-  }
+final class InMemoryProgramRunnerModule extends PrivateModule {
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.
@@ -72,15 +51,12 @@ public class BigMamaModule extends AbstractModule {
   @Override
   protected void configure() {
 
-    // Bind config
-    bind(CConfiguration.class).toInstance(configuration);
+    // Bind and expose LogWriter (a bit hacky, but needed by MapReduce for now)
+    bind(LogWriter.class).to(LocalLogWriter.class);
+    expose(LogWriter.class);
 
-    // Bind LogWriter
-    bind(LogWriter.class).toInstance(new LocalLogWriter(configuration));
-
-    // Bind Discovery service
-    bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
-    bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
+    // Bind ServiceAnnouncer for procedure.
+    bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
@@ -91,20 +67,12 @@ public class BigMamaModule extends AbstractModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    // Note: Expose for test cases. Need to refactor test cases.
+    expose(ProgramRunnerFactory.class);
 
-    // Bind runtime service
+    // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
-
-    bind(SchemaGenerator.class).to(ReflectionSchemaGenerator.class);
-
-    bind(LocationFactory.class).to(LocalLocationFactory.class);
-    bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
-    bind(ManagerFactory.class).to(SyncManagerFactory.class);
-    bind(StoreFactory.class).to(MDSStoreFactory.class);
-    bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-    bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-    bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-    bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
+    expose(ProgramRuntimeService.class);
 
     // For binding DataSet transaction stuff
     install(new PrivateModule() {
@@ -122,11 +90,13 @@ public class BigMamaModule extends AbstractModule {
     install(new FactoryModuleBuilder()
             .implement(QueueReader.class, SingleQueueReader.class)
             .build(QueueReaderFactory.class));
-
-    // For binding IO stuff
-    install(new IOModule());
   }
 
+  @Singleton
+  @Provides
+  private LocalLogWriter providesLogWriter(CConfiguration configuration) {
+    return new LocalLogWriter(configuration);
+  }
 
   @Singleton
   private static final class InMemoryFlowProgramRunnerFactory implements ProgramRunnerFactory {
@@ -143,6 +113,35 @@ public class BigMamaModule extends AbstractModule {
       Provider<ProgramRunner> provider = providers.get(programType);
       Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
       return provider.get();
+    }
+  }
+
+  @Singleton
+  private static final class DiscoveryServiceAnnouncer implements ServiceAnnouncer {
+
+    private final DiscoveryService discoveryService;
+    private final InetAddress hostname;
+
+    @Inject
+    private DiscoveryServiceAnnouncer(DiscoveryService discoveryService,
+                                      @Named("config.hostname") InetAddress hostname) {
+      this.discoveryService = discoveryService;
+      this.hostname = hostname;
+    }
+
+    @Override
+    public Cancellable announce(final String serviceName, final int port) {
+      return discoveryService.register(new Discoverable() {
+        @Override
+        public String getName() {
+          return serviceName;
+        }
+
+        @Override
+        public InetSocketAddress getSocketAddress() {
+          return new InetSocketAddress(hostname, port);
+        }
+      });
     }
   }
 }

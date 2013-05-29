@@ -10,12 +10,11 @@ import com.continuuity.app.DefaultId;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.filesystem.Location;
-import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.StageContext;
+import com.continuuity.weave.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +27,7 @@ public class ProgramGenerationStageTest {
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
     configuration.set(Constants.CFG_APP_FABRIC_OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    LocationFactory lf = new LocalLocationFactory();
+    LocationFactory lf = new com.continuuity.weave.filesystem.LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
     ApplicationSpecification appSpec = new ToyApp().configure();
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());

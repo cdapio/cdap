@@ -31,9 +31,7 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.filesystem.LocationFactory;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
@@ -42,6 +40,7 @@ import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -76,7 +75,7 @@ public class MDSBasedStoreTest {
             bind(OperationExecutor.class).to(NoOperationExecutor.class);
             bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
-            bind(LocationFactory.class).to(LocalLocationFactory.class);
+            bind(com.continuuity.weave.filesystem.LocationFactory.class).to(com.continuuity.weave.filesystem.LocalLocationFactory.class);
           }
         }
       );
@@ -136,7 +135,7 @@ public class MDSBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().build(), new com.continuuity.weave.filesystem.LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()

@@ -7,7 +7,7 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.ResourceIdentifier;
 import com.continuuity.app.services.ResourceInfo;
-import com.continuuity.filesystem.Location;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Objects;
 
 import java.io.IOException;

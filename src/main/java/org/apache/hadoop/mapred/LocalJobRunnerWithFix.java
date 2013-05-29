@@ -18,20 +18,7 @@
 
 package org.apache.hadoop.mapred;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -64,7 +51,19 @@ import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.ReflectionUtils;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Implements MapReduce locally, in-process, for debugging. */
 @InterfaceAudience.Private
@@ -154,7 +153,8 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       // Alternatively to doing it here, we could use job.addFileToClassPath(jobJar) before submitting job in client
       // code, but we don't want to mess with "correct" distributed execution (which adds job jar in classpath).
       DistributedCache.addFileToClassPath(new Path(conf.getJar()), conf, FileSystem.get(conf));
-      ClientDistributedCacheManager.determineTimestampsAndCacheVisibilities(conf);
+      ClientDistributedCacheManager.determineTimestamps(conf);
+      ClientDistributedCacheManager.determineCacheVisibilities(conf);
 
       // Manage the distributed cache.  If there are files to be copied,
       // this will trigger localFile to be re-written again.
