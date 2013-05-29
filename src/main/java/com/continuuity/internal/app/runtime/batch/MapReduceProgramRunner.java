@@ -37,6 +37,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.google.inject.internal.util.$Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -49,6 +50,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
@@ -68,12 +70,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
-                                OperationExecutor opex,
-                                LogWriter logWriter) {
+                                OperationExecutor opex) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.opex = opex;
-    CAppender.logWriter = logWriter;
+  }
+
+  @Inject (optional = true)
+  void setLogWriter(@Nullable LogWriter logWriter) {
+    if (logWriter != null) {
+      CAppender.logWriter = logWriter;
+    }
   }
 
   @Override
