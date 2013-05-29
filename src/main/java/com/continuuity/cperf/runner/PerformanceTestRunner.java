@@ -332,11 +332,7 @@ public final class PerformanceTestRunner {
   public void clearAppFabric() {
     try {
       // use dummy authorization token
-      if (StringUtils.isNotEmpty(accountId)) {
         appFabricService.reset(new AuthToken("appFabricTest"), accountId);
-      } else {
-        appFabricService.reset(new AuthToken("appFabricTest"), "developer");
-      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
