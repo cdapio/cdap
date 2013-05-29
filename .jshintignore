@@ -1,0 +1,3 @@
+./web-cloud-app/client/core/lib/
+./web-cloud-app/server/node_modules/
+./web-cloud-app/server/thrift_bindings/
