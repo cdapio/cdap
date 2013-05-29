@@ -1,15 +1,12 @@
 package com.continuuity.gateway;
 
-import com.continuuity.app.guice.BigMamaModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.discovery.DiscoveryService;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.connector.AppFabricRestConnector;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.passport.PassportConstants;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -45,14 +42,9 @@ public class AppFabricConnectorTest {
                          PortDetector.findFreePort());
     configuration.set("app.output.dir", "/tmp/app");
     configuration.set("app.tmp.dir", "/tmp/temp");
-    Injector injector = Guice.createInjector(
-      new BigMamaModule(configuration),
-      new DataFabricModules().getInMemoryModules()
-    );
+    Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
 
     // Start the discovery service. Used to find where FAR is running.
-    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
-    discoveryService.startAndWait();
     TimeUnit.SECONDS.sleep(2);
 
     // Get the instance of AppFabricServer, start it.

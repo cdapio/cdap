@@ -3,10 +3,9 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type
@@ -52,11 +51,6 @@ public abstract class Connector {
    * This is for discovery service.
    */
   private DiscoveryServiceClient discoveryServiceClient;
-
-  /**
-   * This will be used for zookeeper client discovery by all connectors.
-   */
-  private ServiceDiscovery serviceDiscovery;
 
   /**
    * Authenticates requests to this connector.
@@ -128,25 +122,6 @@ public abstract class Connector {
 
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
-  }
-
-  /**
-   * Set the service discovery client, should only be called by Gateway main.
-   *
-   * @param discovery the discovery client to use
-   */
-  @Deprecated
-  void setServiceDiscovery(ServiceDiscovery discovery) {
-    this.serviceDiscovery = discovery;
-  }
-
-  /**
-   * Get the service discovery client of this connector, to be called by
-   * implementing subclasses.
-   */
-  @Deprecated
-  public ServiceDiscovery getServiceDiscovery() {
-    return serviceDiscovery;
   }
 
   /**

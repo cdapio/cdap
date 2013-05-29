@@ -7,14 +7,13 @@ import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.discovery.DiscoveryServiceClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.gateway.auth.PassportVPCAuthenticator;
-import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -80,11 +79,6 @@ public class Gateway implements Server {
   private DiscoveryServiceClient discoveryServiceClient;
 
   private GatewayMetrics gatewayMetrics = new GatewayMetrics();
-
-  /**
-   * This will be shared by all connectors for zk service discovery.
-   */
-  private ServiceDiscovery serviceDiscovery;
 
   /**
    * The list of connectors for this Gateway. This list is populated in
@@ -160,8 +154,6 @@ public class Gateway implements Server {
    */
   public void start(String[] args, CConfiguration conf) throws
     ServerException {
-
-    discoveryServiceClient.startAndWait();
 
     // Configure ourselves first
     configure(conf);
@@ -321,14 +313,6 @@ public class Gateway implements Server {
     // Save the configuration so we can use it again later
     myConfiguration = configuration;
 
-    // try to establish service discovery
-    boolean doDiscovery = configuration.getBoolean(
-      Constants.CONFIG_DO_SERVICE_DISCOVERY, true);
-    if (doDiscovery) {
-      this.serviceDiscovery = new ServiceDiscovery(configuration);
-      this.serviceDiscovery.initialize();
-    }
-
     // Determine cluster instance name for authentication purposes
     this.clusterName = myConfiguration.get(Constants.CONFIG_CLUSTER_NAME,
                                            Constants.CONFIG_CLUSTER_NAME_DEFAULT);
@@ -391,10 +375,6 @@ public class Gateway implements Server {
         }
 
         newConnector.setDiscoveryServiceClient(discoveryServiceClient);
-
-        // set the connector's discovery client
-        newConnector.setServiceDiscovery(this.serviceDiscovery);
-
         // set the connector's authenticator
         newConnector.setAuthenticator(this.authenticator);
 

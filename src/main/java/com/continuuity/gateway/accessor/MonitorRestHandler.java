@@ -5,11 +5,11 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.FlowIdentifier;
 import com.continuuity.app.services.FlowStatus;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.discovery.Discoverable;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.util.NettyRestHandler;
@@ -17,7 +17,7 @@ import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
 import com.continuuity.metrics2.thrift.FlowArgument;
 import com.continuuity.metrics2.thrift.MetricsFrontendService;
-import com.google.common.collect.Lists;
+import com.continuuity.weave.discovery.Discoverable;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -34,7 +34,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -90,6 +89,10 @@ public class MonitorRestHandler extends NettyRestHandler {
    */
   private CMetrics metrics;
 
+  private final EndpointStrategy flowEndpoints;
+
+  private final EndpointStrategy metricsEndpoints;
+
   /**
    * Constructor requires the accessor that created this.
    *
@@ -99,8 +102,12 @@ public class MonitorRestHandler extends NettyRestHandler {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
     this.pathPrefix =
-      accessor.getHttpConfig().getPathPrefix() +
-        accessor.getHttpConfig().getPathMiddle();
+        accessor.getHttpConfig().getPathPrefix() +
+            accessor.getHttpConfig().getPathMiddle();
+    flowEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
+                                                 .discover(Constants.FLOW_SERVICE_NAME));
+    metricsEndpoints = new RandomEndpointStrategy(accessor.getDiscoveryServiceClient()
+                                                    .discover(Constants.METRICS_SERVICE_NAME));
   }
 
   // a metrics thrift client for every thread
@@ -115,39 +122,20 @@ public class MonitorRestHandler extends NettyRestHandler {
    * generic method to discover a thrift service and start up the
    * thrift transport and protocol layer.
    */
-  private TProtocol getThriftProtocol(String serviceName)
-    throws ServerException {
-
-    ImmutablePair<String, Integer> addr;
-    if (Constants.FLOW_SERVICE_NAME.equals(serviceName)) {
-      List<Discoverable> endpoints
-        = Lists.newArrayList(accessor.getDiscoveryServiceClient().discover("app.fabric.service"));
-      if (endpoints.isEmpty()) {
-        throw new ServerException("Unable to retrieve endpoint for app fabric service");
-      }
-      Collections.shuffle(endpoints);
-      InetSocketAddress endpoint = endpoints.get(0).getSocketAddress();
-      addr = new ImmutablePair<String, Integer>(endpoint.getHostName(), endpoint.getPort());
-    } else {
-      // Remove this once the metrics registers with the new DiscoveryServiceClient.
-      addr = this.accessor.getServiceDiscovery().getServiceAddress(serviceName);
-    }
-
-    // may return null
-    if (addr == null) {
-      String message = String.format("Service '%s' is not registered in " +
-                                       "discovery service.", serviceName);
+  private TProtocol getThriftProtocol(String serviceName, EndpointStrategy endpointStrategy) throws ServerException {
+    Discoverable endpoint = endpointStrategy.pick();
+    if (endpoint == null) {
+      String message = String.format("Service '%s' is not registered in discovery service.", serviceName);
       LOG.error(message);
       throw new ServerException(message);
     }
     TTransport transport = new TFramedTransport(
-      new TSocket(addr.getFirst(), addr.getSecond()));
+        new TSocket(endpoint.getSocketAddress().getHostName(), endpoint.getSocketAddress().getPort()));
     try {
       transport.open();
     } catch (TTransportException e) {
-      String message = String.format("Unable to connect to thrift " +
-                                       "service %s at %s:%d. Reason: %s", serviceName, addr.getFirst(),
-                                     addr.getSecond(), e.getMessage());
+      String message = String.format("Unable to connect to thrift service %s at %s. Reason: %s",
+                                     serviceName, endpoint.getSocketAddress(), e.getMessage());
       LOG.error(message);
       throw new ServerException(message, e);
     }
@@ -164,12 +152,10 @@ public class MonitorRestHandler extends NettyRestHandler {
    *                         service fails.
    */
   private MetricsFrontendService.Client getMetricsClient()
-    throws ServerException {
-    if (metricsClients.get() == null ||
-      !metricsClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol(Constants.METRICS_SERVICE_NAME);
-      MetricsFrontendService.Client client = new
-        MetricsFrontendService.Client(protocol);
+      throws ServerException {
+    if (metricsClients.get() == null || !metricsClients.get().getInputProtocol().getTransport().isOpen()) {
+      TProtocol protocol = getThriftProtocol(Constants.METRICS_SERVICE_NAME, metricsEndpoints);
+      MetricsFrontendService.Client client = new MetricsFrontendService.Client(protocol);
       metricsClients.set(client);
     }
     return metricsClients.get();
@@ -184,9 +170,8 @@ public class MonitorRestHandler extends NettyRestHandler {
    *                         service fails.
    */
   private AppFabricService.Client getFlowClient() throws ServerException {
-    if (flowClients.get() == null ||
-      !flowClients.get().getInputProtocol().getTransport().isOpen()) {
-      TProtocol protocol = getThriftProtocol(Constants.FLOW_SERVICE_NAME);
+    if (flowClients.get() == null || !flowClients.get().getInputProtocol().getTransport().isOpen()) {
+      TProtocol protocol = getThriftProtocol(Constants.FLOW_SERVICE_NAME, flowEndpoints);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       flowClients.set(client);
     }
@@ -397,8 +382,7 @@ public class MonitorRestHandler extends NettyRestHandler {
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
     throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
-    LOG.error("Exception caught for connector '" +
-                this.accessor.getName() + "'. ", e.getCause());
+    LOG.error("Exception caught for connector '" + this.accessor.getName() + "'. ", e.getCause());
     if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();

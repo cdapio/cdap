@@ -33,6 +33,8 @@ dependencies {
   compile libraries.avro_ipc
   compile libraries.flume_ng_core
   compile libraries.flume_ng_sdk
+
+  compile libraries.weave_discovery_api
 }
 
 test {
