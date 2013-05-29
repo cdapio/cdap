@@ -9,6 +9,7 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit;
  * An abstract opex client provider that implements common functionality.
  */
 public abstract class AbstractClientProvider implements OpexClientProvider {
+
+  private static final long DISCOVERY_TIMEOUT_SEC = 10;
 
   private static final Logger Log =
       LoggerFactory.getLogger(AbstractClientProvider.class);
@@ -81,22 +84,38 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
     String address;
     int port;
 
-    Discoverable endpoint = endpointStrategy == null ? null : endpointStrategy.pick();
-
-    if (endpoint == null) {
+    if (endpointStrategy == null) {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
       address = configuration.get(Constants.CFG_DATA_OPEX_SERVER_ADDRESS,
-          Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
+                                  Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
       port = configuration.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
-          Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
+                                  Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
       Log.info("Service assumed at " + address + ":" + port);
     } else {
+      Discoverable endpoint = endpointStrategy.pick();
+      StopWatch stopWatch = new StopWatch();
+      stopWatch.start();
+      stopWatch.split();
+      while (endpoint == null && (stopWatch.getSplitTime() / 1000) < DISCOVERY_TIMEOUT_SEC) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(500);
+          endpoint = endpointStrategy.pick();
+          stopWatch.split();
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+      if (endpoint == null) {
+        Log.error("Unable to discover opex service.");
+        throw new TException("Unable to discover opex service.");
+      }
       address = endpoint.getSocketAddress().getHostName();
       port = endpoint.getSocketAddress().getPort();
       Log.info("Service discovered at " + address + ":" + port);
     }
+
     // now we have an address and port, try to connect a client
     if (timeout < 0) {
       timeout = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT,
@@ -120,5 +139,4 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
         address + ":" + port);
     return newClient;
   }
-
 }
