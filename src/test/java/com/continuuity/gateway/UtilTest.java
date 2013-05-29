@@ -4,8 +4,6 @@ import com.continuuity.gateway.util.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.net.ssl.KeyManagerFactory;
-
 public class UtilTest {
 
   static final byte ff = (byte)0xff;

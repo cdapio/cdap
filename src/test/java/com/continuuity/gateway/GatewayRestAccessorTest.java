@@ -12,6 +12,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static org.junit.Assert.assertTrue;
+
 /**
  * This test configures a gateway with a test accessor as the single connector
  * and verifies that key/values that have been persisted to the in-memory data
@@ -21,8 +28,7 @@ public class GatewayRestAccessorTest {
 
   // Our logger object
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory
-      .getLogger(GatewayRestAccessorTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GatewayRestAccessorTest.class);
 
   // A set of constants we'll use in these tests
   static String name = "access.rest";
@@ -30,11 +36,12 @@ public class GatewayRestAccessorTest {
   static final String path = "/table/";
   static final int valuesToGet = 10;
   static int port = 10000;
+  static final String apiKey = "SampleTestApiKey";
+  static final String cluster = "SampleTestClusterName";
 
-  // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
-
   private OperationExecutor executor;
+  private CConfiguration configuration;
 
   /**
    * Create a new Gateway instance to use in these set of tests. This method
@@ -44,7 +51,7 @@ public class GatewayRestAccessorTest {
    */
   @Before
   public void setupGateway() throws Exception {
-    CConfiguration configuration = new CConfiguration();
+    configuration = new CConfiguration();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(new GatewayTestModule(configuration));
@@ -54,7 +61,6 @@ public class GatewayRestAccessorTest {
     port = PortDetector.findFreePort();
 
     // Create and populate a new config object
-
     configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
@@ -72,8 +78,6 @@ public class GatewayRestAccessorTest {
     theGateway.setConsumer(new TestUtil.NoopConsumer());
     theGateway.setDiscoveryServiceClient(
         injector.getInstance(DiscoveryServiceClient.class));
-    theGateway.start(null, configuration);
-
   } // end of setupGateway
 
 
@@ -83,17 +87,63 @@ public class GatewayRestAccessorTest {
    * @throws Exception If any exceptions happen during the test
    */
   @Test
-  public void testReadFromGateway() throws Exception {
+  public void testWithNoAuthReadFromGateway() throws Exception {
+    try {
+      theGateway.start(null, configuration);
 
-    // Send some REST events
-    for (int i = 0; i < valuesToGet; i++) {
-      TestUtil.writeAndGet(this.executor,
-          "http://localhost:" + port + prefix + path,
-          "key" + i, "value" + i);
+      // Send some REST events
+      for (int i = 0; i < valuesToGet; i++) {
+        TestUtil.writeAndGet(this.executor,
+            "http://localhost:" + port + prefix + path,
+            "key" + i, "value" + i);
+      }
+      // Stop the Gateway
+    } finally {
+      theGateway.stop(true);
     }
+  }
 
-    // Stop the Gateway
-    theGateway.stop(false);
+  @Test
+  public void testWithAuthReadFromGateway() throws Exception {
+    // Authentication configuration
+    configuration.setBoolean(Constants.CONFIG_AUTHENTICATION_REQUIRED, true);
+    configuration.set(Constants.CONFIG_CLUSTER_NAME, cluster);
+    Map<String,List<String>> keysAndClusters =
+      new TreeMap<String,List<String>>();
+    keysAndClusters.put(apiKey, Arrays.asList(cluster));
+    theGateway.setPassportClient(new MockedPassportClient(keysAndClusters));
+
+    try {
+      theGateway.start(null, configuration);
+
+      // Enable authentication with the correct key
+      TestUtil.enableAuth(apiKey);
+      // Send some REST events
+      for (int i = 0; i < valuesToGet; i++) {
+        TestUtil.writeAndGet(this.executor,
+                             "http://localhost:" + port + prefix + path,
+                             "key" + i, "value" + i);
+      }
+
+      // Enable authentication with the wrong key
+      TestUtil.enableAuth(apiKey + "BAD");
+      // Send some REST events
+      for (int i = 0; i < valuesToGet; i++) {
+        // Except a security exception to be thrown
+        try {
+          TestUtil.writeAndGet(this.executor,
+                               "http://localhost:" + port + prefix + path,
+                               "key" + i, "value" + i);
+          assertTrue("Expected authentication to fail but passed", false);
+        } catch (SecurityException se) {
+          // Expected
+        }
+      }
+      // Disable authentication for other tests
+      TestUtil.disableAuth();
+    } finally {
+      theGateway.stop(true);
+    }
   }
 
 

@@ -47,26 +47,25 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the metrics and status REST API.
- * <p>
+ * <p/>
  * At this time it only accepts GET requests, which it forwards as Thrift
  * calls to the Flow and Metricvs services.
  * Examples of well-formed reqeuests:
  * <PRE>
- *   http://gateway:port/rest-status/app-id/flow-id/status
- *   http://gateway:port/rest-status/app-id/flow-id/metrics?counter=cntA,cntB
+ * http://gateway:port/rest-status/app-id/flow-id/status
+ * http://gateway:port/rest-status/app-id/flow-id/metrics?counter=cntA,cntB
  * </PRE>
- *
  */
 public class MonitorRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(MonitorRestHandler.class);
+    .getLogger(MonitorRestHandler.class);
 
   /**
-   * The allowed methods for this handler
+   * The allowed methods for this handler.
    */
   Set<HttpMethod> allowedMethods = Collections.singleton(
-      HttpMethod.GET);
+    HttpMethod.GET);
 
   /**
    * All the paths have to be of the form
@@ -86,7 +85,7 @@ public class MonitorRestHandler extends NettyRestHandler {
   private MonitorRestAccessor accessor;
 
   /**
-   * The metrics object of the rest accessor
+   * The metrics object of the rest accessor.
    */
   private CMetrics metrics;
 
@@ -95,7 +94,7 @@ public class MonitorRestHandler extends NettyRestHandler {
   private final EndpointStrategy metricsEndpoints;
 
   /**
-   * Constructor requires the accessor that created this
+   * Constructor requires the accessor that created this.
    *
    * @param accessor the accessor that created this
    */
@@ -113,17 +112,17 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   // a metrics thrift client for every thread
   ThreadLocal<MetricsFrontendService.Client> metricsClients =
-      new ThreadLocal<MetricsFrontendService.Client>();
+    new ThreadLocal<MetricsFrontendService.Client>();
 
   // a flow thrift client for every thread
   ThreadLocal<AppFabricService.Client> flowClients =
-      new ThreadLocal<AppFabricService.Client>();
+    new ThreadLocal<AppFabricService.Client>();
 
   /**
    * generic method to discover a thrift service and start up the
-   * thrift transport and protocol layer
+   * thrift transport and protocol layer.
    */
-  private TProtocol getThriftProtocol(String serviceName, EndpointStrategy endpointStrategy) throws ServerException{
+  private TProtocol getThriftProtocol(String serviceName, EndpointStrategy endpointStrategy) throws ServerException {
     Discoverable endpoint = endpointStrategy.pick();
     if (endpoint == null) {
       String message = String.format("Service '%s' is not registered in discovery service.", serviceName);
@@ -146,10 +145,11 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   /**
    * obtain a metrics thrift client from the thread-local, if necessary create
-   * and connect the client (when this thread needs it for the first time)
+   * and connect the client (when this thread needs it for the first time).
+   *
    * @return A connected metrics client
    * @throws ServerException if service discovery or connecting to the
-   * service fails.
+   *                         service fails.
    */
   private MetricsFrontendService.Client getMetricsClient()
       throws ServerException {
@@ -163,10 +163,11 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   /**
    * obtain a flow thrift client from the thread-local, if necessary create
-   * and connect the client (when this thread needs it for the first time)
+   * and connect the client (when this thread needs it for the first time).
+   *
    * @return A connected flow client
    * @throws ServerException if service discovery or connecting to the
-   * service fails.
+   *                         service fails.
    */
   private AppFabricService.Client getFlowClient() throws ServerException {
     if (flowClients.get() == null || !flowClients.get().getInputProtocol().getTransport().isOpen()) {
@@ -248,14 +249,14 @@ public class MonitorRestHandler extends NettyRestHandler {
           // increment general status metric
           if (!"".equals(activeFlow.getCurrentState())) {
             int count = statusmetrics.containsKey(activeFlow.getCurrentState())
-                    ? statusmetrics.get(activeFlow.getCurrentState()) : 0;
+              ? statusmetrics.get(activeFlow.getCurrentState()) : 0;
             statusmetrics.put(activeFlow.getCurrentState(), count + 1);
           }
           // get flow metrics for this flow
           MetricsFrontendService.Client metricsClient = this.getMetricsClient();
           CounterRequest counterRequest = new CounterRequest(
             new FlowArgument(accountId, activeFlow.getApplicationId(),
-                    activeFlow.getFlowId()));
+                             activeFlow.getFlowId()));
           List<String> counterNames = parameters.get("counter");
           if (counterNames != null) {
             counterRequest.setName(counterNames);
@@ -330,14 +331,14 @@ public class MonitorRestHandler extends NettyRestHandler {
       if ("status".equals(query)) {
         AppFabricService.Client flowClient = this.getFlowClient();
         FlowStatus status = flowClient.status(new AuthToken(),
-            new FlowIdentifier(accountId, appid, flowid, -1));
+                                              new FlowIdentifier(accountId, appid, flowid, -1));
         String value = status.getStatus();
         respondSuccess(message.getChannel(), request, value.getBytes());
         helper.finish(Success);
       } else if ("metrics".equals(query)) {
         MetricsFrontendService.Client metricsClient = this.getMetricsClient();
         CounterRequest counterRequest = new CounterRequest(
-            new FlowArgument(accountId, appid, flowid));
+          new FlowArgument(accountId, appid, flowid));
         List<String> counterNames = parameters.get("counter");
         if (counterNames != null) {
           counterRequest.setName(counterNames);
@@ -363,15 +364,15 @@ public class MonitorRestHandler extends NettyRestHandler {
         // this should not happen because we checked above -> internal error
         helper.finish(Error);
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (Exception e) {
       LOG.error("Exception caught for connector '" +
-          this.accessor.getName() + "'. ", e);
+                  this.accessor.getName() + "'. ", e);
       helper.finish(Error);
       if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
-            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
         message.getChannel().close();
       }
     }
@@ -379,10 +380,9 @@ public class MonitorRestHandler extends NettyRestHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-      throws Exception {
+    throws Exception {
     MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
-    LOG.error("Exception caught for connector '" +
-        this.accessor.getName() + "'. ", e.getCause());
+    LOG.error("Exception caught for connector '" + this.accessor.getName() + "'. ", e.getCause());
     if (e.getChannel().isOpen()) {
       respondError(e.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       e.getChannel().close();

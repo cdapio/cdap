@@ -91,7 +91,9 @@ public class StreamClient {
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = "stream-client";
-    if (System.getProperty("script") != null) name = System.getProperty("script").replaceAll("[./]", "");
+    if (System.getProperty("script") != null) {
+      name = System.getProperty("script").replaceAll("[./]", "");
+    }
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " create --stream <id>");
@@ -129,19 +131,24 @@ public class StreamClient {
   }
 
   /**
-   * Print an error message followed by the usage statement
+   * Print an error message followed by the usage statement.
+   *
    * @param errorMessage the error message
    */
   void usage(String errorMessage) {
-    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    if (errorMessage != null) {
+      System.err.println("Error: " + errorMessage);
+    }
     usage(true);
   }
 
   /**
-   * Parse the command line arguments
+   * Parse the command line arguments.
    */
   void parseArguments(String[] args) {
-    if (args.length == 0) usage(true);
+    if (args.length == 0) {
+      usage(true);
+    }
     if ("--help".equals(args[0])) {
       usage(false);
       help = true;
@@ -153,35 +160,53 @@ public class StreamClient {
     for (int pos = 1; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--base".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         baseUrl = args[pos];
       } else if ("--host".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         hostname = args[pos];
       } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           port = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
       } else if ("--connector".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         connector = args[pos];
       } else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         apikey = args[pos];
       } else if ("--stream".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         destination = args[pos];
       } else if ("--header".equals(arg)) {
-        if (pos + 2 >= args.length) usage(true);
+        if (pos + 2 >= args.length) {
+          usage(true);
+        }
         headers.put(args[++pos], args[++pos]);
       } else if ("--body".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         body = args[pos];
       } else if ("--body-file".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         bodyFile = args[pos];
       } else if ("--hex".equals(arg)) {
         hex = true;
@@ -190,21 +215,27 @@ public class StreamClient {
       } else if ("--all".equals(arg)) {
         all = true;
       } else if ("--first".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           first = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
       } else if ("--last".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           last = Integer.valueOf(args[pos]);
         } catch (NumberFormatException e) {
           usage(true);
         }
       } else if ("--group".equals(arg)) {
-        if (++pos >= args.length) usage(true);
+        if (++pos >= args.length) {
+          usage(true);
+        }
         try {
           consumer = args[pos];
           // validate that it is a number
@@ -225,43 +256,60 @@ public class StreamClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("create", "send", "group", "fetch", "view", "info");
+    Arrays.asList("create", "send", "group", "fetch", "view", "info");
 
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
-    if (help) return;
+    if (help) {
+      return;
+    }
     // first validate the command
-    if (!supportedCommands.contains(command))
+    if (!supportedCommands.contains(command)) {
       usage("Unsupported command '" + command + "'.");
+    }
     // verify that either --body or --body-file is given
-    if ("send".equals(command) && body != null && bodyFile != null)
+    if ("send".equals(command) && body != null && bodyFile != null) {
       usage("Either --body or --body-file must be specified.");
+    }
     // verify that a destination was given
-    if (destination == null) usage("A destination stream must be specified.");
+    if (destination == null) {
+      usage("A destination stream must be specified.");
+    }
     // verify that only one hint is given for the URL
-    if (hostname != null && baseUrl != null)
+    if (hostname != null && baseUrl != null) {
       usage("Only one of --host or --base may be specified.");
+    }
     if (port > 0 && hostname == null) {
       usage("A hostname must be provided when a port is specified.");
     }
-    if (connector != null && baseUrl != null)
+    if (connector != null && baseUrl != null) {
       usage("Only one of --connector or --base may be specified.");
+    }
     // verify that only one encoding is given for the body
-    if (hex && urlenc) usage("Only one of --hex or --url may be specified");
-    if (bodyFile != null && (hex || urlenc))
+    if (hex && urlenc) {
+      usage("Only one of --hex or --url may be specified");
+    }
+    if (bodyFile != null && (hex || urlenc)) {
       usage("Options --hex and --url are incompatible with --body-file " +
-          "(binary input)");
+              "(binary input)");
+    }
     // make sure that fetch command has a consumer id
-    if ("fetch".equals(command) && consumer == null)
+    if ("fetch".equals(command) && consumer == null) {
       usage("--group must be specified for fetch");
+    }
     // make sure that view command does not have contradicting options
     if ("view".equals(command)) {
       if ((all && first != null) || (all && last != null) ||
-          (last != null && first != null))
+        (last != null && first != null)) {
         usage("Only one of --all, --first or --last may be specified");
-      if (first != null && first < 1) usage("--first must be at least 1");
-      if (last != null && last < 1) usage("--last must be at least 1");
+      }
+      if (first != null && first < 1) {
+        usage("--first must be at least 1");
+      }
+      if (last != null && last < 1) {
+        usage("--last must be at least 1");
+      }
     }
     if ("create".equals(command)) {
       if (!isId(destination)) {
@@ -272,18 +320,19 @@ public class StreamClient {
 
   /**
    * read the body of the event in binary form, either from
-   * --body or --body-file
+   * --body or --body-file.
    */
   byte[] readBody() {
     if (body != null) {
-      if (urlenc)
+      if (urlenc) {
         return Util.urlDecode(body);
-      else if (hex)
+      } else if (hex) {
         return Util.hexValue(body);
+      }
       return body.getBytes();
-    }
-    else if (bodyFile != null)
+    } else if (bodyFile != null) {
       return Util.readBinaryFile(bodyFile);
+    }
     return null;
   }
 
@@ -297,28 +346,35 @@ public class StreamClient {
         FileOutputStream out = new FileOutputStream(bodyFile);
         out.write(binaryBody);
         out.close();
-        if (verbose) System.out.println(binaryBody.length +
-            " bytes written to file " + bodyFile + ".");
+        if (verbose) {
+          System.out.println(binaryBody.length +
+                               " bytes written to file " + bodyFile + ".");
+        }
         return binaryBody.length + " bytes written to file";
       } catch (IOException e) {
         System.err.println(
-            "Error writing to file " + bodyFile + ": " + e.getMessage());
+          "Error writing to file " + bodyFile + ": " + e.getMessage());
         return null;
-      } }
+      }
+    }
     String body;
     // was hex encoding requested?
-    if (hex)
+    if (hex) {
       body = Util.toHex(binaryBody);
-    // or was URl encoding specified?
-    else if (urlenc)
+      // or was URl encoding specified?
+    } else if (urlenc) {
       body = Util.urlEncode(binaryBody);
-    // by default, assume the same encoding for the value as for the key
-    else
+      // by default, assume the same encoding for the value as for the key
+    } else {
       body = new String(binaryBody);
+    }
 
-    if (verbose) System.out.println(
+    if (verbose) {
+      System.out.println(
         "Body[" + binaryBody.length + " bytes]: " + body);
-    else System.out.println(body);
+    } else {
+      System.out.println(body);
+    }
     return body;
   }
 
@@ -330,12 +386,14 @@ public class StreamClient {
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
    * @return null in case of error, an string representing the retrieved value
-   * in case of success
+   *         in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
     validateArguments(args);
-    if (help) return "";
+    if (help) {
+      return "";
+    }
 
     // determine the base url for the GET request
     if (baseUrl == null) {
@@ -343,10 +401,12 @@ public class StreamClient {
     }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
-          "Please use --base or --connector to specify.");
+                           "Please use --base or --connector to specify.");
       return null;
     } else {
-      if (verbose) System.out.println("Using base URL: " + baseUrl);
+      if (verbose) {
+        System.out.println("Using base URL: " + baseUrl);
+      }
     }
 
     // build the full URI for the request and validate it
@@ -357,7 +417,7 @@ public class StreamClient {
       byte[] binaryBody = readBody();
       if (binaryBody == null) {
         System.err.println("Cannot send an event without body. " +
-            "Please use --body or --body-file to specify the body.");
+                             "Please use --body or --body-file to specify the body.");
         return null;
       }
 
@@ -384,11 +444,11 @@ public class StreamClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
       return "OK.";
-    }
-
-    else if ("group".equals(command)) {
+    } else if ("group".equals(command)) {
       String id = getConsumerId(requestUrl);
       if (id != null) {
         System.out.println(id);
@@ -396,9 +456,7 @@ public class StreamClient {
       } else {
         return null;
       }
-    }
-
-    else if ("info".equals(command)) {
+    } else if ("info".equals(command)) {
       String info = getQueueInfo(requestUrl);
       if (info != null) {
         System.out.println(info);
@@ -406,9 +464,7 @@ public class StreamClient {
       } else {
         return null;
       }
-    }
-
-    else if ("fetch".equals(command)) {
+    } else if ("fetch".equals(command)) {
       StreamEvent event;
       try {
         event = fetchOne(requestUrl, consumer);
@@ -425,15 +481,14 @@ public class StreamClient {
       // print all the headers
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name))
+        if (!verbose && Constants.isContinuuityHeader(name)) {
           continue;
+        }
         System.out.println(name + ": " + event.getHeaders().get(name));
       }
       // and finally write out the body
       return writeBody(Bytes.toBytes(event.getBody()));
-    }
-
-    else if ("view".equals(command)) {
+    } else if ("view".equals(command)) {
       if (consumer == null) {
         // prepare for HTTP
         HttpClient client = new DefaultHttpClient();
@@ -449,7 +504,9 @@ public class StreamClient {
           System.err.println("Error sending HTTP request: " + e.getMessage());
           return null;
         }
-        if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
+        if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) {
+          return null;
+        }
         // read the binary value from the HTTP response
         byte[] binaryValue = Util.readHttpResponse(response);
         if (binaryValue == null) {
@@ -459,10 +516,10 @@ public class StreamClient {
         consumer = new String(binaryValue);
       }
       Collector<StreamEvent> collector =
-          all ? new AllCollector<StreamEvent>(StreamEvent.class) :
-              first != null ? new FirstNCollector<StreamEvent>(first, StreamEvent.class) :
-                  last != null ? new LastNCollector<StreamEvent>(last, StreamEvent.class) :
-                      new FirstNCollector<StreamEvent>(10, StreamEvent.class);
+        all ? new AllCollector<StreamEvent>(StreamEvent.class) :
+          first != null ? new FirstNCollector<StreamEvent>(first, StreamEvent.class) :
+            last != null ? new LastNCollector<StreamEvent>(last, StreamEvent.class) :
+              new FirstNCollector<StreamEvent>(10, StreamEvent.class);
       try {
         StreamEvent[] events =
           fetchAll(requestUrl, consumer, collector);
@@ -493,7 +550,9 @@ public class StreamClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
       return "OK.";
 
     }
@@ -501,7 +560,8 @@ public class StreamClient {
   }
 
   /**
-   * This implements --group, it obtains a new consumer group id
+   * This implements --group, it obtains a new consumer group id.
+   *
    * @param requestUrl the base url with the stream added to it
    * @return the consumer group id returned by the gateway
    */
@@ -521,7 +581,9 @@ public class StreamClient {
       return null;
     }
     // this call does not respond with 200 OK, but with 201 Created
-    if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
+    if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) {
+      return null;
+    }
 
     // read the binary value from the HTTP response
     byte[] binaryValue = Util.readHttpResponse(response);
@@ -533,10 +595,11 @@ public class StreamClient {
   }
 
   /**
-   * This implements --info, it retrieves queue meta information
+   * This implements --info, it retrieves queue meta information.
+   *
    * @param requestUrl the base url with the stream added to it
    * @return the consumer group id returned by the gateway,
-   * null in case of error
+   *         null in case of error
    */
   String getQueueInfo(String requestUrl) {
     // prepare for HTTP
@@ -554,7 +617,9 @@ public class StreamClient {
       return null;
     }
     // this call does not respond with 200 OK, but with 201 Created
-    if (!checkHttpStatus(response)) return null;
+    if (!checkHttpStatus(response)) {
+      return null;
+    }
 
     // read the binary value from the HTTP response
     byte[] binaryValue = Util.readHttpResponse(response);
@@ -569,27 +634,33 @@ public class StreamClient {
    * Helper method for --view, given a request URL already constructed, a
    * consumer ID, and an event collector, it iterates over events from the
    * stream until the stream is empty or the collector indicates to stop.
-   * @param uri The request URI including the stream name without the query
-   * @param consumer the consumer group id, as previously returned by
-   *                 getConsumerId()
+   *
+   * @param uri       The request URI including the stream name without the query
+   * @param consumer  the consumer group id, as previously returned by
+   *                  getConsumerId()
    * @param collector a collector for the events in the stream
    * @return all events collected
    * @throws Exception if something goes wrong
    */
   StreamEvent[] fetchAll(String uri, String consumer, Collector<StreamEvent> collector)
-      throws Exception {
+    throws Exception {
     while (true) {
       StreamEvent event = fetchOne(uri, consumer);
-      if (event == null) return collector.finish();
+      if (event == null) {
+        return collector.finish();
+      }
       boolean collectMore = collector.addElement(event);
-      if (!collectMore) return collector.finish();
+      if (!collectMore) {
+        return collector.finish();
+      }
     }
   }
 
   /**
    * Helper method for --view, given a request URL already constructed and a
    * consumer ID, it fetches (dequeues) one event from the stream.
-   * @param uri The request URI including the stream name without the query
+   *
+   * @param uri      The request URI including the stream name without the query
    * @param consumer the consumer group id, as previously returned by
    *                 getConsumerId()
    * @return the event that was fetched, or null if the stream is empty
@@ -611,16 +682,19 @@ public class StreamClient {
       throw new Exception("Error sending HTTP request.", e);
     }
     // we expect either OK for an event, or NO_CONTENT for end of stream
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT)
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
       return null;
+    }
     // check that the response is OK
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
+    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
       throw new Exception(
-          "HTTP request unsuccessful: " + response.getStatusLine());
+        "HTTP request unsuccessful: " + response.getStatusLine());
+    }
     // read the binary value from the HTTP response
     byte[] binaryValue = Util.readHttpResponse(response);
-    if (binaryValue == null)
+    if (binaryValue == null) {
       throw new Exception("Unexpected response without body.");
+    }
 
     // collect all the headers
     Map<String, String> headers = new TreeMap<String, String>();
@@ -639,6 +713,7 @@ public class StreamClient {
   /**
    * Helper for --view. Prints all the collected events to stdout. This can be
    * improved to use better formatting, shortening, etc.
+   *
    * @param events An array of events
    * @return a String indicating how many events were printed
    */
@@ -648,15 +723,20 @@ public class StreamClient {
       String sep = "";
       for (String name : event.getHeaders().keySet()) {
         // unless --verbose was given, we suppress continuuity headers
-        if (!verbose && Constants.isContinuuityHeader(name))
+        if (!verbose && Constants.isContinuuityHeader(name)) {
           continue;
+        }
         System.out.print(sep + name + "=" + event.getHeaders().get(name));
         sep = ", ";
       }
       System.out.print(": ");
-      if (hex) System.out.print(Util.toHex(Bytes.toBytes(event.getBody())));
-      else if (urlenc) System.out.print(Util.urlEncode(Bytes.toBytes(event.getBody())));
-      else System.out.print(new String(Bytes.toBytes(event.getBody())));
+      if (hex) {
+        System.out.print(Util.toHex(Bytes.toBytes(event.getBody())));
+      } else if (urlenc) {
+        System.out.print(Util.urlEncode(Bytes.toBytes(event.getBody())));
+      } else {
+        System.out.print(new String(Bytes.toBytes(event.getBody())));
+      }
       System.out.println();
     }
     return events.length + " events.";
@@ -666,6 +746,7 @@ public class StreamClient {
    * Check whether the Http return code is 200 OK. If not, print the error
    * message and return false. Otherwise, if verbose is on, print the response
    * status line.
+   *
    * @param response the HTTP response
    * @return whether the response is OK
    */
@@ -677,6 +758,7 @@ public class StreamClient {
    * Check whether the Http return code is as expected. If not, print the error
    * message and return false. Otherwise, if verbose is on, print the response
    * status line.
+   *
    * @param response the HTTP response
    * @param expected the expected HTTP status code
    * @return whether the response is as expected
@@ -689,20 +771,23 @@ public class StreamClient {
    * Check whether the Http return code is as expected. If not, print the
    * status message and return false. Otherwise, if verbose is on, print the
    * response status line.
+   *
    * @param response the HTTP response
    * @param expected the list of expected HTTP status codes
    * @return whether the response is as expected
    */
   boolean checkHttpStatus(HttpResponse response, List<Integer> expected) {
     if (!expected.contains(response.getStatusLine().getStatusCode())) {
-      if (verbose)
+      if (verbose) {
         System.out.println(response.getStatusLine());
-      else
+      } else {
         System.err.println(response.getStatusLine().getReasonPhrase());
+      }
       return false;
     }
-    if (verbose)
+    if (verbose) {
       System.out.println(response.getStatusLine());
+    }
     return true;
   }
 
@@ -712,7 +797,7 @@ public class StreamClient {
     } catch (UsageException e) {
       if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " +
-            Arrays.toString(args) + ". Exception: " + e);
+                             Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
     }
@@ -730,7 +815,9 @@ public class StreamClient {
     StreamClient instance = new StreamClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
-    if (value == null) System.exit(1);
+    if (value == null) {
+      System.exit(1);
+    }
   }
 
   private boolean isId(String id) {

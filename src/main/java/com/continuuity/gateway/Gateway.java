@@ -128,17 +128,17 @@ public class Gateway implements Server {
     String name = connector.getName();
     if (name == null) {
       Exception e =
-          new IllegalArgumentException("Connector name cannot be null.");
+        new IllegalArgumentException("Connector name cannot be null.");
       LOG.error(e.getMessage());
       throw e;
     }
 
     LOG.info("Adding connector '" + name + "' of type " +
-        connector.getClass().getName() + ".");
+               connector.getClass().getName() + ".");
 
     if (this.hasNamedConnector(name)) {
       Exception e = new Exception("Connector with name '" + name
-          + "' already registered. ");
+                                    + "' already registered. ");
       LOG.error(e.getMessage());
       throw e;
     } else {
@@ -150,10 +150,10 @@ public class Gateway implements Server {
    * Start the gateway. This will also start the Consumer and all the Connectors
    *
    * @throws ServerException If there is no Consumer, or whatever Exception a
-   *                   connector throws during start().
+   *                         connector throws during start().
    */
   public void start(String[] args, CConfiguration conf) throws
-      ServerException {
+    ServerException {
 
     // Configure ourselves first
     configure(conf);
@@ -161,15 +161,15 @@ public class Gateway implements Server {
     // Check we are in the correct state
     if (this.consumer == null) {
       ServerException es =
-          new ServerException("Cannot start Gateway without a Consumer.");
+        new ServerException("Cannot start Gateway without a Consumer.");
       LOG.error(es.getMessage());
       throw es;
 
     }
     if (this.executor == null) {
       ServerException es =
-          new ServerException(
-              "Cannot start Gateway without an Operation Executor.");
+        new ServerException(
+          "Cannot start Gateway without an Operation Executor.");
       LOG.error(es.getMessage());
       throw es;
     }
@@ -266,7 +266,7 @@ public class Gateway implements Server {
   public void setPassportClient(PassportClient passportClient) {
     Preconditions.checkNotNull(passportClient);
     LOG.info("Setting PassportClient to " + passportClient.getClass().getName()
-        + ".");
+               + ".");
     this.passportClient = passportClient;
   }
 
@@ -279,13 +279,13 @@ public class Gateway implements Server {
   public void setExecutor(OperationExecutor executor) {
     Preconditions.checkNotNull(executor);
     LOG.info("Setting Operations Executor to " +
-        executor.getClass().getName() + ".");
+               executor.getClass().getName() + ".");
     this.executor = executor;
     this.mds = new MetadataService(executor);
   }
 
   public void setDiscoveryServiceClient(
-      DiscoveryServiceClient discoveryServiceClient) {
+    DiscoveryServiceClient discoveryServiceClient) {
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -315,12 +315,12 @@ public class Gateway implements Server {
 
     // Determine cluster instance name for authentication purposes
     this.clusterName = myConfiguration.get(Constants.CONFIG_CLUSTER_NAME,
-        Constants.CONFIG_CLUSTER_NAME_DEFAULT);
-    
+                                           Constants.CONFIG_CLUSTER_NAME_DEFAULT);
+
     // Create the authenticator that will be used by all connectors
     boolean requireAuthentication = this.myConfiguration.getBoolean(
-        Constants.CONFIG_AUTHENTICATION_REQUIRED,
-        Constants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT);
+      Constants.CONFIG_AUTHENTICATION_REQUIRED,
+      Constants.CONFIG_AUTHENTICATION_REQUIRED_DEFAULT);
     if (requireAuthentication) {
       // Tests may set a passport client, so only create one if it dne
       if (this.passportClient == null) {
@@ -335,33 +335,32 @@ public class Gateway implements Server {
 
     // Retrieve the list of connectors that we will create
     Collection<String> connectorNames = myConfiguration.
-        getStringCollection(Constants.CONFIG_CONNECTORS);
+      getStringCollection(Constants.CONFIG_CONNECTORS);
 
     // For each Connector
     for (String connectorName : connectorNames) {
 
       // Retrieve the connector's Class
       String connectorClassName = myConfiguration.get(
-          Constants.buildConnectorPropertyName(connectorName,
-              Constants.CONFIG_CLASSNAME));
+        Constants.buildConnectorPropertyName(connectorName,
+                                             Constants.CONFIG_CLASSNAME));
       // Has the user specified the Class? If not, skip this Connector
       if (connectorClassName == null) {
         LOG.error("No Class property defined for " + connectorName +
-            ". Can not create " + connectorName + ".");
+                    ". Can not create " + connectorName + ".");
       } else {
         // Instantiate a new Connector and then configure it
         Connector newConnector;
         try {
           // Attempt to load the Class
           newConnector =
-              (Connector) Class.forName(connectorClassName).newInstance();
+            (Connector) Class.forName(connectorClassName).newInstance();
           // Tell it what it's called
           newConnector.setName(connectorName);
-
         } catch (Exception e) {
           LOG.error("Cannot instantiate class " + connectorClassName + "(" +
-              e.getMessage() + "). Skipping Connector '" +
-              connectorName + "'.");
+                      e.getMessage() + "). Skipping Connector '" +
+                      connectorName + "'.");
           continue;
         }
 
@@ -370,23 +369,22 @@ public class Gateway implements Server {
           newConnector.configure(myConfiguration);
         } catch (Exception e) {
           LOG.error("Error configuring connector '" + connectorName + "' (" +
-              e.getMessage() + "). Skipping connector '" +
-              connectorName + "'.");
+                      e.getMessage() + "). Skipping connector '" +
+                      connectorName + "'.");
           continue;
         }
 
         newConnector.setDiscoveryServiceClient(discoveryServiceClient);
-
         // set the connector's authenticator
         newConnector.setAuthenticator(this.authenticator);
-        
+
         // Add it to our Connector list
         try {
           this.addConnector(newConnector);
         } catch (Exception e) {
           LOG.error("Error adding connector '" + connectorName + "' (" +
-              e.getMessage() + "). Skipping connector '" +
-              connectorName + "'.");
+                      e.getMessage() + "). Skipping connector '" +
+                      connectorName + "'.");
           // continue // unnecessary
         }
       }

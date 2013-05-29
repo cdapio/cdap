@@ -1,13 +1,12 @@
 package com.continuuity.gateway.auth;
 
-import com.continuuity.passport.meta.Account;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 
 /**
  * Interface that supports the authentication of requests to the Gateway.
- * <p>
+ * <p/>
  * Underlying implementations can choose how they authenticate.  The two current
  * implementations either use no authentication or require a token that will
  * be checked against the passport service as to whether it grants access to
@@ -21,12 +20,14 @@ public interface GatewayAuthenticator {
   /**
    * Checks whether authentication is required or not.  If not, then no token
    * is required on any requests.
+   *
    * @return true if authentication (and thus token) are required, false if not
    */
   public boolean isAuthenticationRequired();
 
   /**
    * Authenticates the specified HTTP request.
+   *
    * @param httpRequest http request
    * @return true if authentication succeeds, false if not
    */
@@ -34,6 +35,7 @@ public interface GatewayAuthenticator {
 
   /**
    * Authenticates the specified Stream Event.
+   *
    * @param event stream event to authenticate
    * @return true if authentication succeeds, false if not
    */
@@ -46,6 +48,7 @@ public interface GatewayAuthenticator {
 
   /**
    * Gets account for authenticated httpRequest.
+   *
    * @param httpRequest http request
    * @return account
    */
@@ -53,6 +56,7 @@ public interface GatewayAuthenticator {
 
   /**
    * Gets account for authenticated httpRequest.
+   *
    * @param event stream event to authenticate
    * @return account
    */

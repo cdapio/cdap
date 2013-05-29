@@ -17,12 +17,11 @@ import java.util.concurrent.TimeUnit;
  * Main is a simple class that allows us to launch the Gateway as a standalone
  * program. This is also where we do our runtime injection.
  * <p/>
- * TODO: Prolly should look to wrap this in some sort of Daemon framework
  */
 public class Main {
 
   /**
-   * Our main method
+   * Our main method.
    *
    * @param args Our command line options
    */

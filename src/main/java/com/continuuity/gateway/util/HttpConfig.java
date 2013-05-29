@@ -20,81 +20,81 @@ public class HttpConfig {
   private static final Logger LOG = LoggerFactory.getLogger(HttpConfig.class);
 
   /**
-   * default name is the name of the protocol
+   * default name is the name of the protocol.
    */
-  public static String DefaultName = "http";
+  public static final String DEFAULT_NAME = "http";
   /**
-   * a default server host name
+   * a default server host name.
    */
-  public static final String DefaultHost = "localhost";
+  public static final String DEFAULT_HOST = "localhost";
   /**
-   * a default port for HTTP
+   * a default port for HTTP.
    */
-  public static final int DefaultPort = 8080;
+  public static final int DEFAULT_PORT = 8080;
   /**
-   * default prefix is just the root path
+   * default prefix is just the root path.
    */
-  public static String DefaultPrefix = "";
+  public static final String DEFAULT_PREFIX = "";
   /**
-   * default middle part is empty
+   * default middle part is empty.
    */
-  public static String DefaultMiddle = "/";
+  public static final String DEFAULT_MIDDLE = "/";
   /**
-   * chunking is on by default
+   * chunking is on by default.
    */
-  public static boolean DefaultChunking = true;
+  public static final boolean DEFAULT_CHUNKING = true;
   /**
-   * default max content size is 1MB
+   * default max content size is 1MB.
    */
-  public static int DefaultMaxContentSize = 1024 * 1024;
+  public static final int DEFAULT_MAX_CONTENT_SIZE = 1024 * 1024;
   /**
-   * default is no secure transport
+   * default is no secure transport.
    */
-  public static boolean DefaultSsl = false;
+  public static final boolean DEFAULT_SSL = false;
   /**
-   * default number of worker threads
+   * default number of worker threads.
    */
-  public static int DefaultThreads = Constants.DEFAULT_THREADS;
+  public static final int DEFAULT_THREADS = Constants.DEFAULT_THREADS;
 
   /**
-   * this is the name of the connector, needed to find the properties
+   * this is the name of the connector, needed to find the properties.
    */
-  private String name = DefaultName;
+  private String name = DEFAULT_NAME;
   /**
-   * this is the hostname of the service
+   * this is the hostname of the service.
    */
-  private String host = DefaultHost;
+  private String host = DEFAULT_HOST;
   /**
-   * this is the port of the service
+   * this is the port of the service.
    */
-  private int port = DefaultPort;
+  private int port = DEFAULT_PORT;
   /**
-   * the path prefix (see above)
+   * the path prefix (see above).
    */
-  private String prefix = DefaultPrefix;
+  private String prefix = DEFAULT_PREFIX;
   /**
-   * the path middle (see above)
+   * the path middle (see above).
    */
-  private String middle = DefaultMiddle;
+  private String middle = DEFAULT_MIDDLE;
   /**
-   * the maximal size of content
+   * the maximal size of content.
    */
-  private int maxContentSize = DefaultMaxContentSize;
+  private int maxContentSize = DEFAULT_MAX_CONTENT_SIZE;
   /**
-   * whether we should accept chunked requests
+   * whether we should accept chunked requests.
    */
-  private boolean chunk = DefaultChunking;
+  private boolean chunk = DEFAULT_CHUNKING;
   /**
-   * whether secure socket transport is on
+   * whether secure socket transport is on.
    */
-  private boolean ssl = DefaultSsl;
+  private boolean ssl = DEFAULT_SSL;
   /**
-   * number of worker threads in the http server
+   * number of worker threads in the http server.
    */
-  private int threads = DefaultThreads;
+  private int threads = DEFAULT_THREADS;
 
   /**
-   * private because this would create a config without a name
+   * private because this would create a config without a name.
    */
   private HttpConfig() {
   }
@@ -109,7 +109,7 @@ public class HttpConfig {
   }
 
   /**
-   * Return the name of the connector
+   * Return the name of the connector.
    *
    * @return the name
    */
@@ -118,7 +118,7 @@ public class HttpConfig {
   }
 
   /**
-   * Return the configured port
+   * Return the configured port.
    *
    * @return the port number
    */
@@ -137,7 +137,7 @@ public class HttpConfig {
   }
 
   /**
-   * Return the configured path prefix
+   * Return the configured path prefix.
    *
    * @return the path prefix
    */
@@ -146,7 +146,7 @@ public class HttpConfig {
   }
 
   /**
-   * Return the middle component of the configured path
+   * Return the middle component of the configured path.
    *
    * @return the path middle
    */
@@ -175,8 +175,9 @@ public class HttpConfig {
   public void setSsl(boolean ssl) {
     this.ssl = ssl;
   }
+
   /**
-   * Return the maximal size of content supported
+   * Return the maximal size of content supported.
    *
    * @return the maximal supported size
    */
@@ -185,7 +186,7 @@ public class HttpConfig {
   }
 
   /**
-   * Return the number of worker threads configured for the server
+   * Return the number of worker threads configured for the server.
    *
    * @return the number of server threads
    */
@@ -194,7 +195,7 @@ public class HttpConfig {
   }
 
   /**
-   * Set the port of the service
+   * Set the port of the service.
    *
    * @param port The port number
    * @return this HttpConfig object
@@ -205,7 +206,7 @@ public class HttpConfig {
   }
 
   /**
-   * Set the path prefix
+   * Set the path prefix.
    *
    * @param prefix The path prefix to use
    * @return this HttpConfig object
@@ -219,7 +220,7 @@ public class HttpConfig {
   }
 
   /**
-   * Set the path middle
+   * Set the path middle.
    *
    * @param middle The path middle to use
    * @return this HttpConfig object
@@ -233,7 +234,7 @@ public class HttpConfig {
   }
 
   /**
-   * Read this HTTP configuration from a CConfiguration and a set of defaults
+   * Read this HTTP configuration from a CConfiguration and a set of defaults.
    *
    * @param name          The name of the connector
    * @param configuration The configuration that has all  the options
@@ -241,43 +242,45 @@ public class HttpConfig {
    * @return a new HTTPConfig
    * @throws Exception if anything goes wrong
    */
-  public static HttpConfig  configure(String name,
+  public static HttpConfig configure(String name,
                                      CConfiguration configuration,
                                      HttpConfig defaults) throws Exception {
     // if no defaults were given, create an empty config (it has defaults)
-    if (defaults == null) defaults = new HttpConfig();
+    if (defaults == null) {
+      defaults = new HttpConfig();
+    }
     HttpConfig config = new HttpConfig(name);
     config.host = configuration.get(Constants.CONFIG_HOSTNAME,
-        defaults.getHost());
+                                    defaults.getHost());
     config.port = configuration.getInt(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_PORT), defaults.getPort());
+      name, Constants.CONFIG_PORT), defaults.getPort());
     config.threads = configuration.getInt(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_THREADS), defaults.getThreads());
+      name, Constants.CONFIG_THREADS), defaults.getThreads());
     config.chunk = configuration.getBoolean(
-        Constants.buildConnectorPropertyName(
-            name, Constants.CONFIG_CHUNKING), defaults.isChunking());
+      Constants.buildConnectorPropertyName(
+        name, Constants.CONFIG_CHUNKING), defaults.isChunking());
     config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(name,
                                                                                Constants.CONFIG_SSL), defaults.isSsl());
 
     //Set port to bind to 443
-    if(config.ssl) {
+    if (config.ssl) {
       LOG.warn("SSL is not implemented yet. " +
-               "Ignoring configuration for connector '" + name + "'.");
+                 "Ignoring configuration for connector '" + name + "'.");
       config.ssl = false;
     }
 
     config.prefix = configuration.get(Constants.buildConnectorPropertyName(
       name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
     config.middle = configuration.get(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
+      name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
     config.maxContentSize = configuration.getInt(
-        Constants.buildConnectorPropertyName(
-            name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
+      Constants.buildConnectorPropertyName(
+        name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
     return config;
   }
 
   /**
-   * Get the base URL that this HttpConfig describes
+   * Get the base URL that this HttpConfig describes.
    *
    * @param hostname the hostname to use for the base url (HttpConfig
    *                 does not have that). If null, localhost is used.
@@ -285,14 +288,14 @@ public class HttpConfig {
    */
   public String getBaseUrl(String hostname) {
     return (this.isSsl() ? "https" : "http") + "://"
-        + (hostname == null ? "localhost" : hostname) + ":"
-        + this.getPort()
-        + (this.getPathPrefix() == null ? "" : this.getPathPrefix())
-        + (this.getPathMiddle() == null ? "" : this.getPathMiddle());
+      + (hostname == null ? "localhost" : hostname) + ":"
+      + this.getPort()
+      + (this.getPathPrefix() == null ? "" : this.getPathPrefix())
+      + (this.getPathMiddle() == null ? "" : this.getPathMiddle());
   }
 
   /**
-   * Get the base URL that this HttpConfig describes, using localhost
+   * Get the base URL that this HttpConfig describes, using localhost.
    *
    * @return the base URL
    */

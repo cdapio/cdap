@@ -156,8 +156,6 @@ public class RestAccessorTest {
       {"key\u0000with\u0000nulls", "foo"}
   };
 
-  static final ByteBuffer emptyBody = ByteBuffer.wrap(new byte[0]);
-
   /**
    * Starts up a REST accessor, then tests retrieval of several combinations
    * of keys and values

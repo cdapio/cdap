@@ -29,7 +29,6 @@ public class StreamClientTest {
       .getLogger(StreamClientTest.class);
 
   private OperationExecutor executor = null;
-
   Gateway gateway = null;
 
   String name = "access.rest";
@@ -82,7 +81,7 @@ public class StreamClientTest {
     // Now create our Gateway with a dummy consumer (we don't run collectors)
     // and make sure to pass the data fabric executor to the gateway.
     gateway = new Gateway();
-    gateway.setExecutor(this.executor);
+    gateway.setExecutor(executor);
     gateway.setConsumer(new TestUtil.NoopConsumer());
     gateway.setDiscoveryServiceClient(injector.getInstance(DiscoveryServiceClient.class));
     gateway.start(null, configuration);
@@ -151,10 +150,6 @@ public class StreamClientTest {
       args[args.length - 1] = streamId;
     }
     return new StreamClient().execute(args, configuration);
-  }
-
-  private String command(String[] args) {
-    return command(null, args);
   }
 
 }

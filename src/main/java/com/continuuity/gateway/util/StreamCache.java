@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 public class StreamCache {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(StreamCache.class);
+    .getLogger(StreamCache.class);
 
   private MetadataService mds;
   private ConcurrentMap<ImmutablePair<String, String>, Stream> knownStreams;
@@ -23,15 +23,14 @@ public class StreamCache {
   public StreamCache(MetadataService mds) {
     this.mds = mds;
     this.knownStreams = new
-        ConcurrentHashMap<ImmutablePair<String, String>, Stream>();
+      ConcurrentHashMap<ImmutablePair<String, String>, Stream>();
   }
 
   public boolean validateStream(String account, String name)
-      throws OperationException
-  {
+    throws OperationException {
     // check cache, if there, then we are good
     ImmutablePair<String, String> key =
-        new ImmutablePair<String, String>(account, name);
+      new ImmutablePair<String, String>(account, name);
     if (this.knownStreams.containsKey(key))
       return true;
 
@@ -41,7 +40,7 @@ public class StreamCache {
       stream = this.mds.getStream(new Account(account), new Stream(name));
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
-          name + "' for account '" + account + "': " + e.getMessage());
+                                       name + "' for account '" + account + "': " + e.getMessage());
       LOG.error(message);
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
@@ -54,21 +53,20 @@ public class StreamCache {
   }
 
   public void refreshStream(String account, String name)
-      throws OperationException
-  {
+    throws OperationException {
     // read entry from mds
     Stream stream;
     try {
       stream = this.mds.getStream(new Account(account), new Stream(name));
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
-          name + "' for account '" + account + "': " + e.getMessage());
+                                       name + "' for account '" + account + "': " + e.getMessage());
       LOG.error(message);
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
     // depending on existence, add to or remove from cache
     ImmutablePair<String, String> key =
-        new ImmutablePair<String, String>(account, name);
+      new ImmutablePair<String, String>(account, name);
     if (stream == null || !stream.isExists())
       this.knownStreams.remove(key);
     else {
