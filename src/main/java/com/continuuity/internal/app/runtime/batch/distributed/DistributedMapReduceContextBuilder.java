@@ -57,6 +57,9 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).to
             (CConfiguration.class);
 
+          // Every mr task talks to datastore directly bypassing oracle
+          bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
+            .toInstance(false);
         }
       }
     );

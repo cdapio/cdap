@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.annotation.Handle;
-import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -11,10 +11,12 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
+import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.io.InstantiatorFactory;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

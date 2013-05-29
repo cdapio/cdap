@@ -42,9 +42,7 @@ import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.SchemaGenerator;
-import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -54,12 +52,15 @@ import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.MultiOutputSubmitter;
 import com.continuuity.internal.app.runtime.OutputSubmitter;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
+import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.SchemaGenerator;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -98,6 +99,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory txAgentSupplierFactory;
   private final QueueReaderFactory queueReaderFactory;
+
   private volatile List<QueueConsumerSupplier> queueConsumerSuppliers;
 
   @Inject
@@ -156,6 +158,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates opex related objects
       DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = txAgentSupplier.getDataSetContext();
+
 
       // Creates flowlet context
       final BasicFlowletContext flowletContext = new BasicFlowletContext(program, flowletName, instanceId, runId,

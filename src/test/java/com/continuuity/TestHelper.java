@@ -24,11 +24,8 @@ import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 
 import java.nio.ByteBuffer;
