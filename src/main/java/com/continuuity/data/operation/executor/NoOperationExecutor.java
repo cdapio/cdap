@@ -48,7 +48,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public Transaction startTransaction(OperationContext context)
+  public Transaction startTransaction(OperationContext context, boolean trackChanges)
     throws OperationException {
     return null;
   }

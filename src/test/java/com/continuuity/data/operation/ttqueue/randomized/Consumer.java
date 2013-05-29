@@ -175,7 +175,7 @@ public class Consumer implements Runnable {
 
     @Override
     public void run() {
-      Transaction transaction = oracle.startTransaction();
+      Transaction transaction = oracle.startTransaction(true);
 
       try {
         TimeUnit.MILLISECONDS.sleep(testConfig.getDequeueSleepMs());
@@ -260,7 +260,7 @@ public class Consumer implements Runnable {
             oracle.abortTransaction(transaction);
             oracle.removeTransaction(transaction);
             listeningExecutorService.submit(new QueueAck(runId, crashId, listeningExecutorService, consumerHolder,
-                                                         dequeueResult, oracle.startTransaction()));
+                                                         dequeueResult, oracle.startTransaction(true)));
             return;
           } else {
             oracle.commitTransaction(transaction);

@@ -597,7 +597,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -634,7 +634,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -666,7 +666,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
   private void dequeuePartitionedEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers, int totalEnqueues) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer, true);
 
     for (int i = 0; i < numConsumers; i++) {
       for (int j = 0; j < totalEnqueues / (2 * numConsumers); j++) {
@@ -707,7 +707,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -747,7 +747,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -782,7 +782,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void dequeuePartitionedEntries(TTQueue queue, StatefulQueueConsumer[] consumers, int numConsumers,
                                          int numQueueEntries, int startQueueEntry, PartitionerType partitionerType) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer, true);
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++) {
         DequeueResult result = queue.dequeue(consumers[consumer], dirtyReadPointer);
@@ -833,7 +833,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final int numConsumers = 4;
     final int consumerGroupId = 0;
     TTQueue queue = createQueue();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     // enqueue some entries
     for (int i = 0; i < numQueueEntries; i++) {
@@ -879,7 +879,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void dequeueFifoEntries(TTQueue queue, QueueConsumer[] consumers, int numConsumers,
                                   int numQueueEntries, int startQueueEntry) throws Exception {
     ReadPointer dirtyReadPointer = getDirtyPointer();
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer);
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), dirtyReadPointer, true);
     int expectedValue = startQueueEntry;
     for (int consumer = 0; consumer < numConsumers; consumer++) {
       for (int entry = 0; entry < numQueueEntries / (2 * numConsumers); entry++, ++expectedValue) {
@@ -925,7 +925,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     final long groupId = 0;
     final int instanceId = 0;
     final int groupSize = 1;
-    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer());
+    Transaction dirtyTxn = new Transaction(getDirtyWriteVersion(), getDirtyPointer(), true);
 
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(1)), dirtyTxn).isSuccess());
     assertTrue(queue.enqueue(new QueueEntry(Bytes.toBytes(2)), dirtyTxn).isSuccess());
@@ -976,7 +976,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     TTQueue queue = createQueue();
 
     // Enqueue some entries
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     for(int i = 1; i < 5; ++i) {
       queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
     }
@@ -1001,7 +1001,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // Ack entry
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.ack(result.getEntryPointers(), consumer, t);
 
     // Trying to change configuration when acked entries are not committed should throw error
@@ -1027,7 +1027,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       Assert.assertEquals(i + 2, Bytes.toInt(result.getEntries()[i].getData()));
     }
 
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.ack(result.getEntryPointers(), consumer, t);
     oracle.commitTransaction(t);
   }
@@ -1038,7 +1038,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     TTQueue queue = createQueue();
 
     // Enqueue some entries
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     for(int i = 1; i < 5; ++i) {
       queue.enqueue(new QueueEntry(Bytes.toBytes(i)), t);
     }
@@ -1167,7 +1167,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     Random random = new Random(System.currentTimeMillis());
     StringWriter debugCollector = new StringWriter();
     TTQueue queue = createQueue();
-    Transaction transaction = oracle.startTransaction();
+    Transaction transaction = oracle.startTransaction(true);
 
     List<Integer> expectedEntries = Lists.newArrayList();
     // Enqueue numEntries
@@ -1342,7 +1342,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -1357,7 +1357,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 15 should return entries: 2, 4, .., 30
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1368,7 +1368,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue 15 again, should return the same entries
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1379,14 +1379,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all entries received, and then unack them
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     QueueEntryPointer[] pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     queue.unack(pointers, consumer, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the same entries
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1397,14 +1397,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all entries received, and then finalize them
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should now return new ones 32, 34, .. 60
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1415,14 +1415,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack 10 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = Arrays.copyOf(result.getEntryPointers(), 10);
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should return the 5 previous ones again: 52, 54, ..., 60
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1433,14 +1433,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack the 5 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 15 again, should return 15 new ones: 62, ..., 90
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1458,7 +1458,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 62, ..., 84
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1469,14 +1469,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all 12 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue 12 again, should return the remaining 3  of previous 15: 86, 88, 90
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1487,14 +1487,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all of them + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue another 12, should return only 5 remaining: 92, 94, ..., 100
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1505,14 +1505,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all of them + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     oracle.commitTransaction(t);
     queue.finalize(pointers, consumer, numGroups, t);
 
     // dequeue should return empty
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertTrue(result.isEmpty());
@@ -1533,7 +1533,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -1550,7 +1550,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer1, oracle.getReadPointer());
 
     // dequeue 15 should return first 15 entries: 1, 2, .., 15
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1561,7 +1561,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue 15 again, should return the same entries
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1572,7 +1572,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // attempt to ack with different consumer -> fail
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     QueueEntryPointer[] pointers = result1.getEntryPointers();
     try {
       queue.ack(pointers, consumer2, t);
@@ -1586,7 +1586,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // dequeue with other consumer should now return next 15 entries: 16, 17, .., 30
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1597,14 +1597,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all entries received, and then unack them
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.unack(pointers, consumer1, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the same entries
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1615,14 +1615,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all entries received, and then finalize them
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should now return new ones 31, 32, .. 45
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1633,14 +1633,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack 10 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = Arrays.copyOf(result1.getEntryPointers(), 10);
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return the 5 previous ones again: 41, 42, ..., 45
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1651,14 +1651,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack the 5 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 again, should return 15 new ones: 46, ..., 60
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1679,7 +1679,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer1, oracle.getReadPointer());
 
     // dequeue 12 with new consumer, should return the first 12 of previous 15: 46, 47, ..., 57
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1690,7 +1690,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue 12 with new consumer 2, should return the first 12 of previous: 16, 17, ..., 27
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -1701,7 +1701,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all 12 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
@@ -1711,7 +1711,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // dequeue 12 again, should return the remaining 3  of previous 15: 58, 59, 60
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1722,7 +1722,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue 12 again with consumer 2, should return the remaining 3  of previous 15: 28, 29, 30
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -1733,7 +1733,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack all of them + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
@@ -1743,7 +1743,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // dequeue another 12, should return some (around 5) of the 15 remaining: 61, 62, ...
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1770,7 +1770,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Collections.singletonMap(hashKey, i), Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -1783,7 +1783,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer0, oracle.getReadPointer()); // we must configure with instance #0
 
     // dequeue 15 -> 1 .. 29
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1794,7 +1794,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue another 15 -> 31 .. 59
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1805,14 +1805,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack second 15 + finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     QueueEntryPointer[] pointers = result.getEntryPointers();
     queue.ack(pointers, consumer, t);
     queue.finalize(pointers, consumer, 2, t);
     oracle.commitTransaction(t);
 
     // ack second 15 again -> error
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     try {
       queue.ack(pointers, consumer, t);
       fail("acking for the second time should fail");
@@ -1825,7 +1825,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // dequeue another 15 -> 61 .. 89
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1836,7 +1836,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack first 10
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = Arrays.copyOf(result.getEntryPointers(), 10);
     queue.ack(pointers, consumer, t);
     queue.finalize(pointers, consumer, 2, t);
@@ -1848,7 +1848,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue 10 -> 1 .. 19
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1860,7 +1860,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueEntryPointer[] pointers1 = result.getEntryPointers();
 
     // dequeue 10 -> 21 .. 29, 81 ... 89
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1875,7 +1875,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueEntryPointer[] pointers2 = result.getEntryPointers();
 
     // dequeue 10 -> 91 .. 99
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -1887,13 +1887,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     QueueEntryPointer[] pointers3 = result.getEntryPointers();
 
     // dequeue 10 -> empty
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertTrue(result.isEmpty());
 
     // ack 1 .. 29
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = Arrays.copyOf(pointers1, pointers1.length + 5);
     System.arraycopy(pointers2, 0, pointers, pointers1.length, 5);
     queue.ack(pointers, consumer, t);
@@ -1901,7 +1901,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // ack 81 .. 99
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     // note pointers will be out of order
     pointers = Arrays.copyOf(pointers3, pointers3.length + 5);
     System.arraycopy(pointers2, 5, pointers, pointers3.length, 5);
@@ -1916,7 +1916,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue -> empty
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertTrue(result.isEmpty());
@@ -1932,7 +1932,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -1946,7 +1946,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer2, oracle.getReadPointer());
 
     // dequeue 15 with first consumer -> 1 .. 15
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1957,7 +1957,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue another 15 -> 16 .. 30
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1968,7 +1968,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue 15 with second consumer -> 31 .. 45
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -1979,7 +1979,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack second batch with second consumer -> error
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     QueueEntryPointer[] pointers = result1.getEntryPointers();
     try {
       queue.ack(pointers, consumer2, t);
@@ -1993,13 +1993,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t);
 
     // ack second batch with first consumer -> ok
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // ack second batch again -> error
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     try {
       queue.ack(pointers, consumer1, t);
       fail("acking for the second time should fail");
@@ -2016,7 +2016,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     consumer1 = new StatefulQueueConsumer(0, groupId, 2, groupName, config);
 
     // dequeue 10 with first consumer 1 .. 10
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -2027,14 +2027,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack these 10
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     pointers = result1.getEntryPointers();
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 10 with first consumer 11 .. 15
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -2046,7 +2046,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     pointers = Arrays.copyOf(result1.getEntryPointers(), 15);
 
     // dequeue 10 with first consumer 46 .. 55
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -2058,7 +2058,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     System.arraycopy(result1.getEntryPointers(), 0, pointers, 5, 10);
 
     // dequeue 15 with second consumer 56 .. 70
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -2069,14 +2069,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // ack previous 15 from first consumer at once
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.ack(pointers, consumer1, t);
     queue.finalize(pointers, consumer1, 2, t);
     oracle.commitTransaction(t);
 
     pointers = Arrays.copyOf(result2.getEntryPointers(), 30);
     // dequeue 15 with second consumer 71 .. 85
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -2088,13 +2088,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // ack last two batches with second consumer
     System.arraycopy(result2.getEntryPointers(), 0, pointers, 15, 15);
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.ack(pointers, consumer2, t);
     queue.finalize(pointers, consumer2, 2, t);
     oracle.commitTransaction(t);
 
     // dequeue 10 with first consumer 86 .. ?, less than 10 (only 15 left in queue)
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result1 = queue.dequeue(consumer1, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result1.isEmpty());
@@ -2106,7 +2106,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     int dequeued = entries.length;
 
     // deqeuee 15 with second consumer ? .. ?, less than 15
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -2122,12 +2122,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i + 100));
     }
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // dequeue 15 with second -> 15
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result2 = queue.dequeue(consumer2, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result2.isEmpty());
@@ -2151,7 +2151,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
       entries[i - 1].addHashKey("p", i);
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     EnqueueResult enqResult = queue.enqueue(entries, t);
     queue.invalidate(Arrays.copyOfRange(enqResult.getEntryPointers(), 5, 15), t);
     oracle.commitTransaction(t);
@@ -2181,14 +2181,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     int numDequeued = 0;
     while (true) {
-      Transaction t = oracle.startTransaction();
+      Transaction t = oracle.startTransaction(true);
       DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
       oracle.commitTransaction(t);
       if (result.isEmpty()) {
         break;
       }
       numDequeued += result.getEntries().length;
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       queue.ack(result.getEntryPointers(), consumer, t);
       queue.finalize(result.getEntryPointers(), consumer, 1, t);
       oracle.commitTransaction(t);
@@ -2207,7 +2207,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -2222,7 +2222,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     do {
       allEmpty = true;
       for (QueueConsumer consumer : consumers) {
-        t = oracle.startTransaction();
+        t = oracle.startTransaction(true);
         DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
         oracle.commitTransaction(t);
         if (result.isEmpty()) {
@@ -2230,7 +2230,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
         }
         allEmpty = false;
         numDequeued += result.getEntries().length;
-        t = oracle.startTransaction();
+        t = oracle.startTransaction(true);
         queue.ack(result.getEntryPointers(), consumer, t);
         queue.finalize(result.getEntryPointers(), consumer, 1, t);
         oracle.commitTransaction(t);
@@ -2251,7 +2251,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -2260,7 +2260,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer, oracle.getReadPointer());
 
     // dequeue but don't ack
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -2274,7 +2274,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // dequeue should still return these entries
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     oracle.commitTransaction(t);
     assertFalse(result.isEmpty());
@@ -2320,7 +2320,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for(int i = 1; i <= entries.length; ++i) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -2346,7 +2346,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Group 2, Consumer 2
     for(int i = 1; i <= entries.length; i += 2) {
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       DequeueResult result = queue.dequeue(grp2Consumer2, t.getReadPointer());
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
@@ -2364,7 +2364,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Group 2, Consumer 1
     for(int i = 2; i <= entries.length; i += 2) {
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       DequeueResult result = queue.dequeue(grp2Consumer1, t.getReadPointer());
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
@@ -2382,7 +2382,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Group 1, Consumer 2
     for(int i = 1; i <= entries.length; i += 2) {
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       DequeueResult result = queue.dequeue(grp1Consumer2, t.getReadPointer());
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
@@ -2400,7 +2400,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
 
     // Group 1, Consumer 1
     for(int i = 2; i <= entries.length; i += 2) {
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       DequeueResult result = queue.dequeue(grp1Consumer1, t.getReadPointer());
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(i, Bytes.toInt(result.getEntry().getData()));
@@ -2448,15 +2448,15 @@ public abstract class TestTTQueueNew extends TestTTQueue {
   private void runFinalize(TTQueue queue, QueueEntryPointer[] entryPointers, QueueConsumer grp1Consumer1,
                            QueueConsumer grp1Consumer2, QueueConsumer grp2Consumer1, QueueConsumer grp2Consumer2)
     throws OperationException {
-    queue.finalize(entryPointers, grp2Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
-    queue.finalize(entryPointers, grp2Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
-    queue.finalize(entryPointers, grp1Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
-    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+    queue.finalize(entryPointers, grp2Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
+    queue.finalize(entryPointers, grp2Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
+    queue.finalize(entryPointers, grp1Consumer2, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
+    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
 
     // Need to run finalize 2 times, since eviction information gets cleared every time we run configure for
     // verification, also the previous finalize with grp1Consumer1 wouldn't write the eviction information till
     // the end of the finalize function, hence (available groups == total groups) check will fail
-    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer()));
+    queue.finalize(entryPointers, grp1Consumer1, 2, new Transaction(getDirtyWriteVersion(), oracle.getReadPointer(), true));
   }
 
   private interface QueueConsumerHolder {
@@ -2519,20 +2519,20 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
     // Dequeue 5 entries in batch, async mode
     QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(FIFO, false, 5, true));
     queue.configure(consumer, oracle.getReadPointer());
-    Transaction t1 = oracle.startTransaction();
+    Transaction t1 = oracle.startTransaction(true);
     DequeueResult result1 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t1.getReadPointer());
     assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
     assertDequeueEquals(expectedDequeues.next(), result1.getEntries());
 
     // Dequeue again without acking
-    Transaction t2 = oracle.startTransaction();
+    Transaction t2 = oracle.startTransaction(true);
     DequeueResult result2 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t2.getReadPointer());
     assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
     assertDequeueEquals(expectedDequeues.next(), result2.getEntries());
@@ -2542,7 +2542,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.commitTransaction(t2);
 
     // Dequeue once more
-    Transaction t3 = oracle.startTransaction();
+    Transaction t3 = oracle.startTransaction(true);
     DequeueResult result3 = queue.dequeue(consumerHolder.getQueueConsumer(consumer), t3.getReadPointer());
     assertEquals(QueueConsumer.StateType.INITIALIZED, consumer.getStateType());
     assertDequeueEquals(expectedDequeues.next(), result3.getEntries());
@@ -2583,7 +2583,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -2593,14 +2593,14 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Dequeue 5 entries in batch, sync mode
     QueueConsumer consumer = new StatefulQueueConsumer(0, 0, 1, new QueueConfig(FIFO, true, 5, true));
     queue.configure(consumer, oracle.getReadPointer());
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result = queue.dequeue(consumer, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer, t);
     oracle.commitTransaction(t);
     Iterables.addAll(actualDequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
 
     // Dequeue 5 more
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     queue.dequeue(consumer, t.getReadPointer());
     // This time drop the entries
     queue.dropInflightState(consumer, t.getReadPointer());
@@ -2608,13 +2608,13 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     oracle.removeTransaction(t);
 
     // Dequeue the remaining
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer, t);
     oracle.commitTransaction(t);
     Iterables.addAll(actualDequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
 
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer, t);
     oracle.commitTransaction(t);
@@ -2641,7 +2641,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     for (int i = 1; i <= entries.length; i++) {
       entries[i - 1] = new QueueEntry(ImmutableMap.of(HASH_KEY, i), Bytes.toBytes(i));
     }
-    Transaction t = oracle.startTransaction();
+    Transaction t = oracle.startTransaction(true);
     queue.enqueue(entries, t);
     oracle.commitTransaction(t);
 
@@ -2660,12 +2660,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     List<Integer> consumer2Dequeues = Lists.newArrayList();
 
     // Dequeue 3 using both consumers
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     DequeueResult result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
     oracle.commitTransaction(t);
     Iterables.addAll(consumer1Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer2, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer2, t);
     oracle.commitTransaction(t);
@@ -2681,7 +2681,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer1, oracle.getReadPointer());
 
     // Dequeue 3 more with consuemr1 only
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
     oracle.commitTransaction(t);
@@ -2691,7 +2691,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     // Dequeuing with consumer2 should now throw error
     try {
       consumer2 = new StatefulQueueConsumer(0, 1L, 1, new QueueConfig(partitionerType, true, 3, true));
-      t = oracle.startTransaction();
+      t = oracle.startTransaction(true);
       result = queue.dequeue(consumer2, t.getReadPointer());
       fail("Dequeue should throw error");
     } catch (OperationException e) {
@@ -2703,7 +2703,7 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     }
 
     // Run finalize
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     // Note: only 4 will get finalized - max of min committed entries of a txn
     queue.finalize(result.getEntryPointers(), consumer1, 1, t);
     oracle.commitTransaction(t);
@@ -2717,12 +2717,12 @@ public abstract class TestTTQueueNew extends TestTTQueue {
     queue.configure(consumer2, oracle.getReadPointer());
 
     // Dequeue 3 using both consumers
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer1, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer1, t);
     oracle.commitTransaction(t);
     Iterables.addAll(consumer1Dequeues, Iterables.transform(Arrays.asList(result.getEntries()), QueueEntryToInteger));
-    t = oracle.startTransaction();
+    t = oracle.startTransaction(true);
     result = queue.dequeue(consumer2, t.getReadPointer());
     queue.ack(result.getEntryPointers(), consumer2, t);
     oracle.commitTransaction(t);

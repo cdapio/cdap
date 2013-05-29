@@ -47,6 +47,11 @@ public abstract class AbstractTransactionAgent implements TransactionAgent {
   }
 
   @Override
+  public void flush() throws OperationException {
+    // DO NOTHING BY DEFAULT
+  }
+
+  @Override
   public int getSucceededCount() {
     return succeeded.get();
   }

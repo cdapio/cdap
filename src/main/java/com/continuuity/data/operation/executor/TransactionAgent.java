@@ -55,6 +55,14 @@ public interface TransactionAgent {
   public void finish() throws OperationException;
 
   /**
+   * Flushes all buffered operations. Ensures that all buffered ops are performed.
+   * This can mean e.g. that all operations become visible to other
+   * transaction agents even if they use same yet to be committed transaction.
+   * @throws OperationException if something goes wrong in data fabric
+   */
+  public void flush() throws OperationException;
+
+  /**
    * Submit a write operation for execution.
    * @param operation The operation
    * @throws OperationException if something goes wrong in data fabric

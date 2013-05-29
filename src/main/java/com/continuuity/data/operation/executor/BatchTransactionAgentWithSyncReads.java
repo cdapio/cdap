@@ -42,6 +42,15 @@ public class BatchTransactionAgentWithSyncReads extends SynchronousTransactionAg
     super.abort();
   }
 
+  /**
+   * Equivalent to {@link #finish()} for this agent type.
+   * @throws OperationException
+   */
+  @Override
+  public void flush() throws OperationException {
+    finish();
+  }
+
   @Override
   public void finish() throws OperationException {
     if (this.writes.isEmpty()) {

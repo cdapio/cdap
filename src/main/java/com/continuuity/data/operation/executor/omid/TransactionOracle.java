@@ -71,9 +71,11 @@ public interface TransactionOracle {
    * that excludes all transaction that start in the future, and also excludes all uncommitted
    * transactions at this time. It does, however, include the transaction itself, such that
    * transactions can see their own writes.
+   * @param trackChanges defines whether started transaction should track changes. If set to false then
+   *                     changes done by tx are not tracked and therefore no conflict detection is done
    * @return a pair of the read pointer and the new transaction id.
    */
-  public Transaction startTransaction();
+  public Transaction startTransaction(boolean trackChanges);
 
   /**
    * Validate that a transaction is in progress.

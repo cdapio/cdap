@@ -47,7 +47,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testSingleConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    Transaction transaction = oracle.startTransaction();
+    Transaction transaction = oracle.startTransaction(true);
 
     int rounds = 1000;
     int entriesPerRound = 10000;
@@ -99,7 +99,7 @@ public class TestMemoryTTQueue extends TestTTQueue {
   public void testMultiConsumerPlenty() throws Exception {
     TTQueue queue = createQueue();
 
-    Transaction transaction = oracle.startTransaction();
+    Transaction transaction = oracle.startTransaction(true);
 
     int rounds = 1000;
     int entriesPerRound = 10000;

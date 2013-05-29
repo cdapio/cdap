@@ -96,9 +96,11 @@ public interface OperationExecutor
 
   /**
    * Start a client-side transaction.
+   * @param trackChanges if false then started transaction doesn't track changes and hence no conflicts with other
+   *                     transactions are detected
    * @return the new transaction
    */
-  public Transaction startTransaction(OperationContext context)
+  public Transaction startTransaction(OperationContext context, boolean trackChanges)
     throws OperationException;
 
   /**

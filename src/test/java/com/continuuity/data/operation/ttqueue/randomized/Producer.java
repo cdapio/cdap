@@ -52,7 +52,7 @@ public class Producer implements Runnable {
       LOG.info(String.format("Producer:%d started", id));
       List<Integer> enqueueBatch = getNextEnqueueBatch();
       while(enqueueBatch != null) {
-        final Transaction transaction =  oracle.startTransaction();
+        final Transaction transaction =  oracle.startTransaction(true);
 
         EnqueueResult result = queue.enqueue(getEnqueueEntries(enqueueBatch), transaction);
         TimeUnit.MILLISECONDS.sleep(testConfig.getEnqueueSleepMs());

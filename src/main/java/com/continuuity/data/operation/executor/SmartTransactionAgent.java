@@ -86,7 +86,19 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
    * @param context the operation context for all operations
    */
   public SmartTransactionAgent(OperationExecutor opex, OperationContext context) {
+    this(opex, context, null);
+  }
+
+  /**
+   * Same as {@link #SmartTransactionAgent(OperationExecutor, com.continuuity.data.operation.OperationContext)} but
+   * takes transaction to operate with.
+   * @param opex the actual operation executor
+   * @param context the operation context for all operations
+   * @param tx optional transaction to use for all operations, if not provided this agent will use new one
+   */
+  public SmartTransactionAgent(OperationExecutor opex, OperationContext context, Transaction tx) {
     super(opex, context);
+    this.xaction = tx;
   }
 
   /**
@@ -123,15 +135,13 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
 
   @Override
   public void start() throws OperationException {
-    if (this.state == State.Running) {
+    // Transaction agent can be started only once
+    if (this.state != State.New) {
       // in this case we want to throw a runtime exception. The transaction has started
       // and we must abort or commit it, otherwise data fabric may be inconsistent.
       throw new IllegalStateException("Transaction has already started.");
     }
     super.start();
-    this.executed.set(0);
-    this.xaction = null;
-    clearDeferred();
     this.state = State.Running;
   }
 
@@ -154,6 +164,19 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
     }
 
     try {
+      abortTransaction();
+    } finally {
+      this.state = State.Aborted;
+      super.abort();
+    }
+  }
+
+  /**
+   * Called to abort transaction. Subclasses can override it, e.g. to skip transaction abort.
+   * @throws OperationException
+   */
+  protected void abortTransaction() throws OperationException {
+    try {
       if (this.xaction != null) {
         // transaction was started - it must be aborted
         this.opex.abort(this.context, this.xaction);
@@ -165,8 +188,6 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
       }
     } finally {
       this.xaction = null;
-      this.state = State.Aborted;
-      super.abort();
     }
   }
 
@@ -212,6 +233,12 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
       clearDeferred();
       super.finish();
     }
+  }
+
+  @Override
+  public void flush() throws OperationException {
+    // check state and get rid of deferred operations
+    executeDeferred();
   }
 
   @Override
@@ -275,7 +302,8 @@ public class SmartTransactionAgent extends AbstractTransactionAgent {
         throw e;
       }
     } else if (this.xaction == null) {
-      this.xaction = opex.startTransaction(this.context);
+      // starting transaction that tracks changes by default
+      this.xaction = opex.startTransaction(this.context, true);
     }
   }
 

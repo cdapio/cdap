@@ -33,6 +33,7 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
   private static final org.apache.thrift.protocol.TField IS_NULL_FIELD_DESC = new org.apache.thrift.protocol.TField("isNull", org.apache.thrift.protocol.TType.BOOL, (short)1);
   private static final org.apache.thrift.protocol.TField TXID_FIELD_DESC = new org.apache.thrift.protocol.TField("txid", org.apache.thrift.protocol.TType.I64, (short)2);
   private static final org.apache.thrift.protocol.TField READ_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("readPointer", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+  private static final org.apache.thrift.protocol.TField TRACK_CHANGES_FIELD_DESC = new org.apache.thrift.protocol.TField("trackChanges", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +44,14 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
   public boolean isNull; // required
   public long txid; // optional
   public TReadPointer readPointer; // optional
+  public boolean trackChanges; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     IS_NULL((short)1, "isNull"),
     TXID((short)2, "txid"),
-    READ_POINTER((short)3, "readPointer");
+    READ_POINTER((short)3, "readPointer"),
+    TRACK_CHANGES((short)4, "trackChanges");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -69,6 +72,8 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
           return TXID;
         case 3: // READ_POINTER
           return READ_POINTER;
+        case 4: // TRACK_CHANGES
+          return TRACK_CHANGES;
         default:
           return null;
       }
@@ -111,8 +116,9 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
   // isset id assignments
   private static final int __ISNULL_ISSET_ID = 0;
   private static final int __TXID_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
-  private _Fields optionals[] = {_Fields.TXID,_Fields.READ_POINTER};
+  private static final int __TRACKCHANGES_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
+  private _Fields optionals[] = {_Fields.TXID,_Fields.READ_POINTER,_Fields.TRACK_CHANGES};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -122,6 +128,8 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.READ_POINTER, new org.apache.thrift.meta_data.FieldMetaData("readPointer", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TReadPointer.class)));
+    tmpMap.put(_Fields.TRACK_CHANGES, new org.apache.thrift.meta_data.FieldMetaData("trackChanges", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TTransaction.class, metaDataMap);
   }
@@ -148,6 +156,7 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
     if (other.isSetReadPointer()) {
       this.readPointer = new TReadPointer(other.readPointer);
     }
+    this.trackChanges = other.trackChanges;
   }
 
   public TTransaction deepCopy() {
@@ -161,6 +170,8 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
     setTxidIsSet(false);
     this.txid = 0;
     this.readPointer = null;
+    setTrackChangesIsSet(false);
+    this.trackChanges = false;
   }
 
   public boolean isIsNull() {
@@ -233,6 +244,29 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
     }
   }
 
+  public boolean isTrackChanges() {
+    return this.trackChanges;
+  }
+
+  public TTransaction setTrackChanges(boolean trackChanges) {
+    this.trackChanges = trackChanges;
+    setTrackChangesIsSet(true);
+    return this;
+  }
+
+  public void unsetTrackChanges() {
+    __isset_bit_vector.clear(__TRACKCHANGES_ISSET_ID);
+  }
+
+  /** Returns true if field trackChanges is set (has been assigned a value) and false otherwise */
+  public boolean isSetTrackChanges() {
+    return __isset_bit_vector.get(__TRACKCHANGES_ISSET_ID);
+  }
+
+  public void setTrackChangesIsSet(boolean value) {
+    __isset_bit_vector.set(__TRACKCHANGES_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case IS_NULL:
@@ -259,6 +293,14 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       }
       break;
 
+    case TRACK_CHANGES:
+      if (value == null) {
+        unsetTrackChanges();
+      } else {
+        setTrackChanges((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -272,6 +314,9 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
 
     case READ_POINTER:
       return getReadPointer();
+
+    case TRACK_CHANGES:
+      return Boolean.valueOf(isTrackChanges());
 
     }
     throw new IllegalStateException();
@@ -290,6 +335,8 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       return isSetTxid();
     case READ_POINTER:
       return isSetReadPointer();
+    case TRACK_CHANGES:
+      return isSetTrackChanges();
     }
     throw new IllegalStateException();
   }
@@ -331,6 +378,15 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       if (!(this_present_readPointer && that_present_readPointer))
         return false;
       if (!this.readPointer.equals(that.readPointer))
+        return false;
+    }
+
+    boolean this_present_trackChanges = true && this.isSetTrackChanges();
+    boolean that_present_trackChanges = true && that.isSetTrackChanges();
+    if (this_present_trackChanges || that_present_trackChanges) {
+      if (!(this_present_trackChanges && that_present_trackChanges))
+        return false;
+      if (this.trackChanges != that.trackChanges)
         return false;
     }
 
@@ -380,6 +436,16 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetTrackChanges()).compareTo(typedOther.isSetTrackChanges());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTrackChanges()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.trackChanges, typedOther.trackChanges);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -417,6 +483,12 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       } else {
         sb.append(this.readPointer);
       }
+      first = false;
+    }
+    if (isSetTrackChanges()) {
+      if (!first) sb.append(", ");
+      sb.append("trackChanges:");
+      sb.append(this.trackChanges);
       first = false;
     }
     sb.append(")");
@@ -488,6 +560,14 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // TRACK_CHANGES
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.trackChanges = iprot.readBool();
+              struct.setTrackChangesIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -518,6 +598,11 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
           oprot.writeFieldEnd();
         }
       }
+      if (struct.isSetTrackChanges()) {
+        oprot.writeFieldBegin(TRACK_CHANGES_FIELD_DESC);
+        oprot.writeBool(struct.trackChanges);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -545,7 +630,10 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       if (struct.isSetReadPointer()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetTrackChanges()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetIsNull()) {
         oprot.writeBool(struct.isNull);
       }
@@ -555,12 +643,15 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
       if (struct.isSetReadPointer()) {
         struct.readPointer.write(oprot);
       }
+      if (struct.isSetTrackChanges()) {
+        oprot.writeBool(struct.trackChanges);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TTransaction struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.isNull = iprot.readBool();
         struct.setIsNullIsSet(true);
@@ -573,6 +664,10 @@ public class TTransaction implements org.apache.thrift.TBase<TTransaction, TTran
         struct.readPointer = new TReadPointer();
         struct.readPointer.read(iprot);
         struct.setReadPointerIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.trackChanges = iprot.readBool();
+        struct.setTrackChangesIsSet(true);
       }
     }
   }
