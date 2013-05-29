@@ -11,11 +11,12 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.runtime.MetadataModules;
-import com.continuuity.runtime.MetricsModules;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.name.Names;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -72,12 +73,12 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     return Guice.createInjector(singleNodeModules);
   }
 
-  private static class NoOracleOpexModule implements Module {
+  private static class NoOracleOpexModule extends AbstractModule {
     private static NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
 
     @Override
-    public void configure(Binder binder) {
-      binder.bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
+    public void configure() {
+      bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
         .toInstance(false);
     }
   }
