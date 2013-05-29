@@ -3,7 +3,6 @@ package com.continuuity.cperf.runner;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.StreamWriter;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 @RunWithApps({SimpleApp.class, TrivialApp.class})
 public class SimplePerformanceTest {
 
-  @Test
+  @PerformanceTest
   public void testApp() throws IOException, TimeoutException, InterruptedException {
     final int numStreamEvents = 10000;
 
