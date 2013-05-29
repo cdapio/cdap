@@ -22,7 +22,7 @@ task jshint << {
     "$rootProject.projectDir/web-cloud-app/client/core/",
     "$rootProject.projectDir/web-cloud-app/client/developer/patch/views",
     "$rootProject.projectDir/web-cloud-app/server/developer/main.js",
-    "--config", 'jshint.json'
+    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
 
   if(executeCommand(developer) != 0) {
@@ -37,7 +37,7 @@ task jshint << {
     "$rootProject.projectDir/web-cloud-app/client/core/",
     "$rootProject.projectDir/web-cloud-app/client/cloud/patch/views",
     "$rootProject.projectDir/web-cloud-app/server/cloud/main.js",
-    "--config", 'jshint.json'
+    "--config", "$rootProject.projectDir/web-cloud-app/jshint.json"
   ]
   if(executeCommand(cloud) != 0) {
     throw new GradleScriptException("JSHint reported errors while building cloud app", null)
