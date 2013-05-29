@@ -28,8 +28,8 @@ public class SimplePerformanceTest {
       kvStream.send("key" + i + "=" + "val" + i);
     }
 
-    BenchmarkRuntimeMetrics sourceFlowletMetrics = PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp",
-                                                                                                   "SimpleFlow", "source");
+    BenchmarkRuntimeMetrics sourceFlowletMetrics =
+      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleFlow", "source");
 
     System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
 
@@ -37,8 +37,8 @@ public class SimplePerformanceTest {
 
     System.out.println("Number of events processed by source flowlet = " + sourceFlowletMetrics.getProcessed());
 
-    BenchmarkRuntimeMetrics readerFlowletMetrics = PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp",
-                                                                                                   "SimpleFlow", "reader");
+    BenchmarkRuntimeMetrics readerFlowletMetrics =
+      PerformanceTestRunner.Context.getFlowletMetrics("SimpleApp", "SimpleFlow", "reader");
 
     System.out.println("Number of events processed by reader flowlet = " + readerFlowletMetrics.getProcessed());
 
