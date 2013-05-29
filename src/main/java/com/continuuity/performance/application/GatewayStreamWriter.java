@@ -7,7 +7,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.passport.PassportConstants;
-import com.continuuity.performance.gateway.HttpClient;
 import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -29,7 +28,7 @@ import java.util.Map;
 public class GatewayStreamWriter implements StreamWriter {
 
   private final StreamEventCodec codec;
-  private final HttpClient poster;
+  private final SimpleHttpClient httpClient;
 
   @Inject
   public GatewayStreamWriter(CConfiguration config,
@@ -47,7 +46,7 @@ public class GatewayStreamWriter implements StreamWriter {
     }
     String url =  Util.findBaseUrl(config, RestCollector.class, null, gateway, -1, apiKey != null)
       + queueName.getSimpleName();
-    poster = new SimpleHttpClient(url, headers);
+    httpClient = new SimpleHttpClient(url, headers);
   }
 
   @Override
@@ -89,7 +88,7 @@ public class GatewayStreamWriter implements StreamWriter {
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     StreamEvent event = new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer);
     try {
-      poster.post(codec.encodePayload(event));
+      httpClient.post(codec.encodePayload(event));
     } catch (Exception e) {
       Throwables.propagate(e);
     }

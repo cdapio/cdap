@@ -1,6 +1,5 @@
 package com.continuuity.performance.gateway.stream;
 
-import com.continuuity.performance.gateway.HttpClient;
 import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -19,7 +18,7 @@ public final class StreamEventDispatcher implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(StreamEventDispatcher.class);
 
   private final AtomicLong counter = new AtomicLong(0);
-  private final HttpClient httpPoster;
+  private final SimpleHttpClient httpClient;
   private final LinkedBlockingDeque<byte[]> queue;
 
   private volatile boolean keepRunning = true;
@@ -29,7 +28,7 @@ public final class StreamEventDispatcher implements Runnable {
    */
   public StreamEventDispatcher(String url, Map<String, String> headers, final LinkedBlockingDeque<byte[]> queue) {
     this.queue = queue;
-    httpPoster = new SimpleHttpClient(url, headers);
+    httpClient = new SimpleHttpClient(url, headers);
   }
 
   /**
@@ -62,7 +61,7 @@ public final class StreamEventDispatcher implements Runnable {
       LOG.debug("Trying to send stream event {} to gateway.", event);
 
       try {
-        httpPoster.post(event);
+        httpClient.post(event);
         LOG.debug("Successfully sent {} stream events to the gateway.", counter.incrementAndGet());
       } catch (Exception e) {
         Throwables.propagate(e);
