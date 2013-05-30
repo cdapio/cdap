@@ -37,7 +37,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
-import com.google.inject.internal.util.$Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -190,7 +189,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
     addContinuuityJarsToClasspath(jobConf);
 
-    jobConf.setJar(jobJarLocation.toURI().getPath());
+    jobConf.setJar(jobJarLocation.toURI().toString());
+    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     new Thread() {
