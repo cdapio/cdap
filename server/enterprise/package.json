@@ -1,0 +1,8 @@
+{
+	"name": "reactor-ui-enterprise",
+	"version": "0.0.1",
+	"main": "./main.js",
+	"dependencies": {
+    "xml2js": "0.2.7"
+	}
+}
