@@ -6,10 +6,17 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +27,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class Main {
 
+  private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
   /**
    * Our main method.
    *
@@ -29,6 +38,21 @@ public class Main {
     // Load our configuration from our resource files
     CConfiguration configuration = CConfiguration.create();
 
+    String zookeeper = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    if (zookeeper == null) {
+      LOG.error("No zookeeper quorum provided.");
+      System.exit(1);
+    }
+    ZKClientService zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zookeeper).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+        ));
+    zkClientService.startAndWait();
+
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
         new GatewayModules().getDistributedModules(),
@@ -36,7 +60,7 @@ public class Main {
         new ConfigModule(configuration),
         new IOModule(),
         new LocationRuntimeModule().getDistributedModules(),
-        new DiscoveryRuntimeModule().getDistributedModules()
+        new DiscoveryRuntimeModule(zkClientService).getDistributedModules()
         );
 
     // Get our fully wired Gateway
@@ -53,10 +77,11 @@ public class Main {
       theGateway.start(null, configuration);
 
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e.toString(), e);
       System.exit(-1);
+    } finally {
+      zkClientService.stopAndWait();
     }
-
   }
 
 } // End of Main
