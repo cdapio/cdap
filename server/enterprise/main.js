@@ -14,7 +14,7 @@ var WebAppServer = require('../common/server');
 /**
  * Set environment.
  */
-process.env.NODE_ENV = 'enterprise';
+process.env.NODE_ENV = 'development';
 
 /**
  * Log level.
@@ -47,13 +47,11 @@ EntServer.prototype.getConfig = function(opt_callback) {
         self.config[item.name] = item.value[0];
       }
     });
-    fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
-      Api.configure(self.config, apiKey || null);
-      self.configSet = true;
-      if (opt_callback && typeof opt_callback === "function") {
-        opt_callback();
-      }
-    });
+    Api.configure(self.config, null);
+    self.configSet = true;
+    if (opt_callback && typeof opt_callback === "function") {
+      opt_callback();
+    }
   });
 };
 
