@@ -1,18 +1,24 @@
 package com.continuuity.gateway.runtime;
 
 import com.continuuity.app.guice.LocationRuntimeModule;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
@@ -60,7 +66,17 @@ public class Main {
         new ConfigModule(configuration),
         new IOModule(),
         new LocationRuntimeModule().getDistributedModules(),
-        new DiscoveryRuntimeModule(zkClientService).getDistributedModules()
+        new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+            // AppFabricServiceModule
+            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
+            bind(MetaDataStore.class).to(SerializingMetaDataStore.class);
+            bind(StoreFactory.class).to(MDSStoreFactory.class);
+          }
+        }
         );
 
     // Get our fully wired Gateway
