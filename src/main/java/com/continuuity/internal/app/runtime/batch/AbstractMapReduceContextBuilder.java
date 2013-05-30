@@ -10,7 +10,6 @@ import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
-import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -21,17 +20,19 @@ import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionAgent;
 import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Builds the {@link BasicMapReduceContext}.
@@ -67,7 +68,7 @@ public abstract class AbstractMapReduceContextBuilder {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = new Program(locationFactory.create(programLocation));
+      program = new Program(locationFactory.create(URI.create(programLocation)));
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -113,7 +114,9 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Hooking up with logging and metrics systems
     // this is a hack for old logging system
-    CAppender.logWriter = injector.getInstance(LogWriter.class);
+    if (injector.getBindings().containsKey(Key.get(LogWriter.class))) {
+      CAppender.logWriter = injector.getInstance(LogWriter.class);
+    }
 
     return context;
   }

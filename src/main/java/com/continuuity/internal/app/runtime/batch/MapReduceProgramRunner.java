@@ -49,6 +49,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
@@ -68,12 +69,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
-                                OperationExecutor opex,
-                                LogWriter logWriter) {
+                                OperationExecutor opex) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.opex = opex;
-    CAppender.logWriter = logWriter;
+  }
+
+  @Inject (optional = true)
+  void setLogWriter(@Nullable LogWriter logWriter) {
+    if (logWriter != null) {
+      CAppender.logWriter = logWriter;
+    }
   }
 
   @Override
@@ -183,7 +189,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
     addContinuuityJarsToClasspath(jobConf);
 
-    jobConf.setJar(jobJarLocation.toURI().getPath());
+    jobConf.setJar(jobJarLocation.toURI().toString());
+    // This is needed for having the program jar file available in MR classpath
+    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     new Thread() {
