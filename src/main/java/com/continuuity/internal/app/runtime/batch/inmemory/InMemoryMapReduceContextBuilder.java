@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import com.continuuity.app.guice.LocationRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.program.Program;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -11,12 +12,15 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.runtime.MetadataModules;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
+
+import java.io.IOException;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -27,6 +31,11 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
 
   public InMemoryMapReduceContextBuilder(CConfiguration cConf) {
     this.cConf = cConf;
+  }
+
+  @Override
+  protected Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException {
+    return new Program(locationFactory.create(programLocation));
   }
 
   protected Injector createInjector() {

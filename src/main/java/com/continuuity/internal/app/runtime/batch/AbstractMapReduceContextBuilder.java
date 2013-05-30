@@ -65,10 +65,9 @@ public abstract class AbstractMapReduceContextBuilder {
     Injector injector = createInjector();
 
     // Initializing Program
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = new Program(locationFactory.create(URI.create(programLocation)));
+      program = loadProgram(programLocation, injector.getInstance(LocationFactory.class));
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -120,6 +119,8 @@ public abstract class AbstractMapReduceContextBuilder {
 
     return context;
   }
+
+  protected abstract Program loadProgram(String programLocation, LocationFactory locationFactory) throws IOException;
 
   /**
    * @return instance of {@link Injector} with bindings for current runtime environment
