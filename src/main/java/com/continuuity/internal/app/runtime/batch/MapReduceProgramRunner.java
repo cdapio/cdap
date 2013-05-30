@@ -190,6 +190,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     addContinuuityJarsToClasspath(jobConf);
 
     jobConf.setJar(jobJarLocation.toURI().toString());
+    // This is needed for having the program jar file available in MR classpath
     jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
