@@ -36,6 +36,7 @@ import com.continuuity.weave.internal.ApplicationBundler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +50,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -179,18 +182,23 @@ public class MapReduceProgramRunner implements ProgramRunner {
     setInputDataSetIfNeeded(jobConf, context);
     setOutputDataSetIfNeeded(jobConf, context);
 
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
-    // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx, jobJarLocation.getName());
-
     // packaging job jar which includes continuuity classes with dependencies
     // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
-    //       classloader when executing user code
+    //       classloader when executing user code. We need to submit a copy of the program jar because
+    //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
+    //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
+
     final Location jobJar = buildJobJar(jobJarLocation);
+    final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+
     jobConf.setJar(jobJar.toURI().toString());
-    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
+    jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
 
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+
+    MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
+    // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
+    contextProvider.set(context, cConf, tx, programJarCopy.getName());
 
     new Thread() {
       @Override
@@ -222,9 +230,31 @@ public class MapReduceProgramRunner implements ProgramRunner {
             LOG.warn("Failed to delete temp mr job jar: " + jobJar.toURI());
             // failure should not affect other stuff
           }
+          try {
+            programJarCopy.delete();
+          } catch (IOException e) {
+            LOG.warn("Failed to delete temp mr job jar: " + programJarCopy.toURI());
+            // failure should not affect other stuff
+          }
         }
       }
     }.start();
+  }
+
+  private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
+    Location programJarCopy = jobJarLocation.getTempFile("program.jar");
+    InputStream src = jobJarLocation.getInputStream();
+    try {
+      OutputStream dest = programJarCopy.getOutputStream();
+      try {
+        ByteStreams.copy(src, dest);
+      } finally {
+        dest.close();
+      }
+    } finally {
+      src.close();
+    }
+    return programJarCopy;
   }
 
   private void wrapMapperClassIfNeeded(Job jobConf) throws ClassNotFoundException {

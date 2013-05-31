@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * Provides access to MapReduceContext for mapreduce job tasks.
  */
-public class MapReduceContextProvider {
+public final class MapReduceContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
 
@@ -78,8 +78,6 @@ public class MapReduceContextProvider {
     String programJarName = getProgramJarName();
     for (Path file : jobContext.getFileClassPaths()) {
       if (programJarName.equals(file.getName())) {
-        // NOTE: in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
-        //       if we allow deploying new program while existing is running. This may need to be addressed.
         return file.toUri().getPath();
       }
     }
