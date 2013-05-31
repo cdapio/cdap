@@ -32,16 +32,17 @@ import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.internal.ApplicationBundler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -50,7 +51,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Set;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -185,13 +194,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
     contextProvider.set(context, cConf, tx);
 
-    // TODO: consider using approach that Weave uses: package all jars with submitted job all the time
-    // adding continuuity jars to classpath (which are located/cached on hdfs to avoid redundant copying with every job)
-    addContinuuityJarsToClasspath(jobConf);
+    // packaging job jar with dependencies (including app-fabric dependencies)
+    final Location jobJar = buildJobJar(job, jobJarLocation);
 
-    jobConf.setJar(jobJarLocation.toURI().toString());
+    jobConf.setJar(jobJar.toURI().toString());
     // This is needed for having the program jar file available in MR classpath
-    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
+    jobConf.addFileToClassPath(new Path(jobJar.toURI()));
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     new Thread() {
@@ -218,28 +226,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // stopping controller when mapreduce job is finished
           // (also that should finish transaction, but that might change after integration with "long running txs")
           stopController(success);
+          try {
+            jobJar.delete();
+          } catch (IOException e) {
+            LOG.warn("Failed to delete temp mr job jar: " + jobJar.toURI());
+            // failure should not affect other stuff
+          }
         }
       }
     }.start();
-  }
-
-  private void addContinuuityJarsToClasspath(Job jobConf) throws IOException {
-    // ideally single line commented out below should be enough, but
-    // due to yarn bug (MAPREDUCE-4740) we need to do it the ugly way
-    // jobConf.addArchiveToClassPath(new Path("/continuuity/lib.zip"));
-
-    FileSystem fs = FileSystem.get(hConf);
-
-    Path libDir = new Path("/continuuity/lib");
-    if (!fs.exists(libDir)) {
-      LOG.warn("/continuuity/lib does NOT exist, only job jar is going to be in classpath of mapreduce tasks");
-      return;
-    }
-    RemoteIterator<LocatedFileStatus> it = fs.listFiles(libDir, false);
-    while (it.hasNext()) {
-      LocatedFileStatus file = it.next();
-      jobConf.addFileToClassPath(file.getPath());
-    }
   }
 
   private void wrapMapperClassIfNeeded(Job jobConf) throws ClassNotFoundException {
@@ -350,4 +345,88 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // No-op
     }
   }
+
+  private static Location buildJobJar(MapReduce job, Location jobJarLocation) throws IOException {
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
+    Location appFabricDependenciesJarLocation = jobJarLocation.getTempFile(".job.jar");
+
+    LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
+    appBundler.createBundle(appFabricDependenciesJarLocation,
+                            job.configure().getClass(),
+                            DataSetOutputFormat.class, DataSetInputFormat.class,
+                            MapperWrapper.class, ReducerWrapper.class);
+    merge(appFabricDependenciesJarLocation, jobJarLocation);
+    return appFabricDependenciesJarLocation;
+  }
+
+  private static void merge(Location otherJar, Location programJar) throws IOException {
+    // The resulting jar is a merge of both jars, but it uses programJar's manifest, which is essential to build
+    // Program instance from the jar.
+
+    // Write the jar to local tmp file first
+    File tmpJar = File.createTempFile(otherJar.getName(), ".tmp");
+    try {
+      // this looks ugly, but we have to create source stream first to get manifest
+      JarInputStream programJarIs = new JarInputStream(programJar.getInputStream());
+      try {
+        JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tmpJar), programJarIs.getManifest());
+        try {
+          // keeping track of added entries to prevent adding duplicates
+          Set<String> addedEntries = Sets.newHashSet();
+
+          // writing programJar contents first
+          put(programJarIs, jarOut, addedEntries);
+
+          // copying other jar
+          addJarContents(otherJar, jarOut, addedEntries);
+
+        } finally {
+          jarOut.close();
+        }
+      } finally {
+        programJarIs.close();
+      }
+
+      // Copy the tmp jar into destination.
+      OutputStream os = new BufferedOutputStream(otherJar.getOutputStream());
+      try {
+        Files.copy(tmpJar, os);
+      } finally {
+        os.close();
+      }
+    } finally {
+      if (!tmpJar.delete()) {
+        LOG.warn("Failed to delete temp file: " + tmpJar);
+        // failure should not affect other stuff
+      }
+    }
+  }
+
+  private static void addJarContents(Location src, JarOutputStream dest, Set<String> addedEntries) throws IOException {
+    JarInputStream otherJarIs = new JarInputStream(src.getInputStream());
+    try {
+      put(otherJarIs, dest, addedEntries);
+    } finally {
+      otherJarIs.close();
+    }
+  }
+
+  private static void put(JarInputStream src, JarOutputStream dest, Set<String> addedEntries) throws IOException {
+    while (true) {
+      ZipEntry nextEntry = src.getNextEntry();
+      if (nextEntry == null) {
+        break;
+      }
+      String entryName = nextEntry.getName();
+      if (addedEntries.contains(entryName)) {
+        continue;
+      }
+      addedEntries.add(entryName);
+      // write entry
+      dest.putNextEntry(new ZipEntry(entryName));
+      ByteStreams.copy(src, dest);
+      dest.closeEntry();
+    }
+  }
+
 }
