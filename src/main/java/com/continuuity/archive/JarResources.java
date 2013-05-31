@@ -71,7 +71,10 @@ public final class JarResources {
         if(LOG.isTraceEnabled()) {
           LOG.trace(dumpJarEntry(ze));
         }
-        if(ze.isDirectory()) {
+        // Skipping directories and jar files bundled inside. We want skip jars in cases when we use mapreduce job
+        // jar submitted to mr framework which contains all dependencies. We don't want to load them as it may take
+        // a lot of memory.
+        if(ze.isDirectory() || ze.getName().endsWith(".jar")) {
           continue;
         }
         if(ze.getSize() > Integer.MAX_VALUE) {
