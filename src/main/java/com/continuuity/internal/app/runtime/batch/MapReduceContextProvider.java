@@ -12,6 +12,7 @@ import com.continuuity.internal.app.runtime.batch.inmemory.InMemoryMapReduceCont
 import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRConfig;
@@ -33,9 +34,10 @@ import java.util.Set;
  */
 public class MapReduceContextProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractMapReduceContextBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
   private static final String HCONF_ATTR_INPUT_DATASET = "hconf.program.input.dataset";
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
@@ -73,11 +75,20 @@ public class MapReduceContextProvider {
   }
 
   private String getProgramLocation() {
-    return jobContext.getJar();
+    String programJarName = getProgramJarName();
+    for (Path file : jobContext.getFileClassPaths()) {
+      if (programJarName.equals(file.getName())) {
+        // NOTE: in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
+        //       if we allow deploying new program while existing is running. This may need to be addressed.
+        return file.toUri().getPath();
+      }
+    }
+    throw new IllegalStateException("Program jar " + programJarName + " not found in classpath files.");
   }
 
-  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx) {
+  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, String programJarName) {
     setRunId(context.getRunId().getId());
+    setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
     if (context.getInputDataset() != null) {
@@ -97,6 +108,14 @@ public class MapReduceContextProvider {
 
   private String getRunId() {
     return jobContext.getConfiguration().get(HCONF_ATTR_RUN_ID);
+  }
+
+  private void setProgramJarName(String programJarName) {
+    jobContext.getConfiguration().set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);
+  }
+
+  private String getProgramJarName() {
+    return jobContext.getConfiguration().get(HCONF_ATTR_PROGRAM_JAR_NAME);
   }
 
   private void setInputDataSet(String dataSetName) {

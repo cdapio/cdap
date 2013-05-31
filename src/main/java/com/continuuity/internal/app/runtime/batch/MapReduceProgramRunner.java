@@ -36,9 +36,6 @@ import com.continuuity.weave.internal.ApplicationBundler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -51,15 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Set;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
 
 /**
  * Runs {@link com.continuuity.api.batch.MapReduce} programs
@@ -192,14 +181,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
     // apart from everything we also remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx);
+    contextProvider.set(context, cConf, tx, jobJarLocation.getName());
 
-    // packaging job jar with dependencies (including app-fabric dependencies)
-    final Location jobJar = buildJobJar(job, jobJarLocation);
-
+    // packaging job jar which includes continuuity classes with dependencies
+    // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
+    //       classloader when executing user code
+    final Location jobJar = buildJobJar(jobJarLocation);
     jobConf.setJar(jobJar.toURI().toString());
-    // This is needed for having the program jar file available in MR classpath
-    jobConf.addFileToClassPath(new Path(jobJar.toURI()));
+    jobConf.addFileToClassPath(new Path(jobJarLocation.toURI()));
+
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     new Thread() {
@@ -346,87 +336,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
   }
 
-  private static Location buildJobJar(MapReduce job, Location jobJarLocation) throws IOException {
+  private static Location buildJobJar(Location jobJarLocation) throws IOException {
     ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
     Location appFabricDependenciesJarLocation = jobJarLocation.getTempFile(".job.jar");
 
     LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
     appBundler.createBundle(appFabricDependenciesJarLocation,
-                            job.configure().getClass(),
+                            MapReduce.class,
                             DataSetOutputFormat.class, DataSetInputFormat.class,
                             MapperWrapper.class, ReducerWrapper.class);
-    merge(appFabricDependenciesJarLocation, jobJarLocation);
     return appFabricDependenciesJarLocation;
   }
-
-  private static void merge(Location otherJar, Location programJar) throws IOException {
-    // The resulting jar is a merge of both jars, but it uses programJar's manifest, which is essential to build
-    // Program instance from the jar.
-
-    // Write the jar to local tmp file first
-    File tmpJar = File.createTempFile(otherJar.getName(), ".tmp");
-    try {
-      // this looks ugly, but we have to create source stream first to get manifest
-      JarInputStream programJarIs = new JarInputStream(programJar.getInputStream());
-      try {
-        JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tmpJar), programJarIs.getManifest());
-        try {
-          // keeping track of added entries to prevent adding duplicates
-          Set<String> addedEntries = Sets.newHashSet();
-
-          // writing programJar contents first
-          put(programJarIs, jarOut, addedEntries);
-
-          // copying other jar
-          addJarContents(otherJar, jarOut, addedEntries);
-
-        } finally {
-          jarOut.close();
-        }
-      } finally {
-        programJarIs.close();
-      }
-
-      // Copy the tmp jar into destination.
-      OutputStream os = new BufferedOutputStream(otherJar.getOutputStream());
-      try {
-        Files.copy(tmpJar, os);
-      } finally {
-        os.close();
-      }
-    } finally {
-      if (!tmpJar.delete()) {
-        LOG.warn("Failed to delete temp file: " + tmpJar);
-        // failure should not affect other stuff
-      }
-    }
-  }
-
-  private static void addJarContents(Location src, JarOutputStream dest, Set<String> addedEntries) throws IOException {
-    JarInputStream otherJarIs = new JarInputStream(src.getInputStream());
-    try {
-      put(otherJarIs, dest, addedEntries);
-    } finally {
-      otherJarIs.close();
-    }
-  }
-
-  private static void put(JarInputStream src, JarOutputStream dest, Set<String> addedEntries) throws IOException {
-    while (true) {
-      ZipEntry nextEntry = src.getNextEntry();
-      if (nextEntry == null) {
-        break;
-      }
-      String entryName = nextEntry.getName();
-      if (addedEntries.contains(entryName)) {
-        continue;
-      }
-      addedEntries.add(entryName);
-      // write entry
-      dest.putNextEntry(new ZipEntry(entryName));
-      ByteStreams.copy(src, dest);
-      dest.closeEntry();
-    }
-  }
-
 }
