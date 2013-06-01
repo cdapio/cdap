@@ -59,7 +59,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
 
     // Register with discovery service.
-    final InetSocketAddress address = new InetSocketAddress(hostname, port);
+    InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
+    InetAddress address = socketAddress.getAddress();
+    if (address.isAnyLocalAddress()) {
+      address = InetAddress.getLocalHost();
+    }
+    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, port);
+
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
@@ -68,11 +74,11 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
       @Override
       public InetSocketAddress getSocketAddress() {
-        return address;
+        return finalSocketAddress;
       }
     });
 
-    TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(address))
+    TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(socketAddress))
       .executorService(executor)
       .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
       .workerThreads(THREAD_COUNT);

@@ -210,14 +210,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       return programController(program.getProgramName(), flowletName, flowletContext, driver);
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {
     flowletContext.setInstanceCount(instanceCount);
-    for(QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
+    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
       queueConsumerSupplier.updateInstanceCount(instanceCount);
     }
   }
@@ -255,7 +255,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (!"instances".equals(name) || !(value instanceof Integer)) {
           return;
         }
-        int instances = (Integer)value;
+        int instances = (Integer) value;
         LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
         changeInstanceCount(flowletContext, instances);
         LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
