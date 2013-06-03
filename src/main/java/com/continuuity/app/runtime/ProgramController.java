@@ -1,5 +1,6 @@
 package com.continuuity.app.runtime;
 
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.util.concurrent.ListenableFuture;
 

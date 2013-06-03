@@ -7,12 +7,12 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.logging.FlowletLoggingContext;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.internal.app.runtime.ProgramRuntimeContext;
+import com.continuuity.weave.api.RunId;
 import com.google.common.base.Objects;
 
 import java.util.Map;

@@ -34,7 +34,6 @@ import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -42,7 +41,6 @@ import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.internal.app.queue.QueueConsumerFactory;
 import com.continuuity.internal.app.queue.QueueConsumerFactory.QueueInfo;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -61,6 +59,8 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -132,7 +132,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       String runIdOption = options.getArguments().getOption("runId");
       Preconditions.checkNotNull(runIdOption, "Missing runId");
-      RunId runId = RunId.from(runIdOption);
+      RunId runId = RunIds.fromString(runIdOption);
 
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -149,7 +149,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
       ClassLoader classLoader = program.getMainClass().getClassLoader();
-      Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>)Class.forName(
+      Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) Class.forName(
                                                       flowletDef.getFlowletSpec().getClassName(),
                                                       true, classLoader);
 
@@ -285,7 +285,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       for (Field field : type.getRawType().getDeclaredFields()) {
         // Inject OutputEmitter
         if (OutputEmitter.class.equals(field.getType())) {
-          TypeToken<?> outputType = TypeToken.of(((ParameterizedType)field.getGenericType())
+          TypeToken<?> outputType = TypeToken.of(((ParameterizedType) field.getGenericType())
                                                    .getActualTypeArguments()[0]);
           String outputName = field.isAnnotationPresent(Output.class) ?
             field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
@@ -293,7 +293,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
           OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputName, outputType);
           setField(flowlet, field, outputEmitter);
           if (outputEmitter instanceof OutputSubmitter) {
-            outputSubmitters.add((OutputSubmitter)outputEmitter);
+            outputSubmitters.add((OutputSubmitter) outputEmitter);
           }
         }
       }
@@ -375,7 +375,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         try {
           // If batch mode then generate schema for Iterator's parameter type
           TypeToken<?> dataType = TypeToken.of(method.getGenericParameterTypes()[0]);
-          if(batch != null) {
+          if (batch != null) {
             Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class), "" +
               "Batch mode without an Iterator as first parameter is not supported yet.");
             Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
@@ -401,7 +401,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private Callback createCallback(Flowlet flowlet, FlowletSpecification flowletSpec) {
     if (flowlet instanceof Callback) {
-      return (Callback)flowlet;
+      return (Callback) flowlet;
     }
     final FailurePolicy failurePolicy = flowletSpec.getFailurePolicy();
     return new Callback() {
@@ -495,7 +495,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   flowletContext.getGroupId(),
                   flowletContext.getMetricName(),
                   queueName, queueInfo,
-                  ! flowletContext.isAsyncMode()
+                  !flowletContext.isAsyncMode()
                 ),
                 instanceCount);
               queueConsumerSupplierBuilder.add(consumerSupplier);

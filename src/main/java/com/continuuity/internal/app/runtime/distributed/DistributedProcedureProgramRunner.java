@@ -9,13 +9,14 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -49,7 +50,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     ProcedureSpecification procedureSpec = appSpec.getProcedures().get(program.getProgramName());
     Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getProgramName());
 
-    RunId runId = RunId.generate();
+    RunId runId = RunIds.generate();
 
     LOG.info("Launching distributed flow: " + program.getProgramName() + ":" + procedureSpec.getName());
 

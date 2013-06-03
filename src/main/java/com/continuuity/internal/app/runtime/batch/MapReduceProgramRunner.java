@@ -12,7 +12,6 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.app.runtime.RunId;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -31,7 +30,9 @@ import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -117,7 +118,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
 
     try {
-      RunId runId = RunId.generate();
+      RunId runId = RunIds.generate();
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, txAgent,
                                   DataSets.createDataSets(dataSetContext, spec.getDataSets()), spec);
